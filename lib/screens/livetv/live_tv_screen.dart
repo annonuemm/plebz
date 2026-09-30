@@ -80,7 +80,7 @@ class LiveTvScreen extends StatefulWidget {
 
 class _LiveTvScreenState extends State<LiveTvScreen>
     with TickerProviderStateMixin, TabNavigationMixin, OckerSubmenuHost
-    implements FocusableTab, ManualRefreshable, LiveTvSidebarActions {
+    implements FocusableTab, BackgroundSelectedTab, ManualRefreshable, LiveTvSidebarActions {
   final _guideTabFocusNode = FocusNode(debugLabel: 'tab_chip_guide');
   final _whatsOnTabFocusNode = FocusNode(debugLabel: 'tab_chip_whats_on');
   final _recordingsTabFocusNode = FocusNode(debugLabel: 'tab_chip_recordings');
@@ -460,23 +460,54 @@ class _LiveTvScreenState extends State<LiveTvScreen>
     // and this screen sits behind it, so by the time the player closes the
     // guide is already on the channel that was being watched.
     LiveTvLastSelection.instance.addListener(_adoptPlayerSelection);
+    // Built in this very moment for a channel started from the home screen:
+    // the hand-off was recorded before there was anyone to listen.
+    if (LiveTvLastSelection.instance.takeHandOff()) _adoptPlayerSelection(handedOff: true);
     _loadChannels();
   }
 
   /// Adopt where the player ended up, so leaving it lands on the channel and
   /// group that were being watched — not on the ones this screen was showing
   /// when the player was opened.
-  void _adoptPlayerSelection() {
+  ///
+  /// A hand-off from the home screen ([LiveTvLastSelection.handOff]) also
+  /// brings the guide itself forward, whichever view was on show.
+  void _adoptPlayerSelection({bool handedOff = false}) {
     final selection = LiveTvLastSelection.instance;
     if (!selection.hasSelection || !mounted) return;
+    if (!handedOff) handedOff = selection.takeHandOff();
     final group = selection.group;
     if (group != _selectedGroup) {
       setState(() => _selectedGroup = group);
     }
-    final key = selection.channelKey;
-    if (key == null) return;
+    _pendingChannelKey = selection.channelKey;
+    if (handedOff) {
+      final guide = _visibleTabs.indexOf(LiveTvTab.guide);
+      if (guide >= 0 && tabController.index != guide) tabController.index = guide;
+    }
+    _showPendingChannel();
+  }
+
+  /// The channel [_adoptPlayerSelection] is to put under the cursor, kept
+  /// until the guide has it: a hand-off arrives before the channels do.
+  String? _pendingChannelKey;
+
+  /// For a guide built after the request — the view switched to for a
+  /// hand-off: it keeps the channel until its programmes are in.
+  String? _takePendingChannel() {
+    final key = _pendingChannelKey;
+    _pendingChannelKey = null;
+    return key;
+  }
+
+  void _showPendingChannel() {
+    final key = _pendingChannelKey;
+    if (key == null || !_channels.any((channel) => liveTvChannelScopeKey(channel) == key)) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _guideTabKey.currentState?.showChannel(key);
+      final guide = _guideTabKey.currentState;
+      if (!mounted || guide == null || _pendingChannelKey != key) return;
+      _pendingChannelKey = null;
+      guide.showChannel(key);
     });
   }
 
@@ -561,6 +592,8 @@ class _LiveTvScreenState extends State<LiveTvScreen>
         _selectedGroup = null;
       }
     });
+    // A channel handed over before the list was there is shown once it is.
+    _showPendingChannel();
   }
 
   FocusNode _groupChipFocusNode(String? group) =>
@@ -1350,6 +1383,19 @@ class _LiveTvScreenState extends State<LiveTvScreen>
   @override
   void focusActiveTabIfReady() => _focusCurrentTab();
 
+  /// Back from a player started on the home screen: the guide takes focus
+  /// where the hand-off put its cursor, not on its first channel as an
+  /// arrival would.
+  @override
+  void focusAfterBackgroundSelect() {
+    final guide = _currentTab == LiveTvTab.guide ? _guideTabKey.currentState : null;
+    if (guide != null) {
+      guide.resumeFocus();
+    } else {
+      _focusCurrentTab();
+    }
+  }
+
   String _getTabLabel(LiveTvTab tab) {
     return switch (tab) {
       LiveTvTab.guide => t.liveTv.guide,
@@ -1733,6 +1779,7 @@ class _LiveTvScreenState extends State<LiveTvScreen>
                 isFavoriteChannel: _isFavoriteChannel,
                 onToggleFavorite: _toggleFavorite,
                 onChannelMenu: _showChannelMenu,
+                takePendingChannel: _takePendingChannel,
                 onNavigateUp: _focusChannelBar,
                 onBack: onTabBarBack,
                 onOpenGroups: _groupColumnEnabled ? _openGroupColumn : null,

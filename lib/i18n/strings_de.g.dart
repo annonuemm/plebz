@@ -2709,6 +2709,9 @@ class _Translations$plebz$de extends Translations$plebz$en {
 	@override String get openSettings => 'Einstellungen öffnen';
 	@override String get updateFailed => 'Das Update konnte nicht geladen oder installiert werden.';
 	@override String get noMatchingDownload => 'Dieses Release hat keine Datei für dieses Gerät.';
+	@override String get whatsNew => 'Was ist neu';
+	@override String get whatsNewDescription => 'Was sich mit jeder Version geändert hat';
+	@override String get whatsNewEmpty => 'Zu dieser Version gibt es noch keine Notizen.';
 }
 
 // Path: common.ratingSource
@@ -5998,6 +6001,9 @@ extension on TranslationsDe {
 			'plebz.openSettings' => 'Einstellungen öffnen',
 			'plebz.updateFailed' => 'Das Update konnte nicht geladen oder installiert werden.',
 			'plebz.noMatchingDownload' => 'Dieses Release hat keine Datei für dieses Gerät.',
+			'plebz.whatsNew' => 'Was ist neu',
+			'plebz.whatsNewDescription' => 'Was sich mit jeder Version geändert hat',
+			'plebz.whatsNewEmpty' => 'Zu dieser Version gibt es noch keine Notizen.',
 			_ => null,
 		};
 	}

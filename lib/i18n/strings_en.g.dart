@@ -6833,6 +6833,15 @@ class Translations$plebz$en {
 
 	/// en: 'This release has no file for this device.'
 	String get noMatchingDownload => 'This release has no file for this device.';
+
+	/// en: 'What's new'
+	String get whatsNew => 'What\'s new';
+
+	/// en: 'What changed with each version'
+	String get whatsNewDescription => 'What changed with each version';
+
+	/// en: 'There are no notes for this version yet.'
+	String get whatsNewEmpty => 'There are no notes for this version yet.';
 }
 
 // Path: common.ratingSource
@@ -11119,6 +11128,9 @@ extension on Translations {
 			'plebz.openSettings' => 'Open settings',
 			'plebz.updateFailed' => 'The update could not be downloaded or installed.',
 			'plebz.noMatchingDownload' => 'This release has no file for this device.',
+			'plebz.whatsNew' => 'What\'s new',
+			'plebz.whatsNewDescription' => 'What changed with each version',
+			'plebz.whatsNewEmpty' => 'There are no notes for this version yet.',
 			_ => null,
 		};
 	}

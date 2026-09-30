@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../i18n/strings.g.dart';
 import '../../services/plebz_update_service.dart';
+import '../../services/plebz_whats_new.dart';
 import '../../services/settings_service.dart';
 import '../../utils/app_logger.dart';
 import '../../utils/dialogs.dart';
@@ -22,9 +23,13 @@ import '../../widgets/setting_tile.dart';
 /// Silent on a first install, and on the first start of the build that
 /// introduced this notice unless the app had been set up before (then it was
 /// an update).
+///
+/// Under the sentence, what is new: every section of [plebzWhatsNewAsset]
+/// since the build last started, so a skipped release is told of too.
 Future<void> maybeShowPlebzUpdatedNotice(
   BuildContext context, {
   Future<({String version, int build})?> Function()? installed,
+  Future<List<PlebzWhatsNewEntry>> Function()? whatsNew,
 }) async {
   final settings = SettingsService.instance;
   final current = await (installed ?? _installedVersion)();
@@ -36,11 +41,27 @@ Future<void> maybeShowPlebzUpdatedNotice(
   if (lastSeen == 0 && !settings.read(SettingsService.onboardingCompleted)) return;
   if (!context.mounted) return;
   appLogger.i('Plebz: first start of build ${current.build} (last seen $lastSeen)');
+  final notes = plebzWhatsNewSince(await (whatsNew ?? loadPlebzWhatsNew)(), lastSeen: lastSeen, current: current.build);
+  if (!context.mounted) return;
   await showFullTextDialog(
     context,
     title: t.plebz.updatedTitle,
-    text: t.plebz.updatedBody(version: current.version, build: current.build),
+    span: plebzWhatsNewSpan(
+      notes,
+      lead: t.plebz.updatedBody(version: current.version, build: current.build),
+    ),
   );
+}
+
+/// Settings' "Was ist neu": every version's notes, newest first.
+Future<void> showPlebzWhatsNew(BuildContext context, {Future<List<PlebzWhatsNewEntry>> Function()? whatsNew}) async {
+  final notes = await (whatsNew ?? loadPlebzWhatsNew)();
+  if (!context.mounted) return;
+  if (notes.isEmpty) {
+    showAppSnackBar(context, t.plebz.whatsNewEmpty);
+    return;
+  }
+  await showFullTextDialog(context, title: t.plebz.whatsNew, span: plebzWhatsNewSpan(notes));
 }
 
 Future<({String version, int build})?> _installedVersion() async {
@@ -109,10 +130,12 @@ Future<void> checkForPlebzUpdate(
       if (userInitiated) showErrorSnackBar(context, t.plebz.noMatchingDownload);
       return;
     }
-    final wanted = await showConfirmDialog(
+    // What the release brings, as written for it — the text that ships in
+    // the new build's own notes.
+    final wanted = await showFullTextConfirmDialog(
       context,
       title: t.plebz.updateAvailableTitle,
-      message: t.plebz.updateAvailableBody(release: release.title),
+      span: plebzNotesSpan(release.notes, lead: t.plebz.updateAvailableBody(release: release.title)),
       confirmText: t.plebz.updateNow,
       cancelText: t.plebz.later,
     );
@@ -195,10 +218,18 @@ Future<dynamic> _downloadWithProgress(BuildContext context, PlebzUpdateService u
   });
 }
 
-/// The update rows for the settings page; nothing until [plebzUpdatesAvailable].
+/// The update rows for the settings page: "Was ist neu" everywhere, the
+/// update check only where [plebzUpdatesAvailable].
 List<Widget> plebzUpdateRows(BuildContext context) {
-  if (!plebzUpdatesAvailable) return const [];
+  final whatsNew = SettingNavigationTile(
+    icon: Symbols.new_releases_rounded,
+    title: t.plebz.whatsNew,
+    subtitle: t.plebz.whatsNewDescription,
+    onTap: () => unawaited(showPlebzWhatsNew(context)),
+  );
+  if (!plebzUpdatesAvailable) return [whatsNew];
   return [
+    whatsNew,
     SettingNavigationTile(
       icon: Symbols.system_update_rounded,
       title: t.plebz.checkForUpdates,

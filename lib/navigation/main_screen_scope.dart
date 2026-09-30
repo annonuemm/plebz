@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../widgets/side_navigation_rail.dart';
+import 'navigation_tabs.dart';
 
 /// Dependency aspects for [MainScreenFocusScope].
 ///
@@ -8,6 +9,25 @@ import '../widgets/side_navigation_rail.dart';
 /// only rebuild the few widgets that position against them — depending on the
 /// whole scope from a screen's top-level build makes the entire screen rebuild
 /// on every sidebar focus flip (measured 150-330ms frames on low-end TVs).
+/// Lets a screen under the main screen bring another of its tabs forward —
+/// the home screen's "Jetzt live" switches to Live TV behind the player it
+/// opens, so closing the player lands in the guide. Above every layout (side
+/// rail, redesign rail, phone bars) alike, unlike [MainScreenFocusScope].
+class MainScreenTabSwitcher extends InheritedWidget {
+  const MainScreenTabSwitcher({super.key, required this.selectTab, required super.child});
+
+  /// Brings [NavigationTabId] forward without moving focus into it; a tab
+  /// that is not on show in this mode is left alone.
+  final void Function(NavigationTabId tab) selectTab;
+
+  static void selectTabOf(BuildContext context, NavigationTabId tab) =>
+      (context.getElementForInheritedWidgetOfExactType<MainScreenTabSwitcher>()?.widget as MainScreenTabSwitcher?)
+          ?.selectTab(tab);
+
+  @override
+  bool updateShouldNotify(MainScreenTabSwitcher oldWidget) => false;
+}
+
 enum MainScreenScopeAspect {
   /// `foregroundLeft` / `sideNavigationWidth` — change when the sidebar
   /// expands or collapses. Depend on these only from small positioning

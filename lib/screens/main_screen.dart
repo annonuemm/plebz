@@ -6,7 +6,7 @@ import '../navigation/page_refresh_shortcut.dart';
 import 'dart:io' show Platform, exit;
 
 export '../navigation/main_screen_scope.dart'
-    show MainScreenFocusScope, MainScreenScopeAspect, SideNavigationBleedBuilder;
+    show MainScreenFocusScope, MainScreenScopeAspect, MainScreenTabSwitcher, SideNavigationBleedBuilder;
 
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
@@ -1838,6 +1838,14 @@ class _MainScreenState extends State<MainScreen>
       _onScreen<TabVisibilityAware>(NavigationTabId.discover, (screen) => screen.onTabShown());
       _onDiscoverBecameVisible();
     }
+    final returnTab = _focusOnReturnTab;
+    _focusOnReturnTab = null;
+    if (returnTab != null && returnTab == _currentTab && !_isSidebarFocused) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _currentTab != returnTab) return;
+        _onScreen<BackgroundSelectedTab>(returnTab, (screen) => screen.focusAfterBackgroundSelect());
+      });
+    }
   }
 
   void _onDiscoverBecameVisible() {
@@ -1891,7 +1899,18 @@ class _MainScreenState extends State<MainScreen>
     _fullRefreshContentTabs();
   }
 
-  void _selectTab(NavigationTabId tab, {bool focusSearchInput = true}) {
+  /// For [MainScreenTabSwitcher]: the tab changes under a route pushed over
+  /// it, so the focus stays where it is.
+  void _selectTabInBackground(NavigationTabId tab) {
+    _selectTab(tab, focusScreen: false);
+    if (_currentTab == tab) _focusOnReturnTab = tab;
+  }
+
+  /// The tab [_selectTabInBackground] brought forward, focused once the route
+  /// over the main screen is popped ([didPopNext]).
+  NavigationTabId? _focusOnReturnTab;
+
+  void _selectTab(NavigationTabId tab, {bool focusSearchInput = true, bool focusScreen = true}) {
     // Guard: ignore if tab isn't available in current mode
     if (!_getVisibleTabs(_isOffline).any((t) => t.id == tab)) return;
 
@@ -1928,7 +1947,7 @@ class _MainScreenState extends State<MainScreen>
         // A companion-remote search (focusSearchInput: false) must NOT focus the
         // search input, since focusing it auto-opens the on-screen keyboard; the
         // query submit focuses results instead.
-        if (!_isSidebarFocused && (tab != NavigationTabId.search || focusSearchInput)) {
+        if (focusScreen && !_isSidebarFocused && (tab != NavigationTabId.search || focusSearchInput)) {
           _onScreen<FocusableTab>(tab, (screen) => screen.focusActiveTabIfReady());
         }
       }
@@ -2192,7 +2211,7 @@ class _MainScreenState extends State<MainScreen>
   Widget build(BuildContext context) {
     final useSideNav = PlatformDetector.shouldUseSideNavigation(context);
 
-    return _buildContent(context, useSideNav);
+    return MainScreenTabSwitcher(selectTab: _selectTabInBackground, child: _buildContent(context, useSideNav));
   }
 
   Widget _buildContent(BuildContext context, bool useSideNav) {

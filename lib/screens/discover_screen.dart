@@ -13,6 +13,8 @@ import 'live_now/live_now_tile.dart';
 import 'live_now/live_now_loader.dart';
 import '../utils/live_tv_player_navigation.dart';
 import '../utils/live_tv_matching.dart';
+import '../services/live_tv_last_selection.dart';
+import '../navigation/navigation_tabs.dart';
 import '../services/sport/sport_repository.dart';
 import '../services/sport/sport_models.dart';
 import '../services/sport/sport_broadcast_matching.dart';
@@ -283,6 +285,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     switch (_liveNow.byId[item.id]) {
       case LiveNowChannel(:final channel):
         if (multiServer == null) return;
+        _handLiveTvOff(channel);
         await navigateToLiveTv(
           context,
           multiServer: multiServer,
@@ -302,9 +305,21 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     }
   }
 
+  /// Behind the player about to open, Live TV comes forward on [channel]'s
+  /// group with the channel under the cursor: closing the player lands in the
+  /// guide, where the viewer can zap on, not back on the home screen.
+  void _handLiveTvOff(LiveTvChannel channel) {
+    LiveTvLastSelection.instance.handOff(
+      channelKey: liveTvChannelScopeKey(channel),
+      group: liveTvNonEmpty(channel.lineup),
+    );
+    MainScreenTabSwitcher.selectTabOf(context, NavigationTabId.liveTv);
+  }
+
   Future<void> _openLiveNowGame(SportMatch match, SportLeague league, MultiServerProvider? multiServer) async {
     void watch(SportBroadcast broadcast, List<LiveTvChannel> channels, {int? startAtEpoch}) {
       if (multiServer == null || !mounted) return;
+      _handLiveTvOff(broadcast.channel);
       unawaited(
         navigateToLiveTv(
           context,

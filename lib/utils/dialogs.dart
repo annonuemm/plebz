@@ -136,18 +136,43 @@ Future<bool> showConfirmDialog(
 /// takes focus itself and drives on UP/DOWN, handing the key on at either end
 /// so focus can still reach the close button — the same edge-escape rule the
 /// text fields use.
-Future<void> showFullTextDialog(BuildContext context, {required String title, required String text}) {
+///
+/// [span] replaces [text] where parts of it need a style of their own.
+Future<void> showFullTextDialog(BuildContext context, {required String title, String text = '', InlineSpan? span}) {
   return showScopedDialog<void>(
     context: context,
-    builder: (dialogContext) => _FullTextDialog(title: title, text: text),
+    builder: (dialogContext) => _FullTextDialog(
+      title: title,
+      span: span ?? TextSpan(text: text),
+    ),
   );
 }
 
+/// [showFullTextDialog] with a choice under the text instead of "Close" —
+/// for a question whose answer depends on reading all of it, like an update
+/// and its notes. True for [confirmText]; false for [cancelText] or back.
+Future<bool> showFullTextConfirmDialog(
+  BuildContext context, {
+  required String title,
+  required InlineSpan span,
+  required String confirmText,
+  String? cancelText,
+}) async {
+  final confirmed = await showScopedDialog<bool>(
+    context: context,
+    builder: (dialogContext) =>
+        _FullTextDialog(title: title, span: span, confirmText: confirmText, cancelText: cancelText),
+  );
+  return confirmed ?? false;
+}
+
 class _FullTextDialog extends StatefulWidget {
-  const _FullTextDialog({required this.title, required this.text});
+  const _FullTextDialog({required this.title, required this.span, this.confirmText, this.cancelText});
 
   final String title;
-  final String text;
+  final InlineSpan span;
+  final String? confirmText;
+  final String? cancelText;
 
   @override
   State<_FullTextDialog> createState() => _FullTextDialogState();
@@ -194,16 +219,29 @@ class _FullTextDialogState extends State<_FullTextDialog> {
           onKeyEvent: _handleKey,
           child: SingleChildScrollView(
             controller: _controller,
-            child: Text(widget.text, style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5)),
+            child: Text.rich(widget.span, style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5)),
           ),
         ),
       ),
       actions: [
-        DialogActionButton(
-          onPressed: () => Navigator.pop(context),
-          label: t.common.close,
-          style: TextButton.styleFrom(padding: _buttonPadding, shape: _buttonShape),
-        ),
+        if (widget.confirmText case final confirmText?) ...[
+          DialogActionButton(
+            onPressed: () => Navigator.pop(context, false),
+            label: widget.cancelText ?? t.common.cancel,
+            style: TextButton.styleFrom(padding: _buttonPadding, shape: _buttonShape),
+          ),
+          DialogActionButton(
+            onPressed: () => Navigator.pop(context, true),
+            label: confirmText,
+            isPrimary: true,
+            style: FilledButton.styleFrom(padding: _buttonPadding, shape: _buttonShape),
+          ),
+        ] else
+          DialogActionButton(
+            onPressed: () => Navigator.pop(context),
+            label: t.common.close,
+            style: TextButton.styleFrom(padding: _buttonPadding, shape: _buttonShape),
+          ),
       ],
     );
   }

@@ -37,10 +37,36 @@ class LiveTvLastSelection extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _handedOff = false;
+
+  /// A channel started from somewhere other than the guide — the home
+  /// screen's "Jetzt live" — with the guide switched to behind the player, so
+  /// leaving the player lands in the guide on that channel's group.
+  ///
+  /// Recorded like a zap, and marked: the guide may only be built in this
+  /// very moment, after the notification it would have listened for.
+  void handOff({required String? channelKey, required String? group}) {
+    _handedOff = true;
+    // Notified even when nothing changed: a guide already on screen has to
+    // move to it all the same.
+    _channelKey = channelKey;
+    _group = group;
+    _groupKnown = true;
+    notifyListeners();
+  }
+
+  /// Whether a [handOff] is waiting for a guide to take it; clears it.
+  bool takeHandOff() {
+    final handedOff = _handedOff;
+    _handedOff = false;
+    return handedOff;
+  }
+
   @visibleForTesting
   void resetForTest() {
     _channelKey = null;
     _group = null;
     _groupKnown = false;
+    _handedOff = false;
   }
 }

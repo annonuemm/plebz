@@ -1,7 +1,7 @@
 name: plezy
 description: "A beautiful Plex and Jellyfin client for Flutter"
 publish_to: "none"
-version: 1.1.0+558
+version: 1.2.0+561
 
 environment:
   # Dart floor stays 3.12: freezed 3.x emits `final` constructor parameters,
@@ -142,6 +142,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/plezy.png
+    - assets/whats_new.md
     - assets/plezy_adaptive_foreground.svg
     - assets/plex_chevron.svg
     - assets/jellyfin_icon.svg

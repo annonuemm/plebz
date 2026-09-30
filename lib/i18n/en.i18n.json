@@ -2733,6 +2733,9 @@
     "installPermissionBody": "To install updates, Plebz needs to be allowed once under \"Install unknown apps\". Then check for the update again.",
     "openSettings": "Open settings",
     "updateFailed": "The update could not be downloaded or installed.",
-    "noMatchingDownload": "This release has no file for this device."
+    "noMatchingDownload": "This release has no file for this device.",
+    "whatsNew": "What's new",
+    "whatsNewDescription": "What changed with each version",
+    "whatsNewEmpty": "There are no notes for this version yet."
   }
 }

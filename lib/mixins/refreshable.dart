@@ -28,6 +28,14 @@ mixin FocusableTab {
   void focusActiveTabIfReady();
 }
 
+/// A tab brought forward behind a route pushed over the main screen
+/// ([MainScreenTabSwitcher]) takes focus here once that route is gone — the
+/// focus the route hands back belonged to the tab left behind, which can no
+/// longer hold it.
+mixin BackgroundSelectedTab {
+  void focusAfterBackgroundSelect();
+}
+
 mixin SearchInputFocusable {
   void focusSearchInput();
 

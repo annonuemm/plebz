@@ -2733,6 +2733,9 @@
     "installPermissionBody": "Damit Plebz Updates installieren kann, erlaube es einmal unter „Unbekannte Apps installieren“. Suche danach erneut nach dem Update.",
     "openSettings": "Einstellungen öffnen",
     "updateFailed": "Das Update konnte nicht geladen oder installiert werden.",
-    "noMatchingDownload": "Dieses Release hat keine Datei für dieses Gerät."
+    "noMatchingDownload": "Dieses Release hat keine Datei für dieses Gerät.",
+    "whatsNew": "Was ist neu",
+    "whatsNewDescription": "Was sich mit jeder Version geändert hat",
+    "whatsNewEmpty": "Zu dieser Version gibt es noch keine Notizen."
   }
 }

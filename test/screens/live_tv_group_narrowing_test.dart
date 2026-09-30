@@ -82,5 +82,23 @@ void main() {
       expect(LiveTvLastSelection.instance.channelKey, 'src 3sat');
       expect(notified, 2, reason: 'the same selection twice is not news');
     });
+
+    test('a hand-off from the home screen is news, and is taken once', () {
+      var notified = 0;
+      void listener() => notified++;
+      LiveTvLastSelection.instance.addListener(listener);
+      addTearDown(() => LiveTvLastSelection.instance.removeListener(listener));
+
+      LiveTvLastSelection.instance.handOff(channelKey: 'src ard', group: 'DE - Kultur');
+
+      expect(notified, 1);
+      expect(LiveTvLastSelection.instance.channelKey, 'src ard');
+      expect(LiveTvLastSelection.instance.group, 'DE - Kultur');
+      expect(LiveTvLastSelection.instance.takeHandOff(), isTrue);
+      expect(LiveTvLastSelection.instance.takeHandOff(), isFalse, reason: 'one guide takes it');
+
+      LiveTvLastSelection.instance.record(channelKey: 'src 3sat', group: 'DE - Kultur');
+      expect(LiveTvLastSelection.instance.takeHandOff(), isFalse, reason: 'a zap in the player is no hand-off');
+    });
   });
 }

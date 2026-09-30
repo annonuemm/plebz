@@ -55,6 +55,11 @@ class GuideTab extends StatefulWidget {
   /// its logo, the context-menu key or a long press. Without one, those
   /// toggle the favourite as they always did.
   final void Function(LiveTvChannel)? onChannelMenu;
+
+  /// Asked once, as the guide is built: a channel (by scope key) waiting to
+  /// be put under the cursor — see [GuideTabState.showChannel]. A guide built
+  /// behind the player for a hand-off is created after the request was made.
+  final String? Function()? takePendingChannel;
   final VoidCallback? onNavigateUp;
   final VoidCallback? onBack;
 
@@ -83,6 +88,7 @@ class GuideTab extends StatefulWidget {
     this.isFavoriteChannel,
     this.onToggleFavorite,
     this.onChannelMenu,
+    this.takePendingChannel,
     this.onNavigateUp,
     this.onBack,
     this.playerChannels,
@@ -362,6 +368,9 @@ class GuideTabState extends State<GuideTab>
   LiveTvChannel? _pendingJumpChannel;
   LiveTvProgram? _pendingJumpProgram;
 
+  // Channel [showChannel] was asked for while programs were still loading.
+  String? _pendingShowChannel;
+
   /// Focus into the guide content (called from tab bar navigation or initial load).
   void focusContent() {
     if (!InputModeTracker.isKeyboardMode(context)) return;
@@ -407,13 +416,25 @@ class GuideTabState extends State<GuideTab>
   /// What the guide is asked for after the player closes: the viewer left it
   /// on a channel, zapped away in full screen, and coming back to the row
   /// they started on would lose the journey they just made.
+  ///
+  /// A guide built just now keeps it until its programmes are in: the first
+  /// load anchors the window on the live line, and the channel comes after.
   void showChannel(String scopeKey) {
+    if (_isLoading) {
+      _pendingShowChannel = scopeKey;
+      return;
+    }
     final index = widget.channels.indexWhere((channel) => liveTvChannelScopeKey(channel) == scopeKey);
     if (index < 0) {
       showFirstChannel();
       return;
     }
-    _updateFocus(() => _gridChannelIndex = index);
+    // In the grid: the viewer left from a channel, and a guide built for a
+    // hand-off would otherwise start out on the time bar.
+    _updateFocus(() {
+      _focusZone = _GuideZone.grid;
+      _gridChannelIndex = index;
+    });
     _scrollToChannel(index);
   }
 
@@ -521,6 +542,7 @@ class GuideTabState extends State<GuideTab>
   void initState() {
     super.initState();
     _initTimeRange();
+    _pendingShowChannel = widget.takePendingChannel?.call();
     _loadPrograms();
 
     _gridHorizontalController.addListener(_syncGridToHeader);
@@ -774,6 +796,7 @@ class GuideTabState extends State<GuideTab>
         // A stashed search jump wins over the default live-line anchoring and
         // over any focus request queued during the load.
         _pendingFocus = false;
+        _pendingShowChannel = null;
         if (pendingJumpProgram != null) {
           unawaited(jumpToProgram(pendingJumpChannel, pendingJumpProgram));
         } else {
@@ -783,6 +806,19 @@ class GuideTabState extends State<GuideTab>
       }
 
       _scrollToNow(loadGeneration: loadGeneration);
+      if (_pendingShowChannel case final key?) {
+        _pendingShowChannel = null;
+        showChannel(key);
+        // Focus asked for meanwhile lands on that channel; an arrival's
+        // focusContent would put the cursor back on the first.
+        if (shouldFocus) {
+          _pendingFocus = false;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_isCurrentProgramLoad(loadGeneration)) resumeFocus();
+          });
+        }
+        return;
+      }
 
       if (shouldFocus) {
         WidgetsBinding.instance.addPostFrameCallback((_) {

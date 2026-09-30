@@ -10,6 +10,7 @@ import 'package:http/testing.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/screens/settings/plebz_updates.dart';
 import 'package:plezy/services/plebz_update_service.dart';
+import 'package:plezy/services/plebz_whats_new.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/utils/fork_identity.dart';
@@ -226,6 +227,7 @@ void main() {
       addTearDown(() => temp.deleteSync(recursive: true));
       await run(tester, installedBuild: 550, temp: temp);
       expect(find.text(t.plebz.updateAvailableTitle), findsOneWidget);
+      expect(find.textContaining('Fixes'), findsOneWidget, reason: "the release's own notes, before saying yes");
 
       await tester.tap(find.text(t.plebz.updateNow));
       // The download writes a real file: let real time and frames take turns.
@@ -278,7 +280,7 @@ void main() {
     });
     tearDown(SettingsService.resetForTesting);
 
-    Future<void> start(WidgetTester tester, {required int build}) async {
+    Future<void> start(WidgetTester tester, {required int build, List<PlebzWhatsNewEntry> notes = const []}) async {
       await tester.pumpWidget(
         TranslationProvider(
           child: MaterialApp(
@@ -286,8 +288,11 @@ void main() {
             home: Scaffold(
               body: Builder(
                 builder: (context) => TextButton(
-                  onPressed: () =>
-                      maybeShowPlebzUpdatedNotice(context, installed: () async => (version: '1.1.0', build: build)),
+                  onPressed: () => maybeShowPlebzUpdatedNotice(
+                    context,
+                    installed: () async => (version: '1.1.0', build: build),
+                    whatsNew: () async => notes,
+                  ),
                   child: const Text('start'),
                 ),
               ),
@@ -308,6 +313,30 @@ void main() {
       expect(find.text(t.plebz.updatedTitle), findsOneWidget);
       expect(find.text(body(558)), findsOneWidget);
       expect(SettingsService.instance.read(SettingsService.plebzLastSeenBuild), 558);
+    });
+
+    testWidgets('with what is new since the build last started, a skipped release included', (tester) async {
+      await SettingsService.instance.write(SettingsService.plebzLastSeenBuild, 556);
+      await start(
+        tester,
+        build: 558,
+        notes: parsePlebzWhatsNew('''
+## 1.2.0 (Build 560)
+- Not installed yet
+## 1.1.1 (Build 558)
+- Installed now
+## 1.1.0 (Build 557)
+- Skipped
+## 1.0.0 (Build 556)
+- Seen before
+'''),
+      );
+
+      expect(find.textContaining(body(558)), findsOneWidget);
+      expect(find.textContaining('Installed now'), findsOneWidget);
+      expect(find.textContaining('Skipped'), findsOneWidget);
+      expect(find.textContaining('Seen before'), findsNothing);
+      expect(find.textContaining('Not installed yet'), findsNothing);
     });
 
     testWidgets('and says it once', (tester) async {

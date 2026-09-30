@@ -9,6 +9,7 @@ import 'package:plezy/exceptions/media_server_exceptions.dart';
 import 'package:plezy/focus/input_mode_tracker.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/media/ids.dart';
+import 'package:plezy/mixins/refreshable.dart';
 import 'package:plezy/media/live_tv_support.dart';
 import 'package:plezy/media/media_backend.dart';
 import 'package:plezy/media/media_server_client.dart';
@@ -23,6 +24,7 @@ import 'package:plezy/screens/livetv/guide_search_sheet.dart';
 import 'package:plezy/screens/livetv/live_tv_screen.dart';
 import 'package:plezy/screens/livetv/live_tv_sidebar_actions.dart';
 import 'package:plezy/screens/livetv/tabs/guide_tab.dart';
+import 'package:plezy/services/live_tv_last_selection.dart';
 import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/redesign/ocker_skin.dart';
@@ -262,6 +264,95 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(_guideChannels(tester).map((channel) => channel.key), ['channel-a', 'channel-b', 'channel-c']);
+  });
+
+  group('a channel handed over from the home screen', () {
+    setUp(LiveTvLastSelection.instance.resetForTest);
+    tearDown(LiveTvLastSelection.instance.resetForTest);
+
+    String keyOf(WidgetTester tester, String channelKey) =>
+        liveTvChannelScopeKey(_guideChannels(tester).singleWhere((channel) => channel.key == channelKey));
+
+    int cursor(WidgetTester tester) => tester.state<GuideTabState>(find.byType(GuideTab)).debugCursorChannelIndex;
+
+    testWidgets('brings the guide forward on its group, with the channel under the cursor', (tester) async {
+      final harness = await _pumpLiveTvScreen(
+        tester,
+        channelKeys: const ['channel-a', 'channel-b', 'channel-c'],
+        channelGroups: _channelGroups(),
+        dvr: _FakeLiveTvDvrSupport(),
+      );
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        harness.dispose();
+      });
+      final key = keyOf(tester, 'channel-b');
+      await tester.tap(find.text(t.liveTv.recordings));
+      await tester.pumpAndSettle();
+      expect(find.byType(RecordingsTab), findsOneWidget);
+
+      LiveTvLastSelection.instance.handOff(channelKey: key, group: 'News');
+      await tester.pumpAndSettle();
+
+      expect(find.byType(RecordingsTab), findsNothing, reason: 'the guide is what the player closes onto');
+      expect(_guideChannels(tester).map((channel) => channel.key), ['channel-a', 'channel-b']);
+      expect(cursor(tester), 1);
+      expect(LiveTvLastSelection.instance.takeHandOff(), isFalse, reason: 'taken, not left for the next visit');
+    });
+
+    testWidgets('closing the player focuses the guide on that channel, not on its first', (tester) async {
+      final harness = await _pumpLiveTvScreen(
+        tester,
+        channelKeys: const ['channel-a', 'channel-b', 'channel-c'],
+        channelGroups: _channelGroups(),
+      );
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        harness.dispose();
+      });
+      // A remote: the viewer navigates by focus.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      final key = keyOf(tester, 'channel-b');
+
+      LiveTvLastSelection.instance.handOff(channelKey: key, group: 'News');
+      await tester.pumpAndSettle();
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+      (tester.state(find.byType(LiveTvScreen)) as BackgroundSelectedTab).focusAfterBackgroundSelect();
+      await tester.pumpAndSettle();
+
+      expect(FocusManager.instance.primaryFocus?.debugLabel, 'guide_tab');
+      expect(cursor(tester), 1, reason: 'an arrival would have put it on the first channel');
+    });
+
+    testWidgets('is taken by a Live TV built only now, once its channels are there', (tester) async {
+      // The first visit to the tab: the screen is built behind the player,
+      // after the hand-off, and its channels arrive later still.
+      final first = await _pumpLiveTvScreen(
+        tester,
+        channelKeys: const ['channel-a', 'channel-b', 'channel-c'],
+        channelGroups: _channelGroups(),
+      );
+      final key = keyOf(tester, 'channel-c');
+      await tester.pumpWidget(const SizedBox.shrink());
+      first.dispose();
+
+      LiveTvLastSelection.instance.handOff(channelKey: key, group: 'Sport');
+      final harness = await _pumpLiveTvScreen(
+        tester,
+        channelKeys: const ['channel-a', 'channel-b', 'channel-c'],
+        channelGroups: _channelGroups(),
+      );
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        harness.dispose();
+      });
+
+      expect(_guideChannels(tester).map((channel) => channel.key), ['channel-c']);
+      expect(cursor(tester), 0);
+      expect(LiveTvLastSelection.instance.takeHandOff(), isFalse);
+    });
   });
 
   testWidgets('a group shown again has the guide ask for programmes again; one hidden does not', (tester) async {

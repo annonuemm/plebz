@@ -6792,6 +6792,18 @@ class Translations$plebz$en {
 	/// en: 'Plebz is up to date'
 	String get upToDate => 'Plebz is up to date';
 
+	/// en: 'Checking for updates…'
+	String get checking => 'Checking for updates…';
+
+	/// en: 'GitHub could not be reached. The reason is under "View logs".'
+	String get checkFailed => 'GitHub could not be reached. The reason is under "View logs".';
+
+	/// en: 'Plebz was updated'
+	String get updatedTitle => 'Plebz was updated';
+
+	/// en: 'You are now on Plebz ${version} (Build ${build}).'
+	String updatedBody({required Object version, required Object build}) => 'You are now on Plebz ${version} (Build ${build}).';
+
 	/// en: 'Check for updates'
 	String get checkForUpdates => 'Check for updates';
 
@@ -11093,6 +11105,10 @@ extension on Translations {
 			'plebz.updateNow' => 'Update',
 			'plebz.later' => 'Later',
 			'plebz.upToDate' => 'Plebz is up to date',
+			'plebz.checking' => 'Checking for updates…',
+			'plebz.checkFailed' => 'GitHub could not be reached. The reason is under "View logs".',
+			'plebz.updatedTitle' => 'Plebz was updated',
+			'plebz.updatedBody' => ({required Object version, required Object build}) => 'You are now on Plebz ${version} (Build ${build}).',
 			'plebz.checkForUpdates' => 'Check for updates',
 			'plebz.checkForUpdatesDescription' => 'Look for a newer Plebz on GitHub',
 			'plebz.checkOnStartup' => 'Check for updates at start',

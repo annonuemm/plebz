@@ -157,10 +157,19 @@ void main() {
       SettingsService.resetForTesting();
     });
 
-    Future<void> run(WidgetTester tester, {required int installedBuild, required Directory temp}) async {
+    Future<void> run(
+      WidgetTester tester, {
+      required int installedBuild,
+      required Directory temp,
+      int githubStatus = 200,
+    }) async {
       final updates = PlebzUpdateService(
         client: MockClient((request) async {
-          if (request.url.host == 'api.github.com') return http.Response(jsonEncode(_releaseJson()), 200);
+          if (request.url.host == 'api.github.com') {
+            return githubStatus == 200
+                ? http.Response(jsonEncode(_releaseJson()), 200)
+                : http.Response('{"message":"API rate limit exceeded"}', githubStatus);
+          }
           return http.Response.bytes(utf8.encode('apk!'), 200);
         }),
         downloadDirectory: () async => temp,
@@ -199,7 +208,17 @@ void main() {
       await run(tester, installedBuild: 551, temp: temp);
 
       expect(find.text(t.plebz.upToDate), findsOneWidget);
+      expect(find.text(t.plebz.checking), findsNothing, reason: 'the answer replaces "Checking…"');
       expect(calls, isEmpty);
+    });
+
+    testWidgets('a GitHub that refuses is a failed check, not "up to date"', (tester) async {
+      final temp = Directory.systemTemp.createTempSync('plebz_update_ui_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      await run(tester, installedBuild: 550, temp: temp, githubStatus: 403);
+
+      expect(find.text(t.plebz.checkFailed), findsOneWidget);
+      expect(find.text(t.plebz.upToDate), findsNothing);
     });
 
     testWidgets('offers a newer build and hands it to the installer', (tester) async {
@@ -232,6 +251,88 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(calls, ['canInstall', 'openInstallPermission']);
+    });
+  });
+
+  group('the release query', () {
+    PlebzUpdateService withStatus(int status) =>
+        PlebzUpdateService(client: MockClient((_) async => http.Response('{}', status)), repository: 'plebz/plebz');
+
+    test('a repository without a release is nothing newer', () async {
+      expect(await withStatus(404).latestRelease(), isNull);
+    });
+
+    test('any other refusal is an error, with its status', () async {
+      await expectLater(
+        withStatus(403).latestRelease(),
+        throwsA(isA<PlebzUpdateCheckException>().having((e) => e.statusCode, 'statusCode', 403)),
+      );
+    });
+  });
+
+  group('after an update', () {
+    setUp(() async {
+      resetSharedPreferencesForTest();
+      SettingsService.resetForTesting();
+      await SettingsService.getInstance();
+    });
+    tearDown(SettingsService.resetForTesting);
+
+    Future<void> start(WidgetTester tester, {required int build}) async {
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: MaterialApp(
+            theme: monoTheme(dark: true),
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () =>
+                      maybeShowPlebzUpdatedNotice(context, installed: () async => (version: '1.1.0', build: build)),
+                  child: const Text('start'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('start'));
+      await tester.pumpAndSettle();
+    }
+
+    String body(int build) => t.plebz.updatedBody(version: '1.1.0', build: build);
+
+    testWidgets('the first start of a newer build says which one is installed', (tester) async {
+      await SettingsService.instance.write(SettingsService.plebzLastSeenBuild, 557);
+      await start(tester, build: 558);
+
+      expect(find.text(t.plebz.updatedTitle), findsOneWidget);
+      expect(find.text(body(558)), findsOneWidget);
+      expect(SettingsService.instance.read(SettingsService.plebzLastSeenBuild), 558);
+    });
+
+    testWidgets('and says it once', (tester) async {
+      await SettingsService.instance.write(SettingsService.plebzLastSeenBuild, 558);
+      await start(tester, build: 558);
+
+      expect(find.text(t.plebz.updatedTitle), findsNothing);
+    });
+
+    testWidgets('a fresh install is not an update', (tester) async {
+      await start(tester, build: 558);
+
+      expect(find.text(t.plebz.updatedTitle), findsNothing);
+      expect(
+        SettingsService.instance.read(SettingsService.plebzLastSeenBuild),
+        558,
+        reason: 'remembered for next time',
+      );
+    });
+
+    testWidgets('an app set up before this notice existed was updated', (tester) async {
+      await SettingsService.instance.write(SettingsService.onboardingCompleted, true);
+      await start(tester, build: 558);
+
+      expect(find.text(t.plebz.updatedTitle), findsOneWidget);
     });
   });
 }

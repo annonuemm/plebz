@@ -2695,6 +2695,10 @@ class _Translations$plebz$de extends Translations$plebz$en {
 	@override String get updateNow => 'Aktualisieren';
 	@override String get later => 'Später';
 	@override String get upToDate => 'Plebz ist auf dem neuesten Stand';
+	@override String get checking => 'Suche nach Updates …';
+	@override String get checkFailed => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.';
+	@override String get updatedTitle => 'Plebz wurde aktualisiert';
+	@override String updatedBody({required Object version, required Object build}) => 'Du nutzt jetzt Plebz ${version} (Build ${build}).';
 	@override String get checkForUpdates => 'Nach Updates suchen';
 	@override String get checkForUpdatesDescription => 'Auf GitHub nach einer neuen Plebz-Version schauen';
 	@override String get checkOnStartup => 'Beim Start nach Updates suchen';
@@ -5980,6 +5984,10 @@ extension on TranslationsDe {
 			'plebz.updateNow' => 'Aktualisieren',
 			'plebz.later' => 'Später',
 			'plebz.upToDate' => 'Plebz ist auf dem neuesten Stand',
+			'plebz.checking' => 'Suche nach Updates …',
+			'plebz.checkFailed' => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.',
+			'plebz.updatedTitle' => 'Plebz wurde aktualisiert',
+			'plebz.updatedBody' => ({required Object version, required Object build}) => 'Du nutzt jetzt Plebz ${version} (Build ${build}).',
 			'plebz.checkForUpdates' => 'Nach Updates suchen',
 			'plebz.checkForUpdatesDescription' => 'Auf GitHub nach einer neuen Plebz-Version schauen',
 			'plebz.checkOnStartup' => 'Beim Start nach Updates suchen',

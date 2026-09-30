@@ -10,6 +10,16 @@ import 'package:path_provider/path_provider.dart';
 
 import '../utils/fork_identity.dart';
 
+/// GitHub answered the release query, but not with a release.
+class PlebzUpdateCheckException implements Exception {
+  const PlebzUpdateCheckException(this.statusCode);
+
+  final int statusCode;
+
+  @override
+  String toString() => 'GitHub answered HTTP $statusCode';
+}
+
 /// One downloadable file of a Plebz release on GitHub.
 class PlebzReleaseAsset {
   const PlebzReleaseAsset({required this.name, required this.url, required this.size, this.sha256});
@@ -68,7 +78,11 @@ class PlebzUpdateService {
 
   void dispose() => _client.close();
 
-  /// The latest release, or null when there is none or GitHub cannot be reached.
+  /// The latest release, or null when the repository has none yet.
+  ///
+  /// Throws when GitHub cannot be asked or answers with anything else — a
+  /// refusal, a rate limit, a network that is not there. Those used to read
+  /// as "nothing newer", which is a claim the app could not make.
   Future<PlebzRelease?> latestRelease() async {
     if (repository.isEmpty) return null;
     final response = await _client
@@ -77,7 +91,9 @@ class PlebzUpdateService {
           headers: const {'Accept': 'application/vnd.github+json', 'User-Agent': 'Plebz'},
         )
         .timeout(const Duration(seconds: 15));
-    if (response.statusCode != 200) return null;
+    // GitHub's answer for a repository without a release.
+    if (response.statusCode == 404) return null;
+    if (response.statusCode != 200) throw PlebzUpdateCheckException(response.statusCode);
     final decoded = jsonDecode(response.body);
     return decoded is Map<String, dynamic> ? parseRelease(decoded) : null;
   }

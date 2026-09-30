@@ -666,8 +666,12 @@ class _MainScreenState extends State<MainScreen>
 
       // Check for updates on startup
       unawaited(_checkForUpdatesOnStartup());
-      // Plebz: its own releases, on Android, once a repository is set.
-      unawaited(maybeCheckPlebzUpdateOnStartup(context));
+      // Plebz: first the word that an update landed, then — on Android, once a
+      // repository is set — whether there is a newer one still.
+      unawaited(() async {
+        await maybeShowPlebzUpdatedNotice(context);
+        if (mounted) await maybeCheckPlebzUpdateOnStartup(context);
+      }());
     });
   }
 

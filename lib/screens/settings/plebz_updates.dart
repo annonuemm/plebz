@@ -14,6 +14,47 @@ import '../../utils/fork_identity.dart';
 import '../../utils/snackbar_helper.dart';
 import '../../widgets/setting_tile.dart';
 
+/// At start, once after an update: which Plebz is now installed. The update
+/// is approved twice — here and in Android's installer — and then the app
+/// restarts into the new build with no word that anything happened; this is
+/// that word.
+///
+/// Silent on a first install, and on the first start of the build that
+/// introduced this notice unless the app had been set up before (then it was
+/// an update).
+Future<void> maybeShowPlebzUpdatedNotice(
+  BuildContext context, {
+  Future<({String version, int build})?> Function()? installed,
+}) async {
+  final settings = SettingsService.instance;
+  final current = await (installed ?? _installedVersion)();
+  if (current == null) return;
+  final lastSeen = settings.read(SettingsService.plebzLastSeenBuild);
+  if (lastSeen == current.build) return;
+  await settings.write(SettingsService.plebzLastSeenBuild, current.build);
+  if (lastSeen > current.build) return;
+  if (lastSeen == 0 && !settings.read(SettingsService.onboardingCompleted)) return;
+  if (!context.mounted) return;
+  appLogger.i('Plebz: first start of build ${current.build} (last seen $lastSeen)');
+  await showFullTextDialog(
+    context,
+    title: t.plebz.updatedTitle,
+    text: t.plebz.updatedBody(version: current.version, build: current.build),
+  );
+}
+
+Future<({String version, int build})?> _installedVersion() async {
+  try {
+    final info = await PackageInfo.fromPlatform();
+    final code = int.tryParse(info.buildNumber);
+    if (code == null) return null;
+    return (version: info.version, build: PlebzUpdateService.buildFromVersionCode(code));
+  } catch (error) {
+    appLogger.d('Plebz: installed version not readable', error: error);
+    return null;
+  }
+}
+
 /// At start, once: asks for a newer Plebz when the viewer has not switched
 /// that off, and says nothing unless there is one.
 Future<void> maybeCheckPlebzUpdateOnStartup(BuildContext context) async {
@@ -35,9 +76,28 @@ Future<void> checkForPlebzUpdate(
 }) async {
   if (!plebzUpdatesAvailable) return;
   final updates = service ?? PlebzUpdateService();
+  // Asking GitHub can take a few seconds, and a press that shows nothing for
+  // that long reads as a press that did nothing.
+  if (userInitiated) showAppSnackBar(context, t.plebz.checking);
   try {
-    final release = await updates.latestRelease();
+    // The answer replaces "Checking…" rather than queueing behind it.
+    void clearChecking() {
+      if (userInitiated && context.mounted) ScaffoldMessenger.maybeOf(context)?.removeCurrentSnackBar();
+    }
+
+    final PlebzRelease? release;
+    try {
+      release = await updates.latestRelease();
+      clearChecking();
+    } catch (error, stackTrace) {
+      clearChecking();
+      // Not "up to date": nothing is known about what is newer.
+      appLogger.w('Plebz update check: GitHub could not be asked', error: error, stackTrace: stackTrace);
+      if (userInitiated && context.mounted) showErrorSnackBar(context, t.plebz.checkFailed);
+      return;
+    }
     final build = await (currentBuild ?? _installedBuild)();
+    appLogger.i('Plebz update check: installed build $build, latest release ${release?.tag ?? 'none'}');
     if (!context.mounted) return;
     if (release == null || !PlebzUpdateService.isNewer(release, build)) {
       if (userInitiated) showAppSnackBar(context, t.plebz.upToDate);

@@ -701,6 +701,10 @@ class SettingsService extends BaseSharedPreferencesService {
   /// turning it off persists so the next download keeps the choice.
   static const downloadIncludeSpecials = BoolPref('download_include_specials', defaultValue: true);
   static const autoCheckUpdatesOnStartup = BoolPref('auto_check_updates_on_startup', defaultValue: true);
+
+  /// The Plebz build this device last started, so the first start of a newer
+  /// one can say it was updated. Per device: not exported with the settings.
+  static const plebzLastSeenBuild = IntPref('plebz_last_seen_build');
   static const showPerformanceOverlay = BoolPref('show_performance_overlay');
   static const autoHidePerformanceOverlay = BoolPref('auto_hide_performance_overlay', defaultValue: true);
   static const enableDiscordRPC = BoolPref('enable_discord_rpc');

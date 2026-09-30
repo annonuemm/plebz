@@ -1,0 +1,19 @@
+# Plebz: a stand-in for sentry_flutter, not the SDK.
+#
+# This fork never initialises crash reporting (see lib/main.dart and the
+# removal in build 162), yet upstream's code calls Sentry in a dozen places —
+# breadcrumbs, captureMessage, captureException — all of which were no-ops
+# without a hub. This package answers those calls with nothing, under the same
+# name, through `dependency_overrides` in the app's pubspec. Upstream's files
+# stay untouched, and the SDK — its native library, its Java classes and its
+# Dart code — no longer ships in the app.
+#
+# It carries only what the app and its tests reference. When an upstream merge
+# calls something new, the analyzer names it; add it here as a no-op.
+name: sentry_flutter
+description: No-op stand-in for sentry_flutter; Plebz sends no crash reports.
+version: 9.30.0
+publish_to: none
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"

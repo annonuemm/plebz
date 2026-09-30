@@ -1,0 +1,62 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+
+import '../models.dart';
+import 'player_native.dart';
+
+/// A player whose video lives in a native surface behind the Flutter window,
+/// and so must be told where to put it.
+///
+/// `Video` keys its layout reporting off this type: implementing it is what
+/// says the player has a surface worth positioning. Without it the surface
+/// covers the whole window, which is right for a full-screen player and wrong
+/// for anything drawn beside something else.
+abstract interface class VideoRectTarget {
+  Future<void> setVideoRect({
+    required int left,
+    required int top,
+    required int right,
+    required int bottom,
+    required double devicePixelRatio,
+  });
+
+  /// The stream a rejected rect is reported on. Geometry is the only thing
+  /// that makes the surface visible, so a failure is a black video area
+  /// rather than a cosmetic glitch, and it has to reach someone.
+  StreamController<PlayerError> get errorController;
+}
+
+/// A player whose picture is a Flutter texture rather than a surface of its
+/// own.
+///
+/// The way to draw video *inside* the widget tree: a surface has to be
+/// composited above or below the whole Flutter view, which is right for a
+/// full-screen picture and cannot place a small one in front of the page and
+/// nothing else. A texture is ordinary content and needs no such ordering.
+abstract interface class VideoTextureTarget {
+  /// The texture to render, or null while there is none yet.
+  ValueListenable<int?> get videoTextureId;
+}
+
+/// The desktop implementation. The request is the same on every such platform
+/// — a Windows child HWND and a Wayland subsurface take identical geometry —
+/// so the mixin carries the call instead of each platform repeating it.
+mixin VideoRectSupport on PlayerNative implements VideoRectTarget {
+  @override
+  Future<void> setVideoRect({
+    required int left,
+    required int top,
+    required int right,
+    required int bottom,
+    required double devicePixelRatio,
+  }) async {
+    await invoke('setVideoRect', {
+      'left': left,
+      'top': top,
+      'right': right,
+      'bottom': bottom,
+      'devicePixelRatio': devicePixelRatio,
+    });
+  }
+}

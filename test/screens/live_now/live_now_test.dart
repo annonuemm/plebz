@@ -14,6 +14,7 @@ import 'package:plezy/providers/multi_server_provider.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/utils/platform_detector.dart';
 import 'package:plezy/focus/card_focus_scope.dart';
+import 'package:plezy/focus/focus_theme.dart';
 import 'package:plezy/widgets/hub_section.dart';
 import 'package:plezy/widgets/media_card.dart';
 import 'package:plezy/widgets/tv_browse_rail.dart';
@@ -236,6 +237,28 @@ void main() {
       expect(find.byType(MediaCard), findsNothing, reason: 'not a poster with a year and a rating');
       expect(find.text('Tagesschau'), findsOneWidget);
       expect(find.descendant(of: find.byType(LiveNowTileCard), matching: find.byType(CardFocusBorder)), findsOneWidget);
+    });
+
+    test('a focused tile grows and rings past its slot, never into the next tile', () {
+      // The tiles are wide and drawn edge to edge; with "tight" spacing the
+      // next one painted over the focused tile's ring.
+      final hub = liveNowHub(snapshot());
+      for (final scale in [0.67, 1.0, 1.5, 2.0]) {
+        for (final fullCards in [false, true]) {
+          final metrics = TvBrowseRailLayout.metricsForHub(
+            hub: hub,
+            availableWidth: 1280 * scale,
+            density: 3,
+            episodePosterMode: EpisodePosterMode.seriesPoster,
+            scale: scale,
+            fullCardLayout: fullCards,
+            gridSpacing: GridSpacing.tight,
+          );
+          final grow = fullCards ? FocusTheme.fullCardFocusScale : FocusTheme.focusScale;
+          final reach = metrics.cardWidth * (grow - 1) / 2 + FocusTheme.focusBorderWidth * scale * grow;
+          expect(metrics.itemGap, greaterThan(reach), reason: 'scale $scale, full cards $fullCards');
+        }
+      }
     });
 
     testWidgets('on a phone a tap hands the tile to the host', (tester) async {

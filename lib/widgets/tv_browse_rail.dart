@@ -248,7 +248,11 @@ class TvBrowseRailLayout {
     // Full-card rails keep their own scale-derived gutter, like full-bleed
     // grids; every other rail follows the user's grid-spacing setting, scaled
     // with the rest of the rail metrics (#2226).
-    final itemGap = fullCardLayout ? fullCardItemGapForScale(scale) : gridSpacing.gridGap * scale;
+    // "Jetzt live" too, whatever the spacing: its tiles are wide and drawn
+    // edge to edge, so a focused one grows (and rings) past its slot by more
+    // than a poster's own margin — with "tight" spacing the next tile painted
+    // over the ring.
+    final itemGap = fullCardLayout || isLiveNowHub(hub) ? fullCardItemGapForScale(scale) : gridSpacing.gridGap * scale;
     final isPersonHub = TvBrowseRailLayout.isPersonHub(hub);
     final isGenreHub = TvBrowseRailLayout.isGenreHub(hub);
     // "Jetzt live" takes the studio shelf's wide geometry, and keeps the

@@ -15,6 +15,10 @@ ein Entwurf ohne sie bleibt in der App unsichtbar. Der Text eines Abschnitts
 ist wortgleich der Text des GitHub-Releases.
 -->
 
+## 1.2.1 (Build 563)
+
+- „Jetzt live“: Der Fokusrahmen einer Kachel wird nicht mehr von der Kachel daneben abgeschnitten.
+
 ## 1.2.0 (Build 561)
 
 - Ein Sender aus „Jetzt live“ startet weiter im Vollbild, dahinter öffnet sich aber Live TV mit seiner Gruppe. Wer den Player verlässt, landet im EPG auf diesem Sender statt auf der Startseite.

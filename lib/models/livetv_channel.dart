@@ -91,6 +91,12 @@ class LiveTvChannel {
   @JsonKey(includeFromJson: false, includeToJson: false)
   final String? guideLogo;
 
+  /// The name the viewer gave this channel, laid on by the channel
+  /// arrangement (see `applyLiveTvChannelLayout`) and shown wherever the
+  /// channel is named. Never stored with the channel: the arrangement keeps it.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final String? nameOverride;
+
   LiveTvChannel({
     required this.key,
     this.identifier,
@@ -111,6 +117,7 @@ class LiveTvChannel {
     this.favoriteStoreKey,
     this.catchupDays,
     this.guideLogo,
+    this.nameOverride,
   });
 
   factory LiveTvChannel.fromJson(Map<String, dynamic> json) => _$LiveTvChannelFromJson(json);
@@ -127,6 +134,7 @@ class LiveTvChannel {
     String? favoriteSource,
     String? favoriteStoreKey,
     int? catchupDays,
+    String? nameOverride,
   }) {
     return LiveTvChannel(
       key: key,
@@ -148,11 +156,19 @@ class LiveTvChannel {
       favoriteStoreKey: favoriteStoreKey ?? this.favoriteStoreKey,
       catchupDays: catchupDays ?? this.catchupDays,
       guideLogo: guideLogo ?? this.guideLogo,
+      nameOverride: nameOverride ?? this.nameOverride,
     );
   }
 
-  /// Display name: prefer callSign, fallback to title
-  String get displayName =>
+  /// What the channel is called on screen: the viewer's own name for it, or
+  /// else the provider's ([sourceName]).
+  String get displayName => nameOverride ?? sourceName;
+
+  /// The provider's name for the channel: its call sign, else its title. What
+  /// anything that *recognises* a channel by name reads — the Sport
+  /// broadcaster match among them — since a name the viewer chose says nothing
+  /// about what the channel carries.
+  String get sourceName =>
       callSign ?? title ?? (number == null ? t.liveTv.unknownChannel : t.liveTv.channelNumber(number: number!));
 }
 

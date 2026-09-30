@@ -1334,6 +1334,33 @@ http://provider/stream/ard
     expect(toggled, ['A']);
   });
 
+  testWidgets('with a channel menu on offer, a SELECT hold opens it instead of flipping the favorite', (tester) async {
+    // A hold used to toggle the favorite without a word; the screen now hands
+    // the guide the channel's own menu — favourite, rename, hide.
+    TvDetectionService.debugSetAppleTVOverride(true);
+    final toggled = <String?>[];
+    final menus = <String?>[];
+    final harness = _GuideHarness.oneServer();
+    addTearDown(harness.dispose);
+    await harness.pump(
+      tester,
+      onToggleFavorite: (channel) => toggled.add(channel.callSign),
+      onChannelMenu: (channel) => menus.add(channel.callSign),
+    );
+    await harness.completeInitialEmpty(tester);
+
+    await _focusGrid(tester);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.gameButtonX);
+    await tester.pumpAndSettle();
+
+    expect(menus, ['A', 'A'], reason: 'the hold and the context-menu key');
+    expect(toggled, isEmpty);
+  });
+
   testWidgets('guide-search jump during load is stashed, wins over default anchoring, and lands focus', (tester) async {
     final harness = _GuideHarness.twoServers();
     addTearDown(harness.dispose);
@@ -1486,7 +1513,11 @@ final class _GuideHarness {
   final MultiServerProvider provider;
   final List<LiveTvChannel> channels;
 
-  Future<void> pump(WidgetTester tester, {void Function(LiveTvChannel)? onToggleFavorite}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    void Function(LiveTvChannel)? onToggleFavorite,
+    void Function(LiveTvChannel)? onChannelMenu,
+  }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1280, 720);
     addTearDown(() {
@@ -1502,7 +1533,7 @@ final class _GuideHarness {
             child: MaterialApp(
               theme: monoTheme(dark: true),
               home: Scaffold(
-                body: GuideTab(channels: channels, onToggleFavorite: onToggleFavorite),
+                body: GuideTab(channels: channels, onToggleFavorite: onToggleFavorite, onChannelMenu: onChannelMenu),
               ),
             ),
           ),

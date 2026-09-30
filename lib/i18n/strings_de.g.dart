@@ -1348,6 +1348,7 @@ class _Translations$discover$de extends Translations$discover$en {
 	@override String get noContentAvailable => 'Kein Inhalt verfügbar';
 	@override String get addMediaToLibraries => 'Medien zur Mediathek hinzufügen';
 	@override String get continueWatching => 'Weiterschauen';
+	@override String get liveNow => 'Jetzt live';
 	@override String continueWatchingIn({required Object library}) => 'Weiterschauen in ${library}';
 	@override String get nextUp => 'Als Nächstes';
 	@override String nextUpIn({required Object library}) => 'Als Nächstes in ${library}';
@@ -1697,7 +1698,7 @@ class _Translations$liveTv$de extends Translations$liveTv$en {
 	@override String get favorites => 'Favoriten';
 	@override String get reorderFavorites => 'Favoriten sortieren';
 	@override String get noFavoriteChannels => 'Keine Lieblingssender';
-	@override String get noFavoriteChannelsHint => 'Zeige alle Sender an und halte dann einen Sender gedrückt, um ihn zu deinen Favoriten hinzuzufügen.';
+	@override String get noFavoriteChannelsHint => 'Zeige alle Sender an, halte dann einen Sender gedrückt und wähle „Zu Favoriten hinzufügen“.';
 	@override String get showAllChannels => 'Alle Sender anzeigen';
 	@override String get favoritesLoadFailed => 'Favoriten konnten nicht geladen werden. Überprüfe deine Verbindung und versuche es erneut.';
 	@override String get favoritesUpdateFailed => 'Favoriten konnten nicht aktualisiert werden. Prüfe deine Verbindung und versuche es erneut.';
@@ -1754,6 +1755,12 @@ class _Translations$liveTv$de extends Translations$liveTv$en {
 	@override String get renameGroup => 'Gruppe umbenennen';
 	@override String get hideGroup => 'Gruppe ausblenden';
 	@override String get restoreGroupName => 'Originalnamen wiederherstellen';
+	@override String get addToFavorites => 'Zu Favoriten hinzufügen';
+	@override String get removeFromFavorites => 'Aus Favoriten entfernen';
+	@override String get renameChannel => 'Sender umbenennen';
+	@override String get channelNameLabel => 'Name des Senders';
+	@override String get hideChannel => 'Sender ausblenden';
+	@override String channelHidden({required Object name}) => '${name} ausgeblendet. Wieder einblenden unter „Sender verwalten“.';
 	@override String get groupNameLabel => 'Name der Gruppe';
 	@override String get hideFromGuide => 'Aus dem Programm ausblenden';
 	@override String get showInGuide => 'Im Programm einblenden';
@@ -4653,6 +4660,7 @@ extension on TranslationsDe {
 			'discover.noContentAvailable' => 'Kein Inhalt verfügbar',
 			'discover.addMediaToLibraries' => 'Medien zur Mediathek hinzufügen',
 			'discover.continueWatching' => 'Weiterschauen',
+			'discover.liveNow' => 'Jetzt live',
 			'discover.continueWatchingIn' => ({required Object library}) => 'Weiterschauen in ${library}',
 			'discover.nextUp' => 'Als Nächstes',
 			'discover.nextUpIn' => ({required Object library}) => 'Als Nächstes in ${library}',
@@ -5038,7 +5046,7 @@ extension on TranslationsDe {
 			'liveTv.favorites' => 'Favoriten',
 			'liveTv.reorderFavorites' => 'Favoriten sortieren',
 			'liveTv.noFavoriteChannels' => 'Keine Lieblingssender',
-			'liveTv.noFavoriteChannelsHint' => 'Zeige alle Sender an und halte dann einen Sender gedrückt, um ihn zu deinen Favoriten hinzuzufügen.',
+			'liveTv.noFavoriteChannelsHint' => 'Zeige alle Sender an, halte dann einen Sender gedrückt und wähle „Zu Favoriten hinzufügen“.',
 			'liveTv.showAllChannels' => 'Alle Sender anzeigen',
 			'liveTv.favoritesLoadFailed' => 'Favoriten konnten nicht geladen werden. Überprüfe deine Verbindung und versuche es erneut.',
 			'liveTv.favoritesUpdateFailed' => 'Favoriten konnten nicht aktualisiert werden. Prüfe deine Verbindung und versuche es erneut.',
@@ -5054,9 +5062,9 @@ extension on TranslationsDe {
 			'liveTv.recordings' => 'Aufnahmen',
 			'liveTv.scheduledRecordings' => 'Geplant',
 			'liveTv.recordingRules' => 'Aufnahmeregeln',
-			'liveTv.noScheduledRecordings' => 'Keine geplanten Aufnahmen',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.noScheduledRecordings' => 'Keine geplanten Aufnahmen',
 			'liveTv.manageRecording' => 'Aufnahme verwalten',
 			'liveTv.cancelRecording' => 'Aufnahme abbrechen',
 			'liveTv.cancelRecordingTitle' => 'Diese Aufnahme abbrechen?',
@@ -5104,6 +5112,12 @@ extension on TranslationsDe {
 			'liveTv.renameGroup' => 'Gruppe umbenennen',
 			'liveTv.hideGroup' => 'Gruppe ausblenden',
 			'liveTv.restoreGroupName' => 'Originalnamen wiederherstellen',
+			'liveTv.addToFavorites' => 'Zu Favoriten hinzufügen',
+			'liveTv.removeFromFavorites' => 'Aus Favoriten entfernen',
+			'liveTv.renameChannel' => 'Sender umbenennen',
+			'liveTv.channelNameLabel' => 'Name des Senders',
+			'liveTv.hideChannel' => 'Sender ausblenden',
+			'liveTv.channelHidden' => ({required Object name}) => '${name} ausgeblendet. Wieder einblenden unter „Sender verwalten“.',
 			'liveTv.groupNameLabel' => 'Name der Gruppe',
 			'liveTv.hideFromGuide' => 'Aus dem Programm ausblenden',
 			'liveTv.showInGuide' => 'Im Programm einblenden',
@@ -5562,6 +5576,8 @@ extension on TranslationsDe {
 			'externalPlayer.launchFailed' => 'Externer Player konnte nicht geöffnet werden',
 			'externalPlayer.appNotInstalled' => ({required Object name}) => '${name} ist nicht installiert',
 			'externalPlayer.playInExternalPlayer' => 'In externem Player abspielen',
+			_ => null,
+		} ?? switch (path) {
 			'metadataEdit.editMetadata' => 'Bearbeiten...',
 			'metadataEdit.screenTitle' => 'Metadaten bearbeiten',
 			'metadataEdit.basicInfo' => 'Grundinformationen',
@@ -5569,8 +5585,6 @@ extension on TranslationsDe {
 			'metadataEdit.advancedSettings' => 'Erweiterte Einstellungen',
 			'metadataEdit.title' => 'Titel',
 			'metadataEdit.sortTitle' => 'Sortiertitel',
-			_ => null,
-		} ?? switch (path) {
 			'metadataEdit.originalTitle' => 'Originaltitel',
 			'metadataEdit.releaseDate' => 'Erscheinungsdatum',
 			'metadataEdit.contentRating' => 'Altersfreigabe',

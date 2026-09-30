@@ -72,6 +72,9 @@ class LiveTvChannelLayoutProvider extends ChangeNotifier with DisposableChangeNo
   /// Rename [groupKey], or hand it back its provider name with a null [name].
   Future<void> setGroupName(String groupKey, String? name) => _update(_layout.withGroupName(groupKey, name));
 
+  /// Rename [channelKey], or hand it back its provider name with a null [name].
+  Future<void> setChannelName(String channelKey, String? name) => _update(_layout.withChannelName(channelKey, name));
+
   Future<void> setGroupOrder(List<String> groupKeys) => _update(_layout.withGroupOrder(groupKeys));
 
   Future<void> setChannelOrder(String groupKey, List<String> channelKeys) =>

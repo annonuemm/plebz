@@ -88,7 +88,7 @@ class SportBroadcastFinder {
       return const SportBroadcastSearch(broadcasts: [], leagueChannels: [], channels: []);
     }
 
-    final channels = await _loadChannels();
+    final channels = await this.channels();
     if (channels.isEmpty) return null;
 
     final kickoff = match.kickoff.toUtc();
@@ -127,8 +127,11 @@ class SportBroadcastFinder {
     return SportBroadcastSearch(broadcasts: broadcasts, leagueChannels: leagueChannels, channels: channels);
   }
 
-  /// The channels as the Live TV screen assembles them.
-  Future<List<LiveTvChannel>> _loadChannels() async {
+  /// The channels as the Live TV screen assembles them: every server's and
+  /// every IPTV source's, the hidden ones left out, in the viewer's order and
+  /// under the viewer's names. Kept for a few minutes. Each carries the
+  /// favourite source it is filed under, so a favourite finds its channel.
+  Future<List<LiveTvChannel>> channels() async {
     final kept = _channels;
     final keptAt = _channelsAt;
     if (kept != null && keptAt != null && clock.now().difference(keptAt) < _channelsTtl) return kept;
@@ -157,8 +160,10 @@ class SportBroadcastFinder {
     );
     for (final source in iptv?.liveTvSources ?? const []) {
       try {
+        final favoriteSource = await source.buildFavoriteChannelSource();
         for (final channel in await source.fetchChannels()) {
-          if (seen.add(liveTvChannelScopeKey(channel))) all.add(channel);
+          final scoped = channel.favoriteSource == null ? channel.copyWith(favoriteSource: favoriteSource) : channel;
+          if (seen.add(liveTvChannelScopeKey(scoped))) all.add(scoped);
         }
       } catch (error) {
         appLogger.d('Sport: no channels from an IPTV source', error: error);

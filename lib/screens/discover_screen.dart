@@ -7,6 +7,18 @@ import 'package:flutter/material.dart';
 import 'package:plezy/widgets/app_icon.dart';
 import '../widgets/server_activities_button.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'sport/sport_match_sheet.dart';
+import 'sport/sport_broadcast_finder.dart';
+import 'live_now/live_now_tile.dart';
+import 'live_now/live_now_loader.dart';
+import '../utils/live_tv_player_navigation.dart';
+import '../utils/live_tv_matching.dart';
+import '../services/sport/sport_repository.dart';
+import '../services/sport/sport_models.dart';
+import '../services/sport/sport_broadcast_matching.dart';
+import '../providers/iptv_sources_provider.dart';
+import '../models/livetv_channel.dart';
+import 'package:clock/clock.dart';
 import 'package:provider/provider.dart';
 import '../focus/focusable_action_bar.dart';
 import '../focus/hub_vertical_navigation.dart';
@@ -165,6 +177,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     if (_continueWatchingHubKey != null && _onDeck.isNotEmpty) {
       keys.add(_continueWatchingHubKey!);
     }
+    if (_liveNowHub != null) keys.add(_liveNowHubKey);
     keys.addAll(_orderedHubKeys);
     return keys;
   }
@@ -176,15 +189,16 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   // rebuilds hand TvBrowseRail the same hubs list and its didUpdateWidget
   // fast path — and the cached rail widget below — kick in.
   List<MediaHub>? _tvBrowseHubsCache;
-  (List<MediaItem>, List<MediaHub>, bool, String)? _tvBrowseHubsCacheKey;
+  (List<MediaItem>, List<MediaHub>, bool, String, MediaHub?)? _tvBrowseHubsCacheKey;
 
   List<MediaHub> get _tvBrowseHubs {
-    final key = (_onDeck, _hubs, _hasMoreContinueWatching, t.discover.continueWatching);
+    final key = (_onDeck, _hubs, _hasMoreContinueWatching, t.discover.continueWatching, _liveNowHub);
     if (_tvBrowseHubsCache != null && key == _tvBrowseHubsCacheKey) return _tvBrowseHubsCache!;
     final hubs = <MediaHub>[];
     if (_onDeck.isNotEmpty) {
       hubs.add(_continueWatchingHub);
     }
+    if (_liveNowHub case final live?) hubs.add(live);
     hubs.addAll(_hubs.where((hub) => hub.items.isNotEmpty));
     _tvBrowseHubsCache = hubs;
     _tvBrowseHubsCacheKey = key;
@@ -202,6 +216,128 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     more: _hasMoreContinueWatching,
     items: _onDeck,
   );
+
+  // ---------- "Jetzt live" ----------
+
+  LiveNowLoader? _liveNowLoader;
+  SportBroadcastFinder? _liveNowFinder;
+  LiveNowSnapshot _liveNow = LiveNowSnapshot.empty;
+  Timer? _liveNowTimer;
+  bool _liveNowOpening = false;
+  final _liveNowHubKey = GlobalKey<HubSectionState>();
+
+  /// The row's hub, replaced only when what a tile *says* changes — an entry
+  /// coming or going, a score, the next programme. Between those the tiles
+  /// redraw from [LiveNowScope] alone, so a minute's refresh neither rebuilds
+  /// the rail nor moves the cursor on it.
+  MediaHub? _liveNowHubCache;
+  String _liveNowSignature = '';
+
+  MediaHub? get _liveNowHub => _liveNow.isEmpty ? null : _liveNowHubCache;
+
+  void _startLiveNow() {
+    final multiServer = context.read<MultiServerProvider?>();
+    final finder = SportBroadcastFinder.maybeOf(context);
+    if (multiServer == null || finder == null) return;
+    _liveNowFinder = finder;
+    _liveNowLoader = LiveNowLoader(
+      multiServer: multiServer,
+      finder: finder,
+      iptv: context.read<IptvSourcesProvider?>(),
+      sportEnabled: () => SettingsService.instanceOrNull?.read(SettingsService.showSportTab) ?? false,
+    );
+    unawaited(_refreshLiveNow());
+    // A live score moves by the minute; the loader asks each source only as
+    // often as that source can have changed.
+    _liveNowTimer = Timer.periodic(const Duration(minutes: 1), (_) => unawaited(_refreshLiveNow()));
+  }
+
+  Future<void> _refreshLiveNow() async {
+    final loader = _liveNowLoader;
+    if (loader == null) return;
+    final LiveNowSnapshot snapshot;
+    try {
+      snapshot = await loader.load();
+    } catch (error, stackTrace) {
+      appLogger.d('Live now: refresh failed', error: error, stackTrace: stackTrace);
+      return;
+    }
+    if (!mounted) return;
+    final hub = liveNowHub(snapshot);
+    final signature = [for (final item in hub.items) '${item.id}|${item.title}|${item.summary}'].join('\n');
+    setState(() {
+      _liveNow = snapshot;
+      if (signature != _liveNowSignature) {
+        _liveNowSignature = signature;
+        _liveNowHubCache = hub;
+      }
+    });
+  }
+
+  /// A channel tunes. A game on now tunes the channel the guide has it on,
+  /// and opens its window where the guide has nothing — as does a game still
+  /// to come, whose window names where it will be on.
+  Future<void> _openLiveNow(MediaItem item) async {
+    if (_liveNowOpening) return;
+    final multiServer = context.read<MultiServerProvider?>();
+    switch (_liveNow.byId[item.id]) {
+      case LiveNowChannel(:final channel):
+        if (multiServer == null) return;
+        await navigateToLiveTv(
+          context,
+          multiServer: multiServer,
+          channel: channel,
+          channels: _liveNow.channels,
+          group: liveTvNonEmpty(channel.lineup),
+        );
+      case LiveNowGame(:final match, :final league):
+        _liveNowOpening = true;
+        try {
+          await _openLiveNowGame(match, league, multiServer);
+        } finally {
+          _liveNowOpening = false;
+        }
+      case null:
+        return;
+    }
+  }
+
+  Future<void> _openLiveNowGame(SportMatch match, SportLeague league, MultiServerProvider? multiServer) async {
+    void watch(SportBroadcast broadcast, List<LiveTvChannel> channels, {int? startAtEpoch}) {
+      if (multiServer == null || !mounted) return;
+      unawaited(
+        navigateToLiveTv(
+          context,
+          multiServer: multiServer,
+          channel: broadcast.channel,
+          channels: channels,
+          startAtEpoch: startAtEpoch,
+          group: liveTvNonEmpty(broadcast.channel.lineup),
+        ),
+      );
+    }
+
+    final search = _liveNowFinder?.search(match, league);
+    if (match.isLive(clock.now()) && search != null) {
+      final found = await search;
+      if (!mounted) return;
+      final broadcast = found?.broadcasts.firstOrNull;
+      if (found != null && broadcast != null) {
+        watch(broadcast, found.channels);
+        return;
+      }
+    }
+    final table = await SportRepository.instance.table(league, match.season);
+    if (!mounted) return;
+    await showSportMatchSheet(
+      context,
+      match: match,
+      league: league,
+      table: table ?? const <SportTableRow>[],
+      broadcasts: search,
+      onWatch: watch,
+    );
+  }
 
   void _setSpotlightItem(MediaItem item) => _spotlight.select(item);
 
@@ -318,6 +454,10 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
   /// Handle vertical navigation between hubs
   /// Returns true if the navigation was handled
+  /// Rows the app puts above the server's hubs: Continue Watching and
+  /// "Jetzt live", where they have anything to show.
+  int get _rowsAboveHubs => (_onDeck.isNotEmpty ? 1 : 0) + (_liveNowHub != null ? 1 : 0);
+
   bool _handleVerticalNavigation(int hubIndex, bool isUp) {
     final keys = _allHubKeys;
     return navigateVerticalHubRows(
@@ -347,6 +487,9 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     _updateHubKeys();
     unawaited(_discover.load());
     _startAutoScroll();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _startLiveNow();
+    });
   }
 
   /// Mirror provider changes into this state's UI concerns: rebuild, apply
@@ -463,6 +606,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     _discover.watchRecommendationsRotation(false);
     _autoScrollTimer?.cancel();
     _indicatorTimer?.cancel();
+    _liveNowTimer?.cancel();
     _spotlight.dispose();
     _indicatorProgress.dispose();
     _heroIndex.dispose();
@@ -1007,7 +1151,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
         SettingsService.libraryDensity,
         SettingsService.episodePosterMode,
       ],
-      builder: (context) => _buildContent(context),
+      builder: (context) => LiveNowScope(snapshot: _liveNow, child: _buildContent(context)),
     );
   }
 
@@ -1064,6 +1208,21 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                     ),
                   ),
 
+                // "Jetzt live": today's games, then the favourite channels.
+                if (_liveNowHub case final liveHub?)
+                  SliverToBoxAdapter(
+                    child: HubSection(
+                      key: _liveNowHubKey,
+                      hub: liveHub,
+                      focusMemory: _hubFocusMemory,
+                      icon: Symbols.live_tv_rounded,
+                      onItemTap: (item) => unawaited(_openLiveNow(item)),
+                      onVerticalNavigation: (isUp) => _handleVerticalNavigation(_onDeck.isNotEmpty ? 1 : 0, isUp),
+                      onNavigateUp: _onDeck.isEmpty ? _focusTopBoundary : null,
+                      onNavigateToSidebar: _navigateToSidebar,
+                    ),
+                  ),
+
                 // Recommendation Hubs (Trending, Top in Genre, etc.)
                 for (int i = 0; i < _hubs.length; i++)
                   SliverToBoxAdapter(
@@ -1075,8 +1234,8 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                       showServerName: showServerNameOnHubs || hubsSpanMultipleServers,
                       onRefresh: _discover.updateItem,
                       // Hub index is i + 1 if continue watching exists, otherwise i
-                      onVerticalNavigation: (isUp) => _handleVerticalNavigation(_onDeck.isNotEmpty ? i + 1 : i, isUp),
-                      onNavigateUp: (i == 0 && _onDeck.isEmpty) ? _focusTopBoundary : null,
+                      onVerticalNavigation: (isUp) => _handleVerticalNavigation(_rowsAboveHubs + i, isUp),
+                      onNavigateUp: (i == 0 && _rowsAboveHubs == 0) ? _focusTopBoundary : null,
                       onNavigateToSidebar: _navigateToSidebar,
                     ),
                   ),
@@ -1169,6 +1328,12 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       // whole. Everything else is read a page at a time — see
       // TvBrowseRail._navigateToHubDetail.
       loadMoreItems: (hub) => hub.id == 'continue_watching' ? _discover.loadAllContinueWatching : null,
+      // A "Jetzt live" tile tunes or opens a game rather than a detail page.
+      onActivateItem: (hub, item) {
+        if (hub.id != liveNowHubId) return false;
+        unawaited(_openLiveNow(item));
+        return true;
+      },
       onNavigateUp: _focusTopActions,
       onNavigateToSidebar: _navigateToSidebar,
       tallPosterScale: TvBrowseRailLayout.compactTallPosterScale,

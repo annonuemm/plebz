@@ -138,4 +138,37 @@ void main() {
       expect(LiveTvChannelLayout.empty.withGroupName('Sport', 'Fußball').isEmpty, isFalse);
     });
   });
+
+  group('renaming a channel', () {
+    test('shows the new name, while the provider\'s stays what recognises the channel', () {
+      final layout = LiveTvChannelLayout.empty.withChannelName(keyOf('a'), 'Erstes');
+      final renamed = applyLiveTvChannelLayout(channels, layout).firstWhere((c) => c.key == 'a');
+
+      expect(renamed.displayName, 'Erstes');
+      expect(renamed.sourceName, 'a', reason: 'the Sport broadcaster match reads this one');
+      expect(renamed.title, 'a', reason: 'and a favourite stored with Plex keeps the provider\'s name');
+      expect(_keys(applyLiveTvChannelLayout(channels, layout)), _keys(channels), reason: 'the order is untouched');
+    });
+
+    test('an empty name hands the channel back its own', () {
+      final named = LiveTvChannelLayout.empty.withChannelName(keyOf('a'), 'Erstes');
+
+      expect(named.withChannelName(keyOf('a'), null).channelNames, isEmpty);
+      expect(named.withChannelName(keyOf('a'), '  ').channelNames, isEmpty);
+      expect(named.isEmpty, isFalse, reason: 'a renamed channel is an arrangement worth storing');
+    });
+
+    test('survives a round trip, and a name that is not a string is dropped', () {
+      final layout = LiveTvChannelLayout.empty.withChannelName(keyOf('a'), 'Erstes');
+      expect(LiveTvChannelLayout.decode(layout.encode()).channelNames, {keyOf('a'): 'Erstes'});
+      expect(LiveTvChannelLayout.decode('{"channelNames": {"x": 3, "y": "Why"}}').channelNames, {'y': 'Why'});
+    });
+
+    test('a hidden channel stays hidden under its new name', () {
+      final layout = LiveTvChannelLayout.empty
+          .withChannelName(keyOf('a'), 'Erstes')
+          .withChannelHidden(keyOf('a'), true);
+      expect(_keys(applyLiveTvChannelLayout(channels, layout)), isNot(contains('a')));
+    });
+  });
 }

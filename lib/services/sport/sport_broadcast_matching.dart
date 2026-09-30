@@ -208,11 +208,11 @@ List<SportBroadcast> findSportBroadcasts({
         // names none borrows the channel's ("Sky Sport Bundesliga 1").
         final named =
             _leagueNamedIn(sportFold('$titles ${program.summary ?? ''}')) ??
-            _leagueNamedIn(sportFold(channel.displayName));
+            _leagueNamedIn(sportFold(channel.sourceName));
         if (named != league) continue;
       }
       if (rank == 1) {
-        final hints = sportFold([titles, ...?program.genres, channel.displayName, channel.lineup ?? ''].join(' '));
+        final hints = sportFold([titles, ...?program.genres, channel.sourceName, channel.lineup ?? ''].join(' '));
         if (!_hasWords(hints, _footballHints)) continue;
       }
       found.add((broadcast: SportBroadcast(channel: channel, program: program, kind: kind), rank: rank));
@@ -319,13 +319,13 @@ List<SportBroadcast> sportLeagueChannels({
   }
 
   final byGroup = channels.where((channel) => carries(channel.lineup ?? '')).toList();
-  final byName = channels.where((channel) => !carries(channel.lineup ?? '') && carries(channel.displayName)).toList();
+  final byName = channels.where((channel) => !carries(channel.lineup ?? '') && carries(channel.sourceName)).toList();
   final taken = {...byGroup, ...byName};
   final picked = <LiveTvChannel>[
     ...byGroup,
     ...byName,
     ...channels.where(
-      (channel) => !taken.contains(channel) && sportBroadcasterLeagues(channel.displayName).contains(league),
+      (channel) => !taken.contains(channel) && sportBroadcasterLeagues(channel.sourceName).contains(league),
     ),
   ];
   if (picked.isEmpty) return const [];

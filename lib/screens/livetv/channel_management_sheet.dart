@@ -405,7 +405,9 @@ class _ChannelManagementListState extends State<_ChannelManagementList>
           return _ManagementTile(
             key: ValueKey(liveTvLayoutChannelKey(channel)),
             index: index,
-            title: channel.displayName,
+            // The name the viewer gave it, as everywhere else; the sheet lists
+            // hidden channels too, so it reads the arrangement itself.
+            title: layout.channelNames[liveTvLayoutChannelKey(channel)] ?? channel.displayName,
             subtitle: channel.number,
             leadingIcon: Symbols.live_tv_rounded,
             isHidden: layout.isChannelHidden(liveTvLayoutChannelKey(channel)),

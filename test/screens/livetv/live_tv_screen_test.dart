@@ -207,7 +207,10 @@ void main() {
     harness.liveTv.favorites.complete(const []);
     await tester.pumpAndSettle();
 
+    // A hold opens the channel's menu; the favourite is one of its entries.
     await tester.longPress(find.text('Unique Channel A'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(t.liveTv.addToFavorites));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -219,6 +222,8 @@ void main() {
     ]);
 
     await tester.longPress(find.text('Unique Channel A'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(t.liveTv.removeFromFavorites));
     await tester.pumpAndSettle();
 
     guide = tester.widget<GuideTab>(find.byType(GuideTab));
@@ -567,6 +572,43 @@ void main() {
 
     expect(_guideChannels(tester).map((channel) => channel.key), ['channel-c']);
     expect(find.text('News'), findsNothing, reason: 'a hidden group is not offered in the column either');
+  });
+
+  testWidgets('a channel\'s menu renames it everywhere, and hides it', (tester) async {
+    final harness = await _pumpLiveTvScreen(tester, channelKeys: const ['channel-a', 'channel-b']);
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      harness.dispose();
+    });
+    harness.liveTv.favorites.complete(const []);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(t.liveTv.showAllChannels));
+    await tester.pumpAndSettle();
+
+    Future<void> openMenuFor(String key) async {
+      final guide = tester.widget<GuideTab>(find.byType(GuideTab));
+      guide.onChannelMenu!(guide.channels.firstWhere((channel) => channel.key == key));
+      await tester.pumpAndSettle();
+    }
+
+    await openMenuFor('channel-a');
+    expect(find.text(t.liveTv.addToFavorites), findsOneWidget);
+    expect(find.text(t.liveTv.renameChannel), findsOneWidget);
+    expect(find.text(t.liveTv.hideChannel), findsOneWidget);
+
+    await tester.tap(find.text(t.liveTv.renameChannel));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Erstes');
+    await tester.tap(find.text(t.common.save));
+    await tester.pumpAndSettle();
+    final renamed = _guideChannels(tester).firstWhere((channel) => channel.key == 'channel-a');
+    expect(renamed.displayName, 'Erstes');
+    expect(renamed.sourceName, 'Unique Channel A');
+
+    await openMenuFor('channel-b');
+    await tester.tap(find.text(t.liveTv.hideChannel));
+    await tester.pumpAndSettle();
+    expect(_guideChannels(tester).map((channel) => channel.key), ['channel-a']);
   });
 
   testWidgets('What\'s On is hidden when no Live TV server is Plex', (tester) async {

@@ -3439,6 +3439,9 @@ class Translations$discover$en {
 	/// en: 'Continue Watching'
 	String get continueWatching => 'Continue Watching';
 
+	/// en: 'Live now'
+	String get liveNow => 'Live now';
+
 	/// en: 'Continue Watching in ${library}'
 	String continueWatchingIn({required Object library}) => 'Continue Watching in ${library}';
 
@@ -4223,8 +4226,8 @@ class Translations$liveTv$en {
 	/// en: 'No favorite channels'
 	String get noFavoriteChannels => 'No favorite channels';
 
-	/// en: 'Show all channels, then long-press a channel to add it to your favorites.'
-	String get noFavoriteChannelsHint => 'Show all channels, then long-press a channel to add it to your favorites.';
+	/// en: 'Show all channels, then hold a channel and choose "Add to favorites".'
+	String get noFavoriteChannelsHint => 'Show all channels, then hold a channel and choose "Add to favorites".';
 
 	/// en: 'Show All Channels'
 	String get showAllChannels => 'Show All Channels';
@@ -4392,6 +4395,24 @@ class Translations$liveTv$en {
 
 	/// en: 'Restore the original name'
 	String get restoreGroupName => 'Restore the original name';
+
+	/// en: 'Add to favorites'
+	String get addToFavorites => 'Add to favorites';
+
+	/// en: 'Remove from favorites'
+	String get removeFromFavorites => 'Remove from favorites';
+
+	/// en: 'Rename channel'
+	String get renameChannel => 'Rename channel';
+
+	/// en: 'Channel name'
+	String get channelNameLabel => 'Channel name';
+
+	/// en: 'Hide channel'
+	String get hideChannel => 'Hide channel';
+
+	/// en: '${name} hidden. Show it again under "Manage channels".'
+	String channelHidden({required Object name}) => '${name} hidden. Show it again under "Manage channels".';
 
 	/// en: 'Group name'
 	String get groupNameLabel => 'Group name';
@@ -9724,6 +9745,7 @@ extension on Translations {
 			'discover.noContentAvailable' => 'No content available',
 			'discover.addMediaToLibraries' => 'Add some media to your libraries',
 			'discover.continueWatching' => 'Continue Watching',
+			'discover.liveNow' => 'Live now',
 			'discover.continueWatchingIn' => ({required Object library}) => 'Continue Watching in ${library}',
 			'discover.nextUp' => 'Next Up',
 			'discover.nextUpIn' => ({required Object library}) => 'Next Up in ${library}',
@@ -10113,9 +10135,9 @@ extension on Translations {
 			'liveTv.liveStreamFailed' => 'Live stream failed',
 			'liveTv.unknownProgram' => 'Unknown Program',
 			'liveTv.unknownHub' => 'Unknown',
-			'liveTv.unknownError' => 'Unknown error',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.unknownError' => 'Unknown error',
 			'liveTv.channelNumber' => ({required Object number}) => 'Channel ${number}',
 			'liveTv.unknownChannel' => 'Unknown channel',
 			'liveTv.live' => 'LIVE',
@@ -10139,7 +10161,7 @@ extension on Translations {
 			'liveTv.favorites' => 'Favorites',
 			'liveTv.reorderFavorites' => 'Reorder Favorites',
 			'liveTv.noFavoriteChannels' => 'No favorite channels',
-			'liveTv.noFavoriteChannelsHint' => 'Show all channels, then long-press a channel to add it to your favorites.',
+			'liveTv.noFavoriteChannelsHint' => 'Show all channels, then hold a channel and choose "Add to favorites".',
 			'liveTv.showAllChannels' => 'Show All Channels',
 			'liveTv.favoritesLoadFailed' => 'Could not load favorites. Check your connection and try again.',
 			'liveTv.favoritesUpdateFailed' => 'Could not update favorites. Check your connection and try again.',
@@ -10203,6 +10225,12 @@ extension on Translations {
 			'liveTv.renameGroup' => 'Rename group',
 			'liveTv.hideGroup' => 'Hide group',
 			'liveTv.restoreGroupName' => 'Restore the original name',
+			'liveTv.addToFavorites' => 'Add to favorites',
+			'liveTv.removeFromFavorites' => 'Remove from favorites',
+			'liveTv.renameChannel' => 'Rename channel',
+			'liveTv.channelNameLabel' => 'Channel name',
+			'liveTv.hideChannel' => 'Hide channel',
+			'liveTv.channelHidden' => ({required Object name}) => '${name} hidden. Show it again under "Manage channels".',
 			'liveTv.groupNameLabel' => 'Group name',
 			'liveTv.hideFromGuide' => 'Hide from guide',
 			'liveTv.showInGuide' => 'Show in guide',
@@ -10621,6 +10649,8 @@ extension on Translations {
 			'performanceOverlay.renderFps' => 'Render FPS',
 			'performanceOverlay.displayFps' => 'Display FPS',
 			'performanceOverlay.avSync' => 'A/V Sync',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.dropped' => 'Dropped',
 			'performanceOverlay.dvRpus' => 'DV RPUs',
 			'performanceOverlay.dvRpuAverage' => 'DV RPU Avg',
@@ -10628,8 +10658,6 @@ extension on Translations {
 			'performanceOverlay.maxLuma' => 'Max Luma',
 			'performanceOverlay.minLuma' => 'Min Luma',
 			'performanceOverlay.maxCll' => 'MaxCLL',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.maxFall' => 'MaxFALL',
 			'performanceOverlay.cacheUsed' => 'Cache Used',
 			'performanceOverlay.cacheLimit' => 'Cache Limit',

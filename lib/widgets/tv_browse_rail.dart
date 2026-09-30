@@ -1,3 +1,4 @@
+import '../screens/live_now/live_now_tile.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -250,7 +251,9 @@ class TvBrowseRailLayout {
     final itemGap = fullCardLayout ? fullCardItemGapForScale(scale) : gridSpacing.gridGap * scale;
     final isPersonHub = TvBrowseRailLayout.isPersonHub(hub);
     final isGenreHub = TvBrowseRailLayout.isGenreHub(hub);
-    final isBrandHub = TvBrowseRailLayout.isBrandHub(hub);
+    // "Jetzt live" takes the studio shelf's wide geometry, and keeps the
+    // caption row the studio tile leaves empty for its pairing or programme.
+    final isBrandHub = TvBrowseRailLayout.isBrandHub(hub) || isLiveNowHub(hub);
     final isPlatformHub = TvBrowseRailLayout.isPlatformHub(hub);
     final isChipHub = TvBrowseRailLayout.isChipHub(hub);
     final emptyEpisodeThumbnailHub =
@@ -297,7 +300,11 @@ class TvBrowseRailLayout {
         : (useWideLayout ? posterWidth * 9 / 16 : posterWidth * 1.5);
     // A service tile carries no name under it — the logo is the name — and a
     // chip is nothing but its name, so neither row keeps height for one.
-    final labelHeight = (fullCardLayout || isPlatformHub || isChipHub) ? 0.0 : ((isPersonHub ? 52 : 36) * scale);
+    // "Jetzt live" keeps its caption under full cards too: the pairing or the
+    // programme is what its tile says, not a label on a poster.
+    final labelHeight = ((fullCardLayout && !isLiveNowHub(hub)) || isPlatformHub || isChipHub)
+        ? 0.0
+        : ((isPersonHub ? 52 : 36) * scale);
     final containerHeight = (posterHeight + labelHeight).ceilToDouble();
     final height = containerHeight + focusExtra + (10 * scale);
 
@@ -2067,6 +2074,16 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
           height: metrics.posterHeight,
           scale: scale,
         ),
+      );
+    }
+    if (isLiveNowHub(hub)) {
+      return LiveNowTileCard(
+        item: item,
+        width: metrics.cardWidth,
+        cardHeight: metrics.posterHeight,
+        captionHeight: metrics.containerHeight - metrics.posterHeight,
+        scale: scale,
+        card: (card) => CardFocusBorder(borderRadius: 8 * scale, child: card),
       );
     }
     if (metrics.isBrandHub) {

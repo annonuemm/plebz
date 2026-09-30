@@ -28,6 +28,7 @@ class LiveTvChannelLayout {
     this.channelOrder = const {},
     this.hiddenChannels = const {},
     this.groupNames = const {},
+    this.channelNames = const {},
   });
 
   /// Group keys in the order the user put them. Groups missing from this list
@@ -48,6 +49,12 @@ class LiveTvChannelLayout {
   /// The key stays the provider's, so the group survives being renamed.
   final Map<String, String> groupNames;
 
+  /// Channel key → the name the user gave it. A playlist names its channels
+  /// for its own filing too ("DE: Das Erste HD RAW"); the viewer's name is
+  /// shown everywhere the channel is, while the provider's stays what anything
+  /// recognising the channel reads (see [LiveTvChannel.sourceName]).
+  final Map<String, String> channelNames;
+
   static const empty = LiveTvChannelLayout();
 
   /// True when nothing was arranged, so the loaded order stands untouched.
@@ -56,7 +63,8 @@ class LiveTvChannelLayout {
       hiddenGroups.isEmpty &&
       channelOrder.isEmpty &&
       hiddenChannels.isEmpty &&
-      groupNames.isEmpty;
+      groupNames.isEmpty &&
+      channelNames.isEmpty;
 
   bool isGroupHidden(String groupKey) => hiddenGroups.contains(groupKey);
 
@@ -72,12 +80,14 @@ class LiveTvChannelLayout {
     Map<String, List<String>>? channelOrder,
     Set<String>? hiddenChannels,
     Map<String, String>? groupNames,
+    Map<String, String>? channelNames,
   }) => LiveTvChannelLayout(
     groupOrder: groupOrder ?? this.groupOrder,
     hiddenGroups: hiddenGroups ?? this.hiddenGroups,
     channelOrder: channelOrder ?? this.channelOrder,
     hiddenChannels: hiddenChannels ?? this.hiddenChannels,
     groupNames: groupNames ?? this.groupNames,
+    channelNames: channelNames ?? this.channelNames,
   );
 
   /// [hidden] toggled for [groupKey].
@@ -110,6 +120,19 @@ class LiveTvChannelLayout {
     );
   }
 
+  /// [channelKey] renamed to [name], or back to the provider's own name when
+  /// [name] is null or blank.
+  LiveTvChannelLayout withChannelName(String channelKey, String? name) {
+    final trimmed = name?.trim();
+    return copyWith(
+      channelNames: {
+        for (final entry in channelNames.entries)
+          if (entry.key != channelKey) entry.key: entry.value,
+        if (trimmed != null && trimmed.isNotEmpty) channelKey: trimmed,
+      },
+    );
+  }
+
   LiveTvChannelLayout withGroupOrder(List<String> order) => copyWith(groupOrder: List.unmodifiable(order));
 
   LiveTvChannelLayout withChannelOrder(String groupKey, List<String> order) =>
@@ -121,6 +144,7 @@ class LiveTvChannelLayout {
     if (channelOrder.isNotEmpty) 'channelOrder': channelOrder,
     if (hiddenChannels.isNotEmpty) 'hiddenChannels': hiddenChannels.toList(),
     if (groupNames.isNotEmpty) 'groupNames': groupNames,
+    if (channelNames.isNotEmpty) 'channelNames': channelNames,
   };
 
   String encode() => jsonEncode(toJson());
@@ -147,22 +171,20 @@ class LiveTvChannelLayout {
         }
       }
 
-      final groupNames = <String, String>{};
-      final storedGroupNames = decoded['groupNames'];
-      if (storedGroupNames is Map) {
-        for (final entry in storedGroupNames.entries) {
-          final groupKey = _string(entry.key);
-          final name = _string(entry.value);
-          if (groupKey != null && name != null && name.isNotEmpty) groupNames[groupKey] = name;
-        }
-      }
+      Map<String, String> names(Object? stored) => {
+        if (stored is Map)
+          for (final entry in stored.entries)
+            if (_string(entry.key) case final key?)
+              if (_string(entry.value) case final name? when name.isNotEmpty) key: name,
+      };
 
       return LiveTvChannelLayout(
         groupOrder: strings(decoded['groupOrder']),
         hiddenGroups: strings(decoded['hiddenGroups']).toSet(),
         channelOrder: channelOrder,
         hiddenChannels: strings(decoded['hiddenChannels']).toSet(),
-        groupNames: groupNames,
+        groupNames: names(decoded['groupNames']),
+        channelNames: names(decoded['channelNames']),
       );
     } on FormatException {
       return empty;
@@ -172,7 +194,8 @@ class LiveTvChannelLayout {
 
 String? _string(Object? value) => value is String ? value : null;
 
-/// Apply [layout] to [channels]: drop what is hidden, then order what is left.
+/// Apply [layout] to [channels]: drop what is hidden, name what the user
+/// renamed, then order what is left.
 ///
 /// Ordering is by group first and channel second, but only where the user
 /// actually arranged something — an untouched layout returns the list in the
@@ -182,7 +205,11 @@ List<LiveTvChannel> applyLiveTvChannelLayout(List<LiveTvChannel> channels, LiveT
 
   final visible = [
     for (final channel in channels)
-      if (!layout.hides(channel)) channel,
+      if (!layout.hides(channel))
+        switch (layout.channelNames[liveTvLayoutChannelKey(channel)]) {
+          final name? => channel.copyWith(nameOverride: name),
+          null => channel,
+        },
   ];
   if (layout.groupOrder.isEmpty && layout.channelOrder.isEmpty) return visible;
 

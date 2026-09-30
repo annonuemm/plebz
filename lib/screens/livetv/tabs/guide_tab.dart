@@ -50,6 +50,11 @@ class GuideTab extends StatefulWidget {
   final List<LiveTvChannel> channels;
   final bool Function(LiveTvChannel channel)? isFavoriteChannel;
   final void Function(LiveTvChannel)? onToggleFavorite;
+
+  /// The channel's own menu — favourite, rename, hide — opened by a hold on
+  /// its logo, the context-menu key or a long press. Without one, those
+  /// toggle the favourite as they always did.
+  final void Function(LiveTvChannel)? onChannelMenu;
   final VoidCallback? onNavigateUp;
   final VoidCallback? onBack;
 
@@ -77,6 +82,7 @@ class GuideTab extends StatefulWidget {
     required this.channels,
     this.isFavoriteChannel,
     this.onToggleFavorite,
+    this.onChannelMenu,
     this.onNavigateUp,
     this.onBack,
     this.playerChannels,
@@ -1138,12 +1144,16 @@ class GuideTabState extends State<GuideTab>
     return widget.channels[_gridChannelIndex];
   }
 
-  /// TV SELECT on a channel cell: a short press tunes and a hold toggles the
-  /// favorite, the same split as a tap and a long press on the cell.
+  /// What a hold on a channel does: its menu where the screen offers one,
+  /// otherwise the favourite toggle. Null when there is neither.
+  void Function(LiveTvChannel)? get _channelHoldAction => widget.onChannelMenu ?? widget.onToggleFavorite;
+
+  /// TV SELECT on a channel cell: a short press tunes and a hold opens the
+  /// channel's menu, the same split as a tap and a long press on the cell.
   KeyEventResult _handleFocusedChannelSelectKey(KeyEvent event) {
-    final onToggleFavorite = widget.onToggleFavorite;
+    final onHold = _channelHoldAction;
     final channel = _focusedChannelTarget();
-    if (onToggleFavorite == null || channel == null) return KeyEventResult.ignored;
+    if (onHold == null || channel == null) return KeyEventResult.ignored;
 
     final ownerChannelIndex = _gridChannelIndex;
     return _selectLongPressController.handleKeyEvent(
@@ -1152,19 +1162,19 @@ class GuideTabState extends State<GuideTab>
       onShortPress: () => tuneChannel(channel),
       onLongPress: () {
         _selectLongPressController.reset();
-        onToggleFavorite(channel);
+        onHold(channel);
       },
     );
   }
 
-  /// The context-menu key (gamepad X, keyboard Menu) toggles the focused
-  /// channel's favorite. Down only, so a held key cannot flip it back and forth.
+  /// The context-menu key (gamepad X, keyboard Menu) does what a hold does.
+  /// Down only, so a held key cannot flip a favourite back and forth.
   KeyEventResult _handleFocusedChannelContextMenuKey(KeyEvent event) {
     if (!event.logicalKey.isContextMenuKey) return KeyEventResult.ignored;
-    final onToggleFavorite = widget.onToggleFavorite;
+    final onHold = _channelHoldAction;
     final channel = _focusedChannelTarget();
-    if (onToggleFavorite == null || channel == null) return KeyEventResult.ignored;
-    if (event is KeyDownEvent) onToggleFavorite(channel);
+    if (onHold == null || channel == null) return KeyEventResult.ignored;
+    if (event is KeyDownEvent) onHold(channel);
     return KeyEventResult.handled;
   }
 
@@ -2257,7 +2267,10 @@ class GuideTabState extends State<GuideTab>
           channel: channel,
           theme: theme,
           onTap: () => _tuneOrPreviewFromPointer(channel),
-          onLongPress: widget.onToggleFavorite != null ? () => widget.onToggleFavorite!(channel) : null,
+          onLongPress: switch (_channelHoldAction) {
+            final onHold? => () => onHold(channel),
+            null => null,
+          },
           isFocused: isFocused,
           isFavorite: widget.isFavoriteChannel?.call(channel) ?? false,
           fallbackBuilder: () => _buildChannelNameFallback(channel, theme),

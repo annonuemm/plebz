@@ -67,6 +67,8 @@ typedef ChannelGroupOption = ({String? key, String label, int count});
 /// What the group bar's context menu offers.
 enum _GroupMenuAction { rename, restoreName, hide }
 
+enum _ChannelMenuAction { favorite, rename, restoreName, hide }
+
 enum LiveTvTab { guide, whatsOn, recordings }
 
 class LiveTvScreen extends StatefulWidget {
@@ -1590,6 +1592,55 @@ class _LiveTvScreenState extends State<LiveTvScreen>
     if (mounted) setState(() {});
   }
 
+  /// A channel's own menu, on a held SELECT, the context-menu key or a long
+  /// press on its logo in the guide: favourite, rename, hide — what the group
+  /// bar offers for a group, and what a hold used to do alone (it toggled the
+  /// favourite, silently).
+  ///
+  /// Renaming and hiding act on the channel the provider defined: the new
+  /// name is shown wherever the channel is, and a hidden channel comes back
+  /// from the channel-management sheet.
+  Future<void> _showChannelMenu(LiveTvChannel channel) async {
+    final provider = _layoutProvider;
+    final channelKey = liveTvLayoutChannelKey(channel);
+    final renamed = provider?.layout.channelNames.containsKey(channelKey) ?? false;
+    final action = await showOptionPickerDialog<_ChannelMenuAction>(
+      context,
+      title: channel.displayName,
+      options: [
+        _isFavoriteChannel(channel)
+            ? (icon: Symbols.star_rounded, label: t.liveTv.removeFromFavorites, value: _ChannelMenuAction.favorite)
+            : (icon: Symbols.star_outline_rounded, label: t.liveTv.addToFavorites, value: _ChannelMenuAction.favorite),
+        if (provider != null) ...[
+          (icon: Symbols.edit_rounded, label: t.liveTv.renameChannel, value: _ChannelMenuAction.rename),
+          if (renamed)
+            (icon: Symbols.undo_rounded, label: t.liveTv.restoreGroupName, value: _ChannelMenuAction.restoreName),
+          (icon: Symbols.visibility_off_rounded, label: t.liveTv.hideChannel, value: _ChannelMenuAction.hide),
+        ],
+      ],
+    );
+    if (action == null || !mounted) return;
+
+    switch (action) {
+      case _ChannelMenuAction.favorite:
+        _toggleFavorite(channel);
+      case _ChannelMenuAction.rename:
+        final name = await showTextInputDialog(
+          context,
+          title: t.liveTv.renameChannel,
+          labelText: t.liveTv.channelNameLabel,
+          initialValue: channel.displayName,
+        );
+        if (name == null || !mounted) return;
+        await provider?.setChannelName(channelKey, name);
+      case _ChannelMenuAction.restoreName:
+        await provider?.setChannelName(channelKey, null);
+      case _ChannelMenuAction.hide:
+        await provider?.setChannelHidden(channelKey, true);
+        if (mounted) showSnackBar(context, t.liveTv.channelHidden(name: channel.displayName));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final useSideNav = PlatformDetector.shouldUseSideNavigation(context);
@@ -1681,6 +1732,7 @@ class _LiveTvScreenState extends State<LiveTvScreen>
                 playerGroup: _selectedGroup,
                 isFavoriteChannel: _isFavoriteChannel,
                 onToggleFavorite: _toggleFavorite,
+                onChannelMenu: _showChannelMenu,
                 onNavigateUp: _focusChannelBar,
                 onBack: onTabBarBack,
                 onOpenGroups: _groupColumnEnabled ? _openGroupColumn : null,

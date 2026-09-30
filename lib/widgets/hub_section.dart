@@ -1,3 +1,4 @@
+import '../screens/live_now/live_now_tile.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -633,11 +634,14 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                     // mode. Clip-only hubs stay wide in the poster modes —
                     // same gate as TvBrowseRail — since episodes already fold
                     // the mode into usesWideAspectRatio (#2036).
+                    final isLiveHub = isLiveNowHub(widget.hub);
                     final useWideLayout =
-                        hasEpisodes && (!hasNonEpisodes || episodePosterMode == EpisodePosterMode.episodeThumbnail);
+                        isLiveHub ||
+                        (hasEpisodes && (!hasNonEpisodes || episodePosterMode == EpisodePosterMode.episodeThumbnail));
 
                     // Music hubs render square album/artist artwork
                     final isSquareHub =
+                        !isLiveHub &&
                         widget.hub.items.isNotEmpty &&
                         widget.hub.items.every((item) => item.cardShape(episodePosterMode) == CardShape.square);
 
@@ -790,6 +794,30 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                             // MediaCard beneath them to win the gesture, and
                             // no memo either — a shelf of destinations is
                             // twenty cheap widgets, not a scrolling library.
+                            // "Jetzt live": a game or a channel, drawn by its
+                            // own tile, caption included; the tap goes to the
+                            // host, which knows how to tune or open it.
+                            if (isLiveHub) {
+                              return Padding(
+                                key: _itemKeyFor(index),
+                                padding: cardPadding,
+                                child: FocusBuilders.buildLockedFocusWrapper(
+                                  context: context,
+                                  isFocused: isItemFocused,
+                                  onTap: () {
+                                    _onItemTapped(index);
+                                    widget.onItemTap?.call(item);
+                                  },
+                                  delegateFocusBorder: true,
+                                  child: LiveNowTileCard(
+                                    item: item,
+                                    width: cardWidth,
+                                    cardHeight: posterHeight,
+                                    captionHeight: containerHeight - posterHeight,
+                                  ),
+                                ),
+                              );
+                            }
                             if (isPlatformHub || isChipHub) {
                               return Padding(
                                 key: _itemKeyFor(index),

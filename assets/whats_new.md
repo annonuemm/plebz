@@ -15,6 +15,10 @@ ein Entwurf ohne sie bleibt in der App unsichtbar. Der Text eines Abschnitts
 ist wortgleich der Text des GitHub-Releases.
 -->
 
+## 1.2.3 (Build 567)
+
+- EPG: OK lange gedrückt auf einem Senderlogo öffnet jetzt wirklich das Menü mit Favorit, Umbenennen und Ausblenden. Bisher hat der noch gehaltene Knopf gleich den ersten Eintrag gewählt und den Sender direkt zu den Favoriten gelegt. Dasselbe gilt für das Menü einer Gruppe.
+
 ## 1.2.2 (Build 565)
 
 - EPG: OK auf einem Senderlogo zeigt den Sender wieder erst in der Vorschau, erst der zweite Druck öffnet ihn im Vollbild.

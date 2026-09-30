@@ -30,6 +30,7 @@ import 'package:plezy/services/live_tv_last_selection.dart';
 import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/utils/dialogs.dart';
 import 'package:plezy/utils/platform_detector.dart';
 import 'package:plezy/widgets/app_icon.dart';
 import 'package:provider/provider.dart';
@@ -852,6 +853,93 @@ http://provider/stream/ard
       expect(guide.debugCursorColumn, 0);
       expect(leftUpwards(), 0);
     });
+  });
+
+  testWidgets('a held SELECT opens the channel menu, and the held key does not pick from it', (tester) async {
+    // A remote repeats a held key. The menu opened while OK was still down,
+    // its first row took the focus, and the repeats chose it: "add to
+    // favourites" happened and the menu was gone before it was seen.
+    resetSharedPreferencesForTest();
+    SettingsService.resetForTesting();
+    await SettingsService.getInstance();
+    TvDetectionService.debugSetAppleTVOverride(true);
+    GuidePreviewPlayerState.debugSuppressPlayback = true;
+    addTearDown(() => GuidePreviewPlayerState.debugSuppressPlayback = false);
+
+    final multiServer = testMultiServerProvider(MultiServerManager());
+    addTearDown(multiServer.dispose);
+
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 600);
+    addTearDown(() {
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetPhysicalSize();
+    });
+
+    final chosen = <String?>[];
+    final channel = LiveTvChannel(key: 'channel/1', identifier: 'station-1', title: 'Sender 1', serverId: 'server-a');
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: InputModeTracker(
+          child: MultiProvider(
+            providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
+            child: MaterialApp(
+              theme: monoTheme(dark: true),
+              home: Scaffold(
+                body: Builder(
+                  builder: (context) => GuideTab(
+                    channels: [channel],
+                    onPlayChannel: (_) async {},
+                    onChannelMenu: (_) async => chosen.add(
+                      await showOptionPickerDialog<String>(
+                        context,
+                        title: 'Sender 1',
+                        options: [
+                          (icon: null, label: 'Favorit', value: 'favorite'),
+                          (icon: null, label: 'Umbenennen', value: 'rename'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final guideFocus = tester.widget<Focus>(
+      find.byWidgetPredicate((widget) => widget is Focus && widget.focusNode?.debugLabel == 'guide_tab'),
+    );
+    guideFocus.focusNode!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+
+    // Held: down, the hold fires, the menu opens and takes focus; the key
+    // keeps repeating until it is let go.
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.select);
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+    expect(find.text('Umbenennen'), findsOneWidget, reason: 'the menu is open');
+    for (var i = 0; i < 3; i++) {
+      await tester.sendKeyRepeatEvent(LogicalKeyboardKey.select);
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.select);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Umbenennen'), findsOneWidget, reason: 'still open once the key is let go');
+    expect(chosen, isEmpty);
+
+    // A fresh press is a choice.
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.pumpAndSettle();
+    expect(chosen, ['favorite']);
   });
 
   for (final withMenu in [false, true]) {

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../focus/dpad_navigator.dart';
 import '../focus/focusable_text_field.dart';
 import '../focus/input_mode_tracker.dart';
 import '../i18n/strings.g.dart';
@@ -727,6 +728,20 @@ class _OptionPickerDialogState<T> extends State<_OptionPickerDialog<T>> {
 
   @override
   Widget build(BuildContext context) {
+    // Opened by a held SELECT (a channel's or a group's menu), the dialog
+    // takes focus while the key is still down: the remote's repeats and its
+    // release would activate the first row before the menu was even seen.
+    // Whoever armed the suppressor for that press gets it swallowed here.
+    return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: (_, event) =>
+          SelectKeyUpSuppressor.consumeIfSuppressed(event) ? KeyEventResult.handled : KeyEventResult.ignored,
+      child: _buildDialog(context),
+    );
+  }
+
+  Widget _buildDialog(BuildContext context) {
     const rowPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 4);
     const rowHorizontalTitleGap = 8.0;
     const rowMinLeadingWidth = 24.0;

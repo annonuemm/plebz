@@ -15,6 +15,10 @@ ein Entwurf ohne sie bleibt in der App unsichtbar. Der Text eines Abschnitts
 ist wortgleich der Text des GitHub-Releases.
 -->
 
+## 1.2.2 (Build 565)
+
+- EPG: OK auf einem Senderlogo zeigt den Sender wieder erst in der Vorschau, erst der zweite Druck öffnet ihn im Vollbild.
+
 ## 1.2.1 (Build 563)
 
 - „Jetzt live“: Der Fokusrahmen einer Kachel wird nicht mehr von der Kachel daneben abgeschnitten.

@@ -1184,7 +1184,8 @@ class GuideTabState extends State<GuideTab>
   /// otherwise the favourite toggle. Null when there is neither.
   void Function(LiveTvChannel)? get _channelHoldAction => widget.onChannelMenu ?? widget.onToggleFavorite;
 
-  /// TV SELECT on a channel cell: a short press tunes and a hold opens the
+  /// TV SELECT on a channel cell: a short press does what a tap does — the
+  /// picture first, the whole screen on a second press — and a hold opens the
   /// channel's menu, the same split as a tap and a long press on the cell.
   KeyEventResult _handleFocusedChannelSelectKey(KeyEvent event) {
     final onHold = _channelHoldAction;
@@ -1195,7 +1196,9 @@ class GuideTabState extends State<GuideTab>
     return _selectLongPressController.handleKeyEvent(
       event,
       isOwnerActive: () => mounted && _focusedChannelTarget() != null && _gridChannelIndex == ownerChannelIndex,
-      onShortPress: () => tuneChannel(channel),
+      // Not tuneChannel: that skipped the preview whenever a hold action was
+      // wired, which the screen always does.
+      onShortPress: () => unawaited(_tuneOrPreview(channel)),
       onLongPress: () {
         _selectLongPressController.reset();
         onHold(channel);

@@ -854,64 +854,87 @@ http://provider/stream/ard
     });
   });
 
-  testWidgets('SELECT on a channel previews it rather than opening full screen', (tester) async {
-    // The programme cells took the two steps; the channel column still went
-    // straight to full screen, so the same press meant two different things
-    // one column apart.
-    resetSharedPreferencesForTest();
-    SettingsService.resetForTesting();
-    await SettingsService.getInstance();
-    TvDetectionService.debugSetAppleTVOverride(true);
-    GuidePreviewPlayerState.debugSuppressPlayback = true;
-    addTearDown(() => GuidePreviewPlayerState.debugSuppressPlayback = false);
+  for (final withMenu in [false, true]) {
+    testWidgets(
+      'SELECT on a channel previews it rather than opening full screen${withMenu ? ', with its hold menu wired' : ''}',
+      (tester) async {
+        // With a hold action wired — as the Live TV screen always does — the
+        // hold-aware SELECT handler caught the press first and went straight to
+        // full screen.
+        // The programme cells took the two steps; the channel column still went
+        // straight to full screen, so the same press meant two different things
+        // one column apart.
+        resetSharedPreferencesForTest();
+        SettingsService.resetForTesting();
+        await SettingsService.getInstance();
+        TvDetectionService.debugSetAppleTVOverride(true);
+        GuidePreviewPlayerState.debugSuppressPlayback = true;
+        addTearDown(() => GuidePreviewPlayerState.debugSuppressPlayback = false);
 
-    final multiServer = testMultiServerProvider(MultiServerManager());
-    addTearDown(multiServer.dispose);
+        final multiServer = testMultiServerProvider(MultiServerManager());
+        addTearDown(multiServer.dispose);
 
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(1280, 600);
-    addTearDown(() {
-      tester.view.resetDevicePixelRatio();
-      tester.view.resetPhysicalSize();
-    });
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(1280, 600);
+        addTearDown(() {
+          tester.view.resetDevicePixelRatio();
+          tester.view.resetPhysicalSize();
+        });
 
-    final fullScreen = <String>[];
-    final channel = LiveTvChannel(key: 'channel/1', identifier: 'station-1', title: 'Sender 1', serverId: 'server-a');
+        final fullScreen = <String>[];
+        final channel = LiveTvChannel(
+          key: 'channel/1',
+          identifier: 'station-1',
+          title: 'Sender 1',
+          serverId: 'server-a',
+        );
 
-    await tester.pumpWidget(
-      TranslationProvider(
-        child: InputModeTracker(
-          child: MultiProvider(
-            providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
-            child: MaterialApp(
-              theme: monoTheme(dark: true),
-              home: Scaffold(
-                body: GuideTab(channels: [channel], onPlayChannel: (played) async => fullScreen.add(played.key)),
+        await tester.pumpWidget(
+          TranslationProvider(
+            child: InputModeTracker(
+              child: MultiProvider(
+                providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
+                child: MaterialApp(
+                  theme: monoTheme(dark: true),
+                  home: Scaffold(
+                    body: GuideTab(
+                      channels: [channel],
+                      onPlayChannel: (played) async => fullScreen.add(played.key),
+                      onChannelMenu: withMenu ? (_) {} : null,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final guideFocus = tester.widget<Focus>(
+          find.byWidgetPredicate((widget) => widget is Focus && widget.focusNode?.debugLabel == 'guide_tab'),
+        );
+        guideFocus.focusNode!.requestFocus();
+        await tester.pump();
+        // Into the grid, on the channel column.
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pump();
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.select);
+        await tester.pump();
+
+        final panel = tester.widget<GuidePreviewPanel>(find.byType(GuidePreviewPanel));
+        expect(panel.previewChannel?.key, channel.key);
+        expect(fullScreen, isEmpty);
+
+        // The second press on the same channel takes the whole screen.
+        await tester.sendKeyEvent(LogicalKeyboardKey.select);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(fullScreen, [channel.key]);
+      },
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    final guideFocus = tester.widget<Focus>(
-      find.byWidgetPredicate((widget) => widget is Focus && widget.focusNode?.debugLabel == 'guide_tab'),
-    );
-    guideFocus.focusNode!.requestFocus();
-    await tester.pump();
-    // Into the grid, on the channel column.
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    await tester.pump();
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.select);
-    await tester.pump();
-
-    final panel = tester.widget<GuidePreviewPanel>(find.byType(GuidePreviewPanel));
-    expect(panel.previewChannel?.key, channel.key);
-    expect(fullScreen, isEmpty);
-  });
+  }
 
   testWidgets('six channels fit under the preview on a TV-sized guide', (tester) async {
     // What a guide is judged by: how much of the list you can compare at

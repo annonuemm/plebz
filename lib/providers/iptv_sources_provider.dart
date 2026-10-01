@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
 import '../mixins/disposable_change_notifier_mixin.dart';
 import '../models/livetv_channel.dart';
+import '../services/credential_fields.dart';
 import '../services/iptv/iptv_disk_cache.dart';
 import 'live_tv_channel_layout_provider.dart';
 import '../services/iptv/iptv_live_tv_source.dart';
@@ -110,17 +112,34 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
       ? const NullableStringPref(iptvSourcesBaseKey)
       : SettingsService.iptvSourcesForProfile(profileId);
 
+  /// The sources' credentials ([iptvSealedFields]) are sealed with
+  /// `CredentialVault` at rest. Sources stored before that are sealed on this
+  /// load; a field the vault can no longer open is dropped, and that source
+  /// asks for it again.
   Future<void> _load() async {
+    var reseal = false;
     try {
       final settings = await SettingsService.getInstance();
-      _sources = IptvSource.decodeList(settings.read(_pref));
+      final raw = settings.read(_pref);
+      final stored = raw == null || raw.trim().isEmpty ? const <Object?>[] : jsonDecode(raw);
+      final opened = <Map<String, Object?>>[];
+      for (final entry in stored is List ? stored : const <Object?>[]) {
+        if (entry is! Map) continue;
+        final result = await CredentialFields.reveal(Map<String, Object?>.from(entry), iptvSealedFields);
+        reseal = reseal || result.hadPlaintext;
+        if (result.lost > 0) appLogger.w('IPTV: a source lost credentials the vault could not open');
+        opened.add(result.json);
+      }
+      _sources = [for (final json in opened) ?IptvSource.fromJson(json)];
     } catch (error, stackTrace) {
       appLogger.w('IPTV: could not read the configured sources', error: error, stackTrace: stackTrace);
       _sources = const [];
+      reseal = false;
     }
     _registerForRedaction();
     _isLoaded = true;
     safeNotifyListeners();
+    if (reseal) await _persist();
   }
 
   /// Keep the panel credentials out of the log.
@@ -130,10 +149,18 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
   /// line carries them too — and a log is the first thing a user copies into
   /// a chat when something misbehaves. Registered here because this is where
   /// the sources are known, and the redaction is global from then on.
+  ///
+  /// An M3U source has no separate login: its playlist and guide addresses
+  /// carry it (`get.php?username=…&password=…`, or in the path), and name the
+  /// provider. They are registered whole, which also masks the provider's host.
   void _registerForRedaction() {
     for (final source in _sources) {
       LogRedactionManager.registerCustomValue(source.username);
       LogRedactionManager.registerCustomValue(source.password);
+      LogRedactionManager.registerServerUrl(source.playlistUrl);
+      for (final url in source.epgUrls) {
+        LogRedactionManager.registerServerUrl(url);
+      }
     }
   }
 
@@ -141,7 +168,8 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
     _registerForRedaction();
     try {
       final settings = await SettingsService.getInstance();
-      await settings.write(_pref, IptvSource.encodeList(_sources));
+      final sealed = [for (final source in _sources) await CredentialFields.protect(source.toJson(), iptvSealedFields)];
+      await settings.write(_pref, jsonEncode(sealed));
     } catch (error, stackTrace) {
       appLogger.w('IPTV: could not save the configured sources', error: error, stackTrace: stackTrace);
     }

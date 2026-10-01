@@ -2147,7 +2147,24 @@
       "connectionTimedOut": "Zeitüberschreitung bei der Verbindung. Nutze auf beiden Geräten dasselbe Netzwerk.",
       "sessionNotFound": "Gerät nicht gefunden. Stelle sicher, dass Plebz auf dem Host läuft.",
       "authFailed": "Authentifizierung fehlgeschlagen. Beide Geräte benötigen dasselbe Plex-Konto.",
-      "failedToConnect": "Verbindung fehlgeschlagen: ${error}"
+      "failedToConnect": "Verbindung fehlgeschlagen: ${error}",
+      "codeTitle": "Gerät koppeln",
+      "codeMessage": "${name} möchte Plebz hier steuern. Gib diesen Code auf dem Gerät ein:",
+      "codeValidFor": "Der Code gilt zwei Minuten.",
+      "enterCodeTitle": "Code eingeben",
+      "enterCodeMessage": "${name} zeigt jetzt einen achtstelligen Code. Gib ihn hier ein.",
+      "codeLabel": "Code",
+      "codeInvalid": "Der Code hat acht Ziffern.",
+      "wrongCode": "Der Code stimmt nicht. Verbinde dich erneut, dann erscheint ein neuer.",
+      "cancelled": "Kopplung abgebrochen",
+      "busy": "Das Gerät koppelt gerade ein anderes. Versuche es gleich noch einmal.",
+      "expired": "Der Code ist abgelaufen. Verbinde dich erneut.",
+      "pairingRequired": "Dieses Gerät ist nicht mehr gekoppelt. Verbinde dich neu, um es wieder zu koppeln.",
+      "hostTooOld": "Das Gerät nutzt eine ältere Plebz-Version. Aktualisiere es, um es zu koppeln.",
+      "pairedDevices": "Gekoppelte Geräte",
+      "noPairedDevices": "Noch kein Gerät gekoppelt. Beim ersten Verbinden erscheint hier ein Code.",
+      "unpair": "Entfernen",
+      "unpaired": "${name} ist nicht mehr gekoppelt"
     },
     "remote": {
       "disconnectConfirm": "Möchtest du die Verbindung zur Fernsteuerungssitzung trennen?",
@@ -2570,7 +2587,10 @@
     "redirectUnsupported": "Der Server hat zu einer nicht unterstützten URL weitergeleitet",
     "redirectDifferentHost": "Der Server hat zu einem anderen Host weitergeleitet. Gib die endgültige ${product}-URL direkt ein.",
     "redirectInsecure": "Der Server hat von HTTPS zu einer unsicheren URL weitergeleitet",
-    "redirectUnsupportedEnterFinal": "Der Server hat zu einer nicht unterstützten URL weitergeleitet. Gib die endgültige ${product}-URL direkt ein."
+    "redirectUnsupportedEnterFinal": "Der Server hat zu einer nicht unterstützten URL weitergeleitet. Gib die endgültige ${product}-URL direkt ein.",
+    "plainHttpTitle": "Unverschlüsselte Verbindung",
+    "plainHttpMessage": "${host} ist nur über unverschlüsseltes HTTP erreichbar und liegt nicht in deinem Heimnetz. Passwort und Zugangsschlüssel würden lesbar durchs Internet gehen. Besser ist HTTPS, etwa über einen Reverse Proxy.",
+    "plainHttpContinue": "Trotzdem verbinden"
   },
   "iptv": {
     "title": "IPTV",

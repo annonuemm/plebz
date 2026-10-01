@@ -9,6 +9,7 @@ import '../../models/seerr/seerr_user.dart';
 import '../../utils/app_logger.dart';
 import '../../utils/log_redaction_manager.dart';
 import '../../utils/poll_with_backoff.dart';
+import '../../utils/network_locality.dart';
 import '../../utils/url_utils.dart';
 import 'seerr_constants.dart';
 import 'seerr_exceptions.dart';
@@ -52,7 +53,12 @@ class SeerrAuthService {
   /// scheme is authoritative, otherwise TLS, plain HTTP, and the default
   /// install port are all tried. Guesses are for discovery only — only the
   /// candidate that answered is persisted.
-  static List<String> expandUrlCandidates(String input) => expandBaseUrlCandidates(input, guesses: _schemelessGuesses);
+  ///
+  /// Outside the home network only `https` is tried ([guessesForUserInput]):
+  /// a password must not fall back to plain HTTP across the internet unless
+  /// the person typed `http://` themselves.
+  static List<String> expandUrlCandidates(String input) =>
+      expandBaseUrlCandidates(input, guesses: guessesForUserInput(input, _schemelessGuesses));
 
   /// Probes every [expandUrlCandidates] guess for [input] and returns the
   /// first reachable instance.

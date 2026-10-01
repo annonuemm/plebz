@@ -28,6 +28,11 @@ enum IptvStreamFormat {
   final String extension;
 }
 
+/// The fields of a stored source that are credentials and sealed at rest
+/// (`IptvSourcesProvider`): the panel password, and the playlist and guide
+/// addresses, which for most M3U providers carry the login themselves.
+const iptvSealedFields = ['password', 'playlistUrl', 'epgUrls'];
+
 /// One configured IPTV source.
 ///
 /// Deliberately not a media server: it carries no library, no watch state and

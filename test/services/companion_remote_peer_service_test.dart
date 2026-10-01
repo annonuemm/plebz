@@ -9,10 +9,31 @@ import 'package:plezy/models/companion_remote/remote_session.dart';
 import 'package:plezy/services/companion_remote/companion_remote_peer_service.dart';
 import 'package:plezy/services/companion_remote/remote_auth_context.dart';
 import 'package:plezy/services/companion_remote/remote_auth_service.dart';
+import 'package:plezy/services/companion_remote/remote_pairing_store.dart';
 
 const _ioTimeout = Duration(seconds: 5);
 
 void main() {
+  // Host and remote in these tests share one install's store: one device id,
+  // paired with itself on both sides under the same key.
+  setUp(() async {
+    final store = RemotePairingStore.memoryForTesting(deviceId: _testDeviceId);
+    RemotePairingStore.instance = store;
+    for (final role in RemotePairingRole.values) {
+      await store.add(
+        role,
+        RemotePairing(
+          peerDeviceId: _testDeviceId,
+          peerName: 'Paired',
+          peerPlatform: 'test',
+          key: _testPairingKey,
+          pairedAt: DateTime(2026),
+        ),
+      );
+    }
+  });
+  tearDown(RemotePairingStore.resetForTesting);
+
   test('auth precondition error uses the active locale', () async {
     await LocaleSettings.setLocale(AppLocale.bg);
     addTearDown(() => LocaleSettings.setLocaleSync(AppLocale.en));
@@ -700,6 +721,7 @@ class _ManagedJoinObservingPeer extends CompanionRemotePeerService {
     List<RemoteAuthContext> authContexts, {
     String? authContextId,
     String expectedHostClientId = '',
+    Future<String?> Function(String hostName)? requestPairingCode,
   }) {
     return _onManagedJoin();
   }
@@ -804,6 +826,9 @@ class _TcpProxy {
   }
 }
 
+const _testDeviceId = 'paired-device';
+final _testPairingKey = List<int>.generate(32, (index) => 100 + index);
+
 final _authContext = RemoteAuthContext(
   id: 'context-1',
   backend: 'plex',
@@ -862,7 +887,7 @@ String _validAuthMessage(
   final clientNonce = RemoteAuthService.instance.generateNonce();
   final selectedUserUuid = userUuid ?? context.userUuid;
   final computedAuthTag = RemoteAuthService.instance.computeAuthTag(
-    homeSecret: context.homeSecret,
+    homeSecret: _testPairingKey,
     hostNonce: hostNonce,
     clientNonce: clientNonce,
     hostClientId: context.clientIdentifier,
@@ -873,6 +898,7 @@ String _validAuthMessage(
   );
   return jsonEncode({
     'type': 'auth',
+    'pairingId': RemotePairing.pairingIdForKey(_testPairingKey),
     if (includeAuthContextId) 'authContextId': authContextId ?? context.id,
     'clientNonce': base64Encode(clientNonce),
     'userUUID': selectedUserUuid,

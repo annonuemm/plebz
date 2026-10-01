@@ -1,21 +1,26 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:shared_preferences/shared_preferences.dart' show SharedPreferencesWithCache;
 
 import '../utils/app_logger.dart';
 import 'base_shared_preferences_service.dart';
 import 'sensitive_prefs.dart';
+import 'vault_key_wrap.dart';
 
 /// Encrypts credentials before they are persisted in Drift config/token
 /// columns. The database no longer stores raw server tokens; registries
 /// decrypt at their boundaries and rewrite legacy plaintext values on read.
 ///
-/// Security model: the key is stored in SharedPreferences, so this is
-/// obfuscation-at-rest against casual database inspection/export rather than
-/// OS-backed Keychain/Keystore protection. Anyone with full access to both app
-/// prefs and the database can recover the tokens.
+/// Security model: the key is stored in SharedPreferences. On Android it is
+/// kept there wrapped by a key that never leaves the Android Keystore
+/// ([VaultKeyWrap]), so a copy of the app's files no longer opens the tokens;
+/// elsewhere (the Mac build is ad-hoc signed, and a Keychain entry would ask
+/// for the login password after every update) it is stored as it is — then
+/// anyone with full access to both prefs and database can recover the tokens.
 class CredentialVault {
   CredentialVault._();
 
@@ -85,6 +90,13 @@ class CredentialVault {
       );
       final clear = await _algorithm.decrypt(box, secretKey: await _getSecretKey());
       return utf8.decode(clear);
+    } on VaultKeyWrapException catch (e) {
+      // The Keystore is not answering for now: the credential is not lost,
+      // only out of reach. Forget this answer so the next reveal asks again.
+      // This very lookup's future; nothing waits on the removed entry itself.
+      _decryptionCache.remove(value)?.ignore();
+      appLogger.w('CredentialVault: vault key out of reach for now', error: e);
+      return null;
     } catch (e) {
       if (generation != _cacheGeneration) return null;
       appLogger.w('CredentialVault: failed to decrypt stored credential, treating as lost', error: e);
@@ -172,8 +184,85 @@ class CredentialVault {
     return (servers: servers, migrated: migrated);
   }
 
+  /// Marks a stored key that is wrapped by the Keystore.
+  static const String _wrappedPrefix = 'ks1:';
+
+  /// Whether [value] has the form of a stored vault key: 32 bytes in base64,
+  /// or those wrapped by the Keystore (IV, key, tag). The preference repair
+  /// must keep either.
+  static bool isStoredKeyForm(String value) {
+    try {
+      if (value.startsWith(_wrappedPrefix)) {
+        return base64Decode(value.substring(_wrappedPrefix.length)).length == 12 + 32 + 16;
+      }
+      return base64Decode(value).length == 32;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// A failed Keystore answer must not stay the answer for the session: the
+  /// failure is forgotten, and the next access asks again.
   static Future<SecretKey> _getSecretKey() {
-    return _secretKey ??= () async {
+    final cached = _secretKey;
+    if (cached != null) return cached;
+    final loading = _loadSecretKey();
+    _secretKey = loading;
+    unawaited(
+      loading.then<void>(
+        (_) {},
+        onError: (Object _) {
+          if (identical(_secretKey, loading)) _secretKey = null;
+        },
+      ),
+    );
+    return loading;
+  }
+
+  static List<int> _freshKeyBytes() => List<int>.generate(32, (_) => Random.secure().nextInt(256));
+
+  /// [bytes] as they go into the preferences: wrapped where the Keystore has
+  /// proved it works, as they are otherwise.
+  static Future<String> _storedForm(List<int> bytes) async {
+    final wrapped = await VaultKeyWrap.wrapVerified(bytes);
+    return wrapped == null ? base64Encode(bytes) : '$_wrappedPrefix${base64Encode(wrapped)}';
+  }
+
+  /// The key behind a stored value. A plain one is wrapped on the way — the
+  /// migration, written only over the very value read. A wrapped one the
+  /// Keystore cannot open *for now* throws without touching anything; one it
+  /// can never open again is replaced, since what it sealed is lost already
+  /// and the person has to be able to sign in again.
+  static Future<List<int>> _openStoredKey(SharedPreferencesWithCache prefs, String stored) async {
+    if (!stored.startsWith(_wrappedPrefix)) {
+      final raw = base64Decode(stored);
+      final wrapped = await _storedForm(raw);
+      if (wrapped != stored) {
+        try {
+          await prefs.reloadCache();
+        } catch (e) {
+          appLogger.d('CredentialVault: prefs reload before wrapping failed', error: e);
+        }
+        if (readTolerantString(prefs, _keyPref) == stored) await prefs.setString(_keyPref, wrapped);
+      }
+      return raw;
+    }
+    try {
+      return await VaultKeyWrap.unwrap(base64Decode(stored.substring(_wrappedPrefix.length)));
+    } on VaultKeyWrapException catch (error) {
+      if (error.failure == VaultKeyWrapFailure.unavailable) {
+        appLogger.w('CredentialVault: the Keystore is not answering; trying again on the next access', error: error);
+        rethrow;
+      }
+      appLogger.e('CredentialVault: the wrapped key cannot be recovered; starting a new one', error: error);
+      final bytes = _freshKeyBytes();
+      await prefs.setString(_keyPref, await _storedForm(bytes));
+      return bytes;
+    }
+  }
+
+  static Future<SecretKey> _loadSecretKey() {
+    return () async {
       final prefs = await BaseSharedPreferencesService.sharedCache();
       // The cached snapshot can predate a key written by another isolate
       // (background downloader, first-run migration); generating "fresh" over
@@ -190,10 +279,10 @@ class CredentialVault {
       // that would orphan every ciphertext in the database (#1732).
       final stored = readTolerantString(prefs, _keyPref);
       if (stored != null && stored.isNotEmpty) {
-        return SecretKey(base64Decode(stored));
+        return SecretKey(await _openStoredKey(prefs, stored));
       }
-      final bytes = List<int>.generate(32, (_) => Random.secure().nextInt(256));
-      await prefs.setString(_keyPref, base64Encode(bytes));
+      final bytes = _freshKeyBytes();
+      await prefs.setString(_keyPref, await _storedForm(bytes));
       try {
         await prefs.reloadCache();
       } catch (e) {
@@ -205,7 +294,7 @@ class CredentialVault {
       // the next launch. Surface it for repair instead (#1732).
       final settled = readTolerantString(prefs, _keyPref);
       if (settled != null && settled.isNotEmpty) {
-        return SecretKey(base64Decode(settled));
+        return SecretKey(await _openStoredKey(prefs, settled));
       }
       return SecretKey(bytes);
     }();

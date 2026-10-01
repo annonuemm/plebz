@@ -13,6 +13,9 @@ import 'package:plezy/models/seerr/seerr_session.dart';
 import 'package:plezy/services/credential_vault.dart';
 import 'package:plezy/services/base_shared_preferences_service.dart';
 import 'package:plezy/services/file_picker_service.dart';
+import 'package:plezy/services/backup_crypto.dart';
+import 'package:plezy/services/credential_fields.dart';
+import 'package:plezy/services/iptv/iptv_source.dart' show iptvSealedFields;
 import 'package:plezy/services/settings_export_service.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/services/trackers/tracker_constants.dart';
@@ -45,6 +48,11 @@ SeerrSession _seerrSession(String secret) => SeerrSession(
 );
 
 void main() {
+  // These are about the backup's contents and flow; the stretching itself is
+  // tested in backup_crypto_test.dart at its real cost.
+  setUpAll(() => BackupCrypto.debugIterations = BackupCrypto.minIterations);
+  tearDownAll(() => BackupCrypto.debugIterations = null);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late _FakeFilePicker picker;
@@ -1149,7 +1157,14 @@ void main() {
 
       expect(result!.connectionsImported, 1);
       expect(restored.single.id, 'jf-1');
-      expect(prefs.getString('user_profile-a_iptv_sources'), '[{"name":"Anbieter","password":"geheim"}]');
+      // Restored sealed with this device's vault, and opening to the same password.
+      final restoredSources = prefs.getString('user_profile-a_iptv_sources')!;
+      expect(restoredSources, isNot(contains('geheim')));
+      final opened = await CredentialFields.reveal(
+        Map<String, Object?>.from((jsonDecode(restoredSources) as List).single as Map),
+        iptvSealedFields,
+      );
+      expect(opened.json, {'name': 'Anbieter', 'password': 'geheim'});
       expect(prefs.getBool('enable_hdr'), isTrue);
     });
 

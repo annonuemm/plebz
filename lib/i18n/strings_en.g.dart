@@ -6329,6 +6329,15 @@ class Translations$addServer$en {
 
 	/// en: 'The server redirected to an unsupported URL. Enter the final ${product} URL directly.'
 	String redirectUnsupportedEnterFinal({required Object product}) => 'The server redirected to an unsupported URL. Enter the final ${product} URL directly.';
+
+	/// en: 'Unencrypted connection'
+	String get plainHttpTitle => 'Unencrypted connection';
+
+	/// en: '${host} is only reachable over unencrypted HTTP and is not in your home network. Your password and access token would cross the internet readable. HTTPS is better, for example through a reverse proxy.'
+	String plainHttpMessage({required Object host}) => '${host} is only reachable over unencrypted HTTP and is not in your home network. Your password and access token would cross the internet readable. HTTPS is better, for example through a reverse proxy.';
+
+	/// en: 'Connect anyway'
+	String get plainHttpContinue => 'Connect anyway';
 }
 
 // Path: iptv
@@ -8297,6 +8306,57 @@ class Translations$companionRemote$pairing$en {
 
 	/// en: 'Failed to connect: ${error}'
 	String failedToConnect({required Object error}) => 'Failed to connect: ${error}';
+
+	/// en: 'Pair a device'
+	String get codeTitle => 'Pair a device';
+
+	/// en: '${name} wants to control Plebz here. Enter this code on that device:'
+	String codeMessage({required Object name}) => '${name} wants to control Plebz here. Enter this code on that device:';
+
+	/// en: 'The code is valid for two minutes.'
+	String get codeValidFor => 'The code is valid for two minutes.';
+
+	/// en: 'Enter code'
+	String get enterCodeTitle => 'Enter code';
+
+	/// en: '${name} is now showing an eight-digit code. Enter it here.'
+	String enterCodeMessage({required Object name}) => '${name} is now showing an eight-digit code. Enter it here.';
+
+	/// en: 'Code'
+	String get codeLabel => 'Code';
+
+	/// en: 'The code has eight digits.'
+	String get codeInvalid => 'The code has eight digits.';
+
+	/// en: 'The code doesn't match. Connect again to get a new one.'
+	String get wrongCode => 'The code doesn\'t match. Connect again to get a new one.';
+
+	/// en: 'Pairing cancelled'
+	String get cancelled => 'Pairing cancelled';
+
+	/// en: 'The device is pairing another one right now. Try again in a moment.'
+	String get busy => 'The device is pairing another one right now. Try again in a moment.';
+
+	/// en: 'The code has expired. Connect again.'
+	String get expired => 'The code has expired. Connect again.';
+
+	/// en: 'This device is no longer paired. Connect again to pair it.'
+	String get pairingRequired => 'This device is no longer paired. Connect again to pair it.';
+
+	/// en: 'The device runs an older Plebz. Update it to pair.'
+	String get hostTooOld => 'The device runs an older Plebz. Update it to pair.';
+
+	/// en: 'Paired devices'
+	String get pairedDevices => 'Paired devices';
+
+	/// en: 'No device paired yet. A code appears here on the first connection.'
+	String get noPairedDevices => 'No device paired yet. A code appears here on the first connection.';
+
+	/// en: 'Remove'
+	String get unpair => 'Remove';
+
+	/// en: '${name} is no longer paired'
+	String unpaired({required Object name}) => '${name} is no longer paired';
 }
 
 // Path: companionRemote.remote
@@ -10587,6 +10647,23 @@ extension on Translations {
 			'companionRemote.pairing.sessionNotFound' => 'Device not found. Make sure Plebz is running on the host.',
 			'companionRemote.pairing.authFailed' => 'Authentication failed. Both devices need the same Plex account.',
 			'companionRemote.pairing.failedToConnect' => ({required Object error}) => 'Failed to connect: ${error}',
+			'companionRemote.pairing.codeTitle' => 'Pair a device',
+			'companionRemote.pairing.codeMessage' => ({required Object name}) => '${name} wants to control Plebz here. Enter this code on that device:',
+			'companionRemote.pairing.codeValidFor' => 'The code is valid for two minutes.',
+			'companionRemote.pairing.enterCodeTitle' => 'Enter code',
+			'companionRemote.pairing.enterCodeMessage' => ({required Object name}) => '${name} is now showing an eight-digit code. Enter it here.',
+			'companionRemote.pairing.codeLabel' => 'Code',
+			'companionRemote.pairing.codeInvalid' => 'The code has eight digits.',
+			'companionRemote.pairing.wrongCode' => 'The code doesn\'t match. Connect again to get a new one.',
+			'companionRemote.pairing.cancelled' => 'Pairing cancelled',
+			'companionRemote.pairing.busy' => 'The device is pairing another one right now. Try again in a moment.',
+			'companionRemote.pairing.expired' => 'The code has expired. Connect again.',
+			'companionRemote.pairing.pairingRequired' => 'This device is no longer paired. Connect again to pair it.',
+			'companionRemote.pairing.hostTooOld' => 'The device runs an older Plebz. Update it to pair.',
+			'companionRemote.pairing.pairedDevices' => 'Paired devices',
+			'companionRemote.pairing.noPairedDevices' => 'No device paired yet. A code appears here on the first connection.',
+			'companionRemote.pairing.unpair' => 'Remove',
+			'companionRemote.pairing.unpaired' => ({required Object name}) => '${name} is no longer paired',
 			'companionRemote.remote.disconnectConfirm' => 'Do you want to disconnect from the remote session?',
 			'companionRemote.remote.reconnecting' => 'Reconnecting...',
 			'companionRemote.remote.attemptOf' => ({required Object current}) => 'Attempt ${current} of 5',
@@ -10653,6 +10730,8 @@ extension on Translations {
 			'performanceOverlay.buffer' => 'Buffer',
 			'performanceOverlay.app' => 'App',
 			'performanceOverlay.decoder' => 'Decoder',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.rawDecoder' => 'Raw Decoder',
 			'performanceOverlay.tunneling' => 'Tunneling',
 			'performanceOverlay.passthrough' => 'Passthrough',
@@ -10670,8 +10749,6 @@ extension on Translations {
 			'performanceOverlay.renderFps' => 'Render FPS',
 			'performanceOverlay.displayFps' => 'Display FPS',
 			'performanceOverlay.avSync' => 'A/V Sync',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.dropped' => 'Dropped',
 			'performanceOverlay.dvRpus' => 'DV RPUs',
 			'performanceOverlay.dvRpuAverage' => 'DV RPU Avg',
@@ -10975,6 +11052,9 @@ extension on Translations {
 			'addServer.redirectDifferentHost' => ({required Object product}) => 'The server redirected to a different host. Enter the final ${product} URL directly.',
 			'addServer.redirectInsecure' => 'The server redirected from HTTPS to an insecure URL',
 			'addServer.redirectUnsupportedEnterFinal' => ({required Object product}) => 'The server redirected to an unsupported URL. Enter the final ${product} URL directly.',
+			'addServer.plainHttpTitle' => 'Unencrypted connection',
+			'addServer.plainHttpMessage' => ({required Object host}) => '${host} is only reachable over unencrypted HTTP and is not in your home network. Your password and access token would cross the internet readable. HTTPS is better, for example through a reverse proxy.',
+			'addServer.plainHttpContinue' => 'Connect anyway',
 			'iptv.title' => 'IPTV',
 			'iptv.hubSubtitle' => 'Playlists and Xtream panels appear in Live TV alongside your servers. They cannot record — that needs a server doing the recording.',
 			'iptv.addPlaylist' => 'Add M3U playlist',

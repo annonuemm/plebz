@@ -10,6 +10,7 @@ import '../utils/endpoint_race.dart';
 import '../utils/log_redaction_manager.dart';
 import '../utils/media_server_http_client.dart';
 import '../utils/media_server_timeouts.dart';
+import '../utils/network_locality.dart';
 import '../utils/url_utils.dart';
 
 /// Result of a successful MediaBrowser server URL probe (`/System/Info/Public`).
@@ -478,11 +479,12 @@ class JellyfinEndpointDiscovery {
   static List<String> expandInputToBaseUrls(
     String input, {
     MediaBrowserDialect dialect = MediaBrowserDialect.jellyfin,
-  }) => expandBaseUrlCandidates(input, guesses: _schemelessGuesses(dialect));
+  }) => expandBaseUrlCandidates(input, guesses: guessesForUserInput(input, _schemelessGuesses(dialect)));
 
   /// Ordered guesses for a schemeless entry: the default HTTP install port
   /// first (the overwhelmingly common LAN case), then TLS on the default port
-  /// and on the dialect's TLS ports, then plain HTTP on port 80.
+  /// and on the dialect's TLS ports, then plain HTTP on port 80. Outside the
+  /// home network only the TLS ones are tried ([guessesForUserInput]).
   static List<BaseUrlGuess> _schemelessGuesses(MediaBrowserDialect dialect) => [
     (scheme: 'http', port: defaultPort),
     (scheme: 'https', port: null),

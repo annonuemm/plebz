@@ -357,6 +357,21 @@ void main() {
       expect(result, 'probe https://192-x-x-50.[REDACTED].plex.direct:32400 failed');
     });
 
+    test('redacts the bare host an HTTP error prints without a scheme', () {
+      LogRedactionManager.registerServerUrl('https://6948-42400.proxy.example.me:443');
+      final result = LogRedactionManager.redact(
+        'Failed to get DVRs\nError: MediaServerHttpException(unknown: HTTP 403: 6948-42400.proxy.example.me/livetv/dvrs)',
+      );
+      expect(result, isNot(contains('proxy.example.me')));
+      expect(result, contains('HTTP 403: [REDACTED_URL]/livetv/dvrs'));
+    });
+
+    test('leaves a single-label host to the URL forms, not every bare word', () {
+      LogRedactionManager.registerServerUrl('http://nas:32400');
+      expect(LogRedactionManager.redact('GET http://nas:32400/library'), isNot(contains('nas')));
+      expect(LogRedactionManager.redact('the nas answered'), 'the nas answered');
+    });
+
     test('redacts the mpv-escaped form used in option-value logs', () {
       LogRedactionManager.registerServerUrl('https://server.example.com');
       // mpv echoes list options like sub-files with ':' escaped as '\:'.
@@ -429,5 +444,21 @@ void main() {
       final result = LogRedactionManager.redact('TOK VAL https://example.com');
       expect(result, 'TOK VAL https://example.com');
     });
+  });
+
+  test('an IPTV playlist link keeps neither its login nor its provider', () {
+    LogRedactionManager.clearTrackedValues();
+    addTearDown(LogRedactionManager.clearTrackedValues);
+    // The field rule alone: a username is masked like a password.
+    expect(
+      LogRedactionManager.redact('GET http://192.168.1.2/get.php?username=anna&password=geheim&type=m3u'),
+      allOf(isNot(contains('anna')), isNot(contains('geheim'))),
+    );
+    // A registered playlist link is masked whole, provider host included.
+    LogRedactionManager.registerServerUrl('http://tv.provider.example/playlist/anna/geheim.m3u');
+    final line = LogRedactionManager.redact(
+      'IPTV Mein IPTV: http://tv.provider.example/playlist/anna/geheim.m3u returned 403',
+    );
+    expect(line, allOf(isNot(contains('anna')), isNot(contains('geheim')), isNot(contains('tv.provider.example'))));
   });
 }

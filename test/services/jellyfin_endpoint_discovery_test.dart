@@ -133,13 +133,13 @@ void main() {
     test('races expanded bare host candidates', () async {
       final discovery = JellyfinEndpointDiscovery(
         testHttpClientFactory: () => MockClient((req) async {
-          if (req.url.scheme == 'http' && req.url.host == 'jf.example.com' && req.url.port == 8096) {
+          if (req.url.scheme == 'http' && req.url.host == 'jf.local' && req.url.port == 8096) {
             return _info(id: 'srv-1');
           }
           throw TimeoutException('offline');
         }),
       );
-      final input = JellyfinEndpointDiscovery.buildUserInputCandidates(['jf.example.com']);
+      final input = JellyfinEndpointDiscovery.buildUserInputCandidates(['jf.local']);
 
       final result = await discovery.raceEndpoints(
         input.probeBaseUrls,
@@ -147,8 +147,8 @@ void main() {
         baseUrlValidationGroups: input.validationBaseUrlGroups,
       );
 
-      expect(result.activeBaseUrl, 'http://jf.example.com:8096');
-      expect(result.baseUrls, ['http://jf.example.com:8096']);
+      expect(result.activeBaseUrl, 'http://jf.local:8096');
+      expect(result.baseUrls, ['http://jf.local:8096']);
     });
 
     test('does not persist failed shorthand guesses as failover URLs', () async {

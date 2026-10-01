@@ -7,9 +7,12 @@ import '../credential_vault.dart';
 /// Per-Plex-profile persistence for the Seerr session, mirroring
 /// `TrackerAccountStore`'s `user_{uuid}_{baseKey}` scoping.
 ///
-/// The password ([SeerrSession.secret]) is CredentialVault-protected at the
-/// store boundary; a failed decrypt degrades to an empty secret (the session
-/// keeps working until its cookie expires) rather than dropping the session.
+/// The password ([SeerrSession.secret]) and the session cookie
+/// ([SeerrSession.cookie], as good as a sign-in while it lasts) are
+/// CredentialVault-protected at the store boundary. A failed decrypt of the
+/// password degrades to an empty secret (the session keeps working until its
+/// cookie expires); of the cookie, to an empty one (the password signs in
+/// again). A cookie stored before sealing began is sealed on its next load.
 class SeerrSessionStore {
   static const String _baseKey = 'seerr_session';
 
@@ -30,19 +33,26 @@ class SeerrSessionStore {
     if (raw == null) return null;
     try {
       final session = SeerrSession.decode(raw);
-      if (session.secret.isEmpty) return session;
-      return session.copyWith(secret: await CredentialVault.reveal(session.secret) ?? '');
+      final cookieWasPlain = session.cookie.isNotEmpty && !CredentialVault.isProtected(session.cookie);
+      final opened = session.copyWith(
+        secret: session.secret.isEmpty ? '' : await CredentialVault.reveal(session.secret) ?? '',
+        cookie: session.cookie.isEmpty ? '' : await CredentialVault.reveal(session.cookie) ?? '',
+      );
+      if (cookieWasPlain) await prefs.setString(_scopedKey(userUuid), (await _seal(opened)).encode());
+      return opened;
     } catch (_) {
       return null;
     }
   });
 
+  static Future<SeerrSession> _seal(SeerrSession session) async => session.copyWith(
+    secret: session.secret.isEmpty ? '' : await CredentialVault.protect(session.secret),
+    cookie: session.cookie.isEmpty ? '' : await CredentialVault.protect(session.cookie),
+  );
+
   Future<void> save(String userUuid, SeerrSession session) => _persistence.run(() async {
     final prefs = await BaseSharedPreferencesService.sharedCache();
-    final protected = session.secret.isEmpty
-        ? session
-        : session.copyWith(secret: await CredentialVault.protect(session.secret));
-    await prefs.setString(_scopedKey(userUuid), protected.encode());
+    await prefs.setString(_scopedKey(userUuid), (await _seal(session)).encode());
   });
 
   Future<void> clear(String userUuid) => _persistence.run(() async {

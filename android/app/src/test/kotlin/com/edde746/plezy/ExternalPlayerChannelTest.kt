@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
+import java.nio.file.Files
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -163,6 +165,50 @@ class ExternalPlayerChannelTest {
 
     override fun notImplemented() {
       completed = true
+    }
+  }
+
+  @Test
+  fun onlyTheDownloadsFolderIsSharedFromPrivateStorage() {
+    val activity = Robolectric.buildActivity(Activity::class.java).get()
+    val channel = ExternalPlayerChannel(activity)
+    val downloads = File(activity.getDir("flutter", android.content.Context.MODE_PRIVATE), "downloads")
+    val video = File(downloads, "srv/42/video.mkv").apply { parentFile!!.mkdirs(); writeText("v") }
+    val prefs = File(activity.applicationInfo.dataDir, "shared_prefs/FlutterSharedPreferences.xml")
+      .apply { parentFile!!.mkdirs(); writeText("secret") }
+    val database = File(activity.filesDir, "app.db").apply { parentFile!!.mkdirs(); writeText("db") }
+    val stepsOut = File(downloads, "../../shared_prefs/FlutterSharedPreferences.xml")
+
+    assertTrue(channel.isShareableFile(video))
+    assertFalse(channel.isShareableFile(prefs))
+    assertFalse(channel.isShareableFile(database))
+    assertFalse(channel.isShareableFile(stepsOut))
+    assertFalse(channel.isShareableFile(File(downloads.parentFile, "downloads-old/video.mkv")))
+  }
+
+  @Test
+  fun aLinkInTheDownloadsFolderIsJudgedByWhereItPoints() {
+    val activity = Robolectric.buildActivity(Activity::class.java).get()
+    val channel = ExternalPlayerChannel(activity)
+    val downloads = File(activity.getDir("flutter", android.content.Context.MODE_PRIVATE), "downloads").apply { mkdirs() }
+    val prefs = File(activity.applicationInfo.dataDir, "shared_prefs/FlutterSharedPreferences.xml")
+      .apply { parentFile!!.mkdirs(); writeText("secret") }
+    val link = File(downloads, "video.mkv")
+    Files.createSymbolicLink(link.toPath(), prefs.toPath())
+
+    assertFalse(channel.isShareableFile(link))
+  }
+
+  @Test
+  fun aCustomFolderOutsidePrivateStorageStaysShareable() {
+    val activity = Robolectric.buildActivity(Activity::class.java).get()
+    val channel = ExternalPlayerChannel(activity)
+    val custom = Files.createTempDirectory("plebz-custom").toFile()
+    try {
+      val video = File(custom, "Movies/Film (2020)/Film (2020) [1a2b3c4d].mkv").apply { parentFile!!.mkdirs(); writeText("v") }
+      assertTrue(channel.isShareableFile(video))
+    } finally {
+      custom.deleteRecursively()
     }
   }
 }

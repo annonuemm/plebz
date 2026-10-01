@@ -30,6 +30,7 @@ import '../../theme/mono_tokens.dart';
 import '../../utils/app_logger.dart';
 import '../../utils/device_identity.dart';
 import '../../utils/platform_detector.dart';
+import '../../widgets/plain_http_warning.dart';
 import '../../widgets/focused_scroll_scaffold.dart';
 import '../../widgets/loading_indicator_box.dart';
 import '../../widgets/quick_connect_code_panel.dart';
@@ -239,6 +240,8 @@ class _AddJellyfinScreenState extends State<AddJellyfinScreen>
           baseUrlsToPersist: input.explicitBaseUrls,
           baseUrlValidationGroups: input.validationBaseUrlGroups,
         );
+        // Plain HTTP to a server outside the home network: only knowingly.
+        if (!mounted || !await confirmPlainHttpIfNeeded(context, endpoint.activeBaseUrl)) return false;
         final serverDialect = endpoint.serverInfo.dialect ?? widget.dialect;
         final qcEnabled = widget.dialect.supportsQuickConnect && serverDialect.supportsQuickConnect
             ? await auth.isQuickConnectEnabled(endpoint.activeBaseUrl)

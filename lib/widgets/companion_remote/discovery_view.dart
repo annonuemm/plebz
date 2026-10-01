@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
@@ -13,9 +14,11 @@ import '../../mixins/mounted_set_state_mixin.dart';
 import '../../providers/companion_remote_provider.dart';
 import '../../services/base_peer_service.dart';
 import '../../services/companion_remote/companion_remote_host_controller.dart';
+import '../../services/companion_remote/remote_pairing_handshake.dart';
 import '../../services/settings_service.dart';
 import '../../theme/mono_tokens.dart';
 import '../../utils/app_logger.dart';
+import '../../utils/dialogs.dart';
 
 import '../loading_indicator_box.dart';
 import '../app_icon.dart';
@@ -72,8 +75,27 @@ class _DiscoveryViewState extends State<DiscoveryView> with ControllerDisposerMi
   void initState() {
     super.initState();
     _provider = context.read<CompanionRemoteProvider>();
+    // A host this phone is not paired with shows a code; it is typed here.
+    _provider.pairingCodeRequester = _askPairingCode;
     unawaited(_loadSavedManualHostAddress());
     _initCryptoAndDiscover();
+  }
+
+  Future<String?> _askPairingCode(String hostName) {
+    if (!mounted) return Future.value();
+    return showTextInputDialog(
+      context,
+      title: t.companionRemote.pairing.enterCodeTitle,
+      message: t.companionRemote.pairing.enterCodeMessage(
+        name: hostName.isEmpty ? t.companionRemote.unknownDevice : hostName,
+      ),
+      labelText: t.companionRemote.pairing.codeLabel,
+      hintText: '1234 5678',
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9 ]')), LengthLimitingTextInputFormatter(9)],
+      validator: (value) =>
+          RemotePairingHandshake.normalizeCode(value) == null ? t.companionRemote.pairing.codeInvalid : null,
+    );
   }
 
   Future<void> _loadSavedManualHostAddress() async {
@@ -135,6 +157,7 @@ class _DiscoveryViewState extends State<DiscoveryView> with ControllerDisposerMi
 
   @override
   void dispose() {
+    if (_provider.pairingCodeRequester == _askPairingCode) _provider.pairingCodeRequester = null;
     _discoverySubscription?.cancel();
     _searchTimeout?.cancel();
     _provider.stopDiscovery();

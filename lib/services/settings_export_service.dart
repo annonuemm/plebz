@@ -17,8 +17,10 @@ import '../utils/formatters.dart';
 import '../utils/platform_detector.dart';
 import '../models/seerr/seerr_session.dart';
 import 'backup_crypto.dart';
+import 'credential_fields.dart';
 import 'credential_vault.dart';
 import 'file_picker_service.dart';
+import 'iptv/iptv_source.dart' show iptvSealedFields;
 import '../connection/connection.dart';
 import '../media/media_backend.dart';
 import 'sensitive_prefs.dart';
@@ -260,12 +262,45 @@ class SettingsExportService {
   /// that key stays here — copied verbatim it would be unreadable on the new
   /// device, which would silently cost the password while the session limped
   /// on until its cookie expired. The file is encrypted either way.
-  static Future<void> revealSecretsForExport(Map<String, dynamic> exportedPrefs) =>
-      _mapSeerrSecret(exportedPrefs, CredentialVault.reveal);
+  ///
+  /// The same goes for the Seerr session cookie and for an IPTV source's
+  /// password and playlist and guide addresses, all sealed at rest.
+  static Future<void> revealSecretsForExport(Map<String, dynamic> exportedPrefs) async {
+    await _mapSeerrSecret(exportedPrefs, CredentialVault.reveal);
+    await _mapIptvSecrets(exportedPrefs, reveal: true);
+  }
 
   /// The other direction: seal it with the vault of the device restoring it.
-  static Future<void> protectSecretsForImport(Map<String, dynamic> exportedPrefs) =>
-      _mapSeerrSecret(exportedPrefs, (secret) async => CredentialVault.protect(secret));
+  static Future<void> protectSecretsForImport(Map<String, dynamic> exportedPrefs) async {
+    await _mapSeerrSecret(exportedPrefs, (secret) async => CredentialVault.protect(secret));
+    await _mapIptvSecrets(exportedPrefs, reveal: false);
+  }
+
+  /// The IPTV sources' sealed fields, opened for the file or sealed again
+  /// from it. A value the vault cannot open is left out: that source then asks
+  /// for it again, the others travel whole.
+  static Future<void> _mapIptvSecrets(Map<String, dynamic> exportedPrefs, {required bool reveal}) async {
+    final entry = exportedPrefs[iptvSourcesBaseKey];
+    if (entry is! Map) return;
+    final raw = entry['value'];
+    if (raw is! String || raw.isEmpty) return;
+    try {
+      final list = jsonDecode(raw);
+      if (list is! List) return;
+      entry['value'] = jsonEncode([
+        for (final source in list)
+          if (source is Map)
+            reveal
+                ? (await CredentialFields.reveal(Map<String, Object?>.from(source), iptvSealedFields)).json
+                : await CredentialFields.protect(Map<String, Object?>.from(source), iptvSealedFields)
+          else
+            source,
+      ]);
+    } catch (error) {
+      appLogger.w('Backup: the IPTV sources could not be re-keyed', error: error);
+      exportedPrefs.remove(iptvSourcesBaseKey);
+    }
+  }
 
   static Future<void> _mapSeerrSecret(
     Map<String, dynamic> exportedPrefs,
@@ -277,11 +312,12 @@ class SettingsExportService {
     if (raw is! String || raw.isEmpty) return;
     try {
       final session = SeerrSession.decode(raw);
-      if (session.secret.isEmpty) return;
-      final mapped = await transform(session.secret);
       // An unreadable secret costs the password, not the session: the cookie
-      // still signs in until it expires.
-      entry['value'] = session.copyWith(secret: mapped ?? '').encode();
+      // still signs in until it expires (and an unreadable cookie, the other
+      // way round).
+      final secret = session.secret.isEmpty ? '' : await transform(session.secret) ?? '';
+      final cookie = session.cookie.isEmpty ? '' : await transform(session.cookie) ?? '';
+      entry['value'] = session.copyWith(secret: secret, cookie: cookie).encode();
     } catch (error) {
       appLogger.w('Backup: the Seerr session could not be re-keyed', error: error);
       exportedPrefs.remove(seerrSessionBaseKey);

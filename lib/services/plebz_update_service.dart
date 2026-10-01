@@ -115,11 +115,21 @@ class PlebzUpdateService {
     return PlebzRelease(
       tag: tag,
       title: title,
-      notes: json['body'] is String ? json['body'] as String : '',
+      notes: notesForApp(json['body'] is String ? json['body'] as String : ''),
       build:
           buildNumberOf(tag) ?? buildNumberOf(title) ?? assets.map((a) => buildNumberOf(a.name)).nonNulls.firstOrNull,
       assets: assets,
     );
+  }
+
+  /// The part of a release body the app shows. GitHub shows the English
+  /// notes; the German ones the app speaks follow them inside an HTML comment
+  /// (`<!-- de` … `-->`, see scripts/whats_new_section.py), which GitHub does
+  /// not render. Without that comment the body is shown as it stands: older
+  /// releases are German throughout, 1.3.0's is English alone.
+  static String notesForApp(String body) {
+    final german = RegExp(r'<!--[ \t]*de[ \t]*\r?\n([\s\S]*?)-->').firstMatch(body);
+    return german == null ? body : german.group(1)!.trim();
   }
 
   static String? _sha256Of(Object? digest) {

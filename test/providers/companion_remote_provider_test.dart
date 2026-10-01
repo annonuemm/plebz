@@ -1016,6 +1016,7 @@ class _FakeCompanionRemotePeerService extends CompanionRemotePeerService {
     List<RemoteAuthContext> authContexts, {
     String? authContextId,
     String expectedHostClientId = '',
+    Future<String?> Function(String hostName)? requestPairingCode,
   }) async {
     if (!joinStarted.isCompleted) joinStarted.complete();
     final gate = joinGate;
@@ -1032,6 +1033,7 @@ class _FakeCompanionRemotePeerService extends CompanionRemotePeerService {
     List<RemoteAuthContext> authContexts, {
     String? authContextId,
     String expectedHostClientId = '',
+    Future<String?> Function(String hostName)? requestPairingCode,
   }) async {
     await joinSessionWithContexts(
       deviceName,

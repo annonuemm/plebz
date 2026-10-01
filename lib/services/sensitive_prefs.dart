@@ -47,6 +47,11 @@ const List<String> trackerSessionBaseKeys = <String>[
   'mdblist_session',
 ];
 
+/// The companion remote's pairings (`RemotePairingStore`): one random key per
+/// paired device, vault-protected, and the install's own remote device id.
+/// Device-level, not profile-scoped, and never part of a settings export.
+const String companionRemotePairingsPref = 'companion_remote_pairings';
+
 /// Unscoped base key used by `SeerrSessionStore`.
 const String seerrSessionBaseKey = 'seerr_session';
 
@@ -89,4 +94,7 @@ bool isSeerrSessionPrefKey(String key) => profileScopedCredentialBaseKey(key) ==
 /// Whether [key] holds a credential and must never be dropped or exported
 /// without an explicit, informed user decision.
 bool isSensitivePrefKey(String key) =>
-    key == credentialVaultKeyPref || key == legacyPlexTokenPref || profileScopedCredentialBaseKey(key) != null;
+    key == credentialVaultKeyPref ||
+    key == legacyPlexTokenPref ||
+    key == companionRemotePairingsPref ||
+    profileScopedCredentialBaseKey(key) != null;

@@ -220,7 +220,18 @@ class DownloadStorageService {
 
   Future<Directory> getMediaDirectory(ServerId serverId, String ratingKey) async {
     final baseDir = await getDownloadsDirectory();
-    return _ensureDirectoryExists(Directory(path.join(baseDir.path, serverId, ratingKey)));
+    return _ensureDirectoryExists(Directory(path.join(baseDir.path, _idSegment(serverId), _idSegment(ratingKey))));
+  }
+
+  /// [id] as one folder name. A server's or an item's id names a folder here
+  /// and is never a path: one that would step out of the downloads folder
+  /// (`..`, a separator) comes from a server gone wrong or a hostile one, and
+  /// the download fails rather than write somewhere else.
+  static String _idSegment(String id) {
+    if (id.isEmpty || id == '.' || id == '..' || id.contains(RegExp(r'[/\\\x00]'))) {
+      throw DownloadStorageException('An id is not a single folder name', id, ArgumentError.value(id, 'id'));
+    }
+    return id;
   }
 
   Future<String> getVideoFilePath(ServerId serverId, String ratingKey, String extension) async {
@@ -602,7 +613,7 @@ class DownloadStorageService {
     if (metadata.isTrack) {
       return (components: getTrackSafPathComponents(metadata), fileName: getTrackSafFileName(metadata, extension));
     }
-    return (components: [serverId!, metadata.id], fileName: 'video.$extension');
+    return (components: [_idSegment(serverId!), _idSegment(metadata.id)], fileName: 'video.$extension');
   }
 
   bool isSafUri(String storedPath) {

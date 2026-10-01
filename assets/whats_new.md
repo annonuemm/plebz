@@ -1,19 +1,43 @@
 # Was ist neu in Plebz
 
 <!--
-Die Notizen, die Plebz nach einem Update, im Update-Dialog und unter
-Einstellungen → „Was ist neu“ zeigt. Jede Version ist ein Abschnitt,
-neueste oben:
+The notes Plebz shows after an update, in the update dialog and under
+Settings → "Was ist neu". One section per version, newest first:
 
   ## 1.2.0 (Build 559)
-  - Punkt
-  ### Unterüberschrift
-  **fett** geht auch.
+  - Item
+  ### Subheading
+  **bold** works too.
 
-Erst die Build-Nummer in der Überschrift macht einen Abschnitt sichtbar;
-ein Entwurf ohne sie bleibt in der App unsichtbar. Der Text eines Abschnitts
-ist wortgleich der Text des GitHub-Releases.
+Only the build number in the heading makes a section visible; a draft
+without one stays hidden in the app. The GitHub release carries the English
+notes from CHANGELOG.md, with this German section hidden behind them in an
+HTML comment; the app's update dialog shows that German part
+(scripts/whats_new_section.py --release-body).
 -->
+
+## 1.3.0 (Build 572)
+
+**Plebz 1.3.0 ist ein Sicherheits-Update.**
+
+### Fernbedienung
+- Ein Handy muss jetzt einmal mit einem achtstelligen Code gekoppelt werden, den das gesteuerte Gerät anzeigt. Bisher reichte dasselbe Konto, und der Schlüssel ließ sich aus öffentlich abrufbaren Server-Daten berechnen.
+- Die Kopplung läuft über CPace: Der Code kann weder mitgehört noch durchprobiert werden. Gekoppelte Handys bleiben gekoppelt und lassen sich im Fernbedienungs-Fenster entfernen.
+- Verbindungen aus einem Webbrowser werden abgelehnt, damit keine Webseite im Heimnetz die Fernbedienung erreicht.
+- **Wichtig:** Handy und gesteuertes Gerät brauchen beide diese Version.
+
+### Zugangsdaten und Verbindungen
+- Trakt- und MDBList-Anmeldungen, IPTV-Passwörter und Playlist-Adressen sowie die Seerr-Sitzung werden verschlüsselt gespeichert. Auf Android liegt der Schlüssel dafür im Android-Keystore.
+- Android nimmt die App-Daten nicht mehr in die automatische Google-Sicherung auf. Für einen Geräteumzug gibt es die eigene, passwortgeschützte Sicherung unter Alle Einstellungen → Sicherung.
+- Sicherungen schützen ihr Passwort stärker. Ältere Sicherungen lassen sich weiter einlesen.
+- Jellyfin-, Emby- und Seerr-Server im Internet: Ohne „https://“ eingetragen, versucht Plebz nur noch verschlüsselte Verbindungen. Unverschlüsseltes HTTP ins Internet gibt es nur noch nach einer Warnung.
+- Protokolle verbergen jetzt auch Benutzernamen, IPTV-Adressen und Serveradressen in Fehlermeldungen.
+
+### Wiedergabe und Dateien
+- Die eingebaute FFmpeg-Bibliothek ist auf Version 8.0.3 aktualisiert. Sie schließt Sicherheitslücken, die ein präparierter Stream oder eine präparierte Datei ausnutzen könnte.
+- IPTV: Playlisten und EPG-Daten werden nur noch bis 256 MB gelesen. Eine fehlerhafte oder absichtlich aufgeblähte Datei bringt die App so nicht mehr zum Absturz.
+- Downloads: Ein Server kann Dateien nicht mehr außerhalb des Download-Ordners ablegen lassen.
+- Externe Player bekommen nur noch heruntergeladene Dateien, nichts anderes aus dem Speicher der App.
 
 ## 1.2.3 (Build 567)
 

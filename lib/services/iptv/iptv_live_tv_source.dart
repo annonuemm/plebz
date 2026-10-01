@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:io';
+import 'dart:typed_data' show BytesBuilder;
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -48,6 +49,7 @@ class IptvLiveTvSource implements LiveTvSupport {
     Future<LiveTvChannelLayout> Function()? channelLayout,
     void Function()? onLogosLearned,
     DateTime Function() now = DateTime.now,
+    int maxResponseBytes = defaultMaxResponseBytes,
   }) : _mergeDuplicates = mergeDuplicates,
        _channelLayout = channelLayout,
        _onLogosLearned = onLogosLearned,
@@ -58,11 +60,19 @@ class IptvLiveTvSource implements LiveTvSupport {
        _guideCacheTtl = guideCacheTtl,
        _diskCache = diskCache,
        _diskCacheMaxAge = diskCacheMaxAge,
-       _now = now;
+       _now = now,
+       _maxResponseBytes = maxResponseBytes;
+
+  /// The most a playlist, guide or panel answer may take, as it arrives and
+  /// again once unpacked. Far above any real guide — one that size would not
+  /// fit in a TV box's memory anyway — but it stops a gzip bomb, or a stream
+  /// address entered as a playlist, from growing until the app is killed.
+  static const defaultMaxResponseBytes = 256 * 1024 * 1024;
 
   final IptvSource source;
   final http.Client _http;
   final bool _ownsHttpClient;
+  final int _maxResponseBytes;
   final FavoriteChannelsRepository _favorites;
   final Duration _channelCacheTtl;
   final Duration _guideCacheTtl;
@@ -830,14 +840,26 @@ class IptvLiveTvSource implements LiveTvSupport {
 
   Future<String?> _get(String url) async {
     try {
-      final response = await _http.get(Uri.parse(url));
+      final response = await _http.send(http.Request('GET', Uri.parse(url)));
       if (response.statusCode < 200 || response.statusCode >= 300) {
+        // Not read: an error page can be as large as anything else.
+        await response.stream.listen(null).cancel();
         appLogger.w('IPTV ${source.name}: $url returned ${response.statusCode}');
         return null;
       }
+      final bytes = BytesBuilder(copy: false);
+      await for (final chunk in response.stream) {
+        bytes.add(chunk);
+        if (bytes.length > _maxResponseBytes) {
+          appLogger.w('IPTV ${source.name}: $url is larger than ${_maxResponseBytes >> 20} MB; not read');
+          return null;
+        }
+      }
+      final unpacked = _maybeGunzip(bytes.takeBytes(), url);
+      if (unpacked == null) return null;
       // Providers serve playlists and guides without a charset; the bytes are
       // UTF-8 in practice, and malformed sequences must not lose the file.
-      return utf8.decode(_maybeGunzip(response.bodyBytes), allowMalformed: true);
+      return utf8.decode(unpacked, allowMalformed: true);
     } catch (error, stackTrace) {
       appLogger.w('IPTV ${source.name}: $url failed', error: error, stackTrace: stackTrace);
       return null;
@@ -848,11 +870,22 @@ class IptvLiveTvSource implements LiveTvSupport {
   /// `application/gzip` reaches us packed — the HTTP layer only unpacks what
   /// the server marks as `Content-Encoding: gzip`. Detected by the gzip magic
   /// number rather than the file extension, because providers name these
-  /// files whatever they like.
-  List<int> _maybeGunzip(Uint8List bytes) {
+  /// files whatever they like. Unpacked piece by piece, so a file that grows
+  /// past the size cap is dropped before it is whole in memory; null then.
+  List<int>? _maybeGunzip(Uint8List bytes, String url) {
     if (bytes.length < 2 || bytes[0] != 0x1f || bytes[1] != 0x8b) return bytes;
+    final unpacked = _CappedBytes(_maxResponseBytes);
     try {
-      return gzip.decode(bytes);
+      final input = gzip.decoder.startChunkedConversion(unpacked);
+      const step = 64 * 1024;
+      for (var start = 0; start < bytes.length; start += step) {
+        input.add(Uint8List.sublistView(bytes, start, math.min(start + step, bytes.length)));
+      }
+      input.close();
+      return unpacked.takeBytes();
+    } on _TooLarge {
+      appLogger.w('IPTV ${source.name}: $url unpacks to more than ${_maxResponseBytes >> 20} MB; not read');
+      return null;
     } catch (error) {
       appLogger.w('IPTV ${source.name}: a gzipped response could not be unpacked', error: error);
       return bytes;
@@ -1077,4 +1110,28 @@ class IptvPlaybackSession implements LiveTvPlaybackSession {
     appLogger.i('IPTV: falling back to variant ${next + 1} of ${variants.length}');
     return IptvPlaybackSession(variants: variants, variantIndex: next, program: program, catchup: catchup, now: _now);
   }
+}
+
+/// Where [IptvLiveTvSource._maybeGunzip] unpacks to: throws [_TooLarge] as
+/// soon as the output passes [limit].
+final class _CappedBytes implements Sink<List<int>> {
+  _CappedBytes(this.limit);
+
+  final int limit;
+  final _bytes = BytesBuilder();
+
+  @override
+  void add(List<int> chunk) {
+    _bytes.add(chunk);
+    if (_bytes.length > limit) throw const _TooLarge();
+  }
+
+  @override
+  void close() {}
+
+  Uint8List takeBytes() => _bytes.takeBytes();
+}
+
+final class _TooLarge implements Exception {
+  const _TooLarge();
 }

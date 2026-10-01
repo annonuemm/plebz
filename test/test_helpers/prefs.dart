@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/services/base_shared_preferences_service.dart';
+import 'package:plezy/services/credential_vault.dart';
 import 'package:plezy/services/prefs_recovery.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +19,7 @@ void resetSharedPreferencesForTest({Map<String, Object> initialAsync = const {}}
     SharedPreferences.resetStatic();
     SettingsService.resetForTesting();
     BaseSharedPreferencesService.resetForTesting();
+    CredentialVault.invalidateCache();
     PrefsRecovery.debugSetSupportedPlatformOverride(null);
   });
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -35,4 +37,8 @@ void resetSharedPreferencesForTest({Map<String, Object> initialAsync = const {}}
       ? InMemorySharedPreferencesAsync.empty()
       : InMemorySharedPreferencesAsync.withData(initialAsync);
   BaseSharedPreferencesService.resetForTesting();
+  // The vault's key lives in these preferences, and its loading is cached as
+  // a future: one begun in an earlier test's fake-async zone may never
+  // complete, and would hang every later seal or reveal.
+  CredentialVault.invalidateCache();
 }

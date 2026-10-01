@@ -664,6 +664,46 @@ void main() {
       expect(dir.path, p.join(downloads.path, 'srv-1', '42'));
     });
 
+    test('an id that is not a single folder name is refused, nothing is created', () async {
+      // Ids come from the server. A hostile one must not lead the download
+      // out of its folder, into the app's own data or anywhere else.
+      final settings = await SettingsService.getInstance();
+      final dss = DownloadStorageService.instance;
+      await dss.initialize(settings);
+
+      for (final id in ['..', '.', '', '../../shared_prefs', r'..\\evil', 'a/b', 'nul\x00byte']) {
+        await expectLater(
+          dss.getMediaDirectory(ServerId('srv-1'), id),
+          throwsA(isA<DownloadStorageException>()),
+          reason: 'item id "$id"',
+        );
+        // An empty one never gets this far: ServerId refuses it itself.
+        if (id.isEmpty) continue;
+        await expectLater(
+          dss.getVideoFilePath(ServerId(id), '42', 'mkv'),
+          throwsA(isA<DownloadStorageException>()),
+          reason: 'server id "$id"',
+        );
+      }
+      expect(Directory(p.join(tmpRoot.path, 'shared_prefs')).existsSync(), isFalse);
+
+      final clip = testMediaItem(id: '../../x', backend: MediaBackend.plex, kind: MediaKind.clip, title: 'Clip');
+      expect(() => dss.safTarget(clip, 'mkv', serverId: 'srv-1'), throwsA(isA<DownloadStorageException>()));
+    });
+
+    test('ordinary Plex and Jellyfin ids stay as they are', () async {
+      final settings = await SettingsService.getInstance();
+      final dss = DownloadStorageService.instance;
+      await dss.initialize(settings);
+      final downloads = await dss.getDownloadsDirectory();
+
+      const jellyfinId = 'f27caa37e5142225cceded48f6553502';
+      final dir = await dss.getMediaDirectory(ServerId('0123abcd-machine'), jellyfinId);
+      expect(dir.path, p.join(downloads.path, '0123abcd-machine', jellyfinId));
+      final clip = testMediaItem(id: '12345', backend: MediaBackend.plex, kind: MediaKind.clip, title: 'Clip');
+      expect(dss.safTarget(clip, 'mkv', serverId: 'srv-1').components, ['srv-1', '12345']);
+    });
+
     test('getMovieDirectory + getMovieVideoPath produce consistent output', () async {
       final settings = await SettingsService.getInstance();
       final dss = DownloadStorageService.instance;

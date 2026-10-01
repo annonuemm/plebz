@@ -2511,6 +2511,9 @@ class _Translations$addServer$de extends Translations$addServer$en {
 	@override String redirectDifferentHost({required Object product}) => 'Der Server hat zu einem anderen Host weitergeleitet. Gib die endgültige ${product}-URL direkt ein.';
 	@override String get redirectInsecure => 'Der Server hat von HTTPS zu einer unsicheren URL weitergeleitet';
 	@override String redirectUnsupportedEnterFinal({required Object product}) => 'Der Server hat zu einer nicht unterstützten URL weitergeleitet. Gib die endgültige ${product}-URL direkt ein.';
+	@override String get plainHttpTitle => 'Unverschlüsselte Verbindung';
+	@override String plainHttpMessage({required Object host}) => '${host} ist nur über unverschlüsseltes HTTP erreichbar und liegt nicht in deinem Heimnetz. Passwort und Zugangsschlüssel würden lesbar durchs Internet gehen. Besser ist HTTPS, etwa über einen Reverse Proxy.';
+	@override String get plainHttpContinue => 'Trotzdem verbinden';
 }
 
 // Path: iptv
@@ -3368,6 +3371,23 @@ class _Translations$companionRemote$pairing$de extends Translations$companionRem
 	@override String get sessionNotFound => 'Gerät nicht gefunden. Stelle sicher, dass Plebz auf dem Host läuft.';
 	@override String get authFailed => 'Authentifizierung fehlgeschlagen. Beide Geräte benötigen dasselbe Plex-Konto.';
 	@override String failedToConnect({required Object error}) => 'Verbindung fehlgeschlagen: ${error}';
+	@override String get codeTitle => 'Gerät koppeln';
+	@override String codeMessage({required Object name}) => '${name} möchte Plebz hier steuern. Gib diesen Code auf dem Gerät ein:';
+	@override String get codeValidFor => 'Der Code gilt zwei Minuten.';
+	@override String get enterCodeTitle => 'Code eingeben';
+	@override String enterCodeMessage({required Object name}) => '${name} zeigt jetzt einen achtstelligen Code. Gib ihn hier ein.';
+	@override String get codeLabel => 'Code';
+	@override String get codeInvalid => 'Der Code hat acht Ziffern.';
+	@override String get wrongCode => 'Der Code stimmt nicht. Verbinde dich erneut, dann erscheint ein neuer.';
+	@override String get cancelled => 'Kopplung abgebrochen';
+	@override String get busy => 'Das Gerät koppelt gerade ein anderes. Versuche es gleich noch einmal.';
+	@override String get expired => 'Der Code ist abgelaufen. Verbinde dich erneut.';
+	@override String get pairingRequired => 'Dieses Gerät ist nicht mehr gekoppelt. Verbinde dich neu, um es wieder zu koppeln.';
+	@override String get hostTooOld => 'Das Gerät nutzt eine ältere Plebz-Version. Aktualisiere es, um es zu koppeln.';
+	@override String get pairedDevices => 'Gekoppelte Geräte';
+	@override String get noPairedDevices => 'Noch kein Gerät gekoppelt. Beim ersten Verbinden erscheint hier ein Code.';
+	@override String get unpair => 'Entfernen';
+	@override String unpaired({required Object name}) => '${name} ist nicht mehr gekoppelt';
 }
 
 // Path: companionRemote.remote
@@ -5460,6 +5480,23 @@ extension on TranslationsDe {
 			'companionRemote.pairing.sessionNotFound' => 'Gerät nicht gefunden. Stelle sicher, dass Plebz auf dem Host läuft.',
 			'companionRemote.pairing.authFailed' => 'Authentifizierung fehlgeschlagen. Beide Geräte benötigen dasselbe Plex-Konto.',
 			'companionRemote.pairing.failedToConnect' => ({required Object error}) => 'Verbindung fehlgeschlagen: ${error}',
+			'companionRemote.pairing.codeTitle' => 'Gerät koppeln',
+			'companionRemote.pairing.codeMessage' => ({required Object name}) => '${name} möchte Plebz hier steuern. Gib diesen Code auf dem Gerät ein:',
+			'companionRemote.pairing.codeValidFor' => 'Der Code gilt zwei Minuten.',
+			'companionRemote.pairing.enterCodeTitle' => 'Code eingeben',
+			'companionRemote.pairing.enterCodeMessage' => ({required Object name}) => '${name} zeigt jetzt einen achtstelligen Code. Gib ihn hier ein.',
+			'companionRemote.pairing.codeLabel' => 'Code',
+			'companionRemote.pairing.codeInvalid' => 'Der Code hat acht Ziffern.',
+			'companionRemote.pairing.wrongCode' => 'Der Code stimmt nicht. Verbinde dich erneut, dann erscheint ein neuer.',
+			'companionRemote.pairing.cancelled' => 'Kopplung abgebrochen',
+			'companionRemote.pairing.busy' => 'Das Gerät koppelt gerade ein anderes. Versuche es gleich noch einmal.',
+			'companionRemote.pairing.expired' => 'Der Code ist abgelaufen. Verbinde dich erneut.',
+			'companionRemote.pairing.pairingRequired' => 'Dieses Gerät ist nicht mehr gekoppelt. Verbinde dich neu, um es wieder zu koppeln.',
+			'companionRemote.pairing.hostTooOld' => 'Das Gerät nutzt eine ältere Plebz-Version. Aktualisiere es, um es zu koppeln.',
+			'companionRemote.pairing.pairedDevices' => 'Gekoppelte Geräte',
+			'companionRemote.pairing.noPairedDevices' => 'Noch kein Gerät gekoppelt. Beim ersten Verbinden erscheint hier ein Code.',
+			'companionRemote.pairing.unpair' => 'Entfernen',
+			'companionRemote.pairing.unpaired' => ({required Object name}) => '${name} ist nicht mehr gekoppelt',
 			'companionRemote.remote.disconnectConfirm' => 'Möchtest du die Verbindung zur Fernsteuerungssitzung trennen?',
 			'companionRemote.remote.reconnecting' => 'Verbindung wird wiederhergestellt...',
 			'companionRemote.remote.attemptOf' => ({required Object current}) => 'Versuch ${current} von 5',
@@ -5566,6 +5603,8 @@ extension on TranslationsDe {
 			'performanceOverlay.decoderSoftware' => 'Software',
 			'performanceOverlay.decoderHardware' => 'Hardware',
 			'performanceOverlay.tunnelingActive' => 'Aktiv',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.dvRpuFailed' => ({required Object converted, required Object failures}) => '${converted} (${failures} fehlgeschlagen)',
 			'externalPlayer.title' => 'Externer Player',
 			'externalPlayer.useExternalPlayer' => 'Externen Player verwenden',
@@ -5583,8 +5622,6 @@ extension on TranslationsDe {
 			'externalPlayer.launchFailed' => 'Externer Player konnte nicht geöffnet werden',
 			'externalPlayer.appNotInstalled' => ({required Object name}) => '${name} ist nicht installiert',
 			'externalPlayer.playInExternalPlayer' => 'In externem Player abspielen',
-			_ => null,
-		} ?? switch (path) {
 			'metadataEdit.editMetadata' => 'Bearbeiten...',
 			'metadataEdit.screenTitle' => 'Metadaten bearbeiten',
 			'metadataEdit.basicInfo' => 'Grundinformationen',
@@ -5848,6 +5885,9 @@ extension on TranslationsDe {
 			'addServer.redirectDifferentHost' => ({required Object product}) => 'Der Server hat zu einem anderen Host weitergeleitet. Gib die endgültige ${product}-URL direkt ein.',
 			'addServer.redirectInsecure' => 'Der Server hat von HTTPS zu einer unsicheren URL weitergeleitet',
 			'addServer.redirectUnsupportedEnterFinal' => ({required Object product}) => 'Der Server hat zu einer nicht unterstützten URL weitergeleitet. Gib die endgültige ${product}-URL direkt ein.',
+			'addServer.plainHttpTitle' => 'Unverschlüsselte Verbindung',
+			'addServer.plainHttpMessage' => ({required Object host}) => '${host} ist nur über unverschlüsseltes HTTP erreichbar und liegt nicht in deinem Heimnetz. Passwort und Zugangsschlüssel würden lesbar durchs Internet gehen. Besser ist HTTPS, etwa über einen Reverse Proxy.',
+			'addServer.plainHttpContinue' => 'Trotzdem verbinden',
 			'iptv.title' => 'IPTV',
 			'iptv.hubSubtitle' => 'Playlists und Xtream-Zugänge erscheinen in Live TV neben deinen Servern. Aufnehmen können sie nicht — dafür braucht es einen Server, der aufzeichnet.',
 			'iptv.addPlaylist' => 'M3U-Playlist hinzufügen',

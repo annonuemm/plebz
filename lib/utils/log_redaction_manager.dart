@@ -3,9 +3,10 @@ import 'url_utils.dart';
 class LogRedactionManager {
   // Size limits for bounded sets (FIFO eviction when exceeded)
   static const int _maxTokens = 50;
-  // Each server registers up to 8 literals (slash/origin/mpv-escaped
-  // variants), so keep headroom for several servers before FIFO eviction.
-  static const int _maxUrls = 40;
+  // Each server registers up to 9 literals (slash/origin/mpv-escaped
+  // variants and the bare host), so keep headroom for several servers before
+  // FIFO eviction.
+  static const int _maxUrls = 45;
   static const int _maxCustomValues = 50;
 
   // Set literals are insertion-ordered, so the oldest entry is evicted first.
@@ -29,7 +30,7 @@ class LogRedactionManager {
   /// Dart-map renderings. Requiring an exact key plus separator leaves prose
   /// and diagnostic fields such as `token_count` intact.
   static final RegExp _sensitiveFieldPattern = RegExp(
-    r'''(^|[\s?&{},;\[(])(["']?)(authorization|proxy-authorization|cookie|set-cookie|x-auth-token|x-plex-token|x-emby-token|x-api-key|api[-_]?key|auth[-_]?token|access[-_]?token|refresh[-_]?token|id[-_]?token|client[-_]?secret|password|passwd|secret|pin|token)(["']?)([ \t]*[:=][ \t]*)''',
+    r'''(^|[\s?&{},;\[(])(["']?)(authorization|proxy-authorization|cookie|set-cookie|x-auth-token|x-plex-token|x-emby-token|x-api-key|api[-_]?key|auth[-_]?token|access[-_]?token|refresh[-_]?token|id[-_]?token|client[-_]?secret|password|passwd|username|secret|pin|token)(["']?)([ \t]*[:=][ \t]*)''',
     caseSensitive: false,
     multiLine: true,
   );
@@ -88,6 +89,10 @@ class LogRedactionManager {
       if (origin.endsWith('/')) {
         _addUrl(origin.substring(0, origin.length - 1));
       }
+      // The bare host too: MediaServerHttpException prints `host/path`
+      // without a scheme. Only a dotted name — a single label such as
+      // `localhost` or `plex` would also mask ordinary words in the log.
+      if (uri.host.contains('.')) _addUrl(uri.host);
     }
 
     _rebuildCombinedPattern();

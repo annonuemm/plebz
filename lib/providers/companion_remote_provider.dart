@@ -16,6 +16,7 @@ import '../profiles/profile_connection_registry.dart';
 import '../services/companion_remote/companion_remote_peer_service.dart';
 import '../services/companion_remote/lan_discovery_service.dart';
 import '../services/companion_remote/remote_auth_context.dart';
+import '../services/companion_remote/remote_pairing_handshake.dart';
 import '../services/companion_remote/remote_auth_service.dart';
 import '../utils/app_logger.dart';
 import '../utils/device_identity.dart';
@@ -114,6 +115,20 @@ class CompanionRemoteProvider with ChangeNotifier, DisposableChangeNotifierMixin
   StreamSubscription<void>? _deviceDisconnectedSubscription;
   StreamSubscription<RemotePeerError>? _errorSubscription;
   StreamSubscription<RemoteSessionStatus>? _statusSubscription;
+  StreamSubscription<RemotePairingPrompt?>? _pairingPromptSubscription;
+
+  RemotePairingPrompt? _pairingPrompt;
+
+  /// On the host: the code to show while a phone pairs, null otherwise.
+  RemotePairingPrompt? get pairingPrompt => _pairingPrompt;
+
+  /// On the remote: asks the person for the code the host shows (the remote
+  /// screen sets it while it is open). Without one a host this device is not
+  /// paired with cannot be joined.
+  Future<String?> Function(String hostName)? pairingCodeRequester;
+
+  /// On the host: decline the pairing whose code is showing.
+  void cancelPairing() => _peerService?.cancelPairing();
 
   CommandReceivedCallback? onCommandReceived;
 
@@ -740,6 +755,7 @@ class CompanionRemoteProvider with ChangeNotifier, DisposableChangeNotifierMixin
           _authContexts,
           authContextId: authContext.id,
           expectedHostClientId: host.clientId,
+          requestPairingCode: pairingCodeRequester,
         );
       },
       onConnected: (peer) {
@@ -776,7 +792,13 @@ class CompanionRemoteProvider with ChangeNotifier, DisposableChangeNotifierMixin
       generation: generation,
       seedConnectingSession: true,
       rethrowOnFailure: true,
-      join: (peer) => peer.joinSessionWithContexts(_deviceName, _platform, hostAddress, _authContexts),
+      join: (peer) => peer.joinSessionWithContexts(
+        _deviceName,
+        _platform,
+        hostAddress,
+        _authContexts,
+        requestPairingCode: pairingCodeRequester,
+      ),
       onConnected: (peer) {
         _lastAuthContextId = peer.selectedAuthContextId;
         _lastHostClientId = peer.selectedHostClientId ?? '';
@@ -937,6 +959,12 @@ class CompanionRemoteProvider with ChangeNotifier, DisposableChangeNotifierMixin
       safeNotifyListeners();
     });
 
+    _pairingPromptSubscription = peer.onPairingPrompt.listen((prompt) {
+      if (!_ownsPeer(peer, generation)) return;
+      _pairingPrompt = prompt;
+      safeNotifyListeners();
+    });
+
     _statusSubscription = peer.onConnectionStateChanged.listen((status) {
       if (!_ownsPeer(peer, generation)) return;
       appLogger.d('CompanionRemote: Status changed: $status');
@@ -987,6 +1015,12 @@ class CompanionRemoteProvider with ChangeNotifier, DisposableChangeNotifierMixin
     _errorSubscription = null;
     _statusSubscription?.cancel();
     _statusSubscription = null;
+    _pairingPromptSubscription?.cancel();
+    _pairingPromptSubscription = null;
+    if (_pairingPrompt != null) {
+      _pairingPrompt = null;
+      safeNotifyListeners();
+    }
   }
 
   /// Advertise whether this device's video player is up to the connected

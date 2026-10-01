@@ -3,10 +3,12 @@ package com.edde746.plezy
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.ClipData
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
@@ -185,9 +187,33 @@ internal class ExternalPlayerChannel(private val activity: Activity) {
 
     val path = if (filePath.startsWith("file://")) filePath.removePrefix("file://") else filePath
     val file = File(path)
+    // Same exception FileProvider throws for a path outside its roots, so a
+    // refused subtitle is skipped and a refused video fails the launch.
+    require(isShareableFile(file)) { "Not a downloaded file: ${file.name}" }
     val uri = FileProvider.getUriForFile(activity, "app.plebz.fileprovider", file)
     return Source(uri, grantRead = true, fileName = file.name)
   }
+
+  /// Whether [file] may go to another app. The FileProvider's roots reach the
+  /// whole app — settings, databases, the vault key — so inside the app's
+  /// private storage only the downloads folder is shared: `downloads` in
+  /// path_provider's documents directory (`getDir("flutter")`), which is
+  /// where every download lands unless a custom folder was chosen. A custom
+  /// folder lies outside private storage and is shared as before. Compared
+  /// after resolving links, so a link into the downloads folder that points
+  /// elsewhere is judged by where it points.
+  internal fun isShareableFile(file: File): Boolean {
+    val target = file.canonicalFile
+    val privateRoots = listOfNotNull(
+      ContextCompat.getDataDir(activity),
+      ContextCompat.getDataDir(ContextCompat.createDeviceProtectedStorageContext(activity) ?: activity)
+    ).map(File::getCanonicalFile)
+    if (privateRoots.none { target.isWithin(it) }) return true
+    val downloads = File(activity.getDir("flutter", Context.MODE_PRIVATE), "downloads").canonicalFile
+    return target.isWithin(downloads)
+  }
+
+  private fun File.isWithin(root: File): Boolean = path == root.path || path.startsWith(root.path + File.separator)
 
   private fun resolveSubtitle(argument: Any?): Subtitle? {
     val map = argument as? Map<*, *> ?: return null

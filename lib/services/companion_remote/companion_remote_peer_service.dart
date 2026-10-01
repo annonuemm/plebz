@@ -16,6 +16,8 @@ import '../base_peer_service.dart';
 import '../trackers/future_coalescer.dart';
 import 'remote_auth_context.dart';
 import 'remote_auth_service.dart';
+import 'remote_pairing_handshake.dart';
+import 'remote_pairing_store.dart';
 
 // Re-export so callers that import from here get the types.
 export '../base_peer_service.dart' show PeerError, PeerErrorType;
@@ -40,6 +42,12 @@ class CompanionRemotePeerService with KeepaliveMixin {
   static const Duration _productionAuthLockoutDuration = Duration(seconds: 30);
   static const Duration _productionRemoteConnectTimeout = Duration(seconds: 10);
 
+  /// How long a connected remote waits for the host to sign it in.
+  static const Duration _handshakeTimeout = Duration(seconds: 15);
+
+  /// Slack on top of a pairing code's lifetime while it is being typed.
+  static const Duration _pairingTimeoutMargin = Duration(seconds: 15);
+
   CompanionRemotePeerService()
     : this.forTesting(
         maxTotalHostConnections: _productionMaxTotalHostConnections,
@@ -63,7 +71,9 @@ class CompanionRemotePeerService with KeepaliveMixin {
     ({Future<void> Function() close, Future<void> ready, Stream<dynamic> stream}) Function(Uri uri)? raceProbeFactory,
     this._afterHostUpgrade,
     Future<List<NetworkInterface>> Function()? listNetworkInterfaces,
-  }) : assert(maxTotalHostConnections > 0),
+    RemotePairingStore? pairingStore,
+  }) : _pairingStore = pairingStore ?? RemotePairingStore.instance,
+       assert(maxTotalHostConnections > 0),
        assert(maxHostConnectionsPerSource > 0),
        assert(maxPreAuthMessageBytes > 0),
        assert(authTimeout > Duration.zero),
@@ -128,6 +138,23 @@ class CompanionRemotePeerService with KeepaliveMixin {
   final _RaceProbeFactory _raceProbeFactory;
   final void Function()? _afterHostUpgrade;
   final Future<List<NetworkInterface>> Function() _listNetworkInterfaces;
+
+  /// Where pairings live: on the host, the devices allowed to control it; on
+  /// the remote, the hosts it may control.
+  final RemotePairingStore _pairingStore;
+
+  /// This host's pairing device id and name, sent in every challenge.
+  String? _hostDeviceId;
+  String _hostDeviceName = '';
+
+  /// The one connection pairing right now; another phone asking meanwhile is
+  /// told the host is busy, so a code on screen always belongs to one asker.
+  _HostAdmission? _pairingAdmission;
+  final _pairingPromptController = StreamController<RemotePairingPrompt?>.broadcast();
+
+  /// The code the host shows while a phone pairs, and null once it is gone —
+  /// paired, refused, expired or abandoned.
+  Stream<RemotePairingPrompt?> get onPairingPrompt => _pairingPromptController.stream;
 
   // Server-side (host) fields
   HttpServer? _server;
@@ -255,6 +282,8 @@ class CompanionRemotePeerService with KeepaliveMixin {
       await disconnect();
     }
 
+    _hostDeviceId = await _pairingStore.deviceId();
+    _hostDeviceName = deviceName;
     _role = RemoteSessionRole.host;
     _myPeerId = 'host';
 
@@ -313,6 +342,17 @@ class CompanionRemotePeerService with KeepaliveMixin {
   ) async {
     if (request.uri.path != '/ws') {
       request.response.statusCode = HttpStatus.notFound;
+      await request.response.close();
+      return;
+    }
+
+    // A browser always names the page a WebSocket is opened from; the remote
+    // never sends an Origin. Refusing every one keeps a web page open on any
+    // device in the network from reaching this server (cross-site WebSocket
+    // hijacking), whatever it would try after connecting.
+    if (request.headers.value('origin') != null) {
+      request.response.statusCode = HttpStatus.forbidden;
+      request.response.headers.contentLength = 0;
       await request.response.close();
       return;
     }
@@ -401,37 +441,11 @@ class CompanionRemotePeerService with KeepaliveMixin {
     // The admission owns and closes this socket.
     // ignore: close_sinks
     final socket = admission.socket!;
-    final auth = RemoteAuthService.instance;
-    final hostNonce = auth.generateNonce();
     final primaryContext = authContexts.first;
 
     appLogger.d('CompanionRemote: New WebSocket connection from ${admission.sourceIp}');
 
-    admission.phase = _HostAdmissionPhase.awaitingAuth;
-    try {
-      socket.add(
-        jsonEncode({
-          'type': 'challenge',
-          'nonce': base64Encode(hostNonce),
-          'hostClientId': primaryContext.clientIdentifier,
-          'authContexts': [
-            for (final context in authContexts) {'id': context.id, 'hostClientId': context.clientIdentifier},
-          ],
-        }),
-      );
-    } catch (e) {
-      appLogger.d('CompanionRemote: Failed to send authentication challenge', error: e);
-      unawaited(_closeHostAdmissionSocket(admission));
-      return;
-    }
-
-    admission.authTimer = Timer(_authTimeout, () {
-      if (admission.phase == _HostAdmissionPhase.awaitingAuth ||
-          admission.phase == _HostAdmissionPhase.authenticating) {
-        appLogger.w('CompanionRemote: Authentication timeout');
-        unawaited(_closeHostAdmissionSocket(admission, code: 4001, reason: 'Authentication timeout'));
-      }
-    });
+    if (!_sendHostChallenge(admission, authContexts)) return;
 
     // The subscription is assigned to and cancelled through the admission.
     // ignore: cancel_subscriptions
@@ -445,13 +459,15 @@ class CompanionRemotePeerService with KeepaliveMixin {
             _authenticateHostAdmission(
               admission,
               data,
-              hostNonce,
+              admission.hostNonce!,
               hostDeviceName,
               hostPlatform,
               authContexts,
               primaryContext,
             ),
           );
+        } else if (admission.phase == _HostAdmissionPhase.pairing) {
+          unawaited(_continueHostPairing(admission, data, authContexts));
         } else if (admission.phase == _HostAdmissionPhase.authenticated) {
           unawaited(
             _handleEncryptedCommand(data).catchError((Object error, StackTrace stackTrace) {
@@ -482,6 +498,47 @@ class CompanionRemotePeerService with KeepaliveMixin {
       cancelOnError: true,
     );
     admission.subscription = socketSubscription;
+  }
+
+  /// Sends a fresh challenge and starts the clock on its answer. The
+  /// challenge names this host's pairing device id, so a remote can tell
+  /// whether it is already paired — and pair first when it is not. False when
+  /// the socket could not take it (and is being closed).
+  bool _sendHostChallenge(_HostAdmission admission, List<RemoteAuthContext> authContexts) {
+    // The admission owns and closes this socket.
+    // ignore: close_sinks
+    final socket = admission.socket!;
+    final hostNonce = RemoteAuthService.instance.generateNonce();
+    admission.hostNonce = hostNonce;
+    admission.phase = _HostAdmissionPhase.awaitingAuth;
+    try {
+      socket.add(
+        jsonEncode({
+          'type': 'challenge',
+          'nonce': base64Encode(hostNonce),
+          'hostClientId': authContexts.first.clientIdentifier,
+          'authContexts': [
+            for (final context in authContexts) {'id': context.id, 'hostClientId': context.clientIdentifier},
+          ],
+          'hostDeviceId': _hostDeviceId,
+          'hostName': _hostDeviceName,
+        }),
+      );
+    } catch (e) {
+      appLogger.d('CompanionRemote: Failed to send authentication challenge', error: e);
+      unawaited(_closeHostAdmissionSocket(admission));
+      return false;
+    }
+
+    admission.authTimer?.cancel();
+    admission.authTimer = Timer(_authTimeout, () {
+      if (admission.phase == _HostAdmissionPhase.awaitingAuth ||
+          admission.phase == _HostAdmissionPhase.authenticating) {
+        appLogger.w('CompanionRemote: Authentication timeout');
+        unawaited(_closeHostAdmissionSocket(admission, code: 4001, reason: 'Authentication timeout'));
+      }
+    });
+    return true;
   }
 
   Future<void> _authenticateHostAdmission(
@@ -517,6 +574,10 @@ class CompanionRemotePeerService with KeepaliveMixin {
       return;
     }
 
+    if (message['type'] == 'pairRequest') {
+      _beginHostPairing(admission, message);
+      return;
+    }
     if (message['type'] != 'auth') {
       _rejectHostAuthentication(admission, closeCode: 4002, closeReason: 'Authentication required');
       return;
@@ -572,9 +633,20 @@ class CompanionRemotePeerService with KeepaliveMixin {
     }
     final authenticatedContext = selectedContext;
 
+    // The account only says who may see whom; the key that proves a remote
+    // may control this host is the one their pairing left on both. An
+    // account-derived secret is no secret: Jellyfin hands out the ids it was
+    // made from to anyone on the network.
+    final pairingId = message['pairingId'];
+    final pairing = pairingId is String ? await _pairingStore.forId(RemotePairingRole.host, pairingId) : null;
+    if (pairing == null) {
+      _rejectHostAuthentication(admission);
+      return;
+    }
+
     final valid = RemoteAuthService.instance.verifyAuthTag(
       authTag: authTag,
-      homeSecret: authenticatedContext.homeSecret,
+      homeSecret: pairing.key,
       hostNonce: hostNonce,
       clientNonce: clientNonce,
       hostClientId: authenticatedContext.clientIdentifier,
@@ -594,7 +666,7 @@ class CompanionRemotePeerService with KeepaliveMixin {
 
     late final List<int> sessionEncKey;
     try {
-      sessionEncKey = await _deriveSessionEncKey(authenticatedContext.homeSecret, hostNonce, clientNonce);
+      sessionEncKey = await _deriveSessionEncKey(pairing.key, hostNonce, clientNonce);
     } catch (e, stackTrace) {
       appLogger.e('CompanionRemote: Failed to derive session key', error: e, stackTrace: stackTrace);
       await _closeHostAdmissionSocket(admission, code: 4003, reason: 'Authentication failed');
@@ -612,6 +684,201 @@ class CompanionRemotePeerService with KeepaliveMixin {
         hostPlatform: hostPlatform,
       ),
     );
+  }
+
+  // ── Pairing (host side) ──
+
+  static const int _maxPairingFieldLength = 256;
+
+  /// A remote without a pairing asks for one: show a fresh code, send the
+  /// session id, and wait — up to the code's lifetime — for its share.
+  void _beginHostPairing(_HostAdmission admission, Map<String, dynamic> message) {
+    final remoteDeviceId = message['remoteDeviceId'];
+    final deviceName = message['deviceName'];
+    final platform = message['platform'];
+    final hostDeviceId = _hostDeviceId;
+    if (remoteDeviceId is! String ||
+        remoteDeviceId.isEmpty ||
+        remoteDeviceId.length > _maxPairingFieldLength ||
+        deviceName is! String ||
+        deviceName.length > _maxPairingFieldLength ||
+        platform is! String ||
+        platform.length > _maxPairingFieldLength ||
+        hostDeviceId == null) {
+      _rejectHostAuthentication(admission);
+      return;
+    }
+
+    final busy = _pairingAdmission;
+    if (busy != null && !identical(busy, admission) && !busy.released) {
+      admission.phase = _HostAdmissionPhase.terminal;
+      admission.authTimer?.cancel();
+      try {
+        admission.socket?.add(jsonEncode({'type': 'pairBusy'}));
+      } catch (_) {
+        // The close below is the answer either way.
+      }
+      unawaited(_closeHostAdmissionSocket(admission, code: 4005, reason: 'Pairing in progress'));
+      return;
+    }
+
+    // Every run is an attempt until it succeeds: a code on the screen costs
+    // the asker, so a device on the network cannot keep putting them up.
+    _recordFailedAuth(admission.sourceIp);
+
+    final code = RemotePairingHandshake.newCode();
+    final sid = RemotePairingHandshake.newSessionId();
+    admission.pairing = _HostPairing(
+      responder: RemotePairingResponder(
+        code: code,
+        sid: sid,
+        hostDeviceId: hostDeviceId,
+        remoteDeviceId: remoteDeviceId,
+      ),
+      remoteDeviceId: remoteDeviceId,
+      deviceName: deviceName,
+      platform: platform,
+    );
+    admission.phase = _HostAdmissionPhase.pairing;
+    admission.authTimer?.cancel();
+    admission.authTimer = Timer(RemotePairingHandshake.codeLifetime, () {
+      if (admission.phase != _HostAdmissionPhase.pairing) return;
+      appLogger.d('CompanionRemote: Pairing code expired');
+      _failHostPairing(admission, closeCode: 4006, closeReason: 'Pairing code expired');
+    });
+    _pairingAdmission = admission;
+    _pairingPromptController.add(
+      RemotePairingPrompt(
+        code: code,
+        deviceName: deviceName,
+        platform: platform,
+        expiresAt: DateTime.now().add(RemotePairingHandshake.codeLifetime),
+      ),
+    );
+    appLogger.d('CompanionRemote: Pairing requested by $deviceName ($platform)');
+    try {
+      admission.socket!.add(jsonEncode({'type': 'pairChallenge', 'sid': base64Encode(sid)}));
+    } catch (e) {
+      appLogger.d('CompanionRemote: Failed to send pairing challenge', error: e);
+      _failHostPairing(admission);
+    }
+  }
+
+  /// The remote's share, then its confirmation. A wrong code shows as a tag
+  /// that does not match, on either side.
+  Future<void> _continueHostPairing(
+    _HostAdmission admission,
+    dynamic data,
+    List<RemoteAuthContext> authContexts,
+  ) async {
+    final pairing = admission.pairing;
+    if (pairing == null || data is! String || data.length > _maxPreAuthMessageBytes) {
+      _failHostPairing(admission);
+      return;
+    }
+    final Map<String, dynamic> message;
+    try {
+      final decoded = jsonDecode(data);
+      if (decoded is! Map<String, dynamic>) throw const FormatException('not an object');
+      message = decoded;
+    } catch (_) {
+      _failHostPairing(admission);
+      return;
+    }
+
+    List<int>? bytesOf(String field, int length) {
+      final value = message[field];
+      if (value is! String) return null;
+      try {
+        final bytes = base64Decode(value);
+        return bytes.length == length ? bytes : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    switch (pairing.step) {
+      case _HostPairingStep.awaitingShare:
+        final share = message['type'] == 'pairShare' ? bytesOf('share', 32) : null;
+        final answer = share == null ? null : pairing.responder.respond(share);
+        if (answer == null) {
+          _failHostPairing(admission);
+          return;
+        }
+        pairing.step = _HostPairingStep.awaitingConfirmation;
+        try {
+          admission.socket!.add(
+            jsonEncode({'type': 'pairShare', 'share': base64Encode(answer.share), 'tag': base64Encode(answer.tag)}),
+          );
+        } catch (e) {
+          appLogger.d('CompanionRemote: Failed to send pairing share', error: e);
+          _failHostPairing(admission);
+        }
+      case _HostPairingStep.awaitingConfirmation:
+        final tag = message['type'] == 'pairConfirm' ? bytesOf('tag', 64) : null;
+        final key = tag == null ? null : pairing.responder.verify(tag);
+        if (key == null) {
+          _failHostPairing(admission);
+          return;
+        }
+        pairing.step = _HostPairingStep.finishing;
+        await _pairingStore.add(
+          RemotePairingRole.host,
+          RemotePairing(
+            peerDeviceId: pairing.remoteDeviceId,
+            peerName: pairing.deviceName,
+            peerPlatform: pairing.platform,
+            key: key,
+            pairedAt: DateTime.now(),
+          ),
+        );
+        if (admission.released || admission.phase != _HostAdmissionPhase.pairing) return;
+        appLogger.d('CompanionRemote: Paired with ${pairing.deviceName}');
+        _failedAuthAttempts.remove(admission.sourceIp);
+        admission.pairing = null;
+        _endHostPairing(admission);
+        try {
+          admission.socket!.add(jsonEncode({'type': 'paired'}));
+        } catch (e) {
+          appLogger.d('CompanionRemote: Failed to confirm pairing', error: e);
+          unawaited(_closeHostAdmissionSocket(admission));
+          return;
+        }
+        // Now an ordinary sign-in, with the key both sides just derived.
+        _sendHostChallenge(admission, authContexts);
+      case _HostPairingStep.finishing:
+        _failHostPairing(admission);
+    }
+  }
+
+  /// Ends a run that did not pair. Its attempt was counted when it began.
+  void _failHostPairing(_HostAdmission admission, {int closeCode = 4003, String closeReason = 'Pairing failed'}) {
+    if (admission.phase == _HostAdmissionPhase.terminal) return;
+    admission.phase = _HostAdmissionPhase.terminal;
+    admission.authTimer?.cancel();
+    admission.authTimer = null;
+    admission.pairing = null;
+    _endHostPairing(admission);
+    try {
+      admission.socket?.add(jsonEncode({'type': 'pairFailed'}));
+    } catch (_) {
+      // The close below is the answer either way.
+    }
+    unawaited(_closeHostAdmissionSocket(admission, code: closeCode, reason: closeReason));
+  }
+
+  /// The person at the host declined: the run ends, and costs the asker nothing.
+  void cancelPairing() {
+    final admission = _pairingAdmission;
+    if (admission == null) return;
+    _failHostPairing(admission, closeCode: 4000, closeReason: 'Pairing declined');
+  }
+
+  /// Takes the code off the host's screen, if [admission] is the one pairing.
+  void _endHostPairing(_HostAdmission admission) {
+    if (!identical(_pairingAdmission, admission)) return;
+    _pairingAdmission = null;
+    if (!_pairingPromptController.isClosed) _pairingPromptController.add(null);
   }
 
   Future<void> _serializeHostAuthenticationCommit(Future<void> Function() commit) => _hostAuthCommitQueue.run(commit);
@@ -732,6 +999,8 @@ class CompanionRemotePeerService with KeepaliveMixin {
   void _releaseHostAdmission(_HostAdmission admission) {
     if (admission.released) return;
     admission.released = true;
+    admission.pairing = null;
+    _endHostPairing(admission);
     admission.phase = _HostAdmissionPhase.terminal;
     admission.authTimer?.cancel();
     admission.authTimer = null;
@@ -809,6 +1078,7 @@ class CompanionRemotePeerService with KeepaliveMixin {
     List<RemoteAuthContext> authContexts, {
     String? authContextId,
     String expectedHostClientId = '',
+    Future<String?> Function(String hostName)? requestPairingCode,
   }) async {
     if (authContexts.isEmpty) {
       throw RemotePeerError(
@@ -820,6 +1090,7 @@ class CompanionRemotePeerService with KeepaliveMixin {
     if (_channel != null) {
       await disconnect();
     }
+    final remoteDeviceId = await _pairingStore.deviceId();
     final connectionGeneration = ++_remoteConnectionGeneration;
 
     _role = RemoteSessionRole.remote;
@@ -827,6 +1098,18 @@ class CompanionRemotePeerService with KeepaliveMixin {
     _myPeerId = 'remote-${Random.secure().nextInt(99999)}';
 
     final completer = Completer<void>();
+
+    // The handshake's clock: started once connected, stretched while a code
+    // is being typed, stopped when the join settles.
+    Timer? handshakeTimer;
+    void armHandshakeTimer(Duration duration) {
+      handshakeTimer?.cancel();
+      handshakeTimer = Timer(duration, () {
+        if (!completer.isCompleted) completer.completeError(const _HandshakeTimeout());
+      });
+    }
+
+    unawaited(completer.future.then((_) {}, onError: (Object _) {}).whenComplete(() => handshakeTimer?.cancel()));
     final auth = RemoteAuthService.instance;
     IOWebSocketChannel? attemptedChannel;
 
@@ -852,10 +1135,27 @@ class CompanionRemotePeerService with KeepaliveMixin {
         throw StateError('Companion Remote connection attempt became stale');
       }
       _channelConnected = true;
+      armHandshakeTimer(_handshakeTimeout);
 
       List<int>? hostNonce;
       List<int>? clientNonce;
       String? receivedHostClientId;
+
+      // Pairing state, when this remote has none with the host yet.
+      String? pairingHostDeviceId;
+      String pairingHostName = '';
+      List<int>? pairingSid;
+      RemotePairingInitiator? pairingInitiator;
+      List<int>? pairedKey;
+      // The pairing this sign-in named; dropped when the host no longer knows it.
+      RemotePairing? usedPairing;
+
+      void failJoin(String message, {int closeCode = 4003, String closeReason = 'Authentication failed'}) {
+        if (!completer.isCompleted) {
+          completer.completeError(RemotePeerError(type: RemotePeerErrorType.authFailed, message: message));
+        }
+        unawaited(channel.sink.close(closeCode, closeReason));
+      }
 
       _channelSubscription = channel.stream.listen(
         (data) async {
@@ -864,7 +1164,23 @@ class CompanionRemotePeerService with KeepaliveMixin {
             if (_isAuthenticated) {
               await _handleEncryptedCommand(data);
             } else if (_sessionEncKey != null) {
-              // Keys derived, waiting for encrypted authSuccess
+              // Keys derived, waiting for encrypted authSuccess. A refusal
+              // still comes in plain text (a text frame; everything
+              // encrypted is binary): the host did not accept the key.
+              if (data is String) {
+                final refusal = jsonDecode(data);
+                if (refusal is Map && refusal['type'] == 'authFailed') {
+                  appLogger.w('CompanionRemote: Host refused the pairing key');
+                  // The host no longer knows this pairing: forget it here
+                  // too, so the next connect pairs afresh.
+                  final stale = usedPairing;
+                  if (stale != null) {
+                    await _pairingStore.remove(RemotePairingRole.remote, stale.peerDeviceId);
+                  }
+                  failJoin(t.companionRemote.pairing.pairingRequired);
+                }
+                return;
+              }
               final decrypted = await _decryptIncoming(data);
               if (decrypted == null || !_ownsRemoteChannel(channel, connectionGeneration)) return;
 
@@ -968,8 +1284,36 @@ class CompanionRemotePeerService with KeepaliveMixin {
                   return;
                 }
 
+                final hostDeviceId = json['hostDeviceId'] as String? ?? '';
+                final hostName = json['hostName'] as String? ?? '';
+                if (hostDeviceId.isEmpty) {
+                  // A host from before pairing: nothing this remote may sign in with.
+                  failJoin(t.companionRemote.pairing.hostTooOld);
+                  return;
+                }
+                final pairing = await _pairingStore.forPeer(RemotePairingRole.remote, hostDeviceId);
+                if (!_ownsRemoteChannel(channel, connectionGeneration)) return;
+                if (pairing == null) {
+                  if (requestPairingCode == null) {
+                    failJoin(t.companionRemote.pairing.pairingRequired);
+                    return;
+                  }
+                  pairingHostDeviceId = hostDeviceId;
+                  pairingHostName = hostName;
+                  channel.sink.add(
+                    jsonEncode({
+                      'type': 'pairRequest',
+                      'remoteDeviceId': remoteDeviceId,
+                      'deviceName': deviceName,
+                      'platform': platform,
+                    }),
+                  );
+                  return;
+                }
+                usedPairing = pairing;
+
                 final authTag = auth.computeAuthTag(
-                  homeSecret: selectedContext.homeSecret,
+                  homeSecret: pairing.key,
                   hostNonce: hostNonce!,
                   clientNonce: clientNonce!,
                   hostClientId: receivedHostClientId!,
@@ -982,6 +1326,7 @@ class CompanionRemotePeerService with KeepaliveMixin {
                 channel.sink.add(
                   jsonEncode({
                     'type': 'auth',
+                    'pairingId': pairing.id,
                     'authContextId': selectedContext.id,
                     'clientNonce': base64Encode(clientNonce!),
                     'userUUID': selectedContext.userUuid,
@@ -992,19 +1337,73 @@ class CompanionRemotePeerService with KeepaliveMixin {
                   }),
                 );
 
-                final sessionEncKey = await auth.deriveSessionEncKey(
-                  selectedContext.homeSecret,
-                  hostNonce!,
-                  clientNonce!,
-                );
+                final sessionEncKey = await auth.deriveSessionEncKey(pairing.key, hostNonce!, clientNonce!);
                 if (!_ownsRemoteChannel(channel, connectionGeneration)) return;
                 _sessionEncKey = sessionEncKey;
                 _sendCounter = 0;
                 _recvCounter = 0;
                 _selectedAuthContextId = selectedContext.id;
                 _selectedHostClientId = receivedHostClientId;
+              } else if (messageType == 'pairChallenge' && pairingHostDeviceId != null && pairingSid == null) {
+                final sid = base64Decode(json['sid'] as String);
+                pairingSid = sid;
+                // Typing the code takes as long as it takes, up to its lifetime.
+                armHandshakeTimer(RemotePairingHandshake.codeLifetime + _pairingTimeoutMargin);
+                final typed = await requestPairingCode!(pairingHostName);
+                if (!_ownsRemoteChannel(channel, connectionGeneration)) return;
+                final code = typed == null ? null : RemotePairingHandshake.normalizeCode(typed);
+                if (code == null) {
+                  failJoin(t.companionRemote.pairing.cancelled, closeCode: 4000, closeReason: 'Pairing cancelled');
+                  return;
+                }
+                final initiator = RemotePairingInitiator(
+                  code: code,
+                  sid: sid,
+                  hostDeviceId: pairingHostDeviceId!,
+                  remoteDeviceId: remoteDeviceId,
+                );
+                pairingInitiator = initiator;
+                armHandshakeTimer(_handshakeTimeout);
+                channel.sink.add(jsonEncode({'type': 'pairShare', 'share': base64Encode(initiator.share)}));
+              } else if (messageType == 'pairShare' && pairingInitiator != null && pairedKey == null) {
+                final result = pairingInitiator!.finish(
+                  hostShare: base64Decode(json['share'] as String),
+                  hostTag: base64Decode(json['tag'] as String),
+                );
+                if (result == null) {
+                  failJoin(t.companionRemote.pairing.wrongCode);
+                  return;
+                }
+                pairedKey = result.pairingKey;
+                channel.sink.add(jsonEncode({'type': 'pairConfirm', 'tag': base64Encode(result.tag)}));
+              } else if (messageType == 'paired' && pairedKey != null) {
+                await _pairingStore.add(
+                  RemotePairingRole.remote,
+                  RemotePairing(
+                    peerDeviceId: pairingHostDeviceId!,
+                    peerName: pairingHostName,
+                    peerPlatform: '',
+                    key: pairedKey!,
+                    pairedAt: DateTime.now(),
+                  ),
+                );
+                appLogger.d('CompanionRemote: Paired with $pairingHostName');
+                // The host follows with a fresh challenge; the branch above
+                // now finds the pairing and signs in with it.
+              } else if (messageType == 'pairBusy') {
+                failJoin(t.companionRemote.pairing.busy, closeCode: 4005, closeReason: 'Pairing in progress');
+              } else if (messageType == 'pairFailed') {
+                failJoin(
+                  pairingInitiator == null ? t.companionRemote.pairing.expired : t.companionRemote.pairing.wrongCode,
+                );
               } else if (messageType == 'authFailed') {
                 appLogger.w('CompanionRemote: Authentication failed');
+                // The host no longer knows the pairing this sign-in named:
+                // forget it here too, so the next connect pairs afresh.
+                final stale = usedPairing;
+                if (stale != null) {
+                  unawaited(_pairingStore.remove(RemotePairingRole.remote, stale.peerDeviceId));
+                }
                 if (!completer.isCompleted) {
                   completer.completeError(
                     RemotePeerError(
@@ -1108,24 +1507,27 @@ class CompanionRemotePeerService with KeepaliveMixin {
     final channel = attemptedChannel;
     if (channel == null) return completer.future;
 
-    return completer.future.timeout(
-      const Duration(seconds: 15),
-      onTimeout: () async {
-        if (_ownsRemoteChannel(channel, connectionGeneration)) {
-          try {
-            await _closeManagedChannel(channel, _channelAttempt!);
-          } catch (e) {
-            appLogger.d('CompanionRemote: channel close on timeout failed', error: e);
-          }
-          if (_ownsRemoteChannel(channel, connectionGeneration)) {
-            _channel = null;
-            _channelAttempt = null;
-            _channelConnected = false;
-          }
+    Future<void> timedOut() async {
+      if (_ownsRemoteChannel(channel, connectionGeneration)) {
+        try {
+          await _closeManagedChannel(channel, _channelAttempt!);
+        } catch (e) {
+          appLogger.d('CompanionRemote: channel close on timeout failed', error: e);
         }
-        throw RemotePeerError(type: RemotePeerErrorType.timeout, message: t.companionRemote.errors.joinTimedOut);
-      },
-    );
+        if (_ownsRemoteChannel(channel, connectionGeneration)) {
+          _channel = null;
+          _channelAttempt = null;
+          _channelConnected = false;
+        }
+      }
+      throw RemotePeerError(type: RemotePeerErrorType.timeout, message: t.companionRemote.errors.joinTimedOut);
+    }
+
+    try {
+      await completer.future;
+    } on _HandshakeTimeout {
+      await timedOut();
+    }
   }
 
   /// Race WebSocket connections and authenticate with the selected shared identity.
@@ -1136,6 +1538,7 @@ class CompanionRemotePeerService with KeepaliveMixin {
     List<RemoteAuthContext> authContexts, {
     String? authContextId,
     String expectedHostClientId = '',
+    Future<String?> Function(String hostName)? requestPairingCode,
   }) async {
     if (authContexts.isEmpty) {
       throw RemotePeerError(
@@ -1152,6 +1555,7 @@ class CompanionRemotePeerService with KeepaliveMixin {
         authContexts,
         authContextId: authContextId,
         expectedHostClientId: expectedHostClientId,
+        requestPairingCode: requestPairingCode,
       );
       return hostAddresses.first;
     }
@@ -1250,6 +1654,7 @@ class CompanionRemotePeerService with KeepaliveMixin {
         authContexts,
         authContextId: authContextId,
         expectedHostClientId: expectedHostClientId,
+        requestPairingCode: requestPairingCode,
       );
       return winner;
     } on TimeoutException {
@@ -1500,6 +1905,7 @@ class CompanionRemotePeerService with KeepaliveMixin {
     await _deviceDisconnectedController.close();
     await _errorController.close();
     await _connectionStateController.close();
+    await _pairingPromptController.close();
     _disposed = true;
   }
 }
@@ -1557,7 +1963,25 @@ class _RemoteAddressProbe {
   }
 }
 
-enum _HostAdmissionPhase { upgrading, awaitingAuth, authenticating, authenticated, terminal }
+enum _HostAdmissionPhase { upgrading, awaitingAuth, authenticating, pairing, authenticated, terminal }
+
+enum _HostPairingStep { awaitingShare, awaitingConfirmation, finishing }
+
+/// A pairing run on one connection.
+class _HostPairing {
+  _HostPairing({
+    required this.responder,
+    required this.remoteDeviceId,
+    required this.deviceName,
+    required this.platform,
+  });
+
+  final RemotePairingResponder responder;
+  final String remoteDeviceId;
+  final String deviceName;
+  final String platform;
+  _HostPairingStep step = _HostPairingStep.awaitingShare;
+}
 
 class _HostAdmission {
   _HostAdmission({required this.sourceIp, required this.server});
@@ -1571,6 +1995,11 @@ class _HostAdmission {
   StreamSubscription<dynamic>? subscription;
   Timer? authTimer;
   _HostAdmissionPhase phase = _HostAdmissionPhase.upgrading;
+
+  /// The nonce of the challenge this connection must answer; a fresh one
+  /// after a pairing.
+  List<int>? hostNonce;
+  _HostPairing? pairing;
   int? commitGeneration;
   bool released = false;
   Future<void>? closeFuture;
@@ -1586,4 +2015,9 @@ class _HostAdmission {
       terminal.complete();
     }
   }
+}
+
+/// The join's own clock ran out (see `joinSessionWithContexts`).
+class _HandshakeTimeout implements Exception {
+  const _HandshakeTimeout();
 }

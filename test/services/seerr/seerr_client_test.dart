@@ -1592,11 +1592,17 @@ void main() {
   });
 
   group('SeerrAuthService.expandUrlCandidates', () {
+    test('outside the home network tries TLS alone, unless http:// was typed', () {
+      // A password must not fall back to plain HTTP across the internet.
+      expect(SeerrAuthService.expandUrlCandidates('seerr.example.com'), ['https://seerr.example.com']);
+      expect(SeerrAuthService.expandUrlCandidates('http://seerr.example.com'), ['http://seerr.example.com']);
+    });
+
     test('tries TLS first, then plain http and the default install port', () {
-      expect(SeerrAuthService.expandUrlCandidates('seerr.example.com'), [
-        'https://seerr.example.com',
-        'http://seerr.example.com',
-        'http://seerr.example.com:5055',
+      expect(SeerrAuthService.expandUrlCandidates('seerr.local'), [
+        'https://seerr.local',
+        'http://seerr.local',
+        'http://seerr.local:5055',
       ]);
     });
 
@@ -1617,8 +1623,8 @@ void main() {
           return _json({'initialized': true, 'mediaServerType': 2});
         }),
       );
-      final result = await auth.probeFirstReachable('seerr.example.com');
-      expect(result.baseUrl, 'http://seerr.example.com:5055');
+      final result = await auth.probeFirstReachable('seerr.local');
+      expect(result.baseUrl, 'http://seerr.local:5055');
       expect(result.settings.product, SeerrProduct.jellyseerr);
     });
 
@@ -1645,7 +1651,7 @@ void main() {
         }),
       );
       await expectLater(
-        auth.probeFirstReachable('seerr.example.com'),
+        auth.probeFirstReachable('seerr.local'),
         throwsA(
           isA<SeerrUrlException>()
               .having((e) => e.message, 'message', contains('first-run setup'))

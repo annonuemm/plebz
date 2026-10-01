@@ -2147,7 +2147,24 @@
       "connectionTimedOut": "Connection timed out. Use the same network on both devices.",
       "sessionNotFound": "Device not found. Make sure Plebz is running on the host.",
       "authFailed": "Authentication failed. Both devices need the same Plex account.",
-      "failedToConnect": "Failed to connect: ${error}"
+      "failedToConnect": "Failed to connect: ${error}",
+      "codeTitle": "Pair a device",
+      "codeMessage": "${name} wants to control Plebz here. Enter this code on that device:",
+      "codeValidFor": "The code is valid for two minutes.",
+      "enterCodeTitle": "Enter code",
+      "enterCodeMessage": "${name} is now showing an eight-digit code. Enter it here.",
+      "codeLabel": "Code",
+      "codeInvalid": "The code has eight digits.",
+      "wrongCode": "The code doesn't match. Connect again to get a new one.",
+      "cancelled": "Pairing cancelled",
+      "busy": "The device is pairing another one right now. Try again in a moment.",
+      "expired": "The code has expired. Connect again.",
+      "pairingRequired": "This device is no longer paired. Connect again to pair it.",
+      "hostTooOld": "The device runs an older Plebz. Update it to pair.",
+      "pairedDevices": "Paired devices",
+      "noPairedDevices": "No device paired yet. A code appears here on the first connection.",
+      "unpair": "Remove",
+      "unpaired": "${name} is no longer paired"
     },
     "remote": {
       "disconnectConfirm": "Do you want to disconnect from the remote session?",
@@ -2570,7 +2587,10 @@
     "redirectUnsupported": "The server redirected to an unsupported URL",
     "redirectDifferentHost": "The server redirected to a different host. Enter the final ${product} URL directly.",
     "redirectInsecure": "The server redirected from HTTPS to an insecure URL",
-    "redirectUnsupportedEnterFinal": "The server redirected to an unsupported URL. Enter the final ${product} URL directly."
+    "redirectUnsupportedEnterFinal": "The server redirected to an unsupported URL. Enter the final ${product} URL directly.",
+    "plainHttpTitle": "Unencrypted connection",
+    "plainHttpMessage": "${host} is only reachable over unencrypted HTTP and is not in your home network. Your password and access token would cross the internet readable. HTTPS is better, for example through a reverse proxy.",
+    "plainHttpContinue": "Connect anyway"
   },
   "iptv": {
     "title": "IPTV",

@@ -305,7 +305,12 @@ class PlaybackInitializationService {
     } else if (metadata.isMovie && metadata.title != null) {
       dirs.add(await storage.getMovieSubtitlesDirectory(metadata));
     }
-    dirs.add(await storage.getSubtitlesDirectory(ServerId(serverId), metadata.id));
+    try {
+      dirs.add(await storage.getSubtitlesDirectory(ServerId(serverId), metadata.id));
+    } on DownloadStorageException catch (error) {
+      // An id that is no folder name: playback goes on without those sidecars.
+      appLogger.w('Sidecar subtitles: no id folder for this item', error: error);
+    }
     return dirs;
   }
 }

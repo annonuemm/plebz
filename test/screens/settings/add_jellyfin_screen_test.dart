@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/connection/connection.dart';
 import 'package:plezy/connection/connection_registry.dart';
 import 'package:plezy/database/app_database.dart';
@@ -74,7 +75,7 @@ JellyfinConnectionAuthService _jellyfinAuthService({bool quickConnectEnabled = f
   );
 }
 
-JellyfinConnectionAuthService _jellyfinAuthServiceForBareHost() {
+JellyfinConnectionAuthService _jellyfinAuthServiceForBareHost({String host = 'jf.local'}) {
   return JellyfinConnectionAuthService(
     clientName: 'Plezy',
     clientVersion: 'test',
@@ -82,7 +83,7 @@ JellyfinConnectionAuthService _jellyfinAuthServiceForBareHost() {
     testHttpClientFactory: () => MockClient((request) async {
       switch (request.url.path) {
         case '/System/Info/Public':
-          if (request.url.scheme == 'http' && request.url.host == 'jf.example.com' && request.url.port == 8096) {
+          if (request.url.scheme == 'http' && request.url.host == host && request.url.port == 8096) {
             return http.Response(
               jsonEncode({'Id': 'srv-1', 'ServerName': 'Home', 'Version': '10.9.0'}),
               200,
@@ -583,13 +584,56 @@ void main() {
     );
     await tester.pump();
 
-    await tester.enterText(find.byType(TextField).first, 'jf.example.com');
+    await tester.enterText(find.byType(TextField).first, 'jf.local');
     await tester.testTextInput.receiveAction(TextInputAction.go);
     await tester.pumpAndSettle();
 
     final field = tester.widget<TextField>(find.byType(TextField).first);
-    expect(field.controller?.text, 'http://jf.example.com:8096');
+    expect(field.controller?.text, 'http://jf.local:8096');
     expect(find.text('Home'), findsOneWidget);
+  });
+
+  group('plain HTTP to a server on the internet', () {
+    Future<void> enter(WidgetTester tester, String url) async {
+      await tester.pumpWidget(
+        _testApp(
+          AddJellyfinScreen(
+            authServiceFactory: () => _jellyfinAuthServiceForBareHost(host: 'jf.example.com'),
+            localDiscoveryFactory: _noLocalServers,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.enterText(find.byType(TextField).first, url);
+      await tester.testTextInput.receiveAction(TextInputAction.go);
+      // The probe's spinner keeps running behind a warning, so no settling.
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    testWidgets('a bare internet host is tried over TLS only, never falling back to plain HTTP', (tester) async {
+      await enter(tester, 'jf.example.com');
+      expect(find.text('Home'), findsNothing, reason: 'the server answers on http://…:8096 alone');
+      expect(find.text(t.addServer.plainHttpTitle), findsNothing);
+    });
+
+    testWidgets('typed http:// warns before any credentials go out; cancelling keeps them in', (tester) async {
+      await enter(tester, 'http://jf.example.com:8096');
+      expect(find.text(t.addServer.plainHttpTitle), findsOneWidget);
+      expect(find.text(t.addServer.plainHttpMessage(host: 'jf.example.com')), findsOneWidget);
+
+      await tester.tap(find.text(t.common.cancel));
+      await tester.pumpAndSettle();
+      expect(find.text('Home'), findsNothing, reason: 'the server is not taken on');
+    });
+
+    testWidgets('…and going ahead knowingly takes the server on', (tester) async {
+      await enter(tester, 'http://jf.example.com:8096');
+      await tester.tap(find.text(t.addServer.plainHttpContinue));
+      await tester.pumpAndSettle();
+      expect(find.text('Home'), findsOneWidget);
+    });
   });
 
   testWidgets('the Emby dialect renames the screen and never offers Quick Connect', (tester) async {

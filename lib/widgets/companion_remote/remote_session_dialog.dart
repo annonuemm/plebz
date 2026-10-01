@@ -6,9 +6,11 @@ import '../../i18n/strings.g.dart';
 import '../../mixins/mounted_set_state_mixin.dart';
 import '../../providers/companion_remote_provider.dart';
 import '../../services/companion_remote/companion_remote_host_controller.dart';
+import '../../services/companion_remote/remote_pairing_store.dart';
 import '../../services/settings_service.dart';
 import '../../theme/mono_tokens.dart';
 import '../../utils/dialogs.dart';
+import '../../utils/snackbar_helper.dart';
 import '../../focus/focusable_button.dart';
 import '../../focus/key_event_utils.dart';
 import '../dialog_action_button.dart';
@@ -35,6 +37,7 @@ class _RemoteSessionDialogState extends State<RemoteSessionDialog> with MountedS
   final _closeFocusNode = FocusNode(debugLabel: 'RemoteSessionDialog.close');
   final _toggleFocusNode = FocusNode(debugLabel: 'RemoteSessionDialog.toggle');
   final _minimizeFocusNode = FocusNode(debugLabel: 'RemoteSessionDialog.minimize');
+  final _pairedDevicesKey = GlobalKey<_PairedDevicesState>();
   final _errorCloseFocusNode = FocusNode(debugLabel: 'RemoteSessionDialog.errorClose');
   final _errorRetryFocusNode = FocusNode(debugLabel: 'RemoteSessionDialog.errorRetry');
 
@@ -167,7 +170,11 @@ class _RemoteSessionDialogState extends State<RemoteSessionDialog> with MountedS
                           focusNode: _closeFocusNode,
                           onPressed: _close,
                           onBack: _close,
-                          onNavigateDown: () => _toggleFocusNode.requestFocus(),
+                          onNavigateDown: () {
+                            if (!(_pairedDevicesKey.currentState?.focusFirst() ?? false)) {
+                              _toggleFocusNode.requestFocus();
+                            }
+                          },
                           useBackgroundFocus: true,
                           child: IconButton(icon: const AppIcon(Symbols.close_rounded), onPressed: _close),
                         ),
@@ -183,6 +190,14 @@ class _RemoteSessionDialogState extends State<RemoteSessionDialog> with MountedS
                     ],
 
                     const SizedBox(height: 24),
+                    _PairedDevices(
+                      key: _pairedDevicesKey,
+                      onNavigateAbove: () => _closeFocusNode.requestFocus(),
+                      onNavigateBelow: () => _toggleFocusNode.requestFocus(),
+                      onBack: _close,
+                    ),
+
+                    const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: .end,
                       children: [
@@ -191,7 +206,11 @@ class _RemoteSessionDialogState extends State<RemoteSessionDialog> with MountedS
                           focusNode: _toggleFocusNode,
                           onPressed: _toggleServer,
                           onBack: _close,
-                          onNavigateUp: () => _closeFocusNode.requestFocus(),
+                          onNavigateUp: () {
+                            if (!(_pairedDevicesKey.currentState?.focusLast() ?? false)) {
+                              _closeFocusNode.requestFocus();
+                            }
+                          },
                           onNavigateRight: () => _minimizeFocusNode.requestFocus(),
                           useBackgroundFocus: true,
                           child: TextButton.icon(
@@ -319,6 +338,120 @@ class _RemoteSessionDialogState extends State<RemoteSessionDialog> with MountedS
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The devices allowed to control this one, each removable. A removed phone
+/// has to pair again, with a new code, before it can connect.
+class _PairedDevices extends StatefulWidget {
+  const _PairedDevices({super.key, required this.onNavigateAbove, required this.onNavigateBelow, required this.onBack});
+
+  final VoidCallback onNavigateAbove;
+  final VoidCallback onNavigateBelow;
+  final VoidCallback onBack;
+
+  @override
+  State<_PairedDevices> createState() => _PairedDevicesState();
+}
+
+class _PairedDevicesState extends State<_PairedDevices> {
+  final _store = RemotePairingStore.instance;
+  List<RemotePairing> _pairings = const [];
+  final Map<String, FocusNode> _focusNodes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _store.revision.addListener(_reload);
+    _reload();
+  }
+
+  @override
+  void dispose() {
+    _store.revision.removeListener(_reload);
+    for (final node in _focusNodes.values) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _reload() async {
+    final pairings = await _store.pairings(RemotePairingRole.host);
+    if (!mounted) return;
+    setState(() => _pairings = pairings);
+  }
+
+  FocusNode _nodeFor(RemotePairing pairing) =>
+      _focusNodes.putIfAbsent(pairing.peerDeviceId, () => FocusNode(debugLabel: 'PairedDevice.${pairing.peerName}'));
+
+  /// Focuses the first row's button; false when there is none.
+  bool focusFirst() {
+    if (_pairings.isEmpty) return false;
+    _nodeFor(_pairings.first).requestFocus();
+    return true;
+  }
+
+  /// Focuses the last row's button; false when there is none.
+  bool focusLast() {
+    if (_pairings.isEmpty) return false;
+    _nodeFor(_pairings.last).requestFocus();
+    return true;
+  }
+
+  Future<void> _remove(int index) async {
+    final pairing = _pairings[index];
+    await _store.remove(RemotePairingRole.host, pairing.peerDeviceId);
+    if (!mounted) return;
+    showAppSnackBar(context, t.companionRemote.pairing.unpaired(name: pairing.peerName));
+    // Focus stays in the list where a row is left, else goes on below.
+    final remaining = await _store.pairings(RemotePairingRole.host);
+    if (!mounted) return;
+    if (remaining.isEmpty) {
+      widget.onNavigateBelow();
+    } else {
+      _nodeFor(remaining[index.clamp(0, remaining.length - 1)]).requestFocus();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: .stretch,
+      mainAxisSize: .min,
+      children: [
+        Text(t.companionRemote.pairing.pairedDevices, style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        if (_pairings.isEmpty)
+          Text(t.companionRemote.pairing.noPairedDevices, style: theme.textTheme.bodySmall)
+        else
+          for (var i = 0; i < _pairings.length; i++)
+            Row(
+              children: [
+                const AppIcon(Symbols.smartphone_rounded, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _pairings[i].peerName.isEmpty ? t.companionRemote.unknownDevice : _pairings[i].peerName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                FocusableButton(
+                  focusNode: _nodeFor(_pairings[i]),
+                  onPressed: () => _remove(i),
+                  onBack: widget.onBack,
+                  onNavigateUp: i == 0 ? widget.onNavigateAbove : () => _nodeFor(_pairings[i - 1]).requestFocus(),
+                  onNavigateDown: i == _pairings.length - 1
+                      ? widget.onNavigateBelow
+                      : () => _nodeFor(_pairings[i + 1]).requestFocus(),
+                  useBackgroundFocus: true,
+                  child: TextButton(onPressed: () => _remove(i), child: Text(t.companionRemote.pairing.unpair)),
+                ),
+              ],
+            ),
+      ],
     );
   }
 }

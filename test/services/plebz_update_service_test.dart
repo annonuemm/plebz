@@ -47,6 +47,21 @@ void main() {
       expect(PlebzUpdateService.buildNumberOf('v1.0.1'), isNull);
     });
 
+    test('the dialog gets the German notes hidden behind the English ones', () {
+      const body =
+          '**Plebz 1.4.0 is an update.**\n\n- English\n\n<!-- de\n**Plebz 1.4.0 ist ein Update.**\n\n- Deutsch\n-->';
+      final release = PlebzUpdateService.parseRelease({..._releaseJson(), 'body': body})!;
+      expect(release.notes, '**Plebz 1.4.0 ist ein Update.**\n\n- Deutsch');
+      expect(release.notes, isNot(contains('English')));
+      expect(release.notes, isNot(contains('<!--')));
+    });
+
+    test('a body without hidden German is shown as it stands', () {
+      expect(PlebzUpdateService.notesForApp('- Fixes'), '- Fixes');
+      expect(PlebzUpdateService.notesForApp('- English only\n<!-- note -->'), '- English only\n<!-- note -->');
+      expect(PlebzUpdateService.notesForApp('a\r\n<!-- de\r\n- Deutsch\r\n-->'), '- Deutsch');
+    });
+
     test('newer means a higher build number, whatever the version name says', () {
       final release = PlebzUpdateService.parseRelease(_releaseJson())!;
       expect(release.build, 551);

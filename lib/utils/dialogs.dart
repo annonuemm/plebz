@@ -523,11 +523,13 @@ Future<String?> showTextInputDialog(
   bool allowEmpty = false,
   bool multiline = false,
   bool obscureText = false,
+  String? message,
 }) {
   return showScopedDialog<String>(
     context: context,
     builder: (context) => _TextInputDialog(
       title: title,
+      message: message,
       labelText: labelText,
       hintText: hintText,
       initialValue: initialValue,
@@ -544,6 +546,9 @@ Future<String?> showTextInputDialog(
 
 class _TextInputDialog extends StatefulWidget {
   final String title;
+
+  /// A line above the field saying what to type, when the title alone does not.
+  final String? message;
   final String labelText;
   final String? hintText;
   final String? initialValue;
@@ -557,6 +562,7 @@ class _TextInputDialog extends StatefulWidget {
 
   const _TextInputDialog({
     required this.title,
+    this.message,
     required this.labelText,
     required this.hintText,
     this.initialValue,
@@ -618,7 +624,18 @@ class _TextInputDialogState extends State<_TextInputDialog> with ControllerDispo
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.title),
-      content: widget.multiline ? SizedBox(width: 400, child: textField) : textField,
+      content: switch (widget.message) {
+        final message? => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(message),
+            const SizedBox(height: 16),
+            widget.multiline ? SizedBox(width: 400, child: textField) : textField,
+          ],
+        ),
+        null => widget.multiline ? SizedBox(width: 400, child: textField) : textField,
+      },
       actions: [
         DialogActionButton(
           focusNode: _cancelFocusNode,

@@ -56,6 +56,7 @@ import '../services/settings_service.dart';
 import '../providers/offline_mode_provider.dart';
 import '../services/companion_remote/companion_remote_host_controller.dart';
 import '../services/companion_remote/companion_remote_receiver.dart';
+import '../widgets/companion_remote/pairing_code_prompt.dart';
 import '../services/fullscreen_state_manager.dart';
 import '../providers/companion_remote_provider.dart';
 import '../utils/desktop_window_padding.dart';
@@ -2211,7 +2212,11 @@ class _MainScreenState extends State<MainScreen>
   Widget build(BuildContext context) {
     final useSideNav = PlatformDetector.shouldUseSideNavigation(context);
 
-    return MainScreenTabSwitcher(selectTab: _selectTabInBackground, child: _buildContent(context, useSideNav));
+    return MainScreenTabSwitcher(
+      selectTab: _selectTabInBackground,
+      // A phone asking to pair shows its code here, on whatever is on screen.
+      child: CompanionRemotePairingPrompt(child: _buildContent(context, useSideNav)),
+    );
   }
 
   Widget _buildContent(BuildContext context, bool useSideNav) {

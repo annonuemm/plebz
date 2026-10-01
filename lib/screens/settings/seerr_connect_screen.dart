@@ -12,6 +12,7 @@ import '../../providers/seerr_account_provider.dart';
 import '../../services/seerr/seerr_constants.dart';
 import '../../services/seerr/seerr_exceptions.dart';
 import '../../theme/mono_tokens.dart';
+import '../../widgets/plain_http_warning.dart';
 import '../../widgets/app_icon.dart';
 import '../../widgets/focused_scroll_scaffold.dart';
 import '../../widgets/loading_indicator_box.dart';
@@ -104,6 +105,8 @@ class _SeerrConnectScreenState extends State<SeerrConnectScreen>
       // race https, plain http, and the default install port instead of
       // assuming https and failing every plain-HTTP LAN instance.
       final reached = await account.authService.probeFirstReachable(input);
+      // Plain HTTP to an instance outside the home network: only knowingly.
+      if (!mounted || !await confirmPlainHttpIfNeeded(context, reached.baseUrl)) return;
       final settings = reached.settings;
       final plexToken = await account.resolvePlexToken();
       if (!mounted) return;

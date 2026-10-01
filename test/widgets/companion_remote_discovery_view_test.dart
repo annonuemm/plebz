@@ -184,6 +184,7 @@ class _FailingJoinPeerService extends CompanionRemotePeerService {
     List<RemoteAuthContext> authContexts, {
     String? authContextId,
     String expectedHostClientId = '',
+    Future<String?> Function(String hostName)? requestPairingCode,
   }) async {
     joinAttempts++;
     throw const PeerError(type: PeerErrorType.timeout, message: 'injected timeout');

@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import '../models/seerr/seerr_session.dart';
 import '../utils/app_logger.dart';
 import '../utils/log_redaction_manager.dart';
+import 'credential_vault.dart';
 import 'sensitive_prefs.dart';
 import 'trackers/tracker_constants.dart';
 import 'trackers/tracker_session.dart';
@@ -561,14 +562,7 @@ abstract final class PrefsRecovery {
 
   /// The vault generates exactly 32 random bytes; anything else would make
   /// `AesGcm.with256bits()` throw on first use, which is worse than no key.
-  static bool _isVaultKey(String value) {
-    if (value.isEmpty) return false;
-    try {
-      return base64Decode(value).length == 32;
-    } catch (_) {
-      return false;
-    }
-  }
+  static bool _isVaultKey(String value) => CredentialVault.isStoredKeyForm(value);
 
   /// The legacy Plex slot is an opaque bearer token. Registering it as a token
   /// also covers its URL-encoded form.

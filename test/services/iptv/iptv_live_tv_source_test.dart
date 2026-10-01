@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -87,6 +88,7 @@ IptvLiveTvSource _m3uSource(
   Duration Function()? diskCacheMaxAge,
   bool mergeDuplicates = false,
   LiveTvChannelLayout Function()? layout,
+  int maxResponseBytes = IptvLiveTvSource.defaultMaxResponseBytes,
 }) => IptvLiveTvSource(
   IptvSource(
     id: 'src',
@@ -102,6 +104,7 @@ IptvLiveTvSource _m3uSource(
   diskCacheMaxAge: diskCacheMaxAge,
   mergeDuplicates: () => mergeDuplicates,
   channelLayout: layout == null ? null : () async => layout(),
+  maxResponseBytes: maxResponseBytes,
 );
 
 /// A playlist whose one entry keeps a five-day archive in the query form.
@@ -726,6 +729,54 @@ http://provider/stream/guarded
       final source = _m3uSource(MockClient((_) async => http.Response.bytes(gzip.encode(utf8.encode(_playlist)), 200)));
 
       expect((await source.fetchChannels()).map((c) => c.title), ['Das Erste HD', 'Kein EPG']);
+    });
+
+    test('a guide larger than the cap is dropped, the channels stay', () async {
+      // A stream address entered as a guide, or a provider gone wrong, would
+      // otherwise grow in memory until the app is killed.
+      final source = _m3uSource(
+        MockClient((request) async {
+          if (request.url.path.endsWith('.m3u')) return _ok(_playlist);
+          return _ok(_guide + ' ' * 4096);
+        }),
+        epgUrl: 'http://provider/epg.xml',
+        maxResponseBytes: 2048,
+      );
+
+      expect((await source.fetchChannels()).map((c) => c.title), ['Das Erste HD', 'Kein EPG']);
+      expect(await source.fetchSchedule(), isEmpty);
+    });
+
+    test('a gzip bomb stops at the cap instead of unpacking whole', () async {
+      // A few kilobytes that unpack to a megabyte: the cap has to hold for
+      // the unpacked size, not just for what came over the wire.
+      final bomb = gzip.encode(utf8.encode(_guide + ' ' * (1024 * 1024)));
+      expect(bomb.length, lessThan(4096));
+      final source = _m3uSource(
+        MockClient((request) async {
+          if (request.url.path.endsWith('.m3u')) return _ok(_playlist);
+          return http.Response.bytes(bomb, 200);
+        }),
+        epgUrl: 'http://provider/epg.xml.gz',
+        maxResponseBytes: 64 * 1024,
+      );
+
+      expect(await source.fetchSchedule(), isEmpty);
+    });
+
+    test('a guide under the cap is read as before', () async {
+      final packed = gzip.encode(utf8.encode(_guide));
+      final source = _m3uSource(
+        MockClient((request) async {
+          if (request.url.path.endsWith('.m3u')) return _ok(_playlist);
+          return http.Response.bytes(packed, 200);
+        }),
+        epgUrl: 'http://provider/epg.xml.gz',
+        // Exactly the larger of the two files: at the cap is still under it.
+        maxResponseBytes: math.max(utf8.encode(_guide).length, utf8.encode(_playlist).length),
+      );
+
+      expect((await source.fetchSchedule()).single.title, 'Tagesschau');
     });
 
     test('without a guide URL there is simply no guide', () async {

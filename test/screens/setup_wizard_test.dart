@@ -119,8 +119,12 @@ void main() {
   testWidgets('with a playlist in place, "Done" finishes the setup', (tester) async {
     final iptv = IptvSourcesProvider(profileId: 'p', buildSource: (_) => throw UnimplementedError());
     addTearDown(iptv.dispose);
-    await iptv.save(
-      const IptvSource(id: 'src', name: 'Playlist', kind: IptvSourceKind.m3u, playlistUrl: 'http://provider/list.m3u'),
+    // Saving seals the playlist address with the vault, which works on real
+    // time rather than the test's clock.
+    await tester.runAsync(
+      () => iptv.save(
+        const IptvSource(id: 'src', name: 'Playlist', kind: IptvSourceKind.m3u, playlistUrl: 'http://provider/list.m3u'),
+      ),
     );
 
     await pump(

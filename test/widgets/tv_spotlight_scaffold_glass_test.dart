@@ -12,10 +12,9 @@ import 'package:plezy/widgets/tv_spotlight_scaffold.dart';
 import '../test_helpers/media_items.dart';
 import '../test_helpers/prefs.dart';
 
-/// Home and Explore under "Glas": the rows below the one in use are hidden,
-/// so their glimpse is not kept either — the row goes down to the foot of the
-/// screen and the spotlight's words stand directly on it, which leaves the air
-/// under the navigation instead of a gap above the rows.
+/// Home and Explore under "Glas": the spotlight's words stand directly on the
+/// rows — the row in use and the glimpse of the next along the foot — which
+/// leaves the air under the navigation instead of a gap above the rows.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -57,11 +56,11 @@ void main() {
     return tester.widget<CatalogSpotlightBackground>(find.byType(CatalogSpotlightBackground)).contentBottom;
   }
 
-  test('without the glimpse the rail keeps only a margin below the row in use', () {
-    final withGlimpse = TvBrowseRailLayout.viewportHeightFor(hubCount: 2, scale: 1, sectionHeight: 300);
-    final without = TvBrowseRailLayout.viewportHeightFor(hubCount: 2, scale: 1, sectionHeight: 300, peekNext: false);
-    expect(without, 300 + TvBrowseRailLayout.footMarginForScale(1));
-    expect(without, lessThan(withGlimpse));
+  test('the rail keeps the glimpse of the next row in every theme', () {
+    expect(
+      TvBrowseRailLayout.viewportHeightFor(hubCount: 2, scale: 1, sectionHeight: 300),
+      300 + TvBrowseRailLayout.nextHubPeekHeightForScale(1),
+    );
   });
 
   testWidgets('under glass the spotlight\'s words come down onto the rows', (tester) async {

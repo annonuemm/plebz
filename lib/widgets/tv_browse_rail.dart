@@ -166,27 +166,18 @@ class TvBrowseRailLayout {
   }
 
   /// The rail's height: the tallest section, and below it a glimpse of the
-  /// next row — or, with [peekNext] off (under "Glas", where the rows below
-  /// stay hidden until reached), only a margin to the foot of the screen.
-  static double viewportHeightFor({
-    required int hubCount,
-    required double scale,
-    required double sectionHeight,
-    bool peekNext = true,
-  }) {
-    final peekHeight = hubCount > 1 ? (peekNext ? nextHubPeekHeightForScale(scale) : footMarginForScale(scale)) : 0.0;
+  /// next row — its heading and a slice of its tiles, cut by the screen edge.
+  static double viewportHeightFor({required int hubCount, required double scale, required double sectionHeight}) {
+    final peekHeight = hubCount > 1 ? nextHubPeekHeightForScale(scale) : 0.0;
     return sectionHeight + peekHeight;
   }
 
-  /// What is kept below the row in use where the next is not glimpsed.
-  static double footMarginForScale(double scale) => 16 * scale;
-
   /// How far a rail may be pushed past the bottom edge before the labels of
   /// its tallest row go with it: the room it keeps under that row — the
-  /// glimpse of the next, or the foot margin — and the breath a row keeps
-  /// under its own labels (its height less the 2 × scale above the cards).
-  static double pushableBelowEdgeFor({required int hubCount, required double scale, bool peekNext = true}) =>
-      viewportHeightFor(hubCount: hubCount, scale: scale, sectionHeight: 0, peekNext: peekNext) + 8 * scale;
+  /// glimpse of the next — and the breath a row keeps under its own labels
+  /// (its height less the 2 × scale above the cards).
+  static double pushableBelowEdgeFor({required int hubCount, required double scale}) =>
+      viewportHeightFor(hubCount: hubCount, scale: scale, sectionHeight: 0) + 8 * scale;
 
   static bool isPersonHub(MediaHub hub) => hub.type == 'person';
 
@@ -476,7 +467,6 @@ class TvBrowseRailLayout {
     GridSpacing gridSpacing = GridSpacing.tight,
     double tallPosterScale = 1.0,
     double widePosterScale = 1.0,
-    bool peekNext = true,
   }) {
     if (hubs.isEmpty) return 0;
 
@@ -502,7 +492,7 @@ class TvBrowseRailLayout {
     final sectionHeight = hubSectionHeightFor(scale: scale, activeRailHeight: railHeight);
 
     return railTopPaddingForScale(scale) +
-        viewportHeightFor(hubCount: hubs.length, scale: scale, sectionHeight: sectionHeight, peekNext: peekNext) +
+        viewportHeightFor(hubCount: hubs.length, scale: scale, sectionHeight: sectionHeight) +
         railBottomPaddingForScale(scale);
   }
 }
@@ -1463,10 +1453,6 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
             hubCount: widget.hubs.length,
             scale: scale,
             sectionHeight: viewportSectionHeight,
-            // Under "Glas" the rows below stay hidden, so their glimpse is not
-            // kept either: the row in use goes down to the foot of the screen
-            // and the spotlight above follows it.
-            peekNext: !ockerGlass(context),
           );
           final bottomPadding = (viewportHeight - sectionHeights.last).clamp(0.0, double.infinity).toDouble();
           _sectionMaxScrollExtent = (nextOffset + bottomPadding - viewportHeight)
@@ -1598,7 +1584,9 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     final minimumShown = TvBrowseRailLayout.hubStripHeightForScale(scale) + 72 * scale;
     bool shownBelow(int hubIndex) {
       final active = _focusModel.hubIndex;
-      if (hubIndex <= active) return true;
+      // The next row always: its heading and the top of its tiles along the
+      // foot say what comes when the cursor goes down.
+      if (hubIndex <= active + 1) return true;
       if (active < 0 || active >= offsets.length) return false;
       // The list stops scrolling at its end, so the row in use is not always
       // at the top of the rail.
@@ -1657,10 +1645,9 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
           controller: _verticalScrollSnapshotController,
           mode: SnapshotMode.permissive,
           autoresize: true,
-          // Under "Glas" the rows below the one in use are not shown until
-          // the cursor comes down to them — unless enough of one fits in the
-          // room a short row leaves: a sliver of the next row along the foot
-          // read as clutter, an empty band under a row of genres as
+          // Under "Glas" the rows below the next are not shown until the
+          // cursor comes down to them — unless enough of one fits in the room
+          // a short row leaves: an empty band under a row of genres reads as
           // unfinished. It fades in as it scrolls up into place.
           child: hideRowsBelow
               ? ListenableSelector<bool>(

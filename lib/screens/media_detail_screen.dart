@@ -3842,11 +3842,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       scale: detailScale,
       maxDrop: math.min(
         (canShowEpisodeTitle ? 120.0 : 86.0) * detailScale,
-        TvBrowseRailLayout.pushableBelowEdgeFor(
-          hubCount: detailHubs.length,
-          scale: detailScale,
-          peekNext: !ockerGlass(context),
-        ),
+        TvBrowseRailLayout.pushableBelowEdgeFor(hubCount: detailHubs.length, scale: detailScale),
       ),
       hasEpisodeTitle: canShowEpisodeTitle,
     );
@@ -4744,9 +4740,6 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       fullCardLayout: svc.read(SettingsService.tvFullCardLayout),
       gridSpacing: svc.read(SettingsService.gridSpacing),
       tallPosterScale: _tvDetailTallPosterScale,
-      // As the rail lays itself out: under glass it glimpses no row below,
-      // and a page that counted the glimpse pushed it that much too far down.
-      peekNext: !ockerGlass(context),
     );
   }
 

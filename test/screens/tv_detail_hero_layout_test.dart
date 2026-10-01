@@ -251,10 +251,11 @@ void main() {
       tallPosterScale: 0.72,
     );
 
-    /// Where the copies' labels end, from the top of the screen, on a page
-    /// that reckons the rail with [countsGlimpse] and caps the push at [cap].
-    double labelsFoot({required bool countsGlimpse, required double cap}) {
-      double rail(bool peek) => TvBrowseRailLayout.estimateHeight(
+    /// Where the copies' labels end, from the top of the screen, when the
+    /// push is capped at [cap]. The page reckons the rail as it draws itself:
+    /// with the glimpse of the row below, in every theme.
+    double labelsFoot({required double cap}) {
+      final rail = TvBrowseRailLayout.estimateHeight(
         size: const Size(width, _viewportHeight),
         hubs: hubs,
         density: 3,
@@ -263,15 +264,12 @@ void main() {
             h == hubs.first ? EpisodePosterMode.episodeThumbnail : EpisodePosterMode.seriesPoster,
         widePosterScaleForHub: (_) => 0.72,
         tallPosterScale: 0.72,
-        peekNext: peek,
       );
       final top = TvBrowseRailLayout.railTopPaddingForScale(_tvScale);
-      final reckoned = rail(countsGlimpse);
-      final drawn = rail(false); // under glass the rail glimpses nothing
       final headerTop = 17 + 40 * _tvScale; // below the home button
-      final available = _viewportHeight - headerTop - (reckoned - top + 4 * _tvScale);
+      final available = _viewportHeight - headerTop - (rail - top + 4 * _tvScale);
       final drop = tvDetailRailDrop(availableHeight: available, scale: _tvScale, maxDrop: cap, hasEpisodeTitle: true);
-      final railTop = _viewportHeight + drop - drawn;
+      final railTop = _viewportHeight + drop - rail;
       return railTop +
           top +
           TvBrowseRailLayout.hubStripHeightForScale(_tvScale) +
@@ -279,22 +277,18 @@ void main() {
           copiesRow.containerHeight;
     }
 
-    test('under glass keep the labels of the tallest row on screen', () {
+    test('the labels of the tallest row stay on screen', () {
       final cap = math.min(
         120.0 * _tvScale,
-        TvBrowseRailLayout.pushableBelowEdgeFor(hubCount: hubs.length, scale: _tvScale, peekNext: false),
+        TvBrowseRailLayout.pushableBelowEdgeFor(hubCount: hubs.length, scale: _tvScale),
       );
-      expect(labelsFoot(countsGlimpse: false, cap: cap), lessThanOrEqualTo(_viewportHeight));
+      expect(labelsFoot(cap: cap), lessThanOrEqualTo(_viewportHeight));
     });
 
-    test('where a glimpse the rail never draws was counted, they went over the edge', () {
-      expect(labelsFoot(countsGlimpse: true, cap: 120.0 * _tvScale), greaterThan(_viewportHeight + 10));
-    });
-
-    test('the push can go as far as the room under the row and the breath under its labels', () {
+    test('the push can go as far as the glimpse below the row and the breath under its labels', () {
       expect(
-        TvBrowseRailLayout.pushableBelowEdgeFor(hubCount: 2, scale: 1, peekNext: false),
-        TvBrowseRailLayout.footMarginForScale(1) + 8,
+        TvBrowseRailLayout.pushableBelowEdgeFor(hubCount: 2, scale: 1),
+        TvBrowseRailLayout.nextHubPeekHeightForScale(1) + 8,
       );
       expect(
         TvBrowseRailLayout.pushableBelowEdgeFor(hubCount: 1, scale: 1),

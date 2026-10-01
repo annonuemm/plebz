@@ -906,7 +906,9 @@ void main() {
     expect(snapshots.every((widget) => widget.controller.allowSnapshotting), isFalse);
   });
 
-  testWidgets('under glass the rows below the one in use stay hidden until the cursor reaches them', (tester) async {
+  testWidgets('under glass the next row is glimpsed, the rows past it stay hidden until the cursor reaches them', (
+    tester,
+  ) async {
     final serverManager = MultiServerManager();
     MediaHub hub(String id, String title) => MediaHub(
       id: id,
@@ -927,7 +929,7 @@ void main() {
               height: 720,
               child: TvBrowseRail(
                 focusMemory: focusMemory,
-                hubs: [hub('first', 'First Row'), hub('second', 'Second Row')],
+                hubs: [hub('first', 'First Row'), hub('second', 'Second Row'), hub('third', 'Third Row')],
                 iconForHub: (_, _) => Icons.tv_rounded,
               ),
             ),
@@ -944,7 +946,10 @@ void main() {
         .widget<AnimatedOpacity>(find.ancestor(of: heading(title), matching: find.byType(AnimatedOpacity)).first)
         .opacity;
     expect(opacityOf('First Row'), 1);
-    expect(opacityOf('Second Row'), 0, reason: 'no sliver of the next row along the foot');
+    expect(opacityOf('Second Row'), 1, reason: 'its heading and the top of its tiles along the foot');
+    // Past the glimpse: hidden, or so far down it is not built at all.
+    final third = find.ancestor(of: heading('Third Row'), matching: find.byType(AnimatedOpacity));
+    if (third.evaluate().isNotEmpty) expect(tester.widget<AnimatedOpacity>(third.first).opacity, 0);
   });
 
   testWidgets('under glass a short row leaves its room to the row below, shown in part', (tester) async {

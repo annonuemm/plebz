@@ -13,38 +13,34 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.4.1 (Build 578)
+
+- Glas: Unter der aktiven Reihe ist die nächste Reihe wieder angeschnitten zu sehen.
+
 ## 1.4.0 (Build 576)
 
 - Glas: Über der Merkliste und beim Durchsuchen einer Mediathek steht rechts, wo du gerade bist, etwa „Merkliste · Plex“ oder der Name der Mediathek.
 
 ## 1.3.1 (Build 574)
 
-- Sicherheits-Update: Der Player bringt neuere Versionen von FreeType (Schriften in Untertiteln) und Mbed TLS (verschlüsselte Streams) mit, ExoPlayer einen neueren Netzwerkteil (Cronet).
-- Leitet ein Server auf eine andere Adresse weiter, geht sein Zugangsschlüssel nicht mehr mit, und von https zurück auf http wird nicht mehr gefolgt.
-- Der TMDB-Schlüssel wird verschlüsselt gespeichert.
+- Sicherheit bei Wiedergabe, Verbindungen und gespeicherten Zugangsdaten verbessert.
 
 ## 1.3.0 (Build 572)
 
 **Plebz 1.3.0 ist ein Sicherheits-Update.**
 
 ### Fernbedienung
-- Ein Handy muss jetzt einmal mit einem achtstelligen Code gekoppelt werden, den das gesteuerte Gerät anzeigt. Bisher reichte dasselbe Konto, und der Schlüssel ließ sich aus öffentlich abrufbaren Server-Daten berechnen.
-- Die Kopplung läuft über CPace: Der Code kann weder mitgehört noch durchprobiert werden. Gekoppelte Handys bleiben gekoppelt und lassen sich im Fernbedienungs-Fenster entfernen.
-- Verbindungen aus einem Webbrowser werden abgelehnt, damit keine Webseite im Heimnetz die Fernbedienung erreicht.
+- Ein Handy wird jetzt einmal mit einem achtstelligen Code gekoppelt, den das gesteuerte Gerät anzeigt. Gekoppelte Handys bleiben gekoppelt und lassen sich im Fernbedienungs-Fenster entfernen.
 - **Wichtig:** Handy und gesteuertes Gerät brauchen beide diese Version.
 
-### Zugangsdaten und Verbindungen
-- Trakt- und MDBList-Anmeldungen, IPTV-Passwörter und Playlist-Adressen sowie die Seerr-Sitzung werden verschlüsselt gespeichert. Auf Android liegt der Schlüssel dafür im Android-Keystore.
-- Android nimmt die App-Daten nicht mehr in die automatische Google-Sicherung auf. Für einen Geräteumzug gibt es die eigene, passwortgeschützte Sicherung unter Alle Einstellungen → Sicherung.
-- Sicherungen schützen ihr Passwort stärker. Ältere Sicherungen lassen sich weiter einlesen.
-- Jellyfin-, Emby- und Seerr-Server im Internet: Ohne „https://“ eingetragen, versucht Plebz nur noch verschlüsselte Verbindungen. Unverschlüsseltes HTTP ins Internet gibt es nur noch nach einer Warnung.
-- Protokolle verbergen jetzt auch Benutzernamen, IPTV-Adressen und Serveradressen in Fehlermeldungen.
+### Daten und Verbindungen
+- Anmeldungen und Zugangsdaten werden besser geschützt gespeichert.
+- Die App-Daten landen nicht mehr in der automatischen Google-Sicherung. Für einen Geräteumzug gibt es die eigene, passwortgeschützte Sicherung unter Alle Einstellungen → Sicherung.
+- Server im Internet werden verschlüsselt verbunden; unverschlüsselt nur noch nach einer Warnung.
+- Protokolle enthalten weniger persönliche Daten.
 
-### Wiedergabe und Dateien
-- Die eingebaute FFmpeg-Bibliothek ist auf Version 8.0.3 aktualisiert. Sie schließt Sicherheitslücken, die ein präparierter Stream oder eine präparierte Datei ausnutzen könnte.
-- IPTV: Playlisten und EPG-Daten werden nur noch bis 256 MB gelesen. Eine fehlerhafte oder absichtlich aufgeblähte Datei bringt die App so nicht mehr zum Absturz.
-- Downloads: Ein Server kann Dateien nicht mehr außerhalb des Download-Ordners ablegen lassen.
-- Externe Player bekommen nur noch heruntergeladene Dateien, nichts anderes aus dem Speicher der App.
+### Wiedergabe
+- Wiedergabe, IPTV und Downloads sicherer gemacht.
 
 ## 1.2.3 (Build 567)
 
@@ -61,4 +57,4 @@ without one stays hidden in the app.
 ## 1.2.0 (Build 561)
 
 - Ein Sender aus „Jetzt live“ startet weiter im Vollbild, dahinter öffnet sich aber Live TV mit seiner Gruppe. Wer den Player verlässt, landet im EPG auf diesem Sender statt auf der Startseite.
-- Neu: „Was ist neu“. Nach einem Update zeigt Plebz, was sich geändert hat, auch über übersprungene Versionen hinweg. Dieselben Notizen stehen im Update-Dialog und unter Einstellungen → „Was ist neu“.
+- Neu: „Was ist neu“. Nach einem Update zeigt Plebz, was sich geändert hat, auch über übersprungene Versionen hinweg. Alle Notizen stehen unter Einstellungen → „Was ist neu“.

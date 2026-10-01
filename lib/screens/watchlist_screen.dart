@@ -398,6 +398,8 @@ class WatchlistScreenState extends State<WatchlistScreen>
       // is one list with nothing above it, and the panel describing whatever
       // holds focus is worth more here than anywhere else this screen serves.
       ockerPageInAnyLayout: true,
+      // The rail lights "Merkliste" but not which of its lists is on show.
+      ockerLocation: '${t.explore.rows.watchlist} · ${active.label}',
       hub: MediaHub(
         id: 'watchlist:${active.id}',
         identifier: 'watchlist.${active.id}',

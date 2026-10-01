@@ -136,7 +136,13 @@ class _LibrariesScreenState extends State<LibrariesScreen>
       valueListenable: _ockerFilterSlot,
       builder: (context, chips, _) {
         if (chips == null) return const SizedBox.shrink();
-        return OckerGridFilterBand(children: [chips(context)]);
+        // The rail lights "Mediatheken" but not which library is open.
+        final library = context
+            .read<LibrariesProvider>()
+            .libraries
+            .where((lib) => lib.globalKey == _selectedLibraryGlobalKey)
+            .firstOrNull;
+        return OckerGridFilterBand(location: library?.title, children: [chips(context)]);
       },
     );
   }

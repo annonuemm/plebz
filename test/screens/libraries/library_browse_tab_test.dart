@@ -472,7 +472,7 @@ void main() {
     // in two places.
     final theme = monoTheme(dark: true, variant: AppThemeVariant.glas);
 
-    ({Rect band, List<Rect> glyphs, List<Rect> posters, Rect panel}) measure(WidgetTester tester) {
+    ({Rect band, List<Rect> glyphs, List<Rect> posters, Rect panel, Rect location}) measure(WidgetTester tester) {
       final band = find.descendant(of: find.byType(OckerGridFilterBand), matching: find.byType(OckerGlassBand));
       final glyphs = find.byType(OckerFilterGlyph);
       final posters = find.byType(OckerPosterTile);
@@ -483,6 +483,7 @@ void main() {
           for (final i in const [0, 1, 4, 5]) tester.getRect(posters.at(i)),
         ],
         panel: tester.getRect(find.byType(OckerDetailPanel)),
+        location: tester.getRect(find.byType(OckerLocationLabel)),
       );
     }
 
@@ -510,6 +511,7 @@ void main() {
                   onExitToHeader: () {},
                   showHeading: false,
                   showCount: false,
+                  location: 'Merkliste · Plex',
                   filters: [
                     FocusableActionBar(
                       actions: [
@@ -541,8 +543,9 @@ void main() {
             resolveClient: (_) => null,
             header: ValueListenableBuilder<WidgetBuilder?>(
               valueListenable: slot,
-              builder: (context, chips, _) =>
-                  chips == null ? const SizedBox.shrink() : OckerGridFilterBand(children: [chips(context)]),
+              builder: (context, chips, _) => chips == null
+                  ? const SizedBox.shrink()
+                  : OckerGridFilterBand(location: 'Filme 4K', children: [chips(context)]),
             ),
             child: OckerGridRoom(
               enabled: true,
@@ -578,6 +581,16 @@ void main() {
           reason: 'the glyphs as far apart',
         );
         expect(library.panel, rectMoreOrLessEquals(watchlist.panel, epsilon: 0.5));
+
+        // Where the viewer is, on the band's line, ending where the last
+        // column of posters ends — on both pages, so neither moves.
+        for (final page in [watchlist, library]) {
+          expect(page.location.right, closeTo(page.posters[2].right, 0.5));
+          expect(page.location.center.dy, closeTo(page.band.center.dy, 1));
+          expect(page.location.left, greaterThan(page.band.right));
+        }
+        expect(find.text('MERKLISTE · PLEX'), findsNothing, reason: 'the watchlist page is gone by now');
+        expect(find.text('FILME 4K'), findsOneWidget);
 
         // The letter bar beside the last column of posters, clear of the
         // describing column.

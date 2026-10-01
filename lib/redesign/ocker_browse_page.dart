@@ -63,6 +63,10 @@ class OckerBrowsePage extends StatefulWidget {
   /// has none.
   final bool showCount;
 
+  /// Which list this is, over the right of the grid — see
+  /// [OckerGridFilterBand.location]. Null where the page names itself.
+  final String? location;
+
   const OckerBrowsePage({
     super.key,
     required this.title,
@@ -78,6 +82,7 @@ class OckerBrowsePage extends StatefulWidget {
     this.header,
     this.showHeading = true,
     this.showCount = true,
+    this.location,
   });
 
   @override
@@ -215,7 +220,9 @@ class OckerBrowsePageState extends State<OckerBrowsePage> {
   Widget _buildChrome(double scale) {
     final header = widget.header;
     if (header == null) {
-      return widget.filters.isEmpty ? const SizedBox.shrink() : OckerGridFilterBand(children: widget.filters);
+      return widget.filters.isEmpty
+          ? const SizedBox.shrink()
+          : OckerGridFilterBand(location: widget.location, children: widget.filters);
     }
     // The switcher's pane reaches past its row; set in by as much, its edge
     // lines up with the posters' below, as the filters' does.

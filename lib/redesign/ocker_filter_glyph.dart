@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../theme/mono_tokens.dart';
 import '../widgets/app_icon.dart';
+import 'ocker_browse_grid.dart';
 import 'ocker_skin.dart';
+import 'ocker_type.dart';
 
 /// A filter, a sort, a view switch: one glyph, no plate behind it, a hairline
 /// ring when it holds focus.
@@ -65,13 +67,19 @@ class OckerFilterGlyph extends StatelessWidget {
 /// two need only drift a pixel apart for the page beneath them to be two
 /// pages.
 class OckerGridFilterBand extends StatelessWidget {
-  const OckerGridFilterBand({super.key, required this.children, this.withGapBelow = true});
+  const OckerGridFilterBand({super.key, required this.children, this.withGapBelow = true, this.location});
 
   final List<Widget> children;
 
   /// False where the band shares its line with something else and the line
   /// keeps the gap to the posters itself.
   final bool withGapBelow;
+
+  /// Where the viewer is — "Merkliste · Plex", a library's name — on the same
+  /// line, its end flush with the last column of posters. The rail names the
+  /// destination, but not which list or library of it is on show. Null draws
+  /// the band alone.
+  final String? location;
 
   /// Between the band and the first row of posters, at 1920.
   static const gapBelow = 18.0;
@@ -82,12 +90,56 @@ class OckerGridFilterBand extends StatelessWidget {
     // pane reaches that far past its row, so the row is set in by as much and
     // the pane's edge lines up with the posters' below.
     final overhang = ockerBandOverhang(context, wordInset: const EdgeInsets.all(OckerFilterGlyph.gap));
+    final band = OckerGlassBand(
+      overhang: overhang,
+      child: Row(mainAxisSize: .min, children: children),
+    );
+    final location = this.location;
     return Padding(
       padding: EdgeInsets.only(left: overhang.left, bottom: withGapBelow ? gapBelow * ockerScale(context) : 0),
-      child: OckerGlassBand(
-        overhang: overhang,
-        child: Row(mainAxisSize: .min, children: children),
-      ),
+      child: location == null || location.isEmpty
+          ? band
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                // The posters start a pixel in from the column's left edge and
+                // run five wide; whatever the column has past them stays clear
+                // of the words, so their end lines up with the last poster's.
+                final column = constraints.maxWidth + overhang.left;
+                final geometry = OckerGridGeometry.of(context, column);
+                final pastPosters = (column - 1 - geometry.gridWidth(context)).clamp(0.0, column);
+                return Row(
+                  children: [
+                    band,
+                    SizedBox(width: 24 * ockerScale(context)),
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(right: pastPosters),
+                        child: OckerLocationLabel(location),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+    );
+  }
+}
+
+/// Where the viewer is, over the right of a grid: the section headings' mono
+/// capitals, a step quieter, since the posters below are what is being read.
+class OckerLocationLabel extends StatelessWidget {
+  const OckerLocationLabel(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      textAlign: TextAlign.right,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: OckerType.of(context).sectionHeading.copyWith(color: tokens(context).ink(0.6)),
     );
   }
 }

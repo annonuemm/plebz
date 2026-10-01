@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.4.0 (Build 576)
+
+- Glas: Über der Merkliste und beim Durchsuchen einer Mediathek steht rechts, wo du gerade bist, etwa „Merkliste · Plex“ oder der Name der Mediathek.
+
 ## 1.3.1 (Build 574)
 
 - Sicherheits-Update: Der Player bringt neuere Versionen von FreeType (Schriften in Untertiteln) und Mbed TLS (verschlüsselte Streams) mit, ExoPlayer einen neueren Netzwerkteil (Cronet).

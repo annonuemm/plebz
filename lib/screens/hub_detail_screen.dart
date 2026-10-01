@@ -76,6 +76,10 @@ class HubDetailScreen extends StatefulWidget {
   /// panel beside the posters is a television's arrangement.
   final bool ockerPageInAnyLayout;
 
+  /// Under the redesign: which list this is, over the right of the grid
+  /// ("Merkliste · Plex"). See [OckerGridFilterBand.location].
+  final String? ockerLocation;
+
   /// Replaces the hub title in the app bar. An embedded host uses it to put
   /// its own chrome — a source switcher, say — where the title would sit.
   final Widget? titleOverride;
@@ -104,6 +108,7 @@ class HubDetailScreen extends StatefulWidget {
     this.onRemoveFromContinueWatching,
     this.isEmbedded = false,
     this.ockerPageInAnyLayout = false,
+    this.ockerLocation,
     this.titleOverride,
     this.onAppBarNavigateLeft,
     this.itemFilter,
@@ -693,6 +698,7 @@ class HubDetailScreenState extends State<HubDetailScreen>
         // The watchlist, the one page embedded as a destination, has no count
         // at its foot; see [OckerBrowsePage.showCount].
         showCount: !widget.isEmbedded,
+        location: widget.ockerLocation,
         filters: buildFocusableAppBarActions(),
         emptyState: Center(child: Text(_items.isEmpty ? t.hubDetail.noItemsFound : t.libraries.noItemsMatchFilters)),
         onPlay: (_, item) => unawaited(

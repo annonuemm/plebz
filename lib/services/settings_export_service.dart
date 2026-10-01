@@ -268,12 +268,42 @@ class SettingsExportService {
   static Future<void> revealSecretsForExport(Map<String, dynamic> exportedPrefs) async {
     await _mapSeerrSecret(exportedPrefs, CredentialVault.reveal);
     await _mapIptvSecrets(exportedPrefs, reveal: true);
+    await _mapSealedPref(exportedPrefs, SettingsService.tmdbApiKey.key, CredentialVault.reveal);
   }
 
   /// The other direction: seal it with the vault of the device restoring it.
   static Future<void> protectSecretsForImport(Map<String, dynamic> exportedPrefs) async {
     await _mapSeerrSecret(exportedPrefs, (secret) async => CredentialVault.protect(secret));
     await _mapIptvSecrets(exportedPrefs, reveal: false);
+    await _mapSealedPref(
+      exportedPrefs,
+      SettingsService.tmdbApiKey.key,
+      (secret) async => CredentialVault.protect(secret),
+    );
+  }
+
+  /// A [SealedStringPref]'s value, opened for the file or sealed again from
+  /// it. One the vault cannot open is left out and asked for again.
+  static Future<void> _mapSealedPref(
+    Map<String, dynamic> exportedPrefs,
+    String key,
+    Future<String?> Function(String secret) transform,
+  ) async {
+    final entry = exportedPrefs[key];
+    if (entry is! Map) return;
+    final raw = entry['value'];
+    if (raw is! String || raw.isEmpty) return;
+    try {
+      final mapped = await transform(raw);
+      if (mapped == null || mapped.isEmpty) {
+        exportedPrefs.remove(key);
+      } else {
+        entry['value'] = mapped;
+      }
+    } catch (error) {
+      appLogger.w('Backup: $key could not be re-keyed', error: error);
+      exportedPrefs.remove(key);
+    }
   }
 
   /// The IPTV sources' sealed fields, opened for the file or sealed again
@@ -937,8 +967,10 @@ class SettingsExportService {
       if (raw is List) connections = raw;
     }
 
-    final prefs = (await SettingsService.getInstance()).prefs;
-    final result = await applyImportMap(data, prefs, currentUserUuid: uuid, withCredentials: withCredentials);
+    final settings = await SettingsService.getInstance();
+    final result = await applyImportMap(data, settings.prefs, currentUserUuid: uuid, withCredentials: withCredentials);
+    // A sealed value read back from the file is opened into memory again.
+    await SettingsService.tmdbApiKey.load(settings);
     if (connections.isEmpty || writeConnection == null) return result;
 
     // Servers last: the settings are in place by the time the app reloads its

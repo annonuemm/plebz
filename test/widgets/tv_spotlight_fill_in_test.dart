@@ -107,7 +107,7 @@ void main() {
 
   testWidgets('an item the server has no logo for is looked up', (tester) async {
     final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.tmdbApiKey, 'test-key');
+    await tester.runAsync(() => settings.write(SettingsService.tmdbApiKey, 'test-key'));
     await settings.write(SettingsService.tmdbLogosEnabled, true);
 
     await pumpSpotlight(tester, catalogShow());
@@ -117,7 +117,7 @@ void main() {
 
   testWidgets('nothing is looked up while the switch is off', (tester) async {
     final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.tmdbApiKey, 'test-key');
+    await tester.runAsync(() => settings.write(SettingsService.tmdbApiKey, 'test-key'));
 
     await pumpSpotlight(tester, catalogShow());
 
@@ -127,7 +127,7 @@ void main() {
 
   testWidgets('a description the catalog row lacked is shown once it arrives', (tester) async {
     final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.tmdbApiKey, 'test-key');
+    await tester.runAsync(() => settings.write(SettingsService.tmdbApiKey, 'test-key'));
     await settings.write(SettingsService.tmdbLogosEnabled, true);
 
     await pumpSpotlight(tester, catalogShow());
@@ -138,7 +138,7 @@ void main() {
 
   testWidgets('an episode is never captioned with its series description', (tester) async {
     final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.tmdbApiKey, 'test-key');
+    await tester.runAsync(() => settings.write(SettingsService.tmdbApiKey, 'test-key'));
     await settings.write(SettingsService.tmdbLogosEnabled, true);
 
     await pumpSpotlight(
@@ -152,7 +152,7 @@ void main() {
 
   testWidgets('the title waits rather than flashing while a lookup runs', (tester) async {
     final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.tmdbApiKey, 'test-key');
+    await tester.runAsync(() => settings.write(SettingsService.tmdbApiKey, 'test-key'));
     await settings.write(SettingsService.tmdbLogosEnabled, true);
 
     final gate = Completer<http.Response>();
@@ -190,7 +190,7 @@ void main() {
 
   testWidgets('an item that needs nothing is left alone', (tester) async {
     final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.tmdbApiKey, 'test-key');
+    await tester.runAsync(() => settings.write(SettingsService.tmdbApiKey, 'test-key'));
     await settings.write(SettingsService.tmdbLogosEnabled, true);
 
     await pumpSpotlight(
@@ -204,7 +204,7 @@ void main() {
 
   testWidgets('a missing description is fetched even when the logo is there', (tester) async {
     final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.tmdbApiKey, 'test-key');
+    await tester.runAsync(() => settings.write(SettingsService.tmdbApiKey, 'test-key'));
     await settings.write(SettingsService.tmdbLogosEnabled, true);
 
     await pumpSpotlight(tester, catalogShow().copyWith(clearLogoPath: 'https://server/logo.png'));

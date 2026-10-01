@@ -10,11 +10,14 @@ Settings → "Was ist neu". One section per version, newest first:
   **bold** works too.
 
 Only the build number in the heading makes a section visible; a draft
-without one stays hidden in the app. The GitHub release carries the English
-notes from CHANGELOG.md, with this German section hidden behind them in an
-HTML comment; the app's update dialog shows that German part
-(scripts/whats_new_section.py --release-body).
+without one stays hidden in the app.
 -->
+
+## 1.3.1 (Build 574)
+
+- Sicherheits-Update: Der Player bringt neuere Versionen von FreeType (Schriften in Untertiteln) und Mbed TLS (verschlüsselte Streams) mit, ExoPlayer einen neueren Netzwerkteil (Cronet).
+- Leitet ein Server auf eine andere Adresse weiter, geht sein Zugangsschlüssel nicht mehr mit, und von https zurück auf http wird nicht mehr gefolgt.
+- Der TMDB-Schlüssel wird verschlüsselt gespeichert.
 
 ## 1.3.0 (Build 572)
 

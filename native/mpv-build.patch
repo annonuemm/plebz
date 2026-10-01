@@ -1,0 +1,52 @@
+diff --git a/versions.json b/versions.json
+index 8811351..f2cc034 100644
+--- a/versions.json
++++ b/versions.json
+@@ -35,11 +35,11 @@
+     },
+     "ffmpeg": {
+       "kind": "git",
+-      "version": "n8.0.1",
++      "version": "n8.0.3",
+       "url": "https://github.com/FFmpeg/FFmpeg",
+-      "ref": "n8.0.1",
+-      "commit": "894da5ca7d742e4429ffb2af534fcda0103ef593",
+-      "provenance": "Tag carried over from main.swift; commit is the annotated tag's dereferenced target, resolved 2026-09-01 with `git ls-remote https://github.com/FFmpeg/FFmpeg 'refs/tags/n8.0.1*'` (peeled ^{} line).",
++      "ref": "n8.0.3",
++      "commit": "8ae0b34901ba60a802f183ee75a250a9fc3e09a5",
++      "provenance": "Plebz: bumped from n8.0.1 for the security fixes in 8.0.2/8.0.3 (CVE-2025-67306, CVE-2026-8461, CVE-2026-30999); commit is the annotated tag's dereferenced target, resolved 2026-10-01 with `git ls-remote https://github.com/FFmpeg/FFmpeg 'refs/tags/n8.0.3*'` (peeled ^{} line).",
+       "platforms": [
+         "apple",
+         "android",
+@@ -167,11 +167,11 @@
+     },
+     "mbedtls": {
+       "kind": "git",
+-      "version": "3.6.5",
++      "version": "3.6.7",
+       "url": "https://github.com/Mbed-TLS/mbedtls",
+-      "ref": "v3.6.5",
+-      "commit": "e185d7fd85499c8ce5ca2a54f5cf8fe7dbe3f8df",
+-      "provenance": "Official Mbed-TLS GitHub annotated tag object d934b47669d1cc60c72caecae2ae2a45aea70c79 (v3.6.5) dereferences to this root commit; its gitlinks pin the mbedtls-framework submodule the android driver clones recursively. TODO(provenance): review the framework gitlink target before the next bump.",
++      "ref": "v3.6.7",
++      "commit": "068ff080b369adfac81509f9b57b2afabaf82dc5",
++      "provenance": "Plebz: bumped from 3.6.5 for the TLS client fixes in 3.6.6/3.6.7 (CVE-2026-25834, CVE-2026-25832, CVE-2026-50581 and others); official Mbed-TLS GitHub annotated tag object da6a8c7b9b8e0c1e236deef2910642657db1a7ec (v3.6.7) dereferences to this root commit, resolved 2026-10-01 with git ls-remote; the android driver clones its mbedtls-framework gitlink recursively.",
+       "platforms": [
+         "android"
+       ],
+@@ -179,11 +179,11 @@
+     },
+     "freetype": {
+       "kind": "git",
+-      "version": "2.14.1",
++      "version": "2.14.3",
+       "url": "https://gitlab.freedesktop.org/freetype/freetype",
+-      "ref": "VER-2-14-1",
+-      "commit": "526ec5c47b9ebccc4754c85ac0c0cdf7c85a5e9b",
+-      "provenance": "Official freedesktop GitLab annotated tag object 3bd82b5f543bc84ccf2b1d0cdb63b95218099ee6 (VER-2-14-1) dereferences to this root commit; the pinned version is carried over from libmpv-android's depinfo.",
++      "ref": "VER-2-14-3",
++      "commit": "0a0221a1347e2f1e07c395263540026e9a0aa7c7",
++      "provenance": "Plebz: bumped from 2.14.1 for the 2026 font-parsing fixes in 2.14.2/2.14.3 (CVE-2026-23865, CVE-2026-34268, CVE-2026-34282 and others); official freedesktop GitLab annotated tag object c740f0fda4274d6ffd2e5b64a25b06ef69803a07 (VER-2-14-3) dereferences to this root commit, resolved 2026-10-01 with git ls-remote.",
+       "platforms": [
+         "android"
+       ],

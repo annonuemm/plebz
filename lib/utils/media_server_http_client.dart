@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:http/http.dart' as http;
 
 import 'app_logger.dart';
@@ -316,18 +317,61 @@ class MediaServerHttpClient {
 
     final requestAbort = AbortController();
     _activeAborts.add(requestAbort);
-    final request = http.AbortableRequest(method, uri, abortTrigger: _abortTrigger(requestAbort, abort));
-    request.headers.addAll({...defaultHeaders, ...?headers});
-    _setBody(request, body);
+
+    Future<http.StreamedResponse> connect(String method, Uri target, Map<String, String> headers, Object? body) {
+      final request = http.AbortableRequest(method, target, abortTrigger: _abortTrigger(requestAbort, abort))
+        ..followRedirects = false;
+      request.headers.addAll(headers);
+      _setBody(request, body);
+      return _withAbortOnTimeout(
+        _client.send(request),
+        timeout ?? connectTimeout,
+        operation: '$operation ${target.path} connect',
+        abort: requestAbort,
+      );
+    }
 
     final scope = _RequestScope(this, uri, operation, requestAbort, timeout ?? receiveTimeout);
     try {
-      final streamed = await _withAbortOnTimeout(
-        _client.send(request),
-        timeout ?? connectTimeout,
-        operation: '$operation ${uri.path} connect',
-        abort: requestAbort,
-      );
+      var current = uri;
+      var currentMethod = method;
+      var currentHeaders = <String, String>{...defaultHeaders, ...?headers};
+      var currentBody = body;
+      var streamed = await connect(currentMethod, current, currentHeaders, currentBody);
+      // Redirects are followed here rather than by dart:io, which copies every
+      // header but Authorization and Cookie to any host: X-Plex-Token and
+      // X-Emby-Token would go wherever a Location pointed, and from HTTPS to
+      // plain HTTP too.
+      for (var hops = 0; ; hops++) {
+        final next = _redirectTarget(currentMethod, current, streamed);
+        if (next == null) break;
+        await scope.receive(streamed.stream.drain<void>());
+        if (hops >= maxRedirects) {
+          throw MediaServerHttpException(
+            type: MediaServerHttpErrorType.unknown,
+            statusCode: streamed.statusCode,
+            requestUri: uri,
+            message: 'Too many redirects',
+          );
+        }
+        if (current.isScheme('https') && !next.isScheme('https')) {
+          throw MediaServerHttpException(
+            type: MediaServerHttpErrorType.unknown,
+            statusCode: streamed.statusCode,
+            requestUri: uri,
+            message: 'Refused a redirect from HTTPS to plain HTTP',
+          );
+        }
+        if (!keepsCredentialsOnRedirect(current, next)) {
+          currentHeaders = withoutCredentialHeaders(currentHeaders);
+        }
+        if (streamed.statusCode == HttpStatus.seeOther && currentMethod == 'POST') {
+          currentMethod = 'GET';
+          currentBody = null;
+        }
+        current = next;
+        streamed = await connect(currentMethod, current, currentHeaders, currentBody);
+      }
       return await consume(streamed, scope);
     } catch (e) {
       // Once this request's abort has fired, any secondary teardown error that
@@ -409,6 +453,52 @@ class MediaServerHttpClient {
   }
 
   static bool _isAbsoluteUrl(String url) => url.startsWith('http://') || url.startsWith('https://');
+
+  /// The hops a request may take, as dart:io allows by default.
+  static const int maxRedirects = 5;
+
+  /// Where [response] sends a request, when it is a redirect dart:io would
+  /// have followed: GET and HEAD on 301/302/303/307/308, POST on 303.
+  static Uri? _redirectTarget(String method, Uri current, http.StreamedResponse response) {
+    final status = response.statusCode;
+    final follows = switch (method) {
+      'GET' || 'HEAD' => const {301, 302, 303, 307, 308}.contains(status),
+      'POST' => status == HttpStatus.seeOther,
+      _ => false,
+    };
+    if (!follows) return null;
+    final location = _headerValue(response.headers, 'location');
+    if (location == null || location.isEmpty) return null;
+    final target = current.resolve(location);
+    return target.isScheme('http') || target.isScheme('https') ? target : null;
+  }
+
+  /// Whether a redirect from [from] to [to] may carry the server's token: the
+  /// same origin, or the same host moving up to HTTPS (a server or its proxy
+  /// sending plain-HTTP visitors to TLS).
+  @visibleForTesting
+  static bool keepsCredentialsOnRedirect(Uri from, Uri to) {
+    if (from.host.toLowerCase() != to.host.toLowerCase()) return false;
+    if (from.scheme == to.scheme && from.port == to.port) return true;
+    return to.isScheme('https');
+  }
+
+  /// [headers] without anything that signs a request in: tokens, API keys,
+  /// Authorization and cookies.
+  @visibleForTesting
+  static Map<String, String> withoutCredentialHeaders(Map<String, String> headers) => {
+    for (final entry in headers.entries)
+      if (!_isCredentialHeader(entry.key)) entry.key: entry.value,
+  };
+
+  static bool _isCredentialHeader(String name) {
+    final lower = name.toLowerCase();
+    return lower.contains('token') ||
+        lower.contains('authorization') ||
+        lower.contains('cookie') ||
+        lower.contains('api-key') ||
+        lower.contains('apikey');
+  }
 
   /// Set the request body, choosing encoding based on the body type.
   void _setBody(http.Request request, Object? body) {

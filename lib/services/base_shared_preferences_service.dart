@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_preferences/util/legacy_to_async_migration_util.dart';
 
 import '../utils/app_logger.dart';
+import 'credential_vault.dart';
 import 'prefs_recovery.dart';
 import 'sensitive_prefs.dart';
 
@@ -518,6 +519,66 @@ class NullableStringPref extends Pref<String?> {
     } else {
       await svc.writeString(key, normalized);
     }
+  }
+}
+
+/// Like [NullableStringPref], but sealed at rest with [CredentialVault]: for a
+/// key or token the user typed in, which should not lie in the preferences in
+/// clear text.
+///
+/// Reads stay synchronous: [load] reveals the stored value once (at start, by
+/// the owning service's `onInit`) and keeps it in memory, tied to the stored
+/// form it came from, so a replaced or reset preference is never answered
+/// from a stale copy. A plain value — written before the pref was sealed —
+/// reads as it is and is sealed on [load].
+class SealedStringPref extends Pref<String?> {
+  const SealedStringPref(super.key);
+
+  /// Per key: the stored (sealed) form and what it reveals to.
+  static final Map<String, (String, String?)> _revealed = {};
+
+  @override
+  String? get resolvedDefault => null;
+  @override
+  String get jsonType => 'string|null';
+
+  /// Reveals the stored value into memory and seals a plain one. A vault that
+  /// cannot be opened leaves the value unread (null) rather than failing.
+  Future<void> load(BaseSharedPreferencesService svc) async {
+    final stored = svc.readNullableString(key);
+    if (stored == null || stored.isEmpty) return;
+    try {
+      if (CredentialVault.isProtected(stored)) {
+        _revealed[key] = (stored, await CredentialVault.reveal(stored));
+      } else {
+        final sealed = await CredentialVault.protect(stored);
+        await svc.writeString(key, sealed);
+        _revealed[key] = (sealed, stored);
+      }
+    } catch (e) {
+      appLogger.w('Sealed preference $key could not be opened', error: e);
+    }
+  }
+
+  @override
+  String? readFrom(BaseSharedPreferencesService svc) {
+    final stored = svc.readNullableString(key);
+    if (stored == null) return null;
+    if (!CredentialVault.isProtected(stored)) return stored;
+    final revealed = _revealed[key];
+    return revealed != null && revealed.$1 == stored ? revealed.$2 : null;
+  }
+
+  @override
+  Future<void> writeTo(BaseSharedPreferencesService svc, String? value) async {
+    if (value == null || value.isEmpty) {
+      _revealed.remove(key);
+      await svc.prefs.remove(key);
+      return;
+    }
+    final sealed = await CredentialVault.protect(value);
+    _revealed[key] = (sealed, value);
+    await svc.writeString(key, sealed);
   }
 }
 

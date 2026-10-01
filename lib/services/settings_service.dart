@@ -1106,8 +1106,9 @@ class SettingsService extends BaseSharedPreferencesService {
 
   /// The user's own TMDB v3 API key. In [_resetOnlyPrefs] rather than the
   /// portable list: it belongs to one person's TMDB account, so it must not
-  /// travel inside a settings export.
-  static const tmdbApiKey = NullableStringPref('tmdb_api_key');
+  /// travel inside a settings export. Sealed at rest like the other keys the
+  /// user types in.
+  static const tmdbApiKey = SealedStringPref('tmdb_api_key');
 
   /// Plebz: whether the first-run setup (look, sources, services) has been
   /// through once. Device-local on purpose — in no export or reset list: a
@@ -1475,6 +1476,7 @@ class SettingsService extends BaseSharedPreferencesService {
   @override
   Future<void> onInit() async {
     _assertCredentialsReadable();
+    await tmdbApiKey.load(this);
 
     const legacyRecentRoomsKey = 'watch_together_recent_rooms';
     await prefs.remove(legacyRecentRoomsKey);

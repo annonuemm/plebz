@@ -29,7 +29,7 @@ val libmpvNativeJniDir = File(libmpvBuildDir, "native/jni")
 val libmpvNativeImportedDir = File(libmpvBuildDir, "native/imported")
 val libmpvLibcxxJniDir = File(libmpvBuildDir, "libcxx/jni")
 
-val media3Version = "1.11.0"
+val media3Version = "1.11.1"
 // 8.0.3 for its security fixes; the libmpv tarballs carry the same release.
 // The digest is of ffmpeg.org's tarball, whose tree matches tag n8.0.3
 // (8ae0b34901ba) file for file.
@@ -455,7 +455,8 @@ dependencies {
 
   // Cronet for HTTP/2 multiplexing + better connection management
   implementation("androidx.media3:media3-datasource-cronet:$media3Version")
-  implementation("org.chromium.net:cronet-embedded:143.7445.0")
+  // cronet-bundled replaced cronet-embedded with the 500.x numbering.
+  implementation("org.chromium.net:cronet-bundled:500.1.0")
 
   // Keeping libass in-project lets its static core share the app's native
   // packaging rules.

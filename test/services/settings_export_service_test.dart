@@ -143,6 +143,21 @@ void main() {
       expect(await CredentialVault.reveal(restored.secret), 'mein-seerr-passwort');
     });
 
+    test('the TMDB key is re-keyed for the device that restores it', () async {
+      final prefs = await BaseSharedPreferencesService.sharedCache();
+      await prefs.setString('tmdb_api_key', await CredentialVault.protect('tmdb-secret'));
+
+      final exported = SettingsExportService.buildExportMap(prefs, currentUserUuid: 'alice', withCredentials: true);
+      final exportedPrefs = exported['prefs']! as Map<String, dynamic>;
+      await SettingsExportService.revealSecretsForExport(exportedPrefs);
+      expect((exportedPrefs['tmdb_api_key']! as Map)['value'], 'tmdb-secret');
+
+      await SettingsExportService.protectSecretsForImport(exportedPrefs);
+      final restored = (exportedPrefs['tmdb_api_key']! as Map)['value']! as String;
+      expect(CredentialVault.isProtected(restored), isTrue);
+      expect(await CredentialVault.reveal(restored), 'tmdb-secret');
+    });
+
     test('a Seerr session that cannot be read is left out rather than restored broken', () async {
       final prefs = <String, dynamic>{
         'seerr_session': {'type': 'string', 'value': 'not json at all'},

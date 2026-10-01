@@ -216,7 +216,10 @@ class _FullTextDialogState extends State<_FullTextDialog> {
       content: SizedBox(
         width: 560,
         child: Focus(
-          autofocus: true,
+          // A question starts on its answer: the text cannot show that it has
+          // focus, so a dialog that opened on it showed no focus at all. UP
+          // still reaches the text to scroll it.
+          autofocus: widget.confirmText == null,
           onKeyEvent: _handleKey,
           child: SingleChildScrollView(
             controller: _controller,
@@ -235,6 +238,7 @@ class _FullTextDialogState extends State<_FullTextDialog> {
             onPressed: () => Navigator.pop(context, true),
             label: confirmText,
             isPrimary: true,
+            autofocus: true,
             style: FilledButton.styleFrom(padding: _buttonPadding, shape: _buttonShape),
           ),
         ] else

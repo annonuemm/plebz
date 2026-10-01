@@ -5,7 +5,8 @@ ABI, named with their sha256 checksums in `mpv-build.lock.json`. They are built
 from [edde746/mpv-build](https://github.com/edde746/mpv-build) at commit
 `93aa2d2db12eb594df3dab04882a6f5fe148b3aa` with
 [`mpv-build.patch`](mpv-build.patch) applied, which moves some dependency
-versions forward. The tarballs are not published.
+versions forward and adds one patch of its own. The tarballs are not
+published.
 
 ## Building the tarballs
 

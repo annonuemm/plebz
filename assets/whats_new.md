@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.4.2 (Build 580)
+
+- Der mpv-Player startet Streams auf manchen Geräten, etwa der NVIDIA Shield, wieder zuverlässig.
+- Im Update-Fenster liegt der Fokus gleich auf „Jetzt aktualisieren“.
+
 ## 1.4.1 (Build 578)
 
 - Glas: Unter der aktiven Reihe ist die nächste Reihe wieder angeschnitten zu sehen.

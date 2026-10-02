@@ -2608,7 +2608,7 @@
     "nameLabel": "Name",
     "playlistLabel": "Playlist-Adresse",
     "guideLabel": "Programm-Adresse (XMLTV)",
-    "guideHelper": "Optional. Ohne sie laufen die Sender, zeigen aber kein Programm.",
+    "guideHelper": "Optional. XMLTV als .xml, .gz oder .xz. Ohne sie laufen die Sender, zeigen aber kein Programm.",
     "guideLabelNumbered": "Programm-Adresse ${number}",
     "addGuide": "Weitere Programmliste",
     "removeGuide": "Programmliste entfernen",

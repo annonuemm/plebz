@@ -6,9 +6,10 @@
 # Android versionCode is always higher than the previous one and installs as an
 # update rather than being rejected as a downgrade.
 #
-# One APK per processor architecture rather than one holding all three: the
+# One APK per processor architecture rather than one holding both: the
 # player's native libraries are ~94% of the download, and a combined APK ships
-# two of those three to every device that cannot run them. Each file is named
+# the other one to every device that cannot run it. Only the two ARM builds:
+# x86_64 (emulators, Chromebooks) is left out at the user's word. Each file is named
 # after the devices it is for, so nobody has to know what "arm64-v8a" means.
 #
 # Usage: scripts/build_apk.sh [--no-bump] [--debug-key]
@@ -56,7 +57,7 @@ else
     echo "Building $version without bumping"
 fi
 
-flutter build apk --release --split-per-abi
+flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64
 
 # An unsigned APK cannot be installed on any device, so fail loudly here rather
 # than at install time on the TV.
@@ -77,7 +78,6 @@ label="${version/+/-build}"
 abis=(
     "arm64-v8a:arm64-modern-tv-and-phones"
     "armeabi-v7a:arm32-older-devices"
-    "x86_64:x86_64-emulators-and-chromebooks"
 )
 
 built_any=0

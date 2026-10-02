@@ -6393,8 +6393,8 @@ class Translations$iptv$en {
 	/// en: 'Guide URL (XMLTV)'
 	String get guideLabel => 'Guide URL (XMLTV)';
 
-	/// en: 'Optional. Without it channels play but show no programme.'
-	String get guideHelper => 'Optional. Without it channels play but show no programme.';
+	/// en: 'Optional. XMLTV as .xml, .gz or .xz. Without it channels play but show no programme.'
+	String get guideHelper => 'Optional. XMLTV as .xml, .gz or .xz. Without it channels play but show no programme.';
 
 	/// en: 'Guide URL ${number}'
 	String guideLabelNumbered({required Object number}) => 'Guide URL ${number}';
@@ -11085,7 +11085,7 @@ extension on Translations {
 			'iptv.nameLabel' => 'Name',
 			'iptv.playlistLabel' => 'Playlist URL',
 			'iptv.guideLabel' => 'Guide URL (XMLTV)',
-			'iptv.guideHelper' => 'Optional. Without it channels play but show no programme.',
+			'iptv.guideHelper' => 'Optional. XMLTV as .xml, .gz or .xz. Without it channels play but show no programme.',
 			'iptv.guideLabelNumbered' => ({required Object number}) => 'Guide URL ${number}',
 			'iptv.addGuide' => 'Add another guide',
 			'iptv.removeGuide' => 'Remove guide',

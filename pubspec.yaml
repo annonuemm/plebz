@@ -1,7 +1,7 @@
 name: plezy
 description: "A beautiful Plex and Jellyfin client for Flutter"
 publish_to: "none"
-version: 1.4.3+584
+version: 1.4.4+586
 
 environment:
   # Dart floor stays 3.12: freezed 3.x emits `final` constructor parameters,
@@ -77,9 +77,10 @@ dependencies:
   xml: ^7.0.1
   string_similarity: ^2.2.0
   unorm_dart: ^0.3.2
+  # Unpacks xz guides (the Rytec XMLTV lists); also used by the tests.
+  archive: ^4.0.9
 
 dev_dependencies:
-  archive: ^4.0.9
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0

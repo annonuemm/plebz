@@ -2608,7 +2608,7 @@
     "nameLabel": "Name",
     "playlistLabel": "Playlist URL",
     "guideLabel": "Guide URL (XMLTV)",
-    "guideHelper": "Optional. Without it channels play but show no programme.",
+    "guideHelper": "Optional. XMLTV as .xml, .gz or .xz. Without it channels play but show no programme.",
     "guideLabelNumbered": "Guide URL ${number}",
     "addGuide": "Add another guide",
     "removeGuide": "Remove guide",

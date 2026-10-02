@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.4.4 (Build 586)
+
+- Der Programmführer liest jetzt auch gepackte Listen im Format .xz, zusätzlich zu .xml und .gz.
+
 ## 1.4.3 (Build 584)
 
 - Die Reihe „Jetzt live“ auf der Startseite lässt sich jetzt ausschalten: in den Einstellungen unter „Start und Navigation“ oder unter Darstellung → Startseite.

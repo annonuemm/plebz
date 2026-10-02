@@ -2538,7 +2538,7 @@ class _Translations$iptv$de extends Translations$iptv$en {
 	@override String get nameLabel => 'Name';
 	@override String get playlistLabel => 'Playlist-Adresse';
 	@override String get guideLabel => 'Programm-Adresse (XMLTV)';
-	@override String get guideHelper => 'Optional. Ohne sie laufen die Sender, zeigen aber kein Programm.';
+	@override String get guideHelper => 'Optional. XMLTV als .xml, .gz oder .xz. Ohne sie laufen die Sender, zeigen aber kein Programm.';
 	@override String guideLabelNumbered({required Object number}) => 'Programm-Adresse ${number}';
 	@override String get addGuide => 'Weitere Programmliste';
 	@override String get removeGuide => 'Programmliste entfernen';
@@ -5908,7 +5908,7 @@ extension on TranslationsDe {
 			'iptv.nameLabel' => 'Name',
 			'iptv.playlistLabel' => 'Playlist-Adresse',
 			'iptv.guideLabel' => 'Programm-Adresse (XMLTV)',
-			'iptv.guideHelper' => 'Optional. Ohne sie laufen die Sender, zeigen aber kein Programm.',
+			'iptv.guideHelper' => 'Optional. XMLTV als .xml, .gz oder .xz. Ohne sie laufen die Sender, zeigen aber kein Programm.',
 			'iptv.guideLabelNumbered' => ({required Object number}) => 'Programm-Adresse ${number}',
 			'iptv.addGuide' => 'Weitere Programmliste',
 			'iptv.removeGuide' => 'Programmliste entfernen',

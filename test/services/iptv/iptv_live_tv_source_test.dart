@@ -56,6 +56,18 @@ const _guide = '''
 </tv>
 ''';
 
+/// [_guide] packed as xz by the reference tool (`xz`/liblzma), not by the
+/// archive package, whose encoder only writes uncompressed blocks.
+final _guideXz = base64.decode(
+  '/Td6WFoAAATm1rRGAgAhARYAAAB0L+Wj4ACWAHBdAAUQBzf7NqDHXHl1qJVH6oUfMwYAzjjm7T1T9roysQ2qgEj7vh9uXf7wnsNbhv8aoPMYjCXF+hRyoT4lPVkEmZcnmRy64Dg/6Ccxv3SBHqoD9K3/nvl+JtilO0dMeDoiAzBH9GSvu4nC+6DccGh/XAAAt/IfGQSxOGAAAYwBlwEAAOSaEraxxGf7AgAAAAAEWVo=',
+);
+
+/// [_guide] followed by a megabyte of spaces, packed as xz: a few hundred
+/// bytes that unpack to a megabyte.
+final _guideXzBomb = base64.decode(
+  '/Td6WFoAAATm1rRGAgAhARYAAAB0L+Wj8ACWAUZdAAUQBzf7NqDHXHl1qJVH6oUfMwYAzjjm7T1T9roysQ2qgEj7vh9uXf7wnsNbhv8aoPMYjCXF+hRyoT4lPVkEmZcnmRy64Dg/6Ccxv3SBHqoD9K3/nvl+JtilO0dMeDoiAzBH9GSvu4nC+6DdO5Tn49FPJh0OSUBCVpytAYhmxqsEHq1gCxXN/LQXTMw2uii2ifipdBy8JiYzq9Y+8bDDfteq4pxGouvh5b9S1LD7Qge1/BAiHLr38G3EAprxtqM4F9c7YBA9PQA+rSbAQACPtRlaVTnhvaI+VmV+SPTQdFaDnARuzL3Z6Iqtly3/LuuaHbrOsScYXFmG6WZSWL7pdqxZ5OVbBQj5x9qt/PtSK3TNHlsgQvndUz34KWQJO4DLKmzftTvwxL0uX6oPPktmQpATDv8Qk/hxeFn4C83/lShGD5Glx1oAAAAAXEX4M611k2IAAeICl4FAAJvaANKxxGf7AgAAAAAEWVo=',
+);
+
 /// Favorites kept in memory, so the tests never touch SharedPreferences.
 class _MemoryFavorites implements FavoriteChannelsRepository {
   final Map<String, List<FavoriteChannel>> stored = {};
@@ -761,6 +773,49 @@ http://provider/stream/guarded
         maxResponseBytes: 64 * 1024,
       );
 
+      expect(await source.fetchSchedule(), isEmpty);
+    });
+
+    test('an xz guide is unpacked before it is read', () async {
+      // The Rytec lists — the free German guide that reaches a week ahead —
+      // are published as `.xz` only.
+      final source = _m3uSource(
+        MockClient((request) async {
+          if (request.url.path.endsWith('.m3u')) return _ok(_playlist);
+          return http.Response.bytes(_guideXz, 200);
+        }),
+        epgUrl: 'http://rytec/rytecDE_Basic.xz',
+      );
+
+      expect((await source.fetchSchedule()).single.title, 'Tagesschau');
+    });
+
+    test('an xz bomb stops at the cap, and the same file under a larger cap is read', () async {
+      expect(_guideXzBomb.length, lessThan(1024));
+      IptvLiveTvSource sourceWithCap(int cap) => _m3uSource(
+        MockClient((request) async {
+          if (request.url.path.endsWith('.m3u')) return _ok(_playlist);
+          return http.Response.bytes(_guideXzBomb, 200);
+        }),
+        epgUrl: 'http://rytec/rytecDE_Basic.xz',
+        maxResponseBytes: cap,
+      );
+
+      expect(await sourceWithCap(64 * 1024).fetchSchedule(), isEmpty);
+      expect((await sourceWithCap(2 * 1024 * 1024).fetchSchedule()).single.title, 'Tagesschau');
+    });
+
+    test('a damaged xz guide is skipped, the channels stay', () async {
+      final damaged = [..._guideXz.take(40), ...List.filled(40, 0x55)];
+      final source = _m3uSource(
+        MockClient((request) async {
+          if (request.url.path.endsWith('.m3u')) return _ok(_playlist);
+          return http.Response.bytes(damaged, 200);
+        }),
+        epgUrl: 'http://rytec/rytecDE_Basic.xz',
+      );
+
+      expect((await source.fetchChannels()).map((c) => c.title), ['Das Erste HD', 'Kein EPG']);
       expect(await source.fetchSchedule(), isEmpty);
     });
 

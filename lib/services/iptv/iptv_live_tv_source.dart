@@ -8,6 +8,7 @@ import 'dart:math' as math;
 import 'dart:io';
 import 'dart:typed_data' show BytesBuilder;
 
+import 'package:archive/archive.dart' show InputMemoryStream, InputStream, OutputMemoryStream, XZDecoder;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -855,7 +856,7 @@ class IptvLiveTvSource implements LiveTvSupport {
           return null;
         }
       }
-      final unpacked = _maybeGunzip(bytes.takeBytes(), url);
+      final unpacked = await _unpack(bytes.takeBytes(), url);
       if (unpacked == null) return null;
       // Providers serve playlists and guides without a charset; the bytes are
       // UTF-8 in practice, and malformed sequences must not lose the file.
@@ -864,6 +865,25 @@ class IptvLiveTvSource implements LiveTvSupport {
       appLogger.w('IPTV ${source.name}: $url failed', error: error, stackTrace: stackTrace);
       return null;
     }
+  }
+
+  /// [bytes] as the text they carry, whichever of the packings guides come in
+  /// it arrives in: none, gzip, or xz — the Rytec lists, the one free German
+  /// guide reaching a week ahead, are `.xz` only.
+  Future<List<int>?> _unpack(Uint8List bytes, String url) async {
+    if (!isXzPayload(bytes)) return _maybeGunzip(bytes, url);
+    // Off the UI isolate: xz is unpacked in Dart, a few hundred milliseconds
+    // for a week of German channels on a desktop, more on a television box.
+    final result = await compute(unpackXzPayload, (data: bytes, cap: _maxResponseBytes));
+    switch (result) {
+      case XzUnpacked(:final bytes):
+        return bytes;
+      case XzTooLarge():
+        appLogger.w('IPTV ${source.name}: $url unpacks to more than ${_maxResponseBytes >> 20} MB; not read');
+      case XzUnreadable(:final error):
+        appLogger.w('IPTV ${source.name}: $url could not be unpacked as xz', error: error);
+    }
+    return null;
   }
 
   /// Guides are routinely published as `.xml.gz`, and a file served as
@@ -911,6 +931,87 @@ class IptvLiveTvSource implements LiveTvSupport {
       appLogger.w('IPTV ${source.name}: unexpected response from ${uri.path}', error: error);
       return null;
     }
+  }
+}
+
+/// Whether [bytes] begin with the xz magic number. Told by content, like
+/// gzip, because guides are named whatever their publisher likes.
+bool isXzPayload(List<int> bytes) =>
+    bytes.length >= 6 &&
+    bytes[0] == 0xfd &&
+    bytes[1] == 0x37 &&
+    bytes[2] == 0x7a &&
+    bytes[3] == 0x58 &&
+    bytes[4] == 0x5a &&
+    bytes[5] == 0x00;
+
+/// What [unpackXzPayload] made of a payload. A result rather than a throw,
+/// so it crosses the isolate boundary as it is.
+sealed class XzResult {
+  const XzResult();
+}
+
+final class XzUnpacked extends XzResult {
+  const XzUnpacked(this.bytes);
+  final Uint8List bytes;
+}
+
+final class XzTooLarge extends XzResult {
+  const XzTooLarge();
+}
+
+final class XzUnreadable extends XzResult {
+  const XzUnreadable(this.error);
+  final String error;
+}
+
+/// Unpack an xz payload, giving up once it grows past `cap` bytes — the cap
+/// holds for the unpacked size, so a small file that unpacks to gigabytes
+/// stops early instead of filling memory. Top-level for `compute`.
+XzResult unpackXzPayload(({Uint8List data, int cap}) input) {
+  final output = _CappedOutput(input.cap);
+  try {
+    XZDecoder().decodeStream(InputMemoryStream(input.data), output);
+    return XzUnpacked(output.getBytes());
+  } on _TooLarge {
+    return const XzTooLarge();
+  } catch (error) {
+    return XzUnreadable(error.toString());
+  }
+}
+
+/// [OutputMemoryStream] with the response cap applied to every write.
+class _CappedOutput extends OutputMemoryStream {
+  _CappedOutput(this.cap);
+
+  final int cap;
+
+  void _check(int more) {
+    if (length + more > cap) throw const _TooLarge();
+  }
+
+  @override
+  void writeByte(int value) {
+    _check(1);
+    super.writeByte(value);
+  }
+
+  @override
+  void writeBytes(List<int> bytes, {int? length}) {
+    _check(length ?? bytes.length);
+    super.writeBytes(bytes, length: length);
+  }
+
+  @override
+  void writeStream(InputStream stream) {
+    _check(stream.length);
+    super.writeStream(stream);
+  }
+
+  @override
+  void writeBackReference(int distance, int count) {
+    _check(count);
+    super.writeBackReference(distance, count);
   }
 }
 

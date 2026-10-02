@@ -56,6 +56,19 @@ class GeneralSettingsScreen extends StatelessWidget {
               ),
             ],
           ),
+        // The fork's own: which keyboard opens for typing on a television.
+        if (PlatformDetector.isTV())
+          SettingsGroup(
+            title: t.settings.input,
+            children: [
+              SettingSwitchTile(
+                pref: SettingsService.useSystemTvKeyboard,
+                icon: Symbols.keyboard_rounded,
+                title: t.settings.useSystemTvKeyboard,
+                subtitle: t.settings.useSystemTvKeyboardDescription,
+              ),
+            ],
+          ),
         const SizedBox(height: 24),
       ],
     );

@@ -934,6 +934,11 @@ class SettingsService extends BaseSharedPreferencesService {
   /// handful of requests after the page is already up, so it is a switch.
   static const showRecommendationsRow = BoolPref('show_recommendations_row', defaultValue: true);
 
+  /// The "Jetzt live" row under Continue Watching: today's games and the
+  /// favourite channels with what is on them. Off, the home screen neither
+  /// shows it nor loads the guide and fixtures behind it.
+  static const showLiveNowRow = BoolPref('show_live_now_row', defaultValue: true);
+
   /// Which servers the recommendation row draws on. Only meaningful while
   /// [showRecommendationsRow] is on.
   static const recommendationsSource = EnumPref<RecommendationsSource>(
@@ -1846,6 +1851,7 @@ class SettingsService extends BaseSharedPreferencesService {
     librariesSectionExpanded,
     showUnwatchedCount,
     showRecommendationsRow,
+    showLiveNowRow,
     recommendationsSource,
     showWatchedIndicators,
     showEpisodeNumberOnCards,

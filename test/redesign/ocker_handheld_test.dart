@@ -13,9 +13,12 @@ import 'package:plezy/widgets/focusable_tab_chip.dart';
 /// test binding reports Android, so without the television override every
 /// test here is a phone.
 void main() {
-  tearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+  tearDown(() {
+    TvDetectionService.debugSetAppleTVOverride(null);
+    debugOckerLayoutOnThisHost = null;
+  });
 
-  Future<({bool layout, double scale})> probe(WidgetTester tester, Size size) async {
+  Future<({bool layout, double scale})> probe(WidgetTester tester, Size size, {TargetPlatform? platform}) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -23,7 +26,7 @@ void main() {
     late double scale;
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(dark: true, variant: AppThemeVariant.glas).copyWith(platform: platform),
         home: Builder(
           builder: (context) {
             layout = isOckerLayout(context);
@@ -52,6 +55,24 @@ void main() {
 
     TvDetectionService.debugSetAppleTVOverride(true);
     expect((await probe(tester, const Size(960, 540))).scale, 0.5, reason: 'the television is unchanged');
+  });
+
+  testWidgets('a Mac window gets the look too, and keeps its own layout', (tester) async {
+    debugOckerLayoutOnThisHost = false;
+    final mac = await probe(tester, const Size(1440, 900), platform: TargetPlatform.macOS);
+    expect(mac.layout, isFalse, reason: 'the window keeps its own navigation and headers');
+    expect(mac.scale, ockerHandheldScale, reason: 'read from a desk, not across the room');
+
+    // Windows and Linux keep the rearranged screens they had.
+    debugOckerLayoutOnThisHost = true;
+    final windows = await probe(tester, const Size(1440, 900), platform: TargetPlatform.windows);
+    expect(windows.layout, isTrue);
+  });
+
+  testWidgets('a Mac forced into the television layout is a television', (tester) async {
+    debugOckerLayoutOnThisHost = false;
+    TvDetectionService.debugSetAppleTVOverride(true);
+    expect((await probe(tester, const Size(960, 540), platform: TargetPlatform.macOS)).layout, isTrue);
   });
 
   Future<void> pumpChip(WidgetTester tester) async {

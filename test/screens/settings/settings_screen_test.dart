@@ -101,6 +101,7 @@ void main() {
         t.plebz.startAndNavigation,
         t.settings.showSportTab,
         t.settings.skipIntroMode,
+        t.plebz.appAndUpdates,
         t.plebz.allSettings,
       ]) {
         expect(find.text(title), findsWidgets, reason: title);
@@ -130,6 +131,17 @@ void main() {
       await _pumpUi(tester);
 
       expect(SettingsService.instance.read(SettingsService.showSportTab), isTrue);
+    });
+
+    testWidgets('the "Live now" row is on until switched off here', (tester) async {
+      final harness = await _pumpSettingsScreen(tester, curated: true);
+      addTearDown(() => harness.dispose(tester));
+      expect(SettingsService.instance.read(SettingsService.showLiveNowRow), isTrue);
+
+      await tester.tap(find.text(t.settings.showLiveNowRow));
+      await _pumpUi(tester);
+
+      expect(SettingsService.instance.read(SettingsService.showLiveNowRow), isFalse);
     });
 
     testWidgets('with a remote, the full list opens with focus on its first row', (tester) async {

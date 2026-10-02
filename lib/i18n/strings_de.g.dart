@@ -550,6 +550,10 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get useSystemTvKeyboardDescription => 'Zum Tippen die Bildschirmtastatur des Fernsehers oder der Box verwenden. Ausschalten, um stattdessen die Tastatur von Plebz zu nutzen — für Geräte, deren eigene nicht aufgeht.';
 	@override String get showRecommendationsRow => 'Empfehlungsreihe';
 	@override String get showRecommendationsRowDescription => 'Unter Weiterschauen eine Reihe „Weil du das gesehen hast" zeigen, gebildet aus Titeln, die du markiert oder gesehen hast. Schlägt nur vor, was auf deinen Servern liegt.';
+	@override String get showLiveNowRow => 'Reihe „Jetzt live“';
+	@override String get showLiveNowRowDescription => 'Unter Weiterschauen deine Lieblingssender mit dem, was gerade läuft – und bei eingeschaltetem Sport die Spiele von heute.';
+	@override String get detailPages => 'Detailseiten';
+	@override String get input => 'Eingabe';
 	@override String get recommendationsSource => 'Empfehlungen aus';
 	@override String get recommendationsSourceAll => 'Allen Servern';
 	@override String get recommendationsSourcePlex => 'Nur Plex';
@@ -565,7 +569,7 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get showPlaybackTracksStatus => 'Ton und Untertitel auf der Detailseite';
 	@override String get showPlaybackTracksStatusDescription => 'Zeigt in der Ecke, welche Tonspur und welche Untertitel beim Abspielen genommen würden. Aus verschwindet die Zeile; an der Wiedergabe ändert sich nichts.';
 	@override String get appThemeVariantGlas => 'Redesign – Glas';
-	@override String get appThemeVariantGlasDescription => 'Das Redesign: Menüs, Infos, „Als nächstes“ und die Player-Leiste schweben als Glas über dem Bild – durchscheinend, mit Glanz und einer Lichtkante, und hinter der Schrift eine festere Fläche, damit sie auch über hellen Postern lesbar bleibt. Auf dem Fernseher ordnet es auch die Seiten neu, auf Handy und Tablet bleibt der vertraute Aufbau. Die Akzentfarbe wählst du selbst.';
+	@override String get appThemeVariantGlasDescription => 'Das Redesign: Menüs, Infos, „Als nächstes“ und die Player-Leiste schweben als Glas über dem Bild – durchscheinend, mit Glanz und einer Lichtkante, und hinter der Schrift eine festere Fläche, damit sie auch über hellen Postern lesbar bleibt. Auf dem Fernseher ordnet es auch die Seiten neu, auf Handy, Tablet und Mac bleibt der vertraute Aufbau. Die Akzentfarbe wählst du selbst.';
 	@override String get glasGround => 'Hintergrund';
 	@override String get glasGroundAccent => 'Hintergrund des Designs';
 	@override String get glasGroundAccentDescription => 'Der weiche Verlauf im Ton der Akzentfarbe.';
@@ -2668,6 +2672,7 @@ class _Translations$plebz$de extends Translations$plebz$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override String get appAndUpdates => 'App & Updates';
 	@override String get sourcesAndAccounts => 'Quellen & Konten';
 	@override String get addConnectionDescription => 'Plex, Jellyfin oder Emby';
 	@override String get startAndNavigation => 'Start & Navigation';
@@ -3971,6 +3976,10 @@ extension on TranslationsDe {
 			'settings.useSystemTvKeyboardDescription' => 'Zum Tippen die Bildschirmtastatur des Fernsehers oder der Box verwenden. Ausschalten, um stattdessen die Tastatur von Plebz zu nutzen — für Geräte, deren eigene nicht aufgeht.',
 			'settings.showRecommendationsRow' => 'Empfehlungsreihe',
 			'settings.showRecommendationsRowDescription' => 'Unter Weiterschauen eine Reihe „Weil du das gesehen hast" zeigen, gebildet aus Titeln, die du markiert oder gesehen hast. Schlägt nur vor, was auf deinen Servern liegt.',
+			'settings.showLiveNowRow' => 'Reihe „Jetzt live“',
+			'settings.showLiveNowRowDescription' => 'Unter Weiterschauen deine Lieblingssender mit dem, was gerade läuft – und bei eingeschaltetem Sport die Spiele von heute.',
+			'settings.detailPages' => 'Detailseiten',
+			'settings.input' => 'Eingabe',
 			'settings.recommendationsSource' => 'Empfehlungen aus',
 			'settings.recommendationsSourceAll' => 'Allen Servern',
 			'settings.recommendationsSourcePlex' => 'Nur Plex',
@@ -3986,7 +3995,7 @@ extension on TranslationsDe {
 			'settings.showPlaybackTracksStatus' => 'Ton und Untertitel auf der Detailseite',
 			'settings.showPlaybackTracksStatusDescription' => 'Zeigt in der Ecke, welche Tonspur und welche Untertitel beim Abspielen genommen würden. Aus verschwindet die Zeile; an der Wiedergabe ändert sich nichts.',
 			'settings.appThemeVariantGlas' => 'Redesign – Glas',
-			'settings.appThemeVariantGlasDescription' => 'Das Redesign: Menüs, Infos, „Als nächstes“ und die Player-Leiste schweben als Glas über dem Bild – durchscheinend, mit Glanz und einer Lichtkante, und hinter der Schrift eine festere Fläche, damit sie auch über hellen Postern lesbar bleibt. Auf dem Fernseher ordnet es auch die Seiten neu, auf Handy und Tablet bleibt der vertraute Aufbau. Die Akzentfarbe wählst du selbst.',
+			'settings.appThemeVariantGlasDescription' => 'Das Redesign: Menüs, Infos, „Als nächstes“ und die Player-Leiste schweben als Glas über dem Bild – durchscheinend, mit Glanz und einer Lichtkante, und hinter der Schrift eine festere Fläche, damit sie auch über hellen Postern lesbar bleibt. Auf dem Fernseher ordnet es auch die Seiten neu, auf Handy, Tablet und Mac bleibt der vertraute Aufbau. Die Akzentfarbe wählst du selbst.',
 			'settings.glasGround' => 'Hintergrund',
 			'settings.glasGroundAccent' => 'Hintergrund des Designs',
 			'settings.glasGroundAccentDescription' => 'Der weiche Verlauf im Ton der Akzentfarbe.',
@@ -4057,12 +4066,12 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.none' => 'keine',
 			'settings.hardwareTestLabels.yes' => 'ja',
 			'settings.hardwareTestLabels.no' => 'nein',
+			_ => null,
+		} ?? switch (path) {
 			'settings.yearFilter' => 'Jahresbereich',
 			'settings.yearFilterDescription' => 'Filme und Serien auf Erscheinungsjahre eingrenzen',
 			'settings.yearFilterMovies' => 'Filme',
 			'settings.yearFilterShows' => 'Serien',
-			_ => null,
-		} ?? switch (path) {
 			'settings.yearFilterFrom' => 'Von',
 			'settings.yearFilterTo' => 'Bis',
 			'settings.yearFilterAnyYear' => 'beliebig',
@@ -4571,12 +4580,12 @@ extension on TranslationsDe {
 			'profiles.deleteProfileTitle' => 'Profil löschen?',
 			'profiles.deleteProfileMessage' => ({required Object displayName}) => '${displayName} und Verbindungen entfernen. Server bleiben verfügbar.',
 			'profiles.profileNameLabel' => 'Profilname',
+			_ => null,
+		} ?? switch (path) {
 			'profiles.pinProtectionLabel' => 'PIN-Schutz',
 			'profiles.pinManagedByPlex' => 'PIN wird von Plex verwaltet. Auf plex.tv bearbeiten.',
 			'profiles.noPinSetEditOnPlex' => 'Keine PIN festgelegt. Um eine zu verlangen, bearbeite den Home-Benutzer auf plex.tv.',
 			'profiles.setPin' => 'PIN festlegen',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.setPinTitle' => 'PIN festlegen',
 			'profiles.confirmPinTitle' => 'PIN bestätigen',
 			'profiles.pinSet' => 'PIN festgelegt',
@@ -5085,12 +5094,12 @@ extension on TranslationsDe {
 			'liveTv.recordEpisode' => 'Episode aufnehmen',
 			'liveTv.recordSeries' => 'Serie aufnehmen',
 			'liveTv.recordOptions' => 'Aufnahmeoptionen',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.saveTo' => 'Speichern in',
 			'liveTv.recordings' => 'Aufnahmen',
 			'liveTv.scheduledRecordings' => 'Geplant',
 			'liveTv.recordingRules' => 'Aufnahmeregeln',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.noScheduledRecordings' => 'Keine geplanten Aufnahmen',
 			'liveTv.manageRecording' => 'Aufnahme verwalten',
 			'liveTv.cancelRecording' => 'Aufnahme abbrechen',
@@ -5599,12 +5608,12 @@ extension on TranslationsDe {
 			'performanceOverlay.decoderNvidiaHw' => 'NVIDIA HW',
 			'performanceOverlay.decoderQualcommHw' => 'Qualcomm HW',
 			'performanceOverlay.decoderMediatekHw' => 'MediaTek HW',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.decoderExynosHw' => 'Exynos HW',
 			'performanceOverlay.decoderSoftware' => 'Software',
 			'performanceOverlay.decoderHardware' => 'Hardware',
 			'performanceOverlay.tunnelingActive' => 'Aktiv',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.dvRpuFailed' => ({required Object converted, required Object failures}) => '${converted} (${failures} fehlgeschlagen)',
 			'externalPlayer.title' => 'Externer Player',
 			'externalPlayer.useExternalPlayer' => 'Externen Player verwenden',
@@ -5997,6 +6006,7 @@ extension on TranslationsDe {
 			'sport.today' => 'Heute',
 			'sport.tomorrow' => 'Morgen',
 			'sport.yesterday' => 'Gestern',
+			'plebz.appAndUpdates' => 'App & Updates',
 			'plebz.sourcesAndAccounts' => 'Quellen & Konten',
 			'plebz.addConnectionDescription' => 'Plex, Jellyfin oder Emby',
 			'plebz.startAndNavigation' => 'Start & Navigation',

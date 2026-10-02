@@ -134,13 +134,6 @@ class AppearanceSettingsScreen extends StatelessWidget {
               ),
             if (PlatformDetector.isTV())
               SettingSwitchTile(
-                pref: SettingsService.useSystemTvKeyboard,
-                icon: Symbols.keyboard_rounded,
-                title: t.settings.useSystemTvKeyboard,
-                subtitle: t.settings.useSystemTvKeyboardDescription,
-              ),
-            if (PlatformDetector.isTV())
-              SettingSwitchTile(
                 pref: SettingsService.focusGlow,
                 icon: Symbols.lightbulb_rounded,
                 title: t.settings.focusGlow,
@@ -151,26 +144,6 @@ class AppearanceSettingsScreen extends StatelessWidget {
               icon: Symbols.title_rounded,
               title: t.settings.homeTitleLogos,
               subtitle: t.settings.homeTitleLogosDescription,
-            ),
-            if (hasExplore)
-              SettingSwitchTile(
-                pref: SettingsService.showCatalogDetailFacts,
-                icon: Symbols.list_alt_rounded,
-                title: t.settings.showCatalogDetailFacts,
-                subtitle: t.settings.showCatalogDetailFactsDescription,
-              ),
-            if (hasExplore)
-              SettingSwitchTile(
-                pref: SettingsService.showCatalogDetailCrew,
-                icon: Symbols.movie_edit_rounded,
-                title: t.settings.showCatalogDetailCrew,
-                subtitle: t.settings.showCatalogDetailCrewDescription,
-              ),
-            SettingSwitchTile(
-              pref: SettingsService.averageRatings,
-              icon: Symbols.star_half_rounded,
-              title: t.settings.averageRatings,
-              subtitle: t.settings.averageRatingsDescription,
             ),
             if (hasSeerr)
               SettingSwitchTile(
@@ -185,11 +158,31 @@ class AppearanceSettingsScreen extends StatelessWidget {
               title: t.settings.showLibraryPlaylistsTab,
               subtitle: t.settings.showLibraryPlaylistsTabDescription,
             ),
+          ],
+        ),
+
+        // What the detail pages show — the fork's own switches, gathered
+        // here rather than among the cards they do not touch.
+        SettingsGroup(
+          title: t.settings.detailPages,
+          children: [
+            SettingSwitchTile(
+              pref: SettingsService.showDownloadAction,
+              icon: Symbols.download_rounded,
+              title: t.settings.showDownloadAction,
+              subtitle: t.settings.showDownloadActionDescription,
+            ),
             SettingSwitchTile(
               pref: SettingsService.showPlaybackTracksStatus,
               icon: Symbols.subtitles_rounded,
               title: t.settings.showPlaybackTracksStatus,
               subtitle: t.settings.showPlaybackTracksStatusDescription,
+            ),
+            SettingSwitchTile(
+              pref: SettingsService.averageRatings,
+              icon: Symbols.star_half_rounded,
+              title: t.settings.averageRatings,
+              subtitle: t.settings.averageRatingsDescription,
             ),
             if (hasTmdbKey)
               SettingSwitchTile(
@@ -197,6 +190,20 @@ class AppearanceSettingsScreen extends StatelessWidget {
                 icon: Symbols.theater_comedy_rounded,
                 title: t.settings.showActorFilmography,
                 subtitle: t.settings.showActorFilmographyDescription,
+              ),
+            if (hasExplore)
+              SettingSwitchTile(
+                pref: SettingsService.showCatalogDetailFacts,
+                icon: Symbols.list_alt_rounded,
+                title: t.settings.showCatalogDetailFacts,
+                subtitle: t.settings.showCatalogDetailFactsDescription,
+              ),
+            if (hasExplore)
+              SettingSwitchTile(
+                pref: SettingsService.showCatalogDetailCrew,
+                icon: Symbols.movie_edit_rounded,
+                title: t.settings.showCatalogDetailCrew,
+                subtitle: t.settings.showCatalogDetailCrewDescription,
               ),
           ],
         ),
@@ -245,12 +252,6 @@ class AppearanceSettingsScreen extends StatelessWidget {
                 title: t.settings.showServerActivitiesAction,
                 subtitle: t.settings.showServerActivitiesActionDescription,
               ),
-            SettingSwitchTile(
-              pref: SettingsService.showDownloadAction,
-              icon: Symbols.download_rounded,
-              title: t.settings.showDownloadAction,
-              subtitle: t.settings.showDownloadActionDescription,
-            ),
             if (!isMobile)
               SettingSwitchTile(
                 pref: SettingsService.hideHomeActionsUntilFocus,
@@ -258,6 +259,24 @@ class AppearanceSettingsScreen extends StatelessWidget {
                 title: t.settings.hideHomeActionsUntilFocus,
                 subtitle: t.settings.hideHomeActionsUntilFocusDescription,
               ),
+            SettingSwitchTile(
+              pref: SettingsService.showLiveNowRow,
+              icon: Symbols.live_tv_rounded,
+              title: t.settings.showLiveNowRow,
+              subtitle: t.settings.showLiveNowRowDescription,
+            ),
+            SettingSwitchTile(
+              pref: SettingsService.showRecommendationsRow,
+              icon: Symbols.recommend_rounded,
+              title: t.settings.showRecommendationsRow,
+              subtitle: t.settings.showRecommendationsRowDescription,
+            ),
+            // Only asked once the row is on: it is a detail of a thing that is
+            // otherwise not there.
+            SettingValueBuilder<bool>(
+              pref: SettingsService.showRecommendationsRow,
+              builder: (context, showRow, _) => showRow ? _recommendationsSourceSelector() : const SizedBox.shrink(),
+            ),
           ],
         ),
 
@@ -306,18 +325,6 @@ class AppearanceSettingsScreen extends StatelessWidget {
               icon: Symbols.counter_1_rounded,
               title: t.settings.showUnwatchedCount,
               subtitle: t.settings.showUnwatchedCountDescription,
-            ),
-            SettingSwitchTile(
-              pref: SettingsService.showRecommendationsRow,
-              icon: Symbols.recommend_rounded,
-              title: t.settings.showRecommendationsRow,
-              subtitle: t.settings.showRecommendationsRowDescription,
-            ),
-            // Only asked once the row is on: it is a detail of a thing that is
-            // otherwise not there.
-            SettingValueBuilder<bool>(
-              pref: SettingsService.showRecommendationsRow,
-              builder: (context, showRow, _) => showRow ? _recommendationsSourceSelector() : const SizedBox.shrink(),
             ),
           ],
         ),
@@ -567,8 +574,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
         title: t.settings.appThemeVariantKlar,
         subtitle: t.settings.appThemeVariantKlarDescription,
       ),
-      // The redesign is a television interface; macOS does not offer it at
-      // all (see [redesignOfferedHere]).
+      // Offered on every host today; the gate is [redesignOfferedHere].
       if (redesignOfferedHere)
         DialogOption(
           value: AppThemeVariant.glas,

@@ -1377,6 +1377,18 @@ class Translations$settings$en {
 	/// en: 'Show a "Because you watched" row under Continue Watching, built from titles you marked or watched. Only suggests what is on your servers.'
 	String get showRecommendationsRowDescription => 'Show a "Because you watched" row under Continue Watching, built from titles you marked or watched. Only suggests what is on your servers.';
 
+	/// en: '"Live now" row'
+	String get showLiveNowRow => '"Live now" row';
+
+	/// en: 'Under Continue Watching, your favourite channels with what is on them — and, with Sport switched on, today's games.'
+	String get showLiveNowRowDescription => 'Under Continue Watching, your favourite channels with what is on them — and, with Sport switched on, today\'s games.';
+
+	/// en: 'Detail pages'
+	String get detailPages => 'Detail pages';
+
+	/// en: 'Input'
+	String get input => 'Input';
+
 	/// en: 'Recommendations from'
 	String get recommendationsSource => 'Recommendations from';
 
@@ -1422,8 +1434,8 @@ class Translations$settings$en {
 	/// en: 'Redesign – Glass'
 	String get appThemeVariantGlas => 'Redesign – Glass';
 
-	/// en: 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones and tablets keep their familiar layout. You pick the accent colour.'
-	String get appThemeVariantGlasDescription => 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones and tablets keep their familiar layout. You pick the accent colour.';
+	/// en: 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones, tablets and the Mac keep their familiar layout. You pick the accent colour.'
+	String get appThemeVariantGlasDescription => 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones, tablets and the Mac keep their familiar layout. You pick the accent colour.';
 
 	/// en: 'Background'
 	String get glasGround => 'Background';
@@ -6711,6 +6723,9 @@ class Translations$plebz$en {
 
 	// Translations
 
+	/// en: 'App & updates'
+	String get appAndUpdates => 'App & updates';
+
 	/// en: 'Sources & accounts'
 	String get sourcesAndAccounts => 'Sources & accounts';
 
@@ -9107,6 +9122,10 @@ extension on Translations {
 			'settings.useSystemTvKeyboardDescription' => 'Type with the on-screen keyboard your TV or box provides. Turn it off to use Plebz\'s own keyboard instead, for a device whose keyboard does not appear.',
 			'settings.showRecommendationsRow' => 'Recommendation row',
 			'settings.showRecommendationsRowDescription' => 'Show a "Because you watched" row under Continue Watching, built from titles you marked or watched. Only suggests what is on your servers.',
+			'settings.showLiveNowRow' => '"Live now" row',
+			'settings.showLiveNowRowDescription' => 'Under Continue Watching, your favourite channels with what is on them — and, with Sport switched on, today\'s games.',
+			'settings.detailPages' => 'Detail pages',
+			'settings.input' => 'Input',
 			'settings.recommendationsSource' => 'Recommendations from',
 			'settings.recommendationsSourceAll' => 'All servers',
 			'settings.recommendationsSourcePlex' => 'Plex only',
@@ -9122,7 +9141,7 @@ extension on Translations {
 			'settings.showPlaybackTracksStatus' => 'Audio and subtitles on the detail page',
 			'settings.showPlaybackTracksStatusDescription' => 'Names the audio track and subtitles Play would start with, in the corner. Off, the line goes; nothing about playback changes.',
 			'settings.appThemeVariantGlas' => 'Redesign – Glass',
-			'settings.appThemeVariantGlasDescription' => 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones and tablets keep their familiar layout. You pick the accent colour.',
+			'settings.appThemeVariantGlasDescription' => 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones, tablets and the Mac keep their familiar layout. You pick the accent colour.',
 			'settings.glasGround' => 'Background',
 			'settings.glasGroundAccent' => 'The design\'s own',
 			'settings.glasGroundAccentDescription' => 'The soft gradient in the accent colour\'s hue.',
@@ -9184,12 +9203,12 @@ extension on Translations {
 			'settings.hardwareTestLabels.peakBrightness' => 'Peak brightness',
 			'settings.hardwareTestLabels.audioOutput' => 'Output',
 			'settings.hardwareTestLabels.channels' => 'Channels',
+			_ => null,
+		} ?? switch (path) {
 			'settings.hardwareTestLabels.hardwareDecoder' => 'Hardware',
 			'settings.hardwareTestLabels.noHardwareDecoder' => 'software only',
 			'settings.hardwareTestLabels.tunneling' => 'tunneling',
 			'settings.hardwareTestLabels.possible' => 'possible',
-			_ => null,
-		} ?? switch (path) {
 			'settings.hardwareTestLabels.notPossible' => 'not possible',
 			'settings.hardwareTestLabels.unavailable' => 'unavailable',
 			'settings.hardwareTestLabels.none' => 'none',
@@ -9698,12 +9717,12 @@ extension on Translations {
 			'profiles.signOutPlexTitle' => 'Sign out of Plex?',
 			'profiles.signOutPlexMessage' => ({required Object displayName}) => 'Remove ${displayName} and all Plex Home users? Sign back in anytime.',
 			'profiles.signOutPlexDeleteDownloads' => 'Also delete downloads',
+			_ => null,
+		} ?? switch (path) {
 			'profiles.signOutPlexDeleteDownloadsDescription' => 'Otherwise they stay on this device and come back when you sign back in to this account.',
 			'profiles.signedOutPlex' => 'Signed out of Plex.',
 			'profiles.signOutFailed' => 'Sign out failed.',
 			'profiles.sectionTitle' => 'Profiles',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.summarySingle' => 'Add profiles to mix managed users and local identities',
 			'profiles.summaryMultipleWithActive' => ({required Object count, required Object activeName}) => '${count} profiles · active: ${activeName}',
 			'profiles.summaryMultiple' => ({required Object count}) => '${count} profiles',
@@ -10212,12 +10231,12 @@ extension on Translations {
 			'liveTv.noDvr' => 'No DVR configured on any server',
 			'liveTv.serverUnavailable' => 'Live TV server is not available.',
 			'liveTv.serverNotConnected' => 'Live TV server is not connected.',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.noPrograms' => 'No program data available',
 			'liveTv.liveStreamFailed' => 'Live stream failed',
 			'liveTv.unknownProgram' => 'Unknown Program',
 			'liveTv.unknownHub' => 'Unknown',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.unknownError' => 'Unknown error',
 			'liveTv.channelNumber' => ({required Object number}) => 'Channel ${number}',
 			'liveTv.unknownChannel' => 'Unknown channel',
@@ -10726,12 +10745,12 @@ extension on Translations {
 			'videoSettings.audioNormalizationDisablesPassthrough' => 'Decodes audio to PCM; passthrough is off while this is on',
 			'videoSettings.audioNormalizationStereoMix' => 'Decodes audio to a stereo mix; passthrough is off while this is on',
 			'performanceOverlay.color' => 'Color',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.performance' => 'Performance',
 			'performanceOverlay.buffer' => 'Buffer',
 			'performanceOverlay.app' => 'App',
 			'performanceOverlay.decoder' => 'Decoder',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.rawDecoder' => 'Raw Decoder',
 			'performanceOverlay.tunneling' => 'Tunneling',
 			'performanceOverlay.passthrough' => 'Passthrough',
@@ -11164,6 +11183,7 @@ extension on Translations {
 			'sport.today' => 'Today',
 			'sport.tomorrow' => 'Tomorrow',
 			'sport.yesterday' => 'Yesterday',
+			'plebz.appAndUpdates' => 'App & updates',
 			'plebz.sourcesAndAccounts' => 'Sources & accounts',
 			'plebz.addConnectionDescription' => 'Plex, Jellyfin or Emby',
 			'plebz.startAndNavigation' => 'Start & navigation',

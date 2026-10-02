@@ -720,8 +720,7 @@ class HubDetailScreenState extends State<HubDetailScreen>
     // Same items, same filters, same way of opening them — this screen is the
     // one the watchlist, the search results and every hub page run through, so
     // one branch reaches all of them. See lib/redesign/.
-    if (isOckerLayout(context) ||
-        (widget.ockerPageInAnyLayout && isOcker(context) && !PlatformDetector.isMobile(context))) {
+    if (isOckerLayout(context) || (widget.ockerPageInAnyLayout && isOcker(context) && !ockerLookOnly(context))) {
       return _buildOckerPage(context);
     }
 

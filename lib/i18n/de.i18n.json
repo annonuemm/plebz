@@ -445,6 +445,10 @@
     "useSystemTvKeyboardDescription": "Zum Tippen die Bildschirmtastatur des Fernsehers oder der Box verwenden. Ausschalten, um stattdessen die Tastatur von Plebz zu nutzen — für Geräte, deren eigene nicht aufgeht.",
     "showRecommendationsRow": "Empfehlungsreihe",
     "showRecommendationsRowDescription": "Unter Weiterschauen eine Reihe „Weil du das gesehen hast\" zeigen, gebildet aus Titeln, die du markiert oder gesehen hast. Schlägt nur vor, was auf deinen Servern liegt.",
+    "showLiveNowRow": "Reihe „Jetzt live“",
+    "showLiveNowRowDescription": "Unter Weiterschauen deine Lieblingssender mit dem, was gerade läuft – und bei eingeschaltetem Sport die Spiele von heute.",
+    "detailPages": "Detailseiten",
+    "input": "Eingabe",
     "recommendationsSource": "Empfehlungen aus",
     "recommendationsSourceAll": "Allen Servern",
     "recommendationsSourcePlex": "Nur Plex",
@@ -460,7 +464,7 @@
     "showPlaybackTracksStatus": "Ton und Untertitel auf der Detailseite",
     "showPlaybackTracksStatusDescription": "Zeigt in der Ecke, welche Tonspur und welche Untertitel beim Abspielen genommen würden. Aus verschwindet die Zeile; an der Wiedergabe ändert sich nichts.",
     "appThemeVariantGlas": "Redesign – Glas",
-    "appThemeVariantGlasDescription": "Das Redesign: Menüs, Infos, „Als nächstes“ und die Player-Leiste schweben als Glas über dem Bild – durchscheinend, mit Glanz und einer Lichtkante, und hinter der Schrift eine festere Fläche, damit sie auch über hellen Postern lesbar bleibt. Auf dem Fernseher ordnet es auch die Seiten neu, auf Handy und Tablet bleibt der vertraute Aufbau. Die Akzentfarbe wählst du selbst.",
+    "appThemeVariantGlasDescription": "Das Redesign: Menüs, Infos, „Als nächstes“ und die Player-Leiste schweben als Glas über dem Bild – durchscheinend, mit Glanz und einer Lichtkante, und hinter der Schrift eine festere Fläche, damit sie auch über hellen Postern lesbar bleibt. Auf dem Fernseher ordnet es auch die Seiten neu, auf Handy, Tablet und Mac bleibt der vertraute Aufbau. Die Akzentfarbe wählst du selbst.",
     "glasGround": "Hintergrund",
     "glasGroundAccent": "Hintergrund des Designs",
     "glasGroundAccentDescription": "Der weiche Verlauf im Ton der Akzentfarbe.",
@@ -2710,6 +2714,7 @@
     "yesterday": "Gestern"
   },
   "plebz": {
+    "appAndUpdates": "App & Updates",
     "sourcesAndAccounts": "Quellen & Konten",
     "addConnectionDescription": "Plex, Jellyfin oder Emby",
     "startAndNavigation": "Start & Navigation",

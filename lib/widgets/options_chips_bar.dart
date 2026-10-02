@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../utils/platform_detector.dart';
 import '../redesign/ocker_skin.dart';
 import 'focusable_filter_chip.dart';
 
@@ -117,7 +116,7 @@ class OptionsChipsBar extends StatelessWidget {
       padding: EdgeInsets.symmetric(
         horizontal: onGridBand
             ? 0
-            : isOcker(context) && !PlatformDetector.isMobile(context)
+            : isOcker(context) && !ockerLookOnly(context)
             ? 5
             : 16,
       ),

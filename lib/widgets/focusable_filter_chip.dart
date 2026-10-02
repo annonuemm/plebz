@@ -7,7 +7,6 @@ import 'focus_builders.dart';
 import '../redesign/ocker_filter_glyph.dart';
 import '../redesign/ocker_skin.dart';
 import '../theme/mono_tokens.dart';
-import '../utils/platform_detector.dart';
 
 /// A focusable filter chip that shows a color change when focused.
 ///
@@ -84,10 +83,11 @@ class _FocusableFilterChipState extends State<FocusableFilterChip> with Focusabl
     // Under "Ocker" there is no plate at all — see [OckerFilterGlyph], which
     // the watchlist's own filter row draws too, so the two cannot drift apart
     // again.
-    // On a phone or tablet the filters have a line of their own and nothing
-    // ever focuses them, so the word is the only way to tell them apart: a
-    // capsule of glass with the glyph and the word, as the facts are set.
-    if (isOcker(context) && PlatformDetector.isMobile(context)) {
+    // On a phone, a tablet or the Mac the filters keep the line the screen
+    // gives them and are pressed rather than focused, so the word is the only
+    // way to tell them apart: a capsule of glass with the glyph and the word,
+    // as the facts are set.
+    if (isOcker(context) && ockerLookOnly(context)) {
       final tk = tokens(context);
       final ink = tk.ink(0.85);
       return FocusBuilders.buildFocusableChip(

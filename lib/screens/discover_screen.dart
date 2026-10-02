@@ -3,6 +3,7 @@ import '../media/ids.dart';
 import 'dart:io' show Platform;
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:plezy/widgets/app_icon.dart';
 import '../widgets/server_activities_button.dart';
@@ -237,6 +238,11 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
   MediaHub? get _liveNowHub => _liveNow.isEmpty ? null : _liveNowHubCache;
 
+  /// The row's switch in the settings; off, nothing behind the row is loaded.
+  ValueListenable<bool>? _showLiveNowListenable;
+
+  bool get _liveNowWanted => SettingsService.instanceOrNull?.read(SettingsService.showLiveNowRow) ?? true;
+
   void _startLiveNow() {
     final multiServer = context.read<MultiServerProvider?>();
     final finder = SportBroadcastFinder.maybeOf(context);
@@ -248,6 +254,28 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       iptv: context.read<IptvSourcesProvider?>(),
       sportEnabled: () => SettingsService.instanceOrNull?.read(SettingsService.showSportTab) ?? false,
     );
+    _showLiveNowListenable = SettingsService.instanceOrNull?.listenable(SettingsService.showLiveNowRow);
+    _showLiveNowListenable?.addListener(_onShowLiveNowChanged);
+    _resumeLiveNow();
+  }
+
+  void _onShowLiveNowChanged() {
+    if (!mounted) return;
+    if (_liveNowWanted) {
+      _resumeLiveNow();
+    } else {
+      _liveNowTimer?.cancel();
+      _liveNowTimer = null;
+      setState(() {
+        _liveNow = LiveNowSnapshot.empty;
+        _liveNowHubCache = null;
+        _liveNowSignature = '';
+      });
+    }
+  }
+
+  void _resumeLiveNow() {
+    if (_liveNowLoader == null || _liveNowTimer != null || !_liveNowWanted) return;
     unawaited(_refreshLiveNow());
     // A live score moves by the minute; the loader asks each source only as
     // often as that source can have changed.
@@ -264,7 +292,8 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       appLogger.d('Live now: refresh failed', error: error, stackTrace: stackTrace);
       return;
     }
-    if (!mounted) return;
+    // Switched off while the load was under way.
+    if (!mounted || !_liveNowWanted) return;
     final hub = liveNowHub(snapshot);
     final signature = [for (final item in hub.items) '${item.id}|${item.title}|${item.summary}'].join('\n');
     setState(() {
@@ -622,6 +651,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     _autoScrollTimer?.cancel();
     _indicatorTimer?.cancel();
     _liveNowTimer?.cancel();
+    _showLiveNowListenable?.removeListener(_onShowLiveNowChanged);
     _spotlight.dispose();
     _indicatorProgress.dispose();
     _heroIndex.dispose();

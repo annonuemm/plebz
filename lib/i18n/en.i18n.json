@@ -445,6 +445,10 @@
     "useSystemTvKeyboardDescription": "Type with the on-screen keyboard your TV or box provides. Turn it off to use Plebz's own keyboard instead, for a device whose keyboard does not appear.",
     "showRecommendationsRow": "Recommendation row",
     "showRecommendationsRowDescription": "Show a \"Because you watched\" row under Continue Watching, built from titles you marked or watched. Only suggests what is on your servers.",
+    "showLiveNowRow": "\"Live now\" row",
+    "showLiveNowRowDescription": "Under Continue Watching, your favourite channels with what is on them — and, with Sport switched on, today's games.",
+    "detailPages": "Detail pages",
+    "input": "Input",
     "recommendationsSource": "Recommendations from",
     "recommendationsSourceAll": "All servers",
     "recommendationsSourcePlex": "Plex only",
@@ -460,7 +464,7 @@
     "showPlaybackTracksStatus": "Audio and subtitles on the detail page",
     "showPlaybackTracksStatusDescription": "Names the audio track and subtitles Play would start with, in the corner. Off, the line goes; nothing about playback changes.",
     "appThemeVariantGlas": "Redesign – Glass",
-    "appThemeVariantGlasDescription": "The redesign: menus, info panels, \"Up next\" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones and tablets keep their familiar layout. You pick the accent colour.",
+    "appThemeVariantGlasDescription": "The redesign: menus, info panels, \"Up next\" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones, tablets and the Mac keep their familiar layout. You pick the accent colour.",
     "glasGround": "Background",
     "glasGroundAccent": "The design's own",
     "glasGroundAccentDescription": "The soft gradient in the accent colour's hue.",
@@ -2710,6 +2714,7 @@
     "yesterday": "Yesterday"
   },
   "plebz": {
+    "appAndUpdates": "App & updates",
     "sourcesAndAccounts": "Sources & accounts",
     "addConnectionDescription": "Plex, Jellyfin or Emby",
     "startAndNavigation": "Start & navigation",

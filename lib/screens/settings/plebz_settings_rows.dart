@@ -118,6 +118,12 @@ List<Widget> plebzSettingsRows(BuildContext context, {required FocusNode Functio
           title: t.settings.showSportTab,
           subtitle: t.settings.showSportTabDescription,
         ),
+        SettingSwitchTile(
+          pref: SettingsService.showLiveNowRow,
+          icon: Symbols.live_tv_rounded,
+          title: t.settings.showLiveNowRow,
+          subtitle: t.settings.showLiveNowRowDescription,
+        ),
         if (hasExplore)
           SettingSwitchTile(
             pref: SettingsService.showExploreTab,
@@ -192,6 +198,7 @@ List<Widget> plebzSettingsRows(BuildContext context, {required FocusNode Functio
       ],
     ),
     SettingsGroup(
+      title: t.plebz.appAndUpdates,
       children: [
         ...plebzUpdateRows(context),
         SettingNavigationTile(
@@ -208,6 +215,13 @@ List<Widget> plebzSettingsRows(BuildContext context, {required FocusNode Functio
           subtitle: t.settings.aboutDescription,
           destinationBuilder: (_) => const AboutScreen(),
         ),
+      ],
+    ),
+    // Set apart, as the full list ends on "About": the way on, not one more
+    // setting of the group above.
+    const SizedBox(height: 24),
+    SettingsGroup(
+      children: [
         SettingNavigationTile(
           focusNode: focusNode('plebz_all_settings'),
           icon: Symbols.tune_rounded,

@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.4.3 (Build 584)
+
+- Die Reihe „Jetzt live“ auf der Startseite lässt sich jetzt ausschalten: in den Einstellungen unter „Start und Navigation“ oder unter Darstellung → Startseite.
+- Die Einstellungen sind übersichtlicher sortiert: Updates und „Über“ haben eine eigene Gruppe, die Schalter für die Detailseiten ebenso.
+
 ## 1.4.2 (Build 580)
 
 - Der mpv-Player startet Streams auf manchen Geräten, etwa der NVIDIA Shield, wieder zuverlässig.

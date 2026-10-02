@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -62,12 +63,30 @@ bool isOcker(BuildContext context) =>
 /// the shared widgets serve phone and tablet, where this design has no
 /// screens of its own yet.
 ///
-/// Only where the app navigates by its side rail — a television, a desktop
-/// window. A phone or tablet keeps its own arrangement and wears the look
+/// Only where the app navigates by its side rail — a television, a Windows or
+/// Linux window. A phone or tablet keeps its own arrangement and wears the look
 /// alone: the screens below this gate drop their own headers in the belief
-/// that the rail carries them, and on a phone nothing would.
+/// that the rail carries them, and on a phone nothing would. So does the Mac
+/// (see [ockerLookOnly]).
 bool isOckerLayout(BuildContext context) =>
-    Theme.of(context).extension<MonoTokens>()?.redesignLayout == true && !PlatformDetector.isMobile(context);
+    Theme.of(context).extension<MonoTokens>()?.redesignLayout == true && !ockerLookOnly(context);
+
+/// Where the redesign is worn as a look alone, the screens keeping their own
+/// arrangement: a phone or tablet, and the Mac.
+///
+/// The Mac is a window driven by a mouse; the rearranged screens are laid out
+/// for a remote across the room, and the user wanted the glass there without
+/// them. A Mac forced into the television layout is a television here.
+bool ockerLookOnly(BuildContext context) => PlatformDetector.isMobile(context) || !_ockerLayoutOnThisHost;
+
+bool? _debugOckerLayoutOnThisHost;
+
+bool get _ockerLayoutOnThisHost => PlatformDetector.isTV() || (_debugOckerLayoutOnThisHost ?? !Platform.isMacOS);
+
+/// Pretend this host does or does not rearrange its screens under the
+/// redesign. The test host really is a Mac; pass null to restore it.
+@visibleForTesting
+set debugOckerLayoutOnThisHost(bool? value) => _debugOckerLayoutOnThisHost = value;
 
 /// Where a screen's content starts under the redesign: at the top safe
 /// margin. The destinations stand in the rail down the left, so nothing lies
@@ -105,9 +124,9 @@ const ockerReferenceWidth = 1920.0;
 /// Scaled by width it came out at the floor — a menu heading at nine points —
 /// so it takes [ockerHandheldScale] instead, whatever its width. Only the look
 /// reaches it there; nothing laid out for the 1920 frame does (see
-/// [isOckerLayout]).
+/// [isOckerLayout]). The same holds for a Mac window, read from a desk.
 double ockerScale(BuildContext context) {
-  if (PlatformDetector.isMobile(context)) return ockerHandheldScale;
+  if (ockerLookOnly(context)) return ockerHandheldScale;
   final width = MediaQuery.sizeOf(context).width;
   return (width / ockerReferenceWidth).clamp(0.5, 1.0);
 }

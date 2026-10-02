@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/settings_service.dart' show AppThemeVariant, GlasAccent;
@@ -100,29 +98,21 @@ bool? _debugRedesignOffered;
 
 /// Whether this host offers the redesign at all.
 ///
-/// The redesign is drawn for a television and for nothing else — measurements
-/// for a screen across the room, paths that assume a remote, focus that never
-/// meets a pointer. macOS is the one host where that is simply the wrong
-/// instrument: a window with a title bar, driven by a mouse. One of the
-/// redesign's own pieces does not even run there (`GuidePreviewPlayer`
-/// inlines on Android, Windows and Linux only), so the Mac would get a
-/// television interface with a hole in it.
+/// Every host does. Where the rearranged screens would be the wrong
+/// instrument — a phone or tablet held in the hand, a Mac window driven by a
+/// mouse — it is the look alone: the glass, the chips, the sheets and menus,
+/// but none of the rearranging, which is laid out for a television and gated
+/// separately — see `isOckerLayout` and `ockerLookOnly`.
 ///
-/// It is therefore not offered on macOS — see [offeredAppThemeVariants] and
+/// The gate stays so a host can be left out again without hunting for every
+/// place that reads the variant — see [offeredAppThemeVariants] and
 /// [supportedAppThemeVariant].
-///
-/// Phones and tablets get the look and keep their own layout: the glass, the
-/// chips, the sheets and menus, but none of the rearranging, which is laid out
-/// for a television and gated separately — see `isOckerLayout`.
-bool get redesignOfferedHere => _debugRedesignOffered ?? _redesignOfferedOnThisHost();
-
-bool _redesignOfferedOnThisHost() => !Platform.isMacOS;
+bool get redesignOfferedHere => _debugRedesignOffered ?? true;
 
 /// Pretend the host does or does not offer the redesign.
 ///
-/// The test host really is a Mac, so without this every suite that touches the
-/// variant list would read the macOS answer. Pass null to restore the real
-/// one; suites that set it must reset it.
+/// For the suites that check what a host without it would do. Pass null to
+/// restore the real answer; suites that set it must reset it.
 @visibleForTesting
 set debugRedesignOfferedHere(bool? offered) => _debugRedesignOffered = offered;
 

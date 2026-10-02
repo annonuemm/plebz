@@ -236,9 +236,7 @@ class _FocusableTabChipState extends State<FocusableTabChip> with FocusableChipS
         // On a phone or tablet at the size the original look sets its tabs, a
         // point up: at the redesign's own a library's three views no longer
         // fit across a phone, and the row began to scroll where it had not.
-        style: type
-            .groupEntry(active: active)
-            .copyWith(color: ink, fontSize: PlatformDetector.isMobile(context) ? 15 : null),
+        style: type.groupEntry(active: active).copyWith(color: ink, fontSize: ockerLookOnly(context) ? 15 : null),
       ),
     );
 

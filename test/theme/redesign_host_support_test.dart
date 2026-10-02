@@ -6,14 +6,18 @@ import 'package:plezy/theme/mono_tokens.dart';
 
 import '../test_helpers/prefs.dart';
 
-/// The redesign is a television interface, and the macOS build is a window
-/// with a mouse. It is left out there — not merely hidden from the list: a
-/// value that reaches a Mac some other way (a restored backup, a copied
-/// preference file) has to settle on the standard theme too, or the Mac paints
-/// a remote-driven interface nobody can drive.
+/// Every host offers the redesign today — the Mac as the look alone. The gate
+/// stays for a host to be left out again: then it is not merely hidden from
+/// the list, a value that reaches that host some other way (a restored backup,
+/// a copied preference file) settles on the standard theme too.
 void main() {
   setUp(resetSharedPreferencesForTest);
   tearDown(() => debugRedesignOfferedHere = null);
+
+  test('the test host, a Mac, offers it', () {
+    expect(redesignOfferedHere, isTrue);
+    expect(offeredAppThemeVariants, contains(settings.AppThemeVariant.glas));
+  });
 
   group('where the redesign is offered', () {
     test('every variant is on the list', () {

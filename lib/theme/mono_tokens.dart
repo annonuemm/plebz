@@ -36,7 +36,7 @@ double flatRadius(BuildContext context, double radius) =>
 /// Still its own number rather than [MonoTokens.radiusSm]: artwork is drawn a
 /// shade rounder than the boxes around it, which is the proportion a poster's
 /// own corner comes out at. Elsewhere it *is* [MonoTokens.radiusSm], so
-/// "Standard" and "Klar" are untouched.
+/// "Standard" is untouched.
 ///
 /// Read off `displayFontFamily`, the field only the redesign palettes fill —
 /// the same marker `isOcker` uses, restated here because the token layer cannot
@@ -102,28 +102,24 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
   /// active entry in the navigation.
   ///
   /// Standard sets it to [text], which is what those surfaces already used, so
-  /// nothing moves there. Klar makes it the app's red — white rings vanish on
-  /// bright posters, and one colour used in two or three places is what gives
-  /// a monochrome design somewhere to point.
+  /// nothing moves there; the redesign takes its palette's accent.
   final Color accent;
 
-  /// Stroke of a focus ring. Klar draws it thinner, in keeping with symbols
-  /// that are outlines rather than solids — a thin ring in a colour reads as
-  /// clearly as a thick one in white.
+  /// Stroke of a focus ring: 2.5 in Standard, a hairline in the redesign.
   final double focusBorderWidth;
 
   /// Whether a catalog poster may draw its focus ring in its own artwork
   /// colour instead of [accent].
   ///
-  /// False in Klar: a monochrome design earns its clarity from one accent, and
-  /// a ring that changes hue per poster spends exactly that.
+  /// False in the redesign: it earns its clarity from one accent, and a ring
+  /// that changes hue per poster spends exactly that.
   final bool itemAccentFocusRing;
 
   /// Whether a section heading carries an icon before its title.
   ///
   /// The rows say what they are in words; the glyph beside them repeats that
-  /// and adds a second thing to look at. Klar drops it, and the heading is
-  /// then carried by type alone.
+  /// and adds a second thing to look at. The redesign drops it, and the
+  /// heading is then carried by type alone.
   final bool sectionIcons;
 
   /// Whether the app bar's profile button shows the profile's own avatar.
@@ -137,8 +133,8 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
   ///
   /// Ocker splits type into three jobs so each one can be recognised without
   /// reading it: a serif means "this is the name of something you can watch",
-  /// mono means "this is a label, a counter or a time". Standard and Klar
-  /// leave all three null and keep one family for everything.
+  /// mono means "this is a label, a counter or a time". Standard
+  /// leaves all three null and keep one family for everything.
   final String? displayFontFamily;
 
   /// Typeface for the interface itself — navigation, body copy, buttons.
@@ -229,6 +225,15 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
   /// steps between 0.32 and 1.0, and eleven named fields would be eleven
   /// chances to introduce a twelfth.
   Color ink(double opacity) => text.withValues(alpha: opacity);
+
+  /// The fill of a tile, chip or card that stands on the page's ground.
+  ///
+  /// [surface] is opaque: under glass it is the block fill composited over
+  /// the palette's flat ground, but the page behind is a gradient that lifts
+  /// and glows. Painted opaque, a tile there was a flat patch, darker than the
+  /// light around it — the "dark area behind" that kept being reported. Under
+  /// glass the fill is the same ink step laid over whatever is behind it.
+  Color get tileFill => glass ? ink(0.06) : surface;
 
   const MonoTokens({
     required this.radiusSm,

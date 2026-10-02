@@ -2159,7 +2159,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
         child: ClipRRect(
           borderRadius: BorderRadius.circular(flatRadius(context, 8) * scale),
           child: ColoredBox(
-            color: theme.colorScheme.surfaceContainerHighest,
+            color: tokens(context).tileFill,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: width * 0.16, vertical: height * 0.22),
               // White in every state, focused included. The originals were

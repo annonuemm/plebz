@@ -147,7 +147,7 @@ class _UpNextCard extends StatelessWidget {
     final series = episode.grandparentTitle;
     final summary = episode.summary;
 
-    // Over the picture in every theme. Standard and Klar keep the player's own
+    // Over the picture in every theme. Standard keeps the player's own
     // white on black; the redesign sets it in its warm pair, the ground and
     // the bone-white ink its every other surface is drawn in.
     final ink = ocker ? tk.ink(1) : Colors.white;
@@ -241,7 +241,7 @@ class _UpNextCard extends StatelessWidget {
 }
 
 /// One of the panel's two buttons, shaped as the theme shapes its buttons —
-/// a pill in Standard and Klar, the redesign's cornered box there — and
+/// a pill in Standard, the redesign's cornered box there — and
 /// focused the way the detail page's buttons are: the button fills, and no
 /// ring is drawn round it.
 ///

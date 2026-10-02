@@ -33,8 +33,8 @@ void main() {
   group('where it is not', () {
     setUp(() => debugRedesignOfferedHere = false);
 
-    test('only the two variants that are not the redesign can be chosen', () {
-      expect(offeredAppThemeVariants, [settings.AppThemeVariant.standard, settings.AppThemeVariant.klar]);
+    test('only the variant that is not the redesign can be chosen', () {
+      expect(offeredAppThemeVariants, [settings.AppThemeVariant.standard]);
     });
 
     test('a redesign palette carried in from elsewhere reads as standard', () {
@@ -43,8 +43,7 @@ void main() {
       expect(supportedAppThemeVariant(settings.AppThemeVariant.glas), settings.AppThemeVariant.standard);
     });
 
-    test('the two that remain are untouched', () {
-      expect(supportedAppThemeVariant(settings.AppThemeVariant.klar), settings.AppThemeVariant.klar);
+    test('the one that remains is untouched', () {
       expect(supportedAppThemeVariant(settings.AppThemeVariant.standard), settings.AppThemeVariant.standard);
     });
 

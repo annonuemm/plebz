@@ -17,6 +17,8 @@ import 'package:plezy/services/trackers/tracker_coordinator.dart';
 import 'package:plezy/services/trackers/tracker_session.dart';
 import 'package:plezy/utils/external_ids.dart';
 
+import 'package:plezy/utils/fork_identity.dart';
+
 import '../test_helpers/media_items.dart';
 import '../test_helpers/prefs.dart';
 
@@ -94,6 +96,9 @@ void main() {
     expect(provider.connectedSources, isEmpty);
   });
   test('tracker rebind exposes and removes the MDBList catalog source', () async {
+    // MDBList is off in this fork; the binding machinery is what is tested.
+    debugRemovedTrackersAvailable = true;
+    addTearDown(() => debugRemovedTrackersAvailable = false);
     const userUuid = 'profile-mdblist';
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     await trackerAccountStore(TrackerService.mdblist).save(

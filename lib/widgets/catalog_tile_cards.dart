@@ -167,7 +167,7 @@ class BrandTileCard extends StatelessWidget {
         height: height,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: tk.surface,
+            color: tk.tileFill,
             borderRadius: BorderRadius.circular(flatRadius(context, 8) * scale),
           ),
           child: item.artPath == null || item.artPath!.isEmpty
@@ -223,7 +223,7 @@ class ChipTileCard extends StatelessWidget {
         height: height,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
+            color: tokens(context).tileFill,
             borderRadius: BorderRadius.circular(flatRadius(context, 8) * scale),
           ),
           child: Center(

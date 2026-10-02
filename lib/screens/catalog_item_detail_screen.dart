@@ -1532,7 +1532,7 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHigh,
+            color: tokens(context).tileFill,
             borderRadius: BorderRadius.circular(flatRadius(context, 12)),
           ),
           child: Row(

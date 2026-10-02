@@ -13,6 +13,13 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.4.5 (Build 592)
+
+- Trakt, MDBList und Discord sind entfernt.
+- Das Design „Klar“ ist entfernt; wer es nutzte, bekommt das Original-Design.
+- Die Tagesauswahl im Programmführer zeigt nur noch Tage, für die es Programm gibt.
+- Kacheln im Glas-Design zeigen keine dunklen Flächen mehr vor dem Hintergrund.
+
 ## 1.4.4 (Build 586)
 
 - Der Programmführer liest jetzt auch gepackte Listen im Format .xz, zusätzlich zu .xml und .gz.

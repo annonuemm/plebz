@@ -102,7 +102,7 @@ class DiscordRPCService {
   final DiscordRPC Function() _rpcFactory;
 
   static bool get isAvailable {
-    if (!PlatformDetector.isDesktopOS()) {
+    if (!discordRichPresenceAvailable || !PlatformDetector.isDesktopOS()) {
       return false;
     }
     return DiscordRPC.isAvailable;

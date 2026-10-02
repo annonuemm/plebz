@@ -39,7 +39,9 @@ class StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: backgroundColor ?? theme.colorScheme.surfaceContainerHigh,
+        color:
+            backgroundColor ??
+            (tokens(context).glass ? tokens(context).tileFill : theme.colorScheme.surfaceContainerHigh),
         borderRadius: BorderRadius.circular(flatRadius(context, 999)),
       ),
       child: Row(

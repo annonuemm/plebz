@@ -8,7 +8,7 @@ void main() {
   group('Browse chips', () {
     test('leave the shared surfaces exactly where they were', () {
       // The defaults are the numbers the rail and the phone have always drawn.
-      // A change here is a change to Standard and Klar, which is why it has to
+      // A change here is a change to Standard, which is why it has to
       // fail a test rather than pass unnoticed.
       expect(chipTileTextStyle(1).fontSize, 15);
       expect(chipTileHeight(1), 52);

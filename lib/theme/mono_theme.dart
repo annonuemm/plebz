@@ -2,24 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/settings_service.dart' show AppThemeVariant, GlasAccent;
 import '../widgets/app_icon.dart';
-import '../widgets/focusable_tab_chip.dart' show activeTabChipColor;
 import 'gapped_track_shape.dart';
 import 'glass_backdrop.dart';
 import 'mono_tokens.dart';
 
-/// **Klar wears the platform's own typeface, like the standard theme.**
-///
-/// It used to wear Inter, for the reasons the Apple-TV reference suggested. But
-/// Inter sets about 4% wider than Roboto at the same size, and the lines that
-/// measure themselves before they draw — the detail hero's facts row, the
-/// spotlight, the pre-play track summary — spend that difference by *dropping a
-/// field*. On a 1280x720 television the facts row lost the audio format and
-/// both rating badges in Klar while the standard theme kept them: same screen,
-/// same film, less information. A variant is a different look, not a different
-/// set of facts, so the typeface went and the look stayed.
-///
-/// The asset (`assets/fonts/Inter-Variable.ttf`) stayed declared in
-/// `pubspec.yaml` while nothing read it. The redesign reads it now.
+/// The Inter asset (`assets/fonts/Inter-Variable.ttf`) is the redesign's.
+/// Inter sets about 4% wider than Roboto, and the lines that measure
+/// themselves before they draw — the detail hero's facts row, the spotlight,
+/// the pre-play track summary — spend that difference by dropping a field at
+/// 1280x720; that is why the standard theme keeps the platform's face.
 
 /// **The redesign is set in one typeface: Inter.** Both palettes, every line.
 ///
@@ -143,8 +134,8 @@ ThemeData monoTheme({
   GlasAccent glasAccent = GlasAccent.eisblau,
 }) {
   // ThemeData derives several defaults from defaultTargetPlatform. The variant
-  // is part of the key too: Klar is a different theme, not a tint of one. The
-  // glass accent only where it paints anything, so the other variants are
+  // is part of the key too: the redesign is a different theme, not a tint of
+  // one. The glass accent only where it paints anything, so the other variants are
   // built once rather than once per accent.
   final key = (
     dark: dark || oled,
@@ -174,7 +165,6 @@ ThemeData _buildMonoTheme({
   required AppThemeVariant variant,
   required GlasAccent glasAccent,
 }) {
-  final klar = variant == AppThemeVariant.klar;
   // Which structure to build, and which of its two palettes to paint it in.
   // Its corner, its typeface and its want of shadows follow from the first;
   // only colour follows from the second.
@@ -202,24 +192,6 @@ ThemeData _buildMonoTheme({
       text: glas.text,
       textMuted: glas.text.withValues(alpha: 0.72),
     );
-  } else if (klar && !oled) {
-    // Deeper grounds and a hairline outline: the surfaces carry less of their
-    // own weight so spacing and type do the separating.
-    c = dark
-        ? (
-            bg: const Color(0xFF08080A),
-            surface: const Color(0xFF121114),
-            outline: const Color(0x24FFFFFF),
-            text: const Color(0xFFFFFFFF),
-            textMuted: const Color(0x9EFFFFFF),
-          )
-        : (
-            bg: const Color(0xFFF4F4F5),
-            surface: const Color(0xFFFFFFFF),
-            outline: const Color(0x1F101012),
-            text: const Color(0xFF101012),
-            textMuted: const Color(0x99101012),
-          );
   } else if (oled) {
     c = (
       bg: const Color(0xFF000000), // Pure black for OLED
@@ -398,7 +370,9 @@ ThemeData _buildMonoTheme({
             // setting and dialog fell back to the platform's face.
             .apply(fontFamily: redesign ? ockerUiFontFamily : null),
     cardTheme: CardThemeData(
-      color: c.surface,
+      // Under glass a card is an ink wash over the page's gradient, not an
+      // opaque patch of the flat ground (see `MonoTokens.tileFill`).
+      color: redesign ? c.text.withValues(alpha: 0.06) : c.surface,
       elevation: 0,
       margin: .zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(redesign ? themeRadius : 14)),
@@ -460,9 +434,6 @@ ThemeData _buildMonoTheme({
   return base.copyWith(
     extensions: [
       MonoTokens(
-        // Klar draws less and spaces more: smaller radii so a corner reads as
-        // a crease rather than a pill, and a wider base unit so every surface
-        // that already takes its spacing from here loosens up at once.
         // The redesign's corners, which were nothing at all until the posters
         // got theirs.
         //
@@ -472,15 +443,15 @@ ThemeData _buildMonoTheme({
         // forgotten rather than as a decision. So the ladder came back, in the
         // posters' own key: a shade rounder than "Standard", which is what a
         // 6.5 % corner on a poster comes out at.
-        radiusSm: redesign ? _redesignCorner : (klar ? 6 : 8),
-        radiusMd: redesign ? 18 : (klar ? 10 : 12),
-        radiusLg: redesign ? 24 : (klar ? 16 : 20),
-        radiusXs: redesign ? 6 : (klar ? 4 : 5),
-        groupGap: redesign ? 1 : (klar ? 3 : 2),
+        radiusSm: redesign ? _redesignCorner : 8,
+        radiusMd: redesign ? 18 : 12,
+        radiusLg: redesign ? 24 : 20,
+        radiusXs: redesign ? 6 : 5,
+        groupGap: redesign ? 1 : 2,
         // 18 is the one spacing number the design repeats — the gap between
         // poster tiles — so everything that takes its padding from here lands
         // on the same rhythm as the grid.
-        space: redesign ? 18 : (klar ? 18 : 12),
+        space: redesign ? 18 : 12,
         // Ocker's motion table: focus 120, panel crossfade 180, ambient
         // background 400, menu 140. Short and mechanical; nothing reflows.
         fast: const Duration(milliseconds: 120),
@@ -492,19 +463,18 @@ ThemeData _buildMonoTheme({
         outline: c.outline,
         text: c.text,
         textMuted: c.textMuted,
-        // The same red the active tab chip has always used, so the app never
-        // shows two reds. Standard keeps [text], which is what focus rings and
-        // the navigation already drew with.
+        // Standard keeps [text], which is what focus rings and the navigation
+        // already drew with.
         // Ocker's one loud colour, and it is loud in exactly three places:
         // progress, the now-line, and the active navigation entry. Focus rings
         // are deliberately *not* one of them — see [focusRing] below.
-        accent: redesign ? glas.accent : (klar ? activeTabChipColor : c.text),
+        accent: redesign ? glas.accent : c.text,
         // Thirty per cent off the standard 2.5; Ocker goes to a hairline,
         // which is all a ring needs when it also has room around it.
-        focusBorderWidth: redesign ? 1 : (klar ? 1.75 : 2.5),
-        itemAccentFocusRing: !klar && !redesign,
-        sectionIcons: !klar && !redesign,
-        profileAvatar: !klar && !redesign,
+        focusBorderWidth: redesign ? 1 : 2.5,
+        itemAccentFocusRing: !redesign,
+        sectionIcons: !redesign,
+        profileAvatar: !redesign,
         displayFontFamily: redesign ? ockerDisplayFontFamily : null,
         uiFontFamily: redesign ? ockerUiFontFamily : null,
         monoFontFamily: redesign ? ockerMonoFontFamily : null,
@@ -523,19 +493,17 @@ ThemeData _buildMonoTheme({
 ///
 /// Icons do not come from [ThemeData] — [AppIcon] reads a set of statics, which
 /// is why one call here reaches every symbol drawn through it. Standard is what
-/// the app has always shown: filled and bold. Klar is the opposite end of the
-/// same two axes, which is most of what makes it read as lighter.
+/// the app has always shown: filled and bold.
 void applyIconDefaultsFor(AppThemeVariant variant) {
   AppIconDefaults.update(
     fill: switch (variant) {
       AppThemeVariant.standard => 1,
       // Ocker fills exactly two glyphs, and neither of them goes through here:
       // the play triangle and the LIVE marker draw their own.
-      AppThemeVariant.klar || AppThemeVariant.glas => 0,
+      AppThemeVariant.glas => 0,
     },
     weight: switch (variant) {
       AppThemeVariant.standard => 700,
-      AppThemeVariant.klar => 300,
       // Lighter still: at 200 an icon carries about as much ink as the text
       // beside it, which is the whole argument for letting words do the
       // naming and leaving the symbol as a hint.

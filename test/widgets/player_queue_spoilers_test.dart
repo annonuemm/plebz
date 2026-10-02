@@ -142,7 +142,7 @@ void main() {
     });
 
     testWidgets('the other themes keep the white frame and no glass', (tester) async {
-      await pumpStrip(tester, monoTheme(dark: true, variant: AppThemeVariant.klar));
+      await pumpStrip(tester, monoTheme(dark: true, variant: AppThemeVariant.standard));
 
       expect(tester.widgetList<MediaSelectorThumbnail>(find.byType(MediaSelectorThumbnail)).first.isCurrent, isTrue);
       expect(find.byType(OckerGlassFocusFill), findsNothing);

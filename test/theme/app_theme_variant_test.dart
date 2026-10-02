@@ -29,7 +29,26 @@ void main() {
     test('and out of an old backup', () {
       expect(SettingsService.appThemeVariant.fromJson('ocker'), AppThemeVariant.glas);
       expect(SettingsService.appThemeVariant.fromJson('schwarz'), AppThemeVariant.glas);
-      expect(SettingsService.appThemeVariant.fromJson('klar'), AppThemeVariant.klar);
+    });
+  });
+
+  group('the retired Klar', () {
+    // Removed 2026-10-02 at the user's word. It was a variant of the standard
+    // look, so whoever had it lands there.
+    testWidgets('reads back as Standard where it was stored', (tester) async {
+      resetSharedPreferencesForTest();
+      final service = await SettingsService.getInstance();
+      await service.writeString(SettingsService.appThemeVariant.key, 'klar');
+
+      expect(service.read(SettingsService.appThemeVariant), AppThemeVariant.standard);
+    });
+
+    test('and out of an old backup', () {
+      expect(SettingsService.appThemeVariant.fromJson('klar'), AppThemeVariant.standard);
+    });
+
+    test('is not a variant any more', () {
+      expect(AppThemeVariant.values.map((v) => v.name), ['standard', 'glas']);
     });
   });
 
@@ -56,103 +75,6 @@ void main() {
     });
   });
 
-  group('Klar', () {
-    test('wears the platform typeface too, so no line loses a field to it', () {
-      // Inter set about 4% wider than Roboto, and every line that measures
-      // itself before drawing paid for that by dropping a field — on a
-      // 1280x720 television the detail hero's facts row lost the audio format
-      // and both rating badges in Klar alone.
-      final klar = _theme(AppThemeVariant.klar);
-
-      final standard = _theme(AppThemeVariant.standard);
-
-      expect(klar.textTheme.bodyMedium?.fontFamily, standard.textTheme.bodyMedium?.fontFamily);
-      expect(klar.textTheme.titleLarge?.fontFamily, standard.textTheme.titleLarge?.fontFamily);
-      expect(klar.textTheme.bodyMedium?.fontFamily, isNot('Inter'));
-    });
-
-    test('turns the symbols into thin outlines', () {
-      // The one call that reaches every icon drawn through AppIcon.
-      applyIconDefaultsFor(AppThemeVariant.klar);
-
-      expect(AppIconDefaults.fill, 0, reason: 'outline, not solid');
-      expect(AppIconDefaults.weight, 300, reason: 'thin, not bold');
-    });
-
-    test('gives every token-driven surface more air', () {
-      expect(_tokens(AppThemeVariant.klar).space, greaterThan(_tokens(AppThemeVariant.standard).space));
-    });
-
-    test('draws corners tighter, so a card reads as a crease not a pill', () {
-      final klar = _tokens(AppThemeVariant.klar);
-      final standard = _tokens(AppThemeVariant.standard);
-
-      expect(klar.radiusSm, lessThan(standard.radiusSm));
-      expect(klar.radiusLg, lessThan(standard.radiusLg));
-    });
-
-    test('drops the glyph in front of a section heading', () {
-      // The heading already says what the row is; the glyph repeated it.
-      expect(_tokens(AppThemeVariant.klar).sectionIcons, isFalse);
-      expect(_tokens(AppThemeVariant.standard).sectionIcons, isTrue);
-    });
-
-    test('puts a plain person in the app bar instead of the profile picture', () {
-      expect(_tokens(AppThemeVariant.klar).profileAvatar, isFalse);
-      expect(_tokens(AppThemeVariant.standard).profileAvatar, isTrue);
-    });
-
-    test('makes focus rings and the active entry red', () {
-      final klar = _tokens(AppThemeVariant.klar);
-      final standard = _tokens(AppThemeVariant.standard);
-
-      expect(klar.accent, const Color(0xFFD32F2F), reason: 'the red the tab chip already uses');
-      expect(standard.accent, standard.text, reason: 'Standard keeps what those surfaces drew with');
-    });
-
-    test('draws the focus ring thinner', () {
-      final klar = _tokens(AppThemeVariant.klar);
-      final standard = _tokens(AppThemeVariant.standard);
-
-      expect(standard.focusBorderWidth, 2.5);
-      expect(klar.focusBorderWidth, closeTo(standard.focusBorderWidth * 0.7, 0.001));
-    });
-
-    test('lets no poster pick its own ring colour', () {
-      // One accent is what a monochrome design has to point with; a ring that
-      // changes hue per poster spends it.
-      expect(_tokens(AppThemeVariant.klar).itemAccentFocusRing, isFalse);
-      expect(_tokens(AppThemeVariant.standard).itemAccentFocusRing, isTrue);
-    });
-
-    test('sits on a deeper ground in the dark', () {
-      final klar = _tokens(AppThemeVariant.klar);
-      final standard = _tokens(AppThemeVariant.standard);
-
-      expect(klar.bg.computeLuminance(), lessThan(standard.bg.computeLuminance()));
-    });
-
-    test('has a light side too, and it is not the dark one', () {
-      final light = monoTheme(dark: false, variant: AppThemeVariant.klar).extension<MonoTokens>()!;
-
-      expect(light.bg.computeLuminance(), greaterThan(0.5));
-      expect(light.text.computeLuminance(), lessThan(0.5));
-    });
-
-    test('leaves OLED its pure black', () {
-      // OLED exists to switch the panel off, which no variant may override.
-      final oled = monoTheme(dark: true, oled: true, variant: AppThemeVariant.klar).extension<MonoTokens>()!;
-
-      expect(oled.bg, const Color(0xFF000000));
-    });
-
-    test('leaves the typeface alone in OLED as well', () {
-      final oled = monoTheme(dark: true, oled: true, variant: AppThemeVariant.klar);
-
-      expect(oled.textTheme.bodyMedium?.fontFamily, monoTheme(dark: true, oled: true).textTheme.bodyMedium?.fontFamily);
-    });
-  });
-
   group('the redesign', () {
     test('rounds a shade more than the others, and in one ladder', () {
       // Square everywhere was the rule until the posters were rounded; a
@@ -172,17 +94,14 @@ void main() {
       expect(ocker.radiusMd, lessThan(ocker.radiusLg));
     });
 
-    test('leaves the other two variants exactly as they were', () {
+    test('leaves the standard variant exactly as it was', () {
       expect(_tokens(AppThemeVariant.standard).radiusSm, 8);
-      expect(_tokens(AppThemeVariant.klar).radiusSm, 6);
       expect(_tokens(AppThemeVariant.standard).radiusLg, 20);
-      expect(_tokens(AppThemeVariant.klar).radiusLg, 16);
     });
 
     test('forbids shadows, which the others still allow', () {
       expect(_tokens(AppThemeVariant.glas).shadowsEnabled, isFalse);
       expect(_tokens(AppThemeVariant.standard).shadowsEnabled, isTrue);
-      expect(_tokens(AppThemeVariant.klar).shadowsEnabled, isTrue);
     });
 
     test('is drawn in one typeface, whatever the three roles are called', () {
@@ -197,8 +116,8 @@ void main() {
       expect(monoTheme(dark: true, variant: AppThemeVariant.glas).textTheme.bodyMedium?.fontFamily, 'Inter');
     });
 
-    test('leaves the other two on the platform typeface', () {
-      for (final variant in [AppThemeVariant.standard, AppThemeVariant.klar]) {
+    test('leaves Standard on the platform typeface', () {
+      for (final variant in [AppThemeVariant.standard]) {
         final tokens = _tokens(variant);
         expect(tokens.displayFontFamily, isNull, reason: '$variant');
         expect(tokens.uiFontFamily, isNull, reason: '$variant');
@@ -227,8 +146,8 @@ void main() {
       expect(ocker.focusRingColor, isNot(ocker.accent));
     });
 
-    test('keeps ring and accent the same colour in the other two', () {
-      for (final variant in [AppThemeVariant.standard, AppThemeVariant.klar]) {
+    test('keeps ring and accent the same colour in Standard', () {
+      for (final variant in [AppThemeVariant.standard]) {
         final tokens = _tokens(variant);
         expect(tokens.focusRingColor, tokens.accent, reason: '$variant');
         expect(tokens.focusRingOffset, 0, reason: '$variant');
@@ -268,11 +187,11 @@ void main() {
       }
     });
 
-    test('draws its symbols as the lightest outlines of the three', () {
+    test('draws its symbols as light outlines', () {
       applyIconDefaultsFor(AppThemeVariant.glas);
 
       expect(AppIconDefaults.fill, 0, reason: 'outline, not solid');
-      expect(AppIconDefaults.weight, 200, reason: 'lighter than Klar\'s 300');
+      expect(AppIconDefaults.weight, 200);
     });
   });
 
@@ -316,8 +235,8 @@ void main() {
       }
     });
 
-    test('leaves the older variants on one family throughout', () {
-      for (final variant in [AppThemeVariant.standard, AppThemeVariant.klar]) {
+    test('leaves Standard on one family throughout', () {
+      for (final variant in [AppThemeVariant.standard]) {
         final text = monoTheme(dark: true, variant: variant).textTheme;
         expect(text.displaySmall?.fontFamily, isNull, reason: '$variant');
         expect(text.displayMedium?.fontFamily, isNull, reason: '$variant');
@@ -350,7 +269,7 @@ void main() {
       for (final variant in [AppThemeVariant.glas, AppThemeVariant.glas]) {
         expect(_tokens(variant).redesignLayout, isTrue, reason: '$variant');
       }
-      for (final variant in [AppThemeVariant.standard, AppThemeVariant.klar]) {
+      for (final variant in [AppThemeVariant.standard]) {
         expect(_tokens(variant).redesignLayout, isFalse, reason: '$variant');
       }
     });
@@ -381,7 +300,6 @@ void main() {
       expect(await radiusUnder(AppThemeVariant.glas), 12, reason: 'the redesign rounds its boxes now');
       expect(await radiusUnder(AppThemeVariant.glas), 12);
       expect(await radiusUnder(AppThemeVariant.standard), 12, reason: 'Standard keeps the exact number it had');
-      expect(await radiusUnder(AppThemeVariant.klar), 12);
     });
 
     testWidgets('drops the decorative shadows written into widgets', (tester) async {

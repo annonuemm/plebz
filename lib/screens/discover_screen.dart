@@ -941,14 +941,14 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     return FocusableAction(
       onPressed: _switchingProfile ? null : () => _userMenuKey.currentState?.showButtonMenu(focusFirstItem: true),
       child: menu(
-        // Klar keeps a plain person here instead of the profile's own picture:
+        // The redesign keeps a plain person here instead of the profile's own picture:
         // one glyph among the others in the bar rather than the one thing in it
         // that is a photograph. The menu behind it still names the profiles.
         icon: active != null && tokens(context).profileAvatar
             ? ProfileAvatar(profile: active, size: 32, avatarUrl: activeProvider.avatarUrlFor(active.id))
             : AppIcon(
                 tokens(context).profileAvatar ? Symbols.account_circle_rounded : Symbols.account_circle,
-                // Klar lets the theme's own fill and weight through.
+                // The redesign lets the theme's own fill and weight through.
                 fill: tokens(context).profileAvatar ? 1 : null,
                 // 32 is an avatar's size, and reads as a portrait among glyphs.
                 size: 32,

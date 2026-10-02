@@ -7,6 +7,8 @@ import 'package:plezy/services/trackers/tracker_coordinator.dart';
 import 'package:plezy/services/trackers/tracker_session.dart';
 import 'package:plezy/services/trackers/trakt/trakt_tracker.dart';
 
+import 'package:plezy/utils/fork_identity.dart';
+
 import '../test_helpers/io_fakes.dart';
 import '../test_helpers/prefs.dart';
 
@@ -31,8 +33,11 @@ void main() {
   setUp(() {
     resetSharedPreferencesForTest();
     TraktTracker.instance.rebindSession(null, onSessionInvalidated: () {});
+    // Trakt is off in this fork; these tests drive the session machinery.
+    debugRemovedTrackersAvailable = true;
   });
   tearDown(() => TraktTracker.instance.rebindSession(null, onSessionInvalidated: () {}));
+  tearDown(() => debugRemovedTrackersAvailable = false);
 
   group('TrackersProvider Trakt account', () {
     test('starts disconnected with null session and catalog client', () {

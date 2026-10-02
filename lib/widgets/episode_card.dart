@@ -165,7 +165,11 @@ class _EpisodeCardState extends State<EpisodeCard> with ContextMenuTapMixin<Epis
               hoverColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.05),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  // Under glass the page ground is a gradient; the card's
+                  // ground-coloured fill sat on it as a flat dark patch.
+                  color: tokens(context).glass
+                      ? tokens(context).tileFill
+                      : Theme.of(context).colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(FocusTheme.defaultBorderRadius),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 4),

@@ -119,7 +119,7 @@ class LiveNowTileCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(flatRadius(context, 8) * scale),
         child: ColoredBox(
-          color: tk.surface,
+          color: tk.tileFill,
           child: switch (entry) {
             LiveNowGame() => _GameCard(entry: entry, height: cardHeight, scale: scale),
             LiveNowChannel() => _ChannelCard(entry: entry, width: width, height: cardHeight, scale: scale),

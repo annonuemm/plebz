@@ -89,18 +89,12 @@ void main() {
     });
   });
 
-  group('the other variants are untouched', () {
+  group('the standard variant is untouched', () {
     testWidgets('Standard still fills the active tab with its red', (tester) async {
       await pumpChips(tester, AppThemeVariant.standard);
 
       expect(fillsBehind(tester, 'Empfohlen'), contains(activeTabChipColor));
       expect(labelColorOf(tester, 'Empfohlen'), onActiveTabChipColor);
-    });
-
-    testWidgets('Klar does too', (tester) async {
-      await pumpChips(tester, AppThemeVariant.klar);
-
-      expect(fillsBehind(tester, 'Empfohlen'), contains(activeTabChipColor));
     });
   });
 }

@@ -3,6 +3,7 @@ import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/providers/trackers_provider.dart';
 import 'package:plezy/screens/settings/tracker_service_info.dart';
 import 'package:plezy/services/base_shared_preferences_service.dart';
+import 'package:plezy/services/discord_rpc_service.dart';
 import 'package:plezy/services/trackers/tracker_account_store.dart';
 import 'package:plezy/services/trackers/tracker_constants.dart';
 import 'package:plezy/services/trackers/tracker_session.dart';
@@ -10,8 +11,9 @@ import 'package:plezy/utils/fork_identity.dart';
 
 import '../test_helpers/prefs.dart';
 
-/// Simkl, MyAnimeList and AniList sign in through Plezy's developer's OAuth
-/// proxy and identify as Plezy's registered apps, so this fork leaves them out.
+/// Every tracker is out of this fork: Simkl, MyAnimeList and AniList sign in
+/// through Plezy's developer's OAuth proxy, and Trakt and MDBList were removed
+/// at the user's word. Discord's rich presence is out as well.
 void main() {
   setUpAll(() => LocaleSettings.setLocaleSync(AppLocale.en));
 
@@ -20,8 +22,8 @@ void main() {
     debugRemovedTrackersAvailable = false;
   });
 
-  test('the three are out, Trakt and MDBList stay', () {
-    expect(forkRemovedTrackers, {TrackerService.simkl, TrackerService.mal, TrackerService.anilist});
+  test('every tracker is out', () {
+    expect(forkRemovedTrackers, TrackerService.values.toSet());
     for (final service in TrackerService.values) {
       expect(isTrackerAvailable(service), !forkRemovedTrackers.contains(service), reason: service.name);
     }
@@ -30,8 +32,7 @@ void main() {
   test('settings offer none of them', () {
     final offered = TrackerServiceInfo.all.map((info) => info.service).toSet();
 
-    expect(offered.intersection(forkRemovedTrackers), isEmpty);
-    expect(offered, containsAll({TrackerService.trakt, TrackerService.mdblist}));
+    expect(offered, isEmpty);
   });
 
   test('a session stored before is not loaded, so nothing talks to them', () async {
@@ -46,6 +47,7 @@ void main() {
     await trackerAccountStore(TrackerService.simkl).save(uuid, session('simkl'));
     await trackerAccountStore(TrackerService.mal).save(uuid, session('mal'));
     await trackerAccountStore(TrackerService.anilist).save(uuid, session('anilist'));
+    await trackerAccountStore(TrackerService.trakt).save(uuid, session('trakt'));
     await trackerAccountStore(TrackerService.mdblist).save(uuid, session('mdblist'));
     BaseSharedPreferencesService.resetForTesting();
 
@@ -61,8 +63,13 @@ void main() {
     expect(provider.simklCatalogClient, isNull);
     expect(provider.malCatalogClient, isNull);
     expect(provider.anilistCatalogClient, isNull);
-    // The machinery itself still works for the services that stay.
-    expect(provider.isMdblistConnected, isTrue);
-    expect(provider.mdblistUsername, 'mdblist');
+    expect(provider.traktCatalogClient, isNull);
+    expect(provider.mdblistCatalogClient, isNull);
+    expect(provider.isMdblistConnected, isFalse);
+  });
+
+  test('Discord rich presence is never offered', () {
+    expect(discordRichPresenceAvailable, isFalse);
+    expect(DiscordRPCService.isAvailable, isFalse);
   });
 }

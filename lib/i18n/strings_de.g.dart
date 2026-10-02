@@ -442,7 +442,7 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get discordRichPresence => 'Discord Rich Presence';
 	@override String get discordRichPresenceDescription => 'Auf Discord anzeigen, was du gerade schaust';
 	@override String get services => 'Dienste';
-	@override String get servicesDescription => 'Trakt, MDBList, Seerr und TMDB verbinden';
+	@override String get servicesDescription => 'Seerr und TMDB verbinden';
 	@override String get manageLibrariesDescription => 'Mediatheken neu anordnen und ausblenden';
 	@override String get companionRemoteServer => 'Companion-Fernbedienungsserver';
 	@override String get companionRemoteServerDescription => 'Mobilgeräten in deinem Netzwerk erlauben, diese App zu steuern';
@@ -562,8 +562,6 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get appThemeVariant => 'Design';
 	@override String get appThemeVariantStandard => 'Original';
 	@override String get appThemeVariantStandardDescription => 'Das bisherige Erscheinungsbild: gefüllte Symbole und die Schrift deines Geräts.';
-	@override String get appThemeVariantKlar => 'Klar';
-	@override String get appThemeVariantKlarDescription => 'Symbole als Umriss, dunklere Flächen und mehr Raum zwischen den Dingen. Gleiche Seiten, gleiche Wege.';
 	@override String get showLibraryPlaylistsTab => 'Reiter „Wiedergabelisten“ in Mediatheken';
 	@override String get showLibraryPlaylistsTabDescription => 'Aus verschwindet der Reiter ganz, statt leer dazustehen. Wiedergabelisten bleiben überall sonst erreichbar.';
 	@override String get showPlaybackTracksStatus => 'Ton und Untertitel auf der Detailseite';
@@ -2444,7 +2442,7 @@ class _Translations$services$de extends Translations$services$en {
 
 	// Translations
 	@override String get title => 'Dienste';
-	@override String get hubSubtitle => 'Wiedergabefortschritt synchronisieren und neue Titel anfragen.';
+	@override String get hubSubtitle => 'Neue Titel anfragen und Logos und Beschreibungen ergänzen.';
 	@override String get integrations => 'Integrationen';
 	@override String get notConnected => 'Nicht verbunden';
 	@override String connectedAs({required Object username}) => 'Verbunden als @${username}';
@@ -3868,7 +3866,7 @@ extension on TranslationsDe {
 			'settings.discordRichPresence' => 'Discord Rich Presence',
 			'settings.discordRichPresenceDescription' => 'Auf Discord anzeigen, was du gerade schaust',
 			'settings.services' => 'Dienste',
-			'settings.servicesDescription' => 'Trakt, MDBList, Seerr und TMDB verbinden',
+			'settings.servicesDescription' => 'Seerr und TMDB verbinden',
 			'settings.manageLibrariesDescription' => 'Mediatheken neu anordnen und ausblenden',
 			'settings.companionRemoteServer' => 'Companion-Fernbedienungsserver',
 			'settings.companionRemoteServerDescription' => 'Mobilgeräten in deinem Netzwerk erlauben, diese App zu steuern',
@@ -3988,8 +3986,6 @@ extension on TranslationsDe {
 			'settings.appThemeVariant' => 'Design',
 			'settings.appThemeVariantStandard' => 'Original',
 			'settings.appThemeVariantStandardDescription' => 'Das bisherige Erscheinungsbild: gefüllte Symbole und die Schrift deines Geräts.',
-			'settings.appThemeVariantKlar' => 'Klar',
-			'settings.appThemeVariantKlarDescription' => 'Symbole als Umriss, dunklere Flächen und mehr Raum zwischen den Dingen. Gleiche Seiten, gleiche Wege.',
 			'settings.showLibraryPlaylistsTab' => 'Reiter „Wiedergabelisten“ in Mediatheken',
 			'settings.showLibraryPlaylistsTabDescription' => 'Aus verschwindet der Reiter ganz, statt leer dazustehen. Wiedergabelisten bleiben überall sonst erreichbar.',
 			'settings.showPlaybackTracksStatus' => 'Ton und Untertitel auf der Detailseite',
@@ -4066,10 +4062,10 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.none' => 'keine',
 			'settings.hardwareTestLabels.yes' => 'ja',
 			'settings.hardwareTestLabels.no' => 'nein',
-			_ => null,
-		} ?? switch (path) {
 			'settings.yearFilter' => 'Jahresbereich',
 			'settings.yearFilterDescription' => 'Filme und Serien auf Erscheinungsjahre eingrenzen',
+			_ => null,
+		} ?? switch (path) {
 			'settings.yearFilterMovies' => 'Filme',
 			'settings.yearFilterShows' => 'Serien',
 			'settings.yearFilterFrom' => 'Von',
@@ -4580,10 +4576,10 @@ extension on TranslationsDe {
 			'profiles.deleteProfileTitle' => 'Profil löschen?',
 			'profiles.deleteProfileMessage' => ({required Object displayName}) => '${displayName} und Verbindungen entfernen. Server bleiben verfügbar.',
 			'profiles.profileNameLabel' => 'Profilname',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.pinProtectionLabel' => 'PIN-Schutz',
 			'profiles.pinManagedByPlex' => 'PIN wird von Plex verwaltet. Auf plex.tv bearbeiten.',
+			_ => null,
+		} ?? switch (path) {
 			'profiles.noPinSetEditOnPlex' => 'Keine PIN festgelegt. Um eine zu verlangen, bearbeite den Home-Benutzer auf plex.tv.',
 			'profiles.setPin' => 'PIN festlegen',
 			'profiles.setPinTitle' => 'PIN festlegen',
@@ -5094,10 +5090,10 @@ extension on TranslationsDe {
 			'liveTv.recordEpisode' => 'Episode aufnehmen',
 			'liveTv.recordSeries' => 'Serie aufnehmen',
 			'liveTv.recordOptions' => 'Aufnahmeoptionen',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.saveTo' => 'Speichern in',
 			'liveTv.recordings' => 'Aufnahmen',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.scheduledRecordings' => 'Geplant',
 			'liveTv.recordingRules' => 'Aufnahmeregeln',
 			'liveTv.noScheduledRecordings' => 'Keine geplanten Aufnahmen',
@@ -5608,10 +5604,10 @@ extension on TranslationsDe {
 			'performanceOverlay.decoderNvidiaHw' => 'NVIDIA HW',
 			'performanceOverlay.decoderQualcommHw' => 'Qualcomm HW',
 			'performanceOverlay.decoderMediatekHw' => 'MediaTek HW',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.decoderExynosHw' => 'Exynos HW',
 			'performanceOverlay.decoderSoftware' => 'Software',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.decoderHardware' => 'Hardware',
 			'performanceOverlay.tunnelingActive' => 'Aktiv',
 			'performanceOverlay.dvRpuFailed' => ({required Object converted, required Object failures}) => '${converted} (${failures} fehlgeschlagen)',
@@ -5794,7 +5790,7 @@ extension on TranslationsDe {
 			'seerr.shelfAvailableShows' => 'immer mal was Neues - Serien',
 			'seerr.shelfEverything' => 'Alles',
 			'services.title' => 'Dienste',
-			'services.hubSubtitle' => 'Wiedergabefortschritt synchronisieren und neue Titel anfragen.',
+			'services.hubSubtitle' => 'Neue Titel anfragen und Logos und Beschreibungen ergänzen.',
 			'services.integrations' => 'Integrationen',
 			'services.notConnected' => 'Nicht verbunden',
 			'services.connectedAs' => ({required Object username}) => 'Verbunden als @${username}',

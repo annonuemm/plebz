@@ -53,9 +53,6 @@ enum AppThemeVariant {
   /// own typeface, tight spacing.
   standard,
 
-  /// Outlined light symbols, Manrope, deeper grounds and more air.
-  klar,
-
   /// The redesign: three typefaces with one job each, generous corners taken
   /// from the posters, no shadows, the navigation overhead — and its floating
   /// surfaces made of glass: the sheets, the bands, the up-next card and the
@@ -1299,7 +1296,8 @@ class SettingsService extends BaseSharedPreferencesService {
     values: AppThemeVariant.values,
     defaultValueProvider: _tvAwareAppThemeVariantDefault,
     // The retired filled redesigns: whoever had one keeps the redesign.
-    legacy: {'ocker': AppThemeVariant.glas, 'schwarz': AppThemeVariant.glas},
+    // "Klar", retired 2026-10-02, was a variant of the standard look.
+    legacy: {'ocker': AppThemeVariant.glas, 'schwarz': AppThemeVariant.glas, 'klar': AppThemeVariant.standard},
   );
 
   /// Which of its palettes "Redesign – Glas" is drawn in. Asked only while

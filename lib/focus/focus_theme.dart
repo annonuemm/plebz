@@ -29,8 +29,8 @@ class FocusTheme {
 
   static Color getFocusBorderColor(BuildContext context) {
     // The theme's ring colour, which falls back to its accent — Standard sets
-    // that to the same colour this used to read from, so only Klar looks
-    // different. Ocker is the one variant that keeps ring and accent apart:
+    // that to the same colour this used to read from. The redesign is the one
+    // variant that keeps ring and accent apart:
     // white so it survives a bright poster, while ocher stays reserved.
     return Theme.of(context).extension<MonoTokens>()?.focusRingColor ?? Theme.of(context).colorScheme.primary;
   }

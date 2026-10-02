@@ -418,6 +418,18 @@ class IptvLiveTvSource implements LiveTvSupport {
     );
   }
 
+  /// When the last programme of the guide in hand begins, in epoch seconds,
+  /// or null while no guide is loaded. Read as it stands and never loading:
+  /// the guide's day picker asks it on a key press.
+  int? get lastProgrammeStart {
+    int? last;
+    for (final program in _programs ?? const <LiveTvProgram>[]) {
+      final begins = program.beginsAt;
+      if (begins != null && (last == null || begins > last)) last = begins;
+    }
+    return last;
+  }
+
   @override
   Future<List<LiveTvProgram>> fetchSchedule({DateTime? from, DateTime? to}) async {
     await _restoreFromDisk();

@@ -43,6 +43,15 @@ bool get watchTogetherAvailable => debugPlezyHostedServicesAvailable;
 bool get logUploadAvailable => debugPlezyHostedServicesAvailable;
 bool get discordPosterUploadAvailable => debugPlezyHostedServicesAvailable;
 
+/// Discord's rich presence, removed at the user's word (2026-10-02): the
+/// settings don't offer it and the service never starts. A desktop feature to
+/// begin with; the code stays for upstream merges.
+bool get discordRichPresenceAvailable => debugDiscordRichPresenceAvailable;
+
+/// Lets upstream's Discord tests keep running.
+@visibleForTesting
+bool debugDiscordRichPresenceAvailable = false;
+
 /// Lets upstream's tests keep exercising the code behind those three switches.
 @visibleForTesting
 bool debugPlezyHostedServicesAvailable = false;
@@ -53,7 +62,17 @@ bool debugPlezyHostedServicesAvailable = false;
 /// them, and a session stored before is not loaded, so nothing talks to them
 /// on Plezy's credentials — no scrobbling, no Explore or watchlist tab.
 /// The stored session stays on disk untouched.
-const forkRemovedTrackers = {TrackerService.simkl, TrackerService.mal, TrackerService.anilist};
+///
+/// Trakt and MDBList went the same way on 2026-10-02 at the user's word: not
+/// used, and Trakt's sign-in, like MDBList's, runs on the app ids Plezy
+/// registered. Every tracker is out now, so nothing scrobbles anywhere.
+const forkRemovedTrackers = {
+  TrackerService.simkl,
+  TrackerService.mal,
+  TrackerService.anilist,
+  TrackerService.trakt,
+  TrackerService.mdblist,
+};
 
 bool isTrackerAvailable(TrackerService service) =>
     debugRemovedTrackersAvailable || !forkRemovedTrackers.contains(service);

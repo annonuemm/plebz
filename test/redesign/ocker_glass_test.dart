@@ -161,8 +161,8 @@ void main() {
 
     test('the accent does not reach the other variants', () {
       expect(
-        monoTheme(dark: true, variant: AppThemeVariant.klar, glasAccent: GlasAccent.mint),
-        same(monoTheme(dark: true, variant: AppThemeVariant.klar, glasAccent: GlasAccent.flieder)),
+        monoTheme(dark: true, variant: AppThemeVariant.standard, glasAccent: GlasAccent.mint),
+        same(monoTheme(dark: true, variant: AppThemeVariant.standard, glasAccent: GlasAccent.flieder)),
       );
     });
 
@@ -374,7 +374,7 @@ void main() {
         isNot(isA<GlassFocusDecoration>()),
       );
 
-      final ocker = await contextIn(tester, AppThemeVariant.klar);
+      final ocker = await contextIn(tester, AppThemeVariant.standard);
       final line = FocusTheme.focusDecoration(ocker, isFocused: true);
       expect(line, isNot(isA<GlassFocusDecoration>()));
       expect(line.border, isA<Border>());
@@ -384,7 +384,7 @@ void main() {
       final glass = await contextIn(tester, AppThemeVariant.glas);
       final on = FocusTheme.focusDecoration(glass, isFocused: true) as GlassFocusDecoration;
       final off = FocusTheme.focusDecoration(glass, isFocused: false) as GlassFocusDecoration;
-      final ocker = await contextIn(tester, AppThemeVariant.klar);
+      final ocker = await contextIn(tester, AppThemeVariant.standard);
       final line = FocusTheme.focusDecoration(ocker, isFocused: true);
 
       // Focus arriving and leaving: the edge fades.

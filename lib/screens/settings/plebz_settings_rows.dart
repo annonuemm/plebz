@@ -322,7 +322,6 @@ Widget _themeVariantSelector() => SettingSelectionTile<AppThemeVariant>(
   title: t.settings.appThemeVariant,
   subtitleBuilder: (value) => switch (supportedAppThemeVariant(value)) {
     AppThemeVariant.standard => t.settings.appThemeVariantStandard,
-    AppThemeVariant.klar => t.settings.appThemeVariantKlar,
     AppThemeVariant.glas => t.settings.appThemeVariantGlas,
   },
   options: [
@@ -330,11 +329,6 @@ Widget _themeVariantSelector() => SettingSelectionTile<AppThemeVariant>(
       value: AppThemeVariant.standard,
       title: t.settings.appThemeVariantStandard,
       subtitle: t.settings.appThemeVariantStandardDescription,
-    ),
-    DialogOption(
-      value: AppThemeVariant.klar,
-      title: t.settings.appThemeVariantKlar,
-      subtitle: t.settings.appThemeVariantKlarDescription,
     ),
     if (redesignOfferedHere)
       DialogOption(

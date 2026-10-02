@@ -51,7 +51,7 @@ void main() {
 
       expect(square, isFalse, reason: '$variant draws no square corners any more');
       expect(flat, 12, reason: '$variant lets every box keep the corner it asked for');
-      if (variant == AppThemeVariant.standard || variant == AppThemeVariant.klar) {
+      if (variant == AppThemeVariant.standard) {
         expect(artwork, tokens(tester.element(find.byType(SizedBox).first)).radiusSm, reason: '$variant is untouched');
         continue;
       }

@@ -834,6 +834,18 @@ http://provider/stream/guarded
       expect((await source.fetchSchedule()).single.title, 'Tagesschau');
     });
 
+    test('the start of the last programme is known once the guide is read, never loading it', () async {
+      final source = _m3uSource(
+        MockClient((request) async => _ok(request.url.path.endsWith('.m3u') ? _playlist : _guide)),
+        epgUrl: 'http://provider/epg.xml',
+      );
+      expect(source.lastProgrammeStart, isNull, reason: 'nothing read yet, and asking does not read');
+
+      await source.fetchSchedule();
+
+      expect(source.lastProgrammeStart, DateTime.utc(2024, 5, 4, 20, 15).millisecondsSinceEpoch ~/ 1000);
+    });
+
     test('without a guide URL there is simply no guide', () async {
       final source = _m3uSource(MockClient((_) async => _ok(_playlist)));
 

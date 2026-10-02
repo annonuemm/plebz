@@ -560,7 +560,6 @@ class AppearanceSettingsScreen extends StatelessWidget {
     // that is actually drawn rather than one this build cannot show.
     subtitleBuilder: (value) => switch (supportedAppThemeVariant(value)) {
       AppThemeVariant.standard => t.settings.appThemeVariantStandard,
-      AppThemeVariant.klar => t.settings.appThemeVariantKlar,
       AppThemeVariant.glas => t.settings.appThemeVariantGlas,
     },
     options: [
@@ -568,11 +567,6 @@ class AppearanceSettingsScreen extends StatelessWidget {
         value: AppThemeVariant.standard,
         title: t.settings.appThemeVariantStandard,
         subtitle: t.settings.appThemeVariantStandardDescription,
-      ),
-      DialogOption(
-        value: AppThemeVariant.klar,
-        title: t.settings.appThemeVariantKlar,
-        subtitle: t.settings.appThemeVariantKlarDescription,
       ),
       // Offered on every host today; the gate is [redesignOfferedHere].
       if (redesignOfferedHere)

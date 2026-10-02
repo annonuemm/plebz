@@ -1029,8 +1029,8 @@ class Translations$settings$en {
 	/// en: 'Services'
 	String get services => 'Services';
 
-	/// en: 'Connect Trakt, MDBList, Seerr and TMDB'
-	String get servicesDescription => 'Connect Trakt, MDBList, Seerr and TMDB';
+	/// en: 'Connect Seerr and TMDB'
+	String get servicesDescription => 'Connect Seerr and TMDB';
 
 	/// en: 'Reorder and hide libraries'
 	String get manageLibrariesDescription => 'Reorder and hide libraries';
@@ -1412,12 +1412,6 @@ class Translations$settings$en {
 
 	/// en: 'The look the app has always had: solid symbols and the typeface your device uses.'
 	String get appThemeVariantStandardDescription => 'The look the app has always had: solid symbols and the typeface your device uses.';
-
-	/// en: 'Klar'
-	String get appThemeVariantKlar => 'Klar';
-
-	/// en: 'Outlined symbols, deeper grounds and more room between things. Same screens, same paths.'
-	String get appThemeVariantKlarDescription => 'Outlined symbols, deeper grounds and more room between things. Same screens, same paths.';
 
 	/// en: 'Playlists tab in libraries'
 	String get showLibraryPlaylistsTab => 'Playlists tab in libraries';
@@ -6158,8 +6152,8 @@ class Translations$services$en {
 	/// en: 'Services'
 	String get title => 'Services';
 
-	/// en: 'Sync watch progress and request new titles.'
-	String get hubSubtitle => 'Sync watch progress and request new titles.';
+	/// en: 'Request new titles and fill in logos and descriptions.'
+	String get hubSubtitle => 'Request new titles and fill in logos and descriptions.';
 
 	/// en: 'Integrations'
 	String get integrations => 'Integrations';
@@ -9006,7 +9000,7 @@ extension on Translations {
 			'settings.discordRichPresence' => 'Discord Rich Presence',
 			'settings.discordRichPresenceDescription' => 'Show what you\'re watching on Discord',
 			'settings.services' => 'Services',
-			'settings.servicesDescription' => 'Connect Trakt, MDBList, Seerr and TMDB',
+			'settings.servicesDescription' => 'Connect Seerr and TMDB',
 			'settings.manageLibrariesDescription' => 'Reorder and hide libraries',
 			'settings.companionRemoteServer' => 'Companion Remote Server',
 			'settings.companionRemoteServerDescription' => 'Allow mobile devices on your network to control this app',
@@ -9134,8 +9128,6 @@ extension on Translations {
 			'settings.appThemeVariant' => 'Design',
 			'settings.appThemeVariantStandard' => 'Original',
 			'settings.appThemeVariantStandardDescription' => 'The look the app has always had: solid symbols and the typeface your device uses.',
-			'settings.appThemeVariantKlar' => 'Klar',
-			'settings.appThemeVariantKlarDescription' => 'Outlined symbols, deeper grounds and more room between things. Same screens, same paths.',
 			'settings.showLibraryPlaylistsTab' => 'Playlists tab in libraries',
 			'settings.showLibraryPlaylistsTabDescription' => 'Off, the tab goes entirely rather than standing empty. Playlists stay reachable everywhere else.',
 			'settings.showPlaybackTracksStatus' => 'Audio and subtitles on the detail page',
@@ -9203,10 +9195,10 @@ extension on Translations {
 			'settings.hardwareTestLabels.peakBrightness' => 'Peak brightness',
 			'settings.hardwareTestLabels.audioOutput' => 'Output',
 			'settings.hardwareTestLabels.channels' => 'Channels',
-			_ => null,
-		} ?? switch (path) {
 			'settings.hardwareTestLabels.hardwareDecoder' => 'Hardware',
 			'settings.hardwareTestLabels.noHardwareDecoder' => 'software only',
+			_ => null,
+		} ?? switch (path) {
 			'settings.hardwareTestLabels.tunneling' => 'tunneling',
 			'settings.hardwareTestLabels.possible' => 'possible',
 			'settings.hardwareTestLabels.notPossible' => 'not possible',
@@ -9717,10 +9709,10 @@ extension on Translations {
 			'profiles.signOutPlexTitle' => 'Sign out of Plex?',
 			'profiles.signOutPlexMessage' => ({required Object displayName}) => 'Remove ${displayName} and all Plex Home users? Sign back in anytime.',
 			'profiles.signOutPlexDeleteDownloads' => 'Also delete downloads',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.signOutPlexDeleteDownloadsDescription' => 'Otherwise they stay on this device and come back when you sign back in to this account.',
 			'profiles.signedOutPlex' => 'Signed out of Plex.',
+			_ => null,
+		} ?? switch (path) {
 			'profiles.signOutFailed' => 'Sign out failed.',
 			'profiles.sectionTitle' => 'Profiles',
 			'profiles.summarySingle' => 'Add profiles to mix managed users and local identities',
@@ -10231,10 +10223,10 @@ extension on Translations {
 			'liveTv.noDvr' => 'No DVR configured on any server',
 			'liveTv.serverUnavailable' => 'Live TV server is not available.',
 			'liveTv.serverNotConnected' => 'Live TV server is not connected.',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.noPrograms' => 'No program data available',
 			'liveTv.liveStreamFailed' => 'Live stream failed',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.unknownProgram' => 'Unknown Program',
 			'liveTv.unknownHub' => 'Unknown',
 			'liveTv.unknownError' => 'Unknown error',
@@ -10745,10 +10737,10 @@ extension on Translations {
 			'videoSettings.audioNormalizationDisablesPassthrough' => 'Decodes audio to PCM; passthrough is off while this is on',
 			'videoSettings.audioNormalizationStereoMix' => 'Decodes audio to a stereo mix; passthrough is off while this is on',
 			'performanceOverlay.color' => 'Color',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.performance' => 'Performance',
 			'performanceOverlay.buffer' => 'Buffer',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.app' => 'App',
 			'performanceOverlay.decoder' => 'Decoder',
 			'performanceOverlay.rawDecoder' => 'Raw Decoder',
@@ -10971,7 +10963,7 @@ extension on Translations {
 			'seerr.shelfAvailableShows' => 'Something new for a change - Series',
 			'seerr.shelfEverything' => 'Everything',
 			'services.title' => 'Services',
-			'services.hubSubtitle' => 'Sync watch progress and request new titles.',
+			'services.hubSubtitle' => 'Request new titles and fill in logos and descriptions.',
 			'services.integrations' => 'Integrations',
 			'services.notConnected' => 'Not connected',
 			'services.connectedAs' => ({required Object username}) => 'Connected as @${username}',

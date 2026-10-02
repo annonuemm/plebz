@@ -128,6 +128,17 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     // discover the same way they refresh libraries. Removed in [dispose] so a
     // profile switch can't leave a stale listener on the app-global provider.
     _multiServer.addOnlineServersListener(syncToOnlineServers);
+    // The row's switch and its source take effect at once: read only after a
+    // page load, a row switched on in the settings stayed away until the next
+    // one.
+    final settings = SettingsService.instanceOrNull;
+    _recommendationSettings = [
+      ?settings?.listenable(SettingsService.showRecommendationsRow),
+      ?settings?.listenable(SettingsService.recommendationsSource),
+    ];
+    for (final setting in _recommendationSettings) {
+      setting.addListener(_onRecommendationSettingsChanged);
+    }
     _hiddenLibraries.addListener(_onHiddenLibrariesChanged);
     _lastSeenLibraryOrderKeys = _libraryOrderKeys();
     _libraries.addListener(_onLibrariesChanged);
@@ -251,6 +262,15 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
 
   /// Injected by tests; otherwise built on first use from the live manager.
   final RecommendationsService? _recommendationsService;
+
+  /// The row's switch and source, followed so a change shows without a reload.
+  List<Listenable> _recommendationSettings = const [];
+
+  void _onRecommendationSettingsChanged() {
+    if (isDisposed) return;
+    unawaited(_loadRecommendations());
+  }
+
   bool _hasMoreContinueWatching = false;
   DiscoverLoadState _onDeckState = DiscoverLoadState.initial;
   DiscoverLoadState _hubsState = DiscoverLoadState.initial;
@@ -775,6 +795,11 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
         libraries: _libraries.libraries,
         // Whatever is one row above does not belong one row below.
         excludeKeys: {for (final item in _onDeck) item.globalKey},
+        // And its copies on the other servers.
+        excludeItems: _onDeck,
+        // And what is under way is what the viewer is into: a profile that
+        // has finished nothing yet still has something to go on.
+        underWay: _onDeck,
         source:
             SettingsService.instanceOrNull?.read(SettingsService.recommendationsSource) ?? RecommendationsSource.all,
         rotation: rotation,
@@ -1151,6 +1176,11 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     final currentKeys = _libraryOrderKeys();
     if (listEquals(currentKeys, _lastSeenLibraryOrderKeys)) return;
     _lastSeenLibraryOrderKeys = currentKeys;
+    // The recommendation row is read out of the libraries. At a cold start
+    // the home rows can land before the library list does, and the row was
+    // then read out of no libraries at all and stayed away until the next
+    // page load. Once the rows are in, a changed list reads it again.
+    if (_hubsState == DiscoverLoadState.loaded) unawaited(_loadRecommendations());
     if (_hubs.isEmpty) return;
 
     final sortedHubs = List<MediaHub>.from(_hubs);
@@ -1251,6 +1281,9 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     _libraryEventPacer.dispose();
     _recommendationsRotationTimer?.cancel();
     _recommendationsRotationTimer = null;
+    for (final setting in _recommendationSettings) {
+      setting.removeListener(_onRecommendationSettingsChanged);
+    }
     _loadCoordinator.dispose();
     _pendingSystemShelfItems = null;
     super.dispose();

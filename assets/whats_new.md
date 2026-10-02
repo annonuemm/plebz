@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.4.6 (Build 596)
+
+- Die Empfehlungsreihe erscheint wieder zuverlässig – auch bei Plex-Mediatheken, die Filme hinter ihren Sammlungen verstecken – und sofort, wenn sie eingeschaltet wird.
+- Bessere Empfehlungen: jeder Titel nur einmal, auch wenn er auf Plex und Jellyfin liegt; Titel, die zu mehreren deiner Filme passen, stehen vorne; berücksichtigt werden alle Mediatheken, Favoriten, gut bewertete Titel und „Weiterschauen“. Angefangenes wird nicht mehr vorgeschlagen.
+
 ## 1.4.5 (Build 592)
 
 - Trakt, MDBList und Discord sind entfernt.

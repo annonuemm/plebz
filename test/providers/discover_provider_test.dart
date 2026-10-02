@@ -184,16 +184,20 @@ class _FakeRecommendations extends RecommendationsService {
   Set<String> lastExcluded = const {};
   RecommendationsSource lastSource = RecommendationsSource.all;
   int lastRotation = -1;
+  List<MediaLibrary> lastLibraries = const [];
 
   @override
   Future<List<MediaItem>> recommend({
     required List<MediaLibrary> libraries,
     Set<String> excludeKeys = const {},
+    List<MediaItem> excludeItems = const [],
+    List<MediaItem> underWay = const [],
     RecommendationsSource source = RecommendationsSource.all,
     int limit = 20,
     int rotation = 0,
   }) async {
     calls++;
+    lastLibraries = libraries;
     lastExcluded = excludeKeys;
     lastSource = source;
     lastRotation = rotation;
@@ -331,6 +335,43 @@ void main() {
       await pumpEventQueue();
 
       expect(recommendations.calls, 0, reason: 'switched off costs no requests');
+      expect(provider.hubs.where((hub) => hub.title == t.discover.recommendedForYou), isEmpty);
+    });
+
+    test('libraries that arrive after the home rows read the row again', () async {
+      // At a cold start the rows can land before the library list does; the
+      // row was then read out of no libraries and stayed away.
+      recommendations.result = [_item('suggested')];
+      await provider.load();
+      await pumpEventQueue();
+      expect(recommendations.lastLibraries, isEmpty);
+      final callsBefore = recommendations.calls;
+
+      MediaLibrary lib(String id) => MediaLibrary(id: id, backend: MediaBackend.plex, title: id, serverId: 'server_1');
+      await libraries.updateLibraryOrder([lib('lib-1'), lib('lib-2')]);
+      await pumpEventQueue();
+
+      expect(recommendations.calls, callsBefore + 1);
+      expect(recommendations.lastLibraries.map((library) => library.id), ['lib-1', 'lib-2']);
+      expect(provider.hubs.first.title, t.discover.recommendedForYou);
+    });
+
+    test('switching it on shows the row at once, and off takes it away', () async {
+      // It used to be read only after a page load, so a row switched on in
+      // the settings stayed away until the next one.
+      final settings = await SettingsService.getInstance();
+      await settings.write(SettingsService.showRecommendationsRow, false);
+      recommendations.result = [_item('suggested')];
+      await provider.load();
+      await pumpEventQueue();
+      expect(provider.hubs.where((hub) => hub.title == t.discover.recommendedForYou), isEmpty);
+
+      await settings.write(SettingsService.showRecommendationsRow, true);
+      await pumpEventQueue();
+      expect(provider.hubs.first.title, t.discover.recommendedForYou);
+
+      await settings.write(SettingsService.showRecommendationsRow, false);
+      await pumpEventQueue();
       expect(provider.hubs.where((hub) => hub.title == t.discover.recommendedForYou), isEmpty);
     });
   });

@@ -16,13 +16,17 @@ import '../test_helpers/media_items.dart';
 /// A server that answers a library scan with [shelf] and "more like this" with
 /// whatever [relatedById] holds for the seed.
 class _FakeClient implements MediaServerClient {
-  _FakeClient({String id = 'srv', this.shelf = const [], this.relatedById = const {}}) : serverId = ServerId(id);
+  _FakeClient({String id = 'srv', this.shelf = const [], this.relatedById = const {}, this.shelfByLibrary = const {}})
+    : serverId = ServerId(id);
 
   @override
   final ServerId serverId;
 
   final List<MediaItem> shelf;
   final Map<String, List<MediaItem>> relatedById;
+
+  /// A library's own shelf, where one differs from [shelf].
+  final Map<String, List<MediaItem>> shelfByLibrary;
 
   final scannedLibraries = <String>[];
   final relatedCalls = <String>[];
@@ -35,7 +39,8 @@ class _FakeClient implements MediaServerClient {
     AbortController? abort,
   }) async {
     scannedLibraries.add(libraryId);
-    return LibraryPage(items: shelf, totalCount: shelf.length);
+    final items = shelfByLibrary[libraryId] ?? shelf;
+    return LibraryPage(items: items, totalCount: items.length);
   }
 
   @override
@@ -58,14 +63,30 @@ MediaItem _item(
   MediaKind kind = MediaKind.movie,
   bool favorite = false,
   int? viewCount,
+  String? title,
+  int? year,
+  MediaBackend backend = MediaBackend.plex,
+  double? userRating,
+  int? lastViewedAt,
+  int? durationMs,
+  int? viewOffsetMs,
+  int? leafCount,
+  int? viewedLeafCount,
 }) => testMediaItem(
   id: id,
-  backend: MediaBackend.plex,
+  backend: backend,
   kind: kind,
-  title: id,
+  title: title ?? id,
+  year: year,
   serverId: serverId,
   isFavorite: favorite,
   viewCount: viewCount,
+  userRating: userRating,
+  lastViewedAt: lastViewedAt,
+  durationMs: durationMs,
+  viewOffsetMs: viewOffsetMs,
+  leafCount: leafCount,
+  viewedLeafCount: viewedLeafCount,
 );
 
 MediaLibrary _library(
@@ -339,6 +360,208 @@ void main() {
       expect(result, isEmpty);
       expect(plex.scannedLibraries, isEmpty);
     });
+  });
+
+  group('one title, wherever it is', () {
+    ({_FakeClient plex, _FakeClient jellyfin, RecommendationsService service}) twoServers({
+      List<MediaItem> plexShelf = const [],
+      List<MediaItem> jellyfinShelf = const [],
+      Map<String, List<MediaItem>> plexRelated = const {},
+      Map<String, List<MediaItem>> jellyfinRelated = const {},
+    }) {
+      final plex = _FakeClient(id: 'plex', shelf: plexShelf, relatedById: plexRelated);
+      final jellyfin = _FakeClient(id: 'jf', shelf: jellyfinShelf, relatedById: jellyfinRelated);
+      final manager = MultiServerManager()
+        ..debugRegisterClientForTesting(plex)
+        ..debugRegisterClientForTesting(jellyfin);
+      addTearDown(manager.dispose);
+      return (plex: plex, jellyfin: jellyfin, service: RecommendationsService(manager));
+    }
+
+    final libraries = [_library('p', serverId: 'plex'), _library('j', serverId: 'jf', backend: MediaBackend.jellyfin)];
+
+    test('a film on Plex and on Jellyfin is one entry', () async {
+      final s = twoServers(
+        plexShelf: [_item('liked-p', serverId: 'plex', favorite: true)],
+        jellyfinShelf: [_item('liked-j', serverId: 'jf', favorite: true, backend: MediaBackend.jellyfin)],
+        plexRelated: {
+          'liked-p': [_item('dune-p', serverId: 'plex', title: 'Dune', year: 2021)],
+        },
+        jellyfinRelated: {
+          'liked-j': [_item('dune-j', serverId: 'jf', title: 'Dune', year: 2021, backend: MediaBackend.jellyfin)],
+        },
+      );
+
+      final result = await s.service.recommend(libraries: libraries);
+
+      expect(result.where((item) => item.title == 'Dune'), hasLength(1));
+    });
+
+    test('watched on one server is watched on the other', () async {
+      final s = twoServers(
+        plexShelf: [_item('liked', serverId: 'plex', favorite: true)],
+        jellyfinShelf: [
+          _item('seen-j', serverId: 'jf', title: 'Arrival', year: 2016, viewCount: 1, backend: MediaBackend.jellyfin),
+        ],
+        plexRelated: {
+          'liked': [
+            _item('arrival-p', serverId: 'plex', title: 'Arrival', year: 2016),
+            _item('other', serverId: 'plex'),
+          ],
+        },
+      );
+
+      final result = await s.service.recommend(libraries: libraries);
+
+      expect(result.map((item) => item.id), ['other']);
+    });
+
+    test('a title watched on both counts as one seed', () async {
+      final s = twoServers(
+        plexShelf: [_item('seen-p', serverId: 'plex', title: 'Heat', year: 1995, viewCount: 1)],
+        jellyfinShelf: [
+          _item('seen-j', serverId: 'jf', title: 'Heat', year: 1995, viewCount: 1, backend: MediaBackend.jellyfin),
+        ],
+      );
+
+      await s.service.recommend(libraries: libraries);
+
+      expect([...s.plex.relatedCalls, ...s.jellyfin.relatedCalls], hasLength(1));
+    });
+  });
+
+  group('what is under way', () {
+    test('an episode in Continue Watching makes its series a seed', () async {
+      // A profile that has finished nothing yet had nothing to go on.
+      final client = _FakeClient(
+        relatedById: {
+          'show-1': [_item('alike', kind: MediaKind.show)],
+        },
+      );
+      final s = withClient(client);
+      final episode = testMediaItem(
+        id: 'ep-1',
+        kind: MediaKind.episode,
+        title: 'Pilot',
+        serverId: 'srv',
+        grandparentId: 'show-1',
+        grandparentTitle: 'The Show',
+      );
+
+      final result = await s.service.recommend(libraries: [_library('1')], underWay: [episode]);
+
+      expect(client.relatedCalls, ['show-1']);
+      expect(result.map((item) => item.id), ['alike']);
+    });
+
+    test('a series under way is never suggested back', () async {
+      final client = _FakeClient(
+        shelf: [_item('liked', favorite: true)],
+        relatedById: {
+          'liked': [_item('show-1', kind: MediaKind.show), _item('other')],
+        },
+      );
+      final s = withClient(client);
+      final episode = testMediaItem(
+        id: 'ep-1',
+        kind: MediaKind.episode,
+        title: 'Pilot',
+        serverId: 'srv',
+        grandparentId: 'show-1',
+        grandparentTitle: 'The Show',
+      );
+
+      final result = await s.service.recommend(
+        libraries: [_library('1')],
+        underWay: [episode],
+        excludeItems: [episode],
+      );
+
+      expect(result.map((item) => item.id), ['other']);
+    });
+
+    test('the libraries the viewer is watching in are read first', () async {
+      final client = _FakeClient();
+      final s = withClient(client);
+      final film = testMediaItem(id: 'half', title: 'Half', serverId: 'srv', libraryId: 'lib-9');
+
+      await s.service.recommend(libraries: [for (var i = 0; i < 10; i++) _library('lib-$i')], underWay: [film]);
+
+      expect(client.scannedLibraries.first, 'lib-9');
+      expect(client.scannedLibraries, hasLength(RecommendationsService.maxSeedLibraries));
+    });
+  });
+
+  test('a title several seeds point at goes first', () async {
+    final client = _FakeClient(
+      shelf: [_item('a', favorite: true), _item('b', favorite: true), _item('c', favorite: true)],
+      relatedById: {
+        'a': [_item('only-a'), _item('shared')],
+        'b': [_item('only-b'), _item('shared')],
+        'c': [_item('only-c')],
+      },
+    );
+    final s = withClient(client);
+
+    final result = await s.service.recommend(libraries: [_library('1')]);
+
+    expect(result.first.id, 'shared');
+    expect(result.map((item) => item.id).toSet(), {'shared', 'only-a', 'only-b', 'only-c'});
+  });
+
+  test('seeds come from every library, not the first three', () async {
+    final client = _FakeClient(
+      shelfByLibrary: {
+        'lib-5': [_item('liked', favorite: true)],
+      },
+      relatedById: {
+        'liked': [_item('suggested')],
+      },
+    );
+    final s = withClient(client);
+
+    final result = await s.service.recommend(libraries: [for (var i = 0; i < 6; i++) _library('lib-$i')]);
+
+    expect(result.map((item) => item.id), ['suggested']);
+  });
+
+  test('a title rated highly is a seed, and favourites and ratings leave room for what was watched last', () async {
+    final client = _FakeClient(
+      shelf: [
+        for (var i = 0; i < 6; i++) _item('fav-$i', favorite: true),
+        for (var i = 0; i < 6; i++) _item('rated-$i', userRating: 9),
+        for (var i = 0; i < 6; i++) _item('seen-$i', viewCount: 1, lastViewedAt: 1000 - i),
+        _item('rated-low', userRating: 5),
+      ],
+    );
+    final s = withClient(client);
+
+    await s.service.recommend(libraries: [_library('1')]);
+
+    final asked = client.relatedCalls;
+    expect(asked, hasLength(RecommendationsService.maxSeeds));
+    expect(asked.where((id) => id.startsWith('fav-')), hasLength(RecommendationsService.maxFavouriteSeeds));
+    expect(asked.where((id) => id.startsWith('rated-')), hasLength(RecommendationsService.maxRatedSeeds));
+    expect(asked.where((id) => id.startsWith('seen-')), ['seen-0', 'seen-1', 'seen-2', 'seen-3']);
+    expect(asked, isNot(contains('rated-low')));
+  });
+
+  test('a film with a resume point or a series under way is not suggested', () async {
+    final client = _FakeClient(
+      shelf: [_item('liked', favorite: true)],
+      relatedById: {
+        'liked': [
+          _item('resumable', durationMs: 6000000, viewOffsetMs: 1200000),
+          _item('half-seen', kind: MediaKind.show, leafCount: 10, viewedLeafCount: 4),
+          _item('fresh'),
+        ],
+      },
+    );
+    final s = withClient(client);
+
+    final result = await s.service.recommend(libraries: [_library('1')]);
+
+    expect(result.map((item) => item.id), ['fresh']);
   });
 }
 

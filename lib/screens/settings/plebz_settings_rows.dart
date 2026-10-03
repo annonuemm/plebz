@@ -28,6 +28,7 @@ import 'playback_settings_screen.dart';
 import 'services_settings_screen.dart';
 import 'settings_screen.dart';
 import 'settings_utils.dart';
+import 'shader_preset_setting.dart';
 import 'subtitle_styling_screen.dart';
 import '../setup_wizard/setup_wizard.dart';
 import 'plebz_updates.dart';
@@ -156,6 +157,9 @@ List<Widget> plebzSettingsRows(BuildContext context, {required FocusNode Functio
           subtitleBuilder: (mode) => '${_skipMarkerModeLabel(mode)} · ${_skipCreditsModeDescription(mode)}',
           options: SkipMarkerMode.values.map((m) => DialogOption(value: m, title: _skipMarkerModeLabel(m))).toList(),
         ),
+        // The mpv shader, here as well: one too heavy for the device makes the
+        // player's own menu hard to reach (the user's case).
+        ?shaderPresetSettingTile(context),
         if (androidTv) ...[
           SettingSwitchTile(
             pref: SettingsService.matchContentFrameRate,

@@ -133,6 +133,19 @@ void main() {
       expect(SettingsService.instance.read(SettingsService.showSportTab), isTrue);
     });
 
+    testWidgets('the mpv shader can be chosen here, without starting a video', (tester) async {
+      final harness = await _pumpSettingsScreen(tester, curated: true);
+      addTearDown(() => harness.dispose(tester));
+      expect(SettingsService.instance.read(SettingsService.globalShaderPreset), 'none');
+
+      await tester.tap(find.text(t.shaders.title));
+      await _pumpUi(tester);
+      await tester.tap(find.text('NVScaler').last);
+      await _pumpUi(tester);
+
+      expect(SettingsService.instance.read(SettingsService.globalShaderPreset), 'nvscaler');
+    });
+
     testWidgets('the "Live now" row is on until switched off here', (tester) async {
       final harness = await _pumpSettingsScreen(tester, curated: true);
       addTearDown(() => harness.dispose(tester));

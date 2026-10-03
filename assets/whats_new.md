@@ -13,6 +13,12 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.6.0 (Build 608)
+
+- Live-TV: Im mpv-Player gibt es jetzt auch Shader, wie bei Filmen und Serien.
+- Einstellungen → Player: Der Shader lässt sich jetzt hier umstellen, ohne ein Video zu starten. Praktisch, wenn ein Shader ruckelt.
+- Handy hochkant: Auf der Erkunden-Detailseite stehen die Knöpfe jetzt unter dem Poster und werden nicht mehr abgeschnitten.
+
 ## 1.5.0 (Build 604)
 
 - Empfehlungsreihe: „Mehr davon“ und „Weniger davon“ im Menü eines Posters (OK lange drücken). Die Reihe mischt sich alle drei Stunden neu, Lieblinge kommen abwechselnd zum Zug. Zurücksetzen unter Einstellungen → Darstellung → Startseite.

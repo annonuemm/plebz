@@ -21,6 +21,7 @@ import '../../widgets/settings_section.dart';
 import 'external_player_screen.dart';
 import 'mpv_config_screen.dart';
 import 'settings_utils.dart';
+import 'shader_preset_setting.dart';
 import 'subtitle_styling_screen.dart';
 
 class PlaybackSettingsScreen extends StatelessWidget {
@@ -79,6 +80,8 @@ class PlaybackSettingsScreen extends StatelessWidget {
                 if (Platform.isAndroid) _playerBackendSelector(),
                 if (PlatformDetector.supportsExternalPlayers()) _externalPlayerTile(),
                 if (!exoActive) _mpvConfigTile(),
+                // mpv's shaders, choosable without starting a video (Plebz).
+                if (!exoActive) ?shaderPresetSettingTile(context),
                 _hardwareDecodingTile(),
                 if (exoActive) _playbackBufferTile(),
                 if (exoActive) _tunneledPlaybackTile(),

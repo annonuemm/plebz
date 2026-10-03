@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -913,7 +914,8 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
         children: [
           const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
           const SizedBox(width: 10),
-          Text(t.explore.checkingLibrary, style: mutedStyle),
+          // Flexible: on a phone held upright the line ran past the edge.
+          Flexible(child: Text(t.explore.checkingLibrary, style: mutedStyle)),
         ],
       );
     }
@@ -1601,6 +1603,114 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
     Navigator.pop(context);
   }
 
+  /// The actions and the note under them. [width] is the room the row has
+  /// when it stands on its own line (a narrow screen): the best copy's button
+  /// then gives up what the other buttons need, its name shortened rather
+  /// than cut off at the edge.
+  List<Widget> _actionsSection(
+    BuildContext hostContext, {
+    required bool? onWatchlist,
+    required int? tmdbId,
+    required double? width,
+  }) {
+    final item = _item;
+    final theme = Theme.of(context);
+    final others = [
+      _watchlistSource != null,
+      _requestSource is SeerrCatalogSource && tmdbId != null && !_isOnServer && !_tooNewToRequest,
+      item.trailerUrl?.trim().isNotEmpty ?? false,
+    ].where((shown) => shown).length;
+    final copyMaxWidth = width == null ? null : math.max(140.0, width - others * 56 - 2 * ockerBandMargin(context) - 8);
+    Widget bounded(Widget button) => copyMaxWidth == null
+        ? button
+        : ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: copyMaxWidth),
+            child: button,
+          );
+    return [
+      const SizedBox(height: 16),
+      if (_hasActions)
+        // Under glass one band, as the
+        // header's destinations are, and
+        // focus its capsule gliding along.
+        OckerGlassBand(
+          overhang: EdgeInsets.all(ockerBandMargin(context)),
+          child: FocusableActionBar(
+            key: _actionBarKey,
+            wrapBuiltAction: ockerGlass(context)
+                ? (context, state, child) =>
+                      OckerWordFocus(focused: state.showFocus, outset: EdgeInsets.zero, child: child)
+                : null,
+            onNavigateDown: _focusSectionBelowActions,
+            onNavigateUp: PlatformDetector.isTV() ? _focusHomeButton : null,
+            actions: [
+              // The title on the viewer's own server, in its
+              // best copy — first, because when there is one
+              // it is what the page is most often opened for.
+              if (_matches?.isNotEmpty ?? false)
+                FocusableAction(
+                  debugLabel: 'catalog_best_copy',
+                  onPressed: _bestCopy == null ? null : _openBestCopy,
+                  builder: (context, state) => bounded(
+                    LibraryCopyJumpButton(
+                      copy: _bestCopy,
+                      quality: _bestCopy == null ? null : _copyQuality[_bestCopy!.globalKey],
+                      showFocus: state.showFocus,
+                      onPressed: _bestCopy == null ? null : _openBestCopy,
+                    ),
+                  ),
+                ),
+              if (_watchlistSource != null)
+                FocusableAction(
+                  // Stable identities so the focused binding survives the
+                  // list-shape changes of async enrichment (watchlist/request
+                  // sources and trailer URL arrive at different times).
+                  debugLabel: 'catalog_watchlist',
+                  icon: onWatchlist ?? false ? Symbols.bookmark_added_rounded : Symbols.bookmark_add_rounded,
+                  tooltip: onWatchlist ?? false ? t.explore.removeFromWatchlist : t.explore.addToWatchlist,
+                  onPressed: () => unawaited(_toggleWatchlist()),
+                ),
+              if (_requestSource case final SeerrCatalogSource seerr
+                  when tmdbId != null && !_isOnServer && !_tooNewToRequest)
+                FocusableAction(
+                  debugLabel: 'catalog_request',
+                  // Not the download arrow: that
+                  // is the app's own downloading,
+                  // and the two were mistaken for
+                  // each other.
+                  icon: Symbols.add_to_queue_rounded,
+                  tooltip: t.seerr.request,
+                  onPressed: () => unawaited(
+                    showSeerrRequestSheet(
+                      hostContext,
+                      source: seerr,
+                      kind: item.kind,
+                      tmdbId: tmdbId,
+                      releaseDate: item.releaseDate,
+                      title: item.title,
+                    ),
+                  ),
+                ),
+              if (item.trailerUrl?.trim() case final trailer? when trailer.isNotEmpty)
+                FocusableAction(
+                  debugLabel: 'catalog_trailer',
+                  icon: Symbols.play_circle_rounded,
+                  tooltip: t.explore.detail.watchTrailer,
+                  onPressed: () => unawaited(_openExternalUrl(trailer)),
+                ),
+            ],
+          ),
+        ),
+      if (_bestCopyNote case final note?) ...[
+        const SizedBox(height: 8),
+        Text(
+          note,
+          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+        ),
+      ],
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = _item;
@@ -1619,6 +1729,8 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
     );
     final posterUrl = item.posterFor(MediaImageHelper.artworkTargetPx(context, 140));
     final isMobile = PlatformDetector.isMobile(context);
+    // A phone held upright: too little room beside the poster for the actions.
+    final narrow = !PlatformDetector.isTV() && MediaQuery.sizeOf(context).width < 600;
 
     final viewInsets = MediaQuery.paddingOf(context);
     final blockSystemBack = PlatformDetector.isTV() || InputModeTracker.shouldBlockSystemBack(context);
@@ -1702,100 +1814,34 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
                                             ),
                                           ),
                                         ],
-                                        const SizedBox(height: 16),
-                                        if (_hasActions)
-                                          // Under glass one band, as the
-                                          // header's destinations are, and
-                                          // focus its capsule gliding along.
-                                          OckerGlassBand(
-                                            overhang: EdgeInsets.all(ockerBandMargin(context)),
-                                            child: FocusableActionBar(
-                                              key: _actionBarKey,
-                                              wrapBuiltAction: ockerGlass(context)
-                                                  ? (context, state, child) => OckerWordFocus(
-                                                      focused: state.showFocus,
-                                                      outset: EdgeInsets.zero,
-                                                      child: child,
-                                                    )
-                                                  : null,
-                                              onNavigateDown: _focusSectionBelowActions,
-                                              onNavigateUp: PlatformDetector.isTV() ? _focusHomeButton : null,
-                                              actions: [
-                                                // The title on the viewer's own server, in its
-                                                // best copy — first, because when there is one
-                                                // it is what the page is most often opened for.
-                                                if (_matches?.isNotEmpty ?? false)
-                                                  FocusableAction(
-                                                    debugLabel: 'catalog_best_copy',
-                                                    onPressed: _bestCopy == null ? null : _openBestCopy,
-                                                    builder: (context, state) => LibraryCopyJumpButton(
-                                                      copy: _bestCopy,
-                                                      quality: _bestCopy == null
-                                                          ? null
-                                                          : _copyQuality[_bestCopy!.globalKey],
-                                                      showFocus: state.showFocus,
-                                                      onPressed: _bestCopy == null ? null : _openBestCopy,
-                                                    ),
-                                                  ),
-                                                if (_watchlistSource != null)
-                                                  FocusableAction(
-                                                    // Stable identities so the focused binding survives the
-                                                    // list-shape changes of async enrichment (watchlist/request
-                                                    // sources and trailer URL arrive at different times).
-                                                    debugLabel: 'catalog_watchlist',
-                                                    icon: onWatchlist ?? false
-                                                        ? Symbols.bookmark_added_rounded
-                                                        : Symbols.bookmark_add_rounded,
-                                                    tooltip: onWatchlist ?? false
-                                                        ? t.explore.removeFromWatchlist
-                                                        : t.explore.addToWatchlist,
-                                                    onPressed: () => unawaited(_toggleWatchlist()),
-                                                  ),
-                                                if (_requestSource case final SeerrCatalogSource seerr
-                                                    when tmdbId != null && !_isOnServer && !_tooNewToRequest)
-                                                  FocusableAction(
-                                                    debugLabel: 'catalog_request',
-                                                    // Not the download arrow: that
-                                                    // is the app's own downloading,
-                                                    // and the two were mistaken for
-                                                    // each other.
-                                                    icon: Symbols.add_to_queue_rounded,
-                                                    tooltip: t.seerr.request,
-                                                    onPressed: () => unawaited(
-                                                      showSeerrRequestSheet(
-                                                        hostContext,
-                                                        source: seerr,
-                                                        kind: item.kind,
-                                                        tmdbId: tmdbId,
-                                                        releaseDate: item.releaseDate,
-                                                        title: item.title,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                if (item.trailerUrl?.trim() case final trailer? when trailer.isNotEmpty)
-                                                  FocusableAction(
-                                                    debugLabel: 'catalog_trailer',
-                                                    icon: Symbols.play_circle_rounded,
-                                                    tooltip: t.explore.detail.watchTrailer,
-                                                    onPressed: () => unawaited(_openExternalUrl(trailer)),
-                                                  ),
-                                              ],
-                                            ),
+                                        if (!narrow)
+                                          ..._actionsSection(
+                                            hostContext,
+                                            onWatchlist: onWatchlist,
+                                            tmdbId: tmdbId,
+                                            width: null,
                                           ),
-                                        if (_bestCopyNote case final note?) ...[
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            note,
-                                            style: theme.textTheme.bodySmall?.copyWith(
-                                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                                            ),
-                                          ),
-                                        ],
                                       ],
                                     ),
                                   ),
                                 ],
                               ),
+                              // On a narrow screen — a phone held upright — the
+                              // actions take the full width under the poster:
+                              // beside it the best copy's button ran off the
+                              // edge and took the watchlist button with it.
+                              if (narrow)
+                                LayoutBuilder(
+                                  builder: (context, constraints) => Column(
+                                    crossAxisAlignment: .start,
+                                    children: _actionsSection(
+                                      hostContext,
+                                      onWatchlist: onWatchlist,
+                                      tmdbId: tmdbId,
+                                      width: constraints.maxWidth,
+                                    ),
+                                  ),
+                                ),
                               SettingValueBuilder<bool>(
                                 pref: SettingsService.averageRatings,
                                 builder: (context, _, _) {

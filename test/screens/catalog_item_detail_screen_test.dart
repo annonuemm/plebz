@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/focus/focusable_action_bar.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:plezy/focus/focusable_action_bar.dart';
 import 'package:plezy/i18n/app_locale_utils.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/media/media_kind.dart';
@@ -984,6 +984,30 @@ void main() {
 
       expect(find.byTooltip(t.seerr.request), findsNothing);
     });
+  });
+
+  testWidgets('on a phone held upright the actions stand under the poster, inside the screen', (tester) async {
+    // Beside the poster the best copy's button ran off the edge.
+    TvDetectionService.debugSetAppleTVOverride(false);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final source = _FakeCatalogSource();
+
+    await _pumpDetail(
+      tester,
+      source,
+      matches: [
+        _libraryCopy(id: 'uhd-copy', libraryTitle: 'Filme - 4K mit einem recht langen Namen', videoResolution: '4k'),
+      ],
+    );
+
+    expect(tester.takeException(), isNull);
+    final button = tester.getRect(find.byType(LibraryCopyJumpButton));
+    final poster = tester.getRect(find.byType(OptimizedMediaImage).first);
+    expect(button.top, greaterThan(poster.bottom), reason: 'under the poster');
+    expect(button.right, lessThanOrEqualTo(390), reason: 'inside the screen');
   });
 
   testWidgets('lists every library copy of one title, best quality first', (tester) async {

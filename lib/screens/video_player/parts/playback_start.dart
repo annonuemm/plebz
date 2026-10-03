@@ -144,6 +144,26 @@ extension _VideoPlayerPlaybackStartMethods on VideoPlayerScreenState {
         await _initVideoFilterAndPip();
         if (!mounted || !attempt.isCurrent) return;
 
+        // Shaders (mpv only), as for films and series — the live path used to
+        // skip this, so the settings had no Shader entry here. The same saved
+        // preset applies; it stays in mpv's chain across zaps. The ambient
+        // light stays out: on a live stream it adds to the deinterlacer's
+        // load, and the user found it stutters on films already.
+        // A shader is decoration: whatever goes wrong here must not stop the
+        // channel.
+        if (_shaderService == null) {
+          try {
+            final shaders = ShaderService(currentPlayer);
+            if (shaders.isSupported) {
+              _shaderService = shaders;
+              await _visualEffects.applySavedPreset();
+            }
+          } catch (error, stackTrace) {
+            appLogger.d('Live TV: shaders unavailable', error: error, stackTrace: stackTrace);
+          }
+          if (!mounted || !attempt.isCurrent) return;
+        }
+
         if (mounted) {
           // Live TV never commits a PlaybackSession, so the session-derived
           // versions/mediaInfo getters already read empty here.

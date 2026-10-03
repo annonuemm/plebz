@@ -1676,6 +1676,9 @@
     "allTypes": "Movies and series",
     "moviesOnly": "Movies only",
     "showsOnly": "Series only",
+    "typeAll": "All",
+    "typeMovies": "Movies",
+    "typeShows": "Shows",
     "anyStatus": "Watched and unwatched",
     "unwatchedOnly": "Not watched",
     "watchedOnly": "Watched"

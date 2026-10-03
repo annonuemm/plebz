@@ -599,7 +599,18 @@ class _OckerWordFocusState extends State<OckerWordFocus> {
   void didUpdateWidget(OckerWordFocus oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.focused && !widget.focused) _releaseSoon();
-    if (oldWidget.active && !widget.active) _band?.unmarkActive(this);
+    if (oldWidget.active && !widget.active) _unmarkActiveSoon();
+  }
+
+  /// No longer the one on show. After the frame, like the marking itself: the
+  /// band is built above the words, and telling it during their build marked
+  /// an already-built widget dirty — a word switched on and off by a press
+  /// (the watchlist's types) threw. Whichever word is on show now has marked
+  /// itself by then, and the band only lets go of a mark this word holds.
+  void _unmarkActiveSoon() {
+    final band = _band;
+    if (band == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => band.unmarkActive(this));
   }
 
   @override

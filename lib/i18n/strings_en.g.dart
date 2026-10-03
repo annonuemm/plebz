@@ -4112,6 +4112,15 @@ class Translations$watchlist$en {
 	/// en: 'Series only'
 	String get showsOnly => 'Series only';
 
+	/// en: 'All'
+	String get typeAll => 'All';
+
+	/// en: 'Movies'
+	String get typeMovies => 'Movies';
+
+	/// en: 'Shows'
+	String get typeShows => 'Shows';
+
 	/// en: 'Watched and unwatched'
 	String get anyStatus => 'Watched and unwatched';
 
@@ -10214,6 +10223,9 @@ extension on Translations {
 			'watchlist.allTypes' => 'Movies and series',
 			'watchlist.moviesOnly' => 'Movies only',
 			'watchlist.showsOnly' => 'Series only',
+			'watchlist.typeAll' => 'All',
+			'watchlist.typeMovies' => 'Movies',
+			'watchlist.typeShows' => 'Shows',
 			'watchlist.anyStatus' => 'Watched and unwatched',
 			'watchlist.unwatchedOnly' => 'Not watched',
 			'watchlist.watchedOnly' => 'Watched',
@@ -10222,11 +10234,11 @@ extension on Translations {
 			'liveTv.noChannels' => 'No channels available',
 			'liveTv.noDvr' => 'No DVR configured on any server',
 			'liveTv.serverUnavailable' => 'Live TV server is not available.',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.serverNotConnected' => 'Live TV server is not connected.',
 			'liveTv.noPrograms' => 'No program data available',
 			'liveTv.liveStreamFailed' => 'Live stream failed',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.unknownProgram' => 'Unknown Program',
 			'liveTv.unknownHub' => 'Unknown',
 			'liveTv.unknownError' => 'Unknown error',
@@ -10736,11 +10748,11 @@ extension on Translations {
 			'videoSettings.audioNormalization' => 'Normalize Loudness',
 			'videoSettings.audioNormalizationDisablesPassthrough' => 'Decodes audio to PCM; passthrough is off while this is on',
 			'videoSettings.audioNormalizationStereoMix' => 'Decodes audio to a stereo mix; passthrough is off while this is on',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.color' => 'Color',
 			'performanceOverlay.performance' => 'Performance',
 			'performanceOverlay.buffer' => 'Buffer',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.app' => 'App',
 			'performanceOverlay.decoder' => 'Decoder',
 			'performanceOverlay.rawDecoder' => 'Raw Decoder',

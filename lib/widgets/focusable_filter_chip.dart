@@ -6,6 +6,7 @@ import '../focus/input_mode_tracker.dart';
 import 'focus_builders.dart';
 import '../redesign/ocker_filter_glyph.dart';
 import '../redesign/ocker_skin.dart';
+import '../redesign/ocker_type.dart';
 import '../theme/mono_tokens.dart';
 
 /// A focusable filter chip that shows a color change when focused.
@@ -35,6 +36,10 @@ class FocusableFilterChip extends StatefulWidget {
   /// Called when the user presses BACK from this chip.
   final VoidCallback? onBack;
 
+  /// Under the redesign, the [label] in words where the glyph would stand —
+  /// the word at reading strength, focus the capsule every word there takes.
+  final bool spellOut;
+
   const FocusableFilterChip({
     super.key,
     required this.icon,
@@ -46,6 +51,7 @@ class FocusableFilterChip extends StatefulWidget {
     this.onNavigateLeft,
     this.onNavigateRight,
     this.onBack,
+    this.spellOut = false,
   });
 
   @override
@@ -133,8 +139,11 @@ class _FocusableFilterChipState extends State<FocusableFilterChip> with Focusabl
         borderRadius: 0,
         // The word stays as the semantic name only: these sit on the same line
         // as the tabs, where a word spent here is a word taken from them, and
-        // the sheet each one opens names itself anyway.
-        child: OckerFilterGlyph(icon: icon, focused: showFocus),
+        // the sheet each one opens names itself anyway — unless the chip
+        // asks to say what it holds.
+        child: widget.spellOut
+            ? _spelledOut(context, showFocus: showFocus)
+            : OckerFilterGlyph(icon: icon, focused: showFocus),
       );
     }
 
@@ -162,4 +171,27 @@ class _FocusableFilterChipState extends State<FocusableFilterChip> with Focusabl
   }
 
   IconData get icon => widget.icon;
+
+  /// The label as a word on the band, where [OckerFilterGlyph] would stand.
+  Widget _spelledOut(BuildContext context, {required bool showFocus}) {
+    final tk = tokens(context);
+    final scale = ockerScale(context);
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 4 * scale),
+      child: OckerWordFocus(
+        focused: showFocus,
+        child: Padding(
+          padding: EdgeInsets.all(tk.focusRingOffset),
+          child: OckerInk(
+            color: showFocus ? tk.ink(1) : tk.ink(0.85),
+            builder: (context, ink) => Text(
+              widget.label,
+              maxLines: 1,
+              style: OckerType.of(context).groupEntry(active: false).copyWith(color: ink),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

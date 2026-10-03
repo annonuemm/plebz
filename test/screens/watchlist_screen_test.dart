@@ -360,6 +360,31 @@ void main() {
     expect(state.ockerRailMenu!.items.firstWhere((item) => item.selected).label, 'Plex');
   });
 
+  testWidgets('under glass the type is written out — all, movies, shows — one press each', (tester) async {
+    await _pumpWatchlist(tester, [
+      _FakeWatchlistSource(
+        CatalogSourceId.plex,
+        'Plex',
+        total: 4,
+        shape: const [(kind: MediaKind.movie, watched: null), (kind: MediaKind.show, watched: null)],
+      ),
+    ], variant: AppThemeVariant.glas);
+
+    expect(find.text(t.watchlist.typeAll), findsOneWidget);
+    expect(find.text(t.watchlist.typeMovies), findsOneWidget);
+    expect(find.text(t.watchlist.typeShows), findsOneWidget);
+    expect(find.byType(OckerPosterTile), findsNWidgets(4));
+
+    await tester.tap(find.text(t.watchlist.typeMovies));
+    await tester.pumpAndSettle();
+    expect(find.byType(OckerPosterTile), findsNWidgets(2), reason: 'only the films');
+    expect(SettingsService.instance.read(SettingsService.watchlistTypeFilter), WatchlistTypeFilter.movies);
+
+    await tester.tap(find.text(t.watchlist.typeAll));
+    await tester.pumpAndSettle();
+    expect(find.byType(OckerPosterTile), findsNWidgets(4));
+  });
+
   testWidgets('under glass the panel names director and cast from the detail body it fetches anyway', (tester) async {
     final source = _FakeWatchlistSource(
       CatalogSourceId.simkl,

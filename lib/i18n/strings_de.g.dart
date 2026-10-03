@@ -1654,6 +1654,9 @@ class _Translations$watchlist$de extends Translations$watchlist$en {
 	@override String get allTypes => 'Filme und Serien';
 	@override String get moviesOnly => 'Nur Filme';
 	@override String get showsOnly => 'Nur Serien';
+	@override String get typeAll => 'Alle';
+	@override String get typeMovies => 'Filme';
+	@override String get typeShows => 'Serien';
 	@override String get anyStatus => 'Gesehen und ungesehen';
 	@override String get unwatchedOnly => 'Nicht gesehen';
 	@override String get watchedOnly => 'Gesehen';
@@ -5041,6 +5044,9 @@ extension on TranslationsDe {
 			'watchlist.allTypes' => 'Filme und Serien',
 			'watchlist.moviesOnly' => 'Nur Filme',
 			'watchlist.showsOnly' => 'Nur Serien',
+			'watchlist.typeAll' => 'Alle',
+			'watchlist.typeMovies' => 'Filme',
+			'watchlist.typeShows' => 'Serien',
 			'watchlist.anyStatus' => 'Gesehen und ungesehen',
 			'watchlist.unwatchedOnly' => 'Nicht gesehen',
 			'watchlist.watchedOnly' => 'Gesehen',
@@ -5089,11 +5095,11 @@ extension on TranslationsDe {
 			'liveTv.record' => 'Aufnehmen',
 			'liveTv.recordEpisode' => 'Episode aufnehmen',
 			'liveTv.recordSeries' => 'Serie aufnehmen',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.recordOptions' => 'Aufnahmeoptionen',
 			'liveTv.saveTo' => 'Speichern in',
 			'liveTv.recordings' => 'Aufnahmen',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.scheduledRecordings' => 'Geplant',
 			'liveTv.recordingRules' => 'Aufnahmeregeln',
 			'liveTv.noScheduledRecordings' => 'Keine geplanten Aufnahmen',
@@ -5603,11 +5609,11 @@ extension on TranslationsDe {
 			'performanceOverlay.decoderAndroidHw' => 'Android HW',
 			'performanceOverlay.decoderNvidiaHw' => 'NVIDIA HW',
 			'performanceOverlay.decoderQualcommHw' => 'Qualcomm HW',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.decoderMediatekHw' => 'MediaTek HW',
 			'performanceOverlay.decoderExynosHw' => 'Exynos HW',
 			'performanceOverlay.decoderSoftware' => 'Software',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.decoderHardware' => 'Hardware',
 			'performanceOverlay.tunnelingActive' => 'Aktiv',
 			'performanceOverlay.dvRpuFailed' => ({required Object converted, required Object failures}) => '${converted} (${failures} fehlgeschlagen)',

@@ -1,3 +1,4 @@
+import 'package:material_symbols_icons/symbols.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -45,7 +46,6 @@ import 'package:plezy/redesign/ocker_detail_panel.dart';
 import 'package:plezy/redesign/ocker_filter_glyph.dart';
 import 'package:plezy/redesign/ocker_filter_slot.dart';
 import 'package:plezy/redesign/ocker_library_column.dart';
-import 'package:plezy/redesign/ocker_skin.dart';
 import 'package:plezy/redesign/ocker_panel_frame.dart';
 import 'package:plezy/widgets/tv_browse_rail.dart';
 import 'package:plezy/widgets/tv_spotlight_scaffold.dart';
@@ -154,10 +154,13 @@ void main() {
     final panel = tester.getRect(find.byType(OckerDetailPanel));
     final grid = tester.getRect(find.byType(OckerFilterSlot));
     expect(panel.left, greaterThan(grid.left), reason: 'the describing column stands right of the posters');
-    final band = find.ancestor(of: find.byType(OckerFilterGlyph).first, matching: find.byType(OckerGlassBand));
-    expect(band, findsOneWidget);
-    expect(tester.getRect(band).right, lessThan(panel.left), reason: 'the filters stand over the posters');
-    expect(tester.getRect(band).left, lessThan(grid.left + 40), reason: 'at their top left');
+    // No grouping to choose under the redesign (the user found it
+    // superfluous); this library has no filters or sorts here, so the band
+    // over the posters holds nothing at all.
+    expect(
+      find.byWidgetPredicate((widget) => widget is OckerFilterGlyph && widget.icon == Symbols.category_rounded),
+      findsNothing,
+    );
 
     final screen = tester.state(find.byType(LibrariesScreen)) as OckerSubmenuHost;
     final menu = screen.ockerRailMenu!;

@@ -46,6 +46,11 @@ class OptionsChipDescriptor {
   /// Override for BACK. Defaults to [OptionsChipsBar.onBack].
   final VoidCallback? onBack;
 
+  /// Under the redesign, say [label] in words rather than show the glyph —
+  /// for a chip whose label is a choice worth reading, such as the sort on
+  /// show. See [FocusableFilterChip.spellOut].
+  final bool spellOut;
+
   const OptionsChipDescriptor({
     required this.icon,
     required this.label,
@@ -57,6 +62,7 @@ class OptionsChipDescriptor {
     this.onNavigateDown,
     this.onNavigateUp,
     this.onBack,
+    this.spellOut = false,
   });
 }
 
@@ -139,6 +145,7 @@ class OptionsChipsBar extends StatelessWidget {
       focusNode: chip.focusNode,
       icon: chip.icon,
       label: chip.label,
+      spellOut: chip.spellOut,
       onPressed: chip.onPressed,
       onNavigateDown: chip.onNavigateDown ?? onNavigateDown,
       onNavigateUp: chip.onNavigateUp ?? onNavigateUp,

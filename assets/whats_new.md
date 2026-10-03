@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.4.7 (Build 601)
+
+- Merkliste im Glas-Design: „Alle“, „Filme“ und „Serien“ stehen jetzt direkt zum Antippen da, ohne Auswahlfenster.
+- Mediatheken im Glas-Design: Die Gruppierung entfällt, und die gewählte Sortierung steht ausgeschrieben in der Leiste, z. B. „Datum hinzugefügt ↓“.
+
 ## 1.4.6 (Build 596)
 
 - Die Empfehlungsreihe erscheint wieder zuverlässig – auch bei Plex-Mediatheken, die Filme hinter ihren Sammlungen verstecken – und sofort, wenn sie eingeschaltet wird.

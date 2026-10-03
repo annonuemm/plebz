@@ -607,7 +607,7 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
       return;
     }
     lastFocusedGridIndex = null;
-    _groupingChipFocusNode.requestFocus();
+    _firstChipFocusNode?.requestFocus();
   }
 
   /// Show the mobile browse options sheet from the parent app bar.
@@ -684,7 +684,10 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
       final savedGrouping = storage.getLibraryGrouping(libraryGlobalKey);
       // Resolve the restored grouping before the sort fetch — music groupings
       // (albums/tracks) request their own per-type sort list.
-      final restoredGrouping = _normalizeGrouping(savedGrouping);
+      // Under the redesign there is no grouping to choose — the library is
+      // browsed as it comes. A grouping stored from the original look stays
+      // stored for it, and is not applied here.
+      final restoredGrouping = _ocker ? _getDefaultGrouping() : _normalizeGrouping(savedGrouping);
       final sortLibraryType = _sortOptionsLibraryType(restoredGrouping);
 
       final LoadedFiltersAndSorts loaded;
@@ -1543,8 +1546,18 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
       widget.onBack?.call();
       return;
     }
-    _groupingChipFocusNode.requestFocus();
+    _firstChipFocusNode?.requestFocus();
   }
+
+  /// The first chip on the bar: the grouping, except under the redesign, which
+  /// has none — there the filters, or the sort when a library has no filters.
+  FocusNode? get _firstChipFocusNode => !_ocker
+      ? _groupingChipFocusNode
+      : _isFiltersChipVisible
+      ? _filtersChipFocusNode
+      : _isSortChipVisible
+      ? _sortChipFocusNode
+      : null;
 
   void _navigateToSidebar() {
     MainScreenFocusScope.focusSidebarOf(context);
@@ -2097,13 +2110,15 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
   Widget _buildChipsBar() {
     return OptionsChipsBar(
       chips: [
-        OptionsChipDescriptor(
-          anchorKey: _groupingChipKey,
-          focusNode: _groupingChipFocusNode,
-          icon: Symbols.category_rounded,
-          label: _getGroupingLabel(_selectedGrouping),
-          onPressed: _showGroupingBottomSheet,
-        ),
+        // Not under the redesign: the user found the choice superfluous there.
+        if (!_ocker)
+          OptionsChipDescriptor(
+            anchorKey: _groupingChipKey,
+            focusNode: _groupingChipFocusNode,
+            icon: Symbols.category_rounded,
+            label: _getGroupingLabel(_selectedGrouping),
+            onPressed: _showGroupingBottomSheet,
+          ),
         if (_isFiltersChipVisible)
           OptionsChipDescriptor(
             anchorKey: _filtersChipKey,
@@ -2119,7 +2134,12 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
             anchorKey: _sortChipKey,
             focusNode: _sortChipFocusNode,
             icon: Symbols.sort_rounded,
-            label: _selectedSort?.title ?? t.libraries.sort,
+            label: _selectedSort == null
+                ? t.libraries.sort
+                : '${_selectedSort!.title} ${_isSortDescending ? '↓' : '↑'}',
+            // Under the redesign the sort on show is written out; with none
+            // chosen the glyph stands, as before.
+            spellOut: _selectedSort != null,
             onPressed: _showSortBottomSheet,
           ),
       ],

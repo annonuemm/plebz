@@ -32,6 +32,8 @@ import 'hub_detail_screen.dart';
 import 'libraries/state_messages.dart';
 import '../redesign/ocker_skin.dart';
 import '../redesign/ocker_submenu.dart';
+import '../redesign/ocker_type.dart';
+import '../theme/mono_tokens.dart';
 
 /// The Watchlist tab: the full watchlist of one provider, as a navigation
 /// destination of its own.
@@ -247,17 +249,38 @@ class WatchlistScreenState extends State<WatchlistScreen>
   /// The two narrowing actions, left of the grid's own sort. Each wears the
   /// choice it holds, so a list that is missing half its titles says why
   /// without being opened.
+  ///
+  /// Under the redesign the type is not a glyph behind a menu but its three
+  /// choices written out — "Alle", "Filme", "Serien" — one press each, the one
+  /// on show marked as a tab is.
   List<FocusableAction> _filterActions() => [
-    FocusableAction(
-      icon: switch (_filter.type) {
-        WatchlistTypeFilter.all => Symbols.category_rounded,
-        WatchlistTypeFilter.movies => Symbols.movie_rounded,
-        WatchlistTypeFilter.shows => Symbols.tv_rounded,
-      },
-      iconFill: _filter.type == WatchlistTypeFilter.all ? 0 : 1,
-      tooltip: t.watchlist.typeFilter,
-      onPressed: _pickTypeFilter,
-    ),
+    if (isOcker(context))
+      for (final (value, label) in [
+        (WatchlistTypeFilter.all, t.watchlist.typeAll),
+        (WatchlistTypeFilter.movies, t.watchlist.typeMovies),
+        (WatchlistTypeFilter.shows, t.watchlist.typeShows),
+      ])
+        FocusableAction(
+          tooltip: label,
+          onPressed: () => _applyFilter(_filter.withType(value)),
+          builder: (context, state) => _TypeWord(
+            label: label,
+            active: _filter.type == value,
+            focused: state.showFocus,
+            onTap: () => _applyFilter(_filter.withType(value)),
+          ),
+        )
+    else
+      FocusableAction(
+        icon: switch (_filter.type) {
+          WatchlistTypeFilter.all => Symbols.category_rounded,
+          WatchlistTypeFilter.movies => Symbols.movie_rounded,
+          WatchlistTypeFilter.shows => Symbols.tv_rounded,
+        },
+        iconFill: _filter.type == WatchlistTypeFilter.all ? 0 : 1,
+        tooltip: t.watchlist.typeFilter,
+        onPressed: _pickTypeFilter,
+      ),
     FocusableAction(
       icon: switch (_filter.status) {
         WatchlistStatusFilter.any => Symbols.filter_alt_rounded,
@@ -425,6 +448,52 @@ class WatchlistScreenState extends State<WatchlistScreen>
       onAppBarNavigateLeft: isOckerLayout(context) || tabs.length < 2
           ? null
           : () => _chipNode(tabs.length - 1).requestFocus(),
+    );
+  }
+}
+
+/// One of the watchlist's type choices written out, as the redesign draws a
+/// tab: the word at full strength when it is the one on show, dimmed
+/// otherwise; focus is the capsule (or the ring) every word in the redesign
+/// takes.
+class _TypeWord extends StatelessWidget {
+  const _TypeWord({required this.label, required this.active, required this.focused, required this.onTap});
+
+  final String label;
+  final bool active;
+  final bool focused;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = tokens(context);
+    final type = OckerType.of(context);
+    final scale = ockerScale(context);
+    return Semantics(
+      button: true,
+      selected: active,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 4 * scale),
+          child: OckerWordFocus(
+            focused: focused,
+            active: active,
+            child: Padding(
+              padding: EdgeInsets.all(tk.focusRingOffset),
+              child: OckerInk(
+                color: active || focused ? tk.ink(1) : tk.ink(0.5),
+                builder: (context, ink) => Text(
+                  label,
+                  style: type.groupEntry(active: active).copyWith(color: ink),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

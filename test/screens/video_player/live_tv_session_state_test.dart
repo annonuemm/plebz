@@ -20,7 +20,19 @@ void main() {
       // a switch had happened, let alone to what.
       expect(
         LiveTvSessionState.titleWithVariant('Das Erste HD', labels: const ['Das Erste HD', 'Das Erste HD 2'], index: 1),
-        'Das Erste HD · Das Erste HD 2',
+        'Das Erste HD 2',
+      );
+    });
+
+    test('on the first copy the channel name stands, once, and a name given to it is kept', () {
+      // "RTLup HDraw · RTLup HDraw" said the same name twice.
+      expect(
+        LiveTvSessionState.titleWithVariant('RTLup HDraw', labels: const ['RTLup HDraw', 'RTLup HDraw²'], index: 0),
+        'RTLup HDraw',
+      );
+      expect(
+        LiveTvSessionState.titleWithVariant('RTL Up', labels: const ['RTLup HDraw', 'RTLup HDraw²'], index: 0),
+        'RTL Up',
       );
     });
 

@@ -147,17 +147,10 @@ class VideoPlayerBufferingOverlay extends StatelessWidget {
 /// and the up-next panel, its words in the theme's ink; the picture keeps
 /// playing through it.
 class VideoPlayerZapBanner extends StatelessWidget {
-  const VideoPlayerZapBanner({
-    super.key,
-    required this.visible,
-    required this.channelName,
-    required this.channelNumber,
-    required this.programTitle,
-  });
+  const VideoPlayerZapBanner({super.key, required this.visible, required this.channelName, required this.programTitle});
 
   final ValueListenable<bool> visible;
   final String? channelName;
-  final String? channelNumber;
   final String? programTitle;
 
   @override
@@ -173,8 +166,11 @@ class VideoPlayerZapBanner extends StatelessWidget {
       crossAxisAlignment: .start,
       mainAxisSize: .min,
       children: [
+        // The name alone, no channel number: the number said nothing the
+        // name did not, and it pushed the name out of line with the
+        // programme beneath it.
         Text(
-          channelNumber == null || channelNumber!.isEmpty ? name : '$channelNumber  $name',
+          name,
           style: TextStyle(color: ink, fontSize: 20, fontWeight: .w600),
           maxLines: 1,
           overflow: .ellipsis,

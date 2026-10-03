@@ -68,6 +68,7 @@ import '../utils/hub_icons.dart';
 import '../utils/media_navigation_helper.dart';
 import '../utils/provider_extensions.dart';
 import '../utils/snackbar_helper.dart';
+import '../widgets/media_context_menu.dart' show MediaMenuExtraEntry;
 import '../utils/video_player_navigation.dart';
 import '../utils/layout_constants.dart';
 import '../utils/platform_detector.dart';
@@ -219,6 +220,33 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     more: _hasMoreContinueWatching,
     items: _onDeck,
   );
+
+  // ---------- Recommendation feedback ----------
+
+  /// "Mehr davon" and "Weniger davon" at the top of a card's menu in the
+  /// recommendation row, and nowhere else.
+  List<MediaMenuExtraEntry> _recommendationMenuEntries(MediaHub hub, MediaItem item) {
+    if (hub.id != recommendationsHubId) return const [];
+    final title = item.displayTitle;
+    return [
+      MediaMenuExtraEntry(
+        icon: Symbols.thumb_up_rounded,
+        label: t.discover.moreOfThis,
+        onSelected: () {
+          unawaited(_discover.moreLikeThis(item));
+          showSuccessSnackBar(context, t.discover.moreOfThisDone(title: title));
+        },
+      ),
+      MediaMenuExtraEntry(
+        icon: Symbols.thumb_down_rounded,
+        label: t.discover.lessOfThis,
+        onSelected: () {
+          unawaited(_discover.lessLikeThis(item));
+          showSuccessSnackBar(context, t.discover.lessOfThisDone(title: title));
+        },
+      ),
+    ];
+  }
 
   // ---------- "Jetzt live" ----------
 
@@ -1282,6 +1310,9 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                       onVerticalNavigation: (isUp) => _handleVerticalNavigation(_rowsAboveHubs + i, isUp),
                       onNavigateUp: (i == 0 && _rowsAboveHubs == 0) ? _focusTopBoundary : null,
                       onNavigateToSidebar: _navigateToSidebar,
+                      menuLeadingEntriesFor: _hubs[i].id == recommendationsHubId
+                          ? (item) => _recommendationMenuEntries(_hubs[i], item)
+                          : null,
                     ),
                   ),
 
@@ -1382,6 +1413,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       onNavigateUp: _focusTopActions,
       onNavigateToSidebar: _navigateToSidebar,
       tallPosterScale: TvBrowseRailLayout.compactTallPosterScale,
+      menuLeadingEntriesFor: _recommendationMenuEntries,
     );
   }
 

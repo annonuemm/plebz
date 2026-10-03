@@ -20,6 +20,7 @@ import 'package:plezy/services/data_aggregation_service.dart';
 import 'package:plezy/services/library_events/library_event_service.dart';
 import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/settings_service.dart';
+import 'package:plezy/services/recommendation_feedback_store.dart';
 import 'package:plezy/services/recommendations_service.dart';
 import 'package:plezy/utils/deletion_notifier.dart';
 import 'package:plezy/utils/watch_state_notifier.dart';
@@ -185,6 +186,8 @@ class _FakeRecommendations extends RecommendationsService {
   RecommendationsSource lastSource = RecommendationsSource.all;
   int lastRotation = -1;
   List<MediaLibrary> lastLibraries = const [];
+  List<MediaItem> lastLiked = const [];
+  Set<String> lastDisliked = const {};
 
   @override
   Future<List<MediaItem>> recommend({
@@ -192,11 +195,16 @@ class _FakeRecommendations extends RecommendationsService {
     Set<String> excludeKeys = const {},
     List<MediaItem> excludeItems = const [],
     List<MediaItem> underWay = const [],
+    List<MediaItem> liked = const [],
+    Set<String> disliked = const {},
+    Set<String> heldBack = const {},
     RecommendationsSource source = RecommendationsSource.all,
     int limit = 20,
     int rotation = 0,
   }) async {
     calls++;
+    lastLiked = liked;
+    lastDisliked = disliked;
     lastLibraries = libraries;
     lastExcluded = excludeKeys;
     lastSource = source;
@@ -282,6 +290,17 @@ void main() {
   tearDown(disposeFixture);
 
   group('recommendation row', () {
+    /// Read the row again, as a change of its source does.
+    Future<void> settingsReload() async {
+      final settings = await SettingsService.getInstance();
+      final current = settings.read(SettingsService.recommendationsSource);
+      await settings.write(
+        SettingsService.recommendationsSource,
+        current == RecommendationsSource.all ? RecommendationsSource.plex : RecommendationsSource.all,
+      );
+      await pumpEventQueue();
+    }
+
     test('sits ahead of the server rows, under continue watching', () async {
       // The server rows are re-sorted into library order on every pass; this
       // one belongs directly under Continue Watching wherever they land.
@@ -336,6 +355,39 @@ void main() {
 
       expect(recommendations.calls, 0, reason: 'switched off costs no requests');
       expect(provider.hubs.where((hub) => hub.title == t.discover.recommendedForYou), isEmpty);
+    });
+
+    test('"Weniger davon" takes the title off the row at once and keeps it out of the next reading', () async {
+      RecommendationFeedbackStore.debugReset();
+      addTearDown(RecommendationFeedbackStore.debugReset);
+      recommendations.result = [_item('suggested'), _item('other')];
+      await provider.load();
+      await pumpEventQueue();
+      expect(provider.hubs.first.items.map((item) => item.id), ['suggested', 'other']);
+
+      await provider.lessLikeThis(_item('suggested'));
+      await pumpEventQueue();
+      expect(provider.hubs.first.items.map((item) => item.id), ['other'], reason: 'gone at once');
+
+      await settingsReload();
+      expect(recommendations.lastDisliked, contains(RecommendationsService.copyKeyOf(_item('suggested'))));
+    });
+
+    test('"Mehr davon" makes the title a seed of the next reading, and a reset forgets both', () async {
+      RecommendationFeedbackStore.debugReset();
+      addTearDown(RecommendationFeedbackStore.debugReset);
+      recommendations.result = [_item('suggested')];
+      await provider.load();
+      await pumpEventQueue();
+
+      await provider.moreLikeThis(_item('suggested'));
+      await settingsReload();
+      expect(recommendations.lastLiked.map((item) => item.id), ['suggested']);
+
+      await provider.resetRecommendationFeedback();
+      await pumpEventQueue();
+      expect(recommendations.lastLiked, isEmpty);
+      expect(recommendations.lastDisliked, isEmpty);
     });
 
     test('libraries that arrive after the home rows read the row again', () async {

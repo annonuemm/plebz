@@ -1060,6 +1060,79 @@ void main() {
       expect(find.byType(SnackBar), findsNothing);
     });
 
+    testWidgets('leading entries stand at the top of the menu and run their own callback', (tester) async {
+      LocaleSettings.setLocaleSync(AppLocale.en);
+      TvDetectionService.debugSetAppleTVOverride(true);
+      addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+
+      final manager = MultiServerManager();
+      final multiServerProvider = testMultiServerProvider(manager);
+      final stack = await ProfileStack.create(withStorage: false);
+      addTearDown(() async {
+        await stack.dispose();
+        multiServerProvider.dispose();
+        manager.dispose();
+      });
+
+      final menuKey = GlobalKey<MediaContextMenuState>();
+      final item = testMediaItem(
+        id: 'movie-1',
+        backend: MediaBackend.jellyfin,
+        kind: MediaKind.movie,
+        title: 'Movie',
+        serverId: 'missing-server',
+      );
+      final chosen = <String>[];
+
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<MultiServerProvider>.value(value: multiServerProvider),
+              ChangeNotifierProvider<ActiveProfileProvider>.value(value: stack.active),
+            ],
+            child: MaterialApp(
+              theme: monoTheme(dark: true),
+              home: Scaffold(
+                body: Center(
+                  child: MediaContextMenu(
+                    key: menuKey,
+                    item: item,
+                    leadingEntries: [
+                      MediaMenuExtraEntry(
+                        icon: Icons.thumb_up,
+                        label: 'More of it',
+                        onSelected: () => chosen.add('more'),
+                      ),
+                      MediaMenuExtraEntry(
+                        icon: Icons.thumb_down,
+                        label: 'Less of it',
+                        onSelected: () => chosen.add('less'),
+                      ),
+                    ],
+                    child: const SizedBox(width: 120, height: 80, child: Text('target')),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      menuKey.currentState!.showContextMenu(tester.element(find.text('target')));
+      await tester.pumpAndSettle();
+
+      final more = tester.getTopLeft(find.text('More of it')).dy;
+      final less = tester.getTopLeft(find.text('Less of it')).dy;
+      final rate = tester.getTopLeft(find.text(t.mediaMenu.rate)).dy;
+      expect(more, lessThan(less));
+      expect(less, lessThan(rate), reason: 'above the standard actions');
+
+      await tester.tap(find.text('Less of it'));
+      await tester.pumpAndSettle();
+      expect(chosen, ['less']);
+    });
+
     testWidgets('file info client resolution failure shows an error without popping another route', (tester) async {
       LocaleSettings.setLocaleSync(AppLocale.en);
       TvDetectionService.debugSetAppleTVOverride(true);

@@ -413,7 +413,6 @@ extension _VideoPlayerBuildMethods on VideoPlayerScreenState {
                 VideoPlayerZapBanner(
                   visible: _zapBannerVisible,
                   channelName: _liveTitleWithVariant,
-                  channelNumber: _currentLiveChannel?.number,
                   programTitle: _currentLiveProgram?.title,
                 ),
               // Watch Together overlays (isolated from video surface repaints)

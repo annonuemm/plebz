@@ -550,6 +550,10 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get useSystemTvKeyboardDescription => 'Zum Tippen die Bildschirmtastatur des Fernsehers oder der Box verwenden. Ausschalten, um stattdessen die Tastatur von Plebz zu nutzen — für Geräte, deren eigene nicht aufgeht.';
 	@override String get showRecommendationsRow => 'Empfehlungsreihe';
 	@override String get showRecommendationsRowDescription => 'Unter Weiterschauen eine Reihe „Weil du das gesehen hast" zeigen, gebildet aus Titeln, die du markiert oder gesehen hast. Schlägt nur vor, was auf deinen Servern liegt.';
+	@override String get resetRecommendations => 'Empfehlungen zurücksetzen';
+	@override String get resetRecommendationsDescription => 'Vergisst alle „Mehr davon“ und „Weniger davon“ aus der Empfehlungsreihe.';
+	@override String get resetRecommendationsConfirm => 'Zurücksetzen';
+	@override String get resetRecommendationsDone => 'Empfehlungen zurückgesetzt';
 	@override String get showLiveNowRow => 'Reihe „Jetzt live“';
 	@override String get showLiveNowRowDescription => 'Unter Weiterschauen deine Lieblingssender mit dem, was gerade läuft – und bei eingeschaltetem Sport die Spiele von heute.';
 	@override String get detailPages => 'Detailseiten';
@@ -1376,6 +1380,10 @@ class _Translations$discover$de extends Translations$discover$en {
 		other: '${n} Titel',
 	);
 	@override String get alsoAvailableOn => 'Auch verfügbar auf';
+	@override String get moreOfThis => 'Mehr davon';
+	@override String get lessOfThis => 'Weniger davon';
+	@override String moreOfThisDone({required Object title}) => 'Mehr Titel wie „${title}“';
+	@override String lessOfThisDone({required Object title}) => '„${title}“ wird nicht mehr vorgeschlagen';
 	@override String get recommendedForYou => 'Empfehlungen für Dich';
 }
 
@@ -3977,6 +3985,10 @@ extension on TranslationsDe {
 			'settings.useSystemTvKeyboardDescription' => 'Zum Tippen die Bildschirmtastatur des Fernsehers oder der Box verwenden. Ausschalten, um stattdessen die Tastatur von Plebz zu nutzen — für Geräte, deren eigene nicht aufgeht.',
 			'settings.showRecommendationsRow' => 'Empfehlungsreihe',
 			'settings.showRecommendationsRowDescription' => 'Unter Weiterschauen eine Reihe „Weil du das gesehen hast" zeigen, gebildet aus Titeln, die du markiert oder gesehen hast. Schlägt nur vor, was auf deinen Servern liegt.',
+			'settings.resetRecommendations' => 'Empfehlungen zurücksetzen',
+			'settings.resetRecommendationsDescription' => 'Vergisst alle „Mehr davon“ und „Weniger davon“ aus der Empfehlungsreihe.',
+			'settings.resetRecommendationsConfirm' => 'Zurücksetzen',
+			'settings.resetRecommendationsDone' => 'Empfehlungen zurückgesetzt',
 			'settings.showLiveNowRow' => 'Reihe „Jetzt live“',
 			'settings.showLiveNowRowDescription' => 'Unter Weiterschauen deine Lieblingssender mit dem, was gerade läuft – und bei eingeschaltetem Sport die Spiele von heute.',
 			'settings.detailPages' => 'Detailseiten',
@@ -4063,12 +4075,12 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.notPossible' => 'nicht möglich',
 			'settings.hardwareTestLabels.unavailable' => 'nicht verfügbar',
 			'settings.hardwareTestLabels.none' => 'keine',
+			_ => null,
+		} ?? switch (path) {
 			'settings.hardwareTestLabels.yes' => 'ja',
 			'settings.hardwareTestLabels.no' => 'nein',
 			'settings.yearFilter' => 'Jahresbereich',
 			'settings.yearFilterDescription' => 'Filme und Serien auf Erscheinungsjahre eingrenzen',
-			_ => null,
-		} ?? switch (path) {
 			'settings.yearFilterMovies' => 'Filme',
 			'settings.yearFilterShows' => 'Serien',
 			'settings.yearFilterFrom' => 'Von',
@@ -4577,12 +4589,12 @@ extension on TranslationsDe {
 			'profiles.removeConnectionTitle' => 'Verbindung entfernen?',
 			'profiles.removeConnectionMessage' => ({required Object displayName, required Object connectionLabel}) => 'Zugriff von ${displayName} auf ${connectionLabel} entfernen. Andere Profile behalten ihn.',
 			'profiles.deleteProfileTitle' => 'Profil löschen?',
+			_ => null,
+		} ?? switch (path) {
 			'profiles.deleteProfileMessage' => ({required Object displayName}) => '${displayName} und Verbindungen entfernen. Server bleiben verfügbar.',
 			'profiles.profileNameLabel' => 'Profilname',
 			'profiles.pinProtectionLabel' => 'PIN-Schutz',
 			'profiles.pinManagedByPlex' => 'PIN wird von Plex verwaltet. Auf plex.tv bearbeiten.',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.noPinSetEditOnPlex' => 'Keine PIN festgelegt. Um eine zu verlangen, bearbeite den Home-Benutzer auf plex.tv.',
 			'profiles.setPin' => 'PIN festlegen',
 			'profiles.setPinTitle' => 'PIN festlegen',
@@ -4718,6 +4730,10 @@ extension on TranslationsDe {
 			'discover.moreLikeThis' => 'Ähnliche Inhalte',
 			'discover.titleCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Titel', other: '${n} Titel', ), 
 			'discover.alsoAvailableOn' => 'Auch verfügbar auf',
+			'discover.moreOfThis' => 'Mehr davon',
+			'discover.lessOfThis' => 'Weniger davon',
+			'discover.moreOfThisDone' => ({required Object title}) => 'Mehr Titel wie „${title}“',
+			'discover.lessOfThisDone' => ({required Object title}) => '„${title}“ wird nicht mehr vorgeschlagen',
 			'discover.recommendedForYou' => 'Empfehlungen für Dich',
 			'errors.searchFailed' => ({required Object error}) => 'Suche fehlgeschlagen: ${error}',
 			'errors.searchUnavailable' => 'Die Suche konnte keinen Medienserver erreichen.',
@@ -5087,6 +5103,8 @@ extension on TranslationsDe {
 			'liveTv.noFavoriteChannelsHint' => 'Zeige alle Sender an, halte dann einen Sender gedrückt und wähle „Zu Favoriten hinzufügen“.',
 			'liveTv.showAllChannels' => 'Alle Sender anzeigen',
 			'liveTv.favoritesLoadFailed' => 'Favoriten konnten nicht geladen werden. Überprüfe deine Verbindung und versuche es erneut.',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.favoritesUpdateFailed' => 'Favoriten konnten nicht aktualisiert werden. Prüfe deine Verbindung und versuche es erneut.',
 			'liveTv.joinSession' => 'Aktueller Sitzung beitreten',
 			'liveTv.watchFromStart' => ({required Object minutes}) => 'Von Anfang an ansehen (vor ${minutes} Min.)',
@@ -5095,8 +5113,6 @@ extension on TranslationsDe {
 			'liveTv.record' => 'Aufnehmen',
 			'liveTv.recordEpisode' => 'Episode aufnehmen',
 			'liveTv.recordSeries' => 'Serie aufnehmen',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.recordOptions' => 'Aufnahmeoptionen',
 			'liveTv.saveTo' => 'Speichern in',
 			'liveTv.recordings' => 'Aufnahmen',
@@ -5601,6 +5617,8 @@ extension on TranslationsDe {
 			'performanceOverlay.maxFall' => 'MaxFALL',
 			'performanceOverlay.cacheUsed' => 'Cache genutzt',
 			'performanceOverlay.cacheLimit' => 'Cache-Limit',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.speed' => 'Geschwindigkeit',
 			'performanceOverlay.player' => 'Player',
 			'performanceOverlay.memory' => 'Speicher',
@@ -5609,8 +5627,6 @@ extension on TranslationsDe {
 			'performanceOverlay.decoderAndroidHw' => 'Android HW',
 			'performanceOverlay.decoderNvidiaHw' => 'NVIDIA HW',
 			'performanceOverlay.decoderQualcommHw' => 'Qualcomm HW',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.decoderMediatekHw' => 'MediaTek HW',
 			'performanceOverlay.decoderExynosHw' => 'Exynos HW',
 			'performanceOverlay.decoderSoftware' => 'Software',

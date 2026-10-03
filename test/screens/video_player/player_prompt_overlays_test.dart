@@ -172,14 +172,7 @@ void main() {
     addTearDown(visible.dispose);
 
     await tester.pumpWidget(
-      _wrapPrompt(
-        VideoPlayerZapBanner(
-          visible: visible,
-          channelName: 'Das Erste HD',
-          channelNumber: '1',
-          programTitle: 'Tagesschau',
-        ),
-      ),
+      _wrapPrompt(VideoPlayerZapBanner(visible: visible, channelName: 'Das Erste HD', programTitle: 'Tagesschau')),
     );
 
     // Built but transparent until a zap announces one; the opacity is what
@@ -189,30 +182,27 @@ void main() {
     visible.value = true;
     await tester.pump();
 
-    expect(find.text('1  Das Erste HD'), findsOneWidget);
+    // The name alone, no channel number, in line with the programme below.
+    expect(find.text('Das Erste HD'), findsOneWidget);
     expect(find.text('Tagesschau'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('Das Erste HD')).dx, tester.getTopLeft(find.text('Tagesschau')).dx);
     expect(tester.widget<AnimatedOpacity>(find.byType(AnimatedOpacity)).opacity, 1);
   });
 
   testWidgets('under glass the zap banner is a pane of glass; elsewhere it keeps its black box', (tester) async {
     final visible = ValueNotifier<bool>(true);
     addTearDown(visible.dispose);
-    Widget banner() => VideoPlayerZapBanner(
-      visible: visible,
-      channelName: 'Das Erste HD',
-      channelNumber: '1',
-      programTitle: 'Tagesschau',
-    );
+    Widget banner() => VideoPlayerZapBanner(visible: visible, channelName: 'Das Erste HD', programTitle: 'Tagesschau');
 
     await tester.pumpWidget(_wrapPrompt(banner(), theme: monoTheme(dark: true, variant: AppThemeVariant.glas)));
-    expect(find.ancestor(of: find.text('1  Das Erste HD'), matching: find.byType(OckerGlass)), findsOneWidget);
+    expect(find.ancestor(of: find.text('Das Erste HD'), matching: find.byType(OckerGlass)), findsOneWidget);
     expect(find.ancestor(of: find.text('Tagesschau'), matching: find.byType(OckerGlass)), findsOneWidget);
 
     await tester.pumpWidget(_wrapPrompt(banner(), theme: monoTheme(dark: true)));
     // The app animates from one theme to the next.
     await tester.pumpAndSettle();
     expect(find.byType(OckerGlass), findsNothing);
-    expect(find.text('1  Das Erste HD'), findsOneWidget);
+    expect(find.text('Das Erste HD'), findsOneWidget);
   });
 
   testWidgets('a channel without a guide entry is announced on its own', (tester) async {
@@ -220,12 +210,10 @@ void main() {
     addTearDown(visible.dispose);
 
     await tester.pumpWidget(
-      _wrapPrompt(
-        VideoPlayerZapBanner(visible: visible, channelName: 'Kein EPG', channelNumber: '7', programTitle: null),
-      ),
+      _wrapPrompt(VideoPlayerZapBanner(visible: visible, channelName: 'Kein EPG', programTitle: null)),
     );
 
-    expect(find.text('7  Kein EPG'), findsOneWidget);
+    expect(find.text('Kein EPG'), findsOneWidget);
   });
 
   testWidgets('the buffering spinner announces loading until the first frame renders', (tester) async {

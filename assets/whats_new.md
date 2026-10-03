@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.5.0 (Build 604)
+
+- Empfehlungsreihe: „Mehr davon“ und „Weniger davon“ im Menü eines Posters (OK lange drücken). Die Reihe mischt sich alle drei Stunden neu, Lieblinge kommen abwechselnd zum Zug. Zurücksetzen unter Einstellungen → Darstellung → Startseite.
+- Live-TV: Beim Umschalten und in der Senderanzeige steht der Sender nur noch einmal und ohne Nummer.
+
 ## 1.4.7 (Build 601)
 
 - Merkliste im Glas-Design: „Alle“, „Filme“ und „Serien“ stehen jetzt direkt zum Antippen da, ohne Auswahlfenster.

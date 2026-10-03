@@ -563,6 +563,10 @@ class TvBrowseRail extends StatefulWidget {
   /// ([MediaCard.showTitleImplied]).
   final bool Function(MediaHub hub)? showTitleImpliedForHub;
 
+  /// Entries put at the top of a card's menu in [hub] — the recommendation
+  /// row's "Mehr davon" and "Weniger davon".
+  final List<MediaMenuExtraEntry> Function(MediaHub hub, MediaItem item)? menuLeadingEntriesFor;
+
   /// Explicit background bleed override. When null, the bleed target is read
   /// from [MainScreenFocusScope] (offset aspect) inside the bleed widget
   /// itself, so sidebar flips never rebuild the rail — only the bleed layer.
@@ -599,6 +603,7 @@ class TvBrowseRail extends StatefulWidget {
     this.fullCardLayoutForHub,
     this.widePosterScaleForHub,
     this.showTitleImpliedForHub,
+    this.menuLeadingEntriesFor,
     this.backgroundBleedLeft,
   });
 
@@ -2122,6 +2127,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
             mixedHubContext: metrics.isMixedHub,
             episodePosterModeOverride: episodePosterMode,
             showTitleImplied: widget.showTitleImpliedForHub?.call(hub) ?? false,
+            menuLeadingEntries: widget.menuLeadingEntriesFor?.call(hub, item) ?? const [],
           );
   }
 

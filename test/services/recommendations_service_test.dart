@@ -229,7 +229,7 @@ void main() {
     expect((await s.service.recommend(libraries: [_library('1')])).map((item) => item.id), ['shared']);
   });
 
-  test('the seeds take turns, so one favourite cannot fill the row', () async {
+  test('every seed is heard, so one favourite cannot fill the row', () async {
     final client = _FakeClient(
       shelf: [_item('a', favorite: true), _item('b', favorite: true)],
       relatedById: {
@@ -239,7 +239,12 @@ void main() {
     );
     final s = withClient(client);
 
-    expect((await s.service.recommend(libraries: [_library('1')])).map((item) => item.id), ['a1', 'b1', 'a2', 'b2']);
+    expect((await s.service.recommend(libraries: [_library('1')])).map((item) => item.id).toSet(), {
+      'a1',
+      'b1',
+      'a2',
+      'b2',
+    });
   });
 
   test('music and photo libraries are not scanned', () async {
@@ -492,7 +497,7 @@ void main() {
     });
   });
 
-  test('a title several seeds point at goes first', () async {
+  test('a title several seeds point at goes first more often, but not always', () async {
     final client = _FakeClient(
       shelf: [_item('a', favorite: true), _item('b', favorite: true), _item('c', favorite: true)],
       relatedById: {
@@ -503,10 +508,80 @@ void main() {
     );
     final s = withClient(client);
 
-    final result = await s.service.recommend(libraries: [_library('1')]);
+    final firsts = <String, int>{};
+    for (var rotation = 0; rotation < 120; rotation++) {
+      final result = await s.service.recommend(libraries: [_library('1')], rotation: rotation);
+      expect(result.map((item) => item.id).toSet(), {'shared', 'only-a', 'only-b', 'only-c'});
+      firsts.update(result.first.id, (count) => count + 1, ifAbsent: () => 1);
+    }
 
-    expect(result.first.id, 'shared');
-    expect(result.map((item) => item.id).toSet(), {'shared', 'only-a', 'only-b', 'only-c'});
+    // The better guess has the better chance; a fixed seat at the front
+    // would pin it there for as long as the seeds stay.
+    final shared = firsts['shared'] ?? 0;
+    for (final other in ['only-a', 'only-b', 'only-c']) {
+      expect(shared, greaterThan(firsts[other] ?? 0), reason: '$firsts');
+    }
+    expect(shared, lessThan(120), reason: 'others get the front too: $firsts');
+  });
+
+  group('Mehr davon, Weniger davon', () {
+    test('a title asked for more of is a seed, and what is like it is favoured', () async {
+      final client = _FakeClient(
+        shelf: [_item('seen', viewCount: 1)],
+        relatedById: {
+          'seen': [_item('x1'), _item('x2'), _item('x3')],
+          'loved': [_item('y1'), _item('y2'), _item('y3')],
+        },
+      );
+      final s = withClient(client);
+      var fromLoved = 0;
+      for (var rotation = 0; rotation < 60; rotation++) {
+        final result = await s.service.recommend(
+          libraries: [_library('1')],
+          liked: [_item('loved')],
+          rotation: rotation,
+        );
+        if (result.first.id.startsWith('y')) fromLoved++;
+      }
+      expect(client.relatedCalls, contains('loved'));
+      expect(fromLoved, greaterThan(30), reason: 'doubled weight, more often first');
+    });
+
+    test('a disliked title stays out, and what is like it is held back', () async {
+      final client = _FakeClient(
+        shelf: [_item('liked', favorite: true)],
+        relatedById: {
+          'liked': [_item('hated'), _item('alike'), _item('fine')],
+        },
+      );
+      final s = withClient(client);
+      var alikeFirst = 0;
+      for (var rotation = 0; rotation < 80; rotation++) {
+        final result = await s.service.recommend(
+          libraries: [_library('1')],
+          disliked: {RecommendationsService.copyKeyOf(_item('hated'))},
+          heldBack: {RecommendationsService.copyKeyOf(_item('alike'))},
+          rotation: rotation,
+        );
+        expect(result.map((item) => item.id), isNot(contains('hated')));
+        expect(result.map((item) => item.id), contains('alike'), reason: 'held back, not hidden');
+        if (result.first.id == 'alike') alikeFirst++;
+      }
+      expect(alikeFirst, lessThan(40), reason: 'a quarter of the chance');
+    });
+
+    test('the liked pool takes turns as seeds across periods', () async {
+      final client = _FakeClient();
+      final s = withClient(client);
+      final liked = [for (var i = 0; i < 9; i++) _item('fav-$i')];
+      final heard = <String>{};
+      for (var rotation = 0; rotation < 12; rotation++) {
+        client.relatedCalls.clear();
+        await s.service.recommend(libraries: [_library('1')], liked: liked, rotation: rotation);
+        heard.addAll(client.relatedCalls);
+      }
+      expect(heard, containsAll([for (final item in liked) item.id]), reason: 'every liked title gets its turn');
+    });
   });
 
   test('seeds come from every library, not the first three', () async {

@@ -1377,6 +1377,18 @@ class Translations$settings$en {
 	/// en: 'Show a "Because you watched" row under Continue Watching, built from titles you marked or watched. Only suggests what is on your servers.'
 	String get showRecommendationsRowDescription => 'Show a "Because you watched" row under Continue Watching, built from titles you marked or watched. Only suggests what is on your servers.';
 
+	/// en: 'Reset recommendations'
+	String get resetRecommendations => 'Reset recommendations';
+
+	/// en: 'Forgets every "More like this" and "Less like this" from the recommendation row.'
+	String get resetRecommendationsDescription => 'Forgets every "More like this" and "Less like this" from the recommendation row.';
+
+	/// en: 'Reset'
+	String get resetRecommendationsConfirm => 'Reset';
+
+	/// en: 'Recommendations reset'
+	String get resetRecommendationsDone => 'Recommendations reset';
+
 	/// en: '"Live now" row'
 	String get showLiveNowRow => '"Live now" row';
 
@@ -3516,6 +3528,18 @@ class Translations$discover$en {
 
 	/// en: 'Also available on'
 	String get alsoAvailableOn => 'Also available on';
+
+	/// en: 'More like this'
+	String get moreOfThis => 'More like this';
+
+	/// en: 'Less like this'
+	String get lessOfThis => 'Less like this';
+
+	/// en: 'More titles like "${title}"'
+	String moreOfThisDone({required Object title}) => 'More titles like "${title}"';
+
+	/// en: '"${title}" won't be suggested again'
+	String lessOfThisDone({required Object title}) => '"${title}" won\'t be suggested again';
 
 	/// en: 'Recommended for you'
 	String get recommendedForYou => 'Recommended for you';
@@ -9125,6 +9149,10 @@ extension on Translations {
 			'settings.useSystemTvKeyboardDescription' => 'Type with the on-screen keyboard your TV or box provides. Turn it off to use Plebz\'s own keyboard instead, for a device whose keyboard does not appear.',
 			'settings.showRecommendationsRow' => 'Recommendation row',
 			'settings.showRecommendationsRowDescription' => 'Show a "Because you watched" row under Continue Watching, built from titles you marked or watched. Only suggests what is on your servers.',
+			'settings.resetRecommendations' => 'Reset recommendations',
+			'settings.resetRecommendationsDescription' => 'Forgets every "More like this" and "Less like this" from the recommendation row.',
+			'settings.resetRecommendationsConfirm' => 'Reset',
+			'settings.resetRecommendationsDone' => 'Recommendations reset',
 			'settings.showLiveNowRow' => '"Live now" row',
 			'settings.showLiveNowRowDescription' => 'Under Continue Watching, your favourite channels with what is on them — and, with Sport switched on, today\'s games.',
 			'settings.detailPages' => 'Detail pages',
@@ -9202,12 +9230,12 @@ extension on Translations {
 			'settings.hardwareTestLabels.hdrFormats' => 'HDR formats',
 			'settings.hardwareTestLabels.wideColour' => 'Wide colour gamut',
 			'settings.hardwareTestLabels.peakBrightness' => 'Peak brightness',
+			_ => null,
+		} ?? switch (path) {
 			'settings.hardwareTestLabels.audioOutput' => 'Output',
 			'settings.hardwareTestLabels.channels' => 'Channels',
 			'settings.hardwareTestLabels.hardwareDecoder' => 'Hardware',
 			'settings.hardwareTestLabels.noHardwareDecoder' => 'software only',
-			_ => null,
-		} ?? switch (path) {
 			'settings.hardwareTestLabels.tunneling' => 'tunneling',
 			'settings.hardwareTestLabels.possible' => 'possible',
 			'settings.hardwareTestLabels.notPossible' => 'not possible',
@@ -9716,12 +9744,12 @@ extension on Translations {
 			'profiles.delete' => 'Delete',
 			'profiles.signOut' => 'Sign out',
 			'profiles.signOutPlexTitle' => 'Sign out of Plex?',
+			_ => null,
+		} ?? switch (path) {
 			'profiles.signOutPlexMessage' => ({required Object displayName}) => 'Remove ${displayName} and all Plex Home users? Sign back in anytime.',
 			'profiles.signOutPlexDeleteDownloads' => 'Also delete downloads',
 			'profiles.signOutPlexDeleteDownloadsDescription' => 'Otherwise they stay on this device and come back when you sign back in to this account.',
 			'profiles.signedOutPlex' => 'Signed out of Plex.',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.signOutFailed' => 'Sign out failed.',
 			'profiles.sectionTitle' => 'Profiles',
 			'profiles.summarySingle' => 'Add profiles to mix managed users and local identities',
@@ -9869,6 +9897,10 @@ extension on Translations {
 			'discover.moreLikeThis' => 'More Like This',
 			'discover.titleCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '${n} title', other: '${n} titles', ), 
 			'discover.alsoAvailableOn' => 'Also available on',
+			'discover.moreOfThis' => 'More like this',
+			'discover.lessOfThis' => 'Less like this',
+			'discover.moreOfThisDone' => ({required Object title}) => 'More titles like "${title}"',
+			'discover.lessOfThisDone' => ({required Object title}) => '"${title}" won\'t be suggested again',
 			'discover.recommendedForYou' => 'Recommended for you',
 			'errors.searchFailed' => ({required Object error}) => 'Search failed: ${error}',
 			'errors.searchUnavailable' => 'Search could not reach any media server.',
@@ -10226,6 +10258,8 @@ extension on Translations {
 			'watchlist.typeAll' => 'All',
 			'watchlist.typeMovies' => 'Movies',
 			'watchlist.typeShows' => 'Shows',
+			_ => null,
+		} ?? switch (path) {
 			'watchlist.anyStatus' => 'Watched and unwatched',
 			'watchlist.unwatchedOnly' => 'Not watched',
 			'watchlist.watchedOnly' => 'Watched',
@@ -10234,8 +10268,6 @@ extension on Translations {
 			'liveTv.noChannels' => 'No channels available',
 			'liveTv.noDvr' => 'No DVR configured on any server',
 			'liveTv.serverUnavailable' => 'Live TV server is not available.',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.serverNotConnected' => 'Live TV server is not connected.',
 			'liveTv.noPrograms' => 'No program data available',
 			'liveTv.liveStreamFailed' => 'Live stream failed',
@@ -10740,6 +10772,8 @@ extension on Translations {
 			'videoSettings.hdrToneMappingFailed' => 'Couldn\'t change HDR tone mapping — the previous mode is still active.',
 			'videoSettings.audioOutput' => 'Audio Output',
 			'videoSettings.performanceOverlay' => 'Performance Overlay',
+			_ => null,
+		} ?? switch (path) {
 			'videoSettings.audioOutputDolbyAtmos' => 'Dolby Atmos',
 			'videoSettings.audioOutputDolbyAudio' => 'Dolby Audio',
 			'videoSettings.audioOutputSurround' => 'Surround',
@@ -10748,8 +10782,6 @@ extension on Translations {
 			'videoSettings.audioNormalization' => 'Normalize Loudness',
 			'videoSettings.audioNormalizationDisablesPassthrough' => 'Decodes audio to PCM; passthrough is off while this is on',
 			'videoSettings.audioNormalizationStereoMix' => 'Decodes audio to a stereo mix; passthrough is off while this is on',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.color' => 'Color',
 			'performanceOverlay.performance' => 'Performance',
 			'performanceOverlay.buffer' => 'Buffer',

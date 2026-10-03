@@ -231,6 +231,10 @@ class MediaContextMenu extends StatefulWidget {
   /// Extra entries appended after the standard actions.
   final List<MediaMenuExtraEntry> extraEntries;
 
+  /// Extra entries put before the standard actions — the recommendation
+  /// row's "Mehr davon" and "Weniger davon".
+  final List<MediaMenuExtraEntry> leadingEntries;
+
   const MediaContextMenu({
     super.key,
     required this.item,
@@ -242,6 +246,7 @@ class MediaContextMenu extends StatefulWidget {
     this.isInContinueWatching = false,
     this.collectionId,
     this.extraEntries = const [],
+    this.leadingEntries = const [],
   });
 
   @override
@@ -390,6 +395,10 @@ class MediaContextMenuState extends State<MediaContextMenu> {
     for (var i = 0; i < widget.extraEntries.length; i++) {
       final entry = widget.extraEntries[i];
       menuActions.add(_MenuAction(value: 'extra_$i', icon: entry.icon, label: entry.label));
+    }
+    for (var i = widget.leadingEntries.length - 1; i >= 0; i--) {
+      final entry = widget.leadingEntries[i];
+      menuActions.insert(0, _MenuAction(value: 'lead_$i', icon: entry.icon, label: entry.label));
     }
 
     final openedFromKeyboard = _openedFromKeyboard;
@@ -788,6 +797,13 @@ class MediaContextMenuState extends State<MediaContextMenu> {
     required bool openedFromKeyboard,
   }) async {
     // Caller-supplied extra entries dispatch straight to their callback.
+    if (selected != null && selected.startsWith('lead_')) {
+      final index = int.tryParse(selected.substring('lead_'.length));
+      if (index != null && index >= 0 && index < widget.leadingEntries.length) {
+        widget.leadingEntries[index].onSelected();
+      }
+      return;
+    }
     if (selected != null && selected.startsWith('extra_')) {
       final index = int.tryParse(selected.substring('extra_'.length));
       if (index != null && index >= 0 && index < widget.extraEntries.length) {

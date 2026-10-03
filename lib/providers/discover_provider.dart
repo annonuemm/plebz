@@ -20,6 +20,7 @@ import '../utils/deletion_notifier.dart';
 import '../utils/media_event_keys.dart';
 import '../utils/global_key_utils.dart';
 import '../i18n/strings.g.dart';
+import '../services/recommendation_feedback_store.dart';
 import '../services/recommendations_service.dart';
 import '../utils/media_hub_ordering.dart';
 import '../utils/watch_state_notifier.dart';
@@ -77,6 +78,10 @@ DiscoverRefreshOutcome _refreshOutcome({
 /// Lives inside the profile-keyed provider subtree, so a profile switch
 /// resets it by construction. The screen is a consumer: it renders this
 /// state and keeps only UI concerns (hero carousel, focus, spotlight).
+
+/// The id of the home screen's recommendation row.
+const recommendationsHubId = 'plesy:recommendations';
+
 class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin {
   /// Preview row caps at 20; one extra item is fetched as a probe so
   /// [hasMoreContinueWatching] can show the "more" affordance without a
@@ -791,6 +796,10 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     try {
       final service = _recommendationsService ?? RecommendationsService(_multiServer.serverManager);
       final rotation = RecommendationsService.rotationAt(_now());
+      final feedback = RecommendationFeedbackStore.forProfile(profileId);
+      await feedback.ensureLoaded();
+      if (isDisposed || generation != _recommendationsGeneration) return;
+      final dislikes = feedback.dislikes;
       final items = await service.recommend(
         libraries: _libraries.libraries,
         // Whatever is one row above does not belong one row below.
@@ -800,6 +809,10 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
         // And what is under way is what the viewer is into: a profile that
         // has finished nothing yet still has something to go on.
         underWay: _onDeck,
+        // "Mehr davon" and "Weniger davon" from the row's own menu.
+        liked: [for (final like in feedback.likes) like.toItem()],
+        disliked: {for (final dislike in dislikes) dislike.key},
+        heldBack: {for (final dislike in dislikes) ...dislike.related},
         source:
             SettingsService.instanceOrNull?.read(SettingsService.recommendationsSource) ?? RecommendationsSource.all,
         rotation: rotation,
@@ -809,7 +822,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
       _recommendations = items.isEmpty
           ? null
           : MediaHub(
-              id: 'plesy:recommendations',
+              id: recommendationsHubId,
               title: t.discover.recommendedForYou,
               type: 'mixed',
               items: items,
@@ -819,6 +832,48 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     } catch (error, stackTrace) {
       appLogger.d('DiscoverProvider: recommendations failed', error: error, stackTrace: stackTrace);
     }
+  }
+
+  /// "Mehr davon" for [item] from the recommendation row: a seed from the
+  /// next reading on. The row on screen stays as it is.
+  Future<void> moreLikeThis(MediaItem item) =>
+      RecommendationFeedbackStore.forProfile(profileId).like(item, RecommendationsService.copyKeyOf(item));
+
+  /// "Weniger davon" for [item]: gone from the row at once, kept out for
+  /// [RecommendationFeedbackStore.lessLifetime], and what its server calls
+  /// like it held back from then on.
+  Future<void> lessLikeThis(MediaItem item) async {
+    final key = RecommendationsService.copyKeyOf(item);
+    final store = RecommendationFeedbackStore.forProfile(profileId);
+    await store.dislike(key);
+    final row = _recommendations;
+    if (row != null && !isDisposed) {
+      final kept = [
+        for (final entry in row.items)
+          if (RecommendationsService.copyKeyOf(entry) != key) entry,
+      ];
+      _recommendations = kept.isEmpty ? null : row.copyWith(items: kept, size: kept.length);
+      safeNotifyListeners();
+    }
+    final serverId = serverIdOrNull(item.serverId);
+    final client = serverId == null ? null : _multiServer.serverManager.getClient(serverId);
+    if (client == null) return;
+    try {
+      final hubs = await client.fetchRelatedHubs(item.id);
+      await store.setDislikeRelated(key, {
+        for (final hub in hubs)
+          for (final related in hub.items) RecommendationsService.copyKeyOf(related),
+      });
+    } catch (error) {
+      appLogger.d('Recommendations: no related titles for a dislike', error: error);
+    }
+  }
+
+  /// Forget every "Mehr davon" and "Weniger davon" of this profile, and read
+  /// the row again without them.
+  Future<void> resetRecommendationFeedback() async {
+    await RecommendationFeedbackStore.forProfile(profileId).clear();
+    if (!isDisposed) unawaited(_loadRecommendations());
   }
 
   /// Whether to keep a timer running that reads the row again when its period

@@ -445,6 +445,10 @@
     "useSystemTvKeyboardDescription": "Zum Tippen die Bildschirmtastatur des Fernsehers oder der Box verwenden. Ausschalten, um stattdessen die Tastatur von Plebz zu nutzen — für Geräte, deren eigene nicht aufgeht.",
     "showRecommendationsRow": "Empfehlungsreihe",
     "showRecommendationsRowDescription": "Unter Weiterschauen eine Reihe „Weil du das gesehen hast\" zeigen, gebildet aus Titeln, die du markiert oder gesehen hast. Schlägt nur vor, was auf deinen Servern liegt.",
+    "resetRecommendations": "Empfehlungen zurücksetzen",
+    "resetRecommendationsDescription": "Vergisst alle „Mehr davon“ und „Weniger davon“ aus der Empfehlungsreihe.",
+    "resetRecommendationsConfirm": "Zurücksetzen",
+    "resetRecommendationsDone": "Empfehlungen zurückgesetzt",
     "showLiveNowRow": "Reihe „Jetzt live“",
     "showLiveNowRowDescription": "Unter Weiterschauen deine Lieblingssender mit dem, was gerade läuft – und bei eingeschaltetem Sport die Spiele von heute.",
     "detailPages": "Detailseiten",
@@ -1255,6 +1259,10 @@
       "other": "${n} Titel"
     },
     "alsoAvailableOn": "Auch verfügbar auf",
+    "moreOfThis": "Mehr davon",
+    "lessOfThis": "Weniger davon",
+    "moreOfThisDone": "Mehr Titel wie „${title}“",
+    "lessOfThisDone": "„${title}“ wird nicht mehr vorgeschlagen",
     "recommendedForYou": "Empfehlungen für Dich"
   },
   "errors": {

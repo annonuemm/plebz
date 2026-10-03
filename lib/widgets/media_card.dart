@@ -225,6 +225,9 @@ class MediaCard extends StatefulWidget {
   /// [SettingsService.viewMode]; null follows the setting.
   final ViewMode? viewModeOverride;
   final bool isInContinueWatching;
+
+  /// Entries put at the top of the card's menu — see [MediaContextMenu.leadingEntries].
+  final List<MediaMenuExtraEntry> menuLeadingEntries;
   final bool usesContinueWatchingAction;
   final String? collectionId; // The collection ID if displaying within a collection
   final bool isOffline; // True for downloaded content without server access
@@ -271,6 +274,7 @@ class MediaCard extends StatefulWidget {
     this.onLongPress,
     this.viewModeOverride,
     this.isInContinueWatching = false,
+    this.menuLeadingEntries = const [],
     bool? usesContinueWatchingAction,
     this.collectionId,
     this.isOffline = false,
@@ -510,6 +514,7 @@ class MediaCardState extends State<MediaCard> with ContextMenuTapMixin<MediaCard
       onListRefresh: widget.onListRefresh,
       isInContinueWatching: widget.isInContinueWatching,
       collectionId: widget.collectionId,
+      leadingEntries: widget.menuLeadingEntries,
       child: cardWidget,
     );
   }

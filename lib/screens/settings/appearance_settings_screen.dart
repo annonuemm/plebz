@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../i18n/strings.g.dart';
 import '../../providers/catalog_sources_provider.dart';
+import '../../providers/discover_provider.dart';
 import '../../providers/seerr_account_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/recommendations_service.dart';
@@ -13,7 +14,9 @@ import '../../services/settings_service.dart' hide ThemeMode;
 import '../../theme/mono_theme.dart' show redesignOfferedHere, supportedAppThemeVariant;
 import '../../focus/focusable_slider.dart';
 import '../../services/device_performance.dart';
+import '../../utils/dialogs.dart';
 import '../../utils/platform_detector.dart';
+import '../../utils/snackbar_helper.dart';
 import '../../widgets/app_icon.dart';
 import '../../widgets/setting_tile.dart';
 import '../../widgets/settings_page.dart';
@@ -277,6 +280,20 @@ class AppearanceSettingsScreen extends StatelessWidget {
               pref: SettingsService.showRecommendationsRow,
               builder: (context, showRow, _) => showRow ? _recommendationsSourceSelector() : const SizedBox.shrink(),
             ),
+            // Forgets the row's "Mehr davon" and "Weniger davon"; only while
+            // the row is on, like its source.
+            SettingValueBuilder<bool>(
+              pref: SettingsService.showRecommendationsRow,
+              builder: (context, showRow, _) => showRow
+                  ? SettingNavigationTile(
+                      icon: Symbols.restart_alt_rounded,
+                      title: t.settings.resetRecommendations,
+                      subtitle: t.settings.resetRecommendationsDescription,
+                      trailingIcon: Symbols.restart_alt_rounded,
+                      onTap: () => _resetRecommendations(context),
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ],
         ),
 
@@ -486,6 +503,18 @@ class AppearanceSettingsScreen extends StatelessWidget {
       ButtonSegment(value: EpisodeAction.details, label: Text(t.settings.episodeDetails)),
     ],
   );
+
+  Future<void> _resetRecommendations(BuildContext context) async {
+    final confirmed = await showConfirmDialog(
+      context,
+      title: t.settings.resetRecommendations,
+      message: t.settings.resetRecommendationsDescription,
+      confirmText: t.settings.resetRecommendationsConfirm,
+    );
+    if (!confirmed || !context.mounted) return;
+    await context.read<DiscoverProvider?>()?.resetRecommendationFeedback();
+    if (context.mounted) showSuccessSnackBar(context, t.settings.resetRecommendationsDone);
+  }
 
   static String _recommendationsSourceLabel(RecommendationsSource source) => switch (source) {
     RecommendationsSource.all => t.settings.recommendationsSourceAll,

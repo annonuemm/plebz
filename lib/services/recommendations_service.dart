@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import '../media/ids.dart';
 import '../media/media_backend.dart';
@@ -90,14 +91,18 @@ class RecommendationsService {
     Set<String> excludeKeys = const {},
     List<MediaItem> excludeItems = const [],
     List<MediaItem> underWay = const [],
+    List<MediaItem> liked = const [],
+    Set<String> disliked = const {},
+    Set<String> heldBack = const {},
     RecommendationsSource source = RecommendationsSource.all,
     int limit = 20,
     int rotation = 0,
   }) async {
-    final scan = await _scan(libraries, source, underWay);
+    final scan = await _scan(libraries, source, underWay, liked, rotation);
     final seeds = scan.seeds;
     if (seeds.isEmpty) return const [];
     final seedKeys = {for (final seed in seeds) seed.globalKey};
+    final likedKeys = {for (final item in liked) copyKeyOf(item)};
 
     // One title is one title, whichever server holds it: a film on Plex and
     // on Jellyfin is a single entry, and a film watched on one of them is
@@ -107,9 +112,14 @@ class RecommendationsService {
       for (final seed in seeds) _copyKey(seed),
       for (final item in excludeItems) _copyKey(item),
       ...scan.dealtWith,
+      // "Weniger davon": kept out for as long as it holds.
+      ...disliked,
     };
 
     final related = await Future.wait([for (final seed in seeds) _relatedTo(seed)]);
+    // Which of the lists came from a title asked for more of — its picks
+    // count double. Carried through the rotation below.
+    final fromLiked = [for (final seed in seeds) likedKeys.contains(_copyKey(seed))];
 
     // Round-robin rather than seed-by-seed: five films that all resemble one
     // favourite would otherwise fill the row before the second seed is heard.
@@ -121,6 +131,7 @@ class RecommendationsService {
     // until something is marked watched. Rotating reaches the rest of what the
     // servers already answered, at no extra request.
     final ordered = _rotated(related, rotation);
+    final orderedFromLiked = _rotated(fromLiked, rotation);
     final order = <String>[];
     final copies = <String, List<MediaItem>>{};
     final votes = <String, Set<int>>{};
@@ -138,7 +149,7 @@ class RecommendationsService {
         if (!(item.isMovie || item.isShow) || _dealtWith(item)) continue;
         final key = _copyKey(item);
         if (excluded.contains(key)) continue;
-        (votes[key] ??= <int>{}).add(list);
+        (votes[key] ??= <int>{}).add(orderedFromLiked[list] ? -1 - list : list);
         final known = copies[key];
         if (known == null) {
           order.add(key);
@@ -149,16 +160,25 @@ class RecommendationsService {
       }
     }
 
-    // A title several of the viewer's titles point at is the better guess, so
-    // it goes first; among equals the round-robin order stands, and with it
-    // the rotation. The best copy is the one the row opens.
-    // List.sort is not stable, so the round-robin position breaks ties.
-    final position = {for (final (index, key) in order.indexed) key: index};
-    final ranked = [...order]
-      ..sort((a, b) {
-        final byVotes = votes[b]!.length.compareTo(votes[a]!.length);
-        return byVotes != 0 ? byVotes : position[a]!.compareTo(position[b]!);
-      });
+    // A title several of the viewer's titles point at is the better guess,
+    // and one a "Mehr davon" title points at doubly so — but a better guess
+    // is a better *chance* of going first, not a seat there: a fixed order
+    // would pin the same handful to the front for as long as the seeds
+    // stayed, and every "Mehr davon" would pin them harder. So the row is a
+    // weighted draw, seeded by [rotation]: it holds still for the period and
+    // reads differently in the next. What is like a "Weniger davon" title
+    // stays in, at a quarter of its chance.
+    double weight(String key) {
+      final named = votes[key]!;
+      final base = named.fold<double>(0, (sum, list) => sum + (list < 0 ? 2 : 1));
+      return heldBack.contains(key) ? base / 4 : base;
+    }
+
+    final random = math.Random(rotation);
+    // Efraimidis–Spirakis: u^(1/w), highest first, is a draw without
+    // replacement in which each title's chance follows its weight.
+    final draw = {for (final key in order) key: math.pow(random.nextDouble(), 1 / weight(key)).toDouble()};
+    final ranked = [...order]..sort((a, b) => draw[b]!.compareTo(draw[a]!));
     final picked = [for (final key in ranked.take(limit)) (copies[key]!..sort(compareLibraryCopies)).first];
 
     appLogger.d('Recommendations: ${seeds.length} seeds → ${picked.length} titles (rotation $rotation)');
@@ -170,7 +190,12 @@ class RecommendationsService {
   /// "Continue Watching" is for, not a suggestion.
   static bool _dealtWith(MediaItem item) => item.isWatched || item.hasActiveProgress || item.isPartiallyWatched;
 
-  static String _copyKey(MediaItem item) => mediaSearchTitleKey(item) ?? 'self:${item.globalKey}';
+  static String _copyKey(MediaItem item) => copyKeyOf(item);
+
+  /// The key one title goes by on every server: kind, title and year, or the
+  /// item itself where it cannot give those. What "Mehr davon" and "Weniger
+  /// davon" are stored under.
+  static String copyKeyOf(MediaItem item) => mediaSearchTitleKey(item) ?? 'self:${item.globalKey}';
 
   /// The seeds' lists, with which one speaks first moved along by [rotation].
   ///
@@ -178,7 +203,7 @@ class RecommendationsService {
   /// seed's pick would still open the row every time, and that pick is the
   /// most-recently-watched title's nearest neighbour — the one the viewer is
   /// most likely to have seen already.
-  static List<List<MediaItem>> _rotated(List<List<MediaItem>> lists, int rotation) {
+  static List<T> _rotated<T>(List<T> lists, int rotation) {
     if (lists.length < 2) return lists;
     final offset = rotation % lists.length;
     if (offset == 0) return lists;
@@ -207,6 +232,8 @@ class RecommendationsService {
     List<MediaLibrary> libraries,
     RecommendationsSource source,
     List<MediaItem> underWay,
+    List<MediaItem> liked,
+    int rotation,
   ) async {
     // What is under way, as titles: an episode or a season stands for its
     // series. Only the backends in scope.
@@ -242,7 +269,7 @@ class RecommendationsService {
       ...eligible.where((library) => busy.contains(library.globalKey)),
       ...eligible.where((library) => !busy.contains(library.globalKey)),
     ].take(maxSeedLibraries).toList();
-    if (candidates.isEmpty && underWaySeeds.isEmpty) {
+    if (candidates.isEmpty && underWaySeeds.isEmpty && liked.isEmpty) {
       return (seeds: const <MediaItem>[], dealtWith: const <String>{});
     }
 
@@ -267,9 +294,14 @@ class RecommendationsService {
     }
     // Most recent first across the libraries, not library by library.
     int byRecency(MediaItem a, MediaItem b) => b.recencySortKey.compareTo(a.recencySortKey);
-    favourites.sort(byRecency);
-    rated.sort((a, b) => (b.userRating ?? 0).compareTo(a.userRating ?? 0));
     watched.sort(byRecency);
+    // The favourites and the titles asked for more of are one pool of
+    // what the viewer likes most, and the highly rated a second; both are
+    // drawn from in turn, a different handful each period, so a long list of
+    // favourites does not mean the same three speak every time. What was
+    // watched last keeps its order: that is what the viewer is into now.
+    final likedPool = _shuffled([...liked.where((item) => source.allows(item.backend)), ...favourites], rotation);
+    final ratedPool = _shuffled(rated, rotation + 1);
 
     final seeds = <MediaItem>[];
     final seen = <String>{};
@@ -283,14 +315,14 @@ class RecommendationsService {
       }
     }
 
-    take(favourites, maxFavouriteSeeds);
+    take(likedPool, maxFavouriteSeeds);
     take(underWaySeeds, maxUnderWaySeeds);
-    take(rated, maxRatedSeeds);
+    take(ratedPool, maxRatedSeeds);
     take(watched, maxSeeds);
     // Room left over goes to the others beyond their share.
-    take(favourites, maxSeeds);
+    take(likedPool, maxSeeds);
     take(underWaySeeds, maxSeeds);
-    take(rated, maxSeeds);
+    take(ratedPool, maxSeeds);
     if (seeds.isEmpty) {
       appLogger.d(
         'Recommendations: no seeds in ${candidates.length} libraries '
@@ -299,6 +331,10 @@ class RecommendationsService {
     }
     return (seeds: seeds, dealtWith: dealtWith);
   }
+
+  /// [items] in an order fixed for [seed]: the same within a period, another
+  /// in the next.
+  static List<MediaItem> _shuffled(List<MediaItem> items, int seed) => [...items]..shuffle(math.Random(seed));
 
   Future<List<MediaItem>> _recentlyTouched(MediaLibrary library) async {
     final client = _clientFor(library);

@@ -49,16 +49,19 @@ class LiveTvSessionState {
   int channelIndex;
   String? channelName;
 
-  /// The channel name, and which of its copies is playing.
+  /// The name of what is playing: the copy itself once another than the
+  /// first is chosen.
   ///
   /// A merged channel is named after its first copy, so switching to another
   /// would otherwise change the picture and nothing else — the viewer would
   /// have no way of telling that anything had happened, or of knowing what
-  /// they are watching now. One copy is no choice, and then the name stands
-  /// alone.
+  /// they are watching now. It used to read "channel · copy", which on the
+  /// first copy said the same name twice ("RTLup HDraw · RTLup HDraw"); the
+  /// copy's own name says it all. On the first copy the channel's name stands,
+  /// so a name the viewer gave it is kept.
   static String? titleWithVariant(String? name, {required List<String> labels, required int index}) {
     if (name == null || labels.length < 2 || index < 0 || index >= labels.length) return name;
-    return '$name · ${labels[index]}';
+    return index == 0 ? name : labels[index];
   }
 
   /// The channel group the session is confined to, or null for all of them.

@@ -28,6 +28,7 @@ import 'card_inflation_budget.dart';
 import 'focus_builders.dart';
 import 'catalog_tile_cards.dart';
 import 'media_card.dart';
+import 'media_context_menu.dart' show MediaMenuExtraEntry;
 import 'media_grid_delegate.dart';
 import 'skeleton_media_card.dart';
 import 'sliver_child_memo.dart';
@@ -85,6 +86,10 @@ class HubSection extends StatefulWidget {
   /// Overrides the standard media context menu for an item.
   final ValueChanged<MediaItem>? onItemLongPress;
 
+  /// Entries put at the top of a card's menu — the recommendation row's
+  /// "Mehr davon" and "Weniger davon".
+  final List<MediaMenuExtraEntry> Function(MediaItem item)? menuLeadingEntriesFor;
+
   /// Callback for vertical navigation (up/down). Return true if handled.
   final bool Function(bool isUp)? onVerticalNavigation;
 
@@ -131,6 +136,7 @@ class HubSection extends StatefulWidget {
     this.onFocusedItemChanged,
     this.onItemTap,
     this.onItemLongPress,
+    this.menuLeadingEntriesFor,
     this.onVerticalNavigation,
     this.onBack,
     this.onNavigateUp,
@@ -891,6 +897,7 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                                     viewModeOverride: ViewMode.grid,
                                     isInContinueWatching: widget.isInContinueWatching,
                                     usesContinueWatchingAction: widget.usesContinueWatchingAction,
+                                    menuLeadingEntries: widget.menuLeadingEntriesFor?.call(item) ?? const [],
                                     mixedHubContext: isMixedHub,
                                     episodePosterModeOverride: episodePosterMode,
                                   ),

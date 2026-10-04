@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ import '../services/catalog/catalog_source.dart';
 import '../services/catalog/local_watchlist.dart';
 import '../services/server_favorites_service.dart';
 import '../services/settings_service.dart';
+import '../focus/focus_theme.dart';
 import '../focus/focusable_action_bar.dart';
 import '../utils/app_logger.dart';
 import '../utils/dialogs.dart';
@@ -217,19 +219,6 @@ class WatchlistScreenState extends State<WatchlistScreen>
     unawaited(settings.write(SettingsService.watchlistStatusFilter, filter.status));
   }
 
-  Future<void> _pickTypeFilter() async {
-    final picked = await showOptionPickerDialog<WatchlistTypeFilter>(
-      context,
-      title: t.watchlist.typeFilter,
-      options: [
-        (icon: Symbols.category_rounded, label: t.watchlist.allTypes, value: WatchlistTypeFilter.all),
-        (icon: Symbols.movie_rounded, label: t.watchlist.moviesOnly, value: WatchlistTypeFilter.movies),
-        (icon: Symbols.tv_rounded, label: t.watchlist.showsOnly, value: WatchlistTypeFilter.shows),
-      ],
-    );
-    if (picked != null && mounted) _applyFilter(_filter.withType(picked));
-  }
-
   Future<void> _pickStatusFilter() async {
     final picked = await showOptionPickerDialog<WatchlistStatusFilter>(
       context,
@@ -251,36 +240,32 @@ class WatchlistScreenState extends State<WatchlistScreen>
   /// choice it holds, so a list that is missing half its titles says why
   /// without being opened.
   ///
-  /// Under the redesign the type is not a glyph behind a menu but its three
-  /// choices written out — "Alle", "Filme", "Serien" — one press each, the one
-  /// on show marked as a tab is.
+  /// The type is not a glyph behind a menu but its three choices written out
+  /// — "Alle", "Filme", "Serien" — one press each, the one on show marked as a
+  /// tab is. First under the redesign, then in the original look too, at a
+  /// viewer's request.
   List<FocusableAction> _filterActions() => [
-    if (isOcker(context))
-      for (final (value, label) in [
-        (WatchlistTypeFilter.all, t.watchlist.typeAll),
-        (WatchlistTypeFilter.movies, t.watchlist.typeMovies),
-        (WatchlistTypeFilter.shows, t.watchlist.typeShows),
-      ])
-        FocusableAction(
-          tooltip: label,
-          onPressed: () => _applyFilter(_filter.withType(value)),
-          builder: (context, state) => _TypeWord(
-            label: label,
-            active: _filter.type == value,
-            focused: state.showFocus,
-            onTap: () => _applyFilter(_filter.withType(value)),
-          ),
-        )
-    else
+    for (final (value, label) in [
+      (WatchlistTypeFilter.all, t.watchlist.typeAll),
+      (WatchlistTypeFilter.movies, t.watchlist.typeMovies),
+      (WatchlistTypeFilter.shows, t.watchlist.typeShows),
+    ])
       FocusableAction(
-        icon: switch (_filter.type) {
-          WatchlistTypeFilter.all => Symbols.category_rounded,
-          WatchlistTypeFilter.movies => Symbols.movie_rounded,
-          WatchlistTypeFilter.shows => Symbols.tv_rounded,
-        },
-        iconFill: _filter.type == WatchlistTypeFilter.all ? 0 : 1,
-        tooltip: t.watchlist.typeFilter,
-        onPressed: _pickTypeFilter,
+        tooltip: label,
+        onPressed: () => _applyFilter(_filter.withType(value)),
+        builder: (context, state) => isOcker(context)
+            ? _TypeWord(
+                label: label,
+                active: _filter.type == value,
+                focused: state.showFocus,
+                onTap: () => _applyFilter(_filter.withType(value)),
+              )
+            : _PlainTypeWord(
+                label: label,
+                active: _filter.type == value,
+                focused: state.showFocus,
+                onTap: () => _applyFilter(_filter.withType(value)),
+              ),
       ),
     FocusableAction(
       icon: switch (_filter.status) {
@@ -479,6 +464,58 @@ class WatchlistScreenState extends State<WatchlistScreen>
   }
 }
 
+/// One of the watchlist's type choices written out in the original look: the
+/// word on a soft pill when it is the one on show, dimmed otherwise, with the
+/// theme's own focus ring.
+class _PlainTypeWord extends StatelessWidget {
+  const _PlainTypeWord({required this.label, required this.active, required this.focused, required this.onTap});
+
+  final String label;
+  final bool active;
+  final bool focused;
+  final VoidCallback onTap;
+
+  static const double _radius = 16;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    // A phone held upright leaves the bar's actions little room: the words
+    // are set a size smaller and closer there, or the last of the bar ran off
+    // its edge.
+    final narrow = MediaQuery.sizeOf(context).width < 420;
+    final style = narrow ? Theme.of(context).textTheme.labelMedium : Theme.of(context).textTheme.labelLarge;
+    return Semantics(
+      button: true,
+      selected: active,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: narrow ? 0 : 2, vertical: 6),
+          child: AnimatedContainer(
+            duration: FocusTheme.getAnimationDuration(context),
+            padding: EdgeInsets.symmetric(horizontal: narrow ? 6 : 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: active ? scheme.onSurface.withValues(alpha: 0.14) : Colors.transparent,
+              borderRadius: BorderRadius.circular(_radius),
+            ),
+            foregroundDecoration: FocusTheme.focusDecoration(context, isFocused: focused, borderRadius: _radius),
+            child: Text(
+              label,
+              style: style?.copyWith(
+                color: active || focused ? scheme.onSurface : scheme.onSurface.withValues(alpha: 0.6),
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// One of the watchlist's type choices written out, as the redesign draws a
 /// tab: the word at full strength when it is the one on show, dimmed
 /// otherwise; focus is the capsule (or the ring) every word in the redesign
@@ -496,6 +533,10 @@ class _TypeWord extends StatelessWidget {
     final tk = tokens(context);
     final type = OckerType.of(context);
     final scale = ockerScale(context);
+    // On a phone held upright the bar's actions have little room: the words
+    // were set at the television's size there and ran the bar off its edge.
+    final narrow = MediaQuery.sizeOf(context).width < 420;
+    final style = type.groupEntry(active: active);
     return Semantics(
       button: true,
       selected: active,
@@ -504,7 +545,7 @@ class _TypeWord extends StatelessWidget {
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 4 * scale),
+          padding: EdgeInsets.symmetric(horizontal: (narrow ? 2 : 6) * scale, vertical: 4 * scale),
           child: OckerWordFocus(
             focused: focused,
             active: active,
@@ -514,7 +555,7 @@ class _TypeWord extends StatelessWidget {
                 color: active || focused ? tk.ink(1) : tk.ink(0.5),
                 builder: (context, ink) => Text(
                   label,
-                  style: type.groupEntry(active: active).copyWith(color: ink),
+                  style: style.copyWith(color: ink, fontSize: narrow ? math.min(style.fontSize ?? 14, 14) : null),
                 ),
               ),
             ),

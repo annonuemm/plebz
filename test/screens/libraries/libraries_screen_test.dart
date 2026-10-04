@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:plezy/exceptions/media_server_exceptions.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/widgets/app_icon.dart';
 import 'package:plezy/focus/input_mode_tracker.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/media/ids.dart';
@@ -205,6 +206,33 @@ void main() {
 
     expect(selected, [_libraryA.globalKey]);
     expect(find.byWidgetPredicate((widget) => widget is BaseLibraryTab), findsWidgets);
+  });
+
+  testWidgets('on a phone a long library name shortens instead of pushing the arrow under the pencil', (tester) async {
+    const long = MediaLibrary(
+      id: 'reality',
+      backend: MediaBackend.plex,
+      title: 'TV - Reality_Soap and a good deal more',
+      kind: MediaKind.show,
+      serverId: 'server',
+    );
+    final harness = await _Harness.create(
+      _GatedPreferences({'selected_library_key': long.globalKey}),
+      libraryOrder: const [long],
+    );
+    addTearDown(harness.dispose);
+
+    await harness.pump(tester, settle: false);
+    tester.view.physicalSize = const Size(390, 844);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(tester.takeException(), isNull);
+    final arrow = find.byWidgetPredicate((w) => w is AppIcon && w.icon == Symbols.arrow_drop_down_rounded);
+    final pencil = find.byWidgetPredicate((w) => w is AppIcon && w.icon == Symbols.edit_rounded);
+    expect(arrow, findsOneWidget);
+    expect(pencil, findsOneWidget);
+    expect(tester.getRect(arrow).right, lessThanOrEqualTo(tester.getRect(pencil).left));
   });
 
   testWidgets('toolbar refresh reloads the library list while none is selected', (tester) async {

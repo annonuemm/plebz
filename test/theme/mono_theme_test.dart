@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/services/settings_service.dart' show AppThemeVariant;
 import 'package:plezy/theme/mono_theme.dart';
 
 /// `monoTheme` builds a full `ColorScheme`, an applied+copyWith'd Typography
@@ -48,6 +49,16 @@ void main() {
     expect(dark.colorScheme.brightness, Brightness.dark);
     expect(light.scaffoldBackgroundColor, isNot(dark.scaffoldBackgroundColor));
     expect(light.colorScheme.onSurface, isNot(dark.colorScheme.onSurface));
+  });
+
+  test('words on an error-coloured button stand out from it in every look', () {
+    for (final variant in AppThemeVariant.values) {
+      for (final dark in [true, false]) {
+        final scheme = monoTheme(dark: dark, variant: variant).colorScheme;
+        final contrast = (scheme.error.computeLuminance() - scheme.onError.computeLuminance()).abs();
+        expect(contrast, greaterThan(0.3), reason: '${variant.name}, dark: $dark');
+      }
+    }
   });
 
   test('filled and elevated buttons look disabled when disabled', () {

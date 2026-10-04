@@ -288,7 +288,9 @@ ThemeData _buildMonoTheme({
       // every "connection lost". An error there is said in the ink, by its icon
       // and its words; the accent keeps its three jobs.
       error: redesign ? c.text : const Color(0xFFB00020),
-      onError: Colors.white,
+      // On the ink the words take the ground, as on every other ink button:
+      // white on it was white on white ("Abmelden" under glass).
+      onError: redesign ? (isDark ? c.bg : Colors.white) : Colors.white,
       tertiary: c.text,
       onTertiary: c.bg,
       primaryContainer: c.surface,

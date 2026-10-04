@@ -671,6 +671,25 @@ void main() {
     expect(find.text(t.explore.rows.watchlist), findsOneWidget);
   });
 
+  for (final variant in [AppThemeVariant.standard, AppThemeVariant.glas]) {
+    testWidgets('on a narrow phone the type words fit the bar (${variant.name})', (tester) async {
+      await _pumpWatchlist(
+        tester,
+        [_FakeWatchlistSource(CatalogSourceId.simkl, 'Simkl')],
+        variant: variant,
+        television: false,
+      );
+      tester.view.physicalSize = const Size(360, 780);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      for (final word in [t.watchlist.typeAll, t.watchlist.typeMovies, t.watchlist.typeShows]) {
+        expect(find.descendant(of: find.byType(FocusableActionBar), matching: find.text(word)), findsOneWidget);
+        expect(tester.getRect(find.text(word)).right, lessThanOrEqualTo(360), reason: word);
+      }
+    });
+  }
+
   group('narrowing the list', () {
     /// Four entries, one of each combination: an unwatched film, an unwatched
     /// series, a watched film, a watched series.
@@ -691,6 +710,12 @@ void main() {
     Finder appBarAction(IconData icon) =>
         find.descendant(of: find.byType(FocusableActionBar), matching: find.byIcon(icon));
 
+    /// The type is written out in every look: one word per choice.
+    Future<void> pickType(WidgetTester tester, String word) async {
+      await tester.tap(find.descendant(of: find.byType(FocusableActionBar), matching: find.text(word)));
+      await tester.pumpAndSettle();
+    }
+
     Future<void> pick(WidgetTester tester, IconData action, String option) async {
       await tester.tap(appBarAction(action));
       await tester.pumpAndSettle();
@@ -702,14 +727,14 @@ void main() {
       await _pumpWatchlist(tester, [mixedSource()]);
       expect(find.text('Simkl Title 1'), findsOneWidget);
 
-      await pick(tester, Symbols.category_rounded, t.watchlist.moviesOnly);
+      await pickType(tester, t.watchlist.typeMovies);
 
       expect(find.text('Simkl Title 0'), findsOneWidget, reason: 'a film');
       expect(find.text('Simkl Title 2'), findsOneWidget, reason: 'a film, watched');
       expect(find.text('Simkl Title 1'), findsNothing, reason: 'a series');
       expect(find.text('Simkl Title 3'), findsNothing, reason: 'a series');
 
-      await pick(tester, Symbols.movie_rounded, t.watchlist.showsOnly);
+      await pickType(tester, t.watchlist.typeShows);
 
       expect(find.text('Simkl Title 1'), findsOneWidget);
       expect(find.text('Simkl Title 0'), findsNothing);
@@ -734,7 +759,7 @@ void main() {
     testWidgets('the two halves narrow together', (tester) async {
       await _pumpWatchlist(tester, [mixedSource()]);
 
-      await pick(tester, Symbols.category_rounded, t.watchlist.showsOnly);
+      await pickType(tester, t.watchlist.typeShows);
       await pick(tester, Symbols.filter_alt_rounded, t.watchlist.watchedOnly);
 
       expect(find.text('Simkl Title 3'), findsOneWidget, reason: 'the watched series');
@@ -753,7 +778,7 @@ void main() {
         ),
       ]);
 
-      await pick(tester, Symbols.category_rounded, t.watchlist.showsOnly);
+      await pickType(tester, t.watchlist.typeShows);
 
       expect(find.text(t.libraries.noItemsMatchFilters), findsOneWidget);
       expect(find.text(t.hubDetail.noItemsFound), findsNothing, reason: 'the list is not empty, the filter is strict');
@@ -764,7 +789,7 @@ void main() {
       await _pumpWatchlist(tester, [source]);
       final fetchesBefore = source.rowFetches.length;
 
-      await pick(tester, Symbols.category_rounded, t.watchlist.moviesOnly);
+      await pickType(tester, t.watchlist.typeMovies);
 
       expect(source.rowFetches.length, fetchesBefore, reason: 'the answer is already on screen');
     });
@@ -772,7 +797,7 @@ void main() {
     testWidgets('a narrowing is remembered', (tester) async {
       await _pumpWatchlist(tester, [mixedSource()]);
 
-      await pick(tester, Symbols.category_rounded, t.watchlist.showsOnly);
+      await pickType(tester, t.watchlist.typeShows);
 
       expect(SettingsService.instance.read(SettingsService.watchlistTypeFilter), WatchlistTypeFilter.shows);
       expect(SettingsService.instance.read(SettingsService.watchlistStatusFilter), WatchlistStatusFilter.any);
@@ -786,7 +811,16 @@ void main() {
 
       expect(find.text('Simkl Title 3'), findsOneWidget);
       expect(find.text('Simkl Title 0'), findsNothing);
-      expect(appBarAction(Symbols.tv_rounded), findsOneWidget, reason: 'the action wears the choice it holds');
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.selected == true &&
+              widget.properties.label == t.watchlist.typeShows,
+        ),
+        findsOneWidget,
+        reason: 'the word on show is marked',
+      );
       expect(appBarAction(Symbols.visibility_rounded), findsOneWidget);
     });
 
@@ -801,7 +835,7 @@ void main() {
         ),
       ]);
 
-      await pick(tester, Symbols.category_rounded, t.watchlist.showsOnly);
+      await pickType(tester, t.watchlist.typeShows);
       await tester.tap(find.text('Plex'));
       await tester.pumpAndSettle();
 

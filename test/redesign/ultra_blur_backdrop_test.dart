@@ -199,6 +199,53 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('other destinations keep the theme\'s own ground, and their posters report to nothing', (tester) async {
+    tester.view.physicalSize = const Size(1280, 720);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final contentScope = FocusScopeNode();
+    final railScope = FocusScopeNode();
+    addTearDown(contentScope.dispose);
+    addTearDown(railScope.dispose);
+    await SettingsService.instance.write(SettingsService.glasUltraBlur, true);
+    UltraBlurAmbient? seen;
+
+    Future<void> pumpOn(NavigationTabId tab) => tester.pumpWidget(
+      MaterialApp(
+        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        home: OckerRailShell(
+          tabs: NavigationTab.getVisibleTabs(isOffline: false),
+          selectedTab: tab,
+          onDestinationSelected: (_) {},
+          onNavigateToContent: () {},
+          expanded: false,
+          railKey: GlobalKey(),
+          railFocusScope: railScope,
+          contentFocusScope: contentScope,
+          content: Builder(
+            builder: (context) {
+              seen = UltraBlurScope.of(context);
+              return const SizedBox.expand();
+            },
+          ),
+        ),
+      ),
+    );
+
+    for (final tab in [NavigationTabId.libraries, NavigationTabId.watchlist, NavigationTabId.settings]) {
+      await pumpOn(tab);
+      await tester.pumpAndSettle();
+      expect(find.byType(UltraBlurLayer), findsNothing, reason: tab.name);
+      expect(seen, isNull, reason: tab.name);
+    }
+    for (final tab in OckerRailShell.ultraBlurDestinations) {
+      await pumpOn(tab);
+      await tester.pumpAndSettle();
+      expect(find.byType(UltraBlurLayer), findsOneWidget, reason: tab.name);
+      expect(seen, isNotNull, reason: tab.name);
+    }
+  });
+
   testWidgets('the switch lays the colours under the glass shell without disturbing the screen on it', (tester) async {
     tester.view.physicalSize = const Size(1280, 720);
     tester.view.devicePixelRatio = 1.0;

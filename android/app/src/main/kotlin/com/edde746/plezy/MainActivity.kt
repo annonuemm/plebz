@@ -467,11 +467,16 @@ class MainActivity : FlutterActivity() {
    * side — keep the two in sync. Evaluated here too because engine shell
    * args must be decided before Dart runs.
    */
-  private fun isLowRamClass(): Boolean {
+  private fun cappedOldGenMegabytes(): Int? {
     val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
     val memoryInfo = ActivityManager.MemoryInfo()
     activityManager.getMemoryInfo(memoryInfo)
-    return !Process.is64Bit() || activityManager.isLowRamDevice || memoryInfo.totalMem <= LOW_MEM_THRESHOLD_BYTES
+    return DartHeapPolicy.oldGenMegabytes(
+      is64Bit = Process.is64Bit(),
+      isLowRamDevice = activityManager.isLowRamDevice,
+      totalMemBytes = memoryInfo.totalMem,
+      lowMemThresholdBytes = LOW_MEM_THRESHOLD_BYTES
+    )
   }
 
   /** User-assigned device name (Settings > About > Device name), or null. */
@@ -665,14 +670,15 @@ class MainActivity : FlutterActivity() {
     // suppresses the loader's old-gen default, so the value set here is the
     // one that sticks. Skia's resource cache threshold has no such opt-out;
     // Dart caps that cache over the flutter/skia channel (DevicePerformance).
-    if (isLowRamClass()) {
+    val cappedOldGen = cappedOldGenMegabytes()
+    if (cappedOldGen != null) {
       // The Dart old gen defaults to half of physical RAM, which drives LMK
-      // kills on 2GB boxes (#1349).
-      args.add("--old-gen-heap-size=256")
+      // kills on 2GB boxes (#1349); see DartHeapPolicy for the 32-bit boxes.
+      args.add("--old-gen-heap-size=$cappedOldGen")
       Log.i(
         TAG,
-        "Low-RAM device: capped engine caches " +
-          "(renderer=${selectedFlutterRenderer.diagnosticName}, oldGen=256MB)"
+        "Capped engine caches " +
+          "(renderer=${selectedFlutterRenderer.diagnosticName}, oldGen=${cappedOldGen}MB)"
       )
     } else {
       args.add("--old-gen-heap-size=${defaultOldGenHeapSizeMegabytes()}")

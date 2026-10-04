@@ -33,6 +33,10 @@ import 'ultra_blur_backdrop.dart';
 /// the panel, the gutter, five posters — and a screen that believed it had the
 /// whole width drew its right-hand column off the edge by the rail's strip.
 class OckerRailShell extends StatefulWidget {
+  /// The destinations whose ground follows the focused title, where that is
+  /// switched on ([SettingsService.glasUltraBlur]).
+  static const Set<NavigationTabId> ultraBlurDestinations = {NavigationTabId.discover, NavigationTabId.explore};
+
   /// The destinations, already filtered — see [OckerSideRail.tabs].
   final List<NavigationTab> tabs;
 
@@ -86,7 +90,8 @@ class _OckerRailShellState extends State<OckerRailShell> {
   final _headerSlot = ValueNotifier<WidgetBuilder?>(null);
 
   /// The ground's colours under the focused Plex title, while that is
-  /// switched on (see [UltraBlurAmbient]).
+  /// switched on (see [UltraBlurAmbient]). Kept across destinations, so coming
+  /// back to Home finds the colours it left.
   UltraBlurAmbient? _ultraBlur;
 
   UltraBlurAmbient? _ultraBlurFor(bool enabled) {
@@ -121,7 +126,12 @@ class _OckerRailShellState extends State<OckerRailShell> {
     return SettingValueBuilder<bool>(
       pref: SettingsService.glasUltraBlur,
       builder: (context, ultraBlurOn, _) {
-        final ultraBlur = _ultraBlurFor(ultraBlurOn);
+        // Home and Explore only (the user's call): every other destination
+        // keeps the theme's own ground, and its posters report to nothing.
+        final ultraBlur =
+            _ultraBlurFor(ultraBlurOn) == null || !OckerRailShell.ultraBlurDestinations.contains(widget.selectedTab)
+            ? null
+            : _ultraBlur;
         return UltraBlurScope(
           ambient: ultraBlur,
           child: OckerHeaderSlot(

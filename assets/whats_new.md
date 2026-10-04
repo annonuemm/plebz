@@ -13,6 +13,17 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.6.3 (Build 618)
+
+- Hintergrund in Posterfarben: wirkt jetzt nur noch auf Startseite und Erkunden, überall sonst bleibt der normale Hintergrund.
+- Boxen mit 32-Bit-System und viel Arbeitsspeicher (z. B. Google TV Streamer): Die App darf mehr Speicher nutzen – weniger Hänger bei großen IPTV-Listen.
+- Glas: Die Schrift auf dem Abmelden-Knopf ist wieder lesbar.
+
+### Handy
+- Mediatheken: Lange Mediathek-Namen werden gekürzt und überdecken das Stift-Symbol nicht mehr.
+- Merkliste im Original-Design: „Alle“, „Filme“ und „Serien“ stehen jetzt direkt zum Antippen da, ohne Auswahlfenster.
+- Merkliste auf schmalen Handys: Die Leiste mit „Alle“, „Filme“ und „Serien“ passt jetzt in beiden Designs auf den Bildschirm.
+
 ## 1.6.2 (Build 614)
 
 - Glas am Fernseher: Neuer Test-Schalter unter Einstellungen → Darstellung → „Hintergrund in Posterfarben (Plex)“. Der Hintergrund nimmt die Farben des Plex-Titels an, auf dem der Fokus steht – wie bei Plex, auf Startseite, Erkunden, Mediathek und Merkliste. Standardmäßig aus.

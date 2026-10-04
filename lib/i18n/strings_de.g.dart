@@ -590,8 +590,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get glasAccentRotDescription => 'Schwarzer Grund, weiße Schrift, kräftiges Rot als Akzent – angelehnt an Netflix.';
 	@override String get glasSmoothFocus => 'Fließender Fokus';
 	@override String get glasSmoothFocusDescription => 'Die Fokuskapsel gleitet von Eintrag zu Eintrag, und die Schrift blendet weich über – auch wenn die visuellen Effekte reduziert sind.';
-	@override String get glasUltraBlur => 'Hintergrund in Posterfarben (Plex)';
-	@override String get glasUltraBlurDescription => 'Der Hintergrund nimmt die Farben des Titels mit dem Fokus an, wie bei Plex. Test: nur für Plex-Titel.';
+	@override String get glasUltraBlur => 'Hintergrund in Posterfarben';
+	@override String get glasUltraBlurDescription => 'Auf Startseite und Erkunden nimmt der Hintergrund die Farben des Titels mit dem Fokus an.';
 	@override String get glasSpinningFocus => 'Fokusrahmen dreht sich';
 	@override String get glasSpinningFocusDescription => 'Das Glanzlicht des Fokusrahmens wandert langsam um ihn herum und hält still, solange du dich bewegst. Kostet ein wenig Leistung.';
 	@override String get homeTitleLogos => 'Logos auf Start und Erkunden';
@@ -4027,8 +4027,8 @@ extension on TranslationsDe {
 			'settings.glasAccentRotDescription' => 'Schwarzer Grund, weiße Schrift, kräftiges Rot als Akzent – angelehnt an Netflix.',
 			'settings.glasSmoothFocus' => 'Fließender Fokus',
 			'settings.glasSmoothFocusDescription' => 'Die Fokuskapsel gleitet von Eintrag zu Eintrag, und die Schrift blendet weich über – auch wenn die visuellen Effekte reduziert sind.',
-			'settings.glasUltraBlur' => 'Hintergrund in Posterfarben (Plex)',
-			'settings.glasUltraBlurDescription' => 'Der Hintergrund nimmt die Farben des Titels mit dem Fokus an, wie bei Plex. Test: nur für Plex-Titel.',
+			'settings.glasUltraBlur' => 'Hintergrund in Posterfarben',
+			'settings.glasUltraBlurDescription' => 'Auf Startseite und Erkunden nimmt der Hintergrund die Farben des Titels mit dem Fokus an.',
 			'settings.glasSpinningFocus' => 'Fokusrahmen dreht sich',
 			'settings.glasSpinningFocusDescription' => 'Das Glanzlicht des Fokusrahmens wandert langsam um ihn herum und hält still, solange du dich bewegst. Kostet ein wenig Leistung.',
 			'settings.homeTitleLogos' => 'Logos auf Start und Erkunden',

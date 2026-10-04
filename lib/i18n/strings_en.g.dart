@@ -1497,11 +1497,11 @@ class Translations$settings$en {
 	/// en: 'The focus capsule glides from entry to entry and the type fades gently — even when visual effects are reduced.'
 	String get glasSmoothFocusDescription => 'The focus capsule glides from entry to entry and the type fades gently — even when visual effects are reduced.';
 
-	/// en: 'Background in the poster's colours (Plex)'
-	String get glasUltraBlur => 'Background in the poster\'s colours (Plex)';
+	/// en: 'Background in the poster's colours'
+	String get glasUltraBlur => 'Background in the poster\'s colours';
 
-	/// en: 'The background takes the colours of the Plex title in focus, as Plex does. A test: Plex titles only.'
-	String get glasUltraBlurDescription => 'The background takes the colours of the Plex title in focus, as Plex does. A test: Plex titles only.';
+	/// en: 'On Home and Explore the background takes the colours of the title in focus.'
+	String get glasUltraBlurDescription => 'On Home and Explore the background takes the colours of the title in focus.';
 
 	/// en: 'Turning focus edge'
 	String get glasSpinningFocus => 'Turning focus edge';
@@ -9195,8 +9195,8 @@ extension on Translations {
 			'settings.glasAccentRotDescription' => 'A black ground, white type and a strong red as the accent — after Netflix.',
 			'settings.glasSmoothFocus' => 'Smooth focus',
 			'settings.glasSmoothFocusDescription' => 'The focus capsule glides from entry to entry and the type fades gently — even when visual effects are reduced.',
-			'settings.glasUltraBlur' => 'Background in the poster\'s colours (Plex)',
-			'settings.glasUltraBlurDescription' => 'The background takes the colours of the Plex title in focus, as Plex does. A test: Plex titles only.',
+			'settings.glasUltraBlur' => 'Background in the poster\'s colours',
+			'settings.glasUltraBlurDescription' => 'On Home and Explore the background takes the colours of the title in focus.',
 			'settings.glasSpinningFocus' => 'Turning focus edge',
 			'settings.glasSpinningFocusDescription' => 'The glint on the focus edge travels slowly round it and holds still while you move. Costs a little performance.',
 			'settings.homeTitleLogos' => 'Logos on Home and Explore',

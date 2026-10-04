@@ -69,13 +69,13 @@ import '../services/watch_actions.dart';
 import '../widgets/settings_builder.dart';
 import '../utils/layout_constants.dart';
 import '../providers/catalog_sources_provider.dart';
-import 'catalog_search_screen.dart';
 import '../providers/download_provider.dart';
 import '../providers/multi_server_provider.dart';
 import '../providers/offline_watch_provider.dart';
 import '../providers/watch_state_store.dart';
 import '../services/catalog/catalog_source.dart';
 import '../services/catalog/library_watchlist_candidates.dart';
+import '../services/catalog/local_watchlist.dart';
 import '../utils/app_logger.dart';
 import '../utils/formatters.dart';
 import '../utils/scroll_utils.dart';
@@ -432,6 +432,9 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
   /// this alone — waiting for the ids to resolve first made it vanish without
   /// a word for every title the providers do not know.
   bool _watchlistPossible = false;
+
+  /// The app's own entries, for titles the provider does not know yet.
+  LocalWatchlist? _localWatchlist;
 
   bool _favoriteMutationInFlight = false;
 
@@ -900,6 +903,8 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     if (catalogSources == null || sources.isEmpty) return;
     _watchlistListenedSources = sources;
     _watchlistPossible = true;
+    _localWatchlist = catalogSources.localWatchlist..addListener(_onWatchlistSourceChanged);
+    unawaited(_localWatchlist!.ensureLoaded());
     for (final source in sources) {
       source.watchlistChanges.addListener(_onWatchlistSourceChanged);
       unawaited(source.ensureWatchlistLoaded());
@@ -918,6 +923,14 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       );
       if (!_canUseDetail || candidates.isEmpty) return;
       setState(() => _watchlistCandidates = candidates);
+      // Kept by the app because the provider did not know it then; it does
+      // now, so the title goes where it belongs.
+      final local = _localWatchlist;
+      if (local != null && local.holds(_metadata)) {
+        for (final candidate in candidates) {
+          await local.promote(_metadata, candidate);
+        }
+      }
     } catch (e) {
       // Not "this title is on no watchlist" — the action stays pressable, and
       // a press resolves again and reports what it found.
@@ -1069,6 +1082,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     for (final source in _watchlistListenedSources) {
       source.watchlistChanges.removeListener(_onWatchlistSourceChanged);
     }
+    _localWatchlist?.removeListener(_onWatchlistSourceChanged);
     _routeObserver?.unsubscribe(this);
     _scrollController.dispose();
     _scrollOffset.dispose();

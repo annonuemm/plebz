@@ -386,7 +386,10 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
     final watchlistStates = [
       for (final candidate in _watchlistCandidates) candidate.source.isOnWatchlist(metadata.kind, candidate.ids),
     ];
-    final bool? onWatchlist = watchlistStates.contains(true)
+    // A title the app keeps itself (the provider did not know it) is on the
+    // watchlist all the same.
+    final heldLocally = _localWatchlist?.holds(metadata) ?? false;
+    final bool? onWatchlist = heldLocally || watchlistStates.contains(true)
         ? true
         : watchlistStates.contains(false)
         ? false
@@ -605,6 +608,12 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
 
   Future<void> _handleWatchlistTogglePressed(MediaItem metadata) async {
     if (!_canUseDetail || _watchlistMutationInFlight) return;
+    final local = _localWatchlist;
+    if (local != null && local.holds(metadata)) {
+      await local.remove(metadata);
+      if (mounted) showSuccessSnackBar(context, t.explore.removedFromWatchlist);
+      return;
+    }
     final candidates = _watchlistCandidates;
     if (candidates.isEmpty) {
       // The press that resolves the providers does not also act on them:
@@ -641,14 +650,14 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
     await _toggleWatchlistOn(metadata, choice);
   }
 
-  /// Resolve the item's providers on a press that found none, and say why
-  /// when it stays empty.
+  /// Resolve the item's providers on a press that found none; when it stays
+  /// empty, keep the title in the app's own list and say why.
   ///
   /// Two different dead ends read the same from the outside, and neither is
   /// the user's fault: a library item the server holds no external ids for
   /// (an unmatched entry, or a library on a legacy agent), and one whose ids
   /// no connected provider recognises — a film too new for their catalogues,
-  /// typically.
+  /// typically. Only the second can ever be handed over later.
   Future<void> _resolveWatchlistCandidatesOnPress(MediaItem metadata) async {
     final catalogSources = Provider.of<CatalogSourcesProvider?>(context, listen: false);
     final client = _getMediaClientForMetadata(context);
@@ -665,30 +674,18 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
         return;
       }
 
+      // No provider knows the title — a show too new for Plex's catalogue,
+      // typically. The app keeps it itself and hands it over once the
+      // provider has it (see [LocalWatchlist]).
+      final target = catalogSources.watchlistCapableSources.firstOrNull;
+      if (target == null) return;
       final ids = await client.fetchExternalIds(metadata.id);
+      await catalogSources.localWatchlist.add(metadata, source: target.id);
       if (!mounted) return;
-      // Naming the providers is the difference between "it does not work" and
-      // "these two do not have it" — the second is something the user can act
-      // on, by connecting a provider that does.
-      final asked = catalogSources.watchlistCapableSources.map((source) => source.displayName).join(', ');
       showAppSnackBar(
         context,
-        ids.hasAny ? t.explore.watchlistTitleUnknown(providers: asked) : t.explore.watchlistNoExternalIds,
+        ids.hasAny ? t.explore.watchlistKeptLocally(provider: target.displayName) : t.explore.watchlistKeptLocallyNoIds,
       );
-      // The provider's own pages can still hold the title even when nothing
-      // resolves it from here, and their entry has a working watchlist. Hand
-      // the search the title rather than leaving the viewer to type it.
-      final searchTitle = metadata.title;
-      final searchSource = catalogSources.watchlistCapableSources.firstOrNull;
-      if (searchTitle != null && searchTitle.isNotEmpty && searchSource != null) {
-        unawaited(
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => CatalogSearchScreen(source: searchSource, initialQuery: searchTitle),
-            ),
-          ),
-        );
-      }
     } catch (e, stackTrace) {
       appLogger.d('Watchlist resolution on press failed', error: e, stackTrace: stackTrace);
       if (mounted) showErrorSnackBar(context, t.explore.watchlistUpdateFailed);
@@ -704,6 +701,9 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
       // Optimistic inside the source; the row/screens listening to
       // watchlistChanges (including this one) rebuild immediately.
       await mutateWatchlistMembership(metadata.kind, candidate, add: !current);
+      // A title handed over by the app's own list stands in on the watchlist
+      // until the provider shows it; a removal ends that too.
+      if (current) await _localWatchlist?.remove(metadata);
     } catch (_) {
       if (mounted) showErrorSnackBar(context, t.explore.watchlistUpdateFailed);
     } finally {

@@ -4106,11 +4106,11 @@ class Translations$explore$en {
 		other: '${n} results',
 	);
 
-	/// en: 'Not known to ${providers}, so no watchlist can hold it.'
-	String watchlistTitleUnknown({required Object providers}) => 'Not known to ${providers}, so no watchlist can hold it.';
+	/// en: 'Kept in Plebz: ${provider} does not know this title yet. It moves to that watchlist once it does.'
+	String watchlistKeptLocally({required Object provider}) => 'Kept in Plebz: ${provider} does not know this title yet. It moves to that watchlist once it does.';
 
-	/// en: 'The server holds no external ids for this title, so no watchlist can match it.'
-	String get watchlistNoExternalIds => 'The server holds no external ids for this title, so no watchlist can match it.';
+	/// en: 'Kept in Plebz: the server holds no external ids for this title, so it stays on this device.'
+	String get watchlistKeptLocallyNoIds => 'Kept in Plebz: the server holds no external ids for this title, so it stays on this device.';
 }
 
 // Path: watchlist
@@ -10248,8 +10248,8 @@ extension on Translations {
 			'explore.detail.background' => 'Background',
 			'explore.detail.networks' => 'Networks & Streaming',
 			'explore.totalResults' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '${n} result', other: '${n} results', ), 
-			'explore.watchlistTitleUnknown' => ({required Object providers}) => 'Not known to ${providers}, so no watchlist can hold it.',
-			'explore.watchlistNoExternalIds' => 'The server holds no external ids for this title, so no watchlist can match it.',
+			'explore.watchlistKeptLocally' => ({required Object provider}) => 'Kept in Plebz: ${provider} does not know this title yet. It moves to that watchlist once it does.',
+			'explore.watchlistKeptLocallyNoIds' => 'Kept in Plebz: the server holds no external ids for this title, so it stays on this device.',
 			'watchlist.typeFilter' => 'Show',
 			'watchlist.statusFilter' => 'Watch state',
 			'watchlist.allTypes' => 'Movies and series',

@@ -47,6 +47,7 @@ import 'package:plezy/services/music/music_playback_service.dart';
 import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/plex_api_cache.dart';
 import 'package:plezy/services/settings_service.dart';
+import 'package:plezy/services/catalog/local_watchlist.dart';
 import 'package:plezy/services/catalog/catalog_source.dart';
 import 'package:plezy/utils/deletion_notifier.dart';
 import 'package:plezy/utils/external_ids.dart';
@@ -1658,9 +1659,9 @@ void main() {
       expect(find.text(t.explore.removedFromWatchlist), findsOneWidget);
     });
 
-    testWidgets('hides the entry when the item resolved in no capable source', (tester) async {
-      final source = _MenuWatchlistSource(CatalogSourceId.mal, 'MAL'); // resolves null: out of domain
-      final harness = await _pumpWatchlistMenu(tester, sources: [source]);
+    testWidgets('a title no provider knows is kept by the app, and offered for removal after', (tester) async {
+      final source = _MenuWatchlistSource(CatalogSourceId.plex, 'Plex'); // resolves null: not in its catalogue
+      final harness = await _pumpWatchlistMenu(tester, sources: [source], guids: ['imdb://tt1']);
       await harness.catalogSources.watchlistCandidatesFor(
         harness.item,
         client: _SeedIdsClient(const ExternalIds(imdb: 'tt1')),
@@ -1668,13 +1669,26 @@ void main() {
 
       harness.menuKey.currentState!.showContextMenu(tester.element(find.text('watchlist target')));
       await tester.pumpAndSettle();
+      await tester.tap(find.text(t.explore.addToWatchlist));
+      await tester.pumpAndSettle();
 
-      expect(find.text(t.mediaMenu.markAsWatched), findsOneWidget);
-      expect(find.text(t.explore.addToWatchlist), findsNothing);
-      expect(find.text(t.explore.removeFromWatchlist), findsNothing);
+      expect(source.mutations, isEmpty);
+      expect(harness.catalogSources.localWatchlist.holds(harness.item), isTrue);
+      expect(find.text(t.explore.watchlistKeptLocally(provider: 'Plex')), findsOneWidget);
+      ScaffoldMessenger.of(tester.element(find.text('watchlist target'))).removeCurrentSnackBar();
+      await tester.pumpAndSettle();
+
+      harness.menuKey.currentState!.showContextMenu(tester.element(find.text('watchlist target')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(t.explore.removeFromWatchlist));
+      await tester.pumpAndSettle();
+
+      expect(source.mutations, isEmpty);
+      expect(harness.catalogSources.localWatchlist.holds(harness.item), isFalse);
+      expect(find.text(t.explore.removedFromWatchlist), findsOneWidget);
     });
 
-    testWidgets('reports when the tapped item matches no watchlist', (tester) async {
+    testWidgets('a title without external ids is kept by the app and says it stays here', (tester) async {
       final source = _MenuWatchlistSource(CatalogSourceId.trakt, 'Trakt', resolveTo: const CatalogItemIds(imdb: 'tt1'));
       // The metadata answer carries no Guid entries: no external ids.
       final harness = await _pumpWatchlistMenu(tester, sources: [source]);
@@ -1686,7 +1700,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(source.mutations, isEmpty);
-      expect(find.text(t.explore.watchlistNoMatch), findsOneWidget);
+      expect(harness.catalogSources.localWatchlist.holds(harness.item), isTrue);
+      expect(find.text(t.explore.watchlistKeptLocallyNoIds), findsOneWidget);
     });
 
     testWidgets('several capable sources open a per-source chooser', (tester) async {
@@ -2381,6 +2396,8 @@ class _SeedIdsClient implements MediaServerClient {
 /// [guids] (empty: the item carries no external ids).
 Future<({GlobalKey<MediaContextMenuState> menuKey, MediaItem item, CatalogSourcesProvider catalogSources})>
 _pumpWatchlistMenu(WidgetTester tester, {required List<CatalogSource> sources, List<String> guids = const []}) async {
+  resetSharedPreferencesForTest();
+  LocalWatchlist.debugReset();
   LocaleSettings.setLocaleSync(AppLocale.en);
   TvDetectionService.debugSetAppleTVOverride(true);
   addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));

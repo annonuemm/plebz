@@ -15,6 +15,7 @@ import '../profiles/profile_connection_registry.dart';
 import '../profiles/profile.dart';
 import '../services/base_shared_preferences_service.dart';
 import '../services/catalog/library_watchlist_candidates.dart';
+import '../services/catalog/local_watchlist.dart';
 import '../services/catalog/catalog_source.dart';
 import '../services/catalog/anilist_catalog_source.dart';
 import '../services/catalog/mdblist_catalog_source.dart';
@@ -267,6 +268,10 @@ class CatalogSourcesProvider extends ChangeNotifier with DisposableChangeNotifie
   /// The already-resolved candidates for [item], or null when never resolved
   /// this session. Menu surfaces label from this without awaiting; an empty
   /// list means no connected source can hold the item.
+  /// The active profile's own watchlist entries: library titles the provider
+  /// did not know when they were added (see [LocalWatchlist]).
+  LocalWatchlist get localWatchlist => LocalWatchlist.forProfile(_activeUserUuid);
+
   List<WatchlistCandidate>? cachedWatchlistCandidatesFor(MediaItem item) =>
       _watchlistCandidateResults[_watchlistItemKey(item)];
 
@@ -280,6 +285,7 @@ class CatalogSourcesProvider extends ChangeNotifier with DisposableChangeNotifie
   Future<void> onActiveProfileChanged(String? userUuid) async {
     final generation = ++_profileBindingGeneration;
     _activeUserUuid = userUuid ?? '';
+    unawaited(localWatchlist.ensureLoaded());
     final prefs = await BaseSharedPreferencesService.sharedCache();
     final raw = prefs.getString(profileScopedPrefsKey(_activeUserUuid, _activeSourceBaseKey));
     if (isDisposed || generation != _profileBindingGeneration) return;

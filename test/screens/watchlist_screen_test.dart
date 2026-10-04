@@ -26,6 +26,7 @@ import 'package:plezy/redesign/ocker_detail_panel.dart';
 import 'package:plezy/redesign/ocker_poster_tile.dart';
 import 'package:plezy/widgets/focusable_tab_chip.dart';
 import 'package:plezy/screens/watchlist_screen.dart';
+import 'package:plezy/services/catalog/local_watchlist.dart';
 import 'package:plezy/services/catalog/catalog_source.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
@@ -149,6 +150,12 @@ class _FakeFavoritesClient implements MediaServerClient {
     totalCount: 1,
   );
 
+  /// A title the app keeps on the watchlist itself, as the server has it.
+  @override
+  Future<MediaItem?> fetchItem(String id) async => id == 'kept-1'
+      ? testMediaItem(id: 'kept-1', kind: MediaKind.show, title: 'Kept Show', serverId: 'server-1')
+      : null;
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -248,6 +255,9 @@ void main() {
 
   setUp(() async {
     resetSharedPreferencesForTest();
+    LocalWatchlist.debugReset();
+    // Read outside the fake clock: the store answers through real async IO.
+    await LocalWatchlist.forProfile('').ensureLoaded();
     SettingsService.resetForTesting();
     await SettingsService.getInstance();
   });
@@ -630,6 +640,28 @@ void main() {
     expect(find.text('Favorite 0'), findsOneWidget);
     expect(find.text('Simkl Title 0'), findsNothing);
     expect(SettingsService.instance.read(SettingsService.watchlistSource), WatchlistScreenState.favoritesTabId);
+  });
+
+  testWidgets('a title the app keeps itself stands first on its provider\'s watchlist', (tester) async {
+    final kept = testMediaItem(id: 'kept-1', kind: MediaKind.show, title: 'Kept', serverId: 'server-1');
+    // Stored through real async IO, outside the fake clock.
+    await tester.runAsync(() async {
+      await LocalWatchlist.forProfile('').add(kept, source: CatalogSourceId.simkl);
+      await LocalWatchlist.forProfile('').add(
+        testMediaItem(id: 'other-1', kind: MediaKind.movie, title: 'Other', serverId: 'server-1'),
+        source: CatalogSourceId.trakt,
+      );
+    });
+
+    await _pumpWatchlist(tester, [
+      _FakeWatchlistSource(CatalogSourceId.simkl, 'Simkl', total: 2),
+    ], capabilities: ServerCapabilities.plex);
+
+    // As the server has it now, not as it was stored.
+    expect(find.text('Kept Show'), findsOneWidget);
+    expect(find.text('Simkl Title 0'), findsOneWidget);
+    expect(find.text('Other'), findsNothing);
+    expect(tester.getTopLeft(find.text('Kept Show')).dx, lessThan(tester.getTopLeft(find.text('Simkl Title 0')).dx));
   });
 
   testWidgets('no connected provider leaves an empty state rather than a grid', (tester) async {

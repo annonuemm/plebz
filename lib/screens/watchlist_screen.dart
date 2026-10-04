@@ -19,6 +19,7 @@ import '../media/ids.dart';
 import '../media/media_library.dart';
 import '../media/watchlist_filter.dart';
 import '../services/catalog/catalog_source.dart';
+import '../services/catalog/local_watchlist.dart';
 import '../services/server_favorites_service.dart';
 import '../services/settings_service.dart';
 import '../focus/focusable_action_bar.dart';
@@ -332,23 +333,49 @@ class WatchlistScreenState extends State<WatchlistScreen>
   /// The items behind [tab]: a provider's watchlist, or the servers' favorites.
   Future<List<MediaItem>> _loadTab(BuildContext context, _WatchlistTab tab) {
     final source = tab.source;
-    if (source != null) return _loadWatchlist(source);
+    if (source != null) {
+      final local = Provider.of<CatalogSourcesProvider?>(context, listen: false)?.localWatchlist;
+      return _loadWatchlist(source, local, _clientLookup(context));
+    }
     return const ServerFavoritesService().fetchFavorites(
       libraries: _libraries(context),
       clientFor: _clientLookup(context),
     );
   }
 
-  /// Every page of the chosen provider's watchlist, concatenated.
-  Future<List<MediaItem>> _loadWatchlist(CatalogSource source) async {
+  /// Every page of the chosen provider's watchlist, concatenated, after the
+  /// titles the app keeps itself for that provider.
+  Future<List<MediaItem>> _loadWatchlist(CatalogSource source, LocalWatchlist? local, ClientLookup clientFor) async {
+    // Kept by the app because the provider did not know them: ask whether it
+    // does now. Not awaited — the list does not wait on the lookups.
+    if (local != null) unawaited(local.promoteDue(source, clientFor));
     final items = <MediaItem>[];
     for (var page = 1; page <= _maxPages; page++) {
       final result = await source.fetchRow(CatalogRowId.watchlist, page: page, limit: _pageSize);
       items.addAll([for (final item in result.items) item.toMediaItem()]);
-      if (!result.hasMore) return items;
+      if (!result.hasMore) break;
+      if (page == _maxPages) {
+        appLogger.w('Watchlist: ${source.id.name} truncated at ${items.length} items ($_maxPages pages)');
+      }
     }
-    appLogger.w('Watchlist: ${source.id.name} truncated at ${items.length} items ($_maxPages pages)');
-    return items;
+    if (local == null) return items;
+    final entries = await local.shownBeside(source.id, items);
+    final kept = await Future.wait([for (final entry in entries) _localItem(entry, clientFor)]);
+    return [...kept.nonNulls, ...items];
+  }
+
+  /// A title the app keeps itself, as its server has it now — watched state
+  /// and artwork included. Left out while the server cannot answer: the
+  /// detail page behind it could not open either.
+  Future<MediaItem?> _localItem(LocalWatchlistEntry entry, ClientLookup clientFor) async {
+    final client = clientFor(entry.serverId);
+    if (client == null) return null;
+    try {
+      return await client.fetchItem(entry.itemId);
+    } catch (e) {
+      appLogger.d('Watchlist: kept title "${entry.title}" unavailable', error: e);
+      return null;
+    }
   }
 
   FocusNode _chipNode(int index) {

@@ -501,20 +501,20 @@ class MediaContextMenuState extends State<MediaContextMenu> {
         itemServerOnline &&
         !context.read<OfflineModeProvider>().isOffline) {
       final cachedCandidates = catalogSources.cachedWatchlistCandidatesFor(mediaItem);
-      // Resolved-and-empty means no connected source can hold this item.
-      showWatchlistEntry = cachedCandidates == null || cachedCandidates.isNotEmpty;
+      // Resolved-and-empty means no connected source knows this item; the
+      // app then keeps it in its own list, so the entry is always offered.
+      showWatchlistEntry = true;
       watchlistRemoveOffered =
-          cachedCandidates?.any((c) => c.source.isOnWatchlist(mediaItem.kind, c.ids) == true) ?? false;
-      if (showWatchlistEntry) {
-        unawaited(
-          catalogSources.watchlistCandidatesFor(mediaItem, client: mediaClient).catchError((Object e, StackTrace st) {
-            appLogger.d('Watchlist candidate warm-up failed', error: e, stackTrace: st);
-            return const <WatchlistCandidate>[];
-          }),
-        );
-        for (final source in catalogSources.watchlistCapableSources) {
-          unawaited(source.ensureWatchlistLoaded());
-        }
+          catalogSources.localWatchlist.holds(mediaItem) ||
+          (cachedCandidates?.any((c) => c.source.isOnWatchlist(mediaItem.kind, c.ids) == true) ?? false);
+      unawaited(
+        catalogSources.watchlistCandidatesFor(mediaItem, client: mediaClient).catchError((Object e, StackTrace st) {
+          appLogger.d('Watchlist candidate warm-up failed', error: e, stackTrace: st);
+          return const <WatchlistCandidate>[];
+        }),
+      );
+      for (final source in catalogSources.watchlistCapableSources) {
+        unawaited(source.ensureWatchlistLoaded());
       }
     }
 
@@ -1087,6 +1087,12 @@ class MediaContextMenuState extends State<MediaContextMenu> {
     required Offset? position,
     required bool openedFromKeyboard,
   }) async {
+    final local = catalogSources.localWatchlist;
+    if (removeOffered && local.holds(item)) {
+      await local.remove(item);
+      if (context.mounted) showSuccessSnackBar(context, t.explore.removedFromWatchlist);
+      return;
+    }
     List<WatchlistCandidate> candidates;
     try {
       candidates = await catalogSources.watchlistCandidatesFor(item, client: client);
@@ -1097,7 +1103,27 @@ class MediaContextMenuState extends State<MediaContextMenu> {
     }
     if (!context.mounted) return;
     if (candidates.isEmpty) {
-      showAppSnackBar(context, t.explore.watchlistNoMatch);
+      // No provider knows the title yet: the app keeps it, and hands it over
+      // once the provider has it (see [LocalWatchlist]).
+      final target = catalogSources.watchlistCapableSources.firstOrNull;
+      if (target == null || client == null) {
+        showAppSnackBar(context, t.explore.watchlistNoMatch);
+        return;
+      }
+      try {
+        final ids = await client.fetchExternalIds(item.id);
+        await local.add(item, source: target.id);
+        if (!context.mounted) return;
+        showAppSnackBar(
+          context,
+          ids.hasAny
+              ? t.explore.watchlistKeptLocally(provider: target.displayName)
+              : t.explore.watchlistKeptLocallyNoIds,
+        );
+      } catch (e, st) {
+        appLogger.w('Local watchlist add failed', error: e, stackTrace: st);
+        if (context.mounted) showErrorSnackBar(context, t.explore.watchlistUpdateFailed);
+      }
       return;
     }
 
@@ -1123,6 +1149,9 @@ class MediaContextMenuState extends State<MediaContextMenu> {
       // Membership updates optimistically inside the source; Explore rows
       // and open detail screens listening to watchlistChanges follow.
       if (!await mutateWatchlistMembership(item.kind, candidate, add: add)) return;
+      // A title the app handed over stands in on the watchlist until the
+      // provider shows it; a removal ends that too.
+      if (!add) await local.remove(item);
       if (!context.mounted) return;
       showSuccessSnackBar(context, add ? t.explore.addedToWatchlist : t.explore.removedFromWatchlist);
     } catch (e, st) {

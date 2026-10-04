@@ -1646,8 +1646,8 @@ class _Translations$explore$de extends Translations$explore$en {
 		one: '${n} Ergebnis',
 		other: '${n} Ergebnisse',
 	);
-	@override String watchlistTitleUnknown({required Object providers}) => '${providers} kennt diesen Titel nicht — damit kann ihn keine Merkliste aufnehmen.';
-	@override String get watchlistNoExternalIds => 'Der Server hat für diesen Titel keine externen IDs — damit findet ihn keine Merkliste.';
+	@override String watchlistKeptLocally({required Object provider}) => 'In Plebz gemerkt: ${provider} kennt diesen Titel noch nicht. Sobald er dort auftaucht, wandert er auf die Merkliste dort.';
+	@override String get watchlistKeptLocallyNoIds => 'In Plebz gemerkt: Der Server hat für diesen Titel keine externen IDs, darum bleibt er auf diesem Gerät.';
 }
 
 // Path: watchlist
@@ -5053,8 +5053,8 @@ extension on TranslationsDe {
 			'explore.detail.background' => 'Hintergrund',
 			'explore.detail.networks' => 'Sender & Streaming',
 			'explore.totalResults' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Ergebnis', other: '${n} Ergebnisse', ), 
-			'explore.watchlistTitleUnknown' => ({required Object providers}) => '${providers} kennt diesen Titel nicht — damit kann ihn keine Merkliste aufnehmen.',
-			'explore.watchlistNoExternalIds' => 'Der Server hat für diesen Titel keine externen IDs — damit findet ihn keine Merkliste.',
+			'explore.watchlistKeptLocally' => ({required Object provider}) => 'In Plebz gemerkt: ${provider} kennt diesen Titel noch nicht. Sobald er dort auftaucht, wandert er auf die Merkliste dort.',
+			'explore.watchlistKeptLocallyNoIds' => 'In Plebz gemerkt: Der Server hat für diesen Titel keine externen IDs, darum bleibt er auf diesem Gerät.',
 			'watchlist.typeFilter' => 'Anzeigen',
 			'watchlist.statusFilter' => 'Status',
 			'watchlist.allTypes' => 'Filme und Serien',

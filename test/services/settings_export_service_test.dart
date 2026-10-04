@@ -270,6 +270,17 @@ void main() {
       expect(jsonEncode(out), isNot(contains('private-order')));
     });
 
+    test('carries the watchlist titles the app keeps itself, for the active profile only', () async {
+      final prefs = await BaseSharedPreferencesService.sharedCache();
+      await prefs.setString('user_alice_local_watchlist', '[{"itemId":"show-1"}]');
+      await prefs.setString('user_bob_local_watchlist', '[{"itemId":"private-show"}]');
+
+      final exported = SettingsExportService.buildExportMap(prefs, currentUserUuid: 'alice')['prefs'] as Map;
+
+      expect(exported['local_watchlist'], {'type': 'string', 'value': '[{"itemId":"show-1"}]'});
+      expect(jsonEncode(exported), isNot(contains('private-show')));
+    });
+
     test('excludes device-local download roots while preserving portable download controls', () async {
       const sourcePath = '/source-device/downloads';
       final prefs = await BaseSharedPreferencesService.sharedCache();

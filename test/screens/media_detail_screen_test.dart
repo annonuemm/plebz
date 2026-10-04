@@ -29,6 +29,11 @@ import 'package:plezy/redesign/ocker_skin.dart';
 import 'package:plezy/providers/multi_server_provider.dart';
 import 'package:plezy/providers/watch_state_store.dart';
 import 'package:plezy/screens/media_detail_screen.dart';
+import 'package:plezy/utils/external_ids.dart';
+import 'package:plezy/services/catalog/local_watchlist.dart';
+import 'package:plezy/services/catalog/catalog_source.dart';
+import 'package:plezy/providers/catalog_sources_provider.dart';
+import 'package:plezy/models/catalog/catalog_item.dart';
 import 'package:plezy/widgets/detail_home_button.dart';
 import 'package:plezy/models/download_models.dart';
 import 'package:plezy/navigation/profile_navigation_scope.dart';
@@ -153,6 +158,60 @@ void main() {
       expect(global.left, lessThanOrEqualTo(pane.left), reason: 'the band\'s left end is drawn');
       expect(global.bottom, greaterThanOrEqualTo(pane.bottom), reason: 'the band\'s foot is drawn');
     }
+  });
+
+  testWidgets('a title the watchlist provider does not know is kept by the app instead of turned away', (tester) async {
+    await SettingsService.getInstance();
+    tester.view.physicalSize = const Size(1280, 720);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    LocalWatchlist.debugReset();
+
+    final show = testMediaItem(id: 'show_new', kind: MediaKind.show, title: 'A Show Too New', serverId: 'server_1');
+    final client = _FakeMediaServerClient(show: show, childrenByParent: {});
+    final servers = testMultiServer(clients: [client]).provider;
+    final source = _UnknownTitleSource();
+    final catalogSources = _DetailCatalogSources([source]);
+    addTearDown(catalogSources.dispose);
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: MaterialApp(
+          theme: monoTheme(dark: true),
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<MultiServerProvider>.value(value: servers),
+              ChangeNotifierProvider<CatalogSourcesProvider>.value(value: catalogSources),
+            ],
+            child: withProfileNavigationScope(child: MediaDetailScreen(metadata: show)),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    Finder bookmark(IconData icon) => find.byWidgetPredicate((widget) => widget is AppIcon && widget.icon == icon);
+    expect(bookmark(Symbols.bookmark_add_rounded), findsOneWidget);
+
+    await tester.tap(bookmark(Symbols.bookmark_add_rounded));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // No search opened on top: the title is on the watchlist, kept by the app.
+    expect(find.text(t.explore.watchlistKeptLocally(provider: 'Plex')), findsOneWidget);
+    expect(source.added, isEmpty);
+    expect(catalogSources.localWatchlist.holds(show), isTrue);
+    expect(find.byType(MediaDetailScreen), findsOneWidget);
+    expect(bookmark(Symbols.bookmark_added_rounded), findsOneWidget);
+
+    await tester.tap(bookmark(Symbols.bookmark_added_rounded));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(catalogSources.localWatchlist.holds(show), isFalse);
+    expect(bookmark(Symbols.bookmark_add_rounded), findsOneWidget);
   });
 
   // The TV detail page's title area owns the whole screen, so its artwork
@@ -3600,6 +3659,48 @@ Map<String, dynamic> _previewItem(
   };
 }
 
+/// A watchlist provider whose catalogue lacks every title.
+class _UnknownTitleSource implements CatalogSource {
+  final added = <CatalogItemIds>[];
+  final _changes = WatchlistChangeNotifier();
+
+  @override
+  CatalogSourceId get id => CatalogSourceId.plex;
+
+  @override
+  String get displayName => 'Plex';
+
+  @override
+  bool get supportsWatchlist => true;
+
+  @override
+  Listenable get watchlistChanges => _changes;
+
+  @override
+  Future<void> ensureWatchlistLoaded() async {}
+
+  @override
+  bool? isOnWatchlist(MediaKind kind, CatalogItemIds ids) => false;
+
+  @override
+  Future<CatalogItemIds?> resolveItemIds(MediaKind kind, ExternalIds external, {String? title}) async => null;
+
+  @override
+  Future<void> addToWatchlist(MediaKind kind, CatalogItemIds ids, {String? title}) async => added.add(ids);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _DetailCatalogSources extends CatalogSourcesProvider {
+  _DetailCatalogSources(this.sources);
+
+  final List<CatalogSource> sources;
+
+  @override
+  List<CatalogSource> get connectedSources => sources;
+}
+
 class _FakeMediaServerClient implements MediaServerClient {
   final MediaItem show;
   final Map<String, List<MediaItem>> childrenByParent;
@@ -3681,6 +3782,9 @@ class _FakeMediaServerClient implements MediaServerClient {
     if (gate != null) await gate.future;
     return (item: item, onDeckEpisode: onDeckEpisode);
   }
+
+  @override
+  Future<ExternalIds> fetchExternalIds(String itemId) async => const ExternalIds(tvdb: 4711);
 
   @override
   Future<MediaItem?> fetchItem(String id) async {

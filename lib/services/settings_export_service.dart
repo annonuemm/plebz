@@ -26,6 +26,7 @@ import '../media/media_backend.dart';
 import 'sensitive_prefs.dart';
 import 'settings_service.dart';
 import 'storage_service.dart';
+import 'catalog/local_watchlist.dart';
 
 class ImportResult {
   final int keysImported;
@@ -130,6 +131,8 @@ class SettingsExportService {
     'hidden_libraries': _PreferencePolicy(_typeString, userScoped: true),
     'library_filters': _PreferencePolicy(_typeString, userScoped: true),
     'library_order': _PreferencePolicy(_typeString, userScoped: true),
+    // Watchlist titles the provider did not know yet, kept by the app itself.
+    LocalWatchlist.baseKey: _PreferencePolicy(_typeString, userScoped: true),
   };
 
   /// Keys a full backup carries and an ordinary export must not: the IPTV
@@ -971,6 +974,8 @@ class SettingsExportService {
     final result = await applyImportMap(data, settings.prefs, currentUserUuid: uuid, withCredentials: withCredentials);
     // A sealed value read back from the file is opened into memory again.
     await SettingsService.tmdbApiKey.load(settings);
+    // The app's own watchlist titles are held in memory once read.
+    LocalWatchlist.reloadAll();
     if (connections.isEmpty || writeConnection == null) return result;
 
     // Servers last: the settings are in place by the time the app reloads its

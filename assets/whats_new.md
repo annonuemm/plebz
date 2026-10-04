@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.6.1 (Build 610)
+
+- Merkliste: Titel aus deiner Mediathek, die Plex noch nicht kennt (z. B. ganz neue Sendungen), merkt sich Plebz jetzt selbst, statt die Suche zu öffnen. Sie stehen vorne in der Merkliste und wandern automatisch auf die Plex-Merkliste, sobald Plex sie kennt. Bis dahin erscheinen sie nur unter „Merkliste“, nicht in der Merklisten-Reihe auf der Startseite und unter Erkunden.
+
 ## 1.6.0 (Build 608)
 
 - Live-TV: Im mpv-Player gibt es jetzt auch Shader, wie bei Filmen und Serien.

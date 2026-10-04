@@ -1675,8 +1675,8 @@
       "one": "${n} result",
       "other": "${n} results"
     },
-    "watchlistTitleUnknown": "Not known to ${providers}, so no watchlist can hold it.",
-    "watchlistNoExternalIds": "The server holds no external ids for this title, so no watchlist can match it."
+    "watchlistKeptLocally": "Kept in Plebz: ${provider} does not know this title yet. It moves to that watchlist once it does.",
+    "watchlistKeptLocallyNoIds": "Kept in Plebz: the server holds no external ids for this title, so it stays on this device."
   },
   "watchlist": {
     "typeFilter": "Show",

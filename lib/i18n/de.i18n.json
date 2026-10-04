@@ -1675,8 +1675,8 @@
       "one": "${n} Ergebnis",
       "other": "${n} Ergebnisse"
     },
-    "watchlistTitleUnknown": "${providers} kennt diesen Titel nicht — damit kann ihn keine Merkliste aufnehmen.",
-    "watchlistNoExternalIds": "Der Server hat für diesen Titel keine externen IDs — damit findet ihn keine Merkliste."
+    "watchlistKeptLocally": "In Plebz gemerkt: ${provider} kennt diesen Titel noch nicht. Sobald er dort auftaucht, wandert er auf die Merkliste dort.",
+    "watchlistKeptLocallyNoIds": "In Plebz gemerkt: Der Server hat für diesen Titel keine externen IDs, darum bleibt er auf diesem Gerät."
   },
   "watchlist": {
     "typeFilter": "Anzeigen",

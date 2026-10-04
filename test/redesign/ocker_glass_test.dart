@@ -838,6 +838,10 @@ void main() {
 
     testWidgets('the shell stands on the glass ground', (tester) async {
       await initializeDateFormatting('en');
+      // The shell reads whether the ground follows the focused title.
+      resetSharedPreferencesForTest();
+      SettingsService.resetForTesting();
+      await SettingsService.getInstance();
       tester.view.physicalSize = const Size(1920, 1080);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);

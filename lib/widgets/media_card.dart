@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:plezy/widgets/app_icon.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
+import '../redesign/ultra_blur_backdrop.dart';
 import '../focus/card_focus_scope.dart';
 import '../focus/focus_theme.dart';
 import '../focus/input_mode_tracker.dart';
@@ -629,7 +630,7 @@ class MediaCardState extends State<MediaCard> with ContextMenuTapMixin<MediaCard
       if (item is MediaItem && _showsWatchedIndicator(item)) WatchedIndicator(item: item),
       ...catalogPosterOverlays(_catalogItem, badgeLabels: badgeLabels),
     ];
-    return ExcludeSemantics(
+    final poster = ExcludeSemantics(
       child: _CatalogFocusBorder(
         accentColor: _catalogAccent,
         borderRadius: _posterFocusRadius(context, item),
@@ -638,6 +639,8 @@ class MediaCardState extends State<MediaCard> with ContextMenuTapMixin<MediaCard
             : Stack(children: [_clipPosterImage(context, item, image), ...overlays]),
       ),
     );
+    // The glass ground's colours follow the focused poster (fork, a test).
+    return item is MediaItem ? UltraBlurCardReporter(item: item, child: poster) : poster;
   }
 
   Widget _buildStandardGridCard(

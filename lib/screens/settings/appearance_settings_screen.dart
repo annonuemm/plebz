@@ -79,6 +79,20 @@ class AppearanceSettingsScreen extends StatelessWidget {
                     )
                   : const SizedBox.shrink(),
             ),
+            // The colours behind the television layout's screens; there is no
+            // such ground on a phone, a tablet or the Mac.
+            if (PlatformDetector.isTV())
+              SettingValueBuilder<AppThemeVariant>(
+                pref: SettingsService.appThemeVariant,
+                builder: (context, variant, _) => supportedAppThemeVariant(variant) == AppThemeVariant.glas
+                    ? SettingSwitchTile(
+                        pref: SettingsService.glasUltraBlur,
+                        icon: Symbols.gradient_rounded,
+                        title: t.settings.glasUltraBlur,
+                        subtitle: t.settings.glasUltraBlurDescription,
+                      )
+                    : const SizedBox.shrink(),
+              ),
             if (PlatformDetector.isAutomotive()) _displayScaleSelector(),
             if (Platform.isAndroid) _visualEffectsSelector(context),
           ],

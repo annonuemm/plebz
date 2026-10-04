@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.6.2 (Build 614)
+
+- Glas am Fernseher: Neuer Test-Schalter unter Einstellungen → Darstellung → „Hintergrund in Posterfarben (Plex)“. Der Hintergrund nimmt die Farben des Plex-Titels an, auf dem der Fokus steht – wie bei Plex, auf Startseite, Erkunden, Mediathek und Merkliste. Standardmäßig aus.
+
 ## 1.6.1 (Build 610)
 
 - Merkliste: Titel aus deiner Mediathek, die Plex noch nicht kennt (z. B. ganz neue Sendungen), merkt sich Plebz jetzt selbst, statt die Suche zu öffnen. Sie stehen vorne in der Merkliste und wandern automatisch auf die Plex-Merkliste, sobald Plex sie kennt. Bis dahin erscheinen sie nur unter „Merkliste“, nicht in der Merklisten-Reihe auf der Startseite und unter Erkunden.

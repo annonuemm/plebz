@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
+import '../media/ultra_blur_colors.dart';
 import '../media/artist_discography.dart';
 import '../media/download_resolution.dart';
 import '../media/episode_collection.dart';
@@ -89,6 +90,7 @@ part 'plex_client/parts/playlists.dart';
 part 'plex_client/parts/collections.dart';
 part 'plex_client/parts/play_queues.dart';
 part 'plex_client/parts/metadata_edit.dart';
+part 'plex_client/parts/ultra_blur.dart';
 
 const _plexVideoTranscodeBaseEndpoint = '/video/:/transcode/universal';
 const _plexVideoHlsStartEndpoint = '$_plexVideoTranscodeBaseEndpoint/start.m3u8';
@@ -388,7 +390,8 @@ class PlexClient
         _PlexPlaylistMethods,
         _PlexCollectionMethods,
         _PlexPlayQueueMethods,
-        _PlexMetadataEditMethods
+        _PlexMetadataEditMethods,
+        _PlexUltraBlurMethods
     implements MediaServerClient, ScopedMediaServerClient, GracefullyCloseable {
   @override
   PlexConfig config;

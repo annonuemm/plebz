@@ -20,6 +20,7 @@ import '../widgets/media_context_menu.dart';
 import '../widgets/optimized_media_image.dart';
 import '../widgets/watched_indicator.dart';
 import 'ocker_focus_bus.dart';
+import 'ultra_blur_backdrop.dart';
 import 'ocker_info_sheet.dart';
 import 'ocker_skin.dart';
 import '../widgets/artwork_dim_scope.dart';
@@ -240,6 +241,7 @@ class OckerPosterTileState extends State<OckerPosterTile> {
     }
     widget.onFocused();
     OckerFocusScope.read(context)?.report(OckerFocused(item: widget.item, hub: widget.hub, index: widget.index));
+    UltraBlurScope.read(context)?.report(widget.item);
     // In a row: sideways only — the page scrolls the vertical axis itself, by
     // section, because centring a 258-px poster would push its own heading off
     // the top. In a grid there is no section to scroll to, so the grid's own

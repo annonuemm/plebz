@@ -1497,6 +1497,12 @@ class Translations$settings$en {
 	/// en: 'The focus capsule glides from entry to entry and the type fades gently — even when visual effects are reduced.'
 	String get glasSmoothFocusDescription => 'The focus capsule glides from entry to entry and the type fades gently — even when visual effects are reduced.';
 
+	/// en: 'Background in the poster's colours (Plex)'
+	String get glasUltraBlur => 'Background in the poster\'s colours (Plex)';
+
+	/// en: 'The background takes the colours of the Plex title in focus, as Plex does. A test: Plex titles only.'
+	String get glasUltraBlurDescription => 'The background takes the colours of the Plex title in focus, as Plex does. A test: Plex titles only.';
+
 	/// en: 'Turning focus edge'
 	String get glasSpinningFocus => 'Turning focus edge';
 
@@ -9189,6 +9195,8 @@ extension on Translations {
 			'settings.glasAccentRotDescription' => 'A black ground, white type and a strong red as the accent — after Netflix.',
 			'settings.glasSmoothFocus' => 'Smooth focus',
 			'settings.glasSmoothFocusDescription' => 'The focus capsule glides from entry to entry and the type fades gently — even when visual effects are reduced.',
+			'settings.glasUltraBlur' => 'Background in the poster\'s colours (Plex)',
+			'settings.glasUltraBlurDescription' => 'The background takes the colours of the Plex title in focus, as Plex does. A test: Plex titles only.',
 			'settings.glasSpinningFocus' => 'Turning focus edge',
 			'settings.glasSpinningFocusDescription' => 'The glint on the focus edge travels slowly round it and holds still while you move. Costs a little performance.',
 			'settings.homeTitleLogos' => 'Logos on Home and Explore',
@@ -9228,10 +9236,10 @@ extension on Translations {
 			'settings.hardwareTestLabels.displayMode' => 'Mode',
 			'settings.hardwareTestLabels.displayModes' => 'Display modes',
 			'settings.hardwareTestLabels.hdrFormats' => 'HDR formats',
-			'settings.hardwareTestLabels.wideColour' => 'Wide colour gamut',
-			'settings.hardwareTestLabels.peakBrightness' => 'Peak brightness',
 			_ => null,
 		} ?? switch (path) {
+			'settings.hardwareTestLabels.wideColour' => 'Wide colour gamut',
+			'settings.hardwareTestLabels.peakBrightness' => 'Peak brightness',
 			'settings.hardwareTestLabels.audioOutput' => 'Output',
 			'settings.hardwareTestLabels.channels' => 'Channels',
 			'settings.hardwareTestLabels.hardwareDecoder' => 'Hardware',
@@ -9742,10 +9750,10 @@ extension on Translations {
 			'profiles.active' => 'Active',
 			'profiles.manage' => 'Manage',
 			'profiles.delete' => 'Delete',
-			'profiles.signOut' => 'Sign out',
-			'profiles.signOutPlexTitle' => 'Sign out of Plex?',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.signOut' => 'Sign out',
+			'profiles.signOutPlexTitle' => 'Sign out of Plex?',
 			'profiles.signOutPlexMessage' => ({required Object displayName}) => 'Remove ${displayName} and all Plex Home users? Sign back in anytime.',
 			'profiles.signOutPlexDeleteDownloads' => 'Also delete downloads',
 			'profiles.signOutPlexDeleteDownloadsDescription' => 'Otherwise they stay on this device and come back when you sign back in to this account.',
@@ -10256,10 +10264,10 @@ extension on Translations {
 			'watchlist.moviesOnly' => 'Movies only',
 			'watchlist.showsOnly' => 'Series only',
 			'watchlist.typeAll' => 'All',
-			'watchlist.typeMovies' => 'Movies',
-			'watchlist.typeShows' => 'Shows',
 			_ => null,
 		} ?? switch (path) {
+			'watchlist.typeMovies' => 'Movies',
+			'watchlist.typeShows' => 'Shows',
 			'watchlist.anyStatus' => 'Watched and unwatched',
 			'watchlist.unwatchedOnly' => 'Not watched',
 			'watchlist.watchedOnly' => 'Watched',
@@ -10770,10 +10778,10 @@ extension on Translations {
 			'videoSettings.hdrToneMappingPlayer' => 'Player',
 			'videoSettings.hdrToneMappingPlayerDescription' => 'Map to the display\'s peak brightness in the player, then tell the compositor the result.',
 			'videoSettings.hdrToneMappingFailed' => 'Couldn\'t change HDR tone mapping — the previous mode is still active.',
-			'videoSettings.audioOutput' => 'Audio Output',
-			'videoSettings.performanceOverlay' => 'Performance Overlay',
 			_ => null,
 		} ?? switch (path) {
+			'videoSettings.audioOutput' => 'Audio Output',
+			'videoSettings.performanceOverlay' => 'Performance Overlay',
 			'videoSettings.audioOutputDolbyAtmos' => 'Dolby Atmos',
 			'videoSettings.audioOutputDolbyAudio' => 'Dolby Audio',
 			'videoSettings.audioOutputSurround' => 'Surround',

@@ -1309,6 +1309,10 @@ class SettingsService extends BaseSharedPreferencesService {
   /// apart.
   static const glasSmoothFocus = BoolPref('glas_smooth_focus', defaultValue: false);
 
+  /// Under glass, the ground takes the colours of the Plex title holding focus
+  /// — Plex's "UltraBlur". A test, off until switched on.
+  static const glasUltraBlur = BoolPref('glas_ultra_blur', defaultValue: false);
+
   /// Under "Redesign – Glas": the focus edge's glint goes slowly round it.
   /// Off by default — a turning edge draws a frame every vsync while it turns,
   /// which a weak box can feel beside scrolling and a playing preview.
@@ -1894,6 +1898,7 @@ class SettingsService extends BaseSharedPreferencesService {
     appThemeVariant,
     glasAccent,
     glasSmoothFocus,
+    glasUltraBlur,
     glasSpinningFocus,
     showLibraryPlaylistsTab,
     showPlaybackTracksStatus,

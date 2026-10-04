@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
 import '../redesign/ocker_skin.dart';
+import '../redesign/ultra_blur_backdrop.dart';
+import '../media/ultra_blur_colors.dart';
 
 import '../i18n/strings.g.dart';
 import '../media/media_item.dart';
@@ -112,15 +114,7 @@ class TvSpotlightBackground extends StatelessWidget {
                   ? _buildMovingBackdrop(size, cornerProgress!, artwork)
                   : (useCorner ? _buildCornerBackdrop(backdropSize, artwork) : blurArtwork(artwork)),
             ),
-            _buildHorizontalScrim(context, bgColor),
-            RasterizedGradient(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.black.withValues(alpha: 0.45), Colors.transparent, bgColor.withValues(alpha: 0.96)],
-                stops: const [0.0, 0.38, 1.0],
-              ),
-            ),
+            _buildScrims(context, bgColor, useCorner: useCorner),
             if (media != null && showInfo)
               Positioned(
                 left: contentLeft ?? TvLayoutConstants.horizontalInset,
@@ -197,6 +191,69 @@ class TvSpotlightBackground extends StatelessWidget {
     return Align(
       alignment: Alignment.topRight,
       child: CornerBackdrop(width: backdropSize.width, height: backdropSize.height, child: backdrop),
+    );
+  }
+
+  /// The two scrims — or, while the ground takes the focused title's colours
+  /// ([UltraBlurAmbient]), lighter ones in black: scrims in the ground's own
+  /// flat colour, nearly opaque at the left and the foot, covered exactly the
+  /// part of the screen the colours were to show on. The picture then fades
+  /// into the colours, as on Plex.
+  Widget _buildScrims(BuildContext context, Color bgColor, {required bool useCorner}) {
+    final ambient = UltraBlurScope.of(context);
+    Widget standard() => Stack(
+      fit: StackFit.expand,
+      children: [
+        _buildHorizontalScrim(context, bgColor),
+        RasterizedGradient(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black.withValues(alpha: 0.45), Colors.transparent, bgColor.withValues(alpha: 0.96)],
+            stops: const [0.0, 0.38, 1.0],
+          ),
+        ),
+      ],
+    );
+    if (ambient == null) return standard();
+    return ValueListenableBuilder<UltraBlurColors?>(
+      valueListenable: ambient,
+      builder: (context, colors, _) {
+        if (colors == null) return standard();
+        // Over the full-screen picture the text still needs its shade; beside
+        // the corner box it stands on the colours themselves.
+        final side = useCorner ? 0.3 : 0.7;
+        final foot = useCorner ? 0.25 : 0.6;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            RasterizedGradient(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Colors.black.withValues(alpha: side),
+                  Colors.black.withValues(alpha: side * 0.35),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.56, 1.0],
+              ),
+            ),
+            RasterizedGradient(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.3),
+                  Colors.transparent,
+                  Colors.black.withValues(alpha: foot),
+                ],
+                stops: const [0.0, 0.38, 1.0],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

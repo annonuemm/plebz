@@ -590,6 +590,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get glasAccentRotDescription => 'Schwarzer Grund, weiße Schrift, kräftiges Rot als Akzent – angelehnt an Netflix.';
 	@override String get glasSmoothFocus => 'Fließender Fokus';
 	@override String get glasSmoothFocusDescription => 'Die Fokuskapsel gleitet von Eintrag zu Eintrag, und die Schrift blendet weich über – auch wenn die visuellen Effekte reduziert sind.';
+	@override String get glasUltraBlur => 'Hintergrund in Posterfarben (Plex)';
+	@override String get glasUltraBlurDescription => 'Der Hintergrund nimmt die Farben des Titels mit dem Fokus an, wie bei Plex. Test: nur für Plex-Titel.';
 	@override String get glasSpinningFocus => 'Fokusrahmen dreht sich';
 	@override String get glasSpinningFocusDescription => 'Das Glanzlicht des Fokusrahmens wandert langsam um ihn herum und hält still, solange du dich bewegst. Kostet ein wenig Leistung.';
 	@override String get homeTitleLogos => 'Logos auf Start und Erkunden';
@@ -4025,6 +4027,8 @@ extension on TranslationsDe {
 			'settings.glasAccentRotDescription' => 'Schwarzer Grund, weiße Schrift, kräftiges Rot als Akzent – angelehnt an Netflix.',
 			'settings.glasSmoothFocus' => 'Fließender Fokus',
 			'settings.glasSmoothFocusDescription' => 'Die Fokuskapsel gleitet von Eintrag zu Eintrag, und die Schrift blendet weich über – auch wenn die visuellen Effekte reduziert sind.',
+			'settings.glasUltraBlur' => 'Hintergrund in Posterfarben (Plex)',
+			'settings.glasUltraBlurDescription' => 'Der Hintergrund nimmt die Farben des Titels mit dem Fokus an, wie bei Plex. Test: nur für Plex-Titel.',
 			'settings.glasSpinningFocus' => 'Fokusrahmen dreht sich',
 			'settings.glasSpinningFocusDescription' => 'Das Glanzlicht des Fokusrahmens wandert langsam um ihn herum und hält still, solange du dich bewegst. Kostet ein wenig Leistung.',
 			'settings.homeTitleLogos' => 'Logos auf Start und Erkunden',
@@ -4073,10 +4077,10 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.tunneling' => 'Tunneling',
 			'settings.hardwareTestLabels.possible' => 'möglich',
 			'settings.hardwareTestLabels.notPossible' => 'nicht möglich',
-			'settings.hardwareTestLabels.unavailable' => 'nicht verfügbar',
-			'settings.hardwareTestLabels.none' => 'keine',
 			_ => null,
 		} ?? switch (path) {
+			'settings.hardwareTestLabels.unavailable' => 'nicht verfügbar',
+			'settings.hardwareTestLabels.none' => 'keine',
 			'settings.hardwareTestLabels.yes' => 'ja',
 			'settings.hardwareTestLabels.no' => 'nein',
 			'settings.yearFilter' => 'Jahresbereich',
@@ -4587,10 +4591,10 @@ extension on TranslationsDe {
 			'profiles.summaryMultipleWithActive' => ({required Object count, required Object activeName}) => '${count} Profile · aktiv: ${activeName}',
 			'profiles.summaryMultiple' => ({required Object count}) => '${count} Profile',
 			'profiles.removeConnectionTitle' => 'Verbindung entfernen?',
-			'profiles.removeConnectionMessage' => ({required Object displayName, required Object connectionLabel}) => 'Zugriff von ${displayName} auf ${connectionLabel} entfernen. Andere Profile behalten ihn.',
-			'profiles.deleteProfileTitle' => 'Profil löschen?',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.removeConnectionMessage' => ({required Object displayName, required Object connectionLabel}) => 'Zugriff von ${displayName} auf ${connectionLabel} entfernen. Andere Profile behalten ihn.',
+			'profiles.deleteProfileTitle' => 'Profil löschen?',
 			'profiles.deleteProfileMessage' => ({required Object displayName}) => '${displayName} und Verbindungen entfernen. Server bleiben verfügbar.',
 			'profiles.profileNameLabel' => 'Profilname',
 			'profiles.pinProtectionLabel' => 'PIN-Schutz',
@@ -5101,10 +5105,10 @@ extension on TranslationsDe {
 			'liveTv.reorderFavorites' => 'Favoriten sortieren',
 			'liveTv.noFavoriteChannels' => 'Keine Lieblingssender',
 			'liveTv.noFavoriteChannelsHint' => 'Zeige alle Sender an, halte dann einen Sender gedrückt und wähle „Zu Favoriten hinzufügen“.',
-			'liveTv.showAllChannels' => 'Alle Sender anzeigen',
-			'liveTv.favoritesLoadFailed' => 'Favoriten konnten nicht geladen werden. Überprüfe deine Verbindung und versuche es erneut.',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.showAllChannels' => 'Alle Sender anzeigen',
+			'liveTv.favoritesLoadFailed' => 'Favoriten konnten nicht geladen werden. Überprüfe deine Verbindung und versuche es erneut.',
 			'liveTv.favoritesUpdateFailed' => 'Favoriten konnten nicht aktualisiert werden. Prüfe deine Verbindung und versuche es erneut.',
 			'liveTv.joinSession' => 'Aktueller Sitzung beitreten',
 			'liveTv.watchFromStart' => ({required Object minutes}) => 'Von Anfang an ansehen (vor ${minutes} Min.)',
@@ -5615,10 +5619,10 @@ extension on TranslationsDe {
 			'performanceOverlay.minLuma' => 'Min. Luma',
 			'performanceOverlay.maxCll' => 'MaxCLL',
 			'performanceOverlay.maxFall' => 'MaxFALL',
-			'performanceOverlay.cacheUsed' => 'Cache genutzt',
-			'performanceOverlay.cacheLimit' => 'Cache-Limit',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.cacheUsed' => 'Cache genutzt',
+			'performanceOverlay.cacheLimit' => 'Cache-Limit',
 			'performanceOverlay.speed' => 'Geschwindigkeit',
 			'performanceOverlay.player' => 'Player',
 			'performanceOverlay.memory' => 'Speicher',

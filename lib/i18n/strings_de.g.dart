@@ -97,6 +97,7 @@ class TranslationsDe extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$sport$de sport = _Translations$sport$de._(_root);
 	@override late final _Translations$plebz$de plebz = _Translations$plebz$de._(_root);
 	@override late final _Translations$localFiles$de localFiles = _Translations$localFiles$de._(_root);
+	@override late final _Translations$reminders$de reminders = _Translations$reminders$de._(_root);
 }
 
 // Path: app
@@ -2758,6 +2759,23 @@ class _Translations$localFiles$de extends Translations$localFiles$en {
 	@override String get noVolumes => 'Kein Speicher gefunden.';
 	@override String get unreadable => 'Dieser Ordner lässt sich nicht lesen.';
 	@override String nothingHere({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.';
+}
+
+// Path: reminders
+class _Translations$reminders$de extends Translations$reminders$en {
+	_Translations$reminders$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get add => 'Erinnern';
+	@override String get remove => 'Erinnerung entfernen';
+	@override String get added => 'Erinnerung gesetzt – Plebz meldet sich kurz vor Beginn.';
+	@override String get isSet => 'Erinnerung gesetzt';
+	@override String get soonTitle => 'Gleich geht’s los';
+	@override String get runningTitle => 'Läuft gerade';
+	@override String get tune => 'Umschalten';
+	@override String channelGone({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.';
 }
 
 // Path: common.ratingSource
@@ -6120,6 +6138,14 @@ extension on TranslationsDe {
 			'localFiles.noVolumes' => 'Kein Speicher gefunden.',
 			'localFiles.unreadable' => 'Dieser Ordner lässt sich nicht lesen.',
 			'localFiles.nothingHere' => ({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.',
+			'reminders.add' => 'Erinnern',
+			'reminders.remove' => 'Erinnerung entfernen',
+			'reminders.added' => 'Erinnerung gesetzt – Plebz meldet sich kurz vor Beginn.',
+			'reminders.isSet' => 'Erinnerung gesetzt',
+			'reminders.soonTitle' => 'Gleich geht’s los',
+			'reminders.runningTitle' => 'Läuft gerade',
+			'reminders.tune' => 'Umschalten',
+			'reminders.channelGone' => ({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.',
 			_ => null,
 		};
 	}

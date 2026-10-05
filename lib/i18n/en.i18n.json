@@ -2792,5 +2792,15 @@
     "noVolumes": "No storage found.",
     "unreadable": "This folder cannot be read.",
     "nothingHere": "No folders here and no files of type ${types}."
+  },
+  "reminders": {
+    "add": "Remind me",
+    "remove": "Remove reminder",
+    "added": "Reminder set – Plebz will tell you just before it starts.",
+    "isSet": "Reminder set",
+    "soonTitle": "Starting soon",
+    "runningTitle": "On now",
+    "tune": "Switch over",
+    "channelGone": "The channel ${channel} is no longer in the channel list."
   }
 }

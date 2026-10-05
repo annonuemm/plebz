@@ -20,6 +20,7 @@ import '../services/app_exit_service.dart';
 import '../services/tvos_system_navigation_service.dart';
 import '../services/update_service.dart';
 import '../utils/app_logger.dart';
+import '../widgets/program_reminder_host.dart';
 import '../widgets/auth_error_banner.dart';
 import '../widgets/app_icon.dart';
 import '../utils/platform_detector.dart';
@@ -2215,7 +2216,8 @@ class _MainScreenState extends State<MainScreen>
     return MainScreenTabSwitcher(
       selectTab: _selectTabInBackground,
       // A phone asking to pair shows its code here, on whatever is on screen.
-      child: CompanionRemotePairingPrompt(child: _buildContent(context, useSideNav)),
+      // So does a programme reminder set in the guide.
+      child: ProgramReminderHost(child: CompanionRemotePairingPrompt(child: _buildContent(context, useSideNav))),
     );
   }
 

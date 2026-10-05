@@ -7,6 +7,8 @@ import '../../media/media_server_client.dart';
 import '../../mixins/mounted_set_state_mixin.dart';
 import '../../models/livetv_channel.dart';
 import '../../models/livetv_program.dart';
+import '../../services/program_reminders.dart';
+import '../../utils/snackbar_helper.dart';
 import '../../models/media_subscription.dart';
 import '../../theme/mono_tokens.dart';
 import '../../utils/app_logger.dart';
@@ -117,6 +119,7 @@ class _ProgramDetailsSheetContentState extends State<_ProgramDetailsSheetContent
   @override
   void initState() {
     super.initState();
+    ProgramReminders.instance.addListener(_onRemindersChanged);
     if (_canRecord) {
       _loadMapping();
     } else {
@@ -124,8 +127,11 @@ class _ProgramDetailsSheetContentState extends State<_ProgramDetailsSheetContent
     }
   }
 
+  void _onRemindersChanged() => setStateIfMounted(() {});
+
   @override
   void dispose() {
+    ProgramReminders.instance.removeListener(_onRemindersChanged);
     for (final node in _focusNodes) {
       node.dispose();
     }
@@ -241,6 +247,28 @@ class _ProgramDetailsSheetContentState extends State<_ProgramDetailsSheetContent
     }
 
     if (archived && isLive) actions.add(archiveAction(_ActionStyle.tonal));
+
+    // A reminder for a programme still to come: the app says when it starts,
+    // over whatever is on screen (ProgramReminderHost).
+    final channel = widget.channel;
+    if (channel != null && ProgramReminders.canRemind(program)) {
+      final reminded = ProgramReminders.instance.isSet(channel, program);
+      actions.add(
+        _SheetAction(
+          label: reminded ? t.reminders.remove : t.reminders.add,
+          icon: reminded ? Symbols.notifications_off_rounded : Symbols.notifications_rounded,
+          onPressed: () async {
+            final beginsAt = program.beginsAt!;
+            if (reminded) {
+              await ProgramReminders.instance.remove(ProgramReminders.keyOf(liveTvChannelScopeKey(channel), beginsAt));
+            } else {
+              await ProgramReminders.instance.add(channel, program);
+              if (mounted) showSuccessSnackBar(context, t.reminders.added);
+            }
+          },
+        ),
+      );
+    }
 
     if (_canRecord && client != null && _checkedMapping) {
       final existing = _existingSubscription;

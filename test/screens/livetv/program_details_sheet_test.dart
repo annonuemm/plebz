@@ -5,18 +5,29 @@ import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/models/livetv_channel.dart';
 import 'package:plezy/models/livetv_program.dart';
 import 'package:plezy/screens/livetv/program_details_sheet.dart';
+import 'package:plezy/services/program_reminders.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/widgets/overlay_sheet.dart';
+
+import '../../test_helpers/prefs.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() => initializeDateFormatting('en'));
-  setUp(() => LocaleSettings.setLocaleSync(AppLocale.en));
+  setUp(() {
+    LocaleSettings.setLocaleSync(AppLocale.en);
+    resetSharedPreferencesForTest();
+    ProgramReminders.instance.debugReset();
+  });
 
   final begins = DateTime(2026, 8, 29, 20, 15);
 
-  LiveTvProgram program({bool airing = false}) {
-    final start = airing ? DateTime.now().subtract(const Duration(minutes: 20)) : begins;
+  LiveTvProgram program({bool airing = false, bool ahead = false}) {
+    final start = airing
+        ? DateTime.now().subtract(const Duration(minutes: 20))
+        : ahead
+        ? DateTime.now().add(const Duration(hours: 2))
+        : begins;
     return LiveTvProgram(
       title: 'Tatort',
       channelIdentifier: 'ard',
@@ -30,6 +41,7 @@ void main() {
     VoidCallback? onWatchFromArchive,
     VoidCallback? onTuneChannel,
     bool airing = false,
+    bool ahead = false,
   }) async {
     await tester.pumpWidget(
       TranslationProvider(
@@ -42,7 +54,7 @@ void main() {
                   child: TextButton(
                     onPressed: () => showProgramDetailsSheet(
                       context,
-                      program: program(airing: airing),
+                      program: program(airing: airing, ahead: ahead),
                       channel: LiveTvChannel(key: 'c', identifier: 'ard', title: 'Das Erste'),
                       posterUrl: null,
                       onTuneChannel: onTuneChannel ?? () {},
@@ -93,5 +105,28 @@ void main() {
     // The channel is still reachable — what is on now is a different thing to
     // want, not a replacement for the programme that was asked about.
     expect(find.text(t.liveTv.watchChannel), findsOneWidget);
+  });
+
+  testWidgets('a programme still to come can be reminded of, and the reminder taken back', (tester) async {
+    await pumpSheet(tester, ahead: true);
+    final channel = LiveTvChannel(key: 'c', identifier: 'ard', title: 'Das Erste');
+    final sheetProgram = program(ahead: true);
+
+    expect(find.text(t.reminders.add), findsOneWidget);
+    await tester.tap(find.text(t.reminders.add));
+    await tester.pumpAndSettle();
+
+    expect(ProgramReminders.instance.isSet(channel, sheetProgram), isTrue);
+    expect(find.text(t.reminders.remove), findsOneWidget);
+
+    await tester.tap(find.text(t.reminders.remove));
+    await tester.pumpAndSettle();
+    expect(ProgramReminders.instance.isSet(channel, sheetProgram), isFalse);
+    expect(find.text(t.reminders.add), findsOneWidget);
+  });
+
+  testWidgets('nothing to remind of once a programme has begun', (tester) async {
+    await pumpSheet(tester, airing: true);
+    expect(find.text(t.reminders.add), findsNothing);
   });
 }

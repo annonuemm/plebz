@@ -98,6 +98,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$sport$en sport = Translations$sport$en.internal(_root);
 	late final Translations$plebz$en plebz = Translations$plebz$en.internal(_root);
 	late final Translations$localFiles$en localFiles = Translations$localFiles$en.internal(_root);
+	late final Translations$reminders$en reminders = Translations$reminders$en.internal(_root);
 }
 
 // Path: app
@@ -6962,6 +6963,39 @@ class Translations$localFiles$en {
 	String nothingHere({required Object types}) => 'No folders here and no files of type ${types}.';
 }
 
+// Path: reminders
+class Translations$reminders$en {
+	Translations$reminders$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Remind me'
+	String get add => 'Remind me';
+
+	/// en: 'Remove reminder'
+	String get remove => 'Remove reminder';
+
+	/// en: 'Reminder set – Plebz will tell you just before it starts.'
+	String get added => 'Reminder set – Plebz will tell you just before it starts.';
+
+	/// en: 'Reminder set'
+	String get isSet => 'Reminder set';
+
+	/// en: 'Starting soon'
+	String get soonTitle => 'Starting soon';
+
+	/// en: 'On now'
+	String get runningTitle => 'On now';
+
+	/// en: 'Switch over'
+	String get tune => 'Switch over';
+
+	/// en: 'The channel ${channel} is no longer in the channel list.'
+	String channelGone({required Object channel}) => 'The channel ${channel} is no longer in the channel list.';
+}
+
 // Path: common.ratingSource
 class Translations$common$ratingSource$en {
 	Translations$common$ratingSource$en.internal(this._root);
@@ -11353,6 +11387,16 @@ extension on Translations {
 			'localFiles.noVolumes' => 'No storage found.',
 			'localFiles.unreadable' => 'This folder cannot be read.',
 			'localFiles.nothingHere' => ({required Object types}) => 'No folders here and no files of type ${types}.',
+			_ => null,
+		} ?? switch (path) {
+			'reminders.add' => 'Remind me',
+			'reminders.remove' => 'Remove reminder',
+			'reminders.added' => 'Reminder set – Plebz will tell you just before it starts.',
+			'reminders.isSet' => 'Reminder set',
+			'reminders.soonTitle' => 'Starting soon',
+			'reminders.runningTitle' => 'On now',
+			'reminders.tune' => 'Switch over',
+			'reminders.channelGone' => ({required Object channel}) => 'The channel ${channel} is no longer in the channel list.',
 			_ => null,
 		};
 	}

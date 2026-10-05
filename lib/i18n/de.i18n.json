@@ -2792,5 +2792,15 @@
     "noVolumes": "Kein Speicher gefunden.",
     "unreadable": "Dieser Ordner lässt sich nicht lesen.",
     "nothingHere": "Hier liegen keine Ordner und keine Dateien vom Typ ${types}."
+  },
+  "reminders": {
+    "add": "Erinnern",
+    "remove": "Erinnerung entfernen",
+    "added": "Erinnerung gesetzt – Plebz meldet sich kurz vor Beginn.",
+    "isSet": "Erinnerung gesetzt",
+    "soonTitle": "Gleich geht’s los",
+    "runningTitle": "Läuft gerade",
+    "tune": "Umschalten",
+    "channelGone": "Der Sender ${channel} ist nicht mehr in der Senderliste."
   }
 }

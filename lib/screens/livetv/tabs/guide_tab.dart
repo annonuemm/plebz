@@ -33,6 +33,7 @@ import '../../../utils/live_tv_grouping.dart';
 import '../../../utils/live_tv_matching.dart';
 import '../../../services/settings_service.dart';
 import '../../../services/live_tv_last_selection.dart';
+import '../../../services/program_reminders.dart';
 import '../../../utils/platform_detector.dart';
 import '../../../utils/tone_mapped_logo_image.dart';
 import '../guide_preview_panel.dart';
@@ -486,6 +487,13 @@ class GuideTabState extends State<GuideTab>
 
     _gridHorizontalController.addListener(_syncGridToHeader);
     _headerHorizontalController.addListener(_syncHeaderToGrid);
+    ProgramReminders.instance.addListener(_onRemindersChanged);
+    unawaited(ProgramReminders.instance.ensureLoaded());
+  }
+
+  /// A bell set or taken away in the details sheet shows in the grid at once.
+  void _onRemindersChanged() {
+    if (mounted) setState(() {});
   }
 
   // Not the gated data-refresh timer the other tabs run: the tick is a
@@ -544,6 +552,7 @@ class GuideTabState extends State<GuideTab>
 
   @override
   void dispose() {
+    ProgramReminders.instance.removeListener(_onRemindersChanged);
     _programLoadGeneration++;
     _selectLongPressController.dispose();
     _guideFocusNode.dispose();
@@ -2130,6 +2139,7 @@ class GuideTabState extends State<GuideTab>
         // grid as the row where the colour stops.
         final isArchived = isPast && liveTvProgramIsArchived(channel, program);
         final isRecordingScheduled = _isRecordingScheduled(program);
+        final isReminded = ProgramReminders.instance.isSet(channel, program);
 
         // Under glass the blocks are panes over the page's gradient ground:
         // washes of ink rather than fills, and focus a pane of bright glass
@@ -2235,6 +2245,18 @@ class GuideTabState extends State<GuideTab>
                             if (isRecordingScheduled) ...[
                               _RecordingDot(color: Colors.red, tooltip: t.liveTv.recordingScheduled),
                               const SizedBox(width: 5),
+                            ],
+                            if (isReminded) ...[
+                              Tooltip(
+                                message: t.reminders.isSet,
+                                child: AppIcon(
+                                  Symbols.notifications_active_rounded,
+                                  fill: 1,
+                                  size: 13,
+                                  color: titleColor,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
                             ],
                             Expanded(
                               child: Text(

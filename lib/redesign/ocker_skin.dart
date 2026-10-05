@@ -175,9 +175,9 @@ double ockerTileWidth(BuildContext context) => ockerTileWidthFor(
 /// fives — starts landing a place off on every DOWN.
 ///
 /// So a grid that can measure itself passes what it measured.
-double ockerTileWidthFor(BuildContext context, double contentWidth) {
+double ockerTileWidthFor(BuildContext context, double contentWidth, {int columns = OckerLayout.gridColumns}) {
   final scale = ockerScale(context);
-  final gaps = OckerLayout.tileGap * scale * (OckerLayout.gridColumns - 1);
+  final gaps = OckerLayout.tileGap * scale * (columns - 1);
   // The 2 px are the focus ring's bleed, which the grid reserves either side.
   //
   // The lower bound is a guard against a degenerate width, not a design
@@ -186,7 +186,19 @@ double ockerTileWidthFor(BuildContext context, double contentWidth) {
   // measured against, and the grid would wrap at four while the focus
   // arithmetic went on counting in fives. A column too narrow for five of
   // these is not a shape this design is asked to draw.
-  return ((contentWidth - 2 - gaps) / OckerLayout.gridColumns).clamp(40.0, OckerLayout.tileWidth);
+  return ((contentWidth - 2 - gaps) / columns).clamp(40.0, OckerLayout.tileWidth);
+}
+
+/// How many posters a grid column [contentWidth] wide takes: five beside the
+/// detail panel, and as many more as fit at the same size where the panel is
+/// switched off ([SettingsService.glasDetailPanel]) and the column has its
+/// room. Worked out from the width alone, so every grid comes to the same
+/// answer without being told whether a panel stands beside it.
+int ockerGridColumnsFor(BuildContext context, double contentWidth) {
+  final gap = OckerLayout.tileGap * ockerScale(context);
+  final poster = ockerTileWidth(context);
+  final fit = ((contentWidth - 2 + gap) / (poster + gap)).floor();
+  return fit < OckerLayout.gridColumns ? OckerLayout.gridColumns : fit;
 }
 
 /// The detail panel on a grid page, widened by whatever its flush-left margin

@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.7.2 (Build 624)
+
+- Glas am Fernseher: Die Beschreibung rechts neben Mediathek und Merkliste lässt sich ausschalten (Einstellungen → Darstellung → „Beschreibung neben den Postern“). Dann passen mehr Poster in eine Reihe.
+
 ## 1.7.1 (Build 622)
 
 - Live-TV: Erinnerungen an Sendungen. Im Programmführer eine kommende Sendung öffnen und „Erinnern“ wählen – eine Glocke markiert sie. Eine Minute vor Beginn erscheint ein Hinweis über allem, was gerade läuft, mit „Umschalten“. Funktioniert, solange Plebz geöffnet ist.

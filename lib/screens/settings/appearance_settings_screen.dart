@@ -85,11 +85,22 @@ class AppearanceSettingsScreen extends StatelessWidget {
               SettingValueBuilder<AppThemeVariant>(
                 pref: SettingsService.appThemeVariant,
                 builder: (context, variant, _) => supportedAppThemeVariant(variant) == AppThemeVariant.glas
-                    ? SettingSwitchTile(
-                        pref: SettingsService.glasUltraBlur,
-                        icon: Symbols.gradient_rounded,
-                        title: t.settings.glasUltraBlur,
-                        subtitle: t.settings.glasUltraBlurDescription,
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SettingSwitchTile(
+                            pref: SettingsService.glasUltraBlur,
+                            icon: Symbols.gradient_rounded,
+                            title: t.settings.glasUltraBlur,
+                            subtitle: t.settings.glasUltraBlurDescription,
+                          ),
+                          SettingSwitchTile(
+                            pref: SettingsService.glasDetailPanel,
+                            icon: Symbols.view_sidebar_rounded,
+                            title: t.settings.glasDetailPanel,
+                            subtitle: t.settings.glasDetailPanelDescription,
+                          ),
+                        ],
                       )
                     : const SizedBox.shrink(),
               ),

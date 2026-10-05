@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/settings_service.dart';
+import '../widgets/settings_builder.dart';
 import 'ocker_detail_panel.dart';
 import 'ocker_focus_bus.dart';
 import 'ocker_skin.dart';
@@ -54,7 +56,15 @@ class _OckerPanelFrameState extends State<OckerPanelFrame> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => SettingValueBuilder<bool>(
+    pref: SettingsService.glasDetailPanel,
+    builder: (context, panelWanted, _) => _build(context, showPanel: widget.showPanel && panelWanted),
+  );
+
+  /// [showPanel]: whether this screen has a panel and the viewer wants it —
+  /// without one the grid takes the width, in more posters
+  /// ([ockerGridColumnsFor]).
+  Widget _build(BuildContext context, {required bool showPanel}) {
     final scale = ockerScale(context);
     // The watchlist's panel, to the pixel — see [ockerGridPanelWidth] — so the
     // two columns are one width and the grid beside either does not move.
@@ -81,7 +91,7 @@ class _OckerPanelFrameState extends State<OckerPanelFrame> {
           OckerLayout.safeMargin * scale,
           0,
         ),
-        child: widget.showPanel
+        child: showPanel
             ? Row(
                 crossAxisAlignment: .start,
                 children: [

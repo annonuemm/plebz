@@ -1505,6 +1505,12 @@ class Translations$settings$en {
 	/// en: 'On Home and Explore the background takes the colours of the title in focus.'
 	String get glasUltraBlurDescription => 'On Home and Explore the background takes the colours of the title in focus.';
 
+	/// en: 'Description beside the posters'
+	String get glasDetailPanel => 'Description beside the posters';
+
+	/// en: 'Libraries and the watchlist show the selected title's description on the right. Off, more posters fit in a row.'
+	String get glasDetailPanelDescription => 'Libraries and the watchlist show the selected title\'s description on the right. Off, more posters fit in a row.';
+
 	/// en: 'Turning focus edge'
 	String get glasSpinningFocus => 'Turning focus edge';
 
@@ -9292,6 +9298,8 @@ extension on Translations {
 			'settings.glasSmoothFocusDescription' => 'The focus capsule glides from entry to entry and the type fades gently — even when visual effects are reduced.',
 			'settings.glasUltraBlur' => 'Background in the poster\'s colours',
 			'settings.glasUltraBlurDescription' => 'On Home and Explore the background takes the colours of the title in focus.',
+			'settings.glasDetailPanel' => 'Description beside the posters',
+			'settings.glasDetailPanelDescription' => 'Libraries and the watchlist show the selected title\'s description on the right. Off, more posters fit in a row.',
 			'settings.glasSpinningFocus' => 'Turning focus edge',
 			'settings.glasSpinningFocusDescription' => 'The glint on the focus edge travels slowly round it and holds still while you move. Costs a little performance.',
 			'settings.homeTitleLogos' => 'Logos on Home and Explore',
@@ -9329,10 +9337,10 @@ extension on Translations {
 			'settings.hardwareTestLabels.currentMode' => 'Current mode',
 			'settings.hardwareTestLabels.modeSwitching' => 'Mode switching',
 			'settings.hardwareTestLabels.displayMode' => 'Mode',
-			'settings.hardwareTestLabels.displayModes' => 'Display modes',
-			'settings.hardwareTestLabels.hdrFormats' => 'HDR formats',
 			_ => null,
 		} ?? switch (path) {
+			'settings.hardwareTestLabels.displayModes' => 'Display modes',
+			'settings.hardwareTestLabels.hdrFormats' => 'HDR formats',
 			'settings.hardwareTestLabels.wideColour' => 'Wide colour gamut',
 			'settings.hardwareTestLabels.peakBrightness' => 'Peak brightness',
 			'settings.hardwareTestLabels.audioOutput' => 'Output',
@@ -9843,10 +9851,10 @@ extension on Translations {
 			'profiles.switchingProfile' => 'Switching profile…',
 			'profiles.deleteThisProfileTitle' => 'Delete this profile?',
 			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => 'Remove ${displayName}. Connections aren\'t affected.',
-			'profiles.active' => 'Active',
-			'profiles.manage' => 'Manage',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.active' => 'Active',
+			'profiles.manage' => 'Manage',
 			'profiles.delete' => 'Delete',
 			'profiles.signOut' => 'Sign out',
 			'profiles.signOutPlexTitle' => 'Sign out of Plex?',
@@ -10357,10 +10365,10 @@ extension on Translations {
 			'watchlist.typeFilter' => 'Show',
 			'watchlist.statusFilter' => 'Watch state',
 			'watchlist.allTypes' => 'Movies and series',
-			'watchlist.moviesOnly' => 'Movies only',
-			'watchlist.showsOnly' => 'Series only',
 			_ => null,
 		} ?? switch (path) {
+			'watchlist.moviesOnly' => 'Movies only',
+			'watchlist.showsOnly' => 'Series only',
 			'watchlist.typeAll' => 'All',
 			'watchlist.typeMovies' => 'Movies',
 			'watchlist.typeShows' => 'Shows',
@@ -10871,10 +10879,10 @@ extension on Translations {
 			'videoSettings.hdrToneMapping' => 'HDR Tone Mapping',
 			'videoSettings.hdrToneMappingCompositor' => 'Compositor',
 			'videoSettings.hdrToneMappingCompositorDescription' => 'Pass the source\'s HDR metadata through and let the desktop compositor map it.',
-			'videoSettings.hdrToneMappingPlayer' => 'Player',
-			'videoSettings.hdrToneMappingPlayerDescription' => 'Map to the display\'s peak brightness in the player, then tell the compositor the result.',
 			_ => null,
 		} ?? switch (path) {
+			'videoSettings.hdrToneMappingPlayer' => 'Player',
+			'videoSettings.hdrToneMappingPlayerDescription' => 'Map to the display\'s peak brightness in the player, then tell the compositor the result.',
 			'videoSettings.hdrToneMappingFailed' => 'Couldn\'t change HDR tone mapping — the previous mode is still active.',
 			'videoSettings.audioOutput' => 'Audio Output',
 			'videoSettings.performanceOverlay' => 'Performance Overlay',
@@ -11385,10 +11393,10 @@ extension on Translations {
 			'localFiles.volumes' => 'Storage',
 			'localFiles.up' => 'Up one level',
 			'localFiles.noVolumes' => 'No storage found.',
-			'localFiles.unreadable' => 'This folder cannot be read.',
-			'localFiles.nothingHere' => ({required Object types}) => 'No folders here and no files of type ${types}.',
 			_ => null,
 		} ?? switch (path) {
+			'localFiles.unreadable' => 'This folder cannot be read.',
+			'localFiles.nothingHere' => ({required Object types}) => 'No folders here and no files of type ${types}.',
 			'reminders.add' => 'Remind me',
 			'reminders.remove' => 'Remove reminder',
 			'reminders.added' => 'Reminder set – Plebz will tell you just before it starts.',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../media/media_hub.dart';
 import '../media/media_item.dart';
+import '../services/settings_service.dart';
 import '../theme/mono_tokens.dart';
 import '../widgets/focusable_tab_chip.dart' show TabChipStrip;
 import 'ocker_browse_grid.dart';
@@ -174,6 +175,16 @@ class OckerBrowsePageState extends State<OckerBrowsePage> {
 
   @override
   Widget build(BuildContext context) {
+    // The viewer may give the panel's width to the posters instead.
+    final panelWanted = SettingsService.instanceOrNull?.listenable(SettingsService.glasDetailPanel);
+    if (panelWanted == null) return _build(context, showPanel: true);
+    return ValueListenableBuilder<bool>(
+      valueListenable: panelWanted,
+      builder: (context, showPanel, _) => _build(context, showPanel: showPanel),
+    );
+  }
+
+  Widget _build(BuildContext context, {required bool showPanel}) {
     final tk = tokens(context);
     final scale = ockerScale(context);
     _describeFirstIfIdle();
@@ -207,8 +218,10 @@ class OckerBrowsePageState extends State<OckerBrowsePage> {
                 ],
               ),
             ),
-            SizedBox(width: OckerLayout.rowGutter * scale),
-            OckerDetailPanel(resolveClient: widget.resolveClient, width: ockerGridPanelWidth(context)),
+            if (showPanel) ...[
+              SizedBox(width: OckerLayout.rowGutter * scale),
+              OckerDetailPanel(resolveClient: widget.resolveClient, width: ockerGridPanelWidth(context)),
+            ],
           ],
         ),
       ),

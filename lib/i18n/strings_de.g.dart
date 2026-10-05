@@ -594,6 +594,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get glasSmoothFocusDescription => 'Die Fokuskapsel gleitet von Eintrag zu Eintrag, und die Schrift blendet weich über – auch wenn die visuellen Effekte reduziert sind.';
 	@override String get glasUltraBlur => 'Hintergrund in Posterfarben';
 	@override String get glasUltraBlurDescription => 'Auf Startseite und Erkunden nimmt der Hintergrund die Farben des Titels mit dem Fokus an.';
+	@override String get glasDetailPanel => 'Beschreibung neben den Postern';
+	@override String get glasDetailPanelDescription => 'Mediathek und Merkliste zeigen rechts die Beschreibung des gewählten Titels. Ausgeschaltet passen mehr Poster in eine Reihe.';
 	@override String get glasSpinningFocus => 'Fokusrahmen dreht sich';
 	@override String get glasSpinningFocusDescription => 'Das Glanzlicht des Fokusrahmens wandert langsam um ihn herum und hält still, solange du dich bewegst. Kostet ein wenig Leistung.';
 	@override String get homeTitleLogos => 'Logos auf Start und Erkunden';
@@ -4074,6 +4076,8 @@ extension on TranslationsDe {
 			'settings.glasSmoothFocusDescription' => 'Die Fokuskapsel gleitet von Eintrag zu Eintrag, und die Schrift blendet weich über – auch wenn die visuellen Effekte reduziert sind.',
 			'settings.glasUltraBlur' => 'Hintergrund in Posterfarben',
 			'settings.glasUltraBlurDescription' => 'Auf Startseite und Erkunden nimmt der Hintergrund die Farben des Titels mit dem Fokus an.',
+			'settings.glasDetailPanel' => 'Beschreibung neben den Postern',
+			'settings.glasDetailPanelDescription' => 'Mediathek und Merkliste zeigen rechts die Beschreibung des gewählten Titels. Ausgeschaltet passen mehr Poster in eine Reihe.',
 			'settings.glasSpinningFocus' => 'Fokusrahmen dreht sich',
 			'settings.glasSpinningFocusDescription' => 'Das Glanzlicht des Fokusrahmens wandert langsam um ihn herum und hält still, solange du dich bewegst. Kostet ein wenig Leistung.',
 			'settings.homeTitleLogos' => 'Logos auf Start und Erkunden',
@@ -4120,10 +4124,10 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.hardwareDecoder' => 'Hardware',
 			'settings.hardwareTestLabels.noHardwareDecoder' => 'nur Software',
 			'settings.hardwareTestLabels.tunneling' => 'Tunneling',
-			'settings.hardwareTestLabels.possible' => 'möglich',
-			'settings.hardwareTestLabels.notPossible' => 'nicht möglich',
 			_ => null,
 		} ?? switch (path) {
+			'settings.hardwareTestLabels.possible' => 'möglich',
+			'settings.hardwareTestLabels.notPossible' => 'nicht möglich',
 			'settings.hardwareTestLabels.unavailable' => 'nicht verfügbar',
 			'settings.hardwareTestLabels.none' => 'keine',
 			'settings.hardwareTestLabels.yes' => 'ja',
@@ -4634,10 +4638,10 @@ extension on TranslationsDe {
 			'profiles.signOutFailed' => 'Abmeldung fehlgeschlagen.',
 			'profiles.sectionTitle' => 'Profile',
 			'profiles.summarySingle' => 'Profile hinzufügen, um verwaltete Benutzer mit lokalen Identitäten zu kombinieren',
-			'profiles.summaryMultipleWithActive' => ({required Object count, required Object activeName}) => '${count} Profile · aktiv: ${activeName}',
-			'profiles.summaryMultiple' => ({required Object count}) => '${count} Profile',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.summaryMultipleWithActive' => ({required Object count, required Object activeName}) => '${count} Profile · aktiv: ${activeName}',
+			'profiles.summaryMultiple' => ({required Object count}) => '${count} Profile',
 			'profiles.removeConnectionTitle' => 'Verbindung entfernen?',
 			'profiles.removeConnectionMessage' => ({required Object displayName, required Object connectionLabel}) => 'Zugriff von ${displayName} auf ${connectionLabel} entfernen. Andere Profile behalten ihn.',
 			'profiles.deleteProfileTitle' => 'Profil löschen?',
@@ -5148,10 +5152,10 @@ extension on TranslationsDe {
 			'liveTv.whatsOn' => 'Jetzt im TV',
 			'liveTv.watchChannel' => 'Kanal ansehen',
 			'liveTv.favorites' => 'Favoriten',
-			'liveTv.reorderFavorites' => 'Favoriten sortieren',
-			'liveTv.noFavoriteChannels' => 'Keine Lieblingssender',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.reorderFavorites' => 'Favoriten sortieren',
+			'liveTv.noFavoriteChannels' => 'Keine Lieblingssender',
 			'liveTv.noFavoriteChannelsHint' => 'Zeige alle Sender an, halte dann einen Sender gedrückt und wähle „Zu Favoriten hinzufügen“.',
 			'liveTv.showAllChannels' => 'Alle Sender anzeigen',
 			'liveTv.favoritesLoadFailed' => 'Favoriten konnten nicht geladen werden. Überprüfe deine Verbindung und versuche es erneut.',
@@ -5662,10 +5666,10 @@ extension on TranslationsDe {
 			'performanceOverlay.dvRpuAverage' => 'DV-RPU Ø',
 			'performanceOverlay.dvSampleAverage' => 'DV-Sample Ø',
 			'performanceOverlay.maxLuma' => 'Max. Luma',
-			'performanceOverlay.minLuma' => 'Min. Luma',
-			'performanceOverlay.maxCll' => 'MaxCLL',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.minLuma' => 'Min. Luma',
+			'performanceOverlay.maxCll' => 'MaxCLL',
 			'performanceOverlay.maxFall' => 'MaxFALL',
 			'performanceOverlay.cacheUsed' => 'Cache genutzt',
 			'performanceOverlay.cacheLimit' => 'Cache-Limit',

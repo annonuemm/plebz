@@ -690,6 +690,32 @@ void main() {
     });
   }
 
+  testWidgets('without the description column a row of the glass watchlist takes more posters, none bigger', (
+    tester,
+  ) async {
+    Future<({int perRow, double width})> firstRow() async {
+      final tiles = find.byType(OckerPosterTile);
+      final top = tester.getTopLeft(tiles.first).dy;
+      final row = tiles.evaluate().where((e) => tester.getTopLeft(find.byWidget(e.widget)).dy == top).length;
+      return (perRow: row, width: tester.getSize(tiles.first).width);
+    }
+
+    await _pumpWatchlist(tester, [
+      _FakeWatchlistSource(CatalogSourceId.simkl, 'Simkl', total: 20),
+    ], variant: AppThemeVariant.glas);
+    final withPanel = await firstRow();
+    expect(withPanel.perRow, 5);
+    expect(find.byType(OckerDetailPanel), findsOneWidget);
+
+    await SettingsService.instance.write(SettingsService.glasDetailPanel, false);
+    await tester.pumpAndSettle();
+    final without = await firstRow();
+    expect(find.byType(OckerDetailPanel), findsNothing);
+    expect(without.perRow, greaterThan(5));
+    // The same poster, give or take the rounding of the gaps.
+    expect(without.width, closeTo(withPanel.width, withPanel.width * 0.02));
+  });
+
   group('narrowing the list', () {
     /// Four entries, one of each combination: an unwatched film, an unwatched
     /// series, a watched film, a watched series.

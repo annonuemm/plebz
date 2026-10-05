@@ -487,6 +487,8 @@
     "glasSmoothFocusDescription": "Die Fokuskapsel gleitet von Eintrag zu Eintrag, und die Schrift blendet weich über – auch wenn die visuellen Effekte reduziert sind.",
     "glasUltraBlur": "Hintergrund in Posterfarben",
     "glasUltraBlurDescription": "Auf Startseite und Erkunden nimmt der Hintergrund die Farben des Titels mit dem Fokus an.",
+    "glasDetailPanel": "Beschreibung neben den Postern",
+    "glasDetailPanelDescription": "Mediathek und Merkliste zeigen rechts die Beschreibung des gewählten Titels. Ausgeschaltet passen mehr Poster in eine Reihe.",
     "glasSpinningFocus": "Fokusrahmen dreht sich",
     "glasSpinningFocusDescription": "Das Glanzlicht des Fokusrahmens wandert langsam um ihn herum und hält still, solange du dich bewegst. Kostet ein wenig Leistung.",
     "homeTitleLogos": "Logos auf Start und Erkunden",

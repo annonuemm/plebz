@@ -2353,7 +2353,9 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
       // Six, like the rows on the home screen. Left to the density setting the
       // narrower column beside the detail panel worked out at five, which made
       // the same poster two different sizes in the same app.
-      columnCountOverride: _ocker && viewMode == ViewMode.grid ? OckerLayout.gridColumns : null,
+      columnCountOverride: _ocker && viewMode == ViewMode.grid
+          ? room?.geometry.columns ?? OckerLayout.gridColumns
+          : null,
       // The poster fills its cell there, with no caption under it to leave
       // room for: the cell is the poster's own 2:3.
       aspectRatioOverride: ockerGrid && browseShape == null && !useWideRatio ? OckerGridGeometry.aspectRatio : null,

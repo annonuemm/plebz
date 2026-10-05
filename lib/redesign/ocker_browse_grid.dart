@@ -101,14 +101,28 @@ class OckerBrowseGridState extends State<OckerBrowseGrid> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final geometry = OckerGridGeometry.of(context, constraints.maxWidth);
-        return _buildGrid(context, scale, gap, geometry.tileWidth, geometry.tileHeight, geometry.bleed);
+        return _buildGrid(
+          context,
+          scale,
+          gap,
+          geometry.tileWidth,
+          geometry.tileHeight,
+          geometry.bleed,
+          geometry.columns,
+        );
       },
     );
   }
 
-  Widget _buildGrid(BuildContext context, double scale, double gap, double tileWidth, double tileHeight, Offset bleed) {
-    const columns = OckerLayout.gridColumns;
-
+  Widget _buildGrid(
+    BuildContext context,
+    double scale,
+    double gap,
+    double tileWidth,
+    double tileHeight,
+    Offset bleed,
+    int columns,
+  ) {
     // The scroll view is moved out by the room it keeps, so the room lies
     // outside the column and the first poster stands exactly where it always
     // stood — flush with the panel and the header above it.
@@ -174,6 +188,7 @@ class OckerBrowseGridState extends State<OckerBrowseGrid> {
 @immutable
 class OckerGridGeometry {
   const OckerGridGeometry._({
+    required this.columns,
     required this.columnWidth,
     required this.tileWidth,
     required this.tileHeight,
@@ -188,15 +203,17 @@ class OckerGridGeometry {
     // pixel the ring vanished on those sides, and the lit edge of "Glas" lost
     // exactly its brightest stretch, top left.
     final growth = FocusTheme.focusScaleFor(context) - 1;
-    final estimate = ockerTileWidthFor(context, columnWidth);
+    final columns = ockerGridColumnsFor(context, columnWidth);
+    final estimate = ockerTileWidthFor(context, columnWidth, columns: columns);
     final bleed = Offset(
       (estimate * growth / 2 + _ringReach).ceilToDouble(),
       (estimate * OckerLayout.tileHeight / OckerLayout.tileWidth * growth / 2 + _ringReach).ceilToDouble(),
     );
     // The room comes out of the tiles, not out of the page: they narrow by a
     // pixel or two so five still fit the same column.
-    final tileWidth = ockerTileWidthFor(context, columnWidth - 2 * (bleed.dx - 1));
+    final tileWidth = ockerTileWidthFor(context, columnWidth - 2 * (bleed.dx - 1), columns: columns);
     return OckerGridGeometry._(
+      columns: columns,
       columnWidth: columnWidth,
       tileWidth: tileWidth,
       tileHeight: tileWidth * OckerLayout.tileHeight / OckerLayout.tileWidth,
@@ -208,6 +225,8 @@ class OckerGridGeometry {
   /// variant draws, "Glas"'s lit edge, with a pixel to spare.
   static const _ringReach = 2.5;
 
+  /// Posters to a row — see [ockerGridColumnsFor].
+  final int columns;
   final double columnWidth;
   final double tileWidth;
   final double tileHeight;
@@ -220,20 +239,21 @@ class OckerGridGeometry {
   /// The width of a poster over its height: the drawn 226 by 339.
   static const aspectRatio = OckerLayout.tileWidth / OckerLayout.tileHeight;
 
-  /// Five posters and their four gaps.
+  /// The posters of a row and the gaps between them.
   double gridWidth(BuildContext context) =>
-      OckerLayout.gridColumns * tileWidth + OckerLayout.tileGap * ockerScale(context) * (OckerLayout.gridColumns - 1);
+      columns * tileWidth + OckerLayout.tileGap * ockerScale(context) * (columns - 1);
 
   @override
   bool operator ==(Object other) =>
       other is OckerGridGeometry &&
+      other.columns == columns &&
       other.columnWidth == columnWidth &&
       other.tileWidth == tileWidth &&
       other.tileHeight == tileHeight &&
       other.bleed == bleed;
 
   @override
-  int get hashCode => Object.hash(columnWidth, tileWidth, tileHeight, bleed);
+  int get hashCode => Object.hash(columns, columnWidth, tileWidth, tileHeight, bleed);
 }
 
 /// Room outside a column for a grid of posters that scrolls inside something

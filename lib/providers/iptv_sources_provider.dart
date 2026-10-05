@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../mixins/disposable_change_notifier_mixin.dart';
 import '../models/livetv_channel.dart';
 import '../services/credential_fields.dart';
+import '../services/iptv/iptv_local_files.dart';
 import '../services/iptv/iptv_disk_cache.dart';
 import 'live_tv_channel_layout_provider.dart';
 import '../services/iptv/iptv_live_tv_source.dart';
@@ -198,6 +199,7 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
     _liveTvById.remove(sourceId)?.close();
     safeNotifyListeners();
     await _persist();
+    await IptvLocalFiles.deleteFor(sourceId);
   }
 
   /// Drop cached playlists and guides so the next read hits the network.

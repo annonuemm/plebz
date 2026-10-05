@@ -10,6 +10,9 @@ import '../../services/settings_service.dart';
 import '../../i18n/strings.g.dart';
 import '../../providers/iptv_sources_provider.dart';
 import '../../services/iptv/iptv_catchup.dart';
+import '../../services/iptv/iptv_local_files.dart';
+import '../../services/local_file_access.dart';
+import '../../utils/app_logger.dart';
 import '../../services/iptv/iptv_source.dart';
 import '../../utils/snackbar_helper.dart';
 import '../../widgets/app_icon.dart';
@@ -191,6 +194,9 @@ class IptvSourceEditScreen extends StatefulWidget {
 }
 
 class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
+  /// Known before the first save: a playlist chosen from a file is copied in
+  /// under it.
+  late final String _id = widget.source?.id ?? const Uuid().v4();
   late final TextEditingController _name;
   late final TextEditingController _playlistUrl;
 
@@ -285,7 +291,7 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
     }
 
     final source = IptvSource(
-      id: widget.source?.id ?? const Uuid().v4(),
+      id: _id,
       name: text(_name),
       kind: widget.kind,
       playlistUrl: _isXtream ? null : text(_playlistUrl),
@@ -372,6 +378,26 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
         textInputAction: TextInputAction.done,
       ),
   ];
+
+  /// A playlist from a local file, chosen wherever it lies; it is copied into
+  /// the app and the field takes the copy's address (see [IptvLocalFiles]).
+  Future<void> _pickPlaylistFile() async {
+    final path = await LocalFileAccess.pickFile(
+      context,
+      extensions: const {'m3u', 'm3u8'},
+      title: t.iptv.pickPlaylistTitle,
+    );
+    if (path == null || !mounted) return;
+    try {
+      final url = await IptvLocalFiles.importPlaylist(_id, path);
+      if (!mounted) return;
+      setState(() => _playlistUrl.text = url);
+      _clearError(_playlistUrl);
+    } catch (error) {
+      appLogger.w('IPTV: local playlist could not be copied in', error: error);
+      if (mounted) showErrorSnackBar(context, t.iptv.playlistFileFailed);
+    }
+  }
 
   String? _errorFor(TextEditingController field) => _emptyRequired.contains(field) ? t.iptv.fieldRequired : null;
 
@@ -499,18 +525,35 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
                       ),
                     ),
                   ] else ...[
-                    FocusableTextField(
-                      controller: _playlistUrl,
-                      tvTextInputPresentation: _keyboard,
-                      tvTextInputAutoOpenBehavior: _autoOpen,
-                      decoration: InputDecoration(
-                        labelText: t.iptv.playlistLabel,
-                        hintText: 'http://provider/list.m3u',
-                        errorText: _errorFor(_playlistUrl),
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _playlistUrl,
+                      builder: (context, value, _) => FocusableTextField(
+                        controller: _playlistUrl,
+                        tvTextInputPresentation: _keyboard,
+                        tvTextInputAutoOpenBehavior: _autoOpen,
+                        decoration: InputDecoration(
+                          labelText: t.iptv.playlistLabel,
+                          hintText: 'http://provider/list.m3u',
+                          errorText: _errorFor(_playlistUrl),
+                          helperText: switch (IptvLocalFiles.originalName(value.text.trim())) {
+                            final name? => t.iptv.localPlaylist(name: name),
+                            null => null,
+                          },
+                          helperMaxLines: 3,
+                        ),
+                        onChanged: (_) => _clearError(_playlistUrl),
+                        keyboardType: TextInputType.url,
+                        textInputAction: TextInputAction.next,
                       ),
-                      onChanged: (_) => _clearError(_playlistUrl),
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.next,
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: .centerLeft,
+                      child: TextButton.icon(
+                        icon: const AppIcon(Symbols.folder_open_rounded, fill: 1),
+                        label: Text(t.iptv.pickPlaylistFile),
+                        onPressed: () => unawaited(_pickPlaylistFile()),
+                      ),
                     ),
                   ],
                   const SizedBox(height: 16),

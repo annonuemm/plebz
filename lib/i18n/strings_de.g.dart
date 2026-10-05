@@ -96,6 +96,7 @@ class TranslationsDe extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$actor$de actor = _Translations$actor$de._(_root);
 	@override late final _Translations$sport$de sport = _Translations$sport$de._(_root);
 	@override late final _Translations$plebz$de plebz = _Translations$plebz$de._(_root);
+	@override late final _Translations$localFiles$de localFiles = _Translations$localFiles$de._(_root);
 }
 
 // Path: app
@@ -677,6 +678,7 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get zapWithChannelKeysDescription => 'P+ und P− wechseln im Live-Player den Sender. Für Fernbedienungen, die diese Tasten haben.';
 	@override String get showActorFilmography => 'Vollständige Filmografie';
 	@override String get showActorFilmographyDescription => 'Auf der Seite eines Schauspielers auch die Filme und Serien auflisten, die du nicht hast — ausgegraut. Nutzt deinen TMDB-Schlüssel.';
+	@override String get backupPickTitle => 'Sicherung wählen';
 }
 
 // Path: search
@@ -2591,6 +2593,10 @@ class _Translations$iptv$de extends Translations$iptv$en {
 	@override String get playlistWithGuide => 'Playlist mit Programm';
 	@override String get playlistWithoutGuide => 'Playlist ohne Programm';
 	@override String sourceCount({required Object n}) => '${n} Quellen';
+	@override String get pickPlaylistFile => 'Datei auswählen';
+	@override String get pickPlaylistTitle => 'M3U-Datei wählen';
+	@override String localPlaylist({required Object name}) => 'Lokale Datei: ${name}. Nach Änderungen an der Datei erneut auswählen.';
+	@override String get playlistFileFailed => 'Die Datei konnte nicht übernommen werden.';
 }
 
 // Path: trailerStage
@@ -2731,6 +2737,27 @@ class _Translations$plebz$de extends Translations$plebz$en {
 	@override String get whatsNew => 'Was ist neu';
 	@override String get whatsNewDescription => 'Was sich mit jeder Version geändert hat';
 	@override String get whatsNewEmpty => 'Zu dieser Version gibt es noch keine Notizen.';
+}
+
+// Path: localFiles
+class _Translations$localFiles$de extends Translations$localFiles$en {
+	_Translations$localFiles$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get wrongTypeTitle => 'Falscher Dateityp';
+	@override String wrongTypeMessage({required Object types}) => 'Gewählt werden kann eine Datei vom Typ ${types}.';
+	@override String get accessTitle => 'Zugriff auf Dateien';
+	@override String get accessMessage => 'Diese Box hat keine eigene Dateiauswahl. Damit Plebz Ordner und USB-Sticks durchsuchen kann, braucht die App einmalig den „Zugriff auf alle Dateien“. Auf der nächsten Seite schaltest du ihn für Plebz ein und kommst dann mit Zurück wieder hierher.';
+	@override String get accessConfirm => 'Weiter';
+	@override String get accessUnavailable => 'Diese Box bietet keine Einstellung für den Dateizugriff an. Er lässt sich nur über einen PC freischalten:\nadb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow';
+	@override String get accessDenied => 'Ohne den Zugriff auf alle Dateien kann Plebz hier keine Ordner durchsuchen.';
+	@override String get volumes => 'Speicherorte';
+	@override String get up => 'Eine Ebene höher';
+	@override String get noVolumes => 'Kein Speicher gefunden.';
+	@override String get unreadable => 'Dieser Ordner lässt sich nicht lesen.';
+	@override String nothingHere({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.';
 }
 
 // Path: common.ratingSource
@@ -4141,6 +4168,7 @@ extension on TranslationsDe {
 			'settings.zapWithChannelKeysDescription' => 'P+ und P− wechseln im Live-Player den Sender. Für Fernbedienungen, die diese Tasten haben.',
 			'settings.showActorFilmography' => 'Vollständige Filmografie',
 			'settings.showActorFilmographyDescription' => 'Auf der Seite eines Schauspielers auch die Filme und Serien auflisten, die du nicht hast — ausgegraut. Nutzt deinen TMDB-Schlüssel.',
+			'settings.backupPickTitle' => 'Sicherung wählen',
 			'search.hint' => 'Filme, Serien und Musik suchen …',
 			'search.notInYourLibraries' => 'Nicht in deinen Mediatheken',
 			'search.copiesFound' => ({required Object count}) => '${count} Kopien',
@@ -4590,9 +4618,9 @@ extension on TranslationsDe {
 			'profiles.summarySingle' => 'Profile hinzufügen, um verwaltete Benutzer mit lokalen Identitäten zu kombinieren',
 			'profiles.summaryMultipleWithActive' => ({required Object count, required Object activeName}) => '${count} Profile · aktiv: ${activeName}',
 			'profiles.summaryMultiple' => ({required Object count}) => '${count} Profile',
-			'profiles.removeConnectionTitle' => 'Verbindung entfernen?',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.removeConnectionTitle' => 'Verbindung entfernen?',
 			'profiles.removeConnectionMessage' => ({required Object displayName, required Object connectionLabel}) => 'Zugriff von ${displayName} auf ${connectionLabel} entfernen. Andere Profile behalten ihn.',
 			'profiles.deleteProfileTitle' => 'Profil löschen?',
 			'profiles.deleteProfileMessage' => ({required Object displayName}) => '${displayName} und Verbindungen entfernen. Server bleiben verfügbar.',
@@ -5104,9 +5132,9 @@ extension on TranslationsDe {
 			'liveTv.favorites' => 'Favoriten',
 			'liveTv.reorderFavorites' => 'Favoriten sortieren',
 			'liveTv.noFavoriteChannels' => 'Keine Lieblingssender',
-			'liveTv.noFavoriteChannelsHint' => 'Zeige alle Sender an, halte dann einen Sender gedrückt und wähle „Zu Favoriten hinzufügen“.',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.noFavoriteChannelsHint' => 'Zeige alle Sender an, halte dann einen Sender gedrückt und wähle „Zu Favoriten hinzufügen“.',
 			'liveTv.showAllChannels' => 'Alle Sender anzeigen',
 			'liveTv.favoritesLoadFailed' => 'Favoriten konnten nicht geladen werden. Überprüfe deine Verbindung und versuche es erneut.',
 			'liveTv.favoritesUpdateFailed' => 'Favoriten konnten nicht aktualisiert werden. Prüfe deine Verbindung und versuche es erneut.',
@@ -5618,9 +5646,9 @@ extension on TranslationsDe {
 			'performanceOverlay.maxLuma' => 'Max. Luma',
 			'performanceOverlay.minLuma' => 'Min. Luma',
 			'performanceOverlay.maxCll' => 'MaxCLL',
-			'performanceOverlay.maxFall' => 'MaxFALL',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.maxFall' => 'MaxFALL',
 			'performanceOverlay.cacheUsed' => 'Cache genutzt',
 			'performanceOverlay.cacheLimit' => 'Cache-Limit',
 			'performanceOverlay.speed' => 'Geschwindigkeit',
@@ -5972,6 +6000,10 @@ extension on TranslationsDe {
 			'iptv.playlistWithGuide' => 'Playlist mit Programm',
 			'iptv.playlistWithoutGuide' => 'Playlist ohne Programm',
 			'iptv.sourceCount' => ({required Object n}) => '${n} Quellen',
+			'iptv.pickPlaylistFile' => 'Datei auswählen',
+			'iptv.pickPlaylistTitle' => 'M3U-Datei wählen',
+			'iptv.localPlaylist' => ({required Object name}) => 'Lokale Datei: ${name}. Nach Änderungen an der Datei erneut auswählen.',
+			'iptv.playlistFileFailed' => 'Die Datei konnte nicht übernommen werden.',
 			'trailerStage.title' => 'Trailerbühne',
 			'trailerStage.mood' => 'Worauf hast du heute Lust?',
 			'trailerStage.kind' => 'Art',
@@ -6076,6 +6108,18 @@ extension on TranslationsDe {
 			'plebz.whatsNew' => 'Was ist neu',
 			'plebz.whatsNewDescription' => 'Was sich mit jeder Version geändert hat',
 			'plebz.whatsNewEmpty' => 'Zu dieser Version gibt es noch keine Notizen.',
+			'localFiles.wrongTypeTitle' => 'Falscher Dateityp',
+			'localFiles.wrongTypeMessage' => ({required Object types}) => 'Gewählt werden kann eine Datei vom Typ ${types}.',
+			'localFiles.accessTitle' => 'Zugriff auf Dateien',
+			'localFiles.accessMessage' => 'Diese Box hat keine eigene Dateiauswahl. Damit Plebz Ordner und USB-Sticks durchsuchen kann, braucht die App einmalig den „Zugriff auf alle Dateien“. Auf der nächsten Seite schaltest du ihn für Plebz ein und kommst dann mit Zurück wieder hierher.',
+			'localFiles.accessConfirm' => 'Weiter',
+			'localFiles.accessUnavailable' => 'Diese Box bietet keine Einstellung für den Dateizugriff an. Er lässt sich nur über einen PC freischalten:\nadb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow',
+			'localFiles.accessDenied' => 'Ohne den Zugriff auf alle Dateien kann Plebz hier keine Ordner durchsuchen.',
+			'localFiles.volumes' => 'Speicherorte',
+			'localFiles.up' => 'Eine Ebene höher',
+			'localFiles.noVolumes' => 'Kein Speicher gefunden.',
+			'localFiles.unreadable' => 'Dieser Ordner lässt sich nicht lesen.',
+			'localFiles.nothingHere' => ({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.',
 			_ => null,
 		};
 	}

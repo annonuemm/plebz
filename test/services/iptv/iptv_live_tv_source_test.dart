@@ -12,6 +12,8 @@ import 'package:plezy/services/favorite_channels_repository.dart';
 import 'package:plezy/services/iptv/iptv_disk_cache.dart';
 import 'package:plezy/services/iptv/iptv_catchup.dart';
 import 'package:plezy/services/iptv/iptv_live_tv_source.dart';
+import 'package:plezy/services/iptv/iptv_local_files.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:plezy/services/iptv/iptv_source.dart';
 
 const _playlist = '''
@@ -187,6 +189,57 @@ http.Response _ok(String body) => http.Response(body, 200);
 http.Response _okJson(Object body) => http.Response(jsonEncode(body), 200);
 
 void main() {
+  group('a playlist from a local file', () {
+    late Directory support;
+    setUp(() async {
+      support = await Directory.systemTemp.createTemp('plebz_iptv_files');
+      IptvLocalFiles.directoryProvider = () async => support;
+    });
+    tearDown(() async {
+      IptvLocalFiles.directoryProvider = getApplicationSupportDirectory;
+      await support.delete(recursive: true);
+    });
+
+    test('is copied in, read without the network, and named after the file it was', () async {
+      final picked = File('${support.path}/Meine Liste.m3u')..writeAsStringSync(_playlist);
+      final url = await IptvLocalFiles.importPlaylist('src', picked.path);
+      picked.deleteSync(); // the original may go away; the copy stays
+      expect(IptvLocalFiles.isLocal(url), isTrue);
+      expect(IptvLocalFiles.originalName(url), 'Meine Liste.m3u');
+
+      final requests = <Uri>[];
+      final source = IptvLiveTvSource(
+        IptvSource(id: 'src', name: 'Lokal', kind: IptvSourceKind.m3u, playlistUrl: url),
+        httpClient: MockClient((request) async {
+          requests.add(request.url);
+          return http.Response('', 404);
+        }),
+        favorites: _MemoryFavorites(),
+      );
+      addTearDown(source.close);
+
+      final channels = await source.fetchChannels();
+      expect(channels.map((channel) => channel.title), ['Das Erste HD', 'Kein EPG']);
+      expect(requests, isEmpty);
+    });
+
+    test('choosing a file again replaces the copy, and removing the source removes it', () async {
+      final first = File('${support.path}/a.m3u')..writeAsStringSync(_playlist);
+      final second = File('${support.path}/b.m3u8')..writeAsStringSync(_playlist);
+      await IptvLocalFiles.importPlaylist('src', first.path);
+      final url = await IptvLocalFiles.importPlaylist('src', second.path);
+      await IptvLocalFiles.importPlaylist('other', first.path);
+
+      List<String> copies() =>
+          Directory('${support.path}/iptv_files').listSync().map((e) => e.uri.pathSegments.last).toList()..sort();
+      expect(copies(), ['other__a.m3u', 'src__b.m3u8']);
+      expect(IptvLocalFiles.originalName(url), 'b.m3u8');
+
+      await IptvLocalFiles.deleteFor('src');
+      expect(copies(), ['other__a.m3u']);
+    });
+  });
+
   group('repeats of the same station', () {
     MockClient repeated() =>
         MockClient((request) async => _ok(request.url.path.endsWith('.m3u') ? _repeatedPlaylist : _guide));

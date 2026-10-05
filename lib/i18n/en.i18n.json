@@ -600,7 +600,8 @@
     "zapWithChannelKeys": "Channel keys on the remote",
     "zapWithChannelKeysDescription": "Let P+ and P− switch channels in the live player. For remotes that have those keys.",
     "showActorFilmography": "Full filmography for actors",
-    "showActorFilmographyDescription": "On an actor's page, also list the films and series you do not have, greyed out. Uses your TMDB key."
+    "showActorFilmographyDescription": "On an actor's page, also list the films and series you do not have, greyed out. Uses your TMDB key.",
+    "backupPickTitle": "Choose a backup"
   },
   "search": {
     "hint": "Search movies, shows, music...",
@@ -2660,7 +2661,11 @@
     "incomplete": "Incomplete",
     "playlistWithGuide": "Playlist with guide",
     "playlistWithoutGuide": "Playlist without guide",
-    "sourceCount": "${n} sources"
+    "sourceCount": "${n} sources",
+    "pickPlaylistFile": "Choose file",
+    "pickPlaylistTitle": "Choose an M3U file",
+    "localPlaylist": "Local file: ${name}. Choose it again after changing the file.",
+    "playlistFileFailed": "The file could not be taken over."
   },
   "trailerStage": {
     "title": "Trailer stage",
@@ -2773,5 +2778,19 @@
     "whatsNew": "What's new",
     "whatsNewDescription": "What changed with each version",
     "whatsNewEmpty": "There are no notes for this version yet."
+  },
+  "localFiles": {
+    "wrongTypeTitle": "Wrong file type",
+    "wrongTypeMessage": "Choose a file of type ${types}.",
+    "accessTitle": "Access to files",
+    "accessMessage": "This box has no file picker of its own. To browse folders and USB sticks, Plebz needs \"all files access\" once. Turn it on for Plebz on the next screen, then come back here with Back.",
+    "accessConfirm": "Continue",
+    "accessUnavailable": "This box offers no setting for file access. It can only be granted from a computer:\nadb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow",
+    "accessDenied": "Without all files access Plebz cannot browse folders here.",
+    "volumes": "Storage",
+    "up": "Up one level",
+    "noVolumes": "No storage found.",
+    "unreadable": "This folder cannot be read.",
+    "nothingHere": "No folders here and no files of type ${types}."
   }
 }

@@ -23,6 +23,7 @@ import '../../utils/app_logger.dart';
 import '../favorite_channels_repository.dart';
 import 'iptv_catchup.dart';
 import 'iptv_disk_cache.dart';
+import 'iptv_local_files.dart';
 import 'iptv_source.dart';
 import 'm3u_parser.dart';
 import 'xmltv_parser.dart';
@@ -852,6 +853,7 @@ class IptvLiveTvSource implements LiveTvSupport {
       _favorites.write(favoriteStoreKey, channels, checkCurrent: checkCurrent);
 
   Future<String?> _get(String url) async {
+    if (IptvLocalFiles.isLocal(url)) return _readLocal(url);
     try {
       final response = await _http.send(http.Request('GET', Uri.parse(url)));
       if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -875,6 +877,22 @@ class IptvLiveTvSource implements LiveTvSupport {
       return utf8.decode(unpacked, allowMalformed: true);
     } catch (error, stackTrace) {
       appLogger.w('IPTV ${source.name}: $url failed', error: error, stackTrace: stackTrace);
+      return null;
+    }
+  }
+
+  /// A playlist (or guide) taken from a local file — see [IptvLocalFiles].
+  Future<String?> _readLocal(String url) async {
+    try {
+      final file = File(Uri.parse(url).toFilePath());
+      if (await file.length() > _maxResponseBytes) {
+        appLogger.w('IPTV ${source.name}: local file is larger than ${_maxResponseBytes >> 20} MB; not read');
+        return null;
+      }
+      final unpacked = await _unpack(await file.readAsBytes(), url);
+      return unpacked == null ? null : utf8.decode(unpacked, allowMalformed: true);
+    } catch (error, stackTrace) {
+      appLogger.w('IPTV ${source.name}: local file could not be read', error: error, stackTrace: stackTrace);
       return null;
     }
   }

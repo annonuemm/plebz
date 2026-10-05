@@ -126,6 +126,7 @@ class MainActivity : FlutterActivity() {
   private val userCertificateChannel = UserCertificateChannel()
   private val updateInstallerChannel = UpdateInstallerChannel(this)
   private val vaultKeyChannel = VaultKeyChannel()
+  private val storageAccessChannel by lazy { StorageAccessChannel(this) }
   private val exitDiagnosticsRequested = AtomicBoolean(false)
 
   private inline fun logTextInputDiag(message: () -> String) {
@@ -961,6 +962,7 @@ class MainActivity : FlutterActivity() {
     userCertificateChannel.attach(flutterEngine.dartExecutor.binaryMessenger)
     updateInstallerChannel.attach(flutterEngine.dartExecutor.binaryMessenger)
     vaultKeyChannel.attach(flutterEngine.dartExecutor.binaryMessenger)
+    storageAccessChannel.attach(flutterEngine.dartExecutor.binaryMessenger)
 
     // Splash screen theme: persist user's chosen theme for next launch (API 31+)
     MethodChannel(flutterEngine.dartExecutor.binaryMessenger, THEME_CHANNEL).setMethodCallHandler { call, result ->

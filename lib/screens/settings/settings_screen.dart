@@ -29,6 +29,7 @@ import 'package:path/path.dart' as p;
 
 import '../../connection/connection_registry.dart';
 import '../../media/year_filter.dart';
+import '../../services/local_file_access.dart';
 import '../../services/settings_export_service.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/seerr_account_provider.dart';
@@ -1059,6 +1060,27 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
     if (_usesFilePicker) {
       return SettingsExportService.importFromFile(askPassword: askPassword, writeConnection: registry.upsert);
     }
+    return _importOnTelevision(askPassword: askPassword, registry: registry);
+  }
+
+  /// On a television the backup is chosen wherever it lies — the box's own
+  /// picker, or the app's browser where there is none. Only without either
+  /// (the file access declined) does it fall back to the known folders.
+  Future<ImportResult?> _importOnTelevision({
+    required Future<String?> Function() askPassword,
+    required ConnectionRegistry registry,
+  }) async {
+    final chosen = await LocalFileAccess.pickFile(
+      context,
+      extensions: const {SettingsExportService.fileExtension},
+      title: t.settings.backupPickTitle,
+    );
+    if (!mounted) return null;
+    if (chosen != null) {
+      return SettingsExportService.importFromPath(chosen, askPassword: askPassword, writeConnection: registry.upsert);
+    }
+    if (await LocalFileAccess.hasSystemPicker() || await LocalFileAccess.hasFileAccess()) return null;
+    if (!mounted) return null;
     return _importFromKnownFolder(askPassword: askPassword, registry: registry);
   }
 

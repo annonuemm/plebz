@@ -97,6 +97,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$actor$en actor = Translations$actor$en.internal(_root);
 	late final Translations$sport$en sport = Translations$sport$en.internal(_root);
 	late final Translations$plebz$en plebz = Translations$plebz$en.internal(_root);
+	late final Translations$localFiles$en localFiles = Translations$localFiles$en.internal(_root);
 }
 
 // Path: app
@@ -1754,6 +1755,9 @@ class Translations$settings$en {
 
 	/// en: 'On an actor's page, also list the films and series you do not have, greyed out. Uses your TMDB key.'
 	String get showActorFilmographyDescription => 'On an actor\'s page, also list the films and series you do not have, greyed out. Uses your TMDB key.';
+
+	/// en: 'Choose a backup'
+	String get backupPickTitle => 'Choose a backup';
 }
 
 // Path: search
@@ -6551,6 +6555,18 @@ class Translations$iptv$en {
 
 	/// en: '${n} sources'
 	String sourceCount({required Object n}) => '${n} sources';
+
+	/// en: 'Choose file'
+	String get pickPlaylistFile => 'Choose file';
+
+	/// en: 'Choose an M3U file'
+	String get pickPlaylistTitle => 'Choose an M3U file';
+
+	/// en: 'Local file: ${name}. Choose it again after changing the file.'
+	String localPlaylist({required Object name}) => 'Local file: ${name}. Choose it again after changing the file.';
+
+	/// en: 'The file could not be taken over.'
+	String get playlistFileFailed => 'The file could not be taken over.';
 }
 
 // Path: trailerStage
@@ -6899,6 +6915,51 @@ class Translations$plebz$en {
 
 	/// en: 'There are no notes for this version yet.'
 	String get whatsNewEmpty => 'There are no notes for this version yet.';
+}
+
+// Path: localFiles
+class Translations$localFiles$en {
+	Translations$localFiles$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Wrong file type'
+	String get wrongTypeTitle => 'Wrong file type';
+
+	/// en: 'Choose a file of type ${types}.'
+	String wrongTypeMessage({required Object types}) => 'Choose a file of type ${types}.';
+
+	/// en: 'Access to files'
+	String get accessTitle => 'Access to files';
+
+	/// en: 'This box has no file picker of its own. To browse folders and USB sticks, Plebz needs "all files access" once. Turn it on for Plebz on the next screen, then come back here with Back.'
+	String get accessMessage => 'This box has no file picker of its own. To browse folders and USB sticks, Plebz needs "all files access" once. Turn it on for Plebz on the next screen, then come back here with Back.';
+
+	/// en: 'Continue'
+	String get accessConfirm => 'Continue';
+
+	/// en: 'This box offers no setting for file access. It can only be granted from a computer: adb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow'
+	String get accessUnavailable => 'This box offers no setting for file access. It can only be granted from a computer:\nadb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow';
+
+	/// en: 'Without all files access Plebz cannot browse folders here.'
+	String get accessDenied => 'Without all files access Plebz cannot browse folders here.';
+
+	/// en: 'Storage'
+	String get volumes => 'Storage';
+
+	/// en: 'Up one level'
+	String get up => 'Up one level';
+
+	/// en: 'No storage found.'
+	String get noVolumes => 'No storage found.';
+
+	/// en: 'This folder cannot be read.'
+	String get unreadable => 'This folder cannot be read.';
+
+	/// en: 'No folders here and no files of type ${types}.'
+	String nothingHere({required Object types}) => 'No folders here and no files of type ${types}.';
 }
 
 // Path: common.ratingSource
@@ -9309,6 +9370,7 @@ extension on Translations {
 			'settings.zapWithChannelKeysDescription' => 'Let P+ and P− switch channels in the live player. For remotes that have those keys.',
 			'settings.showActorFilmography' => 'Full filmography for actors',
 			'settings.showActorFilmographyDescription' => 'On an actor\'s page, also list the films and series you do not have, greyed out. Uses your TMDB key.',
+			'settings.backupPickTitle' => 'Choose a backup',
 			'search.hint' => 'Search movies, shows, music...',
 			'search.notInYourLibraries' => 'Not in your libraries',
 			'search.copiesFound' => ({required Object count}) => '${count} copies',
@@ -9749,9 +9811,9 @@ extension on Translations {
 			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => 'Remove ${displayName}. Connections aren\'t affected.',
 			'profiles.active' => 'Active',
 			'profiles.manage' => 'Manage',
-			'profiles.delete' => 'Delete',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.delete' => 'Delete',
 			'profiles.signOut' => 'Sign out',
 			'profiles.signOutPlexTitle' => 'Sign out of Plex?',
 			'profiles.signOutPlexMessage' => ({required Object displayName}) => 'Remove ${displayName} and all Plex Home users? Sign back in anytime.',
@@ -10263,9 +10325,9 @@ extension on Translations {
 			'watchlist.allTypes' => 'Movies and series',
 			'watchlist.moviesOnly' => 'Movies only',
 			'watchlist.showsOnly' => 'Series only',
-			'watchlist.typeAll' => 'All',
 			_ => null,
 		} ?? switch (path) {
+			'watchlist.typeAll' => 'All',
 			'watchlist.typeMovies' => 'Movies',
 			'watchlist.typeShows' => 'Shows',
 			'watchlist.anyStatus' => 'Watched and unwatched',
@@ -10777,9 +10839,9 @@ extension on Translations {
 			'videoSettings.hdrToneMappingCompositorDescription' => 'Pass the source\'s HDR metadata through and let the desktop compositor map it.',
 			'videoSettings.hdrToneMappingPlayer' => 'Player',
 			'videoSettings.hdrToneMappingPlayerDescription' => 'Map to the display\'s peak brightness in the player, then tell the compositor the result.',
-			'videoSettings.hdrToneMappingFailed' => 'Couldn\'t change HDR tone mapping — the previous mode is still active.',
 			_ => null,
 		} ?? switch (path) {
+			'videoSettings.hdrToneMappingFailed' => 'Couldn\'t change HDR tone mapping — the previous mode is still active.',
 			'videoSettings.audioOutput' => 'Audio Output',
 			'videoSettings.performanceOverlay' => 'Performance Overlay',
 			'videoSettings.audioOutputDolbyAtmos' => 'Dolby Atmos',
@@ -11171,6 +11233,10 @@ extension on Translations {
 			'iptv.playlistWithGuide' => 'Playlist with guide',
 			'iptv.playlistWithoutGuide' => 'Playlist without guide',
 			'iptv.sourceCount' => ({required Object n}) => '${n} sources',
+			'iptv.pickPlaylistFile' => 'Choose file',
+			'iptv.pickPlaylistTitle' => 'Choose an M3U file',
+			'iptv.localPlaylist' => ({required Object name}) => 'Local file: ${name}. Choose it again after changing the file.',
+			'iptv.playlistFileFailed' => 'The file could not be taken over.',
 			'trailerStage.title' => 'Trailer stage',
 			'trailerStage.mood' => 'What are you in the mood for?',
 			'trailerStage.kind' => 'Kind',
@@ -11275,6 +11341,18 @@ extension on Translations {
 			'plebz.whatsNew' => 'What\'s new',
 			'plebz.whatsNewDescription' => 'What changed with each version',
 			'plebz.whatsNewEmpty' => 'There are no notes for this version yet.',
+			'localFiles.wrongTypeTitle' => 'Wrong file type',
+			'localFiles.wrongTypeMessage' => ({required Object types}) => 'Choose a file of type ${types}.',
+			'localFiles.accessTitle' => 'Access to files',
+			'localFiles.accessMessage' => 'This box has no file picker of its own. To browse folders and USB sticks, Plebz needs "all files access" once. Turn it on for Plebz on the next screen, then come back here with Back.',
+			'localFiles.accessConfirm' => 'Continue',
+			'localFiles.accessUnavailable' => 'This box offers no setting for file access. It can only be granted from a computer:\nadb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow',
+			'localFiles.accessDenied' => 'Without all files access Plebz cannot browse folders here.',
+			'localFiles.volumes' => 'Storage',
+			'localFiles.up' => 'Up one level',
+			'localFiles.noVolumes' => 'No storage found.',
+			'localFiles.unreadable' => 'This folder cannot be read.',
+			'localFiles.nothingHere' => ({required Object types}) => 'No folders here and no files of type ${types}.',
 			_ => null,
 		};
 	}

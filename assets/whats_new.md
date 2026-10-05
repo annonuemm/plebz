@@ -13,6 +13,12 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.7.0 (Build 620)
+
+- IPTV: M3U-Playlists lassen sich jetzt auch als Datei laden – beim Bearbeiten einer M3U-Quelle über „Datei auswählen“. Die Datei wird in die App übernommen; nach Änderungen einfach erneut auswählen.
+- Dateien frei wählen: Hat die Box keine eigene Dateiauswahl, öffnet sich ein Dateibrowser für internen Speicher und USB-Sticks. Dafür fragt die App einmalig nach dem „Zugriff auf alle Dateien“.
+- Sicherung am Fernseher: Beim Wiederherstellen kann die Sicherungsdatei jetzt aus jedem Ordner gewählt werden.
+
 ## 1.6.3 (Build 618)
 
 - Hintergrund in Posterfarben: wirkt jetzt nur noch auf Startseite und Erkunden, überall sonst bleibt der normale Hintergrund.

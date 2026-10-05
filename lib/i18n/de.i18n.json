@@ -600,7 +600,8 @@
     "zapWithChannelKeys": "Sendertasten der Fernbedienung",
     "zapWithChannelKeysDescription": "P+ und P− wechseln im Live-Player den Sender. Für Fernbedienungen, die diese Tasten haben.",
     "showActorFilmography": "Vollständige Filmografie",
-    "showActorFilmographyDescription": "Auf der Seite eines Schauspielers auch die Filme und Serien auflisten, die du nicht hast — ausgegraut. Nutzt deinen TMDB-Schlüssel."
+    "showActorFilmographyDescription": "Auf der Seite eines Schauspielers auch die Filme und Serien auflisten, die du nicht hast — ausgegraut. Nutzt deinen TMDB-Schlüssel.",
+    "backupPickTitle": "Sicherung wählen"
   },
   "search": {
     "hint": "Filme, Serien und Musik suchen …",
@@ -2660,7 +2661,11 @@
     "incomplete": "Unvollständig",
     "playlistWithGuide": "Playlist mit Programm",
     "playlistWithoutGuide": "Playlist ohne Programm",
-    "sourceCount": "${n} Quellen"
+    "sourceCount": "${n} Quellen",
+    "pickPlaylistFile": "Datei auswählen",
+    "pickPlaylistTitle": "M3U-Datei wählen",
+    "localPlaylist": "Lokale Datei: ${name}. Nach Änderungen an der Datei erneut auswählen.",
+    "playlistFileFailed": "Die Datei konnte nicht übernommen werden."
   },
   "trailerStage": {
     "title": "Trailerbühne",
@@ -2773,5 +2778,19 @@
     "whatsNew": "Was ist neu",
     "whatsNewDescription": "Was sich mit jeder Version geändert hat",
     "whatsNewEmpty": "Zu dieser Version gibt es noch keine Notizen."
+  },
+  "localFiles": {
+    "wrongTypeTitle": "Falscher Dateityp",
+    "wrongTypeMessage": "Gewählt werden kann eine Datei vom Typ ${types}.",
+    "accessTitle": "Zugriff auf Dateien",
+    "accessMessage": "Diese Box hat keine eigene Dateiauswahl. Damit Plebz Ordner und USB-Sticks durchsuchen kann, braucht die App einmalig den „Zugriff auf alle Dateien“. Auf der nächsten Seite schaltest du ihn für Plebz ein und kommst dann mit Zurück wieder hierher.",
+    "accessConfirm": "Weiter",
+    "accessUnavailable": "Diese Box bietet keine Einstellung für den Dateizugriff an. Er lässt sich nur über einen PC freischalten:\nadb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow",
+    "accessDenied": "Ohne den Zugriff auf alle Dateien kann Plebz hier keine Ordner durchsuchen.",
+    "volumes": "Speicherorte",
+    "up": "Eine Ebene höher",
+    "noVolumes": "Kein Speicher gefunden.",
+    "unreadable": "Dieser Ordner lässt sich nicht lesen.",
+    "nothingHere": "Hier liegen keine Ordner und keine Dateien vom Typ ${types}."
   }
 }

@@ -575,7 +575,7 @@
     "backupNoFilesMessage": "Put the backup file into one of these folders and try again:\n\n${paths}",
     "importBackupSuccess": "Backup restored: ${n} servers",
     "showUpNextPanel": "Show \"up next\" panel",
-    "showUpNextPanelDescription": "Towards the end of an episode, show what follows with the option to start it. Uses the credits marker where there is one.",
+    "showUpNextPanelDescription": "Towards the end of an episode, show what follows with the option to start it. When the episode ends, the countdown to the next one runs here too. Uses the credits marker where there is one. Off: the original countdown prompt.",
     "mirrorWatchedAcrossServers": "Sync watched state across servers",
     "mirrorWatchedAcrossServersDescription": "What you mark as watched is marked on every other copy too — in another library and on your other servers. Covers films, whole series and single seasons, not individual episodes. Matched by IMDb/TMDB id, never by title alone.",
     "matchContentFrameRateLiveTv": "Match frame rate for live TV",
@@ -955,6 +955,7 @@
     "osdSubtitles": "Subtitles: ${track}",
     "osdAudio": "Audio: ${track}",
     "upNext": "UP NEXT",
+    "upNextStartsIn": "Next episode in ${seconds}s",
     "closeUpNext": "Close",
     "showUpNextPanel": "Show \"up next\" panel"
   },

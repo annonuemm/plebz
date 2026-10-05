@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/database/app_database.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/media/ids.dart';
@@ -673,6 +674,10 @@ void main() {
           ChangeNotifierProvider(create: (_) => CompanionRemoteProvider()),
         ],
         child: MaterialApp(
+          // The app's own theme, as every screen has it: the "up next" panel
+          // draws from its tokens, and it now carries the end-of-episode
+          // countdown these tests run through.
+          theme: monoTheme(dark: true),
           home: VideoPlayerScreen(
             key: key,
             metadata: item,

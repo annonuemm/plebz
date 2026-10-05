@@ -2320,12 +2320,27 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     });
   }
 
+  /// The "up next" panel, unless it is switched off — then Plezy's own
+  /// end-of-episode prompt does the countdown.
+  bool get _upNextPanelEnabled => SettingsService.instanceOrNull?.read(SettingsService.showUpNextPanel) ?? true;
+
+  /// The episode has ended and the next one is offered — counting down, or
+  /// waiting where auto-play is off — on the panel.
+  bool get _upNextCountingDown => _upNextPanelEnabled && _episode.showPlayNextDialog;
+
+  /// Close on the panel, and Back on it: the offer goes for the rest of this
+  /// episode, and a countdown running on it stops.
+  void _closeUpNextPanel() {
+    dismissUpNext();
+    if (_episode.showPlayNextDialog) _cancelAutoPlay();
+  }
+
   Future<void> _handleBackButton({bool navigateHome = false}) async {
     final acceptedExit = _routeExitOperation;
     if (acceptedExit != null) return acceptedExit;
     // Back on the panel means "let it finish", not "leave".
-    if (!navigateHome && _showUpNext) {
-      dismissUpNext();
+    if (!navigateHome && (_showUpNext || _upNextCountingDown)) {
+      _closeUpNextPanel();
       return;
     }
     if (!navigateHome && (_episode.showPlayNextDialog || _showStillWatchingPrompt)) {

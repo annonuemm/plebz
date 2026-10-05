@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.7.3 (Build 627)
+
+- Player: Das „Als nächstes“-Fenster ersetzt jetzt auch das Fenster am Ende einer Folge. Der Countdown bis zur nächsten Folge läuft direkt auf dem Abspielknopf („Nächste Folge in 5 s“). Dauer und automatisches Abspielen wie bisher unter Einstellungen → Player; wer das Fenster ausschaltet, bekommt wieder das ursprüngliche.
+
 ## 1.7.2 (Build 624)
 
 - Glas am Fernseher: Die Beschreibung rechts neben Mediathek und Merkliste lässt sich ausschalten (Einstellungen → Darstellung → „Beschreibung neben den Postern“). Dann passen mehr Poster in eine Reihe.

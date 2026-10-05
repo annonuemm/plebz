@@ -1679,8 +1679,8 @@ class Translations$settings$en {
 	/// en: 'Show "up next" panel'
 	String get showUpNextPanel => 'Show "up next" panel';
 
-	/// en: 'Towards the end of an episode, show what follows with the option to start it. Uses the credits marker where there is one.'
-	String get showUpNextPanelDescription => 'Towards the end of an episode, show what follows with the option to start it. Uses the credits marker where there is one.';
+	/// en: 'Towards the end of an episode, show what follows with the option to start it. When the episode ends, the countdown to the next one runs here too. Uses the credits marker where there is one. Off: the original countdown prompt.'
+	String get showUpNextPanelDescription => 'Towards the end of an episode, show what follows with the option to start it. When the episode ends, the countdown to the next one runs here too. Uses the credits marker where there is one. Off: the original countdown prompt.';
 
 	/// en: 'Sync watched state across servers'
 	String get mirrorWatchedAcrossServers => 'Sync watched state across servers';
@@ -2720,6 +2720,9 @@ class Translations$videoControls$en {
 
 	/// en: 'UP NEXT'
 	String get upNext => 'UP NEXT';
+
+	/// en: 'Next episode in ${seconds}s'
+	String upNextStartsIn({required Object seconds}) => 'Next episode in ${seconds}s';
 
 	/// en: 'Close'
 	String get closeUpNext => 'Close';
@@ -9384,7 +9387,7 @@ extension on Translations {
 			'settings.backupNoFilesMessage' => ({required Object paths}) => 'Put the backup file into one of these folders and try again:\n\n${paths}',
 			'settings.importBackupSuccess' => ({required Object n}) => 'Backup restored: ${n} servers',
 			'settings.showUpNextPanel' => 'Show "up next" panel',
-			'settings.showUpNextPanelDescription' => 'Towards the end of an episode, show what follows with the option to start it. Uses the credits marker where there is one.',
+			'settings.showUpNextPanelDescription' => 'Towards the end of an episode, show what follows with the option to start it. When the episode ends, the countdown to the next one runs here too. Uses the credits marker where there is one. Off: the original countdown prompt.',
 			'settings.mirrorWatchedAcrossServers' => 'Sync watched state across servers',
 			'settings.mirrorWatchedAcrossServersDescription' => 'What you mark as watched is marked on every other copy too — in another library and on your other servers. Covers films, whole series and single seasons, not individual episodes. Matched by IMDb/TMDB id, never by title alone.',
 			'settings.matchContentFrameRateLiveTv' => 'Match frame rate for live TV',
@@ -9733,6 +9736,7 @@ extension on Translations {
 			'videoControls.osdSubtitles' => ({required Object track}) => 'Subtitles: ${track}',
 			'videoControls.osdAudio' => ({required Object track}) => 'Audio: ${track}',
 			'videoControls.upNext' => 'UP NEXT',
+			'videoControls.upNextStartsIn' => ({required Object seconds}) => 'Next episode in ${seconds}s',
 			'videoControls.closeUpNext' => 'Close',
 			'videoControls.showUpNextPanel' => 'Show "up next" panel',
 			'messages.markedAsWatched' => 'Marked as watched',
@@ -9850,9 +9854,9 @@ extension on Translations {
 			'profiles.addPlezyProfile' => 'Add Plebz profile',
 			'profiles.switchingProfile' => 'Switching profile…',
 			'profiles.deleteThisProfileTitle' => 'Delete this profile?',
-			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => 'Remove ${displayName}. Connections aren\'t affected.',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => 'Remove ${displayName}. Connections aren\'t affected.',
 			'profiles.active' => 'Active',
 			'profiles.manage' => 'Manage',
 			'profiles.delete' => 'Delete',
@@ -10364,9 +10368,9 @@ extension on Translations {
 			'explore.watchlistKeptLocallyNoIds' => 'Kept in Plebz: the server holds no external ids for this title, so it stays on this device.',
 			'watchlist.typeFilter' => 'Show',
 			'watchlist.statusFilter' => 'Watch state',
-			'watchlist.allTypes' => 'Movies and series',
 			_ => null,
 		} ?? switch (path) {
+			'watchlist.allTypes' => 'Movies and series',
 			'watchlist.moviesOnly' => 'Movies only',
 			'watchlist.showsOnly' => 'Series only',
 			'watchlist.typeAll' => 'All',
@@ -10878,9 +10882,9 @@ extension on Translations {
 			'videoSettings.hdrUnsupported' => 'HDR isn\'t available here — this desktop compositor or video output can\'t carry it.',
 			'videoSettings.hdrToneMapping' => 'HDR Tone Mapping',
 			'videoSettings.hdrToneMappingCompositor' => 'Compositor',
-			'videoSettings.hdrToneMappingCompositorDescription' => 'Pass the source\'s HDR metadata through and let the desktop compositor map it.',
 			_ => null,
 		} ?? switch (path) {
+			'videoSettings.hdrToneMappingCompositorDescription' => 'Pass the source\'s HDR metadata through and let the desktop compositor map it.',
 			'videoSettings.hdrToneMappingPlayer' => 'Player',
 			'videoSettings.hdrToneMappingPlayerDescription' => 'Map to the display\'s peak brightness in the player, then tell the compositor the result.',
 			'videoSettings.hdrToneMappingFailed' => 'Couldn\'t change HDR tone mapping — the previous mode is still active.',
@@ -11392,9 +11396,9 @@ extension on Translations {
 			'localFiles.accessDenied' => 'Without all files access Plebz cannot browse folders here.',
 			'localFiles.volumes' => 'Storage',
 			'localFiles.up' => 'Up one level',
-			'localFiles.noVolumes' => 'No storage found.',
 			_ => null,
 		} ?? switch (path) {
+			'localFiles.noVolumes' => 'No storage found.',
 			'localFiles.unreadable' => 'This folder cannot be read.',
 			'localFiles.nothingHere' => ({required Object types}) => 'No folders here and no files of type ${types}.',
 			'reminders.add' => 'Remind me',

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +29,7 @@ void main() {
     String? thumbPath,
     bool withNeighbour = false,
     AppThemeVariant variant = AppThemeVariant.standard,
+    ValueListenable<int>? countdown,
   }) async {
     var played = 0;
     var closed = 0;
@@ -71,6 +73,7 @@ void main() {
                     onPlay: () => played++,
                     onClose: () => closed++,
                     chromeController: chrome,
+                    countdown: countdown,
                   ),
                 ],
               ),
@@ -298,5 +301,34 @@ void main() {
     await pumpPanel(tester, visible: false);
 
     expect(find.text('Breaking Bad'), findsNothing);
+  });
+
+  testWidgets('at the end of the episode the panel counts down to the next one', (tester) async {
+    final seconds = ValueNotifier<int>(5);
+    addTearDown(seconds.dispose);
+    await pumpPanel(tester, countdown: seconds);
+
+    expect(find.text(t.videoControls.upNextStartsIn(seconds: 5)), findsOneWidget);
+    seconds.value = 4;
+    await tester.pump();
+    expect(find.text(t.videoControls.upNextStartsIn(seconds: 4)), findsOneWidget);
+
+    // On the play button, not on a line of its own.
+    expect(
+      find.ancestor(of: find.text(t.videoControls.upNextStartsIn(seconds: 4)), matching: find.byType(FilledButton)),
+      findsOneWidget,
+    );
+    expect(find.text(t.common.play), findsNothing);
+
+    // Auto-play off: the offer waits, with no number on it.
+    seconds.value = -1;
+    await tester.pump();
+    expect(find.text(t.videoControls.upNextStartsIn(seconds: 4)), findsNothing);
+    expect(find.text(t.common.play), findsOneWidget);
+  });
+
+  testWidgets('while the episode still runs the panel names no countdown', (tester) async {
+    await pumpPanel(tester);
+    expect(find.textContaining(t.videoControls.upNextStartsIn(seconds: 5)), findsNothing);
   });
 }

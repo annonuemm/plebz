@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../focus/focusable_wrapper.dart';
@@ -32,6 +33,12 @@ class PlayerUpNextPanel extends StatefulWidget {
   final VoidCallback onPlay;
   final VoidCallback onClose;
 
+  /// Seconds left before the next episode starts by itself, once this one
+  /// has ended and auto-play is on — the end-of-episode countdown, which this
+  /// panel shows in place of Plezy's own prompt. Null while the episode still
+  /// runs; a value below one means no countdown (auto-play off).
+  final ValueListenable<int>? countdown;
+
   /// Held open while the panel is up. Without it the chrome auto-hides after a
   /// few seconds of stillness and takes the focus with it — the buttons lose
   /// their highlight and the cursor is suddenly on the player again, with no
@@ -47,6 +54,7 @@ class PlayerUpNextPanel extends StatefulWidget {
     required this.onPlay,
     required this.onClose,
     required this.chromeController,
+    this.countdown,
   });
 
   @override
@@ -64,7 +72,15 @@ class _PlayerUpNextPanelState extends State<PlayerUpNextPanel> {
   @override
   void didUpdateWidget(PlayerUpNextPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.visible != oldWidget.visible) _syncHold();
+    if (widget.visible != oldWidget.visible) {
+      // After the frame: the hold tells the chrome, which is built in this
+      // same pass — the end-of-episode countdown raises the panel from the
+      // screen's own rebuild, and a notification in the middle of it marks
+      // the chrome dirty after it was built.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _syncHold();
+      });
+    }
     if (widget.visible && !oldWidget.visible) _claimFocus();
   }
 
@@ -111,6 +127,7 @@ class _PlayerUpNextPanelState extends State<PlayerUpNextPanel> {
               width: (constraints.maxWidth * 0.34).clamp(280.0, 460.0),
               child: _UpNextCard(
                 episode: episode,
+                countdown: widget.countdown,
                 playFocusNode: widget.playFocusNode,
                 closeFocusNode: widget.closeFocusNode,
                 onPlay: widget.onPlay,
@@ -124,8 +141,12 @@ class _PlayerUpNextPanelState extends State<PlayerUpNextPanel> {
   }
 }
 
+/// Stands in for a countdown while the episode is still running.
+final ValueListenable<int> _noCountdown = ValueNotifier<int>(0);
+
 class _UpNextCard extends StatelessWidget {
   final MediaItem episode;
+  final ValueListenable<int>? countdown;
   final FocusNode playFocusNode;
   final FocusNode closeFocusNode;
   final VoidCallback onPlay;
@@ -133,6 +154,7 @@ class _UpNextCard extends StatelessWidget {
 
   const _UpNextCard({
     required this.episode,
+    required this.countdown,
     required this.playFocusNode,
     required this.closeFocusNode,
     required this.onPlay,
@@ -215,14 +237,20 @@ class _UpNextCard extends StatelessWidget {
           // Every direction is answered, so nothing walks out of the panel:
           // the controls underneath would take the focus and there is no way
           // back in — the panel has no cursor of its own to return to.
-          _UpNextButton(
-            focusNode: playFocusNode,
-            onPressed: onPlay,
-            icon: Symbols.play_arrow_rounded,
-            label: t.common.play,
-            offered: true,
-            onNavigateUp: () {},
-            onNavigateDown: () => closeFocusNode.requestFocus(),
+          // The countdown rides on the play button rather than taking a line
+          // of its own: on a television a taller card pushed its foot out of
+          // the picture.
+          ValueListenableBuilder<int>(
+            valueListenable: countdown ?? _noCountdown,
+            builder: (context, left, _) => _UpNextButton(
+              focusNode: playFocusNode,
+              onPressed: onPlay,
+              icon: Symbols.play_arrow_rounded,
+              label: left > 0 ? t.videoControls.upNextStartsIn(seconds: left) : t.common.play,
+              offered: true,
+              onNavigateUp: () {},
+              onNavigateDown: () => closeFocusNode.requestFocus(),
+            ),
           ),
           const SizedBox(height: 8),
           _UpNextButton(

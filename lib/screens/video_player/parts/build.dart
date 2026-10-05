@@ -338,7 +338,7 @@ extension _VideoPlayerBuildMethods on VideoPlayerScreenState {
                         // up out of the timeline lands here instead of hiding
                         // the chrome, and the skip button stays out of the way
                         // while one is up. The panel needs both.
-                        playNextFocusNode: _showUpNext
+                        playNextFocusNode: _showUpNext || _upNextCountingDown
                             ? _upNextPlayFocusNode
                             : (_episode.showPlayNextDialog ? _playNextConfirmFocusNode : null),
                         playbackPromptOpen: _showStillWatchingPrompt,
@@ -365,10 +365,12 @@ extension _VideoPlayerBuildMethods on VideoPlayerScreenState {
                   },
                 ),
               ),
-              // "Up next" while the episode still runs — the completion
-              // overlay below takes over once it actually ends.
+              // "Up next" while the episode still runs, and — unless it is
+              // switched off — the end-of-episode countdown too, in place of
+              // the completion overlay below.
               PlayerUpNextPanel(
-                visible: _showUpNext,
+                visible: _showUpNext || _upNextCountingDown,
+                countdown: _upNextCountingDown ? _episode.autoPlayCountdown : null,
                 nextEpisode: _upNextDetails ?? _episode.next,
                 playFocusNode: _upNextPlayFocusNode,
                 closeFocusNode: _upNextCloseFocusNode,
@@ -376,12 +378,13 @@ extension _VideoPlayerBuildMethods on VideoPlayerScreenState {
                   setStateIfMounted(() => _showUpNext = false);
                   unawaited(_playNext());
                 },
-                onClose: dismissUpNext,
+                onClose: _closeUpNextPanel,
                 chromeController: _chromeController,
               ),
-              // Netflix-style auto-play overlay (hidden in PiP mode)
+              // Netflix-style auto-play overlay (hidden in PiP mode), where the
+              // panel above is switched off.
               VideoPlayerPlayNextOverlay(
-                visible: _episode.showPlayNextDialog,
+                visible: _episode.showPlayNextDialog && !_upNextPanelEnabled,
                 nextEpisode: _episode.next,
                 autoPlayCountdown: _episode.autoPlayCountdown,
                 cancelFocusNode: _playNextCancelFocusNode,

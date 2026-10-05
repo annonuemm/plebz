@@ -653,7 +653,7 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String backupNoFilesMessage({required Object paths}) => 'Lege die Sicherungsdatei in einen dieser Ordner und versuche es erneut:\n\n${paths}';
 	@override String importBackupSuccess({required Object n}) => 'Sicherung wiederhergestellt: ${n} Server';
 	@override String get showUpNextPanel => '„Als nächstes"-Fenster zeigen';
-	@override String get showUpNextPanelDescription => 'Gegen Ende einer Folge anzeigen, was als nächstes kommt, samt Möglichkeit es zu starten. Nutzt die Abspann-Marke, wo eine vorhanden ist.';
+	@override String get showUpNextPanelDescription => 'Gegen Ende einer Folge anzeigen, was als nächstes kommt, samt Möglichkeit es zu starten. Am Ende der Folge läuft hier auch der Countdown bis zur nächsten. Nutzt die Abspann-Marke, wo eine vorhanden ist. Aus: das ursprüngliche Fenster mit Countdown.';
 	@override String get mirrorWatchedAcrossServers => 'Gesehen-Status zwischen Servern abgleichen';
 	@override String get mirrorWatchedAcrossServersDescription => 'Was du als gesehen markierst, wird auch in jeder anderen Kopie markiert — in einer anderen Bibliothek und auf deinen anderen Servern. Gilt für Filme, ganze Serien und einzelne Staffeln, nicht für einzelne Folgen. Zuordnung über IMDb-/TMDB-ID, nie über den Titel allein.';
 	@override String get matchContentFrameRateLiveTv => 'Bildrate auch bei Live-TV anpassen';
@@ -1060,6 +1060,7 @@ class _Translations$videoControls$de extends Translations$videoControls$en {
 	@override String osdSubtitles({required Object track}) => 'Untertitel: ${track}';
 	@override String osdAudio({required Object track}) => 'Audio: ${track}';
 	@override String get upNext => 'ALS NÄCHSTES';
+	@override String upNextStartsIn({required Object seconds}) => 'Nächste Folge in ${seconds} s';
 	@override String get closeUpNext => 'Schließen';
 	@override String get showUpNextPanel => '„Als nächstes"-Fenster zeigen';
 }
@@ -4162,7 +4163,7 @@ extension on TranslationsDe {
 			'settings.backupNoFilesMessage' => ({required Object paths}) => 'Lege die Sicherungsdatei in einen dieser Ordner und versuche es erneut:\n\n${paths}',
 			'settings.importBackupSuccess' => ({required Object n}) => 'Sicherung wiederhergestellt: ${n} Server',
 			'settings.showUpNextPanel' => '„Als nächstes"-Fenster zeigen',
-			'settings.showUpNextPanelDescription' => 'Gegen Ende einer Folge anzeigen, was als nächstes kommt, samt Möglichkeit es zu starten. Nutzt die Abspann-Marke, wo eine vorhanden ist.',
+			'settings.showUpNextPanelDescription' => 'Gegen Ende einer Folge anzeigen, was als nächstes kommt, samt Möglichkeit es zu starten. Am Ende der Folge läuft hier auch der Countdown bis zur nächsten. Nutzt die Abspann-Marke, wo eine vorhanden ist. Aus: das ursprüngliche Fenster mit Countdown.',
 			'settings.mirrorWatchedAcrossServers' => 'Gesehen-Status zwischen Servern abgleichen',
 			'settings.mirrorWatchedAcrossServersDescription' => 'Was du als gesehen markierst, wird auch in jeder anderen Kopie markiert — in einer anderen Bibliothek und auf deinen anderen Servern. Gilt für Filme, ganze Serien und einzelne Staffeln, nicht für einzelne Folgen. Zuordnung über IMDb-/TMDB-ID, nie über den Titel allein.',
 			'settings.matchContentFrameRateLiveTv' => 'Bildrate auch bei Live-TV anpassen',
@@ -4510,6 +4511,7 @@ extension on TranslationsDe {
 			'videoControls.osdSubtitles' => ({required Object track}) => 'Untertitel: ${track}',
 			'videoControls.osdAudio' => ({required Object track}) => 'Audio: ${track}',
 			'videoControls.upNext' => 'ALS NÄCHSTES',
+			'videoControls.upNextStartsIn' => ({required Object seconds}) => 'Nächste Folge in ${seconds} s',
 			'videoControls.closeUpNext' => 'Schließen',
 			'videoControls.showUpNextPanel' => '„Als nächstes"-Fenster zeigen',
 			'messages.markedAsWatched' => 'Als gesehen markiert',
@@ -4637,9 +4639,9 @@ extension on TranslationsDe {
 			'profiles.signedOutPlex' => 'Von Plex abgemeldet.',
 			'profiles.signOutFailed' => 'Abmeldung fehlgeschlagen.',
 			'profiles.sectionTitle' => 'Profile',
-			'profiles.summarySingle' => 'Profile hinzufügen, um verwaltete Benutzer mit lokalen Identitäten zu kombinieren',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.summarySingle' => 'Profile hinzufügen, um verwaltete Benutzer mit lokalen Identitäten zu kombinieren',
 			'profiles.summaryMultipleWithActive' => ({required Object count, required Object activeName}) => '${count} Profile · aktiv: ${activeName}',
 			'profiles.summaryMultiple' => ({required Object count}) => '${count} Profile',
 			'profiles.removeConnectionTitle' => 'Verbindung entfernen?',
@@ -5151,9 +5153,9 @@ extension on TranslationsDe {
 			'liveTv.lateNight' => 'Spätnacht',
 			'liveTv.whatsOn' => 'Jetzt im TV',
 			'liveTv.watchChannel' => 'Kanal ansehen',
-			'liveTv.favorites' => 'Favoriten',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.favorites' => 'Favoriten',
 			'liveTv.reorderFavorites' => 'Favoriten sortieren',
 			'liveTv.noFavoriteChannels' => 'Keine Lieblingssender',
 			'liveTv.noFavoriteChannelsHint' => 'Zeige alle Sender an, halte dann einen Sender gedrückt und wähle „Zu Favoriten hinzufügen“.',
@@ -5665,9 +5667,9 @@ extension on TranslationsDe {
 			'performanceOverlay.dvRpus' => 'DV-RPUs',
 			'performanceOverlay.dvRpuAverage' => 'DV-RPU Ø',
 			'performanceOverlay.dvSampleAverage' => 'DV-Sample Ø',
-			'performanceOverlay.maxLuma' => 'Max. Luma',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.maxLuma' => 'Max. Luma',
 			'performanceOverlay.minLuma' => 'Min. Luma',
 			'performanceOverlay.maxCll' => 'MaxCLL',
 			'performanceOverlay.maxFall' => 'MaxFALL',

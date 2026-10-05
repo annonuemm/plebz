@@ -575,7 +575,7 @@
     "backupNoFilesMessage": "Lege die Sicherungsdatei in einen dieser Ordner und versuche es erneut:\n\n${paths}",
     "importBackupSuccess": "Sicherung wiederhergestellt: ${n} Server",
     "showUpNextPanel": "„Als nächstes\"-Fenster zeigen",
-    "showUpNextPanelDescription": "Gegen Ende einer Folge anzeigen, was als nächstes kommt, samt Möglichkeit es zu starten. Nutzt die Abspann-Marke, wo eine vorhanden ist.",
+    "showUpNextPanelDescription": "Gegen Ende einer Folge anzeigen, was als nächstes kommt, samt Möglichkeit es zu starten. Am Ende der Folge läuft hier auch der Countdown bis zur nächsten. Nutzt die Abspann-Marke, wo eine vorhanden ist. Aus: das ursprüngliche Fenster mit Countdown.",
     "mirrorWatchedAcrossServers": "Gesehen-Status zwischen Servern abgleichen",
     "mirrorWatchedAcrossServersDescription": "Was du als gesehen markierst, wird auch in jeder anderen Kopie markiert — in einer anderen Bibliothek und auf deinen anderen Servern. Gilt für Filme, ganze Serien und einzelne Staffeln, nicht für einzelne Folgen. Zuordnung über IMDb-/TMDB-ID, nie über den Titel allein.",
     "matchContentFrameRateLiveTv": "Bildrate auch bei Live-TV anpassen",
@@ -955,6 +955,7 @@
     "osdSubtitles": "Untertitel: ${track}",
     "osdAudio": "Audio: ${track}",
     "upNext": "ALS NÄCHSTES",
+    "upNextStartsIn": "Nächste Folge in ${seconds} s",
     "closeUpNext": "Schließen",
     "showUpNextPanel": "„Als nächstes\"-Fenster zeigen"
   },

@@ -489,6 +489,8 @@ void main() {
 
     for (final size in const [Size(960, 540), Size(1920, 1080)]) {
       testWidgets('a library is laid out as the watchlist, at ${size.width.toInt()}', (tester) async {
+        // The redesign's own look: posters without captions under them.
+        await SettingsService.instance.write(SettingsService.tvFullCardLayout, true);
         // A television, where this layout is offered.
         TvDetectionService.debugSetAppleTVOverride(true);
         addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));

@@ -716,6 +716,24 @@ void main() {
     expect(without.width, closeTo(withPanel.width, withPanel.width * 0.02));
   });
 
+  testWidgets('with the full-card layout off the glass watchlist names each poster under it', (tester) async {
+    await SettingsService.instance.write(SettingsService.tvFullCardLayout, false);
+    await _pumpWatchlist(tester, [
+      _FakeWatchlistSource(CatalogSourceId.simkl, 'Simkl', total: 5),
+    ], variant: AppThemeVariant.glas);
+    final tile = find.byType(OckerPosterTile).first;
+    final caption = find.descendant(of: tile, matching: find.text('Simkl Title 0'));
+    expect(caption, findsOneWidget);
+    final poster = tester.getRect(tile);
+    expect(tester.getRect(caption).left, closeTo(poster.left, 1));
+
+    await SettingsService.instance.write(SettingsService.tvFullCardLayout, true);
+    await _pumpWatchlist(tester, [
+      _FakeWatchlistSource(CatalogSourceId.simkl, 'Simkl', total: 5),
+    ], variant: AppThemeVariant.glas);
+    expect(find.descendant(of: find.byType(OckerPosterTile).first, matching: find.text('Simkl Title 0')), findsNothing);
+  });
+
   group('narrowing the list', () {
     /// Four entries, one of each combination: an unwatched film, an unwatched
     /// series, a watched film, a watched series.

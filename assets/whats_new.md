@@ -13,6 +13,14 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.7.4 (Build 632)
+
+- Detailseite (Fernseher, Original-Theme): Wie im Redesign stehen Jahr, Freigabe, Laufzeit, Bewertung und Genres in der ersten Reihe, die Qualitätsangaben (Auflösung, HDR, Ton) in einer eigenen Reihe darunter. Genres füllen die Reihe auf, was nicht passt, entfällt. Die Ecke mit Regie, Studio und Besetzung ist weg.
+- Titel und Logos sitzen auf Detailseite und Startseite jetzt in allen Themes direkt über den Infos.
+- „Bewertungen zusammenfassen“ ist jetzt standardmäßig an.
+- Redesign: Ist „Vollflächige TV-Karten“ aus, stehen in Merkliste und Mediathek Titel und Jahr unter den Postern.
+- IPTV: Catch-up funktioniert jetzt auch bei M3U-Listen und lokalen Dateien im Xtream-Format.
+
 ## 1.7.3 (Build 627)
 
 - Player: Das „Als nächstes“-Fenster ersetzt jetzt auch das Fenster am Ende einer Folge. Der Countdown bis zur nächsten Folge läuft direkt auf dem Abspielknopf („Nächste Folge in 5 s“). Dauer und automatisches Abspielen wie bisher unter Einstellungen → Player; wer das Fenster ausschaltet, bekommt wieder das ursprüngliche.

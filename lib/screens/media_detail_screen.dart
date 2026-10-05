@@ -113,7 +113,6 @@ import '../services/playback_track_preview.dart';
 import '../utils/error_message_utils.dart';
 
 import 'media_detail/trailer_extras.dart';
-import 'media_detail/tv_detail_credits.dart';
 import 'media_detail/tv_detail_header_layout.dart';
 
 part 'media_detail/action_buttons.dart';
@@ -1126,6 +1125,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     Color? color,
     Color? shadowColor,
     TextAlign? textAlign,
+    Alignment? alignment,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final baseStyle = (Theme.of(context).textTheme.displaySmall ?? const TextStyle()).copyWith(
@@ -1140,7 +1140,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       title,
       style: baseStyle,
       textAlign: textAlign,
-      alignment: textAlign == TextAlign.center ? Alignment.center : Alignment.centerLeft,
+      alignment: alignment ?? (textAlign == TextAlign.center ? Alignment.center : Alignment.centerLeft),
     );
   }
 
@@ -3919,14 +3919,6 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
             ),
           ),
         ),
-        AnimatedPositioned(
-          duration: settleDuration,
-          curve: Curves.easeOutCubic,
-          left: size.width * 0.60,
-          right: spotlightLeft,
-          bottom: foregroundBottom + (_tvDetailActionSize * detailScale) + (6 * detailScale),
-          child: _buildTvDetailCredits(context, metadata, scale: detailScale),
-        ),
         // No on-screen back arrow: on a television the remote's back button is
         // the way out, and Google's TV guidance says not to draw one. The
         // remote already leaves the page — the rail's onBack and the page's
@@ -4088,7 +4080,8 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           availableHeight: availableHeight,
           scale: scale,
           hasDescription: hasDescription,
-          hasGenres: genres.isNotEmpty && !isOcker(context),
+          // The genres stand on the first row of facts, in every theme.
+          hasGenres: false,
           hasEpisodeTitle: reservesEpisodeTitle,
           heroLayout: heroLayout,
           hasQualityLine: _tvDetailReservesQualityRow(context, metadata),
@@ -4097,10 +4090,9 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           availableHeight: availableHeight,
           scale: scale,
           hasDescription: hasDescription,
-          // Under "Ocker" the genres moved to the corner opposite, where the
-          // credits used to be — so the room they took here goes to the
-          // synopsis rather than standing empty.
-          hasGenres: genres.isNotEmpty && !isOcker(context),
+          // The genres stand on the first row of facts, in every theme — so
+          // the room a line of them took goes to the synopsis.
+          hasGenres: false,
           hasEpisodeTitle: reservesEpisodeTitle,
           heroLayout: heroLayout,
           hasQualityLine: _tvDetailReservesQualityRow(context, metadata),
@@ -4111,8 +4103,6 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
         final layout = resolveTvDetailHeaderLayout(metrics);
 
         final metadataLineHeight = metrics.metadataBlockHeight;
-        final genreLineHeight = metrics.genreLineHeight;
-        final genreGap = metrics.genreGap;
         final logoMetadataGap = metrics.logoMetadataGap;
         final summaryFontSize = metrics.summaryFontSize;
         final actionHeight = metrics.actionHeight;
@@ -4210,37 +4200,6 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                                         child: _buildTvDetailMetadataLine(context, metadata, scale),
                                       ),
                                     ),
-                                    if (genres.isNotEmpty && !isOcker(context)) ...[
-                                      SizedBox(height: genreGap),
-                                      SizedBox(
-                                        height: genreLineHeight,
-                                        child: Align(
-                                          alignment: .centerLeft,
-                                          // Same voice as the line of facts
-                                          // above it, and capped at three.
-                                          // Six genres in a second typeface
-                                          // read as a paragraph of their own;
-                                          // three in the same face read as the
-                                          // table's second row — and the three
-                                          // a server lists first are the three
-                                          // that say what the thing is.
-                                          child: Text(
-                                            (isOcker(context) && genres.length > 3 ? genres.take(3) : genres).join(
-                                              '  •  ',
-                                            ),
-                                            maxLines: 1,
-                                            overflow: .ellipsis,
-                                            style: TextStyle(
-                                              color: mutedForegroundColor,
-                                              fontFamily: tokens(context).monoFontFamily,
-                                              fontSize: 16 * scale,
-                                              fontWeight: isOcker(context) ? .w400 : .w600,
-                                              letterSpacing: 0.1,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
                                     if (summaryMaxLines > 0 && description != null) ...[
                                       SizedBox(height: metrics.summaryGap),
                                       // No reserved box: a three-line synopsis in a
@@ -4279,110 +4238,9 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
 
   /// Direction, studio and the head of the cast, small in the far corner.
   ///
-  /// The show's own credits, never the focused episode's — the corner would
-  /// otherwise twitch as focus moves down the episode rail, and an episode
-  /// rarely knows its own studio anyway. Empty when the server told us none of
-  /// the three, which is why it draws nothing rather than an empty frame.
   Color _tvDetailTitleShadowColor(BuildContext context) {
     final brightness = Theme.of(context).colorScheme.brightness;
     return brightness == Brightness.dark ? Colors.black.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.55);
-  }
-
-  Widget _buildTvDetailCredits(BuildContext context, MediaItem metadata, {required double scale}) {
-    // Under "Ocker" this corner holds the genres instead of the credits.
-    //
-    // Three lines of director, studio and cast are three answers to questions
-    // nobody asked at this moment — they are on the page below, where someone
-    // looking for them will look. What the corner is good for is the one thing
-    // the title itself cannot say: what kind of thing this is. Stacked rather
-    // than strung out with bullets, because a column of three words is read at
-    // a glance and a line of three words has to be parsed.
-    //
-    // Under "Glas" the genres have moved again, onto the first row of facts as
-    // capsules of their own — so the corner stands empty.
-    if (ockerGlass(context)) return const SizedBox.shrink();
-    if (isOcker(context)) return _buildTvDetailGenreCorner(context, metadata, scale: scale);
-
-    final credits = tvDetailCredits(
-      directorLabel: t.discover.director,
-      directorsLabel: t.discover.directors,
-      studioLabel: t.discover.studio,
-      castLabel: t.discover.cast,
-      directors: metadata.directors,
-      studio: metadata.studio,
-      cast: metadata.roles?.map((role) => role.tag).toList(),
-    );
-    if (credits.isEmpty) return const SizedBox.shrink();
-
-    final foreground = _tvDetailForegroundColor(context);
-    return Column(
-      mainAxisSize: .min,
-      crossAxisAlignment: .end,
-      children: [
-        for (final credit in credits)
-          Padding(
-            padding: EdgeInsets.only(top: credit == credits.first ? 0 : 5 * scale),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  // The label is a label: mono, quiet, and — under a design
-                  // that says so — set apart from its value by the change of
-                  // face rather than only by a step in brightness. Three
-                  // fragments at three heights become three rows of one thing.
-                  TextSpan(
-                    text: '${credit.label} ',
-                    style: TextStyle(
-                      color: foreground.withValues(alpha: isOcker(context) ? 0.45 : 0.55),
-                      fontFamily: tokens(context).monoFontFamily,
-                      letterSpacing: isOcker(context) ? 0.8 : null,
-                    ),
-                  ),
-                  TextSpan(
-                    text: credit.value,
-                    style: TextStyle(color: foreground.withValues(alpha: 0.88)),
-                  ),
-                ],
-              ),
-              textAlign: .right,
-              maxLines: 2,
-              overflow: .ellipsis,
-              style: TextStyle(fontSize: 14 * scale, height: 1.3, fontWeight: .w500),
-            ),
-          ),
-      ],
-    );
-  }
-
-  /// The genres, stacked in the corner opposite the title.
-  Widget _buildTvDetailGenreCorner(BuildContext context, MediaItem metadata, {required double scale}) {
-    final genres = metadata.genres ?? const <String>[];
-    if (genres.isEmpty) return const SizedBox.shrink();
-    final tk = tokens(context);
-    final foreground = _tvDetailForegroundColor(context);
-
-    return Column(
-      mainAxisSize: .min,
-      crossAxisAlignment: .end,
-      children: [
-        for (final genre in genres.take(3))
-          Padding(
-            padding: EdgeInsets.only(top: genre == genres.first ? 0 : 6 * scale),
-            child: Text(
-              genre,
-              maxLines: 1,
-              overflow: .ellipsis,
-              textAlign: .right,
-              style: TextStyle(
-                color: foreground.withValues(alpha: 0.82),
-                fontFamily: tk.monoFontFamily,
-                fontSize: 15 * scale,
-                letterSpacing: 1.2 * scale,
-                height: 1.35,
-              ),
-            ),
-          ),
-      ],
-    );
   }
 
   /// The ordered metadata fields the TV detail line renders and its announcement
@@ -4436,13 +4294,14 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     }
     final ratings = mediaRatingsFor(lineMetadata, fallbackItem: metadata);
     if (ratings.isNotEmpty) parts.add(MetadataLineRatings(ratings, dropPriority: 4));
-    // Under "Glas" the genres close the first row, each on its own capsule,
-    // three at most, as the corner they came from held — and only while the
-    // row is about the film or the show itself. An episode's row, focused or
-    // on its own page, names the episode; the genres belong to its show.
-    // The first to go when the row runs out of room.
-    if (ockerGlass(context) && !lineMetadata.isEpisode) {
-      for (final genre in (metadata.genres ?? const <String>[]).take(3)) {
+    // The genres close the first row, each in a box of its own (a capsule
+    // under "Glas") — the original look took this over from the redesign at
+    // the user's word — and only while the row is about the film or the show
+    // itself. An episode's row, focused or on its own page, names the
+    // episode; the genres belong to its show. As many as the row has room
+    // for: they are the first to go when it runs out, from the last one back.
+    if (!lineMetadata.isEpisode) {
+      for (final genre in metadata.genres ?? const <String>[]) {
         if (genre.trim().isNotEmpty) parts.add(MetadataLineText(genre.trim(), dropPriority: 5));
       }
     }
@@ -4536,6 +4395,8 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
         width: logoWidth,
         fallbackWidth: titleWidth,
         height: layout.titleHeight,
+        // A logo on the floor of its box, as the type that stands in for it.
+        alignment: Alignment.bottomLeft,
         titleBuilder: (context, title) =>
             _tvDetailTextTitle(context, title, fontSize: layout.titleFontSize, foregroundColor: foregroundColor),
       );
@@ -4571,6 +4432,9 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     shadowBlur: 12,
     color: foregroundColor,
     shadowColor: _tvDetailTitleShadowColor(context),
+    // On the floor of its box, in every theme: a one-line title centred in a
+    // box sized for two stood a line's height away from the facts below it.
+    alignment: Alignment.bottomLeft,
   );
 
   /// [fallbackWidth], where given, is the width the *title* gets when no logo
@@ -4653,8 +4517,8 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       fontWeight: .w700,
       letterSpacing: 0.1,
     );
-    // Under "Glas" two rows: year, age and length first, the picture and
-    // sound below — each fact on a capsule of glass.
+    // Two rows: year, age and length first, the picture and sound below —
+    // each fact on a capsule of glass under "Glas", in a box elsewhere.
     final twoRows = _tvDetailReservesQualityRow(context, metadata);
     final parts = _tvDetailMetadataParts(context, metadata, quality: twoRows ? false : null);
     if (parts.isEmpty && !twoRows) return const SizedBox.shrink();
@@ -4692,15 +4556,16 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     );
   }
 
-  /// Whether the facts take a second row for the picture and sound: under
-  /// "Glas", on a page of something to watch.
+  /// Whether the facts take a second row for the picture and sound: on a page
+  /// of something to watch, in every theme — "Glas" had it first, and the
+  /// original look took it over at the user's word.
   ///
   /// Budgeted for the page, not for the moment — as the episode title is. The
   /// picture and sound are only known once the playback source has resolved,
   /// after the header has been laid out; a row that arrived then would push
   /// everything below it out of the budget.
   bool _tvDetailReservesQualityRow(BuildContext context, MediaItem metadata) =>
-      ockerGlass(context) && (metadata.isMovie || metadata.isShow || metadata.isSeason || metadata.isEpisode);
+      metadata.isMovie || metadata.isShow || metadata.isSeason || metadata.isEpisode;
 
   String? _tvDetailDescription(MediaItem metadata, {required bool hideSpoilers}) {
     final focusedEpisode = _tvDetailFocusedEpisode.value;

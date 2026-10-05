@@ -22,6 +22,8 @@ import '../test_helpers/prefs.dart';
 /// normally one or two entries — never a reason to re-fetch an item.
 Future<void> _pumpSpotlight(WidgetTester tester, MediaItem item, {AppThemeVariant? variant}) async {
   await SettingsService.getInstance();
+  // Per-source scores: averaging is on by default in this fork.
+  await SettingsService.instance.write(SettingsService.averageRatings, false);
   tester.view.physicalSize = const Size(1920, 1080);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);

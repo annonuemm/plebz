@@ -52,6 +52,37 @@ void main() {
     });
   });
 
+  group('Xtream timeshift from a playlist', () {
+    // A playlist source — a file from disk included — knows no panel and no
+    // login; the entry's own live URL carries both.
+    String? fromPlaylist(String liveUrl) => buildIptvCatchupUrl(
+      mode: IptvCatchupMode.xtream,
+      liveUrl: liveUrl,
+      start: start,
+      durationSeconds: 3600,
+      now: now,
+    );
+
+    test('reads the panel and the login off the live URL', () {
+      expect(
+        fromPlaylist('http://panel.example:8080/live/anna/s3cret/12345.ts'),
+        'http://panel.example:8080/timeshift/anna/s3cret/60/2026-08-30:20-15/12345.ts',
+      );
+    });
+
+    test('also from the shorter form get.php playlists hand out, without live/', () {
+      expect(
+        fromPlaylist('http://panel.example:8080/anna/s3cret/12345'),
+        'http://panel.example:8080/timeshift/anna/s3cret/60/2026-08-30:20-15/12345',
+      );
+    });
+
+    test('a URL that is no panel path builds nothing rather than a guess', () {
+      expect(fromPlaylist('http://cdn.example/hls/channel/index.m3u8'), isNull);
+      expect(xtreamAccessFromLiveUrl('http://cdn.example/a/b/c.m3u8'), isNull);
+    });
+  });
+
   group('query form', () {
     test('appends the window when the entry names no template', () {
       expect(

@@ -14,6 +14,7 @@ import '../media/media_kind.dart';
 import '../media/media_item_types.dart';
 import '../services/settings_service.dart';
 import '../theme/mono_tokens.dart';
+import '../utils/formatters.dart' show formatSeasonEpisodeLabel;
 import '../utils/media_image_helper.dart';
 import '../widgets/media_card.dart' show catalogPosterOverlays;
 import '../widgets/media_context_menu.dart';
@@ -122,6 +123,16 @@ class OckerPosterTile extends StatefulWidget {
 
   static bool hideSpoilersOf(BuildContext context) =>
       SettingsService.instanceOrNull?.read(SettingsService.hideSpoilers) ?? false;
+
+  /// Whether the title and its year stand under the poster: where the viewer
+  /// switched the full-card layout off, as in the original look. Off by
+  /// nature where no settings are in reach.
+  static bool captionsOf(BuildContext context) =>
+      !(SettingsService.instanceOrNull?.read(SettingsService.tvFullCardLayout) ?? true);
+
+  /// The room the two caption lines take under a poster — the same for every
+  /// tile, so a grid can size its cells by it.
+  static const double captionHeight = 44;
 
   @override
   State<OckerPosterTile> createState() => OckerPosterTileState();
@@ -298,13 +309,20 @@ class OckerPosterTileState extends State<OckerPosterTile> {
           // A focused poster grows a little, the way the standard theme's
           // cards do. Paint-only, so the row holds still under it — see
           // [PaintScale].
-          child: TweenAnimationBuilder<double>(
-            tween: Tween<double>(end: _focused ? FocusTheme.focusScaleFor(context) : 1.0),
-            duration: tk.fast,
-            curve: Curves.easeOutCubic,
-            builder: (context, value, child) => PaintScale(scale: value, child: child!),
-            child: _buildPoster(context, tk, width, height, path, blurSpoiler, imageWidth, imageHeight),
-          ),
+          child:
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(end: _focused ? FocusTheme.focusScaleFor(context) : 1.0),
+                duration: tk.fast,
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) => PaintScale(scale: value, child: child!),
+                child: _buildPoster(context, tk, width, height, path, blurSpoiler, imageWidth, imageHeight),
+              ).withCaption(
+                context,
+                show: OckerPosterTile.captionsOf(context),
+                item: widget.item,
+                fill: !height.isFinite,
+                width: width,
+              ),
         ),
       ),
     );
@@ -395,6 +413,76 @@ class OckerPosterTileState extends State<OckerPosterTile> {
           // on — these went missing here for as long as this tile had
           // its own idea of what a poster carries.
           if (widget.content == null) ...catalogPosterOverlays(widget.item.catalogItem),
+        ],
+      ),
+    );
+  }
+}
+
+/// The original look's captions under a poster, for the redesign's grids
+/// (fork addition): the title, and its year — or, for an episode, which one
+/// it is.
+extension _OckerPosterCaption on Widget {
+  Widget withCaption(
+    BuildContext context, {
+    required bool show,
+    required MediaItem item,
+    required bool fill,
+    required double width,
+  }) {
+    if (!show) return this;
+    // As wide as the poster and no wider: a long title would otherwise widen
+    // the tile, and the row would fit one poster fewer.
+    final caption = SizedBox(
+      width: width.isFinite ? width : null,
+      height: OckerPosterTile.captionHeight,
+      child: _OckerPosterCaptionText(item: item),
+    );
+    return fill
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: this),
+              caption,
+            ],
+          )
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [this, caption],
+          );
+  }
+}
+
+class _OckerPosterCaptionText extends StatelessWidget {
+  const _OckerPosterCaptionText({required this.item});
+
+  final MediaItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = tokens(context);
+    final textTheme = Theme.of(context).textTheme;
+    final title = item.isEpisode ? (item.grandparentTitle ?? item.displayTitle) : item.displayTitle;
+    final second = item.isEpisode ? formatSeasonEpisodeLabel(item.parentIndex, item.index) : item.year?.toString();
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.bodyMedium?.copyWith(color: tk.ink(1), fontWeight: FontWeight.w600, height: 1.25),
+          ),
+          if (second != null)
+            Text(
+              second,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodySmall?.copyWith(color: tk.ink(0.6), height: 1.25),
+            ),
         ],
       ),
     );

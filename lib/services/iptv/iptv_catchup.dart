@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
+
 /// The archive window to assume when a provider offers one without saying how
 /// far back it goes. Seven days is what most panels serve and what the
 /// established players assume; the per-source setting overrides it.
@@ -111,7 +113,14 @@ String? buildIptvCatchupUrl({
 
   switch (effective) {
     case IptvCatchupMode.xtream:
-      if (xtreamRoot == null || xtreamUsername == null || xtreamPassword == null) return null;
+      // An Xtream source knows its panel and login. A playlist does not — a
+      // file chosen from disk least of all — but its entries are the panel's
+      // own live URLs, which carry both: `…/live/user/pass/12345.ts`.
+      if (xtreamRoot == null || xtreamUsername == null || xtreamPassword == null) {
+        final fromUrl = xtreamAccessFromLiveUrl(liveUrl);
+        if (fromUrl == null) return null;
+        (xtreamRoot, xtreamUsername, xtreamPassword) = fromUrl;
+      }
       // The stream id and the container come out of the live URL
       // (`…/live/user/pass/12345.ts`) rather than being passed in: a channel
       // merged from several playlist entries has one id per copy, and the
@@ -149,6 +158,29 @@ String? buildIptvCatchupUrl({
     case IptvCatchupMode.automatic || IptvCatchupMode.off:
       return null;
   }
+}
+
+/// The panel root and login an Xtream live URL carries, or null when [liveUrl]
+/// is not shaped like one: `{root}/live/{user}/{pass}/{id}.{ext}`, or the
+/// same without `live/` as `get.php` playlists hand it out.
+@visibleForTesting
+(String root, String user, String password)? xtreamAccessFromLiveUrl(String liveUrl) {
+  final uri = Uri.tryParse(liveUrl);
+  if (uri == null || !uri.hasScheme || uri.host.isEmpty) return null;
+  final segments = [
+    for (final segment in uri.pathSegments)
+      if (segment.isNotEmpty) segment,
+  ];
+  if (segments.length < 3) return null;
+  final user = segments[segments.length - 3];
+  final password = segments[segments.length - 2];
+  // The id is a number; anything else is not a panel's live path.
+  final id = segments.last.split('.').first;
+  if (int.tryParse(id) == null || user.isEmpty || password.isEmpty) return null;
+  var prefix = segments.sublist(0, segments.length - 3);
+  if (prefix.isNotEmpty && prefix.last == 'live') prefix = prefix.sublist(0, prefix.length - 1);
+  final root = uri.replace(pathSegments: prefix, query: null, fragment: null).toString();
+  return (root.endsWith('/') ? root.substring(0, root.length - 1) : root, user, password);
 }
 
 /// Rewrite a Flussonic live URL to its archive form.

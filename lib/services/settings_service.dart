@@ -990,7 +990,10 @@ class SettingsService extends BaseSharedPreferencesService {
 
   /// Collapse an item's attributed scores (IMDb, TMDB, both Rotten Tomatoes
   /// panels, ...) into a single mean instead of a badge per source.
-  static const averageRatings = BoolPref('average_ratings');
+  ///
+  /// On by default (fork): one score leaves the first row of facts the room
+  /// its genres need.
+  static const averageRatings = BoolPref('average_ratings', defaultValue: true);
 
   /// The catalog detail page's crew grid (director, writer, producer). On by
   /// default; a long-running series lists dozens of names across three rows.

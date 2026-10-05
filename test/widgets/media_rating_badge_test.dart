@@ -48,9 +48,15 @@ void main() {
     resetSharedPreferencesForTest();
     SettingsService.resetForTesting();
     await SettingsService.getInstance();
+    // Per-source scores: averaging is on by default in this fork.
+    await SettingsService.instance.write(SettingsService.averageRatings, false);
   });
 
-  testWidgets('every source keeps its own badge by default', (tester) async {
+  test('the fork averages the scores unless the viewer says otherwise', () {
+    expect(SettingsService.averageRatings.defaultValue, isTrue);
+  });
+
+  testWidgets('with averaging off every source keeps its own badge', (tester) async {
     await _pumpBadges(tester, _fourScoreMovie);
 
     expect(SettingsService.instance.read(SettingsService.averageRatings), isFalse);

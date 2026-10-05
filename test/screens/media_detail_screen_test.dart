@@ -384,6 +384,7 @@ void main() {
 
   testWidgets('TV detail metadata line shows every rating source the item carries', (tester) async {
     await SettingsService.getInstance();
+    await SettingsService.instance.write(SettingsService.averageRatings, false);
     tester.view.physicalSize = const Size(1280, 720);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -538,6 +539,70 @@ void main() {
     expect(find.textContaining('0min'), findsNothing);
   });
 
+  testWidgets('in the original look the genres close the first row, and the picture and sound take the second', (
+    tester,
+  ) async {
+    await SettingsService.getInstance();
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final movie = MediaItem.plex(
+      id: 'movie_std',
+      serverId: ServerId('server_1'),
+      kind: MediaKind.movie,
+      title: 'Original Look',
+      summary: 'Two rows of facts.',
+      year: 2025,
+      contentRating: '16',
+      durationMs: 3120000,
+      genres: const ['Dokumentarfilm', 'Historie', 'Kriegsfilm'],
+      mediaVersions: const [MediaVersion(id: 'v1', videoResolution: '1080')],
+    );
+    final client = _FakeMediaServerClient(
+      show: movie,
+      childrenByParent: {},
+      mediaSourcesById: {
+        movie.id: MediaSourceInfo(
+          videoUrl: '',
+          audioTracks: [],
+          subtitleTracks: [],
+          chapters: [],
+          mediaSourceId: 'v1',
+          mediaIndex: 0,
+        ),
+      },
+    );
+    final provider = testMultiServer(clients: [client]).provider;
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: MaterialApp(
+          theme: monoTheme(dark: true),
+          home: ChangeNotifierProvider<MultiServerProvider>.value(
+            value: provider,
+            child: withProfileNavigationScope(child: MediaDetailScreen(metadata: movie)),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+
+    final firstRow = tester.getTopLeft(find.text('2025')).dy;
+    for (final genre in ['Dokumentarfilm', 'Historie', 'Kriegsfilm']) {
+      expect(find.text(genre), findsOneWidget, reason: genre);
+      expect(tester.getTopLeft(find.text(genre)).dy, firstRow, reason: '$genre on the year\'s row');
+    }
+    expect(tester.getTopLeft(find.text('Kriegsfilm')).dx, greaterThan(tester.getTopLeft(find.text('52min')).dx));
+    expect(find.textContaining('  •  '), findsNothing, reason: 'no line of genres of its own');
+    final qualityRow = find.byKey(const ValueKey('tv_detail_quality_row'));
+    expect(find.descendant(of: qualityRow, matching: find.text('1080p')), findsOneWidget);
+  });
+
   testWidgets('under glass the facts take two rows of glass capsules: the title first, the picture below', (
     tester,
   ) async {
@@ -684,11 +749,15 @@ void main() {
     // Year opens the line; the type label is gone.
     expect(find.text('Movie'), findsNothing);
     expect(find.text('2017'), findsOneWidget);
-    // Quality sits with the year and the runtime, on the line with half again
-    // the width for it. What is left under the buttons is the track *choice*,
-    // which is a different question and stays out of here.
+    // Quality has a row of its own under the year and the runtime, as under
+    // "Glas". What is left under the buttons is the track *choice*, which is
+    // a different question and stays out of here.
     final information = find.byKey(const ValueKey('tv_detail_information_semantics'));
     expect(find.descendant(of: information, matching: find.text('1080p')), findsOneWidget);
+    final qualityRow = find.byKey(const ValueKey('tv_detail_quality_row'));
+    expect(find.descendant(of: qualityRow, matching: find.text('1080p')), findsOneWidget);
+    expect(find.descendant(of: qualityRow, matching: find.text('2017')), findsNothing);
+    expect(tester.getTopLeft(find.text('2017')).dy, lessThan(tester.getTopLeft(find.text('1080p')).dy));
     expect(
       find.descendant(of: find.byKey(const ValueKey('detail_playback_tracks')), matching: find.text('1080p')),
       findsNothing,
@@ -1497,7 +1566,8 @@ void main() {
     expect(find.text('The episode summary.'), findsOneWidget);
     // The title sits above the episode's metadata line, inside the block that
     // opens the details sheet.
-    final metadataLine = find.byType(FittedMetadataLine);
+    // The first of the two rows of facts; the picture and sound have their own.
+    final metadataLine = find.byType(FittedMetadataLine).first;
     expect(tester.getBottomLeft(heroTitle).dy, lessThanOrEqualTo(tester.getTopLeft(metadataLine).dy));
     expect(
       find.descendant(of: find.byKey(const ValueKey('tv_detail_information_semantics')), matching: heroTitle),
@@ -1505,9 +1575,10 @@ void main() {
     );
     expect(tester.getSemantics(information).label, contains('The Show, The One Where the Title Matters, S1 E1'));
 
-    // Genres are the show's and never change while browsing, so the row is
-    // stable as focus walks the episode rail.
-    expect(find.text('Drama  •  Mystery'), findsOneWidget);
+    // Genres are the show's: the first row of facts names them for the show
+    // itself, and while an episode holds focus the row is the episode's. The
+    // announcement still carries them.
+    expect(find.text('Drama'), findsNothing);
     expect(tester.getSemantics(information).label, contains('Drama, Mystery'));
 
     // Rail cards sit inside their own show: the episode title is the headline
@@ -1730,7 +1801,8 @@ void main() {
 
     // The format the profile names, at chip length. The title said the same
     // thing three times as long, which is what crowded the line (#2)
-    final chips = find.descendant(of: find.byType(FittedMetadataLine).first, matching: find.byType(Text));
+    // On the row of its own the picture and sound have, under the year's.
+    final chips = find.descendant(of: find.byKey(const ValueKey('tv_detail_quality_row')), matching: find.byType(Text));
     final texts = [for (final element in chips.evaluate()) (element.widget as Text).data];
     expect(texts, contains('DTS-HD MA Stereo'));
     expect(texts, isNot(contains('German DTS-HD MA 2.0 · Stereo')));
@@ -2557,6 +2629,9 @@ void main() {
           );
       final client = _FakeMediaServerClient(show: movie, childrenByParent: const {});
 
+      // Per-source scores: averaging is on by default in this fork.
+      await SettingsService.getInstance();
+      await SettingsService.instance.write(SettingsService.averageRatings, false);
       await pumpPhoneDetail(tester, client, movie);
 
       Future<void> resizeTo(double width) async {

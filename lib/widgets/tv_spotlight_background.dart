@@ -374,7 +374,8 @@ class TvSpotlightBackground extends StatelessWidget {
     // with a gap beneath that the facts row then has to start below. Bottom
     // alignment puts every logo the same distance above that line, whatever
     // shape it arrived in.
-    final logoAlignment = isOcker(context) ? Alignment.bottomLeft : Alignment.centerLeft;
+    // In every theme since the original look took it over from the redesign.
+    const logoAlignment = Alignment.bottomLeft;
     final pixelRatio = MediaImageHelper.artworkPixelRatio(context, imageType: ImageType.heroLogo);
     final (logoMemWidth, logoMemHeight) = MediaImageHelper.getMemCacheDimensions(
       displayWidth: (logoWidth * pixelRatio).round(),
@@ -446,7 +447,7 @@ class TvSpotlightBackground extends StatelessWidget {
       // that needs two lines grows upward from that floor rather than pushing
       // the row down, and FittingTitleText shrinks the type until both lines
       // fit the slot's height, so it cannot climb into the band above.
-      alignment: isOcker(context) ? Alignment.bottomLeft : Alignment.centerLeft,
+      alignment: Alignment.bottomLeft,
       style: Theme.of(context).textTheme.displaySmall?.copyWith(
         color: colorScheme.onSurface,
         fontSize: _titleFontSize(scale),

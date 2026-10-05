@@ -432,6 +432,8 @@ void main() {
     resetSharedPreferencesForTest();
     SettingsService.resetForTesting();
     await SettingsService.getInstance();
+    // Per-source scores: averaging is on by default in this fork.
+    await SettingsService.instance.write(SettingsService.averageRatings, false);
     TvDetectionService.debugSetAppleTVOverride(true);
   });
 

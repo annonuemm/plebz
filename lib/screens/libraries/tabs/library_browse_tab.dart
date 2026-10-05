@@ -2358,7 +2358,12 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
           : null,
       // The poster fills its cell there, with no caption under it to leave
       // room for: the cell is the poster's own 2:3.
-      aspectRatioOverride: ockerGrid && browseShape == null && !useWideRatio ? OckerGridGeometry.aspectRatio : null,
+      aspectRatioOverride: ockerGrid && browseShape == null && !useWideRatio
+          ? (OckerPosterTile.captionsOf(context)
+                // The poster's own 2:3 and the caption lines under it.
+                ? room.geometry.tileWidth / (room.geometry.tileHeight + OckerPosterTile.captionHeight)
+                : OckerGridGeometry.aspectRatio)
+          : null,
       padding: padding,
       useWideAspectRatio: useWideRatio,
       shape: browseShape,

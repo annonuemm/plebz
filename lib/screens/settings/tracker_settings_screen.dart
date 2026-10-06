@@ -12,6 +12,7 @@ import '../../utils/dialogs.dart';
 import '../../widgets/device_code_dialog.dart';
 import '../../widgets/oauth_proxy_dialog.dart';
 import '../../widgets/settings_page.dart';
+import 'simkl_progress_tile.dart';
 import 'tracker_account_settings_body.dart';
 import 'tracker_connect_launcher.dart';
 
@@ -171,6 +172,7 @@ class TrackerSettingsScreen extends StatelessWidget {
               subtitle: t.services.scrobbleDescription,
             ),
           ],
+          extraRows: [if (config.service == TrackerService.simkl) const SimklProgressTile()],
           onDisconnect: () => _disconnect(context, account),
         );
       },

@@ -29,6 +29,9 @@ class TrackerAccountSettingsBody extends StatelessWidget {
   final String? accountSubtitle;
   final TrackerService service;
   final List<TrackerSettingsToggle> toggles;
+
+  /// Rows of the tracker's own above the shared behaviour group (Plebz).
+  final List<Widget> extraRows;
   final FutureOr<void> Function() onDisconnect;
 
   const TrackerAccountSettingsBody({
@@ -38,6 +41,7 @@ class TrackerAccountSettingsBody extends StatelessWidget {
     this.accountSubtitle,
     required this.service,
     required this.toggles,
+    this.extraRows = const [],
     required this.onDisconnect,
   });
 
@@ -55,6 +59,7 @@ class TrackerAccountSettingsBody extends StatelessWidget {
             ),
           ],
         ),
+        if (extraRows.isNotEmpty) SettingsGroup(children: extraRows),
         SettingsGroup(
           title: t.settings.behavior,
           children: [

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import '../media/ids.dart';
+import '../focus/remote_keys.dart';
 import '../media/library_copy_quality.dart';
 import '../media/playback_rate.dart';
 import '../media/watchlist_filter.dart';
@@ -788,6 +789,40 @@ class SettingsService extends BaseSharedPreferencesService {
   /// receiver in the middle, or a set whose Dolby Vision mode looks worse than
   /// its HDR10 one. Profile 5 carries no base layer and is left alone.
   static const disableDolbyVision = BoolPref('disable_dolby_vision');
+
+  /// What the remote's colour keys do in the player (fork addition). Red,
+  /// green, yellow, blue: by default the order most remotes print beside them.
+  static const remoteRedButton = EnumPref<RemoteButtonFunction>(
+    'remote_red_button',
+    values: RemoteButtonFunction.values,
+    defaultValue: RemoteButtonFunction.subtitles,
+  );
+  static const remoteGreenButton = EnumPref<RemoteButtonFunction>(
+    'remote_green_button',
+    values: RemoteButtonFunction.values,
+    defaultValue: RemoteButtonFunction.audioTrack,
+  );
+  static const remoteYellowButton = EnumPref<RemoteButtonFunction>(
+    'remote_yellow_button',
+    values: RemoteButtonFunction.values,
+    defaultValue: RemoteButtonFunction.skipMarker,
+  );
+  static const remoteBlueButton = EnumPref<RemoteButtonFunction>(
+    'remote_blue_button',
+    values: RemoteButtonFunction.values,
+    defaultValue: RemoteButtonFunction.controls,
+  );
+
+  static EnumPref<RemoteButtonFunction> remoteButtonPref(RemoteColourKey key) => switch (key) {
+    RemoteColourKey.red => remoteRedButton,
+    RemoteColourKey.green => remoteGreenButton,
+    RemoteColourKey.yellow => remoteYellowButton,
+    RemoteColourKey.blue => remoteBlueButton,
+  };
+
+  /// The profiles whose watch state Simkl keeps rather than the server (fork
+  /// addition; see `watch_progress/tracker_progress_controller.dart`).
+  static const simklLedProfiles = StringListPref('simkl_led_profiles');
 
   /// Which library copy the Explore detail page ranks first and opens from
   /// the button beside the poster (fork addition).
@@ -1847,6 +1882,10 @@ class SettingsService extends BaseSharedPreferencesService {
     dvConversionMode,
     disableDolbyVision,
     bestCopyPreference,
+    remoteRedButton,
+    remoteGreenButton,
+    remoteYellowButton,
+    remoteBlueButton,
     hdrSdrConversion,
     musicVolume,
     resumeMusicOnLaunch,

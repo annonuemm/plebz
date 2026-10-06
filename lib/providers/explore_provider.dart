@@ -103,7 +103,7 @@ class ExploreProvider extends ChangeNotifier with DisposableChangeNotifierMixin 
   final FutureCoalescer<void> _watchlistRefreshCoalescer = FutureCoalescer();
 
   List<ExploreRowHub>? _hubsCache;
-  (int, String)? _hubsCacheKey;
+  (int, String, bool)? _hubsCacheKey;
   int _rowsEpoch = 0;
 
   CatalogSource? get activeSource => _source;
@@ -120,10 +120,10 @@ class ExploreProvider extends ChangeNotifier with DisposableChangeNotifierMixin 
   List<ExploreRowHub> get rowHubs {
     final source = _source;
     if (source == null) return const [];
-    final key = (_rowsEpoch, rowTitle(CatalogRowId.watchlist));
+    final key = (_rowsEpoch, rowTitle(CatalogRowId.watchlist), _catalogSources.plexWatchlistSetAside);
     if (_hubsCache != null && key == _hubsCacheKey) return _hubsCache!;
     final hubs = <ExploreRowHub>[
-      for (final row in source.supportedRows)
+      for (final row in _catalogSources.rowsOf(source))
         if (_rows[row] case final CatalogPage page)
           if (page.items.isNotEmpty)
             ExploreRowHub.catalogRow(
@@ -511,7 +511,7 @@ class ExploreProvider extends ChangeNotifier with DisposableChangeNotifierMixin 
             appLogger.w('Explore: seerr genres failed', error: e);
           }
         }(),
-      for (final row in source.supportedRows)
+      for (final row in _catalogSources.rowsOf(source))
         () async {
           try {
             fetched[row] = await source.fetchRow(row, limit: rowLimit);

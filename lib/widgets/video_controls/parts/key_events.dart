@@ -421,6 +421,10 @@ extension _PlexVideoControlsKeyEventMethods on _PlexVideoControlsState {
     final channelResult = _handleChannelKey(event, key);
     if (channelResult != KeyEventResult.ignored) return channelResult;
 
+    // Stop, Info, CC, audio, guide, last channel, colours and digits (Plebz).
+    final remoteResult = _handleRemoteKey(event, key);
+    if (remoteResult != KeyEventResult.ignored) return remoteResult;
+
     // Tab is the deliberate way into the OSD (#1797). With the chrome down,
     // raise it and hand it focus; with the chrome up, let Flutter's app-level
     // Shortcuts run NextFocusAction and walk in, rather than consuming the key

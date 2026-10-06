@@ -6,25 +6,23 @@ import '../../../models/trackers/device_code.dart';
 import '../../../utils/abortable_http_request.dart';
 import '../../../utils/app_logger.dart';
 import '../device_code_auth_service.dart';
-import '../oauth_proxy_client.dart';
 import '../tracker_constants.dart';
 import '../tracker_session.dart';
 import 'simkl_constants.dart';
 
 /// Simkl OAuth PIN (device-code) flow.
 ///
-/// `GET /oauth/pin` with Simkl's required app identity parameters and a
-/// relay redirect returns a PIN the user enters at https://simkl.com/pin.
-/// After entry Simkl redirects the browser to the relay's static "signed in"
-/// page. The app polls `/oauth/pin/<user_code>` with the same identity.
+/// `GET /oauth/pin` with Simkl's required app identity parameters returns a
+/// PIN the user enters at https://simkl.com/pin. The app polls
+/// `/oauth/pin/<user_code>` with the same identity.
 class SimklAuthService extends DeviceCodeAuthServiceBase {
   SimklAuthService({super.httpClient});
 
   @override
   Future<DeviceCode> createDeviceCode() async {
-    final uri = Uri.parse(
-      SimklConstants.pinUrl,
-    ).replace(queryParameters: SimklConstants.queryParameters({'redirect': '${OAuthProxyClient.baseUrl}/auth/done'}));
+    // Without upstream's `redirect` to Plezy's relay page: Simkl then shows
+    // its own confirmation, and nothing reaches Plezy's host (fork change).
+    final uri = Uri.parse(SimklConstants.pinUrl).replace(queryParameters: SimklConstants.queryParameters());
     final res = await sendAbortableHttpRequest(
       httpClient,
       'GET',

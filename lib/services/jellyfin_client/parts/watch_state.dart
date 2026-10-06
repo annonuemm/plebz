@@ -17,6 +17,9 @@ mixin _JellyfinWatchStateMethods on _JellyfinClientInternals {
   /// resets their children recursively, so nothing extra is owed here.
   @override
   Future<void> markWatched(MediaItem item) async {
+    // Not while a tracker keeps the profile's watch state: the account may be
+    // shared, and its state is not this profile's to change (fork addition).
+    if (!ProgressRouting.instance.serverKeepsWatchState) return;
     final response = await _http.post(paths.playedItem(item.id), queryParameters: {'userId': connection.userId});
     throwIfHttpError(response);
 
@@ -40,6 +43,7 @@ mixin _JellyfinWatchStateMethods on _JellyfinClientInternals {
 
   @override
   Future<void> markUnwatched(MediaItem item) async {
+    if (!ProgressRouting.instance.serverKeepsWatchState) return;
     final response = await _http.delete(paths.playedItem(item.id), queryParameters: {'userId': connection.userId});
     throwIfHttpError(response);
   }

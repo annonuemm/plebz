@@ -90,6 +90,8 @@ import '../redesign/ocker_skin.dart';
 import '../redesign/ocker_submenu.dart';
 import 'setup_wizard/setup_wizard.dart';
 import 'settings/plebz_updates.dart';
+import '../services/watch_progress/tracker_progress_controller.dart';
+import '../widgets/tracker_progress_binder.dart';
 
 /// Provides access to the main screen's focus control.
 // MainScreenFocusScope and SideNavigationBleedBuilder live in
@@ -542,6 +544,8 @@ class _MainScreenState extends State<MainScreen>
     _offlineUntilConnected = widget.isOfflineMode;
 
     WidgetsBinding.instance.addObserver(this);
+    // A tracker-led profile's titles change when its tracker says so (Plebz).
+    TrackerProgressController.instance.revision.addListener(_refreshContentAfterStaleResume);
     profileNavigationRegistry.attachHome(_showHomeTab);
     _contentFocusScope.addListener(_syncSidebarFocusWithContent);
 
@@ -1152,6 +1156,7 @@ class _MainScreenState extends State<MainScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    TrackerProgressController.instance.revision.removeListener(_refreshContentAfterStaleResume);
     profileNavigationRegistry.detachHome(_showHomeTab);
     _profileRouteObserver?.unsubscribe(this);
     if (PlatformDetector.isDesktopOS()) {
@@ -1242,6 +1247,8 @@ class _MainScreenState extends State<MainScreen>
     // content. A grant must recover hidden Request actions on any real resume.
     if (resumedFromBackground && mounted) {
       unawaited(context.read<SeerrAccountProvider?>()?.refreshUser());
+      // What was watched elsewhere since, for a tracker-led profile (Plebz).
+      unawaited(TrackerProgressController.instance.refresh());
     }
     if (shouldShowProfileSelectionOnResume(
       resumedFromBackground: resumedFromBackground,
@@ -2217,7 +2224,10 @@ class _MainScreenState extends State<MainScreen>
       selectTab: _selectTabInBackground,
       // A phone asking to pair shows its code here, on whatever is on screen.
       // So does a programme reminder set in the guide.
-      child: ProgramReminderHost(child: CompanionRemotePairingPrompt(child: _buildContent(context, useSideNav))),
+      // And a profile keeping its progress in Simkl is bound to it here.
+      child: TrackerProgressBinder(
+        child: ProgramReminderHost(child: CompanionRemotePairingPrompt(child: _buildContent(context, useSideNav))),
+      ),
     );
   }
 

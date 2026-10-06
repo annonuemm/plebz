@@ -9,6 +9,7 @@ import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/utils/external_ids.dart';
 import 'package:plezy/utils/watch_state_notifier.dart';
+import 'package:plezy/services/watch_progress/progress_routing.dart';
 
 import '../test_helpers/prefs.dart';
 
@@ -178,6 +179,18 @@ void main() {
     // The copy the mark came from is already right; marking it again would be
     // a write for nothing.
     expect(s.plex.marked, isEmpty);
+  });
+
+  test('a profile whose progress Simkl keeps leaves the servers alone', () async {
+    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    ProgressRouting.instance.activate(ProgressSourceKind.tracker);
+    addTearDown(ProgressRouting.instance.debugReset);
+    final s = twoServers();
+
+    await s.mirror.handleEvent(_event(s.watchedOnPlex));
+
+    expect(s.jellyfin.marked, isEmpty);
+    expect(s.plex.lookups, 0);
   });
 
   test('unmarking travels the same way', () async {

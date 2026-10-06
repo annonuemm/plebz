@@ -56,23 +56,22 @@ bool debugDiscordRichPresenceAvailable = false;
 @visibleForTesting
 bool debugPlezyHostedServicesAvailable = false;
 
-/// Simkl, MyAnimeList and AniList sign in through the same host's OAuth proxy
-/// (`ice.plezy.app/auth`), and Simkl and MAL identify themselves with the app
-/// ids Plezy registered. This fork leaves the three out: settings don't offer
-/// them, and a session stored before is not loaded, so nothing talks to them
-/// on Plezy's credentials — no scrobbling, no Explore or watchlist tab.
-/// The stored session stays on disk untouched.
+/// MyAnimeList and AniList sign in through the same host's OAuth proxy
+/// (`ice.plezy.app/auth`), and MAL identifies itself with the app id Plezy
+/// registered. This fork leaves them out: settings don't offer them, and a
+/// session stored before is not loaded, so nothing talks to them on Plezy's
+/// credentials — no scrobbling, no Explore or watchlist tab. The stored
+/// session stays on disk untouched.
 ///
 /// Trakt and MDBList went the same way on 2026-10-02 at the user's word: not
 /// used, and Trakt's sign-in, like MDBList's, runs on the app ids Plezy
-/// registered. Every tracker is out now, so nothing scrobbles anywhere.
-const forkRemovedTrackers = {
-  TrackerService.simkl,
-  TrackerService.mal,
-  TrackerService.anilist,
-  TrackerService.trakt,
-  TrackerService.mdblist,
-};
+/// registered.
+///
+/// Simkl came back on 2026-10-06 at the user's word, as the tracker a profile
+/// can keep its own progress in. It signs in with a PIN straight at Simkl —
+/// no relay page on Plezy's host — and still on the app id Plezy registered,
+/// which the user accepted; an own id is one constant in `simkl_constants.dart`.
+const forkRemovedTrackers = {TrackerService.mal, TrackerService.anilist, TrackerService.trakt, TrackerService.mdblist};
 
 bool isTrackerAvailable(TrackerService service) =>
     debugRemovedTrackersAvailable || !forkRemovedTrackers.contains(service);

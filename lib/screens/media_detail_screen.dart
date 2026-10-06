@@ -114,6 +114,7 @@ import '../utils/error_message_utils.dart';
 
 import 'media_detail/trailer_extras.dart';
 import 'media_detail/tv_detail_header_layout.dart';
+import '../services/watch_progress/tracker_progress_controller.dart';
 
 part 'media_detail/action_buttons.dart';
 part 'media_detail/playback_tracks_status.dart';
@@ -842,7 +843,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     final serverName = _metadata.serverName;
 
     try {
-      final result = await mediaClient.fetchItemWithOnDeck(_metadata.id);
+      final result = await mediaClient.fetchItemWithProfileOnDeck(_metadata.id);
       if (!_canUseDetail) return;
       final metadata = result.item;
       final onDeckEpisode = result.onDeckEpisode;
@@ -1781,7 +1782,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       // Seasons/extras deliberately still start after the whole lookup
       // settles: starting them at the early paint measured *worse*, because
       // they contend with the on-deck request rather than overlapping it.
-      final result = await client.fetchItemWithOnDeck(
+      final result = await client.fetchItemWithProfileOnDeck(
         _metadata.id,
         onItemReady: (item) {
           if (_canUseDetail) publish(item);

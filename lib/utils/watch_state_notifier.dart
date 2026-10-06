@@ -6,6 +6,7 @@ import 'base_notifier.dart';
 import 'global_key_utils.dart';
 import 'hierarchical_event_mixin.dart';
 import 'media_event_keys.dart';
+import '../services/watch_progress/progress_routing.dart';
 
 /// Identity of the store overlay entry a watch event creates.
 ///
@@ -152,6 +153,8 @@ class WatchStateNotifier extends BaseNotifier<WatchStateEvent> {
   }) {
     final serverId = serverIdForEvent(item, notifier: 'WatchStateNotifier', event: 'watched');
     if (serverId == null) return null;
+    // A tracker-led profile shows the change before its tracker echoes it.
+    ProgressRouting.instance.noteLocalChange(item, watched: isNowWatched);
     final id = patchId ?? WatchPatchId.session(++_sequence);
     notify(
       WatchStateEvent(
@@ -189,6 +192,11 @@ class WatchStateNotifier extends BaseNotifier<WatchStateEvent> {
     final serverId = serverIdForEvent(item, notifier: 'WatchStateNotifier', event: 'progress');
     if (serverId == null) return null;
     final isNowWatched = isWatchedProgress(positionMs: viewOffset, durationMs: duration, threshold: watchedThreshold);
+    ProgressRouting.instance.noteLocalChange(
+      item,
+      watched: isNowWatched ? true : null,
+      offsetMs: isNowWatched ? null : viewOffset,
+    );
     final id = patchId ?? WatchPatchId.session(++_sequence);
 
     notify(

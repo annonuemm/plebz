@@ -32,6 +32,7 @@ import '../../mpv/mpv.dart';
 import '../overlay_sheet.dart';
 import '../../focus/dpad_navigator.dart';
 import '../../focus/focus_navigation_intent.dart';
+import '../../focus/remote_keys.dart';
 import '../../focus/transport_keys.dart';
 
 import '../../database/app_database.dart';
@@ -83,6 +84,10 @@ import 'widgets/mobile_edge_adjustment_indicator.dart';
 import 'widgets/mobile_skip_zones.dart';
 import 'widgets/skip_marker_button.dart';
 import 'widgets/track_chapter_controls.dart';
+import 'sheets/video_settings_sheet.dart';
+import 'sheets/track_sheet.dart';
+import 'sheets/description_sheet.dart';
+import 'sheets/chapter_sheet.dart';
 import 'widgets/performance_overlay/performance_overlay.dart';
 import '../rasterized_gradient.dart';
 import 'mobile_video_controls.dart';
@@ -101,6 +106,7 @@ part 'parts/markers.dart';
 part 'parts/navigation.dart';
 part 'parts/playback_extras.dart';
 part 'parts/playback_input.dart';
+part 'parts/remote_keys.dart';
 part 'parts/track_controls.dart';
 part 'parts/visibility.dart';
 
@@ -1139,6 +1145,7 @@ class _PlexVideoControlsState extends State<PlexVideoControls>
 
   @override
   void dispose() {
+    _remoteKeyMemories[this]?.digitTimer?.cancel();
     ++_subtitleVisibilityWriteGeneration;
     _feedbackTimer?.cancel();
     _feedbackHideTimer?.cancel();

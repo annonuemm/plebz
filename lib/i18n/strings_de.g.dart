@@ -98,6 +98,7 @@ class TranslationsDe extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$plebz$de plebz = _Translations$plebz$de._(_root);
 	@override late final _Translations$localFiles$de localFiles = _Translations$localFiles$de._(_root);
 	@override late final _Translations$reminders$de reminders = _Translations$reminders$de._(_root);
+	@override late final _Translations$remoteKeys$de remoteKeys = _Translations$remoteKeys$de._(_root);
 }
 
 // Path: app
@@ -1071,6 +1072,8 @@ class _Translations$videoControls$de extends Translations$videoControls$en {
 	@override String upNextStartsIn({required Object seconds}) => 'Nächste Folge in ${seconds} s';
 	@override String get closeUpNext => 'Schließen';
 	@override String get showUpNextPanel => '„Als nächstes"-Fenster zeigen';
+	@override String channelNumberTyped({required Object number}) => 'Sender ${number}';
+	@override String channelNumberMissing({required Object number}) => 'Kein Sender mit der Nummer ${number}';
 }
 
 // Path: messages
@@ -2475,6 +2478,9 @@ class _Translations$services$de extends Translations$services$en {
 	@override String connectedAs({required Object username}) => 'Verbunden als @${username}';
 	@override String get scrobble => 'Fortschritt automatisch verfolgen';
 	@override String get scrobbleDescription => 'Aktualisiere deine Liste, wenn du eine Folge oder einen Film beendest.';
+	@override String get ownProgress => 'Eigener Fortschritt über Simkl';
+	@override String get ownProgressDescription => 'Dieses Profil nimmt Gesehen-Häkchen, Weiter ansehen und Fortsetzen-Stellen aus Simkl statt vom Server. So hat jedes Profil seinen eigenen Stand, auch wenn sich mehrere ein Server-Konto teilen.';
+	@override String get ownProgressNote => 'Gut zu wissen: Beim Abspielen meldet Plebz weiter an den Server, damit Umwandlungen laufen und der Admin sieht, wer schaut. Ab etwa 90 % setzt Plex auf dem Konto dann selbst den Haken. Das stört nur, wenn ein anderes Profil dasselbe Konto ohne Simkl nutzt.';
 	@override String disconnectConfirm({required Object service}) => '${service} trennen?';
 	@override String disconnectConfirmBody({required Object service}) => 'Plebz aktualisiert ${service} nicht mehr. Jederzeit erneut verbinden.';
 	@override String connectFailed({required Object service}) => 'Verbindung zu ${service} fehlgeschlagen. Versuche es erneut.';
@@ -2738,6 +2744,9 @@ class _Translations$plebz$de extends Translations$plebz$en {
 	@override String get extrasBody => 'Füge weitere Quellen hinzu und verbinde die Dienste, die du nutzt. Alles hier ist freiwillig, bis auf eine Quelle zum Schauen.';
 	@override String get sourcesGroup => 'Quellen';
 	@override String get extrasGroup => 'Extras';
+	@override String get profilesGroup => 'Mehrere Personen?';
+	@override String get profilesHint => 'Plebz kann mehrere Profile haben, auch wenn alle dasselbe Plex-Konto nutzen. Damit jede Person ihren eigenen Fortschritt, eigene Häkchen und eine eigene Merkliste hat, verbinde jedes Profil mit einem eigenen Simkl-Konto und schalte dort „Eigener Fortschritt über Simkl“ ein. Weitere Profile legst du unter Einstellungen → Profile → „Plebz-Profil hinzufügen“ an.';
+	@override String get profilesHintConnectFirst => 'Verbinde unten unter Dienste zuerst Simkl für dieses Profil.';
 	@override String get addSourceFirst => 'Füge zuerst eine Quelle hinzu: einen Server oder eine IPTV-Playlist.';
 	@override String get finish => 'Fertig';
 	@override String get setupAgain => 'Einrichtung erneut starten';
@@ -2802,6 +2811,77 @@ class _Translations$reminders$de extends Translations$reminders$en {
 	@override String get runningTitle => 'Läuft gerade';
 	@override String get tune => 'Umschalten';
 	@override String channelGone({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.';
+}
+
+// Path: remoteKeys
+class _Translations$remoteKeys$de extends Translations$remoteKeys$en {
+	_Translations$remoteKeys$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Fernbedienung';
+	@override String get entryDescription => 'Welche Taste im Player was tut';
+	@override String get intro => 'So bedienst du den Player mit der Fernbedienung. Hat deine Fernbedienung eine Taste nicht, übernehmen die Farbtasten.';
+	@override String get playbackGroup => 'Filme und Serien';
+	@override String get liveGroup => 'Live-TV';
+	@override String get colourGroup => 'Farbtasten';
+	@override String get colourGroupDescription => 'Frei belegbar: Taste auswählen und festlegen, was sie im Player tut.';
+	@override String get receiverGroup => 'Universalfernbedienung mit Empfänger';
+	@override String get receiverIntro => 'Etwa eine Logitech Harmony mit Flirc: Solche Empfänger senden Medientasten oder Tastaturtasten. Beides versteht der Player.';
+	@override String get keyOk => 'OK';
+	@override String get doOk => 'Bedienleiste einblenden und anhalten oder weiterspielen; bei Live-TV nur die Bedienleiste. Läuft gerade ein Intro, überspringt OK es';
+	@override String get keyPlayPause => 'Play/Pause, Play, Pause';
+	@override String get doPlayPause => 'Abspielen und anhalten';
+	@override String get keyStop => 'Stop';
+	@override String get doStop => 'Player verlassen';
+	@override String get keySeek => 'Vorspulen, Zurückspulen';
+	@override String get doSeek => 'Zum nächsten oder vorigen Kapitel, ohne Kapitel um die eingestellte Zeit';
+	@override String get keyTrack => 'Weiter, Zurück (⏭ ⏮)';
+	@override String get doTrack => 'Wie Vor- und Zurückspulen';
+	@override String get keyLeftRight => 'Links, Rechts';
+	@override String get doLeftRight => 'Spulen, ohne die Bedienleiste einzublenden';
+	@override String get keyUpDown => 'Hoch, Runter';
+	@override String get doUpDown => 'Bedienleiste einblenden';
+	@override String get keyBack => 'Zurück';
+	@override String get doBack => 'Bedienleiste ausblenden, sonst Player verlassen';
+	@override String get keyInfo => 'Info, Menü';
+	@override String get doInfo => 'Bedienleiste ein- und ausblenden';
+	@override String get keySubtitles => 'Untertitel (CC)';
+	@override String get doSubtitles => 'Untertitel an und aus';
+	@override String get keyAudio => 'Tonspur (Audio)';
+	@override String get doAudio => 'Zur nächsten Tonspur';
+	@override String get keyLiveUpDown => 'Hoch, Runter';
+	@override String get doLiveUpDown => 'Sender wechseln';
+	@override String get keyLiveLeft => 'Links';
+	@override String get doLiveLeft => 'Senderliste';
+	@override String get keyLiveRight => 'Rechts';
+	@override String get doLiveRight => 'Gruppen';
+	@override String get keyChannel => 'P+, P−';
+	@override String get doChannel => 'Sender wechseln, wenn unter Wiedergabe „Sendertasten der Fernbedienung“ eingeschaltet ist';
+	@override String get keyDigits => 'Ziffern 0–9';
+	@override String get doDigits => 'Sendernummer eintippen; nach kurzer Pause wird umgeschaltet';
+	@override String get keyLast => 'Letzter Sender (Last)';
+	@override String get doLast => 'Zurück zum vorigen Sender';
+	@override String get keyGuide => 'Guide, EPG';
+	@override String get doGuide => 'Senderliste';
+	@override String get keyRed => 'Rot';
+	@override String get keyGreen => 'Grün';
+	@override String get keyYellow => 'Gelb';
+	@override String get keyBlue => 'Blau';
+	@override String get keySpace => 'Leertaste';
+	@override String get doSpace => 'Abspielen und anhalten';
+	@override String get keyEscape => 'Esc';
+	@override String get doEscape => 'Wie Zurück';
+	@override String get keyLetterI => 'I';
+	@override String get doLetterI => 'Wie Info';
+	@override String get keyLetterX => 'X';
+	@override String get doLetterX => 'Wie Stop';
+	@override String get keyLetterS => 'S';
+	@override String get doLetterS => 'Untertitel an und aus';
+	@override String get keyLetterA => 'A';
+	@override String get doLetterA => 'Zur nächsten Tonspur';
+	@override late final _Translations$remoteKeys$functions$de functions = _Translations$remoteKeys$functions$de._(_root);
 }
 
 // Path: common.ratingSource
@@ -3626,6 +3706,26 @@ class _Translations$services$tmdb$de extends Translations$services$tmdb$en {
 	@override String get clearCache => 'Nachgeschlagene Daten verwerfen';
 	@override String get clearCacheDescription => 'Alle bisher gefundenen Logos und Beschreibungen vergessen und beim nächsten Anzeigen erneut nachschlagen.';
 	@override String get cacheCleared => 'Nachgeschlagene Daten verworfen';
+}
+
+// Path: remoteKeys.functions
+class _Translations$remoteKeys$functions$de extends Translations$remoteKeys$functions$en {
+	_Translations$remoteKeys$functions$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get none => 'Nichts';
+	@override String get subtitles => 'Untertitel an und aus';
+	@override String get audioTrack => 'Nächste Tonspur';
+	@override String get skipMarker => 'Intro oder Abspann überspringen';
+	@override String get controls => 'Bedienleiste ein- und ausblenden';
+	@override String get description => 'Infotext zum Titel';
+	@override String get playerSettings => 'Player-Einstellungen';
+	@override String get tracks => 'Ton und Untertitel auswählen';
+	@override String get chapters => 'Kapitel';
+	@override String get channelList => 'Live-TV: Senderliste';
+	@override String get lastChannel => 'Live-TV: voriger Sender';
 }
 
 /// The flat map containing all translations for locale <de>.
@@ -4545,6 +4645,8 @@ extension on TranslationsDe {
 			'videoControls.upNextStartsIn' => ({required Object seconds}) => 'Nächste Folge in ${seconds} s',
 			'videoControls.closeUpNext' => 'Schließen',
 			'videoControls.showUpNextPanel' => '„Als nächstes"-Fenster zeigen',
+			'videoControls.channelNumberTyped' => ({required Object number}) => 'Sender ${number}',
+			'videoControls.channelNumberMissing' => ({required Object number}) => 'Kein Sender mit der Nummer ${number}',
 			'messages.markedAsWatched' => 'Als gesehen markiert',
 			'messages.markedAsUnwatched' => 'Als ungesehen markiert',
 			'messages.markedAsWatchedOffline' => 'Als gesehen markiert (wird synchronisiert, wenn online)',
@@ -4660,10 +4762,10 @@ extension on TranslationsDe {
 			'profiles.addPlezyProfile' => 'Plebz-Profil hinzufügen',
 			'profiles.switchingProfile' => 'Profil wird gewechselt…',
 			'profiles.deleteThisProfileTitle' => 'Dieses Profil löschen?',
-			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => '${displayName} entfernen. Verbindungen bleiben unberührt.',
-			'profiles.active' => 'Aktiv',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => '${displayName} entfernen. Verbindungen bleiben unberührt.',
+			'profiles.active' => 'Aktiv',
 			'profiles.manage' => 'Verwalten',
 			'profiles.delete' => 'Löschen',
 			'profiles.signOut' => 'Abmelden',
@@ -5174,10 +5276,10 @@ extension on TranslationsDe {
 			'liveTv.channelsSection' => 'Kanäle',
 			'liveTv.programsSection' => 'Sendungen',
 			'liveTv.now' => 'Jetzt',
-			'liveTv.today' => 'Heute',
-			'liveTv.tomorrow' => 'Morgen',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.today' => 'Heute',
+			'liveTv.tomorrow' => 'Morgen',
 			'liveTv.midnight' => 'Mitternacht',
 			'liveTv.overnight' => 'Nacht',
 			'liveTv.morning' => 'Morgen',
@@ -5688,10 +5790,10 @@ extension on TranslationsDe {
 			'performanceOverlay.sampleRate' => 'Abtastrate',
 			'performanceOverlay.pixelFormat' => 'Pixelformat',
 			'performanceOverlay.hwFormat' => 'HW-Format',
-			'performanceOverlay.matrix' => 'Matrix',
-			'performanceOverlay.primaries' => 'Primärfarben',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.matrix' => 'Matrix',
+			'performanceOverlay.primaries' => 'Primärfarben',
 			'performanceOverlay.transfer' => 'Transfer',
 			'performanceOverlay.renderFps' => 'Render-FPS',
 			'performanceOverlay.displayFps' => 'Display-FPS',
@@ -5905,6 +6007,9 @@ extension on TranslationsDe {
 			'services.connectedAs' => ({required Object username}) => 'Verbunden als @${username}',
 			'services.scrobble' => 'Fortschritt automatisch verfolgen',
 			'services.scrobbleDescription' => 'Aktualisiere deine Liste, wenn du eine Folge oder einen Film beendest.',
+			'services.ownProgress' => 'Eigener Fortschritt über Simkl',
+			'services.ownProgressDescription' => 'Dieses Profil nimmt Gesehen-Häkchen, Weiter ansehen und Fortsetzen-Stellen aus Simkl statt vom Server. So hat jedes Profil seinen eigenen Stand, auch wenn sich mehrere ein Server-Konto teilen.',
+			'services.ownProgressNote' => 'Gut zu wissen: Beim Abspielen meldet Plebz weiter an den Server, damit Umwandlungen laufen und der Admin sieht, wer schaut. Ab etwa 90 % setzt Plex auf dem Konto dann selbst den Haken. Das stört nur, wenn ein anderes Profil dasselbe Konto ohne Simkl nutzt.',
 			'services.disconnectConfirm' => ({required Object service}) => '${service} trennen?',
 			'services.disconnectConfirmBody' => ({required Object service}) => 'Plebz aktualisiert ${service} nicht mehr. Jederzeit erneut verbinden.',
 			'services.connectFailed' => ({required Object service}) => 'Verbindung zu ${service} fehlgeschlagen. Versuche es erneut.',
@@ -6152,6 +6257,9 @@ extension on TranslationsDe {
 			'plebz.extrasBody' => 'Füge weitere Quellen hinzu und verbinde die Dienste, die du nutzt. Alles hier ist freiwillig, bis auf eine Quelle zum Schauen.',
 			'plebz.sourcesGroup' => 'Quellen',
 			'plebz.extrasGroup' => 'Extras',
+			'plebz.profilesGroup' => 'Mehrere Personen?',
+			'plebz.profilesHint' => 'Plebz kann mehrere Profile haben, auch wenn alle dasselbe Plex-Konto nutzen. Damit jede Person ihren eigenen Fortschritt, eigene Häkchen und eine eigene Merkliste hat, verbinde jedes Profil mit einem eigenen Simkl-Konto und schalte dort „Eigener Fortschritt über Simkl“ ein. Weitere Profile legst du unter Einstellungen → Profile → „Plebz-Profil hinzufügen“ an.',
+			'plebz.profilesHintConnectFirst' => 'Verbinde unten unter Dienste zuerst Simkl für dieses Profil.',
 			'plebz.addSourceFirst' => 'Füge zuerst eine Quelle hinzu: einen Server oder eine IPTV-Playlist.',
 			'plebz.finish' => 'Fertig',
 			'plebz.setupAgain' => 'Einrichtung erneut starten',
@@ -6196,8 +6304,82 @@ extension on TranslationsDe {
 			'reminders.isSet' => 'Erinnerung gesetzt',
 			'reminders.soonTitle' => 'Gleich geht’s los',
 			'reminders.runningTitle' => 'Läuft gerade',
+			_ => null,
+		} ?? switch (path) {
 			'reminders.tune' => 'Umschalten',
 			'reminders.channelGone' => ({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.',
+			'remoteKeys.title' => 'Fernbedienung',
+			'remoteKeys.entryDescription' => 'Welche Taste im Player was tut',
+			'remoteKeys.intro' => 'So bedienst du den Player mit der Fernbedienung. Hat deine Fernbedienung eine Taste nicht, übernehmen die Farbtasten.',
+			'remoteKeys.playbackGroup' => 'Filme und Serien',
+			'remoteKeys.liveGroup' => 'Live-TV',
+			'remoteKeys.colourGroup' => 'Farbtasten',
+			'remoteKeys.colourGroupDescription' => 'Frei belegbar: Taste auswählen und festlegen, was sie im Player tut.',
+			'remoteKeys.receiverGroup' => 'Universalfernbedienung mit Empfänger',
+			'remoteKeys.receiverIntro' => 'Etwa eine Logitech Harmony mit Flirc: Solche Empfänger senden Medientasten oder Tastaturtasten. Beides versteht der Player.',
+			'remoteKeys.keyOk' => 'OK',
+			'remoteKeys.doOk' => 'Bedienleiste einblenden und anhalten oder weiterspielen; bei Live-TV nur die Bedienleiste. Läuft gerade ein Intro, überspringt OK es',
+			'remoteKeys.keyPlayPause' => 'Play/Pause, Play, Pause',
+			'remoteKeys.doPlayPause' => 'Abspielen und anhalten',
+			'remoteKeys.keyStop' => 'Stop',
+			'remoteKeys.doStop' => 'Player verlassen',
+			'remoteKeys.keySeek' => 'Vorspulen, Zurückspulen',
+			'remoteKeys.doSeek' => 'Zum nächsten oder vorigen Kapitel, ohne Kapitel um die eingestellte Zeit',
+			'remoteKeys.keyTrack' => 'Weiter, Zurück (⏭ ⏮)',
+			'remoteKeys.doTrack' => 'Wie Vor- und Zurückspulen',
+			'remoteKeys.keyLeftRight' => 'Links, Rechts',
+			'remoteKeys.doLeftRight' => 'Spulen, ohne die Bedienleiste einzublenden',
+			'remoteKeys.keyUpDown' => 'Hoch, Runter',
+			'remoteKeys.doUpDown' => 'Bedienleiste einblenden',
+			'remoteKeys.keyBack' => 'Zurück',
+			'remoteKeys.doBack' => 'Bedienleiste ausblenden, sonst Player verlassen',
+			'remoteKeys.keyInfo' => 'Info, Menü',
+			'remoteKeys.doInfo' => 'Bedienleiste ein- und ausblenden',
+			'remoteKeys.keySubtitles' => 'Untertitel (CC)',
+			'remoteKeys.doSubtitles' => 'Untertitel an und aus',
+			'remoteKeys.keyAudio' => 'Tonspur (Audio)',
+			'remoteKeys.doAudio' => 'Zur nächsten Tonspur',
+			'remoteKeys.keyLiveUpDown' => 'Hoch, Runter',
+			'remoteKeys.doLiveUpDown' => 'Sender wechseln',
+			'remoteKeys.keyLiveLeft' => 'Links',
+			'remoteKeys.doLiveLeft' => 'Senderliste',
+			'remoteKeys.keyLiveRight' => 'Rechts',
+			'remoteKeys.doLiveRight' => 'Gruppen',
+			'remoteKeys.keyChannel' => 'P+, P−',
+			'remoteKeys.doChannel' => 'Sender wechseln, wenn unter Wiedergabe „Sendertasten der Fernbedienung“ eingeschaltet ist',
+			'remoteKeys.keyDigits' => 'Ziffern 0–9',
+			'remoteKeys.doDigits' => 'Sendernummer eintippen; nach kurzer Pause wird umgeschaltet',
+			'remoteKeys.keyLast' => 'Letzter Sender (Last)',
+			'remoteKeys.doLast' => 'Zurück zum vorigen Sender',
+			'remoteKeys.keyGuide' => 'Guide, EPG',
+			'remoteKeys.doGuide' => 'Senderliste',
+			'remoteKeys.keyRed' => 'Rot',
+			'remoteKeys.keyGreen' => 'Grün',
+			'remoteKeys.keyYellow' => 'Gelb',
+			'remoteKeys.keyBlue' => 'Blau',
+			'remoteKeys.keySpace' => 'Leertaste',
+			'remoteKeys.doSpace' => 'Abspielen und anhalten',
+			'remoteKeys.keyEscape' => 'Esc',
+			'remoteKeys.doEscape' => 'Wie Zurück',
+			'remoteKeys.keyLetterI' => 'I',
+			'remoteKeys.doLetterI' => 'Wie Info',
+			'remoteKeys.keyLetterX' => 'X',
+			'remoteKeys.doLetterX' => 'Wie Stop',
+			'remoteKeys.keyLetterS' => 'S',
+			'remoteKeys.doLetterS' => 'Untertitel an und aus',
+			'remoteKeys.keyLetterA' => 'A',
+			'remoteKeys.doLetterA' => 'Zur nächsten Tonspur',
+			'remoteKeys.functions.none' => 'Nichts',
+			'remoteKeys.functions.subtitles' => 'Untertitel an und aus',
+			'remoteKeys.functions.audioTrack' => 'Nächste Tonspur',
+			'remoteKeys.functions.skipMarker' => 'Intro oder Abspann überspringen',
+			'remoteKeys.functions.controls' => 'Bedienleiste ein- und ausblenden',
+			'remoteKeys.functions.description' => 'Infotext zum Titel',
+			'remoteKeys.functions.playerSettings' => 'Player-Einstellungen',
+			'remoteKeys.functions.tracks' => 'Ton und Untertitel auswählen',
+			'remoteKeys.functions.chapters' => 'Kapitel',
+			'remoteKeys.functions.channelList' => 'Live-TV: Senderliste',
+			'remoteKeys.functions.lastChannel' => 'Live-TV: voriger Sender',
 			_ => null,
 		};
 	}

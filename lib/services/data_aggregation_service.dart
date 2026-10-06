@@ -18,6 +18,7 @@ import '../utils/search_relevance.dart';
 import '../utils/media_server_http_client.dart';
 import 'local_playback_history.dart';
 import 'multi_server_manager.dart';
+import 'watch_progress/tracker_progress_controller.dart';
 
 /// A row a successful response actually returned, paired with the immutable
 /// cache scope of the client that fetched it.
@@ -267,10 +268,15 @@ class DataAggregationService {
       clients,
       failureMessage: (serverId) => 'Failed on-deck fetch from $serverId',
       fetch: (serverId, client) async {
-        final rows = await client.fetchContinueWatching(
-          count: limit,
-          excludedLibraryIds: _hiddenLibraryIdsOn(serverId, hiddenLibraryKeys),
-        );
+        final excluded = _hiddenLibraryIdsOn(serverId, hiddenLibraryKeys);
+        // A tracker-led profile's list comes from its tracker (Plebz).
+        final rows =
+            await (TrackerProgressController.instance.continueWatchingFor(
+                  client,
+                  count: limit,
+                  excludedLibraryIds: excluded,
+                ) ??
+                client.fetchContinueWatching(count: limit, excludedLibraryIds: excluded));
         // Capture the scope here: after the fan-out flattens and dedup runs,
         // there is no way back to the client that produced a row.
         final scope = client.cacheServerId;

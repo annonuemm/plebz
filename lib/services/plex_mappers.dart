@@ -36,6 +36,7 @@ import '../utils/global_key_utils.dart';
 import '../utils/json_utils.dart';
 import 'file_info_parser.dart';
 import 'plex_constants.dart';
+import 'watch_progress/progress_routing.dart';
 
 part 'plex_mappers.g.dart';
 
@@ -1073,8 +1074,12 @@ class PlexMappers {
     return DiscographyGroupKind.albums;
   }
 
-  /// Map a parsed [PlexMetadataDto] into a [PlexMediaItem].
-  static PlexMediaItem mediaItem(PlexMetadataDto dto) {
+  /// Map a parsed [PlexMetadataDto] into a [PlexMediaItem], with the active
+  /// profile's watch state laid over it — the item itself unless a tracker
+  /// keeps that state (fork addition).
+  static PlexMediaItem mediaItem(PlexMetadataDto dto) => ProgressRouting.overlay(_mediaItem(dto));
+
+  static PlexMediaItem _mediaItem(PlexMetadataDto dto) {
     final kind = MediaKind.fromString(dto.type);
     return PlexMediaItem(
       id: dto.ratingKey,

@@ -15,6 +15,8 @@ import '../utils/app_logger.dart';
 import 'multi_server_manager.dart';
 import 'plex_client.dart';
 import 'plex_constants.dart';
+import 'watch_progress/tracker_library_query.dart';
+import 'watch_progress/tracker_progress_controller.dart';
 
 /// Which servers the recommendation row is allowed to draw on.
 ///
@@ -340,6 +342,19 @@ class RecommendationsService {
     final client = _clientFor(library);
     if (client == null) return const [];
     try {
+      // A tracker-led profile's own viewing, not the shared account's
+      // (fork addition).
+      if (TrackerProgressController.instance.isActive) {
+        final page = await client.fetchLibraryPageForProfile(
+          library.id,
+          query: const LibraryQuery(
+            limit: seedScanLimit,
+            sort: LibrarySort(field: 'lastViewedAt'),
+          ),
+          libraryKind: library.kind,
+        );
+        return page.items;
+      }
       if (client is PlexClient) {
         // Plex is asked without collections. The browse path asks for them,
         // and a library set to hide the items of a collection behind it then

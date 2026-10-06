@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import 'package:plezy/database/app_database.dart';
 import 'package:plezy/focus/input_mode_tracker.dart';
+import 'package:plezy/focus/remote_keys.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/models/livetv_capture_buffer.dart';
 import 'package:plezy/models/livetv_channel.dart';
@@ -110,6 +111,8 @@ void main() {
     CaptureBuffer? captureBuffer,
     bool isAtLiveEdge = true,
     List<LiveTvChannel>? liveChannels,
+    int liveChannelIndex = 2,
+    VoidCallback? onBack,
   }) async {
     await tester.pumpWidget(
       shell(
@@ -128,8 +131,9 @@ void main() {
           liveEpochForPosition: isLive ? (position) => 1000 + position.inSeconds : null,
           isAtLiveEdge: isAtLiveEdge,
           liveChannels: liveChannels ?? channels,
-          liveChannelIndex: 2,
+          liveChannelIndex: liveChannelIndex,
           onLiveChannelSelected: selectedChannels.add,
+          onBack: onBack,
           onNext: () => nextChannel++,
           onPrevious: () => previousChannel++,
           onPlayPauseRequested: (_) async => toggles++,
@@ -139,10 +143,19 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> press(WidgetTester tester, LogicalKeyboardKey key) async {
-    await tester.sendKeyDownEvent(key);
-    await tester.pump();
-    await tester.sendKeyUpEvent(key);
+  Future<void> press(WidgetTester tester, LogicalKeyboardKey key, {String? platform}) async {
+    if (platform == null) {
+      await tester.sendKeyDownEvent(key);
+      await tester.pump();
+      await tester.sendKeyUpEvent(key);
+    } else {
+      // The simulator knows no physical key for some remote buttons (Guide);
+      // the player reads the logical key alone, so any stands in for it.
+      const stand = PhysicalKeyboardKey.f24;
+      await tester.sendKeyDownEvent(key, platform: platform, physicalKey: stand);
+      await tester.pump();
+      await tester.sendKeyUpEvent(key, platform: platform, physicalKey: stand);
+    }
     await tester.pumpAndSettle();
   }
 
@@ -345,6 +358,104 @@ void main() {
 
     endTest(tester);
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  group('the remote\'s extra keys (Plebz)', () {
+    testWidgets('a typed channel number tunes that channel after a pause', (tester) async {
+      await pumpPlayer(tester);
+
+      await press(tester, LogicalKeyboardKey.digit4, platform: 'android');
+      expect(selectedChannels, isEmpty, reason: 'a second digit may follow');
+      await tester.pump(const Duration(milliseconds: 1600));
+
+      expect(selectedChannels, [3], reason: 'channel number 4 is the fourth in the list');
+      await tester.pump(const Duration(seconds: 2));
+      endTest(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a number no channel has tunes nothing', (tester) async {
+      await pumpPlayer(tester);
+
+      await press(tester, LogicalKeyboardKey.digit9, platform: 'android');
+      await press(tester, LogicalKeyboardKey.digit9, platform: 'android');
+      await tester.pump(const Duration(milliseconds: 1600));
+
+      expect(selectedChannels, isEmpty);
+      await tester.pump(const Duration(seconds: 2));
+      endTest(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('the last-channel key goes back to the channel before', (tester) async {
+      await pumpPlayer(tester);
+      await press(tester, LogicalKeyboardKey.info, platform: 'android');
+      await press(tester, LogicalKeyboardKey.info, platform: 'android');
+      await pumpPlayer(tester, liveChannelIndex: 4);
+
+      await press(tester, LogicalKeyboardKey.mediaLast, platform: 'android');
+
+      expect(selectedChannels, [2]);
+      endTest(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('the guide key opens the channel list', (tester) async {
+      await pumpPlayer(tester);
+
+      await press(tester, LogicalKeyboardKey.guide, platform: 'android');
+
+      expect(find.byType(LiveChannelStrip), findsOneWidget);
+      endTest(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('info raises the controls and lowers them again', (tester) async {
+      await pumpPlayer(tester);
+
+      await press(tester, LogicalKeyboardKey.info, platform: 'android');
+      expect(chrome.controlsVisible, isTrue);
+      await press(tester, LogicalKeyboardKey.info, platform: 'android');
+      expect(chrome.controlsVisible, isFalse);
+
+      endTest(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a colour key does what it is set to: here, the channel list', (tester) async {
+      final settings = await SettingsService.getInstance();
+      await settings.write(SettingsService.remoteBlueButton, RemoteButtonFunction.channelList);
+      await pumpPlayer(tester);
+
+      await press(tester, LogicalKeyboardKey.colorF3Blue, platform: 'android');
+
+      expect(find.byType(LiveChannelStrip), findsOneWidget);
+      endTest(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('a colour key set to nothing does nothing', (tester) async {
+      final settings = await SettingsService.getInstance();
+      await settings.write(SettingsService.remoteBlueButton, RemoteButtonFunction.none);
+      await pumpPlayer(tester);
+
+      await press(tester, LogicalKeyboardKey.colorF3Blue, platform: 'android');
+
+      expect(chrome.controlsVisible, isFalse);
+      endTest(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('stop leaves the player', (tester) async {
+      var left = 0;
+      await pumpPlayer(tester, onBack: () => left++);
+
+      await press(tester, LogicalKeyboardKey.mediaStop, platform: 'android');
+
+      expect(left, 1);
+      endTest(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
   });
 }
 

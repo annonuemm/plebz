@@ -1,0 +1,277 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:clock/clock.dart';
+import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+
+import '../../media/media_item.dart';
+import '../../media/media_kind.dart';
+import '../../media/media_server_client.dart';
+import '../../utils/app_logger.dart';
+import '../../utils/external_ids.dart';
+import '../trackers/simkl/simkl_client.dart';
+import 'external_id_index_client.dart';
+import 'progress_routing.dart';
+import 'simkl_watch_sync.dart';
+import 'tracker_continue_watching.dart';
+import 'tracker_watch_files.dart';
+import 'tracker_watch_overlay.dart';
+import 'tracker_watch_state.dart';
+
+/// Keeps a tracker-led profile's watch state (fork addition): reads it from
+/// disk, asks Simkl and the servers again, and hands [ProgressRouting] the
+/// overlay to lay over every server item.
+///
+/// Bound by the app shell whenever the profile, its choice, its Simkl
+/// session or the connected servers change ([bind]); a profile that keeps its
+/// progress on the server hands everything back ([ProgressRouting] in server
+/// mode) and costs nothing.
+class TrackerProgressController extends ChangeNotifier {
+  TrackerProgressController._();
+
+  static final TrackerProgressController instance = TrackerProgressController._();
+
+  /// Where each profile's files live; replaced in tests.
+  @visibleForTesting
+  Future<Directory> Function() rootDirectory = _defaultRoot;
+
+  static Future<Directory> _defaultRoot() async =>
+      Directory(p.join((await getApplicationSupportDirectory()).path, 'tracker_watch'));
+
+  /// How long a change made here is shown on its own before the tracker is
+  /// trusted to have it: Simkl takes a moment, and its writes queue.
+  static const Duration patchLifetime = Duration(minutes: 3);
+
+  /// How soon after a change made here the tracker is asked again.
+  static const Duration echoDelay = Duration(seconds: 30);
+
+  /// How old a server's id index may grow before it is asked again.
+  static const Duration indexLifetime = Duration(hours: 1);
+
+  String? _profileId;
+  SimklClient? _simkl;
+  Map<String, ExternalIdIndexClient> _servers = const {};
+  TrackerWatchFiles? _files;
+  TrackerWatchState _state = TrackerWatchState.empty;
+  final Map<String, Map<String, ExternalIds>> _indexes = {};
+  final Map<String, DateTime> _indexedAt = {};
+  final Map<String, LocalWatchPatch> _patches = {};
+  Future<void>? _refreshing;
+  Timer? _echoTimer;
+  int _generation = 0;
+
+  /// Whether a tracker keeps the active profile's watch state.
+  bool get isActive => _simkl != null;
+
+  TrackerWatchState get state => _state;
+
+  /// The ids of [itemId] on [serverId], if its server has named them.
+  ExternalIds? idsOf(String serverId, String itemId) => _indexes[serverId]?[itemId];
+
+  /// Continue Watching on [client]'s server for a tracker-led profile; null
+  /// while the server keeps the profile's progress, so its own list is used.
+  Future<List<MediaItem>>? continueWatchingFor(
+    MediaServerClient client, {
+    int? count,
+    Set<String> excludedLibraryIds = const {},
+  }) {
+    if (!isActive) return null;
+    // Home and every library page ask in turn; one answer serves them all
+    // for a minute, as long as nothing was watched or marked since.
+    final key = '${client.serverId}|$count|${(excludedLibraryIds.toList()..sort()).join(',')}';
+    final kept = _continueWatching[key];
+    if (kept != null && kept.stamp == _changeStamp && clock.now().difference(kept.at) < continueWatchingLifetime) {
+      return kept.rows;
+    }
+    final rows = TrackerContinueWatching(
+      state: _state,
+      index: _indexes[client.serverId] ?? const {},
+    ).fetch(client, count: count, excludedLibraryIds: excludedLibraryIds);
+    _continueWatching[key] = (stamp: _changeStamp, at: clock.now(), rows: rows);
+    rows.catchError((Object _) {
+      if (identical(_continueWatching[key]?.rows, rows)) _continueWatching.remove(key);
+      return const <MediaItem>[];
+    });
+    return rows;
+  }
+
+  /// How long a Continue Watching answer is reused.
+  static const Duration continueWatchingLifetime = Duration(minutes: 1);
+
+  final Map<String, ({int stamp, DateTime at, Future<List<MediaItem>> rows})> _continueWatching = {};
+
+  /// Counts every change to what this profile watched — the tracker's or one
+  /// made here.
+  int _changeStamp = 0;
+
+  /// The episode a series' page offers next for a tracker-led profile, in
+  /// place of the account's own; [item] other than a series has none.
+  Future<MediaItem?> onDeckFor(MediaServerClient client, MediaItem? item) async {
+    if (item == null || item.kind != MediaKind.show) return null;
+    try {
+      return await TrackerContinueWatching(
+        state: _state,
+        index: _indexes[client.serverId] ?? const {},
+      ).nextEpisodeOf(client, item.id);
+    } catch (error) {
+      appLogger.d('Tracker progress: next episode of ${item.id} unknown', error: error);
+      return null;
+    }
+  }
+
+  /// Counts up whenever what the tracker or the servers said changed — not
+  /// for changes made here, which their own events already show. Screens
+  /// listing many titles fetch again on it.
+  final ValueNotifier<int> revision = ValueNotifier(0);
+
+  Future<void> bind({
+    required String? profileId,
+    required bool trackerLed,
+    required SimklClient? simkl,
+    required Map<String, ExternalIdIndexClient> servers,
+  }) async {
+    if (!trackerLed || simkl == null || profileId == null) {
+      _deactivate();
+      return;
+    }
+    _simkl = simkl;
+    _servers = Map.of(servers);
+    if (profileId != _profileId) {
+      final generation = ++_generation;
+      _profileId = profileId;
+      _state = TrackerWatchState.empty;
+      _indexes.clear();
+      _indexedAt.clear();
+      _patches.clear();
+      final files = TrackerWatchFiles(Directory(p.join((await rootDirectory()).path, _safe(profileId))));
+      if (generation != _generation) return;
+      _files = files;
+      ProgressRouting.instance.onLocalChange = _noteLocalChange;
+      _publish();
+      final state = await files.readState();
+      final indexes = {for (final serverId in _servers.keys) serverId: await files.readIndex(serverId)};
+      if (generation != _generation) return;
+      _state = state;
+      _indexes.addAll(indexes);
+      _publish(contentChanged: true);
+    }
+    await refresh();
+  }
+
+  /// Ask Simkl what changed, and each server for its ids where they have
+  /// grown old; one pass at a time.
+  Future<void> refresh() => _refreshing ??= _refresh().whenComplete(() => _refreshing = null);
+
+  Future<void> _refresh() async {
+    final generation = _generation;
+    final simkl = _simkl;
+    final files = _files;
+    if (simkl == null || files == null) return;
+    var changed = false;
+    try {
+      final next = await SimklWatchSync(simkl).refresh(_state);
+      if (generation != _generation) return;
+      if (!identical(next, _state)) {
+        _state = next;
+        changed = true;
+        unawaited(files.writeState(next));
+      }
+    } catch (error) {
+      appLogger.w('Tracker progress: Simkl sync failed', error: error);
+    }
+    for (final MapEntry(key: serverId, value: client) in _servers.entries) {
+      final at = _indexedAt[serverId];
+      if (at != null && clock.now().difference(at) < indexLifetime) continue;
+      try {
+        final index = await client.fetchExternalIdIndex();
+        if (generation != _generation) return;
+        _indexes[serverId] = index;
+        _indexedAt[serverId] = clock.now();
+        changed = true;
+        unawaited(files.writeIndex(serverId, index));
+      } catch (error) {
+        appLogger.w('Tracker progress: ids of $serverId could not be read', error: error);
+      }
+    }
+    final stale = clock.now().subtract(patchLifetime);
+    final before = _patches.length;
+    _patches.removeWhere((_, patch) => patch.at.isBefore(stale));
+    if (changed || _patches.length != before) _publish(contentChanged: changed);
+    if (_patches.isNotEmpty) _echoAfter(patchLifetime);
+  }
+
+  void _noteLocalChange(MediaItem item, {bool? watched, int? offsetMs}) {
+    final serverId = item.serverId;
+    if (!isActive || serverId == null) return;
+    _patches[LocalWatchPatch.keyOf(serverId, item.id)] = LocalWatchPatch(
+      watched: watched,
+      offsetMs: offsetMs,
+      at: clock.now(),
+    );
+    _publish();
+    _echoAfter(echoDelay);
+  }
+
+  void _echoAfter(Duration delay) {
+    _echoTimer?.cancel();
+    _echoTimer = Timer(delay, () => unawaited(refresh()));
+  }
+
+  void _publish({bool contentChanged = false}) {
+    _changeStamp++;
+    ProgressRouting.instance.activate(
+      ProgressSourceKind.tracker,
+      overlay: TrackerWatchOverlay(state: _state, idsOf: idsOf, patches: Map.of(_patches)),
+    );
+    if (contentChanged) revision.value++;
+    notifyListeners();
+  }
+
+  void _deactivate() {
+    if (_profileId == null && _simkl == null) return;
+    _generation++;
+    _echoTimer?.cancel();
+    _profileId = null;
+    _simkl = null;
+    _servers = const {};
+    _files = null;
+    _state = TrackerWatchState.empty;
+    _indexes.clear();
+    _indexedAt.clear();
+    _patches.clear();
+    ProgressRouting.instance
+      ..onLocalChange = null
+      ..activate(ProgressSourceKind.server);
+    revision.value++;
+    notifyListeners();
+  }
+
+  static String _safe(String name) => name.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+
+  /// Done once what was learnt so far is on disk.
+  @visibleForTesting
+  Future<void> debugFlush() async => _files?.idle;
+
+  @visibleForTesting
+  void debugReset() {
+    _deactivate();
+    rootDirectory = _defaultRoot;
+  }
+}
+
+/// A series' page asks for its next episode through here (fork addition).
+extension TrackerOnDeckLookup on MediaServerClient {
+  /// [fetchItemWithOnDeck], with a tracker-led profile's next episode in
+  /// place of the shared account's.
+  Future<({MediaItem? item, MediaItem? onDeckEpisode})> fetchItemWithProfileOnDeck(
+    String id, {
+    void Function(MediaItem item)? onItemReady,
+  }) async {
+    final result = await fetchItemWithOnDeck(id, onItemReady: onItemReady);
+    final controller = TrackerProgressController.instance;
+    if (!controller.isActive) return result;
+    return (item: result.item, onDeckEpisode: await controller.onDeckFor(this, result.item));
+  }
+}

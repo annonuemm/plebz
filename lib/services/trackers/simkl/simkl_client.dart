@@ -118,6 +118,25 @@ class SimklClient implements DisposableTrackerClient {
     return decoded is Map<String, dynamic> ? SimklAllItems.fromJson(decoded) : const SimklAllItems();
   }
 
+  // The raw sync answers a tracker-led profile reads its watch state from
+  // (fork addition; see `watch_progress/simkl_watch_sync.dart`).
+
+  /// When what last changed in the account, per kind.
+  Future<Object?> getActivities() => _request('GET', '/sync/activities');
+
+  /// Every listed title with its watched episodes, or only those changed
+  /// since [dateFrom] — a stamp exactly as [getActivities] gave it. [type]
+  /// narrows it to `movies`, `shows` or `anime`; [extended] `full_anime_seasons`
+  /// adds each anime episode's TVDB season and number.
+  Future<Object?> getWatchedItems({String? dateFrom, String? type, String extended = 'full'}) => _request(
+    'GET',
+    type == null ? '/sync/all-items' : '/sync/all-items/$type',
+    query: {'extended': extended, 'episode_watched_at': 'yes', 'include_all_episodes': 'yes', 'date_from': ?dateFrom},
+  );
+
+  /// The paused sessions: where playback of a film or an episode was left.
+  Future<Object?> getPlayback() => _request('GET', '/sync/playback');
+
   Future<void> addToList(Map<String, dynamic> body) async {
     await _request('POST', '/sync/add-to-list', body: body);
   }

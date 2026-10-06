@@ -13,6 +13,7 @@ import '../utils/provider_extensions.dart';
 import '../utils/watch_state_notifier.dart';
 import 'hidden_continue_watching_store.dart';
 import 'trackers/tracker_coordinator.dart';
+import 'watch_progress/progress_routing.dart';
 
 enum WatchMarkOutcome {
   /// Queued for later sync (offline). The offline provider emitted the event.
@@ -88,7 +89,9 @@ class WatchActions {
   /// same gesture, same result in this app, but not shared with other clients.
   static Future<void> removeFromContinueWatching(BuildContext context, MediaItem item) async {
     final client = context.getMediaClientForServer(ServerId(item.serverId!));
-    if (client.capabilities.continueWatchingRemoval) {
+    // A tracker-led profile keeps its own Continue Watching; the server's
+    // belongs to whoever else shares the account (fork addition).
+    if (client.capabilities.continueWatchingRemoval && ProgressRouting.instance.serverKeepsWatchState) {
       await client.removeFromContinueWatching(item);
     } else {
       // Read the profile before the await: the context may be gone after it.

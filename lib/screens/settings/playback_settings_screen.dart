@@ -21,6 +21,7 @@ import '../../widgets/settings_page.dart';
 import '../../widgets/settings_section.dart';
 import 'external_player_screen.dart';
 import 'mpv_config_screen.dart';
+import 'remote_keys_screen.dart';
 import 'settings_utils.dart';
 import 'shader_preset_setting.dart';
 import 'subtitle_styling_screen.dart';
@@ -273,6 +274,14 @@ class PlaybackSettingsScreen extends StatelessWidget {
           icon: Symbols.swap_vert_rounded,
           title: t.settings.zapWithChannelKeys,
           subtitle: t.settings.zapWithChannelKeysDescription,
+        ),
+      // What each remote button does in the player (Plebz).
+      if (PlatformDetector.isTV())
+        SettingNavigationTile(
+          icon: Symbols.settings_remote_rounded,
+          title: t.remoteKeys.title,
+          subtitle: t.remoteKeys.entryDescription,
+          destinationBuilder: (_) => const RemoteKeysScreen(),
         ),
       SettingSwitchTile(
         pref: SettingsService.resumeMusicOnLaunch,

@@ -84,6 +84,8 @@ import 'playback_initialization_types.dart';
 import 'subtitle_preference.dart';
 import 'track_selection_service.dart';
 import 'video_decode_capabilities.dart';
+import 'watch_progress/external_id_index_client.dart';
+import 'watch_progress/progress_routing.dart';
 
 part 'plex_client/parts/live_tv.dart';
 part 'plex_client/parts/playlists.dart';
@@ -91,6 +93,7 @@ part 'plex_client/parts/collections.dart';
 part 'plex_client/parts/play_queues.dart';
 part 'plex_client/parts/metadata_edit.dart';
 part 'plex_client/parts/ultra_blur.dart';
+part 'plex_client/parts/external_id_index.dart';
 
 const _plexVideoTranscodeBaseEndpoint = '/video/:/transcode/universal';
 const _plexVideoHlsStartEndpoint = '$_plexVideoTranscodeBaseEndpoint/start.m3u8';
@@ -391,7 +394,8 @@ class PlexClient
         _PlexCollectionMethods,
         _PlexPlayQueueMethods,
         _PlexMetadataEditMethods,
-        _PlexUltraBlurMethods
+        _PlexUltraBlurMethods,
+        _PlexExternalIdIndexMethods
     implements MediaServerClient, ScopedMediaServerClient, GracefullyCloseable {
   @override
   PlexConfig config;
@@ -4509,11 +4513,17 @@ class PlexClient
     return hubs.map((h) => PlexMappers.mediaHub(h)).toList();
   }
 
+  // Not while a tracker keeps the profile's watch state: the account may be
+  // shared, and its state is not this profile's to change (fork addition).
   @override
-  Future<void> markWatched(MediaItem item) => markAsWatched(item.id);
+  Future<void> markWatched(MediaItem item) async {
+    if (ProgressRouting.instance.serverKeepsWatchState) await markAsWatched(item.id);
+  }
 
   @override
-  Future<void> markUnwatched(MediaItem item) => markAsUnwatched(item.id);
+  Future<void> markUnwatched(MediaItem item) async {
+    if (ProgressRouting.instance.serverKeepsWatchState) await markAsUnwatched(item.id);
+  }
 
   @override
   Future<void> removeFromContinueWatching(MediaItem item) async {

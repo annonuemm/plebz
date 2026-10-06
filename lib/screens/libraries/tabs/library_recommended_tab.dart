@@ -28,6 +28,7 @@ import '../../../widgets/tv_spotlight_scaffold.dart';
 import '../../main_screen.dart';
 import 'base_library_tab.dart';
 import '../../../redesign/ocker_library_column.dart';
+import '../../../services/watch_progress/tracker_progress_controller.dart';
 
 /// Recommended tab for library screen
 /// Shows library-specific hubs and recommendations, including dedicated Continue Watching
@@ -202,6 +203,27 @@ class _LibraryRecommendedTabState extends BaseLibraryTabState<MediaHub, LibraryR
               libraryKind: widget.library.kind,
             ),
           );
+    // A tracker-led profile's Continue Watching comes from its tracker; the
+    // server's, and its On Deck, belong to the shared account (Plebz).
+    if (client != null) {
+      final own = await TrackerProgressController.instance.continueWatchingFor(client, count: defaultHubPreviewLimit);
+      if (own != null) {
+        final inThisLibrary = [
+          for (final item in own)
+            if (item.libraryId == null || item.libraryId == widget.library.id) item,
+        ];
+        var placed = false;
+        for (var i = 0; i < hubs.length; i++) {
+          if (!_usesContinueWatchingAction(hubs[i])) continue;
+          if (!placed && _isContinueWatchingHub(hubs[i])) {
+            hubs[i] = hubs[i].copyWith(items: inThisLibrary, size: inThisLibrary.length);
+            placed = true;
+          } else {
+            hubs[i] = hubs[i].copyWith(items: const []);
+          }
+        }
+      }
+    }
     hubs.removeWhere((hub) => hub.items.isEmpty);
 
     // Move Continue Watching hub to the front if present

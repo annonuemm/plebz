@@ -15,6 +15,7 @@ import '../../profiles/profile_registry.dart';
 import '../../providers/iptv_sources_provider.dart';
 import '../../providers/multi_server_provider.dart';
 import '../../providers/seerr_account_provider.dart';
+import '../../providers/trackers_provider.dart';
 import '../../services/settings_service.dart';
 import '../../utils/navigation_transitions.dart';
 import '../../widgets/app_icon.dart';
@@ -30,6 +31,7 @@ import '../settings/iptv_settings_screen.dart';
 import '../settings/plebz_settings_rows.dart';
 import '../settings/seerr_connect_screen.dart';
 import '../settings/seerr_settings_screen.dart';
+import '../settings/simkl_progress_tile.dart';
 import '../settings/tmdb_settings_screen.dart';
 import '../settings/tracker_service_info.dart';
 
@@ -208,6 +210,7 @@ class _SetupExtrasScreenState extends State<SetupExtrasScreen> {
     final theme = Theme.of(context);
     final hasSource = _hasSource(context);
     final iptvCount = context.watch<IptvSourcesProvider?>()?.sources.length ?? 0;
+    final simklConnected = context.watch<TrackersProvider?>()?.isSimklConnected ?? false;
     return PopScope(
       // Leaving with a source in place counts as done, so the page does not
       // come back at every start; without one it will, until there is one.
@@ -248,6 +251,19 @@ class _SetupExtrasScreenState extends State<SetupExtrasScreen> {
                         );
                       },
                     ),
+                  ],
+                ),
+                // Several viewers on one server account each keep their own
+                // progress through a Simkl account per profile (Plebz).
+                SettingsGroup(
+                  title: t.plebz.profilesGroup,
+                  children: [
+                    ListTile(
+                      leading: const AppIcon(Symbols.group_rounded, fill: 1),
+                      title: Text(t.plebz.profilesHint),
+                      subtitle: simklConnected ? null : Text(t.plebz.profilesHintConnectFirst),
+                    ),
+                    if (simklConnected) const SimklProgressTile(),
                   ],
                 ),
                 SettingsGroup(

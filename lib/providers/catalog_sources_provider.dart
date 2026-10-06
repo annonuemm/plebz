@@ -14,6 +14,7 @@ import '../profiles/active_profile_provider.dart';
 import '../profiles/profile_connection_registry.dart';
 import '../profiles/profile.dart';
 import '../services/base_shared_preferences_service.dart';
+import '../services/settings_service.dart';
 import '../services/catalog/library_watchlist_candidates.dart';
 import '../services/catalog/local_watchlist.dart';
 import '../services/catalog/catalog_source.dart';
@@ -96,7 +97,36 @@ class _CatalogSourceBinding<Client extends Object, Source extends CatalogSource>
 /// every source appears and disappears with its owning account connection
 /// (which also drives the Explore tab's visibility).
 class CatalogSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMixin {
-  CatalogSourcesProvider({this.plexSessionSupplier});
+  CatalogSourcesProvider({this.plexSessionSupplier}) {
+    _profileProgressChoice?.addListener(_onProfileProgressChoice);
+  }
+
+  // A profile that keeps its progress in Simkl keeps its watchlist there too
+  // (fork addition): the Plex account's list belongs to whoever shares the
+  // account, so it is neither shown nor offered to add to.
+  final Listenable? _profileProgressChoice = SettingsService.instanceOrNull?.listenable(
+    SettingsService.simklLedProfiles,
+  );
+
+  void _onProfileProgressChoice() {
+    _invalidateWatchlistCandidates();
+    safeNotifyListeners();
+  }
+
+  /// Whether the active profile's watchlist is Simkl's rather than Plex's.
+  bool get plexWatchlistSetAside =>
+      connectedSources.any((source) => source.id == CatalogSourceId.simkl) &&
+      (SettingsService.instanceOrNull?.read(SettingsService.simklLedProfiles).contains(_activeUserUuid) ?? false);
+
+  bool _keepsWatchlist(CatalogSource source) =>
+      source.supportsWatchlist && !(source.id == CatalogSourceId.plex && plexWatchlistSetAside);
+
+  /// The rows [source] offers on Explore: without the Plex watchlist while it
+  /// is set aside.
+  List<CatalogRowId> rowsOf(CatalogSource source) => [
+    for (final row in source.supportedRows)
+      if (row != CatalogRowId.watchlist || _keepsWatchlist(source)) row,
+  ];
 
   final PlexDiscoverSessionSupplier? plexSessionSupplier;
   final _CatalogSourceBinding<PlexDiscoverSession, PlexCatalogSource> _plex = _CatalogSourceBinding(
@@ -212,12 +242,12 @@ class CatalogSourcesProvider extends ChangeNotifier with DisposableChangeNotifie
   /// The source backing watchlist membership/mutation surfaces (media-detail
   /// action). Independent of [activeSource] so switching the Explore tab to a
   /// watchlist-less source (e.g. a future Seerr) keeps the action alive.
-  CatalogSource? get watchlistCapableSource => connectedSources.firstWhereOrNull((s) => s.supportsWatchlist);
+  CatalogSource? get watchlistCapableSource => connectedSources.firstWhereOrNull(_keepsWatchlist);
 
   /// All connected sources whose watchlist can be read and mutated, for
   /// surfaces that offer a choice (media-detail bookmark with several
   /// providers connected).
-  List<CatalogSource> get watchlistCapableSources => [...connectedSources.where((source) => source.supportsWatchlist)];
+  List<CatalogSource> get watchlistCapableSources => [...connectedSources.where(_keepsWatchlist)];
 
   /// The watchlist source catalog-item surfaces (detail screen, card menu)
   /// must bind to: the item's OWN source — a MAL card toggles the MAL Plan to
@@ -230,7 +260,7 @@ class CatalogSourcesProvider extends ChangeNotifier with DisposableChangeNotifie
   /// item whose source got disconnected mid-session.
   CatalogSource? watchlistSourceFor(CatalogItem item) {
     final own = connectedSources.firstWhereOrNull((s) => s.id == item.source);
-    if (own != null && own.supportsWatchlist) return own;
+    if (own != null && _keepsWatchlist(own)) return own;
     return watchlistCapableSource;
   }
 
@@ -374,6 +404,7 @@ class CatalogSourcesProvider extends ChangeNotifier with DisposableChangeNotifie
 
   @override
   void dispose() {
+    _profileProgressChoice?.removeListener(_onProfileProgressChoice);
     _plex.dispose();
     _trakt.dispose();
     _mal.dispose();

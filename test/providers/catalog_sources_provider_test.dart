@@ -10,6 +10,7 @@ import 'package:plezy/providers/trackers_provider.dart';
 import 'package:plezy/services/catalog/catalog_source.dart';
 import 'package:plezy/services/base_shared_preferences_service.dart';
 import 'package:plezy/services/plex_discover_client.dart';
+import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/services/trackers/mdblist/mdblist_tracker.dart';
 import 'package:plezy/services/trackers/tracker_account_store.dart';
 import 'package:plezy/services/trackers/tracker_constants.dart';
@@ -174,6 +175,59 @@ void main() {
     });
   });
 
+  group('a profile keeping its progress in Simkl', () {
+    CatalogItem plexItem() => CatalogItem(
+      source: CatalogSourceId.plex,
+      kind: MediaKind.movie,
+      title: 'Ein Film',
+      ids: const CatalogItemIds(tmdb: 42),
+    );
+
+    Future<_FakeSourcesProvider> providerFor(String profile, {required List<String> simklLed}) async {
+      final settings = await SettingsService.getInstance();
+      await settings.write(SettingsService.simklLedProfiles, simklLed);
+      final provider = _FakeSourcesProvider([
+        _FakeWatchlistSource(CatalogSourceId.simkl),
+        _FakeWatchlistSource(CatalogSourceId.plex),
+      ], plexSessionSupplier: () async => null);
+      addTearDown(provider.dispose);
+      await provider.onActiveProfileChanged(profile);
+      return provider;
+    }
+
+    test('neither shows nor offers the Plex account\'s watchlist', () async {
+      final provider = await providerFor('anna', simklLed: ['anna']);
+
+      expect(provider.plexWatchlistSetAside, isTrue);
+      expect(provider.watchlistCapableSources.map((source) => source.id), [CatalogSourceId.simkl]);
+      expect(provider.watchlistCapableSource?.id, CatalogSourceId.simkl);
+      expect(provider.watchlistSourceFor(plexItem())?.id, CatalogSourceId.simkl);
+      expect(provider.rowsOf(provider.connectedSources.last), isNot(contains(CatalogRowId.watchlist)));
+    });
+
+    test('another profile keeps both', () async {
+      final provider = await providerFor('ben', simklLed: ['anna']);
+
+      expect(provider.plexWatchlistSetAside, isFalse);
+      expect(provider.watchlistCapableSources.map((source) => source.id), [
+        CatalogSourceId.simkl,
+        CatalogSourceId.plex,
+      ]);
+      expect(provider.watchlistSourceFor(plexItem())?.id, CatalogSourceId.plex);
+    });
+
+    test('switching the choice changes the lists at once', () async {
+      final provider = await providerFor('anna', simklLed: const []);
+      var notified = 0;
+      provider.addListener(() => notified++);
+
+      await SettingsService.instance.write(SettingsService.simklLedProfiles, ['anna']);
+
+      expect(notified, greaterThan(0));
+      expect(provider.watchlistCapableSources.map((source) => source.id), [CatalogSourceId.simkl]);
+    });
+  });
+
   group('watchlist candidate cache', () {
     final item = testMediaItem(id: 'movie-1', serverId: 'server-1');
 
@@ -303,6 +357,9 @@ class _FakeWatchlistSource implements CatalogSource {
 
   @override
   final bool supportsWatchlist;
+
+  @override
+  List<CatalogRowId> get supportedRows => const [CatalogRowId.watchlist];
 
   @override
   Future<CatalogItemIds?> resolveItemIds(MediaKind kind, ExternalIds external, {String? title}) async {

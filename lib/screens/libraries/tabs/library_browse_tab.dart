@@ -75,6 +75,7 @@ import '../../../redesign/ocker_library_column.dart';
 import '../../../redesign/ocker_skin.dart';
 import '../../../redesign/ocker_poster_tile.dart';
 import '../../../redesign/ocker_filter_slot.dart';
+import '../../../services/watch_progress/tracker_library_query.dart';
 
 /// Browse tab for library screen
 /// Shows library items with grouping, filtering, and sorting
@@ -1023,7 +1024,8 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
   @override
   Future<LibraryPage<MediaItem>> fetchPage(int start, int size, AbortController? abort) async {
     final client = context.getMediaClientForLibrary(widget.library);
-    return client.fetchLibraryPagedContent(
+    // "Unwatched" and "last watched" follow a tracker-led profile's own state.
+    return client.fetchLibraryPageForProfile(
       widget.library.id,
       query: _buildQuery(clauses: _selectedFilters, offset: start, limit: size),
       libraryKind: widget.library.kind,

@@ -116,6 +116,16 @@ void main() {
     expect(SettingsService.instance.read(SettingsService.onboardingCompleted), isFalse);
   });
 
+  testWidgets('the extras say how several viewers keep their own progress', (tester) async {
+    await pump(tester, const SetupExtrasScreen());
+
+    expect(find.text(t.plebz.profilesGroup), findsOneWidget);
+    expect(find.text(t.plebz.profilesHint), findsOneWidget);
+    // Without Simkl connected there is no switch yet, only the way to it.
+    expect(find.text(t.plebz.profilesHintConnectFirst), findsOneWidget);
+    expect(find.text(t.services.ownProgress), findsNothing);
+  });
+
   testWidgets('with a playlist in place, "Done" finishes the setup', (tester) async {
     final iptv = IptvSourcesProvider(profileId: 'p', buildSource: (_) => throw UnimplementedError());
     addTearDown(iptv.dispose);
@@ -123,7 +133,12 @@ void main() {
     // time rather than the test's clock.
     await tester.runAsync(
       () => iptv.save(
-        const IptvSource(id: 'src', name: 'Playlist', kind: IptvSourceKind.m3u, playlistUrl: 'http://provider/list.m3u'),
+        const IptvSource(
+          id: 'src',
+          name: 'Playlist',
+          kind: IptvSourceKind.m3u,
+          playlistUrl: 'http://provider/list.m3u',
+        ),
       ),
     );
 

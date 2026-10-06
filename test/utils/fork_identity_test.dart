@@ -11,9 +11,10 @@ import 'package:plezy/utils/fork_identity.dart';
 
 import '../test_helpers/prefs.dart';
 
-/// Every tracker is out of this fork: Simkl, MyAnimeList and AniList sign in
-/// through Plezy's developer's OAuth proxy, and Trakt and MDBList were removed
-/// at the user's word. Discord's rich presence is out as well.
+/// Of the trackers only Simkl is in this fork (back since 2026-10-06, as the
+/// tracker a profile can keep its own progress in): MyAnimeList and AniList
+/// sign in through Plezy's developer's OAuth proxy, and Trakt and MDBList were
+/// removed at the user's word. Discord's rich presence is out as well.
 void main() {
   setUpAll(() => LocaleSettings.setLocaleSync(AppLocale.en));
 
@@ -22,20 +23,20 @@ void main() {
     debugRemovedTrackersAvailable = false;
   });
 
-  test('every tracker is out', () {
-    expect(forkRemovedTrackers, TrackerService.values.toSet());
+  test('every tracker but Simkl is out', () {
+    expect(forkRemovedTrackers, TrackerService.values.toSet().difference({TrackerService.simkl}));
     for (final service in TrackerService.values) {
       expect(isTrackerAvailable(service), !forkRemovedTrackers.contains(service), reason: service.name);
     }
   });
 
-  test('settings offer none of them', () {
+  test('settings offer Simkl alone', () {
     final offered = TrackerServiceInfo.all.map((info) => info.service).toSet();
 
-    expect(offered, isEmpty);
+    expect(offered, {TrackerService.simkl});
   });
 
-  test('a session stored before is not loaded, so nothing talks to them', () async {
+  test('a session stored before is loaded for Simkl alone, so nothing talks to the others', () async {
     const uuid = 'profile-1';
     TrackerSession session(String name) => TrackerSession(
       accessToken: '$name-at',
@@ -57,10 +58,9 @@ void main() {
     addTearDown(() => provider.onActiveProfileChanged('teardown-profile'));
     await provider.onActiveProfileChanged(uuid);
 
-    expect(provider.isSimklConnected, isFalse);
+    expect(provider.isSimklConnected, isTrue);
     expect(provider.isMalConnected, isFalse);
     expect(provider.isAnilistConnected, isFalse);
-    expect(provider.simklCatalogClient, isNull);
     expect(provider.malCatalogClient, isNull);
     expect(provider.anilistCatalogClient, isNull);
     expect(provider.traktCatalogClient, isNull);

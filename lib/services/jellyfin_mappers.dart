@@ -15,6 +15,7 @@ import '../utils/json_utils.dart';
 import '../utils/resolution_label.dart';
 import 'file_info_parser.dart';
 import 'jellyfin_display_metadata.dart';
+import 'watch_progress/progress_routing.dart';
 
 Map<String, dynamic>? jellyfinFirstVideoStream(Object? streams) {
   if (streams is! List) return null;
@@ -299,7 +300,9 @@ class JellyfinMappers {
       serverName: serverName,
       raw: item,
     );
-    return absolutizer == null ? mapped : absolutizer.applyTo(mapped);
+    // The active profile's watch state: the item itself unless a tracker
+    // keeps it (fork addition).
+    return ProgressRouting.overlay(absolutizer == null ? mapped : absolutizer.applyTo(mapped));
   }
 
   /// Map a MediaBrowser "view" (returned by `/Users/{userId}/Views`) into a

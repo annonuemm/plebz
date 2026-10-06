@@ -9,6 +9,7 @@ import '../utils/watch_state_notifier.dart';
 import 'data_aggregation_service.dart';
 import 'multi_server_manager.dart';
 import 'settings_service.dart';
+import 'watch_progress/progress_routing.dart';
 
 /// Carries a watched mark over to every other copy of the same movie.
 ///
@@ -72,6 +73,9 @@ class CrossServerWatchedMirror {
     if (watched == null) return;
     if (_consumeSelfWrite(event.globalKey)) return;
     if (!(SettingsService.instanceOrNull?.read(SettingsService.mirrorWatchedAcrossServers) ?? false)) return;
+    // A tracker keeps this profile's marks across every server already, and
+    // the servers' own state is not its to write (fork addition).
+    if (!ProgressRouting.instance.serverKeepsWatchState) return;
 
     final source = _serverManager.getClient(event.serverId);
     if (source == null) return;

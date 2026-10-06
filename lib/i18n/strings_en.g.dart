@@ -99,6 +99,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$plebz$en plebz = Translations$plebz$en.internal(_root);
 	late final Translations$localFiles$en localFiles = Translations$localFiles$en.internal(_root);
 	late final Translations$reminders$en reminders = Translations$reminders$en.internal(_root);
+	late final Translations$remoteKeys$en remoteKeys = Translations$remoteKeys$en.internal(_root);
 }
 
 // Path: app
@@ -2753,6 +2754,12 @@ class Translations$videoControls$en {
 
 	/// en: 'Show "up next" panel'
 	String get showUpNextPanel => 'Show "up next" panel';
+
+	/// en: 'Channel ${number}'
+	String channelNumberTyped({required Object number}) => 'Channel ${number}';
+
+	/// en: 'No channel numbered ${number}'
+	String channelNumberMissing({required Object number}) => 'No channel numbered ${number}';
 }
 
 // Path: messages
@@ -6247,6 +6254,15 @@ class Translations$services$en {
 	/// en: 'Update your list when you finish an episode or movie.'
 	String get scrobbleDescription => 'Update your list when you finish an episode or movie.';
 
+	/// en: 'Own progress via Simkl'
+	String get ownProgress => 'Own progress via Simkl';
+
+	/// en: 'This profile takes watched marks, Continue Watching and resume points from Simkl instead of the server. Every profile keeps its own state, even when several share one server account.'
+	String get ownProgressDescription => 'This profile takes watched marks, Continue Watching and resume points from Simkl instead of the server. Every profile keeps its own state, even when several share one server account.';
+
+	/// en: 'Good to know: playback is still reported to the server, so transcodes keep running and the admin sees who is watching. Past about 90 %, Plex then marks the item watched on the account itself. That only matters when another profile uses the same account without Simkl.'
+	String get ownProgressNote => 'Good to know: playback is still reported to the server, so transcodes keep running and the admin sees who is watching. Past about 90 %, Plex then marks the item watched on the account itself. That only matters when another profile uses the same account without Simkl.';
+
 	/// en: 'Disconnect ${service}?'
 	String disconnectConfirm({required Object service}) => 'Disconnect ${service}?';
 
@@ -6917,6 +6933,15 @@ class Translations$plebz$en {
 	/// en: 'Extras'
 	String get extrasGroup => 'Extras';
 
+	/// en: 'More than one viewer?'
+	String get profilesGroup => 'More than one viewer?';
+
+	/// en: 'Plebz can hold several profiles, even when everyone shares one Plex account. So that each person keeps their own progress, watched marks and watchlist, connect every profile to its own Simkl account and turn on “Own progress via Simkl” there. Add more profiles under Settings → Profiles → “Add Plebz profile”.'
+	String get profilesHint => 'Plebz can hold several profiles, even when everyone shares one Plex account. So that each person keeps their own progress, watched marks and watchlist, connect every profile to its own Simkl account and turn on “Own progress via Simkl” there. Add more profiles under Settings → Profiles → “Add Plebz profile”.';
+
+	/// en: 'Connect Simkl for this profile under Services below first.'
+	String get profilesHintConnectFirst => 'Connect Simkl for this profile under Services below first.';
+
 	/// en: 'Add a source first: a server, or an IPTV playlist.'
 	String get addSourceFirst => 'Add a source first: a server, or an IPTV playlist.';
 
@@ -7072,6 +7097,200 @@ class Translations$reminders$en {
 
 	/// en: 'The channel ${channel} is no longer in the channel list.'
 	String channelGone({required Object channel}) => 'The channel ${channel} is no longer in the channel list.';
+}
+
+// Path: remoteKeys
+class Translations$remoteKeys$en {
+	Translations$remoteKeys$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Remote control'
+	String get title => 'Remote control';
+
+	/// en: 'What each button does in the player'
+	String get entryDescription => 'What each button does in the player';
+
+	/// en: 'How to drive the player with a remote. Where your remote lacks a button, the colour keys stand in.'
+	String get intro => 'How to drive the player with a remote. Where your remote lacks a button, the colour keys stand in.';
+
+	/// en: 'Films and series'
+	String get playbackGroup => 'Films and series';
+
+	/// en: 'Live TV'
+	String get liveGroup => 'Live TV';
+
+	/// en: 'Colour keys'
+	String get colourGroup => 'Colour keys';
+
+	/// en: 'Yours to assign: pick a key and choose what it does in the player.'
+	String get colourGroupDescription => 'Yours to assign: pick a key and choose what it does in the player.';
+
+	/// en: 'Universal remote with a receiver'
+	String get receiverGroup => 'Universal remote with a receiver';
+
+	/// en: 'Such as a Logitech Harmony with Flirc: these receivers send media keys or keyboard keys. The player understands both.'
+	String get receiverIntro => 'Such as a Logitech Harmony with Flirc: these receivers send media keys or keyboard keys. The player understands both.';
+
+	/// en: 'OK'
+	String get keyOk => 'OK';
+
+	/// en: 'Show the controls and pause or resume; on live TV only the controls. During an intro, OK skips it'
+	String get doOk => 'Show the controls and pause or resume; on live TV only the controls. During an intro, OK skips it';
+
+	/// en: 'Play/Pause, Play, Pause'
+	String get keyPlayPause => 'Play/Pause, Play, Pause';
+
+	/// en: 'Play and pause'
+	String get doPlayPause => 'Play and pause';
+
+	/// en: 'Stop'
+	String get keyStop => 'Stop';
+
+	/// en: 'Leave the player'
+	String get doStop => 'Leave the player';
+
+	/// en: 'Fast forward, rewind'
+	String get keySeek => 'Fast forward, rewind';
+
+	/// en: 'Next or previous chapter; without chapters, by the configured time'
+	String get doSeek => 'Next or previous chapter; without chapters, by the configured time';
+
+	/// en: 'Next, previous (⏭ ⏮)'
+	String get keyTrack => 'Next, previous (⏭ ⏮)';
+
+	/// en: 'Like fast forward and rewind'
+	String get doTrack => 'Like fast forward and rewind';
+
+	/// en: 'Left, right'
+	String get keyLeftRight => 'Left, right';
+
+	/// en: 'Seek without showing the controls'
+	String get doLeftRight => 'Seek without showing the controls';
+
+	/// en: 'Up, down'
+	String get keyUpDown => 'Up, down';
+
+	/// en: 'Show the controls'
+	String get doUpDown => 'Show the controls';
+
+	/// en: 'Back'
+	String get keyBack => 'Back';
+
+	/// en: 'Hide the controls, otherwise leave the player'
+	String get doBack => 'Hide the controls, otherwise leave the player';
+
+	/// en: 'Info, menu'
+	String get keyInfo => 'Info, menu';
+
+	/// en: 'Show and hide the controls'
+	String get doInfo => 'Show and hide the controls';
+
+	/// en: 'Subtitles (CC)'
+	String get keySubtitles => 'Subtitles (CC)';
+
+	/// en: 'Subtitles on and off'
+	String get doSubtitles => 'Subtitles on and off';
+
+	/// en: 'Audio track'
+	String get keyAudio => 'Audio track';
+
+	/// en: 'Next audio track'
+	String get doAudio => 'Next audio track';
+
+	/// en: 'Up, down'
+	String get keyLiveUpDown => 'Up, down';
+
+	/// en: 'Change channel'
+	String get doLiveUpDown => 'Change channel';
+
+	/// en: 'Left'
+	String get keyLiveLeft => 'Left';
+
+	/// en: 'Channel list'
+	String get doLiveLeft => 'Channel list';
+
+	/// en: 'Right'
+	String get keyLiveRight => 'Right';
+
+	/// en: 'Groups'
+	String get doLiveRight => 'Groups';
+
+	/// en: 'P+, P−'
+	String get keyChannel => 'P+, P−';
+
+	/// en: 'Change channel, once “Channel keys on the remote” is on under Playback'
+	String get doChannel => 'Change channel, once “Channel keys on the remote” is on under Playback';
+
+	/// en: 'Digits 0–9'
+	String get keyDigits => 'Digits 0–9';
+
+	/// en: 'Type a channel number; it switches after a short pause'
+	String get doDigits => 'Type a channel number; it switches after a short pause';
+
+	/// en: 'Last channel'
+	String get keyLast => 'Last channel';
+
+	/// en: 'Back to the previous channel'
+	String get doLast => 'Back to the previous channel';
+
+	/// en: 'Guide, EPG'
+	String get keyGuide => 'Guide, EPG';
+
+	/// en: 'Channel list'
+	String get doGuide => 'Channel list';
+
+	/// en: 'Red'
+	String get keyRed => 'Red';
+
+	/// en: 'Green'
+	String get keyGreen => 'Green';
+
+	/// en: 'Yellow'
+	String get keyYellow => 'Yellow';
+
+	/// en: 'Blue'
+	String get keyBlue => 'Blue';
+
+	/// en: 'Space'
+	String get keySpace => 'Space';
+
+	/// en: 'Play and pause'
+	String get doSpace => 'Play and pause';
+
+	/// en: 'Esc'
+	String get keyEscape => 'Esc';
+
+	/// en: 'Like Back'
+	String get doEscape => 'Like Back';
+
+	/// en: 'I'
+	String get keyLetterI => 'I';
+
+	/// en: 'Like Info'
+	String get doLetterI => 'Like Info';
+
+	/// en: 'X'
+	String get keyLetterX => 'X';
+
+	/// en: 'Like Stop'
+	String get doLetterX => 'Like Stop';
+
+	/// en: 'S'
+	String get keyLetterS => 'S';
+
+	/// en: 'Subtitles on and off'
+	String get doLetterS => 'Subtitles on and off';
+
+	/// en: 'A'
+	String get keyLetterA => 'A';
+
+	/// en: 'Next audio track'
+	String get doLetterA => 'Next audio track';
+
+	late final Translations$remoteKeys$functions$en functions = Translations$remoteKeys$functions$en.internal(_root);
 }
 
 // Path: common.ratingSource
@@ -8889,6 +9108,48 @@ class Translations$services$tmdb$en {
 	String get cacheCleared => 'Looked-up data discarded';
 }
 
+// Path: remoteKeys.functions
+class Translations$remoteKeys$functions$en {
+	Translations$remoteKeys$functions$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Nothing'
+	String get none => 'Nothing';
+
+	/// en: 'Subtitles on and off'
+	String get subtitles => 'Subtitles on and off';
+
+	/// en: 'Next audio track'
+	String get audioTrack => 'Next audio track';
+
+	/// en: 'Skip the intro or credits'
+	String get skipMarker => 'Skip the intro or credits';
+
+	/// en: 'Show and hide the controls'
+	String get controls => 'Show and hide the controls';
+
+	/// en: 'About this title'
+	String get description => 'About this title';
+
+	/// en: 'Player settings'
+	String get playerSettings => 'Player settings';
+
+	/// en: 'Choose audio and subtitles'
+	String get tracks => 'Choose audio and subtitles';
+
+	/// en: 'Chapters'
+	String get chapters => 'Chapters';
+
+	/// en: 'Live TV: channel list'
+	String get channelList => 'Live TV: channel list';
+
+	/// en: 'Live TV: previous channel'
+	String get lastChannel => 'Live TV: previous channel';
+}
+
 /// The flat map containing all translations for locale <en>.
 /// Only for edge cases! For simple maps, use the map function of this library.
 ///
@@ -9816,6 +10077,8 @@ extension on Translations {
 			'videoControls.upNextStartsIn' => ({required Object seconds}) => 'Next episode in ${seconds}s',
 			'videoControls.closeUpNext' => 'Close',
 			'videoControls.showUpNextPanel' => 'Show "up next" panel',
+			'videoControls.channelNumberTyped' => ({required Object number}) => 'Channel ${number}',
+			'videoControls.channelNumberMissing' => ({required Object number}) => 'No channel numbered ${number}',
 			'messages.markedAsWatched' => 'Marked as watched',
 			'messages.markedAsUnwatched' => 'Marked as unwatched',
 			'messages.markedAsWatchedOffline' => 'Marked as watched (will sync when online)',
@@ -9921,10 +10184,10 @@ extension on Translations {
 			'mpvConfig.presetSaved' => 'Preset saved',
 			'mpvConfig.presetLoaded' => 'Preset loaded',
 			'mpvConfig.presetDeleted' => 'Preset deleted',
-			'mpvConfig.confirmDeletePreset' => 'Are you sure you want to delete this preset?',
-			'mpvConfig.configPlaceholder' => 'gpu-api=vulkan\nhwdec=auto\n# comment',
 			_ => null,
 		} ?? switch (path) {
+			'mpvConfig.confirmDeletePreset' => 'Are you sure you want to delete this preset?',
+			'mpvConfig.configPlaceholder' => 'gpu-api=vulkan\nhwdec=auto\n# comment',
 			'mpvConfig.lineHint' => 'option=value',
 			'mpvConfig.addLine' => 'Add line',
 			'mpvConfig.removeLine' => 'Remove line',
@@ -10435,10 +10698,10 @@ extension on Translations {
 			'explore.detail.recommendedByUsers' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Recommended by ${n} user', other: 'Recommended by ${n} users', ), 
 			'explore.detail.recommendedBy' => ({required Object who}) => 'Recommended by ${who}',
 			'explore.detail.favoritedBy' => ({required Object who}) => 'Favorited by ${who}',
-			'explore.detail.unairedEpisodes' => ({required Object n}) => '${n} not aired yet',
-			'explore.detail.recommendedByPercent' => ({required Object percent}) => 'Recommended by ${percent} of viewers',
 			_ => null,
 		} ?? switch (path) {
+			'explore.detail.unairedEpisodes' => ({required Object n}) => '${n} not aired yet',
+			'explore.detail.recommendedByPercent' => ({required Object percent}) => 'Recommended by ${percent} of viewers',
 			'explore.detail.relatedTitles' => 'Related titles',
 			'explore.detail.background' => 'Background',
 			'explore.detail.networks' => 'Networks & Streaming',
@@ -10949,10 +11212,10 @@ extension on Translations {
 			'companionRemote.errors.connectionLost' => 'Connection lost',
 			'companionRemote.closedBeforeAuth' => 'The connection closed before authentication',
 			'videoSettings.playbackSpeed' => 'Playback Speed',
-			'videoSettings.normalSpeed' => 'Normal',
-			'videoSettings.sleepTimerActive' => ({required Object duration}) => 'Active (${duration})',
 			_ => null,
 		} ?? switch (path) {
+			'videoSettings.normalSpeed' => 'Normal',
+			'videoSettings.sleepTimerActive' => ({required Object duration}) => 'Active (${duration})',
 			'videoSettings.zoom' => 'Zoom',
 			'videoSettings.sleepTimer' => 'Sleep Timer',
 			'videoSettings.audioSync' => 'Audio Sync',
@@ -11206,6 +11469,9 @@ extension on Translations {
 			'services.connectedAs' => ({required Object username}) => 'Connected as @${username}',
 			'services.scrobble' => 'Track progress automatically',
 			'services.scrobbleDescription' => 'Update your list when you finish an episode or movie.',
+			'services.ownProgress' => 'Own progress via Simkl',
+			'services.ownProgressDescription' => 'This profile takes watched marks, Continue Watching and resume points from Simkl instead of the server. Every profile keeps its own state, even when several share one server account.',
+			'services.ownProgressNote' => 'Good to know: playback is still reported to the server, so transcodes keep running and the admin sees who is watching. Past about 90 %, Plex then marks the item watched on the account itself. That only matters when another profile uses the same account without Simkl.',
 			'services.disconnectConfirm' => ({required Object service}) => 'Disconnect ${service}?',
 			'services.disconnectConfirmBody' => ({required Object service}) => 'Plebz will stop updating ${service}. Reconnect any time.',
 			'services.connectFailed' => ({required Object service}) => 'Couldn\'t connect to ${service}. Try again.',
@@ -11453,10 +11719,15 @@ extension on Translations {
 			'plebz.extrasBody' => 'Add more sources and connect the services you use. Everything here is optional, apart from one source to watch from.',
 			'plebz.sourcesGroup' => 'Sources',
 			'plebz.extrasGroup' => 'Extras',
+			'plebz.profilesGroup' => 'More than one viewer?',
+			'plebz.profilesHint' => 'Plebz can hold several profiles, even when everyone shares one Plex account. So that each person keeps their own progress, watched marks and watchlist, connect every profile to its own Simkl account and turn on “Own progress via Simkl” there. Add more profiles under Settings → Profiles → “Add Plebz profile”.',
+			'plebz.profilesHintConnectFirst' => 'Connect Simkl for this profile under Services below first.',
 			'plebz.addSourceFirst' => 'Add a source first: a server, or an IPTV playlist.',
 			'plebz.finish' => 'Done',
 			'plebz.setupAgain' => 'Run setup again',
 			'plebz.setupAgainDescription' => 'Look, sources and services, step by step',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.updateAvailableTitle' => 'Update available',
 			'plebz.updateAvailableBody' => ({required Object release}) => '${release} is ready to install. Your settings and sign-ins stay as they are.',
 			'plebz.updateNow' => 'Update',
@@ -11465,8 +11736,6 @@ extension on Translations {
 			'plebz.checking' => 'Checking for updates…',
 			'plebz.checkFailed' => 'GitHub could not be reached. The reason is under "View logs".',
 			'plebz.updatedTitle' => 'Plebz was updated',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.updatedBody' => ({required Object version, required Object build}) => 'You are now on Plebz ${version} (Build ${build}).',
 			'plebz.checkForUpdates' => 'Check for updates',
 			'plebz.checkForUpdatesDescription' => 'Look for a newer Plebz on GitHub',
@@ -11501,6 +11770,78 @@ extension on Translations {
 			'reminders.runningTitle' => 'On now',
 			'reminders.tune' => 'Switch over',
 			'reminders.channelGone' => ({required Object channel}) => 'The channel ${channel} is no longer in the channel list.',
+			'remoteKeys.title' => 'Remote control',
+			'remoteKeys.entryDescription' => 'What each button does in the player',
+			'remoteKeys.intro' => 'How to drive the player with a remote. Where your remote lacks a button, the colour keys stand in.',
+			'remoteKeys.playbackGroup' => 'Films and series',
+			'remoteKeys.liveGroup' => 'Live TV',
+			'remoteKeys.colourGroup' => 'Colour keys',
+			'remoteKeys.colourGroupDescription' => 'Yours to assign: pick a key and choose what it does in the player.',
+			'remoteKeys.receiverGroup' => 'Universal remote with a receiver',
+			'remoteKeys.receiverIntro' => 'Such as a Logitech Harmony with Flirc: these receivers send media keys or keyboard keys. The player understands both.',
+			'remoteKeys.keyOk' => 'OK',
+			'remoteKeys.doOk' => 'Show the controls and pause or resume; on live TV only the controls. During an intro, OK skips it',
+			'remoteKeys.keyPlayPause' => 'Play/Pause, Play, Pause',
+			'remoteKeys.doPlayPause' => 'Play and pause',
+			'remoteKeys.keyStop' => 'Stop',
+			'remoteKeys.doStop' => 'Leave the player',
+			'remoteKeys.keySeek' => 'Fast forward, rewind',
+			'remoteKeys.doSeek' => 'Next or previous chapter; without chapters, by the configured time',
+			'remoteKeys.keyTrack' => 'Next, previous (⏭ ⏮)',
+			'remoteKeys.doTrack' => 'Like fast forward and rewind',
+			'remoteKeys.keyLeftRight' => 'Left, right',
+			'remoteKeys.doLeftRight' => 'Seek without showing the controls',
+			'remoteKeys.keyUpDown' => 'Up, down',
+			'remoteKeys.doUpDown' => 'Show the controls',
+			'remoteKeys.keyBack' => 'Back',
+			'remoteKeys.doBack' => 'Hide the controls, otherwise leave the player',
+			'remoteKeys.keyInfo' => 'Info, menu',
+			'remoteKeys.doInfo' => 'Show and hide the controls',
+			'remoteKeys.keySubtitles' => 'Subtitles (CC)',
+			'remoteKeys.doSubtitles' => 'Subtitles on and off',
+			'remoteKeys.keyAudio' => 'Audio track',
+			'remoteKeys.doAudio' => 'Next audio track',
+			'remoteKeys.keyLiveUpDown' => 'Up, down',
+			'remoteKeys.doLiveUpDown' => 'Change channel',
+			'remoteKeys.keyLiveLeft' => 'Left',
+			'remoteKeys.doLiveLeft' => 'Channel list',
+			'remoteKeys.keyLiveRight' => 'Right',
+			'remoteKeys.doLiveRight' => 'Groups',
+			'remoteKeys.keyChannel' => 'P+, P−',
+			'remoteKeys.doChannel' => 'Change channel, once “Channel keys on the remote” is on under Playback',
+			'remoteKeys.keyDigits' => 'Digits 0–9',
+			'remoteKeys.doDigits' => 'Type a channel number; it switches after a short pause',
+			'remoteKeys.keyLast' => 'Last channel',
+			'remoteKeys.doLast' => 'Back to the previous channel',
+			'remoteKeys.keyGuide' => 'Guide, EPG',
+			'remoteKeys.doGuide' => 'Channel list',
+			'remoteKeys.keyRed' => 'Red',
+			'remoteKeys.keyGreen' => 'Green',
+			'remoteKeys.keyYellow' => 'Yellow',
+			'remoteKeys.keyBlue' => 'Blue',
+			'remoteKeys.keySpace' => 'Space',
+			'remoteKeys.doSpace' => 'Play and pause',
+			'remoteKeys.keyEscape' => 'Esc',
+			'remoteKeys.doEscape' => 'Like Back',
+			'remoteKeys.keyLetterI' => 'I',
+			'remoteKeys.doLetterI' => 'Like Info',
+			'remoteKeys.keyLetterX' => 'X',
+			'remoteKeys.doLetterX' => 'Like Stop',
+			'remoteKeys.keyLetterS' => 'S',
+			'remoteKeys.doLetterS' => 'Subtitles on and off',
+			'remoteKeys.keyLetterA' => 'A',
+			'remoteKeys.doLetterA' => 'Next audio track',
+			'remoteKeys.functions.none' => 'Nothing',
+			'remoteKeys.functions.subtitles' => 'Subtitles on and off',
+			'remoteKeys.functions.audioTrack' => 'Next audio track',
+			'remoteKeys.functions.skipMarker' => 'Skip the intro or credits',
+			'remoteKeys.functions.controls' => 'Show and hide the controls',
+			'remoteKeys.functions.description' => 'About this title',
+			'remoteKeys.functions.playerSettings' => 'Player settings',
+			'remoteKeys.functions.tracks' => 'Choose audio and subtitles',
+			'remoteKeys.functions.chapters' => 'Chapters',
+			'remoteKeys.functions.channelList' => 'Live TV: channel list',
+			'remoteKeys.functions.lastChannel' => 'Live TV: previous channel',
 			_ => null,
 		};
 	}

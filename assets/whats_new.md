@@ -13,6 +13,16 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.9.0 (Build 643)
+
+- Neu und noch in der Testphase (Beta): Mehrere Personen, ein Plex-Konto. Jedes Profil kann seinen eigenen Fortschritt über Simkl führen. Unter Einstellungen → Dienste → Simkl verbinden und „Eigener Fortschritt über Simkl“ einschalten. Dann kommen Häkchen, Weiter ansehen, Fortsetzen, die nächste Folge und die Merkliste aus dem Simkl-Konto des Profils, nicht mehr vom gemeinsamen Plex-Konto.
+- Am besten bekommt jedes Profil sein eigenes Simkl-Konto. Die Einrichtung beim ersten Start weist jetzt darauf hin.
+- Bei diesen Profilen zeigt die Merkliste nur Simkl, und „Auf die Merkliste“ setzt direkt dorthin.
+- Auch „ungesehen“ und „zuletzt gesehen“ in den Mediatheken richten sich dann nach dem eigenen Stand.
+- Gut zu wissen: Beim Abspielen meldet Plebz weiter an den Server, damit alles läuft und der Admin sieht, wer schaut. Ab etwa 90 % setzt Plex auf dem Konto dann selbst den Haken. Das stört nur, wenn ein anderes Profil dasselbe Konto ohne Simkl nutzt.
+- Weil es eine Beta ist: Wenn irgendwo etwas hakt, gebt bitte Bescheid.
+- Fernbedienung: Stop, Info, Untertitel, Tonspur, Guide, Letzter Sender und Zifferntasten für Live-TV funktionieren jetzt im Player. Die Farbtasten sind frei belegbar, etwa für den Infotext oder die Player-Einstellungen. Übersicht und Belegung unter Einstellungen → Wiedergabe → Fernbedienung.
+
 ## 1.8.1 (Build 636)
 
 - Erkunden: Unter Einstellungen → Wiedergabe → „Fassung auf Erkunden-Seiten“ wählst du, welche Fassung aus deinen Mediatheken oben steht und vom Knopf neben dem Poster geöffnet wird: beste Qualität (wie bisher), beste vollständige Fassung (bei Serien die mit den meisten Folgen) oder Full HD bevorzugen.

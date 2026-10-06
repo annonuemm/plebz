@@ -1508,4 +1508,75 @@ http://provider/stream/ard
       expect(second!.canTimeShift, session.canTimeShift);
     });
   });
+
+  group('chosen groups', () {
+    test('a playlist source keeps only the chosen groups, and offers all of them', () async {
+      final client = MockClient((request) async => _ok(_twoGroupsPlaylist));
+      final all = _m3uSource(client);
+      addTearDown(all.close);
+      final offered = await all.fetchGroupOptions();
+      expect(
+        [for (final option in offered!) (option.key, option.channelCount)],
+        [('Vollprogramm', 1), ('Ausgeblendet', 1)],
+      );
+
+      final narrowed = IptvLiveTvSource(
+        const IptvSource(
+          id: 'src',
+          name: 'P',
+          kind: IptvSourceKind.m3u,
+          playlistUrl: 'http://provider/list.m3u',
+        ).withGroups(['Vollprogramm'], offered: ['Vollprogramm', 'Ausgeblendet']),
+        httpClient: client,
+        favorites: _MemoryFavorites(),
+      );
+      addTearDown(narrowed.close);
+      final channels = await narrowed.fetchChannels();
+      expect(channels.map((channel) => channel.title), ['Das Erste HD']);
+    });
+
+    test('a panel is asked for the chosen categories one by one, and offers its categories', () async {
+      final asked = <String>[];
+      final client = MockClient((request) async {
+        final action = request.url.queryParameters['action'];
+        if (action == 'get_live_categories') {
+          return _okJson([
+            {'category_id': '1', 'category_name': 'DE Sport'},
+            {'category_id': '2', 'category_name': 'UK News'},
+          ]);
+        }
+        if (action == 'get_live_streams') {
+          final category = request.url.queryParameters['category_id'];
+          asked.add(category ?? 'all');
+          return _okJson([
+            if (category == null || category == '1') {'stream_id': 10, 'name': 'Sport', 'category_id': '1'},
+            if (category == null || category == '2') {'stream_id': 20, 'name': 'News', 'category_id': '2'},
+          ]);
+        }
+        return http.Response('[]', 200);
+      });
+
+      final offer = _xtreamSource(client);
+      addTearDown(offer.close);
+      final offered = await offer.fetchGroupOptions();
+      expect([for (final option in offered!) (option.key, option.label)], [('1', 'DE Sport'), ('2', 'UK News')]);
+
+      final narrowed = IptvLiveTvSource(
+        const IptvSource(
+          id: 'src',
+          name: 'Panel',
+          kind: IptvSourceKind.xtream,
+          baseUrl: 'http://panel:8080',
+          username: 'u',
+          password: 'p',
+        ).withGroups(['1'], offered: ['1', '2']),
+        httpClient: client,
+        favorites: _MemoryFavorites(),
+      );
+      addTearDown(narrowed.close);
+      final channels = await narrowed.fetchChannels();
+      expect(channels.map((channel) => channel.title), ['Sport']);
+      expect(asked, ['1'], reason: 'only the chosen category was asked for');
+    });
+  });
 }

@@ -373,7 +373,8 @@ class IptvLiveTvSource implements LiveTvSupport {
     final body = await _get(url);
     if (body == null) return const [];
 
-    final entries = parseM3u(body);
+    // Only the chosen groups: the rest is never kept (see [IptvSource.groups]).
+    final entries = parseM3u(body, keepGroup: source.groups == null ? null : source.loadsGroup);
     final channels = channelsFromM3u(
       entries,
       sourceId: source.id,
@@ -407,7 +408,7 @@ class IptvLiveTvSource implements LiveTvSupport {
 
   Future<List<LiveTvChannel>> _fetchXtreamChannels() async {
     final categories = await _getJsonList(_xtream.liveCategories());
-    final streams = await _getJsonList(_xtream.liveStreams());
+    final streams = await _xtreamStreamsOfChosenGroups();
     if (streams == null) return const [];
     return channelsFromXtream(
       streams,
@@ -852,6 +853,54 @@ class IptvLiveTvSource implements LiveTvSupport {
   Future<void> setFavoriteChannels(List<FavoriteChannel> channels, {void Function()? checkCurrent}) =>
       _favorites.write(favoriteStoreKey, channels, checkCurrent: checkCurrent);
 
+  /// The panel's live streams, of the chosen groups only. A few groups are
+  /// asked for one by one, so the panel sends no more than they hold; past
+  /// [_perGroupRequestLimit] one whole list is cheaper than that many
+  /// requests, and it is narrowed here instead.
+  Future<List<dynamic>?> _xtreamStreamsOfChosenGroups() async {
+    final chosen = source.groups;
+    if (chosen == null) return _getJsonList(_xtream.liveStreams());
+    if (chosen.length > _perGroupRequestLimit) {
+      final all = await _getJsonList(_xtream.liveStreams());
+      return all?.where((row) => row is Map && chosen.contains('${row['category_id']}')).toList();
+    }
+    final streams = <dynamic>[];
+    var answered = false;
+    for (final category in chosen) {
+      final rows = await _getJsonList(_xtream.liveStreams(categoryId: category));
+      if (rows == null) continue;
+      answered = true;
+      streams.addAll(rows);
+    }
+    return answered || chosen.isEmpty ? streams : null;
+  }
+
+  static const _perGroupRequestLimit = 20;
+
+  /// Every group the provider offers, for choosing a source's groups: the
+  /// panel's categories, or the playlist's `group-title`s with how many
+  /// channels each holds. Null when the provider cannot be read.
+  Future<List<IptvGroupOption>?> fetchGroupOptions() async {
+    switch (source.kind) {
+      case IptvSourceKind.xtream:
+        final rows = await _getJsonList(_xtream.liveCategories());
+        if (rows == null) return null;
+        return [
+          for (final MapEntry(:key, :value) in categoriesFromXtream(rows).entries)
+            IptvGroupOption(key: key, label: value),
+        ];
+      case IptvSourceKind.m3u:
+        final url = source.playlistUrl;
+        if (url == null || url.isEmpty) return null;
+        final body = await _get(url);
+        if (body == null) return null;
+        return [
+          for (final MapEntry(:key, :value) in m3uGroupCounts(body).entries)
+            IptvGroupOption(key: key, label: key, channelCount: value),
+        ];
+    }
+  }
+
   Future<String?> _get(String url) async {
     if (IptvLocalFiles.isLocal(url)) return _readLocal(url);
     try {
@@ -1265,4 +1314,18 @@ final class _CappedBytes implements Sink<List<int>> {
 
 final class _TooLarge implements Exception {
   const _TooLarge();
+}
+
+/// One group a source's provider offers (fork): a playlist's `group-title`
+/// or a panel's category.
+@immutable
+class IptvGroupOption {
+  const IptvGroupOption({required this.key, required this.label, this.channelCount});
+
+  /// What [IptvSource.groups] stores: the title itself, or the category id.
+  final String key;
+  final String label;
+
+  /// How many channels it holds, where that is known without loading them.
+  final int? channelCount;
 }

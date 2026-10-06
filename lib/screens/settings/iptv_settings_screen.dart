@@ -19,6 +19,7 @@ import '../../widgets/app_icon.dart';
 import '../../widgets/focusable_list_tile.dart';
 import '../../widgets/focused_scroll_scaffold.dart';
 import '../../widgets/setting_tile.dart';
+import 'iptv_group_picker_screen.dart';
 import 'settings_utils.dart';
 import '../../widgets/settings_section.dart';
 
@@ -217,6 +218,12 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
   late IptvCatchupMode _catchupMode;
   late final TextEditingController _catchupDays;
 
+  /// The groups chosen to be loaded (null: all), and every group offered when
+  /// they were — see [IptvSource.groups].
+  List<String>? _groups;
+  List<String> _knownGroups = const [];
+  bool _loadingGroups = false;
+
   @override
   void initState() {
     super.initState();
@@ -233,6 +240,8 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
     _streamFormat = source?.streamFormat ?? IptvStreamFormat.mpegTs;
     _catchupMode = source?.catchupMode ?? IptvCatchupMode.automatic;
     _catchupDays = TextEditingController(text: source?.catchupDays?.toString() ?? '');
+    _groups = source?.groups;
+    _knownGroups = source?.knownGroups ?? const [];
     _baseUrl = TextEditingController(text: source?.baseUrl ?? '');
     _username = TextEditingController(text: source?.username ?? '');
     _password = TextEditingController(text: source?.password ?? '');
@@ -305,6 +314,8 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
       streamFormat: _streamFormat,
       catchupMode: _catchupMode,
       catchupDays: int.tryParse(text(_catchupDays)),
+      groups: _groups,
+      knownGroups: _groups == null ? const [] : _knownGroups,
     );
     Navigator.of(context).pop(IptvEditResult(source));
   }
@@ -397,6 +408,55 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
       appLogger.w('IPTV: local playlist could not be copied in', error: error);
       if (mounted) showErrorSnackBar(context, t.iptv.playlistFileFailed);
     }
+  }
+
+  /// Which of the provider's groups this source loads. Read from the provider
+  /// with what the form holds now, so it works before the source is saved;
+  /// the fields it needs are asked for the way saving asks for them.
+  Future<void> _pickGroups() async {
+    if (_loadingGroups) return;
+    String text(TextEditingController c) => c.text.trim();
+    final needed = [
+      if (_isXtream) ...[_baseUrl, _username, _password] else _playlistUrl,
+    ];
+    final empty = needed.where((field) => text(field).isEmpty).toSet();
+    if (empty.isNotEmpty) {
+      setState(() => _emptyRequired.addAll(empty));
+      return;
+    }
+    final draft = IptvSource(
+      id: _id,
+      name: text(_name),
+      kind: widget.kind,
+      playlistUrl: _isXtream ? null : text(_playlistUrl),
+      baseUrl: _isXtream ? text(_baseUrl) : null,
+      username: _isXtream ? text(_username) : null,
+      password: _isXtream ? text(_password) : null,
+      streamFormat: _streamFormat,
+    );
+    setState(() => _loadingGroups = true);
+    final options = await context.read<IptvSourcesProvider>().groupOptionsFor(draft);
+    if (!mounted) return;
+    setState(() => _loadingGroups = false);
+    if (options == null || options.isEmpty) {
+      showErrorSnackBar(context, t.iptv.groupsLoadFailed);
+      return;
+    }
+    final chosen = await Navigator.of(
+      context,
+    ).push(IptvGroupPickerScreen.route(options: options, selected: _groups, known: _knownGroups));
+    if (chosen == null || !mounted) return;
+    setState(() {
+      _groups = chosen;
+      _knownGroups = [for (final option in options) option.key];
+    });
+  }
+
+  String get _groupsSummary {
+    if (_loadingGroups) return t.iptv.groupsLoading;
+    final groups = _groups;
+    if (groups == null) return t.iptv.groupsAllLoaded;
+    return t.iptv.groupsSummary(count: groups.length);
   }
 
   String? _errorFor(TextEditingController field) => _emptyRequired.contains(field) ? t.iptv.fieldRequired : null;
@@ -556,7 +616,26 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  // Which groups are loaded at all — the slim list a local
+                  // file gives, from the provider's own address.
+                  FocusableListTile(
+                    leading: const AppIcon(Symbols.checklist_rounded, fill: 1),
+                    title: Text(t.iptv.groupsLabel),
+                    subtitle: Text(_groupsSummary),
+                    trailing: const AppIcon(Symbols.chevron_right_rounded, fill: 1),
+                    onTap: () => unawaited(_pickGroups()),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+                    child: Text(
+                      t.iptv.groupsDescription,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   ..._buildGuideFields(),
                   const SizedBox(height: 16),
                   ..._buildCatchupFields(context),

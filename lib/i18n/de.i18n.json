@@ -2668,7 +2668,22 @@
     "pickPlaylistFile": "Datei auswählen",
     "pickPlaylistTitle": "M3U-Datei wählen",
     "localPlaylist": "Lokale Datei: ${name}. Nach Änderungen an der Datei erneut auswählen.",
-    "playlistFileFailed": "Die Datei konnte nicht übernommen werden."
+    "playlistFileFailed": "Die Datei konnte nicht übernommen werden.",
+    "groupsLabel": "Gruppen",
+    "groupsDescription": "Nur die gewählten Gruppen werden überhaupt geladen – das hält große Listen schlank und schnell. Neue Gruppen des Anbieters kommen erst dazu, wenn du sie hier auswählst.",
+    "groupsAllLoaded": "Alle Gruppen werden geladen",
+    "groupsSummary": "${count} ausgewählt",
+    "groupsLoading": "Gruppen werden geladen …",
+    "groupsLoadFailed": "Die Gruppen konnten nicht geladen werden. Stimmen Adresse und Zugangsdaten?",
+    "groupsTitle": "Gruppen auswählen",
+    "groupsChosenOf": "${chosen} von ${total} ausgewählt",
+    "groupsChosenWithChannels": "${chosen} von ${total} ausgewählt · ${channels} Sender",
+    "groupsApply": "Übernehmen",
+    "groupsAll": "Alle auswählen",
+    "groupsNone": "Keine auswählen",
+    "groupsWithout": "Ohne Gruppe",
+    "groupsChannelCount": "${count} Sender",
+    "groupsNew": "neu"
   },
   "trailerStage": {
     "title": "Trailerbühne",

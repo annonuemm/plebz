@@ -51,6 +51,8 @@ class IptvSource {
     this.streamFormat = IptvStreamFormat.mpegTs,
     this.catchupMode = IptvCatchupMode.automatic,
     this.catchupDays,
+    this.groups,
+    this.knownGroups = const [],
   });
 
   /// Stable id, also used to namespace channel keys and favorites.
@@ -90,6 +92,41 @@ class IptvSource {
   /// `catchup-days`; this fills in for the ones that report neither.
   final int? catchupDays;
 
+  /// The groups this source loads, by key — the playlist's `group-title`, or
+  /// the panel's category id — or null for all of them, which is what a
+  /// source holds until its groups are chosen. What is left out is never
+  /// loaded at all, unlike a group hidden under "Sender verwalten" (fork).
+  final List<String>? groups;
+
+  /// Every group the provider offered when [groups] was chosen. A group not
+  /// among them is new since, and is not loaded until it is chosen too.
+  final List<String> knownGroups;
+
+  /// Whether a group with [key] is loaded.
+  bool loadsGroup(String key) => groups?.contains(key) ?? true;
+
+  /// This source with its groups chosen: [selected] of [offered], or every
+  /// group with null.
+  IptvSource withGroups(List<String>? selected, {List<String> offered = const []}) => IptvSource(
+    id: id,
+    name: name,
+    kind: kind,
+    playlistUrl: playlistUrl,
+    epgUrls: epgUrls,
+    baseUrl: baseUrl,
+    username: username,
+    password: password,
+    streamFormat: streamFormat,
+    catchupMode: catchupMode,
+    catchupDays: catchupDays,
+    groups: selected,
+    knownGroups: selected == null ? const [] : offered,
+  );
+
+  /// What decides which channels this source lists — where they come from and
+  /// which of them are kept. A change here makes a stored copy stale.
+  String get channelListSignature => [kind.name, playlistUrl, baseUrl, username, password, ...?groups].join('\u0000');
+
   /// Whether this source has everything it needs to be queried.
   bool get isComplete => switch (kind) {
     IptvSourceKind.m3u => (playlistUrl?.trim().isNotEmpty ?? false),
@@ -122,6 +159,8 @@ class IptvSource {
     streamFormat: streamFormat ?? this.streamFormat,
     catchupMode: catchupMode ?? this.catchupMode,
     catchupDays: catchupDays ?? this.catchupDays,
+    groups: groups,
+    knownGroups: knownGroups,
   );
 
   Map<String, Object?> toJson() => {
@@ -136,6 +175,8 @@ class IptvSource {
     'streamFormat': streamFormat.name,
     'catchupMode': catchupMode.name,
     if (catchupDays != null) 'catchupDays': catchupDays,
+    if (groups != null) 'groups': groups,
+    if (knownGroups.isNotEmpty) 'knownGroups': knownGroups,
   };
 
   static IptvSource? fromJson(Map<String, Object?> json) {
@@ -174,6 +215,14 @@ class IptvSource {
         final int days when days > 0 => days,
         final String days => int.tryParse(days),
         _ => null,
+      },
+      groups: switch (json['groups']) {
+        final List<dynamic> keys => [for (final key in keys) ?(key is String ? key : null)],
+        _ => null,
+      },
+      knownGroups: switch (json['knownGroups']) {
+        final List<dynamic> keys => [for (final key in keys) ?(key is String ? key : null)],
+        _ => const [],
       },
     );
   }

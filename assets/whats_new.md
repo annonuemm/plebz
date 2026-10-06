@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.8.0 (Build 634)
+
+- IPTV: Gruppen auswählen. Beim Hinzufügen oder Bearbeiten einer Quelle (M3U-Adresse, Datei oder Xtream) lädt „Gruppen“ zuerst nur die Gruppenliste – angehakt wird, was du willst, und nur diese Gruppen werden überhaupt geladen. Das hält große Listen schlank und schnell. Neue Gruppen des Anbieters kommen erst dazu, wenn du sie auswählst; sie sind mit „neu“ markiert.
+- IPTV: Nach einer Änderung von Adresse oder Zugangsdaten zeigt eine Quelle sofort die neue Senderliste.
+
 ## 1.7.4 (Build 632)
 
 - Detailseite (Fernseher, Original-Theme): Wie im Redesign stehen Jahr, Freigabe, Laufzeit, Bewertung und Genres in der ersten Reihe, die Qualitätsangaben (Auflösung, HDR, Ton) in einer eigenen Reihe darunter. Genres füllen die Reihe auf, was nicht passt, entfällt. Die Ecke mit Regie, Studio und Besetzung ist weg.

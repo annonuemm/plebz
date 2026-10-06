@@ -275,4 +275,30 @@ http://provider/stream/a|User-Agent=VLC
       expect(channels.single.catchupDays, 2);
     });
   });
+
+  group('choosing groups', () {
+    const playlist = '''
+#EXTM3U
+#EXTINF:-1 group-title="DE • Sport",Sport 1
+http://p/1.ts
+#EXTINF:-1 group-title="UK • News",News
+http://p/2.ts
+#EXTINF:-1 group-title="DE • Sport",Sport 2
+http://p/3.ts
+#EXTINF:-1,Loose
+#EXTGRP:Extra
+http://p/4.ts
+#EXTINF:-1,Nowhere
+http://p/5.ts
+''';
+
+    test('the groups are counted in the order the playlist names them', () {
+      expect(m3uGroupCounts(playlist), {'DE • Sport': 2, 'UK • News': 1, 'Extra': 1, '': 1});
+    });
+
+    test('an entry of a group left out is not kept', () {
+      final kept = parseM3u(playlist, keepGroup: (group) => group == 'DE • Sport' || group == '');
+      expect(kept.map((entry) => entry.name), ['Sport 1', 'Sport 2', 'Nowhere']);
+    });
+  });
 }

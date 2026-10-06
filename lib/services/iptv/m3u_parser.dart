@@ -65,7 +65,11 @@ int? _positiveInt(String? raw) {
 /// directives in between. Anything unparseable is skipped rather than
 /// failing the whole playlist: one malformed entry in a 20,000-line file must
 /// not cost the user every channel.
-List<M3uEntry> parseM3u(String contents) {
+///
+/// [keepGroup], where given, is asked about each entry's group (the empty
+/// string for none): an entry it turns away is not kept at all, so a long
+/// playlist cut down to a few groups costs the memory of those few.
+List<M3uEntry> parseM3u(String contents, {bool Function(String group)? keepGroup}) {
   final entries = <M3uEntry>[];
   String? pendingInfo;
   String? pendingGroup;
@@ -103,10 +107,41 @@ List<M3uEntry> parseM3u(String contents) {
     if (info == null) continue;
 
     final entry = _entryFrom(info, line, fallbackGroup: group, headers: headers);
-    if (entry != null) entries.add(entry);
+    if (entry != null && (keepGroup?.call(entry.group ?? '') ?? true)) entries.add(entry);
   }
 
   return entries;
+}
+
+/// Every group of a playlist with how many entries it holds, in the order
+/// the playlist first names them — what choosing a source's groups is offered
+/// from. Read without building the entries.
+Map<String, int> m3uGroupCounts(String contents) {
+  final counts = <String, int>{};
+  String? pendingGroup;
+  String? pendingExtGrp;
+  var pending = false;
+  final groupTitle = RegExp(r'group-title="([^"]*)"', caseSensitive: false);
+  for (final rawLine in contents.split('\n')) {
+    final line = rawLine.trim();
+    if (line.isEmpty) continue;
+    if (line.startsWith('#EXTINF')) {
+      pending = true;
+      pendingGroup = groupTitle.firstMatch(line)?.group(1)?.trim();
+      pendingExtGrp = null;
+      continue;
+    }
+    if (line.startsWith('#EXTGRP:')) {
+      pendingExtGrp = line.substring('#EXTGRP:'.length).trim();
+      continue;
+    }
+    if (line.startsWith('#')) continue;
+    if (!pending) continue;
+    pending = false;
+    final group = (pendingGroup?.isNotEmpty ?? false) ? pendingGroup! : (pendingExtGrp ?? '');
+    counts[group] = (counts[group] ?? 0) + 1;
+  }
+  return counts;
 }
 
 /// VLC's playlist options. Only the two that decide whether a stream plays

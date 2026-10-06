@@ -180,6 +180,11 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
   Future<void> save(IptvSource source) async {
     await ensureLoaded();
     final index = _sources.indexWhere((candidate) => candidate.id == source.id);
+    // A stored copy of a list read from elsewhere, or cut to other groups,
+    // describes another source: it must not answer the next read.
+    if (index != -1 && _sources[index].channelListSignature != source.channelListSignature) {
+      await IptvDiskCache().clear(source.id);
+    }
     _sources = index == -1
         ? [..._sources, source]
         : [for (var i = 0; i < _sources.length; i++) i == index ? source : _sources[i]];
@@ -200,6 +205,20 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
     safeNotifyListeners();
     await _persist();
     await IptvLocalFiles.deleteFor(sourceId);
+  }
+
+  /// The groups [draft]'s provider offers — for choosing them before the
+  /// source is saved, so read through a source of its own that keeps nothing.
+  Future<List<IptvGroupOption>?> groupOptionsFor(IptvSource draft) async {
+    final reader = IptvLiveTvSource(draft.withGroups(null));
+    try {
+      return await reader.fetchGroupOptions();
+    } catch (error, stackTrace) {
+      appLogger.w('IPTV: groups of a source could not be read', error: error, stackTrace: stackTrace);
+      return null;
+    } finally {
+      reader.close();
+    }
   }
 
   /// Drop cached playlists and guides so the next read hits the network.

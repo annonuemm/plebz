@@ -2668,7 +2668,22 @@
     "pickPlaylistFile": "Choose file",
     "pickPlaylistTitle": "Choose an M3U file",
     "localPlaylist": "Local file: ${name}. Choose it again after changing the file.",
-    "playlistFileFailed": "The file could not be taken over."
+    "playlistFileFailed": "The file could not be taken over.",
+    "groupsLabel": "Groups",
+    "groupsDescription": "Only the chosen groups are loaded at all – keeping a big list slim and fast. New groups from the provider are added only once you choose them here.",
+    "groupsAllLoaded": "All groups are loaded",
+    "groupsSummary": "${count} chosen",
+    "groupsLoading": "Loading groups …",
+    "groupsLoadFailed": "The groups could not be loaded. Are the address and login right?",
+    "groupsTitle": "Choose groups",
+    "groupsChosenOf": "${chosen} of ${total} chosen",
+    "groupsChosenWithChannels": "${chosen} of ${total} chosen · ${channels} channels",
+    "groupsApply": "Apply",
+    "groupsAll": "Choose all",
+    "groupsNone": "Choose none",
+    "groupsWithout": "No group",
+    "groupsChannelCount": "${count} channels",
+    "groupsNew": "new"
   },
   "trailerStage": {
     "title": "Trailer stage",

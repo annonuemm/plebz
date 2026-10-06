@@ -137,4 +137,31 @@ void main() {
       expect(restored.catchupDays, isNull);
     });
   });
+
+  group('chosen groups', () {
+    const source = IptvSource(id: 'a', name: 'A', kind: IptvSourceKind.m3u, playlistUrl: 'http://p/list.m3u');
+
+    test('a source loads every group until its groups are chosen', () {
+      expect(source.groups, isNull);
+      expect(source.loadsGroup('anything'), isTrue);
+    });
+
+    test('the choice and the groups offered with it survive a round trip', () {
+      final chosen = source.withGroups(['DE • Sport'], offered: ['DE • Sport', 'UK • News']);
+      final back = IptvSource.fromJson(chosen.toJson())!;
+      expect(back.groups, ['DE • Sport']);
+      expect(back.knownGroups, ['DE • Sport', 'UK • News']);
+      expect(back.loadsGroup('UK • News'), isFalse);
+      // Back to every group, and the old offer goes with the choice.
+      final all = back.withGroups(null);
+      expect(all.groups, isNull);
+      expect(all.knownGroups, isEmpty);
+    });
+
+    test('a change of groups makes a stored channel list stale, a new name does not', () {
+      final chosen = source.withGroups(['DE • Sport']);
+      expect(chosen.channelListSignature, isNot(source.channelListSignature));
+      expect(source.copyWith(name: 'B').channelListSignature, source.channelListSignature);
+    });
+  });
 }

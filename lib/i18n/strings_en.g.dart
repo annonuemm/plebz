@@ -6577,6 +6577,51 @@ class Translations$iptv$en {
 
 	/// en: 'The file could not be taken over.'
 	String get playlistFileFailed => 'The file could not be taken over.';
+
+	/// en: 'Groups'
+	String get groupsLabel => 'Groups';
+
+	/// en: 'Only the chosen groups are loaded at all – keeping a big list slim and fast. New groups from the provider are added only once you choose them here.'
+	String get groupsDescription => 'Only the chosen groups are loaded at all – keeping a big list slim and fast. New groups from the provider are added only once you choose them here.';
+
+	/// en: 'All groups are loaded'
+	String get groupsAllLoaded => 'All groups are loaded';
+
+	/// en: '${count} chosen'
+	String groupsSummary({required Object count}) => '${count} chosen';
+
+	/// en: 'Loading groups …'
+	String get groupsLoading => 'Loading groups …';
+
+	/// en: 'The groups could not be loaded. Are the address and login right?'
+	String get groupsLoadFailed => 'The groups could not be loaded. Are the address and login right?';
+
+	/// en: 'Choose groups'
+	String get groupsTitle => 'Choose groups';
+
+	/// en: '${chosen} of ${total} chosen'
+	String groupsChosenOf({required Object chosen, required Object total}) => '${chosen} of ${total} chosen';
+
+	/// en: '${chosen} of ${total} chosen · ${channels} channels'
+	String groupsChosenWithChannels({required Object chosen, required Object total, required Object channels}) => '${chosen} of ${total} chosen · ${channels} channels';
+
+	/// en: 'Apply'
+	String get groupsApply => 'Apply';
+
+	/// en: 'Choose all'
+	String get groupsAll => 'Choose all';
+
+	/// en: 'Choose none'
+	String get groupsNone => 'Choose none';
+
+	/// en: 'No group'
+	String get groupsWithout => 'No group';
+
+	/// en: '${count} channels'
+	String groupsChannelCount({required Object count}) => '${count} channels';
+
+	/// en: 'new'
+	String get groupsNew => 'new';
 }
 
 // Path: trailerStage
@@ -11283,6 +11328,21 @@ extension on Translations {
 			'iptv.pickPlaylistTitle' => 'Choose an M3U file',
 			'iptv.localPlaylist' => ({required Object name}) => 'Local file: ${name}. Choose it again after changing the file.',
 			'iptv.playlistFileFailed' => 'The file could not be taken over.',
+			'iptv.groupsLabel' => 'Groups',
+			'iptv.groupsDescription' => 'Only the chosen groups are loaded at all – keeping a big list slim and fast. New groups from the provider are added only once you choose them here.',
+			'iptv.groupsAllLoaded' => 'All groups are loaded',
+			'iptv.groupsSummary' => ({required Object count}) => '${count} chosen',
+			'iptv.groupsLoading' => 'Loading groups …',
+			'iptv.groupsLoadFailed' => 'The groups could not be loaded. Are the address and login right?',
+			'iptv.groupsTitle' => 'Choose groups',
+			'iptv.groupsChosenOf' => ({required Object chosen, required Object total}) => '${chosen} of ${total} chosen',
+			'iptv.groupsChosenWithChannels' => ({required Object chosen, required Object total, required Object channels}) => '${chosen} of ${total} chosen · ${channels} channels',
+			'iptv.groupsApply' => 'Apply',
+			'iptv.groupsAll' => 'Choose all',
+			'iptv.groupsNone' => 'Choose none',
+			'iptv.groupsWithout' => 'No group',
+			'iptv.groupsChannelCount' => ({required Object count}) => '${count} channels',
+			'iptv.groupsNew' => 'new',
 			'trailerStage.title' => 'Trailer stage',
 			'trailerStage.mood' => 'What are you in the mood for?',
 			'trailerStage.kind' => 'Kind',
@@ -11381,6 +11441,8 @@ extension on Translations {
 			'plebz.downloading' => 'Downloading the update…',
 			'plebz.installPermissionTitle' => 'Allow installing',
 			'plebz.installPermissionBody' => 'To install updates, Plebz needs to be allowed once under "Install unknown apps". Then check for the update again.',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.openSettings' => 'Open settings',
 			'plebz.updateFailed' => 'The update could not be downloaded or installed.',
 			'plebz.noMatchingDownload' => 'This release has no file for this device.',
@@ -11396,8 +11458,6 @@ extension on Translations {
 			'localFiles.accessDenied' => 'Without all files access Plebz cannot browse folders here.',
 			'localFiles.volumes' => 'Storage',
 			'localFiles.up' => 'Up one level',
-			_ => null,
-		} ?? switch (path) {
 			'localFiles.noVolumes' => 'No storage found.',
 			'localFiles.unreadable' => 'This folder cannot be read.',
 			'localFiles.nothingHere' => ({required Object types}) => 'No folders here and no files of type ${types}.',

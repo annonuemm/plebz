@@ -2601,6 +2601,21 @@ class _Translations$iptv$de extends Translations$iptv$en {
 	@override String get pickPlaylistTitle => 'M3U-Datei wählen';
 	@override String localPlaylist({required Object name}) => 'Lokale Datei: ${name}. Nach Änderungen an der Datei erneut auswählen.';
 	@override String get playlistFileFailed => 'Die Datei konnte nicht übernommen werden.';
+	@override String get groupsLabel => 'Gruppen';
+	@override String get groupsDescription => 'Nur die gewählten Gruppen werden überhaupt geladen – das hält große Listen schlank und schnell. Neue Gruppen des Anbieters kommen erst dazu, wenn du sie hier auswählst.';
+	@override String get groupsAllLoaded => 'Alle Gruppen werden geladen';
+	@override String groupsSummary({required Object count}) => '${count} ausgewählt';
+	@override String get groupsLoading => 'Gruppen werden geladen …';
+	@override String get groupsLoadFailed => 'Die Gruppen konnten nicht geladen werden. Stimmen Adresse und Zugangsdaten?';
+	@override String get groupsTitle => 'Gruppen auswählen';
+	@override String groupsChosenOf({required Object chosen, required Object total}) => '${chosen} von ${total} ausgewählt';
+	@override String groupsChosenWithChannels({required Object chosen, required Object total, required Object channels}) => '${chosen} von ${total} ausgewählt · ${channels} Sender';
+	@override String get groupsApply => 'Übernehmen';
+	@override String get groupsAll => 'Alle auswählen';
+	@override String get groupsNone => 'Keine auswählen';
+	@override String get groupsWithout => 'Ohne Gruppe';
+	@override String groupsChannelCount({required Object count}) => '${count} Sender';
+	@override String get groupsNew => 'neu';
 }
 
 // Path: trailerStage
@@ -6028,6 +6043,21 @@ extension on TranslationsDe {
 			'iptv.pickPlaylistTitle' => 'M3U-Datei wählen',
 			'iptv.localPlaylist' => ({required Object name}) => 'Lokale Datei: ${name}. Nach Änderungen an der Datei erneut auswählen.',
 			'iptv.playlistFileFailed' => 'Die Datei konnte nicht übernommen werden.',
+			'iptv.groupsLabel' => 'Gruppen',
+			'iptv.groupsDescription' => 'Nur die gewählten Gruppen werden überhaupt geladen – das hält große Listen schlank und schnell. Neue Gruppen des Anbieters kommen erst dazu, wenn du sie hier auswählst.',
+			'iptv.groupsAllLoaded' => 'Alle Gruppen werden geladen',
+			'iptv.groupsSummary' => ({required Object count}) => '${count} ausgewählt',
+			'iptv.groupsLoading' => 'Gruppen werden geladen …',
+			'iptv.groupsLoadFailed' => 'Die Gruppen konnten nicht geladen werden. Stimmen Adresse und Zugangsdaten?',
+			'iptv.groupsTitle' => 'Gruppen auswählen',
+			'iptv.groupsChosenOf' => ({required Object chosen, required Object total}) => '${chosen} von ${total} ausgewählt',
+			'iptv.groupsChosenWithChannels' => ({required Object chosen, required Object total, required Object channels}) => '${chosen} von ${total} ausgewählt · ${channels} Sender',
+			'iptv.groupsApply' => 'Übernehmen',
+			'iptv.groupsAll' => 'Alle auswählen',
+			'iptv.groupsNone' => 'Keine auswählen',
+			'iptv.groupsWithout' => 'Ohne Gruppe',
+			'iptv.groupsChannelCount' => ({required Object count}) => '${count} Sender',
+			'iptv.groupsNew' => 'neu',
 			'trailerStage.title' => 'Trailerbühne',
 			'trailerStage.mood' => 'Worauf hast du heute Lust?',
 			'trailerStage.kind' => 'Art',

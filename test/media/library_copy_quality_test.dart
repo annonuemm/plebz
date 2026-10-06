@@ -174,6 +174,39 @@ void main() {
     });
   });
 
+  group('preference in the playback settings', () {
+    int compare(LibraryCopyQuality a, LibraryCopyQuality? b, BestCopyPreference preference) =>
+        compareLibraryCopyQuality(a, b, preference: preference);
+
+    final partial4k = _of(_version(resolution: '4k', dolbyVision: true), episodes: 8);
+    final completeHd = _of(_version(resolution: '1080'), episodes: 19);
+    final complete720 = _of(_version(resolution: '720'), episodes: 19);
+
+    test('complete: the copy with every episode first, then the better of two complete ones', () {
+      expect(compare(completeHd, partial4k, BestCopyPreference.complete), lessThan(0));
+      expect(compare(completeHd, complete720, BestCopyPreference.complete), lessThan(0));
+      expect(compare(partial4k, completeHd, BestCopyPreference.best), lessThan(0), reason: 'the default is unchanged');
+    });
+
+    test('complete: films, which have no episodes, rank as by quality', () {
+      final film4k = _of(_version(resolution: '4k'));
+      final filmHd = _of(_version(resolution: '1080'));
+      expect(compare(film4k, filmHd, BestCopyPreference.complete), lessThan(0));
+    });
+
+    test('Full HD: 1080p before 4K, the best 1080p first, 4K only before nothing', () {
+      final hd = _of(_version(resolution: '1080', bitrate: 8000));
+      final hdRicher = _of(_version(resolution: '1080', hdr: true, bitrate: 6000));
+      final uhd = _of(_version(resolution: '4k', dolbyVision: true));
+      final sd = _of(_version(resolution: '720'));
+      expect(compare(hd, uhd, BestCopyPreference.fullHd), lessThan(0));
+      expect(compare(hdRicher, hd, BestCopyPreference.fullHd), lessThan(0));
+      expect(compare(sd, uhd, BestCopyPreference.fullHd), lessThan(0), reason: 'smaller, but not above Full HD');
+      expect(compare(hd, sd, BestCopyPreference.fullHd), lessThan(0));
+      expect(compare(uhd, null, BestCopyPreference.fullHd), lessThan(0), reason: 'known before unknown');
+    });
+  });
+
   group('Dolby Vision switched off', () {
     test('profile 8 is worth its HDR10 base layer', () {
       final p8 = _of(_version(resolution: '4k', dolbyVision: true, dolbyVisionProfile: 8), dolbyVisionDisabled: true);

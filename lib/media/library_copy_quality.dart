@@ -90,19 +90,48 @@ class LibraryCopyQuality {
   bool get isKnown => resolution > 0 || dynamicRange > 0 || audio > 0 || bitrate > 0;
 }
 
-/// Best first: picture (resolution, then dynamic range), then sound, then
-/// bitrate — and only when all of that is equal, the copy with more episodes.
-/// The viewer's call: a copy in 4K that lacks episodes still comes before a
-/// complete one in HD, and says so. Unknown comes last.
-int compareLibraryCopyQuality(LibraryCopyQuality? a, LibraryCopyQuality? b) {
+/// Which library copy the Explore detail page puts first and opens from the
+/// button beside the poster — the viewer's choice in the playback settings.
+enum BestCopyPreference {
+  /// Picture, then sound, then bitrate; episodes only on a tie.
+  best,
+
+  /// For a series, the copy with the most episodes; the best of those. A film
+  /// has no episodes, so it ranks as with [best].
+  complete,
+
+  /// Copies up to 1080p first, the best of those; 4K only where nothing
+  /// smaller exists.
+  fullHd,
+}
+
+/// Best first, as [preference] has it — by default picture (resolution, then
+/// dynamic range), then sound, then bitrate, and only when all of that is
+/// equal, the copy with more episodes. The viewer's call: a copy in 4K that
+/// lacks episodes still comes before a complete one in HD, and says so.
+/// Unknown comes last whatever the preference.
+int compareLibraryCopyQuality(
+  LibraryCopyQuality? a,
+  LibraryCopyQuality? b, {
+  BestCopyPreference preference = BestCopyPreference.best,
+}) {
   final aKnown = a != null && a.isKnown;
   final bKnown = b != null && b.isKnown;
   if (aKnown != bKnown) return aKnown ? -1 : 1;
   if (!aKnown || !bKnown) return 0;
+  final byEpisodes = (b.episodes ?? 0).compareTo(a.episodes ?? 0);
+  if (preference == BestCopyPreference.complete && byEpisodes != 0) return byEpisodes;
+  if (preference == BestCopyPreference.fullHd) {
+    final byFit = _aboveFullHd(a).compareTo(_aboveFullHd(b));
+    if (byFit != 0) return byFit;
+  }
   final byPicture = _comparePicture(a, b);
   if (byPicture != 0) return byPicture;
-  return (b.episodes ?? 0).compareTo(a.episodes ?? 0);
+  return byEpisodes;
 }
+
+/// 1 for a copy above 1080p, 0 for one up to it — or of unknown size.
+int _aboveFullHd(LibraryCopyQuality quality) => quality.resolution > 1080 ? 1 : 0;
 
 int _comparePicture(LibraryCopyQuality a, LibraryCopyQuality b) {
   for (final (x, y) in [

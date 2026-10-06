@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import '../media/ids.dart';
+import '../media/library_copy_quality.dart';
 import '../media/playback_rate.dart';
 import '../media/watchlist_filter.dart';
 import '../media/year_filter.dart';
@@ -787,6 +788,14 @@ class SettingsService extends BaseSharedPreferencesService {
   /// receiver in the middle, or a set whose Dolby Vision mode looks worse than
   /// its HDR10 one. Profile 5 carries no base layer and is left alone.
   static const disableDolbyVision = BoolPref('disable_dolby_vision');
+
+  /// Which library copy the Explore detail page ranks first and opens from
+  /// the button beside the poster (fork addition).
+  static const bestCopyPreference = EnumPref<BestCopyPreference>(
+    'best_copy_preference',
+    values: BestCopyPreference.values,
+    defaultValue: BestCopyPreference.best,
+  );
 
   static const hdrSdrConversion = EnumPref<HdrSdrConversion>(
     'hdr_sdr_conversion',
@@ -1837,6 +1846,7 @@ class SettingsService extends BaseSharedPreferencesService {
     tunneledPlaybackLiveTv,
     dvConversionMode,
     disableDolbyVision,
+    bestCopyPreference,
     hdrSdrConversion,
     musicVolume,
     resumeMusicOnLaunch,

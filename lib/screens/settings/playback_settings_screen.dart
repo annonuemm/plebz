@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../i18n/strings.g.dart';
+import '../../media/library_copy_quality.dart';
 import '../../models/audio_channel_limit.dart';
 import '../../models/audio_quality_preset.dart';
 import '../../models/transcode_quality_preset.dart';
@@ -140,6 +141,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
                 // machine too weak for a codec says so (#2443).
                 if (PlatformDetector.isDesktopOS()) _videoCodecsTile(),
                 _musicQualityTile(),
+                _bestCopyPreferenceTile(),
               ],
             ),
 
@@ -719,6 +721,32 @@ class PlaybackSettingsScreen extends StatelessWidget {
 
   // Plex-only effect: MediaBrowser servers make the equivalent
   // direct-play-vs-transcode call server-side (#2152, #2193).
+  /// Which copy the Explore detail page's button opens (Plebz).
+  Widget _bestCopyPreferenceTile() => SettingSelectionTile<BestCopyPreference>(
+    pref: SettingsService.bestCopyPreference,
+    icon: Symbols.workspace_premium_rounded,
+    title: t.settings.bestCopy,
+    subtitleBuilder: (preference) => '${_bestCopyLabel(preference)} · ${t.settings.bestCopyDescription}',
+    options: [
+      for (final preference in BestCopyPreference.values)
+        DialogOption(
+          value: preference,
+          title: _bestCopyLabel(preference),
+          subtitle: switch (preference) {
+            BestCopyPreference.best => t.settings.bestCopyBestDescription,
+            BestCopyPreference.complete => t.settings.bestCopyCompleteDescription,
+            BestCopyPreference.fullHd => t.settings.bestCopyFullHdDescription,
+          },
+        ),
+    ],
+  );
+
+  static String _bestCopyLabel(BestCopyPreference preference) => switch (preference) {
+    BestCopyPreference.best => t.settings.bestCopyBest,
+    BestCopyPreference.complete => t.settings.bestCopyComplete,
+    BestCopyPreference.fullHd => t.settings.bestCopyFullHd,
+  };
+
   Widget _directPlayCoveredQualityTile() => SettingSwitchTile(
     pref: SettingsService.directPlayCoveredQuality,
     icon: Symbols.bolt_rounded,

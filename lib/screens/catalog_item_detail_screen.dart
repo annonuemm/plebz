@@ -268,10 +268,15 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
     _settleBestCopyFocus();
   }
 
-  /// Best copy first: what the servers said about the files, then — where
-  /// they said nothing, or the same — the lookup's own order.
+  /// Best copy first, as the playback settings rank it: what the servers said
+  /// about the files, then — where they said nothing, or the same — the
+  /// lookup's own order.
   int _compareCopies(MediaItem a, MediaItem b) {
-    final byQuality = compareLibraryCopyQuality(_copyQuality[a.globalKey], _copyQuality[b.globalKey]);
+    final byQuality = compareLibraryCopyQuality(
+      _copyQuality[a.globalKey],
+      _copyQuality[b.globalKey],
+      preference: SettingsService.instanceOrNull?.read(SettingsService.bestCopyPreference) ?? BestCopyPreference.best,
+    );
     return byQuality != 0 ? byQuality : compareLibraryCopies(a, b);
   }
 

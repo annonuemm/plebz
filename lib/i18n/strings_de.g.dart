@@ -321,6 +321,14 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get cellularQualitySameAsDefault => 'Wie Standardqualität';
 	@override String get directPlayCoveredQuality => 'Kleinere Videos in Originalqualität abspielen';
 	@override String get directPlayCoveredQualityDescription => 'Videos, die bereits innerhalb des Qualitätslimits liegen, per Direct Play abspielen, statt sie zu transkodieren';
+	@override String get bestCopy => 'Fassung auf Erkunden-Seiten';
+	@override String get bestCopyDescription => 'Welche Fassung aus deinen Mediatheken oben steht und vom Button neben dem Poster geöffnet wird';
+	@override String get bestCopyBest => 'Beste Qualität';
+	@override String get bestCopyBestDescription => 'Bild, dann Ton, dann Bitrate. Bei Serien zählt die Qualität vor der Zahl der Folgen';
+	@override String get bestCopyComplete => 'Beste vollständige Fassung';
+	@override String get bestCopyCompleteDescription => 'Bei Serien die Fassung mit den meisten Folgen, davon die beste. Filme wie „Beste Qualität“';
+	@override String get bestCopyFullHd => 'Full HD bevorzugen';
+	@override String get bestCopyFullHdDescription => 'Fassungen bis 1080p zuerst, davon die beste. 4K nur, wenn es nichts anderes gibt';
 	@override String get videoCodecs => 'Video-Codecs';
 	@override String get videoCodecsDescription => 'Nicht ausgewählte Codecs transkodiert der Server';
 	@override String get videoCodecsAlwaysAccepted => 'Immer akzeptiert';
@@ -3819,6 +3827,14 @@ extension on TranslationsDe {
 			'settings.cellularQualitySameAsDefault' => 'Wie Standardqualität',
 			'settings.directPlayCoveredQuality' => 'Kleinere Videos in Originalqualität abspielen',
 			'settings.directPlayCoveredQualityDescription' => 'Videos, die bereits innerhalb des Qualitätslimits liegen, per Direct Play abspielen, statt sie zu transkodieren',
+			'settings.bestCopy' => 'Fassung auf Erkunden-Seiten',
+			'settings.bestCopyDescription' => 'Welche Fassung aus deinen Mediatheken oben steht und vom Button neben dem Poster geöffnet wird',
+			'settings.bestCopyBest' => 'Beste Qualität',
+			'settings.bestCopyBestDescription' => 'Bild, dann Ton, dann Bitrate. Bei Serien zählt die Qualität vor der Zahl der Folgen',
+			'settings.bestCopyComplete' => 'Beste vollständige Fassung',
+			'settings.bestCopyCompleteDescription' => 'Bei Serien die Fassung mit den meisten Folgen, davon die beste. Filme wie „Beste Qualität“',
+			'settings.bestCopyFullHd' => 'Full HD bevorzugen',
+			'settings.bestCopyFullHdDescription' => 'Fassungen bis 1080p zuerst, davon die beste. 4K nur, wenn es nichts anderes gibt',
 			'settings.videoCodecs' => 'Video-Codecs',
 			'settings.videoCodecsDescription' => 'Nicht ausgewählte Codecs transkodiert der Server',
 			'settings.videoCodecsAlwaysAccepted' => 'Immer akzeptiert',
@@ -4132,6 +4148,8 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.modeSwitching' => 'Moduswechsel',
 			'settings.hardwareTestLabels.displayMode' => 'Modus',
 			'settings.hardwareTestLabels.displayModes' => 'Bildschirmmodi',
+			_ => null,
+		} ?? switch (path) {
 			'settings.hardwareTestLabels.hdrFormats' => 'HDR-Formate',
 			'settings.hardwareTestLabels.wideColour' => 'Erweiterter Farbraum',
 			'settings.hardwareTestLabels.peakBrightness' => 'Spitzenhelligkeit',
@@ -4140,8 +4158,6 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.hardwareDecoder' => 'Hardware',
 			'settings.hardwareTestLabels.noHardwareDecoder' => 'nur Software',
 			'settings.hardwareTestLabels.tunneling' => 'Tunneling',
-			_ => null,
-		} ?? switch (path) {
 			'settings.hardwareTestLabels.possible' => 'möglich',
 			'settings.hardwareTestLabels.notPossible' => 'nicht möglich',
 			'settings.hardwareTestLabels.unavailable' => 'nicht verfügbar',
@@ -4646,6 +4662,8 @@ extension on TranslationsDe {
 			'profiles.deleteThisProfileTitle' => 'Dieses Profil löschen?',
 			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => '${displayName} entfernen. Verbindungen bleiben unberührt.',
 			'profiles.active' => 'Aktiv',
+			_ => null,
+		} ?? switch (path) {
 			'profiles.manage' => 'Verwalten',
 			'profiles.delete' => 'Löschen',
 			'profiles.signOut' => 'Abmelden',
@@ -4654,8 +4672,6 @@ extension on TranslationsDe {
 			'profiles.signedOutPlex' => 'Von Plex abgemeldet.',
 			'profiles.signOutFailed' => 'Abmeldung fehlgeschlagen.',
 			'profiles.sectionTitle' => 'Profile',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.summarySingle' => 'Profile hinzufügen, um verwaltete Benutzer mit lokalen Identitäten zu kombinieren',
 			'profiles.summaryMultipleWithActive' => ({required Object count, required Object activeName}) => '${count} Profile · aktiv: ${activeName}',
 			'profiles.summaryMultiple' => ({required Object count}) => '${count} Profile',
@@ -5160,6 +5176,8 @@ extension on TranslationsDe {
 			'liveTv.now' => 'Jetzt',
 			'liveTv.today' => 'Heute',
 			'liveTv.tomorrow' => 'Morgen',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.midnight' => 'Mitternacht',
 			'liveTv.overnight' => 'Nacht',
 			'liveTv.morning' => 'Morgen',
@@ -5168,8 +5186,6 @@ extension on TranslationsDe {
 			'liveTv.lateNight' => 'Spätnacht',
 			'liveTv.whatsOn' => 'Jetzt im TV',
 			'liveTv.watchChannel' => 'Kanal ansehen',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.favorites' => 'Favoriten',
 			'liveTv.reorderFavorites' => 'Favoriten sortieren',
 			'liveTv.noFavoriteChannels' => 'Keine Lieblingssender',
@@ -5674,6 +5690,8 @@ extension on TranslationsDe {
 			'performanceOverlay.hwFormat' => 'HW-Format',
 			'performanceOverlay.matrix' => 'Matrix',
 			'performanceOverlay.primaries' => 'Primärfarben',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.transfer' => 'Transfer',
 			'performanceOverlay.renderFps' => 'Render-FPS',
 			'performanceOverlay.displayFps' => 'Display-FPS',
@@ -5682,8 +5700,6 @@ extension on TranslationsDe {
 			'performanceOverlay.dvRpus' => 'DV-RPUs',
 			'performanceOverlay.dvRpuAverage' => 'DV-RPU Ø',
 			'performanceOverlay.dvSampleAverage' => 'DV-Sample Ø',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.maxLuma' => 'Max. Luma',
 			'performanceOverlay.minLuma' => 'Min. Luma',
 			'performanceOverlay.maxCll' => 'MaxCLL',

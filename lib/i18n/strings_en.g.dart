@@ -659,6 +659,30 @@ class Translations$settings$en {
 	/// en: 'Direct play videos already within the quality limit instead of transcoding them'
 	String get directPlayCoveredQualityDescription => 'Direct play videos already within the quality limit instead of transcoding them';
 
+	/// en: 'Copy on Explore pages'
+	String get bestCopy => 'Copy on Explore pages';
+
+	/// en: 'Which copy from your libraries is listed first and opened by the button beside the poster'
+	String get bestCopyDescription => 'Which copy from your libraries is listed first and opened by the button beside the poster';
+
+	/// en: 'Best quality'
+	String get bestCopyBest => 'Best quality';
+
+	/// en: 'Picture, then sound, then bitrate. For series, quality comes before the number of episodes'
+	String get bestCopyBestDescription => 'Picture, then sound, then bitrate. For series, quality comes before the number of episodes';
+
+	/// en: 'Best complete copy'
+	String get bestCopyComplete => 'Best complete copy';
+
+	/// en: 'For series, the copy with the most episodes, the best of those. Films as with “Best quality”'
+	String get bestCopyCompleteDescription => 'For series, the copy with the most episodes, the best of those. Films as with “Best quality”';
+
+	/// en: 'Prefer Full HD'
+	String get bestCopyFullHd => 'Prefer Full HD';
+
+	/// en: 'Copies up to 1080p first, the best of those. 4K only when there is nothing else'
+	String get bestCopyFullHdDescription => 'Copies up to 1080p first, the best of those. 4K only when there is nothing else';
+
 	/// en: 'Video Codecs'
 	String get videoCodecs => 'Video Codecs';
 
@@ -9064,6 +9088,14 @@ extension on Translations {
 			'settings.cellularQualitySameAsDefault' => 'Same as Default Quality',
 			'settings.directPlayCoveredQuality' => 'Play Smaller Videos at Original Quality',
 			'settings.directPlayCoveredQualityDescription' => 'Direct play videos already within the quality limit instead of transcoding them',
+			'settings.bestCopy' => 'Copy on Explore pages',
+			'settings.bestCopyDescription' => 'Which copy from your libraries is listed first and opened by the button beside the poster',
+			'settings.bestCopyBest' => 'Best quality',
+			'settings.bestCopyBestDescription' => 'Picture, then sound, then bitrate. For series, quality comes before the number of episodes',
+			'settings.bestCopyComplete' => 'Best complete copy',
+			'settings.bestCopyCompleteDescription' => 'For series, the copy with the most episodes, the best of those. Films as with “Best quality”',
+			'settings.bestCopyFullHd' => 'Prefer Full HD',
+			'settings.bestCopyFullHdDescription' => 'Copies up to 1080p first, the best of those. 4K only when there is nothing else',
 			'settings.videoCodecs' => 'Video Codecs',
 			'settings.videoCodecsDescription' => 'Unchecked codecs are transcoded by the server',
 			'settings.videoCodecsAlwaysAccepted' => 'Always accepted',
@@ -9377,6 +9409,8 @@ extension on Translations {
 			'settings.hardwareTestSections.display' => 'Display',
 			'settings.hardwareTestSections.colour' => 'Colour & HDR',
 			'settings.hardwareTestSections.audio' => 'Audio',
+			_ => null,
+		} ?? switch (path) {
 			'settings.hardwareTestSections.video' => 'Video decoders',
 			'settings.hardwareTestLabels.model' => 'Model',
 			'settings.hardwareTestLabels.system' => 'System',
@@ -9385,8 +9419,6 @@ extension on Translations {
 			'settings.hardwareTestLabels.currentMode' => 'Current mode',
 			'settings.hardwareTestLabels.modeSwitching' => 'Mode switching',
 			'settings.hardwareTestLabels.displayMode' => 'Mode',
-			_ => null,
-		} ?? switch (path) {
 			'settings.hardwareTestLabels.displayModes' => 'Display modes',
 			'settings.hardwareTestLabels.hdrFormats' => 'HDR formats',
 			'settings.hardwareTestLabels.wideColour' => 'Wide colour gamut',
@@ -9891,6 +9923,8 @@ extension on Translations {
 			'mpvConfig.presetDeleted' => 'Preset deleted',
 			'mpvConfig.confirmDeletePreset' => 'Are you sure you want to delete this preset?',
 			'mpvConfig.configPlaceholder' => 'gpu-api=vulkan\nhwdec=auto\n# comment',
+			_ => null,
+		} ?? switch (path) {
 			'mpvConfig.lineHint' => 'option=value',
 			'mpvConfig.addLine' => 'Add line',
 			'mpvConfig.removeLine' => 'Remove line',
@@ -9899,8 +9933,6 @@ extension on Translations {
 			'profiles.addPlezyProfile' => 'Add Plebz profile',
 			'profiles.switchingProfile' => 'Switching profile…',
 			'profiles.deleteThisProfileTitle' => 'Delete this profile?',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => 'Remove ${displayName}. Connections aren\'t affected.',
 			'profiles.active' => 'Active',
 			'profiles.manage' => 'Manage',
@@ -10405,6 +10437,8 @@ extension on Translations {
 			'explore.detail.favoritedBy' => ({required Object who}) => 'Favorited by ${who}',
 			'explore.detail.unairedEpisodes' => ({required Object n}) => '${n} not aired yet',
 			'explore.detail.recommendedByPercent' => ({required Object percent}) => 'Recommended by ${percent} of viewers',
+			_ => null,
+		} ?? switch (path) {
 			'explore.detail.relatedTitles' => 'Related titles',
 			'explore.detail.background' => 'Background',
 			'explore.detail.networks' => 'Networks & Streaming',
@@ -10413,8 +10447,6 @@ extension on Translations {
 			'explore.watchlistKeptLocallyNoIds' => 'Kept in Plebz: the server holds no external ids for this title, so it stays on this device.',
 			'watchlist.typeFilter' => 'Show',
 			'watchlist.statusFilter' => 'Watch state',
-			_ => null,
-		} ?? switch (path) {
 			'watchlist.allTypes' => 'Movies and series',
 			'watchlist.moviesOnly' => 'Movies only',
 			'watchlist.showsOnly' => 'Series only',
@@ -10919,6 +10951,8 @@ extension on Translations {
 			'videoSettings.playbackSpeed' => 'Playback Speed',
 			'videoSettings.normalSpeed' => 'Normal',
 			'videoSettings.sleepTimerActive' => ({required Object duration}) => 'Active (${duration})',
+			_ => null,
+		} ?? switch (path) {
 			'videoSettings.zoom' => 'Zoom',
 			'videoSettings.sleepTimer' => 'Sleep Timer',
 			'videoSettings.audioSync' => 'Audio Sync',
@@ -10927,8 +10961,6 @@ extension on Translations {
 			'videoSettings.hdrUnsupported' => 'HDR isn\'t available here — this desktop compositor or video output can\'t carry it.',
 			'videoSettings.hdrToneMapping' => 'HDR Tone Mapping',
 			'videoSettings.hdrToneMappingCompositor' => 'Compositor',
-			_ => null,
-		} ?? switch (path) {
 			'videoSettings.hdrToneMappingCompositorDescription' => 'Pass the source\'s HDR metadata through and let the desktop compositor map it.',
 			'videoSettings.hdrToneMappingPlayer' => 'Player',
 			'videoSettings.hdrToneMappingPlayerDescription' => 'Map to the display\'s peak brightness in the player, then tell the compositor the result.',
@@ -11433,6 +11465,8 @@ extension on Translations {
 			'plebz.checking' => 'Checking for updates…',
 			'plebz.checkFailed' => 'GitHub could not be reached. The reason is under "View logs".',
 			'plebz.updatedTitle' => 'Plebz was updated',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.updatedBody' => ({required Object version, required Object build}) => 'You are now on Plebz ${version} (Build ${build}).',
 			'plebz.checkForUpdates' => 'Check for updates',
 			'plebz.checkForUpdatesDescription' => 'Look for a newer Plebz on GitHub',
@@ -11441,8 +11475,6 @@ extension on Translations {
 			'plebz.downloading' => 'Downloading the update…',
 			'plebz.installPermissionTitle' => 'Allow installing',
 			'plebz.installPermissionBody' => 'To install updates, Plebz needs to be allowed once under "Install unknown apps". Then check for the update again.',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.openSettings' => 'Open settings',
 			'plebz.updateFailed' => 'The update could not be downloaded or installed.',
 			'plebz.noMatchingDownload' => 'This release has no file for this device.',

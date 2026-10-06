@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.8.1 (Build 636)
+
+- Erkunden: Unter Einstellungen → Wiedergabe → „Fassung auf Erkunden-Seiten“ wählst du, welche Fassung aus deinen Mediatheken oben steht und vom Knopf neben dem Poster geöffnet wird: beste Qualität (wie bisher), beste vollständige Fassung (bei Serien die mit den meisten Folgen) oder Full HD bevorzugen.
+
 ## 1.8.0 (Build 634)
 
 - IPTV: Gruppen auswählen. Beim Hinzufügen oder Bearbeiten einer Quelle (M3U-Adresse, Datei oder Xtream) lädt „Gruppen“ zuerst nur die Gruppenliste – angehakt wird, was du willst, und nur diese Gruppen werden überhaupt geladen. Das hält große Listen schlank und schnell. Neue Gruppen des Anbieters kommen erst dazu, wenn du sie auswählst; sie sind mit „neu“ markiert.

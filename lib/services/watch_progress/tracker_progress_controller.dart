@@ -171,6 +171,10 @@ class TrackerProgressController extends ChangeNotifier {
       final generation = ++_generation;
       _profileId = profileId;
       _state = TrackerWatchState.empty;
+      _retryTimer?.cancel();
+      _lastSyncAt = null;
+      _syncFailed = false;
+      _failedSyncs = 0;
       _indexes.clear();
       _indexedAt.clear();
       _patches.clear();
@@ -195,26 +199,86 @@ class TrackerProgressController extends ChangeNotifier {
   /// grown old; one pass at a time.
   Future<void> refresh() => _refreshing ??= _refresh().whenComplete(() => _refreshing = null);
 
-  Future<void> _refresh() async {
+  /// "Jetzt abgleichen": everything asked again — Simkl whole rather than what
+  /// changed, every server's ids anew. Waits for a pass already under way
+  /// first. True when Simkl answered.
+  Future<bool> syncNow() async {
+    await _refreshing;
+    if (!isActive) return false;
+    await (_refreshing = _refresh(full: true).whenComplete(() => _refreshing = null));
+    return isActive && !_syncFailed;
+  }
+
+  /// After a failed sync, when to try again: sooner first, then less often.
+  static const List<Duration> defaultRetryDelays = [Duration(minutes: 1), Duration(minutes: 5), Duration(minutes: 15)];
+
+  @visibleForTesting
+  static List<Duration> retryDelays = defaultRetryDelays;
+
+  DateTime? _lastSyncAt;
+  bool _syncFailed = false;
+  bool _syncing = false;
+  int _failedSyncs = 0;
+  Timer? _retryTimer;
+
+  /// When Simkl last answered a sync; null before the first.
+  DateTime? get lastSyncAt => _lastSyncAt;
+
+  /// Whether the last sync failed — a retry is then on its way.
+  bool get syncFailed => _syncFailed;
+
+  /// Whether a sync is under way.
+  bool get syncing => _syncing;
+
+  void _scheduleRetry() {
+    _retryTimer?.cancel();
+    final delay = retryDelays[(_failedSyncs - 1).clamp(0, retryDelays.length - 1)];
+    _retryTimer = Timer(delay, () => unawaited(refresh()));
+  }
+
+  Future<void> _refresh({bool full = false}) async {
     final generation = _generation;
     final simkl = _simkl;
     final files = _files;
     if (simkl == null || files == null) return;
+    _syncing = true;
+    notifyListeners();
+    try {
+      await _refreshWith(simkl, files, generation, full: full);
+    } finally {
+      if (generation == _generation) {
+        _syncing = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> _refreshWith(SimklClient simkl, TrackerWatchFiles files, int generation, {required bool full}) async {
     var changed = false;
     try {
-      final next = await SimklWatchSync(simkl).refresh(_state);
+      final next = await SimklWatchSync(simkl).refresh(full ? _state.withoutSyncMarks() : _state);
       if (generation != _generation) return;
+      _lastSyncAt = clock.now();
+      _syncFailed = false;
+      _failedSyncs = 0;
+      _retryTimer?.cancel();
       if (!identical(next, _state)) {
         _state = next;
         changed = true;
         unawaited(files.writeState(next));
       }
     } catch (error) {
-      appLogger.w('Tracker progress: Simkl sync failed', error: error);
+      if (generation != _generation) return;
+      // Not left until the next resume or profile switch: a first sync that
+      // failed kept the profile blank until the viewer reconnected Simkl.
+      _syncFailed = true;
+      _failedSyncs++;
+      _scheduleRetry();
+      appLogger.w('Tracker progress: Simkl sync failed (attempt $_failedSyncs), trying again later', error: error);
     }
     for (final MapEntry(key: serverId, value: client) in _servers.entries) {
       final at = _indexedAt[serverId];
-      if (at != null && clock.now().difference(at) < indexLifetime) continue;
+      if (!full && at != null && clock.now().difference(at) < indexLifetime) continue;
       try {
         final index = await client.fetchExternalIdIndex();
         if (generation != _generation) return;
@@ -272,6 +336,11 @@ class TrackerProgressController extends ChangeNotifier {
     if (_profileId == null && _simkl == null) return;
     _generation++;
     _echoTimer?.cancel();
+    _retryTimer?.cancel();
+    _lastSyncAt = null;
+    _syncFailed = false;
+    _syncing = false;
+    _failedSyncs = 0;
     _profileId = null;
     _simkl = null;
     _servers = const {};
@@ -297,6 +366,7 @@ class TrackerProgressController extends ChangeNotifier {
   void debugReset() {
     _deactivate();
     rootDirectory = _defaultRoot;
+    retryDelays = defaultRetryDelays;
   }
 }
 

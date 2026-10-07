@@ -6260,6 +6260,33 @@ class Translations$services$en {
 	/// en: 'Good to know: playback is still reported to the server, so transcodes keep running and the admin sees who is watching. Past about 90 %, Plex then marks the item watched on the account itself. That only matters when another profile uses the same account without Simkl.'
 	String get ownProgressNote => 'Good to know: playback is still reported to the server, so transcodes keep running and the admin sees who is watching. Past about 90 %, Plex then marks the item watched on the account itself. That only matters when another profile uses the same account without Simkl.';
 
+	/// en: 'Sync with Simkl'
+	String get syncStatusTitle => 'Sync with Simkl';
+
+	/// en: 'Last synced at ${time} · ${shows} series, ${movies} films'
+	String syncStatusOk({required Object time, required Object shows, required Object movies}) => 'Last synced at ${time} · ${shows} series, ${movies} films';
+
+	/// en: 'Not synced yet'
+	String get syncStatusNever => 'Not synced yet';
+
+	/// en: 'Syncing …'
+	String get syncStatusRunning => 'Syncing …';
+
+	/// en: 'Last sync failed – Plebz will try again shortly by itself'
+	String get syncStatusFailed => 'Last sync failed – Plebz will try again shortly by itself';
+
+	/// en: 'Sync now'
+	String get syncNow => 'Sync now';
+
+	/// en: 'Fetches the whole state from Simkl again right away. Useful when watched marks, resume points or Continue Watching look wrong, or after watching on another device.'
+	String get syncNowDescription => 'Fetches the whole state from Simkl again right away. Useful when watched marks, resume points or Continue Watching look wrong, or after watching on another device.';
+
+	/// en: 'Synced with Simkl'
+	String get syncNowDone => 'Synced with Simkl';
+
+	/// en: 'Simkl did not answer. Plebz will try again shortly.'
+	String get syncNowFailed => 'Simkl did not answer. Plebz will try again shortly.';
+
 	/// en: 'Disconnect ${service}?'
 	String disconnectConfirm({required Object service}) => 'Disconnect ${service}?';
 
@@ -11468,6 +11495,15 @@ extension on Translations {
 			'services.ownProgress' => 'Own progress via Simkl',
 			'services.ownProgressDescription' => 'This profile takes watched marks, Continue Watching and resume points from Simkl instead of the server. Every profile keeps its own state, even when several share one server account.',
 			'services.ownProgressNote' => 'Good to know: playback is still reported to the server, so transcodes keep running and the admin sees who is watching. Past about 90 %, Plex then marks the item watched on the account itself. That only matters when another profile uses the same account without Simkl.',
+			'services.syncStatusTitle' => 'Sync with Simkl',
+			'services.syncStatusOk' => ({required Object time, required Object shows, required Object movies}) => 'Last synced at ${time} · ${shows} series, ${movies} films',
+			'services.syncStatusNever' => 'Not synced yet',
+			'services.syncStatusRunning' => 'Syncing …',
+			'services.syncStatusFailed' => 'Last sync failed – Plebz will try again shortly by itself',
+			'services.syncNow' => 'Sync now',
+			'services.syncNowDescription' => 'Fetches the whole state from Simkl again right away. Useful when watched marks, resume points or Continue Watching look wrong, or after watching on another device.',
+			'services.syncNowDone' => 'Synced with Simkl',
+			'services.syncNowFailed' => 'Simkl did not answer. Plebz will try again shortly.',
 			'services.disconnectConfirm' => ({required Object service}) => 'Disconnect ${service}?',
 			'services.disconnectConfirmBody' => ({required Object service}) => 'Plebz will stop updating ${service}. Reconnect any time.',
 			'services.connectFailed' => ({required Object service}) => 'Couldn\'t connect to ${service}. Try again.',
@@ -11714,6 +11750,8 @@ extension on Translations {
 			'plebz.extrasTitle' => 'Almost done',
 			'plebz.extrasBody' => 'Add more sources and connect the services you use. Everything here is optional, apart from one source to watch from.',
 			'plebz.sourcesGroup' => 'Sources',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.extrasGroup' => 'Extras',
 			'plebz.profilesGroup' => 'More than one viewer?',
 			'plebz.profilesHint' => 'Plebz can hold several profiles, even when everyone shares one Plex account. So that each person keeps their own progress, watched marks and watchlist, connect every profile to its own Simkl account and turn on “Own progress via Simkl” there. Add more profiles under Settings → Profiles → “Add Plebz profile”.',
@@ -11723,8 +11761,6 @@ extension on Translations {
 			'plebz.setupAgain' => 'Run setup again',
 			'plebz.setupAgainDescription' => 'Look, sources and services, step by step',
 			'plebz.updateAvailableTitle' => 'Update available',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.updateAvailableBody' => ({required Object release}) => '${release} is ready to install. Your settings and sign-ins stay as they are.',
 			'plebz.updateNow' => 'Update',
 			'plebz.later' => 'Later',

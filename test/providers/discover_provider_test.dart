@@ -22,6 +22,7 @@ import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/services/recommendation_feedback_store.dart';
 import 'package:plezy/services/recommendations_service.dart';
+import 'package:plezy/services/watch_progress/tracker_progress_controller.dart';
 import 'package:plezy/utils/deletion_notifier.dart';
 import 'package:plezy/utils/watch_state_notifier.dart';
 import 'package:plezy/utils/library_content_notifier.dart';
@@ -565,6 +566,38 @@ void main() {
 
     expect(aggregation.onDeckCalls, onDeckCallsBefore + 2);
     expect(aggregation.hubCalls, hubCallsBefore);
+  });
+
+  test('news from a tracker-led profile\'s tracker refreshes continue watching only', () async {
+    aggregation.onDeckResult = () => [_item('ep-1')];
+    aggregation.hubsResult = () => [_hub('hub-1')];
+    await provider.load();
+    final hubCallsBefore = aggregation.hubCalls;
+
+    aggregation.onDeckResult = () => [_item('ep-2')];
+    TrackerProgressController.instance.revision.value++;
+    await pumpEventQueue();
+
+    expect(provider.onDeck.map((item) => item.id), ['ep-2']);
+    expect(aggregation.hubCalls, hubCallsBefore);
+  });
+
+  test('a tracker bound while the first pass runs — a profile switch — loads the page once more', () async {
+    final gate = Completer<void>();
+    aggregation.onDeckGate = gate.future;
+    aggregation.onDeckStarted = Completer<void>();
+    aggregation.onDeckResult = () => [_item(aggregation.onDeckCalls == 1 ? 'old-profile' : 'new-profile')];
+    aggregation.hubsResult = () => [_hub('hub-1')];
+
+    final first = provider.load();
+    await aggregation.onDeckStarted!.future;
+    TrackerProgressController.instance.revision.value++;
+    gate.complete();
+    await first;
+    await pumpEventQueue();
+
+    expect(aggregation.onDeckCalls, 2);
+    expect(provider.onDeck.map((item) => item.id), ['new-profile']);
   });
 
   test('full, background, and delta publication forward the profile owner', () async {

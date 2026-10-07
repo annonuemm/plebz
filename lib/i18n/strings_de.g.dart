@@ -2480,6 +2480,15 @@ class _Translations$services$de extends Translations$services$en {
 	@override String get ownProgress => 'Eigener Fortschritt über Simkl';
 	@override String get ownProgressDescription => 'Dieses Profil nimmt Gesehen-Häkchen, Weiter ansehen und Fortsetzen-Stellen aus Simkl statt vom Server. So hat jedes Profil seinen eigenen Stand, auch wenn sich mehrere ein Server-Konto teilen.';
 	@override String get ownProgressNote => 'Gut zu wissen: Beim Abspielen meldet Plebz weiter an den Server, damit Umwandlungen laufen und der Admin sieht, wer schaut. Ab etwa 90 % setzt Plex auf dem Konto dann selbst den Haken. Das stört nur, wenn ein anderes Profil dasselbe Konto ohne Simkl nutzt.';
+	@override String get syncStatusTitle => 'Abgleich mit Simkl';
+	@override String syncStatusOk({required Object time, required Object shows, required Object movies}) => 'Zuletzt abgeglichen um ${time} · ${shows} Serien, ${movies} Filme';
+	@override String get syncStatusNever => 'Noch nicht abgeglichen';
+	@override String get syncStatusRunning => 'Wird gerade abgeglichen …';
+	@override String get syncStatusFailed => 'Letzter Abgleich fehlgeschlagen – Plebz versucht es gleich von selbst erneut';
+	@override String get syncNow => 'Jetzt abgleichen';
+	@override String get syncNowDescription => 'Holt den kompletten Stand sofort neu von Simkl. Hilfreich, wenn Haken, Fortsetzen-Stellen oder „Weiter ansehen“ nicht stimmen, oder wenn gerade auf einem anderen Gerät geschaut wurde.';
+	@override String get syncNowDone => 'Mit Simkl abgeglichen';
+	@override String get syncNowFailed => 'Simkl hat nicht geantwortet. Plebz versucht es gleich erneut.';
 	@override String disconnectConfirm({required Object service}) => '${service} trennen?';
 	@override String disconnectConfirmBody({required Object service}) => 'Plebz aktualisiert ${service} nicht mehr. Jederzeit erneut verbinden.';
 	@override String connectFailed({required Object service}) => 'Verbindung zu ${service} fehlgeschlagen. Versuche es erneut.';
@@ -6008,6 +6017,15 @@ extension on TranslationsDe {
 			'services.ownProgress' => 'Eigener Fortschritt über Simkl',
 			'services.ownProgressDescription' => 'Dieses Profil nimmt Gesehen-Häkchen, Weiter ansehen und Fortsetzen-Stellen aus Simkl statt vom Server. So hat jedes Profil seinen eigenen Stand, auch wenn sich mehrere ein Server-Konto teilen.',
 			'services.ownProgressNote' => 'Gut zu wissen: Beim Abspielen meldet Plebz weiter an den Server, damit Umwandlungen laufen und der Admin sieht, wer schaut. Ab etwa 90 % setzt Plex auf dem Konto dann selbst den Haken. Das stört nur, wenn ein anderes Profil dasselbe Konto ohne Simkl nutzt.',
+			'services.syncStatusTitle' => 'Abgleich mit Simkl',
+			'services.syncStatusOk' => ({required Object time, required Object shows, required Object movies}) => 'Zuletzt abgeglichen um ${time} · ${shows} Serien, ${movies} Filme',
+			'services.syncStatusNever' => 'Noch nicht abgeglichen',
+			'services.syncStatusRunning' => 'Wird gerade abgeglichen …',
+			'services.syncStatusFailed' => 'Letzter Abgleich fehlgeschlagen – Plebz versucht es gleich von selbst erneut',
+			'services.syncNow' => 'Jetzt abgleichen',
+			'services.syncNowDescription' => 'Holt den kompletten Stand sofort neu von Simkl. Hilfreich, wenn Haken, Fortsetzen-Stellen oder „Weiter ansehen“ nicht stimmen, oder wenn gerade auf einem anderen Gerät geschaut wurde.',
+			'services.syncNowDone' => 'Mit Simkl abgeglichen',
+			'services.syncNowFailed' => 'Simkl hat nicht geantwortet. Plebz versucht es gleich erneut.',
 			'services.disconnectConfirm' => ({required Object service}) => '${service} trennen?',
 			'services.disconnectConfirmBody' => ({required Object service}) => 'Plebz aktualisiert ${service} nicht mehr. Jederzeit erneut verbinden.',
 			'services.connectFailed' => ({required Object service}) => 'Verbindung zu ${service} fehlgeschlagen. Versuche es erneut.',
@@ -6294,6 +6312,8 @@ extension on TranslationsDe {
 			'localFiles.volumes' => 'Speicherorte',
 			'localFiles.up' => 'Eine Ebene höher',
 			'localFiles.noVolumes' => 'Kein Speicher gefunden.',
+			_ => null,
+		} ?? switch (path) {
 			'localFiles.unreadable' => 'Dieser Ordner lässt sich nicht lesen.',
 			'localFiles.nothingHere' => ({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.',
 			'reminders.add' => 'Erinnern',
@@ -6303,8 +6323,6 @@ extension on TranslationsDe {
 			'reminders.soonTitle' => 'Gleich geht’s los',
 			'reminders.runningTitle' => 'Läuft gerade',
 			'reminders.tune' => 'Umschalten',
-			_ => null,
-		} ?? switch (path) {
 			'reminders.channelGone' => ({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.',
 			'remoteKeys.title' => 'Fernbedienung',
 			'remoteKeys.entryDescription' => 'Welche Taste im Player was tut',

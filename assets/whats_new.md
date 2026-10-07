@@ -13,6 +13,12 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.9.4 (Build 656)
+
+- Simkl-Profile (Beta): Klappt der Abgleich mit Simkl einmal nicht, versucht Plebz es jetzt von selbst erneut. Trennen und neu verbinden ist nicht mehr nötig.
+- Unter Einstellungen → Dienste → Simkl steht jetzt, wann zuletzt abgeglichen wurde. Mit „Jetzt abgleichen“ holst du den kompletten Stand sofort neu.
+- Nach einem Profilwechsel zeigt die Startseite gleich die „Weiterschauen“-Reihe des neuen Profils.
+
 ## 1.9.3 (Build 653)
 
 - Simkl-Profile (Beta): Gesehen-Haken und Fortsetzen-Stellen bleiben auf dem Gerät erhalten, bis Simkl sie bestätigt. Bisher konnten sie nach wenigen Minuten verloren gehen.

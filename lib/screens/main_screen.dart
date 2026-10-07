@@ -524,6 +524,10 @@ class _MainScreenState extends State<MainScreen>
   /// Jellyfin gets added, leaving its libraries out of the navbar.
   VoidCallback? _bindingSettleListener;
   bool _startupServicesPrimed = false;
+
+  /// A tracker-led profile's tracker changed what was watched before the tabs
+  /// were primed — right after a profile switch (Plebz); refreshed once they are.
+  bool _trackerRevisionBeforePrime = false;
   Timer? _startupSettleTimeout;
 
   /// Hard ceiling on how long we wait for [ActiveProfileBinder] to settle
@@ -545,7 +549,7 @@ class _MainScreenState extends State<MainScreen>
 
     WidgetsBinding.instance.addObserver(this);
     // A tracker-led profile's titles change when its tracker says so (Plebz).
-    TrackerProgressController.instance.revision.addListener(_refreshContentAfterStaleResume);
+    TrackerProgressController.instance.revision.addListener(_onTrackerRevision);
     profileNavigationRegistry.attachHome(_showHomeTab);
     _contentFocusScope.addListener(_syncSidebarFocusWithContent);
 
@@ -780,6 +784,10 @@ class _MainScreenState extends State<MainScreen>
 
     if (!mounted) return;
     _primeContentTabs();
+    if (_trackerRevisionBeforePrime) {
+      _trackerRevisionBeforePrime = false;
+      _refreshContentAfterStaleResume();
+    }
   }
 
   /// Resume queued downloads for servers the last resume didn't cover,
@@ -1156,7 +1164,7 @@ class _MainScreenState extends State<MainScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    TrackerProgressController.instance.revision.removeListener(_refreshContentAfterStaleResume);
+    TrackerProgressController.instance.revision.removeListener(_onTrackerRevision);
     profileNavigationRegistry.detachHome(_showHomeTab);
     _profileRouteObserver?.unsubscribe(this);
     if (PlatformDetector.isDesktopOS()) {
@@ -1266,6 +1274,17 @@ class _MainScreenState extends State<MainScreen>
       _showProfileSelectionOnResume();
     }
     if (refreshStaleContent) _refreshContentAfterStaleResume();
+  }
+
+  /// A tracker-led profile's tracker changed what was watched (Plebz). Before
+  /// the tabs are primed — a profile switch remounts this screen — the change
+  /// is kept for the priming rather than dropped.
+  void _onTrackerRevision() {
+    if (!_startupServicesPrimed) {
+      _trackerRevisionBeforePrime = true;
+      return;
+    }
+    _refreshContentAfterStaleResume();
   }
 
   /// Refetch the content tabs after the app resumes from a long backgrounding.

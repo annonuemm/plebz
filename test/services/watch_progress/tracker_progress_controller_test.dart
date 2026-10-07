@@ -32,11 +32,13 @@ class _Server implements ExternalIdIndexClient {
 /// account that cannot be reached.
 class _Simkl {
   bool down = false;
+  final asked = <Uri>[];
 
   SimklClient client() => SimklClient(
     const TrackerSession(accessToken: 't', refreshToken: '', expiresAt: 0, createdAt: 0),
     onSessionInvalidated: () {},
     httpClient: MockClient((request) async {
+      asked.add(request.url);
       if (down) return http.Response('', 503);
       final body = switch (request.url.path) {
         '/sync/activities' => {'all': 'a1'},
@@ -172,5 +174,40 @@ void main() {
     await bind();
 
     expect(ProgressRouting.overlay(episode).viewOffsetMs, 420000);
+  });
+
+  test('a failed first sync is tried again by itself, not left until a reconnect', () async {
+    TrackerProgressController.retryDelays = const [Duration(milliseconds: 50)];
+    simkl.down = true;
+    await bind();
+    expect(controller.syncFailed, isTrue);
+    expect(ProgressRouting.overlay(film).isWatched, isFalse);
+
+    simkl.down = false;
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await controller.debugFlush();
+
+    expect(controller.syncFailed, isFalse);
+    expect(controller.lastSyncAt, isNotNull);
+    expect(ProgressRouting.overlay(film).isWatched, isTrue);
+  });
+
+  test('"sync now" asks Simkl for everything again, not just what changed', () async {
+    await bind();
+    simkl.asked.clear();
+
+    expect(await controller.syncNow(), isTrue);
+
+    final everything = simkl.asked.where((uri) => uri.path == '/sync/all-items');
+    expect(everything, isNotEmpty);
+    expect(everything.every((uri) => !uri.queryParameters.containsKey('date_from')), isTrue);
+    expect(server.asked, 2, reason: 'and every server for its ids once more');
+  });
+
+  test('"sync now" reports a Simkl that does not answer', () async {
+    await bind();
+    simkl.down = true;
+    expect(await controller.syncNow(), isFalse);
+    expect(controller.syncFailed, isTrue);
   });
 }

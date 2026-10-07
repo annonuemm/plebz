@@ -210,6 +210,10 @@ class TrackerWatchState {
   TrackedPlayback? episodePlayback(ExternalIds showIds, int season, int episode) =>
       _first(_playbackById, [for (final id in _idKeys(showIds)) '$id|$season|$episode']);
 
+  /// The same state, but asked for whole at the next sync: without the marks
+  /// a tracker answers everything rather than what changed since.
+  TrackerWatchState withoutSyncMarks() => TrackerWatchState(movies: movies, shows: shows, playback: playback);
+
   Map<String, Object?> toJson() => {
     'syncMarks': syncMarks,
     'movies': [for (final movie in movies) movie.toJson()],

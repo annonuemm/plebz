@@ -14,6 +14,7 @@ import '../mixins/event_aware.dart';
 import '../services/settings_service.dart';
 import '../services/data_aggregation_service.dart';
 import '../services/system_shelf_service.dart';
+import '../services/watch_progress/tracker_progress_controller.dart';
 import '../utils/app_logger.dart';
 import '../utils/coalesced_load_coordinator.dart';
 import '../utils/deletion_notifier.dart';
@@ -164,6 +165,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
       onEvent: _onDeletion,
     );
     _libraryEventSubscription = LibraryContentNotifier().stream.listen(_onLibraryContentChanged);
+    TrackerProgressController.instance.revision.addListener(_onTrackerRevision);
   }
 
   final MultiServerProvider _multiServer;
@@ -989,6 +991,21 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     }
   }
 
+  /// A tracker-led profile's watch state changed under every row at once
+  /// (Plebz): its tracker was bound — right after a profile switch, while this
+  /// screen's first pass may still be running — or answered with news. A full
+  /// pass under way asked before that, so one more is queued behind it; once
+  /// loaded, Continue Watching alone is fetched again. Before any pass there
+  /// is nothing on screen to correct.
+  void _onTrackerRevision() {
+    if (isDisposed) return;
+    if (_loadCoordinator.isFullActive) {
+      unawaited(load());
+    } else if (_onDeckState == DiscoverLoadState.loaded) {
+      unawaited(refreshContinueWatching());
+    }
+  }
+
   /// Background refresh of Continue Watching only. Concurrent events coalesce
   /// into the active request plus at most one trailing fresh request.
   Future<void> refreshContinueWatching() {
@@ -1324,6 +1341,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
 
   @override
   void dispose() {
+    TrackerProgressController.instance.revision.removeListener(_onTrackerRevision);
     _multiServer.removeOnlineServersListener(syncToOnlineServers);
     _hiddenLibraries.removeListener(_onHiddenLibrariesChanged);
     _libraries.removeListener(_onLibrariesChanged);

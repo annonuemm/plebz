@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.9.2 (Build 648)
+
+- Design Glas: Auf dem Fernseher sind unter Darstellung die Einstellungen ausgeblendet, die dort keine Wirkung haben (Ansicht, Kartengröße, Rasterabstand, Folgennummer, Fokus-Leuchten, Seitenleiste immer offen, nach Server gruppieren). Auf Handy, Tablet und Mac bleiben sie.
+- „Profil beim Öffnen abfragen“ steht jetzt unter Einstellungen → Profile statt unter Allgemein.
+
 ## 1.9.1 (Build 645)
 
 - Fernbedienung: P+ und P− wechseln den Sender jetzt immer, der eigene Schalter dafür entfällt.

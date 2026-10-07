@@ -21,6 +21,7 @@ import 'package:plezy/profiles/profile_registry.dart';
 import 'package:plezy/screens/profile/pin_entry_dialog.dart';
 import 'package:plezy/screens/profile/profile_detail_screen.dart';
 import 'package:plezy/screens/profile/profile_switch_screen.dart';
+import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/services/storage_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/utils/platform_detector.dart';
@@ -33,7 +34,44 @@ void main() {
 
   setUp(() {
     resetSharedPreferencesForTest();
+    SettingsService.resetForTesting();
     LocaleSettings.setLocaleSync(AppLocale.en);
+  });
+
+  testWidgets('asking for a profile at every start is offered here, once there are several', (tester) async {
+    await _pumpPicker(
+      tester,
+      profiles: [
+        Profile.local(id: 'local-owner', displayName: 'Owner', createdAt: DateTime(2026, 1, 1)),
+        Profile.local(id: 'local-kids', displayName: 'Kids', createdAt: DateTime(2026, 1, 2)),
+      ],
+      connections: const [],
+    );
+    expect(find.text(t.settings.requireProfileSelectionOnOpen), findsNothing, reason: 'no settings, no switch');
+
+    // Loaded after the profiles, in the real zone: a prefs future settled
+    // before them would hang the profile provider's own reads.
+    await tester.runAsync(SettingsService.getInstance);
+    tester.element(find.byType(ProfileSwitchScreen)).markNeedsBuild();
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text(t.settings.requireProfileSelectionOnOpen),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text(t.settings.requireProfileSelectionOnOpen), findsOneWidget);
+  });
+
+  testWidgets('a single profile is not asked about', (tester) async {
+    await _pumpPicker(
+      tester,
+      profiles: [Profile.local(id: 'local-owner', displayName: 'Owner', createdAt: DateTime(2026, 1, 1))],
+      connections: const [],
+    );
+    await tester.runAsync(SettingsService.getInstance);
+    tester.element(find.byType(ProfileSwitchScreen)).markNeedsBuild();
+    await tester.pumpAndSettle();
+    expect(find.text(t.settings.requireProfileSelectionOnOpen), findsNothing);
   });
 
   testWidgets('D-pad can focus profile actions and open the manage menu', (tester) async {

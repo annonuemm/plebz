@@ -22,6 +22,7 @@ import '../../widgets/setting_tile.dart';
 import '../../widgets/settings_page.dart';
 import '../../widgets/settings_builder.dart';
 import '../../widgets/settings_section.dart';
+import '../../redesign/ocker_skin.dart' show isOckerLayout;
 import 'plebz_settings_rows.dart' show plebzThemeModeRow;
 import 'settings_utils.dart';
 import '../../utils/fork_identity.dart';
@@ -39,6 +40,10 @@ class AppearanceSettingsScreen extends StatelessWidget {
     final isMobile = PlatformDetector.isMobile(context);
     final hasSeerr = context.watch<SeerrAccountProvider?>()?.isConnected ?? false;
     final hasTmdbKey = SettingsService.instance.read(SettingsService.tmdbApiKey)?.trim().isNotEmpty ?? false;
+    // The redesign on a television lays out its own grids and rail: these rows
+    // have nothing left to steer there (Plebz). On a phone, tablet or Mac it
+    // is a look only, and they keep working.
+    final glasLayout = isOckerLayout(context);
     return SettingsPage(
       title: Text(t.settings.appearance),
       children: [
@@ -112,16 +117,17 @@ class AppearanceSettingsScreen extends StatelessWidget {
         SettingsGroup(
           title: t.settings.libraryAndCards,
           children: [
-            _viewModeSelector(),
-            _densitySelector(),
-            _gridSpacingSelector(),
+            if (!glasLayout) _viewModeSelector(),
+            if (!glasLayout) _densitySelector(),
+            if (!glasLayout) _gridSpacingSelector(),
             _episodePosterModeSelector(),
-            SettingSwitchTile(
-              pref: SettingsService.showEpisodeNumberOnCards,
-              icon: Symbols.tag_rounded,
-              title: t.settings.showEpisodeNumberOnCards,
-              subtitle: t.settings.showEpisodeNumberOnCardsDescription,
-            ),
+            if (!glasLayout)
+              SettingSwitchTile(
+                pref: SettingsService.showEpisodeNumberOnCards,
+                icon: Symbols.tag_rounded,
+                title: t.settings.showEpisodeNumberOnCards,
+                subtitle: t.settings.showEpisodeNumberOnCardsDescription,
+              ),
             if (!PlatformDetector.isTV())
               SettingSwitchTile(
                 pref: SettingsService.showSeasonPostersOnTabs,
@@ -160,7 +166,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
                 title: t.settings.tvCornerSpotlightBackdrop,
                 subtitle: t.settings.tvCornerSpotlightBackdropDescription,
               ),
-            if (PlatformDetector.isTV())
+            if (PlatformDetector.isTV() && !glasLayout)
               SettingSwitchTile(
                 pref: SettingsService.focusGlow,
                 icon: Symbols.lightbulb_rounded,
@@ -341,14 +347,14 @@ class AppearanceSettingsScreen extends StatelessWidget {
               subtitle: t.settings.showSportTabDescription,
             ),
             if (Platform.isAndroid || PlatformDetector.isDesktopOS()) _layoutModeSelector(context),
-            if (PlatformDetector.shouldUseSideNavigation(context))
+            if (PlatformDetector.shouldUseSideNavigation(context) && !glasLayout)
               SettingSwitchTile(
                 pref: SettingsService.alwaysKeepSidebarOpen,
                 icon: Symbols.dock_to_left_rounded,
                 title: t.settings.alwaysKeepSidebarOpen,
                 subtitle: t.settings.alwaysKeepSidebarOpenDescription,
               ),
-            if (PlatformDetector.shouldUseSideNavigation(context))
+            if (PlatformDetector.shouldUseSideNavigation(context) && !glasLayout)
               SettingSwitchTile(
                 pref: SettingsService.groupLibrariesByServer,
                 icon: Symbols.dns_rounded,

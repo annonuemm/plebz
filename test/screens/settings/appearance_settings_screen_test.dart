@@ -83,6 +83,51 @@ void main() {
     expect(find.text(t.settings.glasSmoothFocus), findsOneWidget, reason: 'the glide, apart from the effects');
   });
 
+  testWidgets('glass on a television leaves out the rows it has nothing to steer with', (tester) async {
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1000, 4000);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    Future<void> pumpWith(AppThemeVariant variant) async {
+      final theme = ThemeProvider();
+      addTearDown(theme.dispose);
+      await tester.pumpWidget(
+        ChangeNotifierProvider<ThemeProvider>.value(
+          value: theme,
+          child: MaterialApp(
+            theme: monoTheme(dark: true, variant: variant),
+            home: const AppearanceSettingsScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    final deadUnderGlas = [
+      t.settings.viewMode,
+      t.settings.libraryDensity,
+      t.settings.gridSpacing,
+      t.settings.showEpisodeNumberOnCards,
+      t.settings.focusGlow,
+      t.settings.alwaysKeepSidebarOpen,
+      t.settings.groupLibrariesByServer,
+    ];
+
+    await pumpWith(AppThemeVariant.glas);
+    for (final title in deadUnderGlas) {
+      expect(find.text(title), findsNothing, reason: title);
+    }
+    expect(find.text(t.settings.episodePosterMode), findsOneWidget, reason: 'the glass posters follow this one');
+
+    await pumpWith(AppThemeVariant.standard);
+    for (final title in deadUnderGlas) {
+      expect(find.text(title), findsOneWidget, reason: title);
+    }
+  });
+
   testWidgets('on a phone glass is offered with its accent, but not the focus switches', (tester) async {
     tester.view.devicePixelRatio = 1;
     // Wide, so the test face's box glyphs fit; what makes this a phone is the

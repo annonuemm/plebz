@@ -16,6 +16,7 @@ import '../../profiles/profile_avatar.dart';
 import '../../profiles/profile_connection.dart';
 import '../../profiles/profile_merge.dart';
 import '../../services/app_exit_service.dart';
+import '../../services/settings_service.dart';
 import '../../theme/mono_tokens.dart';
 import '../../widgets/app_icon.dart';
 import '../../widgets/app_menu.dart';
@@ -23,6 +24,8 @@ import '../../widgets/backend_badge.dart';
 import '../../widgets/focusable_popup_menu_button.dart';
 import '../../widgets/focused_scroll_scaffold.dart';
 import '../../widgets/profile_switching_overlay.dart';
+import '../../widgets/setting_tile.dart';
+import '../../widgets/settings_section.dart';
 import '../libraries/state_messages.dart';
 import 'add_local_profile_screen.dart';
 import 'pin_entry_dialog.dart';
@@ -117,6 +120,27 @@ class _ProfileSwitchScreenState extends State<ProfileSwitchScreen> with MountedS
                   ),
                 ),
               ),
+              // Whether to ask for a profile at every start belongs beside the
+              // profiles themselves (Plebz). Not on the start's own picker,
+              // and only once there is more than one to choose from.
+              if (!widget.requireSelection &&
+                  activeProvider.hasMultipleProfiles &&
+                  SettingsService.instanceOrNull != null)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: SettingsGroup(
+                      children: [
+                        SettingSwitchTile(
+                          pref: SettingsService.requireProfileSelectionOnOpen,
+                          icon: Symbols.person_rounded,
+                          title: t.settings.requireProfileSelectionOnOpen,
+                          subtitle: t.settings.requireProfileSelectionOnOpenDescription,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           ),
           if (_switching) const ProfileSwitchingOverlay(),

@@ -74,6 +74,7 @@ import 'tracker_service_info.dart';
 import '../../widgets/loading_indicator_box.dart';
 import '../../utils/fork_identity.dart';
 import 'plebz_settings_rows.dart';
+import '../../redesign/ocker_skin.dart' show isOckerLayout;
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
@@ -346,7 +347,8 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
                     ? '${t.settings.appThemeVariantGlas} · ${t.settings.glasGroundOled}'
                     : t.settings.appThemeVariantGlas)
               : themeModeLabel(mode);
-          final summary = '$look · ${t.settings.libraryDensity} $libraryDensity';
+          // The redesign on a television sizes its grids itself (Plebz).
+          final summary = isOckerLayout(context) ? look : '$look · ${t.settings.libraryDensity} $libraryDensity';
           return SettingNavigationTile(
             focusNode: _focusTracker.get(_kAppearance),
             icon: Symbols.palette_rounded,

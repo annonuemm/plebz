@@ -1,3 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<inset xmlns:android="http://schemas.android.com/apk/res/android"
-    android:drawable="@drawable/ic_launcher_foreground" />
+<!-- Plebz: no icon on the system splash. The start screen draws the logo
+     itself, from nothing; a finished logo here would show, vanish, and only
+     then be drawn. -->
+<color xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@android:color/transparent" />

@@ -221,6 +221,9 @@ void main() {
 
     completion.complete(3);
     await tester.pump();
+    // Nothing on the loading frame animates (Plebz), so the gate's rebuild
+    // lands on the frame after.
+    await tester.pump();
     expect(find.text('ready 3'), findsOneWidget);
   });
 

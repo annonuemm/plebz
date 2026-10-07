@@ -644,6 +644,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
     GlasAccent.flieder => t.settings.glasAccentFlieder,
     GlasAccent.grau => t.settings.glasAccentGrau,
     GlasAccent.rot => t.settings.glasAccentRot,
+    GlasAccent.plebz => t.settings.glasAccentPlebz,
   };
 
   Widget _glasAccentSelector() => SettingSelectionTile<GlasAccent>(
@@ -663,6 +664,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
     GlasAccent.flieder => t.settings.glasAccentFliederDescription,
     GlasAccent.grau => t.settings.glasAccentGrauDescription,
     GlasAccent.rot => t.settings.glasAccentRotDescription,
+    GlasAccent.plebz => t.settings.glasAccentPlebzDescription,
   };
 
   Widget _visualEffectsSelector(BuildContext context) => SettingSelectionTile<VisualEffectsSetting>(

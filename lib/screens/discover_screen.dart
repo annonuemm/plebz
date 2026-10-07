@@ -1891,9 +1891,11 @@ class _DiscoverScreenState extends State<DiscoverScreen>
           builder: (context, _) {
             final showFocus = isTv && _heroFocusNode.hasFocus && InputModeTracker.isKeyboardMode(context);
             final colorScheme = Theme.of(context).colorScheme;
+            // Under the Plebz palette it wears the logo's gradient instead.
+            final plebzPlay = ockerPlebzPlay(context);
             final backgroundColor = showFocus ? colorScheme.primary : Colors.white;
-            final foregroundColor = showFocus ? colorScheme.onPrimary : Colors.black;
-            return InkWell(
+            final foregroundColor = plebzPlay ? Colors.white : (showFocus ? colorScheme.onPrimary : Colors.black);
+            final button = InkWell(
               onTap: () {
                 appLogger.d('Playing: ${heroItem.title}');
                 navigateToVideoPlayer(context, metadata: heroItem);
@@ -1903,19 +1905,21 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                 duration: const Duration(milliseconds: 150),
                 curve: Curves.easeOutCubic,
                 padding: .symmetric(horizontal: isTv ? 34 : 24, vertical: isTv ? 16 : 12),
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  borderRadius: BorderRadius.all(Radius.circular(isTv ? 32 : 24)),
-                  boxShadow: showFocus
-                      ? flatShadows(context, [
-                          BoxShadow(
-                            color: colorScheme.primary.withValues(alpha: 0.35),
-                            blurRadius: 28,
-                            spreadRadius: 4,
-                          ),
-                        ])
-                      : null,
-                ),
+                decoration: plebzPlay
+                    ? null
+                    : BoxDecoration(
+                        color: backgroundColor,
+                        borderRadius: BorderRadius.all(Radius.circular(isTv ? 32 : 24)),
+                        boxShadow: showFocus
+                            ? flatShadows(context, [
+                                BoxShadow(
+                                  color: colorScheme.primary.withValues(alpha: 0.35),
+                                  blurRadius: 28,
+                                  spreadRadius: 4,
+                                ),
+                              ])
+                            : null,
+                      ),
                 child: Row(
                   mainAxisSize: .min,
                   children: [
@@ -1963,6 +1967,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                 ),
               ),
             );
+            return plebzPlay ? OckerPlebzPlayGround(focused: showFocus, child: button) : button;
           },
         );
       },

@@ -62,7 +62,20 @@ const double _redesignCorner = 14;
   // whose ground and ink stay out of the accent's hue — black, white and red
   // is the whole of the look.
   GlasAccent.rot => (bg: const Color(0xFF141414), text: const Color(0xFFFFFFFF), accent: const Color(0xFFE50914)),
+  // After the logo (Plebz): a near-black with the faintest violet, a
+  // lavender-white ink, the logo's middle violet as the accent — and its whole
+  // gradient on the play buttons, see [plebzGradient].
+  GlasAccent.plebz => (bg: const Color(0xFF08070C), text: const Color(0xFFF3EFFA), accent: const Color(0xFFA866EE)),
 };
+
+/// The logo's gradient, violet to pink (Plebz). Under the Plebz palette the
+/// play buttons wear it; nothing else does, so it keeps meaning "play".
+const plebzGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [Color(0xFF7356F5), Color(0xFFA866EE), Color(0xFFEE8BD2)],
+  stops: [0, 0.55, 1],
+);
 
 /// The redesign's ground with the OLED choice on: black, and nothing on it —
 /// no lift, no glow — so an OLED panel's pixels stay off. No palette's own

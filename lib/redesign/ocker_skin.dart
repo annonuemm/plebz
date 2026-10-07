@@ -10,7 +10,7 @@ import '../services/settings_service.dart';
 import '../media/media_item.dart';
 import '../media/media_server_client.dart';
 
-import '../theme/mono_theme.dart' show ockerDisplayFontFamily;
+import '../theme/mono_theme.dart' show glasPalette, ockerDisplayFontFamily, plebzGradient;
 import '../theme/mono_tokens.dart';
 import '../utils/layout_constants.dart';
 import '../utils/platform_detector.dart';
@@ -401,6 +401,103 @@ Widget ockerActiveMark(BuildContext context, {required String label, required Te
 /// Asks the theme, like [isOcker], so a widget under a `Theme` override
 /// answers for the theme it is drawn in.
 bool ockerGlass(BuildContext context) => Theme.of(context).extension<MonoTokens>()?.glass == true;
+
+/// Whether the play buttons wear the logo's gradient: Glas in the Plebz
+/// palette (fork addition). Told apart by its accent, which no other palette
+/// shares and the OLED ground leaves as it is.
+bool ockerPlebzPlay(BuildContext context) {
+  final tk = Theme.of(context).extension<MonoTokens>();
+  return tk != null && tk.glass && tk.accent == glasPalette(GlasAccent.plebz).accent;
+}
+
+/// A play button's ground under the Plebz palette: a capsule of the same
+/// glass as the navigation's, tinted with the logo's gradient — violet to
+/// pink glass, the page showing through, with the pane's sheen and lit edge.
+///
+/// Focused on a band, the band's own capsule glides onto it as it does onto
+/// any word, and the tint lies on that capsule, lifted with it — one pane, not
+/// a tinted one inside a clear one. Off a band (the home hero) it draws the
+/// bright pane itself.
+class OckerPlebzPlayGround extends StatelessWidget {
+  const OckerPlebzPlayGround({
+    super.key,
+    required this.focused,
+    required this.child,
+    this.shape = const StadiumBorder(),
+  });
+
+  final bool focused;
+  final OutlinedBorder shape;
+  final Widget child;
+
+  /// How much of the gradient the glass wears, at rest and focused.
+  static const double restingTint = 0.36;
+  static const double focusedTint = 0.5;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = tokens(context);
+    final onBand = _OckerBandScope.maybeOf(context) != null;
+    final lift = focused && onBand ? ockerWordFocusLift(context) : 0.0;
+    final alpha = focused ? focusedTint : restingTint;
+    final tint = DecoratedBox(
+      decoration: ShapeDecoration(
+        shape: shape,
+        gradient: LinearGradient(
+          begin: plebzGradient.begin,
+          end: plebzGradient.end,
+          colors: [for (final colour in plebzGradient.colors) colour.withValues(alpha: alpha)],
+          stops: plebzGradient.stops,
+        ),
+      ),
+      child: const SizedBox.expand(),
+    );
+    final Widget pane;
+    if (focused && onBand) {
+      // The band's capsule under it is the glass.
+      pane = tint;
+    } else {
+      final sheen = focused ? const [0.34, 0.12, 0.22] : const [0.12, 0.03, 0.07];
+      pane = CustomPaint(
+        foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context)),
+        child: DecoratedBox(
+          decoration: ShapeDecoration(shape: shape, color: tk.bg.withValues(alpha: 0.30)),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              tint,
+              DecoratedBox(
+                decoration: ShapeDecoration(
+                  shape: shape,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [for (final a in sheen) tk.ink(a)],
+                    stops: const [0, 0.45, 1],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return Stack(
+      clipBehavior: Clip.none,
+      fit: StackFit.passthrough,
+      children: [
+        Positioned(
+          left: 0,
+          right: 0,
+          top: -lift,
+          bottom: -lift,
+          child: IgnorePointer(child: pane),
+        ),
+        child,
+      ],
+    );
+  }
+}
 
 /// The two strengths the glass comes in.
 ///

@@ -1518,6 +1518,12 @@ class Translations$settings$en {
 	/// en: 'A black ground, white type and a strong red as the accent — after Netflix.'
 	String get glasAccentRotDescription => 'A black ground, white type and a strong red as the accent — after Netflix.';
 
+	/// en: 'Plebz'
+	String get glasAccentPlebz => 'Plebz';
+
+	/// en: 'A near-black, violet as the accent, and the play button in the logo's gradient.'
+	String get glasAccentPlebzDescription => 'A near-black, violet as the accent, and the play button in the logo\'s gradient.';
+
 	/// en: 'Smooth focus'
 	String get glasSmoothFocus => 'Smooth focus';
 
@@ -9659,6 +9665,8 @@ extension on Translations {
 			'settings.glasAccentGrauDescription' => 'A neutral near-black with no tint, white type and grey as the accent — the nearest to Apple.',
 			'settings.glasAccentRot' => 'Red',
 			'settings.glasAccentRotDescription' => 'A black ground, white type and a strong red as the accent — after Netflix.',
+			'settings.glasAccentPlebz' => 'Plebz',
+			'settings.glasAccentPlebzDescription' => 'A near-black, violet as the accent, and the play button in the logo\'s gradient.',
 			'settings.glasSmoothFocus' => 'Smooth focus',
 			'settings.glasSmoothFocusDescription' => 'The focus capsule glides from entry to entry and the type fades gently — even when visual effects are reduced.',
 			'settings.glasUltraBlur' => 'Background in the poster\'s colours',
@@ -9692,10 +9700,10 @@ extension on Translations {
 			'settings.hardwareTestUnavailable' => 'Not available on this platform',
 			'settings.hardwareTestSections.device' => 'Device',
 			'settings.hardwareTestSections.display' => 'Display',
-			'settings.hardwareTestSections.colour' => 'Colour & HDR',
-			'settings.hardwareTestSections.audio' => 'Audio',
 			_ => null,
 		} ?? switch (path) {
+			'settings.hardwareTestSections.colour' => 'Colour & HDR',
+			'settings.hardwareTestSections.audio' => 'Audio',
 			'settings.hardwareTestSections.video' => 'Video decoders',
 			'settings.hardwareTestLabels.model' => 'Model',
 			'settings.hardwareTestLabels.system' => 'System',
@@ -10206,10 +10214,10 @@ extension on Translations {
 			'mpvConfig.deletePreset' => 'Delete',
 			'mpvConfig.presetSaved' => 'Preset saved',
 			'mpvConfig.presetLoaded' => 'Preset loaded',
-			'mpvConfig.presetDeleted' => 'Preset deleted',
-			'mpvConfig.confirmDeletePreset' => 'Are you sure you want to delete this preset?',
 			_ => null,
 		} ?? switch (path) {
+			'mpvConfig.presetDeleted' => 'Preset deleted',
+			'mpvConfig.confirmDeletePreset' => 'Are you sure you want to delete this preset?',
 			'mpvConfig.configPlaceholder' => 'gpu-api=vulkan\nhwdec=auto\n# comment',
 			'mpvConfig.lineHint' => 'option=value',
 			'mpvConfig.addLine' => 'Add line',
@@ -10720,10 +10728,10 @@ extension on Translations {
 			'explore.detail.schedule' => 'Schedule',
 			'explore.detail.recommendedByUsers' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Recommended by ${n} user', other: 'Recommended by ${n} users', ), 
 			'explore.detail.recommendedBy' => ({required Object who}) => 'Recommended by ${who}',
-			'explore.detail.favoritedBy' => ({required Object who}) => 'Favorited by ${who}',
-			'explore.detail.unairedEpisodes' => ({required Object n}) => '${n} not aired yet',
 			_ => null,
 		} ?? switch (path) {
+			'explore.detail.favoritedBy' => ({required Object who}) => 'Favorited by ${who}',
+			'explore.detail.unairedEpisodes' => ({required Object n}) => '${n} not aired yet',
 			'explore.detail.recommendedByPercent' => ({required Object percent}) => 'Recommended by ${percent} of viewers',
 			'explore.detail.relatedTitles' => 'Related titles',
 			'explore.detail.background' => 'Background',
@@ -11234,10 +11242,10 @@ extension on Translations {
 			'companionRemote.errors.connectionLostAfterAttempts' => ({required Object attempts}) => 'Connection lost after ${attempts} attempts',
 			'companionRemote.errors.connectionLost' => 'Connection lost',
 			'companionRemote.closedBeforeAuth' => 'The connection closed before authentication',
-			'videoSettings.playbackSpeed' => 'Playback Speed',
-			'videoSettings.normalSpeed' => 'Normal',
 			_ => null,
 		} ?? switch (path) {
+			'videoSettings.playbackSpeed' => 'Playback Speed',
+			'videoSettings.normalSpeed' => 'Normal',
 			'videoSettings.sleepTimerActive' => ({required Object duration}) => 'Active (${duration})',
 			'videoSettings.zoom' => 'Zoom',
 			'videoSettings.sleepTimer' => 'Sleep Timer',
@@ -11748,10 +11756,10 @@ extension on Translations {
 			'plebz.iptvOnly' => 'IPTV only',
 			'plebz.defaultProfileName' => 'Home',
 			'plebz.extrasTitle' => 'Almost done',
-			'plebz.extrasBody' => 'Add more sources and connect the services you use. Everything here is optional, apart from one source to watch from.',
-			'plebz.sourcesGroup' => 'Sources',
 			_ => null,
 		} ?? switch (path) {
+			'plebz.extrasBody' => 'Add more sources and connect the services you use. Everything here is optional, apart from one source to watch from.',
+			'plebz.sourcesGroup' => 'Sources',
 			'plebz.extrasGroup' => 'Extras',
 			'plebz.profilesGroup' => 'More than one viewer?',
 			'plebz.profilesHint' => 'Plebz can hold several profiles, even when everyone shares one Plex account. So that each person keeps their own progress, watched marks and watchlist, connect every profile to its own Simkl account and turn on “Own progress via Simkl” there. Add more profiles under Settings → Profiles → “Add Plebz profile”.',

@@ -213,7 +213,23 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
 
     final gap = isTv ? 8.0 * tvScale : 12.0;
 
+    // Under the Plebz palette the play segments wear the logo's gradient.
+    final plebzPlay = ockerPlebzPlay(context);
+    final plebzStyle = ButtonStyle(
+      backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+      foregroundColor: const WidgetStatePropertyAll(Colors.white),
+    );
+    Widget plebzGround(Widget button, OutlinedBorder shape, bool focused) =>
+        plebzPlay ? OckerPlebzPlayGround(focused: focused, shape: shape, child: button) : button;
+    // A capsule, as the glass focus is: half its height for a corner.
+    const playCapsule = StadiumBorder();
+
     Widget playButton(FocusableActionBuildState state) {
+      final style = actionButtonStyle(
+        showFocus: state.showFocus,
+        padding: .symmetric(horizontal: isTv ? 17 * tvScale : 16, vertical: isTv ? 9 * tvScale : 0),
+        shape: playShape ?? (plebzPlay ? playCapsule : null),
+      );
       return Semantics(
         label: playSemanticsLabel,
         button: true,
@@ -221,23 +237,23 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
         excludeSemantics: true,
         child: SizedBox(
           height: actionSize,
-          child: FilledButton(
-            onPressed: onPlayPressed,
-            style: actionButtonStyle(
-              showFocus: state.showFocus,
-              padding: .symmetric(horizontal: isTv ? 17 * tvScale : 16, vertical: isTv ? 9 * tvScale : 0),
-              shape: playShape,
+          child: plebzGround(
+            FilledButton(
+              onPressed: onPlayPressed,
+              style: plebzPlay ? plebzStyle.merge(style) : style,
+              child: playButtonLabel.isNotEmpty
+                  ? Row(
+                      mainAxisSize: .min,
+                      children: [
+                        playButtonIcon,
+                        SizedBox(width: isTv ? 7 * tvScale : 8),
+                        Text(playButtonLabel, style: playTextStyle),
+                      ],
+                    )
+                  : playButtonIcon,
             ),
-            child: playButtonLabel.isNotEmpty
-                ? Row(
-                    mainAxisSize: .min,
-                    children: [
-                      playButtonIcon,
-                      SizedBox(width: isTv ? 7 * tvScale : 8),
-                      Text(playButtonLabel, style: playTextStyle),
-                    ],
-                  )
-                : playButtonIcon,
+            playShape ?? playCapsule,
+            state.showFocus,
           ),
         ),
       );
@@ -246,6 +262,10 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
     // The trailing segment of the split Play button. A plain FilledButton
     // (not IconButton) so both segments share color roles and focus styling.
     Widget versionButton(FocusableActionBuildState state) {
+      final versionShape = RoundedRectangleBorder(
+        borderRadius: BorderRadiusDirectional.horizontal(start: splitInnerRadius, end: splitOuterRadius),
+      );
+      final versionStyle = actionButtonStyle(showFocus: state.showFocus, padding: .zero, shape: versionShape);
       return Semantics(
         label: t.mediaMenu.playVersion,
         button: true,
@@ -256,16 +276,14 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
           child: SizedBox(
             width: versionSegmentWidth,
             height: actionSize,
-            child: FilledButton(
-              onPressed: onPlayVersionPressed,
-              style: actionButtonStyle(
-                showFocus: state.showFocus,
-                padding: .zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadiusDirectional.horizontal(start: splitInnerRadius, end: splitOuterRadius),
-                ),
+            child: plebzGround(
+              FilledButton(
+                onPressed: onPlayVersionPressed,
+                style: plebzPlay ? plebzStyle.merge(versionStyle) : versionStyle,
+                child: AppIcon(Symbols.keyboard_arrow_down_rounded, fill: 1, size: playIconSize),
               ),
-              child: AppIcon(Symbols.keyboard_arrow_down_rounded, fill: 1, size: playIconSize),
+              versionShape,
+              state.showFocus,
             ),
           ),
         ),

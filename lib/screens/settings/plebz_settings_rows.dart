@@ -360,6 +360,7 @@ String _glasAccentLabel(GlasAccent value) => switch (value) {
   GlasAccent.flieder => t.settings.glasAccentFlieder,
   GlasAccent.grau => t.settings.glasAccentGrau,
   GlasAccent.rot => t.settings.glasAccentRot,
+  GlasAccent.plebz => t.settings.glasAccentPlebz,
 };
 
 String _glasAccentDescription(GlasAccent value) => switch (value) {
@@ -368,6 +369,7 @@ String _glasAccentDescription(GlasAccent value) => switch (value) {
   GlasAccent.flieder => t.settings.glasAccentFliederDescription,
   GlasAccent.grau => t.settings.glasAccentGrauDescription,
   GlasAccent.rot => t.settings.glasAccentRotDescription,
+  GlasAccent.plebz => t.settings.glasAccentPlebzDescription,
 };
 
 String _skipMarkerModeLabel(SkipMarkerMode mode) => switch (mode) {

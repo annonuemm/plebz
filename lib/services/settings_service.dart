@@ -80,11 +80,12 @@ enum AppThemeVariant {
 /// as whole palettes rather than one palette with its accent swapped. [grau]
 /// is the neutral one: no hue at all, the nearest to Apple's own glass.
 /// [rot] keeps the neutral ground and ink and puts one red on them, after
-/// Netflix: black, white and red.
+/// Netflix: black, white and red. [plebz] is the fork's own, after its logo:
+/// a near-black, violet, and the logo's gradient on the play buttons.
 ///
 /// New ones go at the end: the stored value is the name, and an old one must
 /// still read back as what it was.
-enum GlasAccent { eisblau, mint, flieder, grau, rot }
+enum GlasAccent { eisblau, mint, flieder, grau, rot, plebz }
 
 /// Library density is now an int 1–5 (1 = most compact, 5 = most comfortable).
 /// Default is 3.

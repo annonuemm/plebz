@@ -13,6 +13,12 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.10.0 (Build 662)
+
+- Neues Logo: Plebz hat jetzt ein eigenes Play-Zeichen im Farbverlauf, auf dem App-Symbol, dem TV-Banner und beim Start.
+- Neue Startanimation: Das Logo zeichnet sich beim Öffnen selbst, in der Akzentfarbe deines Themes, und zeigt, solange die App sich mit deinen Servern verbindet.
+- Neue Akzentfarbe „Plebz“ im Glas-Theme: fast schwarz mit Violett, der Abspiel-Knopf aus violettem Glas. Zu finden unter Einstellungen → Darstellung → Akzentfarbe.
+
 ## 1.9.4 (Build 656)
 
 - Simkl-Profile (Beta): Klappt der Abgleich mit Simkl einmal nicht, versucht Plebz es jetzt von selbst erneut. Trennen und neu verbinden ist nicht mehr nötig.

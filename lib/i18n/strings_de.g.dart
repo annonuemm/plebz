@@ -599,6 +599,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get glasAccentGrauDescription => 'Neutrales Fastschwarz ohne Farbstich, weiße Schrift, Grau als Akzent – am nächsten an Apple.';
 	@override String get glasAccentRot => 'Rot';
 	@override String get glasAccentRotDescription => 'Schwarzer Grund, weiße Schrift, kräftiges Rot als Akzent – angelehnt an Netflix.';
+	@override String get glasAccentPlebz => 'Plebz';
+	@override String get glasAccentPlebzDescription => 'Fast reines Schwarz, Violett als Akzent, der Abspiel-Knopf im Farbverlauf des Logos.';
 	@override String get glasSmoothFocus => 'Fließender Fokus';
 	@override String get glasSmoothFocusDescription => 'Die Fokuskapsel gleitet von Eintrag zu Eintrag, und die Schrift blendet weich über – auch wenn die visuellen Effekte reduziert sind.';
 	@override String get glasUltraBlur => 'Hintergrund in Posterfarben';
@@ -4212,6 +4214,8 @@ extension on TranslationsDe {
 			'settings.glasAccentGrauDescription' => 'Neutrales Fastschwarz ohne Farbstich, weiße Schrift, Grau als Akzent – am nächsten an Apple.',
 			'settings.glasAccentRot' => 'Rot',
 			'settings.glasAccentRotDescription' => 'Schwarzer Grund, weiße Schrift, kräftiges Rot als Akzent – angelehnt an Netflix.',
+			'settings.glasAccentPlebz' => 'Plebz',
+			'settings.glasAccentPlebzDescription' => 'Fast reines Schwarz, Violett als Akzent, der Abspiel-Knopf im Farbverlauf des Logos.',
 			'settings.glasSmoothFocus' => 'Fließender Fokus',
 			'settings.glasSmoothFocusDescription' => 'Die Fokuskapsel gleitet von Eintrag zu Eintrag, und die Schrift blendet weich über – auch wenn die visuellen Effekte reduziert sind.',
 			'settings.glasUltraBlur' => 'Hintergrund in Posterfarben',
@@ -4254,10 +4258,10 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.televisionMode' => 'Fernsehmodus',
 			'settings.hardwareTestLabels.currentMode' => 'Aktueller Modus',
 			'settings.hardwareTestLabels.modeSwitching' => 'Moduswechsel',
-			'settings.hardwareTestLabels.displayMode' => 'Modus',
-			'settings.hardwareTestLabels.displayModes' => 'Bildschirmmodi',
 			_ => null,
 		} ?? switch (path) {
+			'settings.hardwareTestLabels.displayMode' => 'Modus',
+			'settings.hardwareTestLabels.displayModes' => 'Bildschirmmodi',
 			'settings.hardwareTestLabels.hdrFormats' => 'HDR-Formate',
 			'settings.hardwareTestLabels.wideColour' => 'Erweiterter Farbraum',
 			'settings.hardwareTestLabels.peakBrightness' => 'Spitzenhelligkeit',
@@ -4768,10 +4772,10 @@ extension on TranslationsDe {
 			'dialog.confirmAction' => 'Aktion bestätigen',
 			'profiles.addPlezyProfile' => 'Plebz-Profil hinzufügen',
 			'profiles.switchingProfile' => 'Profil wird gewechselt…',
-			'profiles.deleteThisProfileTitle' => 'Dieses Profil löschen?',
-			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => '${displayName} entfernen. Verbindungen bleiben unberührt.',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.deleteThisProfileTitle' => 'Dieses Profil löschen?',
+			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => '${displayName} entfernen. Verbindungen bleiben unberührt.',
 			'profiles.active' => 'Aktiv',
 			'profiles.manage' => 'Verwalten',
 			'profiles.delete' => 'Löschen',
@@ -5282,10 +5286,10 @@ extension on TranslationsDe {
 			'liveTv.searchNoResults' => ({required Object query}) => 'Keine Treffer für „${query}“',
 			'liveTv.channelsSection' => 'Kanäle',
 			'liveTv.programsSection' => 'Sendungen',
-			'liveTv.now' => 'Jetzt',
-			'liveTv.today' => 'Heute',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.now' => 'Jetzt',
+			'liveTv.today' => 'Heute',
 			'liveTv.tomorrow' => 'Morgen',
 			'liveTv.midnight' => 'Mitternacht',
 			'liveTv.overnight' => 'Nacht',
@@ -5796,10 +5800,10 @@ extension on TranslationsDe {
 			'performanceOverlay.p7Conversion' => 'P7-Konv.',
 			'performanceOverlay.sampleRate' => 'Abtastrate',
 			'performanceOverlay.pixelFormat' => 'Pixelformat',
-			'performanceOverlay.hwFormat' => 'HW-Format',
-			'performanceOverlay.matrix' => 'Matrix',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.hwFormat' => 'HW-Format',
+			'performanceOverlay.matrix' => 'Matrix',
 			'performanceOverlay.primaries' => 'Primärfarben',
 			'performanceOverlay.transfer' => 'Transfer',
 			'performanceOverlay.renderFps' => 'Render-FPS',
@@ -6310,10 +6314,10 @@ extension on TranslationsDe {
 			'localFiles.accessUnavailable' => 'Diese Box bietet keine Einstellung für den Dateizugriff an. Er lässt sich nur über einen PC freischalten:\nadb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow',
 			'localFiles.accessDenied' => 'Ohne den Zugriff auf alle Dateien kann Plebz hier keine Ordner durchsuchen.',
 			'localFiles.volumes' => 'Speicherorte',
-			'localFiles.up' => 'Eine Ebene höher',
-			'localFiles.noVolumes' => 'Kein Speicher gefunden.',
 			_ => null,
 		} ?? switch (path) {
+			'localFiles.up' => 'Eine Ebene höher',
+			'localFiles.noVolumes' => 'Kein Speicher gefunden.',
 			'localFiles.unreadable' => 'Dieser Ordner lässt sich nicht lesen.',
 			'localFiles.nothingHere' => ({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.',
 			'reminders.add' => 'Erinnern',

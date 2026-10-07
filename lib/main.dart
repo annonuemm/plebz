@@ -11,7 +11,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'connection/connection.dart';
 import 'connection/connection_bootstrap.dart';
@@ -42,6 +41,7 @@ import 'services/fullscreen_state_manager.dart';
 import 'services/settings_service.dart';
 import 'services/agent_control_service.dart';
 import 'services/tmdb/tmdb_fill_in_service.dart';
+import 'widgets/plebz_start_animation.dart';
 import 'widgets/agent_control_scope.dart';
 import 'widgets/settings_builder.dart';
 import 'utils/platform_detector.dart';
@@ -799,7 +799,9 @@ class _StartupBootstrapState<T> extends State<StartupBootstrap<T>> {
     // what turned a black Android TV splash into a flashbang (#1833).
     return Scaffold(
       backgroundColor: widget.transparentWhileLoading ? Colors.transparent : null,
-      body: const Center(child: CircularProgressIndicator(key: startupBootstrapProgressKey)),
+      // Plebz: no spinner either — the start screen that follows draws the
+      // logo out of the black, and anything here would flash before it.
+      body: const SizedBox.shrink(key: startupBootstrapProgressKey),
     );
   }
 }
@@ -1872,6 +1874,17 @@ class _SetupScreenState extends State<SetupScreen> with MountedSetStateMixin {
   // Per-server connection status: serverId -> (name, connected?)
   final Map<String, (String name, bool? connected)> _serverStatus = {};
 
+  final GlobalKey<PlebzStartAnimationState> _startAnimation = GlobalKey();
+
+  /// Plebz: the start animation finishes its entrance, then steps back, before
+  /// the app comes in.
+  Future<void> _leaveStartAnimation() async {
+    final animation = _startAnimation.currentState;
+    if (animation == null) return;
+    await animation.introDone;
+    await _startAnimation.currentState?.leave();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1890,6 +1903,7 @@ class _SetupScreenState extends State<SetupScreen> with MountedSetStateMixin {
     _enteringOffline = true;
     _setStatus(t.common.startingOfflineMode);
     await context.read<DownloadProvider>().ensureInitialized();
+    await _leaveStartAnimation();
     if (!mounted) return;
     AndroidExitDiagnostics.markStartupPhase(AndroidStartupPhase.mainScreen);
     unawaited(Navigator.pushReplacement(context, fadeRoute(const ProfileSessionScreen(isOfflineMode: true))));
@@ -2123,6 +2137,7 @@ class _SetupScreenState extends State<SetupScreen> with MountedSetStateMixin {
     // place). Without this the downloads list and sync-rule titles render
     // empty until something forces a later refresh.
     await downloadProvider.refreshMetadataFromCache();
+    await _leaveStartAnimation();
     if (!mounted) return;
 
     AndroidExitDiagnostics.markStartupPhase(AndroidStartupPhase.mainScreen);
@@ -2180,9 +2195,7 @@ class _SetupScreenState extends State<SetupScreen> with MountedSetStateMixin {
         _statusMessage,
         key: ValueKey(_statusMessage),
         textAlign: TextAlign.center,
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.62)),
       ),
     );
   }
@@ -2190,7 +2203,7 @@ class _SetupScreenState extends State<SetupScreen> with MountedSetStateMixin {
   Widget _buildServerStatusList(BuildContext context) {
     if (_serverStatus.isEmpty) return const SizedBox.shrink();
     final textTheme = Theme.of(context).textTheme;
-    final dimColor = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
+    final dimColor = Colors.white.withValues(alpha: 0.5);
     const successColor = Color(0xFF4CAF50);
     const failColor = Color(0xFFEF5350);
 
@@ -2224,61 +2237,45 @@ class _SetupScreenState extends State<SetupScreen> with MountedSetStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    const coralColor = Color(0xFFE5A00D);
-    final height = MediaQuery.sizeOf(context).height;
-    // The stacked layout below hangs its two rows off fixed ±170/180 offsets from the middle, which
-    // needs roughly 700 logical pixels of height. A car at a large interface scale — and a phone in
-    // landscape — has less than that, and the rows would collide or fall outside the Stack's clip.
-    if (height < 700) {
-      return ColoredBox(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SvgPicture.asset('assets/plezy_adaptive_foreground.svg', width: 160, height: 160),
-                  _buildStatusText(context),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: _serverStatus.isEmpty
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: coralColor),
-                          )
-                        : _buildServerStatusList(context),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
+    // Plebz: the start animation, on black whatever the theme — like the
+    // launcher icon and the TV banner. Its sheen is the loading indicator.
     return ColoredBox(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Stack(
-        children: [
-          Center(child: SvgPicture.asset('assets/plezy_adaptive_foreground.svg', width: 288, height: 288)),
-          Positioned(left: 0, right: 0, bottom: height * 0.5 - 170, child: _buildStatusText(context)),
-          Positioned(
-            left: 0,
-            right: 0,
-            top: height * 0.5 + 180,
-            child: Center(
-              child: _serverStatus.isEmpty
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: coralColor),
-                    )
-                  : _buildServerStatusList(context),
-            ),
-          ),
-        ],
+      color: Colors.black,
+      child: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final stacked = constraints.maxWidth < constraints.maxHeight;
+            final markHeight = (constraints.biggest.shortestSide * (stacked ? 0.24 : 0.2)).clamp(56.0, 160.0);
+            final logo = PlebzStartAnimation(
+              key: _startAnimation,
+              markHeight: markHeight,
+              stacked: stacked,
+              colours: plebzMarkColours(context),
+            );
+            final status = Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [_buildStatusText(context), const SizedBox(height: 12), _buildServerStatusList(context)],
+            );
+            final logoHeight = PlebzStartAnimation.heightFor(markHeight, stacked: stacked);
+            // Below the logo there must be room for a few server rows; a car
+            // at a large interface scale or a phone in landscape has less, so
+            // there the two stack and scroll.
+            if (constraints.maxHeight / 2 - logoHeight / 2 < 180) {
+              return Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [logo, const SizedBox(height: 32), status]),
+                ),
+              );
+            }
+            return Stack(
+              children: [
+                Center(child: logo),
+                Positioned(left: 0, right: 0, top: constraints.maxHeight / 2 + logoHeight / 2 + 48, child: status),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

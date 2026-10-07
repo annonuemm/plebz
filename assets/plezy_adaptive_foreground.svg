@@ -1,10 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+<defs>
+<linearGradient id="plebz" gradientUnits="userSpaceOnUse" x1="0" y1="3.6" x2="85.34" y2="104">
+<stop offset="0" stop-color="#7356F5"/>
+<stop offset="0.55" stop-color="#A866EE"/>
+<stop offset="1" stop-color="#EE8BD2"/>
+</linearGradient>
+</defs>
 <rect x="27" y="27" width="54" height="54" rx="12" fill="#000000"/>
-<g transform="translate(42.6 60.3) scale(0.6)">
-<g fill="none" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
-<path d="M4,-19a15,15 0 1,0 30,0a15,15 0 1,0 -30,0"/>
-<path d="M4,-34L4,13"/>
-</g>
-<path d="M15.5,-25L15.5,-13L25.5,-19Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>
+<g transform="translate(43.28 40.49) scale(0.25)">
+<path d="M0,104 L0,11 Q0,0 9.62,5.34 L80.38,44.66 Q90,50 80.94,56.25 L32,90" fill="none" stroke="url(#plebz)" stroke-width="27" stroke-linecap="round" stroke-linejoin="round"/>
 </g>
 </svg>

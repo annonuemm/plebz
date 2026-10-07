@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 """Draw every Plebz logo file from one geometry.
 
-The mark is a lowercase "p" whose bowl holds a play triangle; the wordmark
-"plebz" is built from the same strokes (one weight, round ends). This script is
-the source: change a number here and run it again, never edit the outputs.
+The mark is a play triangle drawn as one thick round-ended stroke: the stem
+runs down the left like a "p", the triangle stays open at the bottom, and a
+violet-to-pink gradient runs across it. The wordmark is "Plebz" set in Poppins
+Bold beside it. Icons and the TV banner sit on black. This script is the
+source: change a number here and run it again, never edit the outputs.
 
     python3 scripts/brand/make_brand_assets.py
 
-Needs Pillow for the bitmaps. Writes, relative to the repository root:
-  assets/brand/plebz_mark.svg, assets/brand/plebz_wordmark.svg   masters
+Needs Pillow and Poppins Bold (Poppins-Bold.ttf in ~/Library/Fonts or
+/Library/Fonts, or the file named by PLEBZ_WORDMARK_FONT). Writes, relative to
+the repository root:
+  assets/brand/plebz_mark.svg                 the mark, master
+  assets/brand/plebz_logo_on_{black,white}.png   mark and wordmark, 2048 wide
   assets/plezy_adaptive_foreground.svg   the start screen (path kept for upstream)
   assets/plezy.png                       the sign-in screen (path kept)
+  assets/plebz_wordmark.png              "Plebz" in white, for the start animation
   android/.../drawable/ic_launcher_{foreground,monochrome}.xml
   android/.../mipmap-*/ic_launcher.png   launchers before Android 8
   android/.../drawable-*/tv_banner.png   the Android TV banner
@@ -20,70 +26,85 @@ Needs Pillow for the bitmaps. Writes, relative to the repository root:
 
 from __future__ import annotations
 
-import math
+import os
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[2]
 RES = ROOT / "android/app/src/main/res"
 
-# --- Geometry, in glyph units. Baseline y=0, up is negative. ---------------
-W = 8.0  # the one stroke weight
-RM = 15.0  # centre-line radius of every bowl (outer 19, inner 11)
-XTOP = -34.0  # centre line of an x-height top cap (outer -38)
-ASC = -54.0  # centre line of an ascender cap (outer -58)
-BASE = -4.0  # centre line of a baseline cap (outer 0)
-DESC = 13.0  # centre line of the descender cap (outer 17)
-BOWL_Y = -19.0  # centre of every bowl
-GAP = 9.0  # space between letters, outer edge to outer edge
-E_OPEN = 40.0  # degrees of the "e"'s opening, below its bar
+# --- Geometry, in mark units. y grows downwards. ----------------------------
+W = 27.0  # the stroke weight
+STEM_BOTTOM = 104.0  # centre line of the stem's round end
+TIP = (90.0, 50.0)  # the triangle's point
+OPEN_END = (32.0, 90.0)  # centre line of the open stroke's round end
+CORNER = 11.0  # how far each corner's curve reaches along its two edges
+
+# The gradient runs corner to corner across the centre line's box.
+STOPS = [(0.0, "#7356F5"), (0.55, "#A866EE"), (1.0, "#EE8BD2")]
 
 WHITE = "#FFFFFF"
 BLACK = "#000000"
+INK = "#16151D"  # the wordmark on white
+
+# The wordmark beside the mark: the mark is this many times the height of
+# "Plebz" (cap top to baseline), and stands this far from it, in that height.
+MARK_TO_TEXT = 1.42
+TEXT_GAP = 0.61
 
 
-def triangle(cx: float, cy: float) -> list[tuple[float, float]]:
-    """The play triangle in a bowl centred at (cx, cy), nudged right so it
-    sits optically in the middle."""
-    return [(cx - 3.5, cy - 6.0), (cx - 3.5, cy + 6.0), (cx + 6.5, cy)]
+def _toward(a: tuple[float, float], b: tuple[float, float], d: float) -> tuple[float, float]:
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    length = (dx * dx + dy * dy) ** 0.5
+    return a[0] + dx / length * d, a[1] + dy / length * d
 
 
-def glyphs() -> tuple[list[tuple], tuple[float, float, float, float]]:
-    """The wordmark as primitives, and its bounding box (x0, y0, x1, y1)."""
-    shapes: list[tuple] = []
-    x = 0.0
-    # p: a bowl, the stem down its left side, the play inside.
-    cx = x + W / 2 + RM
-    shapes += [("ring", cx, BOWL_Y), ("line", [(x + W / 2, XTOP), (x + W / 2, DESC)]), ("tri", triangle(cx, BOWL_Y))]
-    x += 2 * (RM + W / 2) + GAP
-    # l
-    shapes.append(("line", [(x + W / 2, ASC), (x + W / 2, BASE)]))
-    x += W + GAP
-    # e: bar through the middle, bowl open below the bar on the right.
-    cx = x + W / 2 + RM
-    shapes += [("line", [(cx - RM, BOWL_Y), (cx + RM, BOWL_Y)]), ("e-arc", cx, BOWL_Y)]
-    x += 2 * (RM + W / 2) + GAP
-    # b: the stem up the left side to the ascender, bowl at x-height.
-    cx = x + W / 2 + RM
-    shapes += [("ring", cx, BOWL_Y), ("line", [(x + W / 2, ASC), (x + W / 2, BASE)])]
-    x += 2 * (RM + W / 2) + GAP
-    # z: as wide as a bowl.
-    x0, x1 = x + W / 2, x + W / 2 + 2 * RM
-    shapes.append(("line", [(x0, XTOP), (x1, XTOP), (x0, BASE), (x1, BASE)]))
-    x += 2 * (RM + W / 2)
-    return shapes, (0.0, ASC - W / 2, x, DESC + W / 2)
+def segments() -> list[tuple]:
+    """The centre line: ("M", p), ("L", p), ("Q", control, p)."""
+    top = (0.0, 0.0)
+    return [
+        ("M", (0.0, STEM_BOTTOM)),
+        ("L", (0.0, CORNER)),
+        ("Q", top, _toward(top, TIP, CORNER)),
+        ("L", _toward(TIP, top, CORNER)),
+        ("Q", TIP, _toward(TIP, OPEN_END, CORNER)),
+        ("L", OPEN_END),
+    ]
 
 
-def mark() -> tuple[list[tuple], tuple[float, float, float, float]]:
-    """The "p" alone: the first three primitives of the wordmark."""
-    shapes, _ = glyphs()
-    return shapes[:3], (0.0, XTOP - W / 2, 2 * (RM + W / 2), DESC + W / 2)
+def box() -> tuple[float, float, float, float]:
+    """The stroke's outer box, sampled from the outline (x0, y0, x1, y1)."""
+    pts = polyline()
+    r = W / 2
+    return (
+        min(x for x, _ in pts) - r,
+        min(y for _, y in pts) - r,
+        max(x for x, _ in pts) + r,
+        max(y for _, y in pts) + r,
+    )
 
 
-def e_arc_end(cx: float, cy: float) -> tuple[float, float]:
-    a = math.radians(E_OPEN)
-    return cx + RM * math.cos(a), cy + RM * math.sin(a)
+def gradient_box() -> tuple[float, float, float, float]:
+    """Where the gradient starts and ends: the centre line's box, so the
+    stroke reaches both end colours."""
+    pts = polyline()
+    return min(x for x, _ in pts), min(y for _, y in pts), max(x for x, _ in pts), max(y for _, y in pts)
+
+
+def polyline(steps: int = 48) -> list[tuple[float, float]]:
+    """The centre line as dense points, for drawing bitmaps."""
+    pts: list[tuple[float, float]] = []
+    for seg in segments():
+        if seg[0] in ("M", "L"):
+            pts.append(seg[1])
+        else:
+            (x0, y0), (cx, cy), (x1, y1) = pts[-1], seg[1], seg[2]
+            for i in range(1, steps + 1):
+                t = i / steps
+                u = 1 - t
+                pts.append((u * u * x0 + 2 * u * t * cx + t * t * x1, u * u * y0 + 2 * u * t * cy + t * t * y1))
+    return pts
 
 
 # --- SVG and VectorDrawable path data ---------------------------------------
@@ -91,42 +112,36 @@ def fmt(v: float) -> str:
     return f"{v:.2f}".rstrip("0").rstrip(".")
 
 
-def circle_path(cx: float, cy: float, r: float) -> str:
-    return (
-        f"M{fmt(cx - r)},{fmt(cy)}a{fmt(r)},{fmt(r)} 0 1,0 {fmt(2 * r)},0"
-        f"a{fmt(r)},{fmt(r)} 0 1,0 {fmt(-2 * r)},0"
-    )
+def path_data() -> str:
+    out = []
+    for seg in segments():
+        if seg[0] == "Q":
+            out.append(f"Q{fmt(seg[1][0])},{fmt(seg[1][1])} {fmt(seg[2][0])},{fmt(seg[2][1])}")
+        else:
+            out.append(f"{seg[0]}{fmt(seg[1][0])},{fmt(seg[1][1])}")
+    return " ".join(out)
 
 
-def stroke_paths(shapes: list[tuple]) -> tuple[list[str], list[str]]:
-    """(stroked centre lines, filled triangles) as path data."""
-    strokes, fills = [], []
-    for s in shapes:
-        if s[0] == "ring":
-            strokes.append(circle_path(s[1], s[2], RM))
-        elif s[0] == "line":
-            pts = s[1]
-            strokes.append("M" + "L".join(f"{fmt(px)},{fmt(py)}" for px, py in pts))
-        elif s[0] == "e-arc":
-            cx, cy = s[1], s[2]
-            ex, ey = e_arc_end(cx, cy)
-            strokes.append(f"M{fmt(cx + RM)},{fmt(cy)}A{fmt(RM)},{fmt(RM)} 0 1,0 {fmt(ex)},{fmt(ey)}")
-        elif s[0] == "tri":
-            fills.append("M" + "L".join(f"{fmt(px)},{fmt(py)}" for px, py in s[1]) + "Z")
-    return strokes, fills
-
-
-def svg(shapes, box, *, color=WHITE, pad=0.0, size=None, canvas=None, tile=None, transform=None) -> str:
-    """[box] is the glyph's box; [canvas] (x, y, w, h) overrides the viewBox
-    when the glyph is placed with [transform] inside a larger frame."""
-    x0, y0, x1, y1 = box
+def svg(*, pad: float = 1.0, size=None, canvas=None, tile=None, transform=None) -> str:
+    """The mark in its gradient. [canvas] (x, y, w, h) overrides the viewBox
+    when the mark is placed with [transform] inside a larger frame; [tile]
+    (x, y, width, radius) puts a black rounded square behind it."""
+    x0, y0, x1, y1 = box()
     if canvas:
         vb = " ".join(fmt(v) for v in canvas)
     else:
         vb = f"{fmt(x0 - pad)} {fmt(y0 - pad)} {fmt(x1 - x0 + 2 * pad)} {fmt(y1 - y0 + 2 * pad)}"
-    strokes, fills = stroke_paths(shapes)
     dims = f' width="{size[0]}" height="{size[1]}"' if size else ""
+    gx0, gy0, gx1, gy1 = gradient_box()
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vb}"{dims}>']
+    out.append("<defs>")
+    out.append(
+        f'<linearGradient id="plebz" gradientUnits="userSpaceOnUse" x1="{fmt(gx0)}" y1="{fmt(gy0)}"'
+        f' x2="{fmt(gx1)}" y2="{fmt(gy1)}">'
+    )
+    out += [f'<stop offset="{fmt(o)}" stop-color="{c}"/>' for o, c in STOPS]
+    out.append("</linearGradient>")
+    out.append("</defs>")
     if tile:
         tx, ty, tw, radius = tile
         out.append(
@@ -134,163 +149,222 @@ def svg(shapes, box, *, color=WHITE, pad=0.0, size=None, canvas=None, tile=None,
         )
     out.append(f'<g transform="{transform}">' if transform else "<g>")
     out.append(
-        f'<g fill="none" stroke="{color}" stroke-width="{fmt(W)}" stroke-linecap="round" stroke-linejoin="round">'
+        f'<path d="{path_data()}" fill="none" stroke="url(#plebz)" stroke-width="{fmt(W)}"'
+        ' stroke-linecap="round" stroke-linejoin="round"/>'
     )
-    out += [f'<path d="{d}"/>' for d in strokes]
-    out.append("</g>")
-    out += [f'<path d="{d}" fill="{color}" stroke="{color}" stroke-width="2" stroke-linejoin="round"/>' for d in fills]
     out.append("</g>")
     out.append("</svg>")
     return "\n".join(out) + "\n"
 
 
-def vector_drawable(shapes, box, *, scale: float) -> str:
-    """An adaptive-icon layer: 108dp, the mark centred in the 66dp safe zone."""
-    x0, y0, x1, y1 = box
+def vector_drawable(*, height_dp: float, gradient: bool) -> str:
+    """An adaptive-icon layer: 108dp, the mark [height_dp] tall in the middle.
+    The monochrome layer is the same stroke in white."""
+    x0, y0, x1, y1 = box()
+    scale = height_dp / (y1 - y0)
     tx = 54 - (x0 + x1) / 2 * scale
     ty = 54 - (y0 + y1) / 2 * scale
-    strokes, fills = stroke_paths(shapes)
     lines = [
         '<?xml version="1.0" encoding="utf-8"?>',
         "<!-- Generated by scripts/brand/make_brand_assets.py; edit the script, not this file. -->",
         '<vector xmlns:android="http://schemas.android.com/apk/res/android"',
+        '    xmlns:aapt="http://schemas.android.com/aapt"' if gradient else None,
         '    android:width="108dp"',
         '    android:height="108dp"',
         '    android:viewportWidth="108"',
         '    android:viewportHeight="108">',
         f'    <group android:scaleX="{fmt(scale)}" android:scaleY="{fmt(scale)}"'
         f' android:translateX="{fmt(tx)}" android:translateY="{fmt(ty)}">',
+        "        <path",
+        f'            android:pathData="{path_data()}"',
+        None if gradient else '            android:strokeColor="#FFFFFFFF"',
+        f'            android:strokeWidth="{fmt(W)}"',
+        '            android:strokeLineCap="round"',
+        '            android:strokeLineJoin="round"' + ("" if gradient else " />"),
     ]
-    for d in strokes:
+    if gradient:
+        gx0, gy0, gx1, gy1 = gradient_box()
+        lines[-1] += ">"
         lines += [
-            "        <path",
-            f'            android:pathData="{d}"',
-            '            android:strokeColor="#FFFFFFFF"',
-            f'            android:strokeWidth="{fmt(W)}"',
-            '            android:strokeLineCap="round"',
-            '            android:strokeLineJoin="round" />',
+            '            <aapt:attr name="android:strokeColor">',
+            '                <gradient android:type="linear"',
+            f'                    android:startX="{fmt(gx0)}" android:startY="{fmt(gy0)}"',
+            f'                    android:endX="{fmt(gx1)}" android:endY="{fmt(gy1)}">',
         ]
-    for d in fills:
         lines += [
-            "        <path",
-            f'            android:pathData="{d}"',
-            '            android:fillColor="#FFFFFFFF"',
-            '            android:strokeColor="#FFFFFFFF"',
-            '            android:strokeWidth="2"',
-            '            android:strokeLineJoin="round" />',
+            f'                    <item android:offset="{fmt(o)}" android:color="#FF{c[1:]}" />' for o, c in STOPS
         ]
+        lines += ["                </gradient>", "            </aapt:attr>", "        </path>"]
     lines += ["    </group>", "</vector>"]
-    return "\n".join(lines) + "\n"
+    return "\n".join(line for line in lines if line is not None) + "\n"
 
 
 # --- Bitmaps ---------------------------------------------------------------
 SS = 8  # supersampling
 
 
-def render(shapes, box, *, width: int, height: int, glyph_height: float, tile_radius: float | None = None,
-           background: str | None = BLACK) -> Image.Image:
-    """Draw [shapes] centred, [glyph_height] pixels tall, on a black canvas or
-    a black rounded tile on transparency."""
-    W_, H_ = width * SS, height * SS
-    img = Image.new("RGBA", (W_, H_), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
+def _rgb(hex_colour: str) -> tuple[int, int, int]:
+    return int(hex_colour[1:3], 16), int(hex_colour[3:5], 16), int(hex_colour[5:7], 16)
+
+
+def _gradient_palette() -> list[int]:
+    palette = []
+    for i in range(256):
+        t = i / 255
+        for (o0, c0), (o1, c1) in zip(STOPS, STOPS[1:]):
+            if o0 <= t <= o1:
+                f = (t - o0) / (o1 - o0)
+                a, b = _rgb(c0), _rgb(c1)
+                palette += [round(a[k] + (b[k] - a[k]) * f) for k in range(3)]
+                break
+    return palette
+
+
+def draw_mark(canvas: Image.Image, *, height: float, centre: tuple[float, float], colour: str | None = None) -> None:
+    """Paint the mark [height] pixels tall around [centre]: in its gradient,
+    or in [colour]."""
+    x0, y0, x1, y1 = box()
+    s = height / (y1 - y0)
+    ox = centre[0] - (x0 + x1) / 2 * s
+    oy = centre[1] - (y0 + y1) / 2 * s
+    mask = Image.new("L", canvas.size, 0)
+    d = ImageDraw.Draw(mask)
+    pts = [(ox + x * s, oy + y * s) for x, y in polyline()]
+    r = W * s / 2
+    # Thick segments plus a disc at every point: round ends and round joins.
+    for a, b in zip(pts, pts[1:]):
+        d.line([a, b], fill=255, width=round(W * s))
+    for cx, cy in pts:
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=255)
+
+    if colour:
+        fill = Image.new("RGBA", canvas.size, colour)
+    else:
+        # t along the corner-to-corner line, as a grey ramp, then coloured.
+        # The stroke reaches past both ends of the line, where the end colours
+        # hold: the ramp is padded with 256 rows of each.
+        bx0, by0, bx1, by1 = gradient_box()
+        gx0, gy0, gx1, gy1 = ox + bx0 * s, oy + by0 * s, ox + bx1 * s, oy + by1 * s
+        dx, dy = gx1 - gx0, gy1 - gy0
+        l2 = dx * dx + dy * dy
+        padded = Image.new("L", (1, 768))
+        padded.putdata([0] * 256 + list(range(256)) + [255] * 256)
+        ramp = padded.transform(
+            canvas.size,
+            Image.Transform.AFFINE,
+            (0, 0, 0, 255 * dx / l2, 255 * dy / l2, 256 - 255 * (gx0 * dx + gy0 * dy) / l2),
+            resample=Image.Resampling.BILINEAR,
+        )
+        ramp.putpalette(_gradient_palette())
+        fill = ramp.convert("RGBA")
+    canvas.paste(fill, (0, 0), mask)
+
+
+def _font_path() -> Path:
+    named = os.environ.get("PLEBZ_WORDMARK_FONT")
+    candidates = [Path(named)] if named else []
+    candidates += [Path.home() / "Library/Fonts/Poppins-Bold.ttf", Path("/Library/Fonts/Poppins-Bold.ttf")]
+    for path in candidates:
+        if path.is_file():
+            return path
+    raise SystemExit("Poppins Bold not found: install Poppins-Bold.ttf or set PLEBZ_WORDMARK_FONT")
+
+
+def icon(px: int, *, mark_height: float, tile_radius: float | None) -> Image.Image:
+    """The mark on a black square, or on a black rounded tile on transparency."""
+    size = px * SS
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0) if tile_radius is not None else BLACK)
     if tile_radius is not None:
-        d.rounded_rectangle([0, 0, W_ - 1, H_ - 1], radius=tile_radius * SS, fill=BLACK)
-    elif background:
-        d.rectangle([0, 0, W_, H_], fill=background)
-    x0, y0, x1, y1 = box
-    s = glyph_height / (y1 - y0) * SS
-    ox = W_ / 2 - (x0 + x1) / 2 * s
-    oy = H_ / 2 - (y0 + y1) / 2 * s
+        ImageDraw.Draw(img).rounded_rectangle([0, 0, size - 1, size - 1], radius=tile_radius * SS, fill=BLACK)
+    draw_mark(img, height=mark_height * SS, centre=(size / 2, size / 2))
+    return img.resize((px, px), Image.Resampling.LANCZOS)
 
-    def p(x: float, y: float) -> tuple[float, float]:
-        return ox + x * s, oy + y * s
 
-    w = W * s
-    r = w / 2
+def lockup(width: int, height: int, *, span: float, background, text: str) -> Image.Image:
+    """Mark and "Plebz" side by side, [span] of the width, centred."""
+    w_, h_ = width * SS, height * SS
+    img = Image.new("RGBA", (w_, h_), background)
+    font_path = _font_path()
+    probe = ImageFont.truetype(str(font_path), 1000)
+    l, t, r, b = probe.getbbox("Plebz")
+    # Sizes per unit of text height (cap top to baseline).
+    x0, y0, x1, y1 = box()
+    mark_w = MARK_TO_TEXT * (x1 - x0) / (y1 - y0)
+    text_w = (r - l) / (b - t)
+    unit = span * w_ / (mark_w + TEXT_GAP + text_w)
+    left = (w_ - unit * (mark_w + TEXT_GAP + text_w)) / 2
+    draw_mark(img, height=MARK_TO_TEXT * unit, centre=(left + mark_w * unit / 2, h_ / 2))
+    font = ImageFont.truetype(str(font_path), round(1000 * unit / (b - t)))
+    l, t, r, b = font.getbbox("Plebz")
+    tx = left + (mark_w + TEXT_GAP) * unit - l
+    ty = h_ / 2 - (t + b) / 2
+    ImageDraw.Draw(img).text((tx, ty), "Plebz", font=font, fill=text)
+    return img.resize((width, height), Image.Resampling.LANCZOS)
 
-    def cap(x: float, y: float) -> None:
-        cx, cy = p(x, y)
-        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=WHITE)
 
-    for sh in shapes:
-        if sh[0] == "ring":
-            cx, cy = p(sh[1], sh[2])
-            ro = RM * s + r
-            d.ellipse([cx - ro, cy - ro, cx + ro, cy + ro], outline=WHITE, width=round(w))
-        elif sh[0] == "line":
-            pts = [p(*pt) for pt in sh[1]]
-            d.line(pts, fill=WHITE, width=round(w), joint="curve")
-            cap(*sh[1][0])
-            cap(*sh[1][-1])
-        elif sh[0] == "e-arc":
-            cx, cy = p(sh[1], sh[2])
-            ro = RM * s + r
-            d.arc([cx - ro, cy - ro, cx + ro, cy + ro], start=E_OPEN, end=360, fill=WHITE, width=round(w))
-            cap(*e_arc_end(sh[1], sh[2]))
-        elif sh[0] == "tri":
-            # Rounded corners the way the SVG's round-joined 2-unit stroke
-            # draws them: each edge as a thick line, a disc on every corner.
-            pts = [p(*pt) for pt in sh[1]]
-            d.polygon(pts, fill=WHITE)
-            for a, b in zip(pts, pts[1:] + pts[:1]):
-                d.line([a, b], fill=WHITE, width=round(2 * s))
-            for cx, cy in pts:
-                d.ellipse([cx - s, cy - s, cx + s, cy + s], fill=WHITE)
-    return img.resize((width, height), Image.LANCZOS)
+def wordmark(height: int) -> Image.Image:
+    """"Plebz" in white on transparency, cut to its ink: [height] pixels from
+    cap top to baseline."""
+    font = ImageFont.truetype(str(_font_path()), 1000)
+    l, t, r, b = font.getbbox("Plebz")
+    size = round(1000 * height / (b - t))
+    font = ImageFont.truetype(str(_font_path()), size)
+    l, t, r, b = font.getbbox("Plebz")
+    img = Image.new("RGBA", (r - l + 2 * size, b - t + size), (255, 255, 255, 0))
+    ImageDraw.Draw(img).text((size - l, size // 2 - t), "Plebz", font=font, fill=WHITE)
+    return img.crop(img.getbbox())
 
 
 def main() -> None:
-    m_shapes, m_box = mark()
-    w_shapes, w_box = glyphs()
-
+    x0, y0, x1, y1 = box()
     brand = ROOT / "assets/brand"
     brand.mkdir(parents=True, exist_ok=True)
-    (brand / "plebz_mark.svg").write_text(svg(m_shapes, m_box, pad=1))
-    (brand / "plebz_wordmark.svg").write_text(svg(w_shapes, w_box, pad=1))
+    (brand / "plebz_mark.svg").write_text(svg())
+    lockup(2048, 640, span=0.84, background=BLACK, text=WHITE).convert("RGB").save(brand / "plebz_logo_on_black.png")
+    lockup(2048, 640, span=0.84, background=WHITE, text=INK).convert("RGB").save(brand / "plebz_logo_on_white.png")
 
-    # Start screen: the app icon (black tile, white p) in the adaptive-icon
+    # Start screen: the app icon (black tile, the mark) in the adaptive-icon
     # canvas it replaces, so the call sites keep their sizes.
-    mx0, my0, mx1, my1 = m_box
-    scale = 0.6
-    tx, ty = 54 - (mx0 + mx1) / 2 * scale, 54 - (my0 + my1) / 2 * scale
+    scale = 32 / (y1 - y0)
+    tx, ty = 54 - (x0 + x1) / 2 * scale, 54 - (y0 + y1) / 2 * scale
     start = svg(
-        m_shapes,
-        m_box,
         canvas=(0, 0, 108, 108),
         tile=(27, 27, 54, 12),
         transform=f"translate({fmt(tx)} {fmt(ty)}) scale({fmt(scale)})",
     )
     (ROOT / "assets/plezy_adaptive_foreground.svg").write_text(start)
 
-    fg = vector_drawable(m_shapes, m_box, scale=0.85)
-    (RES / "drawable/ic_launcher_foreground.xml").write_text(fg)
-    (RES / "drawable/ic_launcher_monochrome.xml").write_text(fg)
+    # Adaptive icon: the launcher masks the 108dp layer to its middle 72dp.
+    (RES / "drawable/ic_launcher_foreground.xml").write_text(vector_drawable(height_dp=44, gradient=True))
+    (RES / "drawable/ic_launcher_monochrome.xml").write_text(vector_drawable(height_dp=44, gradient=False))
 
     # Legacy launcher bitmaps (before adaptive icons): a rounded black tile.
     for folder, px in {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}.items():
-        render(m_shapes, m_box, width=px, height=px, glyph_height=px * 0.58, tile_radius=px * 0.22).save(
-            RES / f"mipmap-{folder}/ic_launcher.png"
-        )
+        icon(px, mark_height=px * 0.6, tile_radius=px * 0.22).save(RES / f"mipmap-{folder}/ic_launcher.png")
 
-    # Android TV banner: the wordmark on black.
+    # Android TV banner: mark and wordmark on black.
     for folder, (bw, bh) in {"xhdpi": (320, 180), "xxhdpi": (480, 270), "xxxhdpi": (640, 360)}.items():
-        render(w_shapes, w_box, width=bw, height=bh, glyph_height=bh * 0.42).convert("RGB").save(
+        lockup(bw, bh, span=0.7, background=BLACK, text=WHITE).convert("RGB").save(
             RES / f"drawable-{folder}/tv_banner.png"
         )
 
-    # Sign-in screen logo.
-    render(m_shapes, m_box, width=512, height=512, glyph_height=300, tile_radius=112).save(ROOT / "assets/plezy.png")
+    # The start animation's name, revealed beside the drawn mark.
+    wordmark(256).save(ROOT / "assets/plebz_wordmark.png", optimize=True)
 
-    # Mac icon layer: the white p alone, sized like the layer it replaces.
+    # Sign-in screen logo.
+    icon(512, mark_height=300, tile_radius=112).save(ROOT / "assets/plezy.png")
+
+    # Mac icon layer: the mark alone, as tall as the layer it replaces.
+    h = 281
     (ROOT / "macos/plezy.icon/Assets/plezy-cropped.svg").write_text(
-        svg(m_shapes, m_box, pad=1, size=(round(38 * 5.1), round(55 * 5.1)))
+        svg(size=(round(h * (x1 - x0 + 2) / (y1 - y0 + 2)), h))
     )
 
     # Windows icon.
     sizes = [16, 24, 32, 48, 64, 128, 256]
-    big = render(m_shapes, m_box, width=256, height=256, glyph_height=150, tile_radius=56)
-    big.save(ROOT / "windows/runner/resources/app_icon.ico", sizes=[(n, n) for n in sizes])
+    icon(256, mark_height=156, tile_radius=56).save(
+        ROOT / "windows/runner/resources/app_icon.ico", sizes=[(n, n) for n in sizes]
+    )
 
 
 if __name__ == "__main__":

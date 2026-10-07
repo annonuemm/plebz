@@ -128,7 +128,13 @@ class LiveSeekAccumulator {
     // A press landed during the network round-trip + calibration. Its
     // debounce may already have fired while we were flushing, so dispatch
     // it after every terminal outcome, not only a successful calibration.
+    //
+    // Unless that debounce is still running: the viewer is still pressing,
+    // and re-opening now would play a moment at every stop on the way — the
+    // stutter an IPTV archive shows, where each re-open takes seconds. The
+    // running timer commits the burst once the presses stop (Plebz).
     if (_pendingEpoch != target) {
+      if (_debounceTimer?.isActive ?? false) return;
       unawaited(_flush());
       return;
     }

@@ -817,7 +817,8 @@
     "playVersion": "Play Version...",
     "markSeasonAsWatched": "Mark season as watched",
     "addToFavorites": "Add to favorites",
-    "removeFromFavorites": "Remove from favorites"
+    "removeFromFavorites": "Remove from favorites",
+    "episodeSummary": "Episode description"
   },
   "rateSheet": {
     "title": "Rate",

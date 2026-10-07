@@ -40,9 +40,14 @@ class TrackerProgressController extends ChangeNotifier {
   static Future<Directory> _defaultRoot() async =>
       Directory(p.join((await getApplicationSupportDirectory()).path, 'tracker_watch'));
 
-  /// How long a change made here is shown on its own before the tracker is
-  /// trusted to have it: Simkl takes a moment, and its writes queue.
-  static const Duration patchLifetime = Duration(minutes: 3);
+  /// How long a change made here is kept at most. It gives way sooner to
+  /// anything newer the tracker says about the same title (see
+  /// [TrackerWatchOverlay]); this only clears what never got an answer.
+  static const Duration patchLifetime = Duration(days: 30);
+
+  /// How soon the tracker is asked again while changes made here wait for its
+  /// echo.
+  static const Duration patchEchoCheck = Duration(minutes: 3);
 
   /// How soon after a change made here the tracker is asked again.
   static const Duration echoDelay = Duration(seconds: 30);
@@ -111,6 +116,7 @@ class TrackerProgressController extends ChangeNotifier {
   Future<MediaItem?> onDeckFor(MediaServerClient client, MediaItem? item) async {
     if (item == null || item.kind != MediaKind.show) return null;
     try {
+      await _ensureIdsOf(client, item.id);
       return await TrackerContinueWatching(
         state: _state,
         index: _indexes[client.serverId] ?? const {},
@@ -119,6 +125,29 @@ class TrackerProgressController extends ChangeNotifier {
       appLogger.d('Tracker progress: next episode of ${item.id} unknown', error: error);
       return null;
     }
+  }
+
+  /// Makes sure the ids of [itemId] on [client]'s server are known, asking
+  /// the server for this one title when its library listing did not name it —
+  /// a copy added since, a library on a server that came online later. Without
+  /// them a series' page knows nothing the tracker says about it: every episode
+  /// reads unwatched and play starts at the first.
+  ///
+  /// Called before the page fetches its episodes, so they come in with the
+  /// tracker's state already.
+  Future<void> _ensureIdsOf(MediaServerClient client, String itemId) async {
+    final serverId = client.serverId;
+    if (_indexes[serverId]?.containsKey(itemId) ?? false) return;
+    final generation = _generation;
+    final ids = await client.fetchExternalIds(itemId);
+    if (generation != _generation || !ids.hasCatalogIds) {
+      if (!ids.hasCatalogIds) appLogger.i('Tracker progress: $serverId/$itemId names no ids, cannot be matched');
+      return;
+    }
+    final index = Map.of(_indexes[serverId] ?? const <String, ExternalIds>{})..[itemId] = ids;
+    _indexes[serverId] = index;
+    unawaited(_files?.writeIndex(serverId, index));
+    _publish();
   }
 
   /// Counts up whenever what the tracker or the servers said changed — not
@@ -152,9 +181,11 @@ class TrackerProgressController extends ChangeNotifier {
       _publish();
       final state = await files.readState();
       final indexes = {for (final serverId in _servers.keys) serverId: await files.readIndex(serverId)};
+      final patches = await files.readPatches();
       if (generation != _generation) return;
       _state = state;
       _indexes.addAll(indexes);
+      _patches.addAll(patches);
       _publish(contentChanged: true);
     }
     await refresh();
@@ -198,8 +229,13 @@ class TrackerProgressController extends ChangeNotifier {
     final stale = clock.now().subtract(patchLifetime);
     final before = _patches.length;
     _patches.removeWhere((_, patch) => patch.at.isBefore(stale));
+    if (_patches.length != before) unawaited(files.writePatches(Map.of(_patches)));
     if (changed || _patches.length != before) _publish(contentChanged: changed);
-    if (_patches.isNotEmpty) _echoAfter(patchLifetime);
+    appLogger.i(
+      'Tracker progress: ${_state.movies.length} films, ${_state.shows.length} series, '
+      '${_state.playback.length} paused, ${_patches.length} own changes waiting',
+    );
+    if (_patches.isNotEmpty) _echoAfter(patchEchoCheck);
   }
 
   void _noteLocalChange(MediaItem item, {bool? watched, int? offsetMs}) {
@@ -210,6 +246,9 @@ class TrackerProgressController extends ChangeNotifier {
       offsetMs: offsetMs,
       at: clock.now(),
     );
+    // Kept on disk: a position left here must survive the app being closed
+    // before the tracker has it.
+    unawaited(_files?.writePatches(Map.of(_patches)));
     _publish();
     _echoAfter(echoDelay);
   }

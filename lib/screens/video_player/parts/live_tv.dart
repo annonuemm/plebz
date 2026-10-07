@@ -641,6 +641,12 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     if (!mounted) return;
     final pending = _liveSeek.pendingEpoch;
     final buffer = _live.captureBuffer;
+    // Hold the picture while the viewer skips: what plays now is about to be
+    // left, and the re-open at the target starts playback again (Plebz).
+    final currentPlayer = player;
+    if (pending != null && currentPlayer != null && currentPlayer.state.playing) {
+      unawaited(currentPlayer.pause());
+    }
     _setPlayerState(() {
       if (pending != null && buffer != null) {
         _live.atLiveEdge = pending >= buffer.seekableEndEpoch - VideoPlayerScreenState._liveEdgeThresholdSeconds;

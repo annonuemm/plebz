@@ -197,4 +197,29 @@ void main() {
       expect(season.isWatched, isTrue);
     });
   });
+
+  group('this device\'s change against what the tracker says later', () {
+    MediaItem paused(TrackerWatchOverlay overlay) =>
+        overlay.apply(testMediaItem(id: 'paused', serverId: 'plex', durationMs: 7200000));
+
+    test('a position left here outlives the tracker\'s older pause', () {
+      // Simkl's own pause is from 10 May; the viewer got further here in October.
+      final overlay = TrackerWatchOverlay(
+        state: state,
+        idsOf: (serverId, itemId) => ids[itemId],
+        patches: {'plex|paused': LocalWatchPatch(offsetMs: 6000000, at: DateTime.utc(2026, 10, 6))},
+      );
+      expect(paused(overlay).viewOffsetMs, 6000000);
+    });
+
+    test('the tracker\'s newer pause wins over an older change made here', () {
+      // Watched on another device after this one's change.
+      final overlay = TrackerWatchOverlay(
+        state: state,
+        idsOf: (serverId, itemId) => ids[itemId],
+        patches: {'plex|paused': LocalWatchPatch(offsetMs: 6000000, at: DateTime.utc(2026, 5, 1))},
+      );
+      expect(paused(overlay).viewOffsetMs, 3600000);
+    });
+  });
 }

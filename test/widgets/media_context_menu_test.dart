@@ -393,6 +393,40 @@ void main() {
       expect(played, ['season-1'], reason: 'the season is what gets marked, not the episode that opened the menu');
     });
 
+    testWidgets('an episode\'s description heads its menu and opens in full', (tester) async {
+      final menuKey = await _pumpJellyfinItemMenu(
+        tester,
+        isAdministrator: false,
+        item: _episode(id: 'ep-2', index: 2).copyWith(summary: 'Walt and Jesse dispose of the bodies.'),
+        handler: _seasonWatchHandler(played: []),
+      );
+
+      await _openMenu(tester, menuKey);
+      final entry = find.text(t.mediaMenu.episodeSummary);
+      expect(entry, findsOneWidget);
+      expect(
+        tester.getTopLeft(entry).dy,
+        lessThan(tester.getTopLeft(find.text(t.mediaMenu.markAsWatched)).dy),
+        reason: 'at the top of the list',
+      );
+
+      await tester.tap(entry);
+      await tester.pumpAndSettle();
+      expect(find.text('Walt and Jesse dispose of the bodies.'), findsOneWidget);
+    });
+
+    testWidgets('an episode without a description offers none', (tester) async {
+      final menuKey = await _pumpJellyfinItemMenu(
+        tester,
+        isAdministrator: false,
+        item: _episode(id: 'ep-2', index: 2),
+        handler: _seasonWatchHandler(played: []),
+      );
+
+      await _openMenu(tester, menuKey);
+      expect(find.text(t.mediaMenu.episodeSummary), findsNothing);
+    });
+
     testWidgets('a movie has no season to offer', (tester) async {
       final menuKey = await _pumpJellyfinMovieMenu(
         tester,

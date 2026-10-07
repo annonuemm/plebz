@@ -2323,6 +2323,9 @@ class Translations$mediaMenu$en {
 
 	/// en: 'Remove from favorites'
 	String get removeFromFavorites => 'Remove from favorites';
+
+	/// en: 'Episode description'
+	String get episodeSummary => 'Episode description';
 }
 
 // Path: rateSheet
@@ -9935,6 +9938,7 @@ extension on Translations {
 			'mediaMenu.markSeasonAsWatched' => 'Mark season as watched',
 			'mediaMenu.addToFavorites' => 'Add to favorites',
 			'mediaMenu.removeFromFavorites' => 'Remove from favorites',
+			'mediaMenu.episodeSummary' => 'Episode description',
 			'rateSheet.title' => 'Rate',
 			'rateSheet.server' => 'Server',
 			'rateSheet.favorite' => 'Favorite',
@@ -10177,9 +10181,9 @@ extension on Translations {
 			'mpvConfig.presetLoaded' => 'Preset loaded',
 			'mpvConfig.presetDeleted' => 'Preset deleted',
 			'mpvConfig.confirmDeletePreset' => 'Are you sure you want to delete this preset?',
-			'mpvConfig.configPlaceholder' => 'gpu-api=vulkan\nhwdec=auto\n# comment',
 			_ => null,
 		} ?? switch (path) {
+			'mpvConfig.configPlaceholder' => 'gpu-api=vulkan\nhwdec=auto\n# comment',
 			'mpvConfig.lineHint' => 'option=value',
 			'mpvConfig.addLine' => 'Add line',
 			'mpvConfig.removeLine' => 'Remove line',
@@ -10691,9 +10695,9 @@ extension on Translations {
 			'explore.detail.recommendedBy' => ({required Object who}) => 'Recommended by ${who}',
 			'explore.detail.favoritedBy' => ({required Object who}) => 'Favorited by ${who}',
 			'explore.detail.unairedEpisodes' => ({required Object n}) => '${n} not aired yet',
-			'explore.detail.recommendedByPercent' => ({required Object percent}) => 'Recommended by ${percent} of viewers',
 			_ => null,
 		} ?? switch (path) {
+			'explore.detail.recommendedByPercent' => ({required Object percent}) => 'Recommended by ${percent} of viewers',
 			'explore.detail.relatedTitles' => 'Related titles',
 			'explore.detail.background' => 'Background',
 			'explore.detail.networks' => 'Networks & Streaming',
@@ -11205,9 +11209,9 @@ extension on Translations {
 			'companionRemote.closedBeforeAuth' => 'The connection closed before authentication',
 			'videoSettings.playbackSpeed' => 'Playback Speed',
 			'videoSettings.normalSpeed' => 'Normal',
-			'videoSettings.sleepTimerActive' => ({required Object duration}) => 'Active (${duration})',
 			_ => null,
 		} ?? switch (path) {
+			'videoSettings.sleepTimerActive' => ({required Object duration}) => 'Active (${duration})',
 			'videoSettings.zoom' => 'Zoom',
 			'videoSettings.sleepTimer' => 'Sleep Timer',
 			'videoSettings.audioSync' => 'Audio Sync',
@@ -11719,9 +11723,9 @@ extension on Translations {
 			'plebz.setupAgain' => 'Run setup again',
 			'plebz.setupAgainDescription' => 'Look, sources and services, step by step',
 			'plebz.updateAvailableTitle' => 'Update available',
-			'plebz.updateAvailableBody' => ({required Object release}) => '${release} is ready to install. Your settings and sign-ins stay as they are.',
 			_ => null,
 		} ?? switch (path) {
+			'plebz.updateAvailableBody' => ({required Object release}) => '${release} is ready to install. Your settings and sign-ins stay as they are.',
 			'plebz.updateNow' => 'Update',
 			'plebz.later' => 'Later',
 			'plebz.upToDate' => 'Plebz is up to date',

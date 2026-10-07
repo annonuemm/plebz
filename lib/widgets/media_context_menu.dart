@@ -593,7 +593,13 @@ class MediaContextMenuState extends State<MediaContextMenu> {
     // For episodes, the show key is grandparentId; for seasons, it's parentId
     final itemSeriesKey = mediaKind == MediaKind.episode ? mediaItem.grandparentId : mediaItem.parentId;
 
+    final episodeSummary = mediaKind == MediaKind.episode ? mediaItem.summary?.trim() : null;
     return [
+      // An episode's own description, top of the list: the episode rows show
+      // its title alone, and this is the one way to read what it is about
+      // without leaving the series page (Plebz).
+      if (episodeSummary != null && episodeSummary.isNotEmpty)
+        _MenuAction(value: 'episode_summary', icon: Symbols.notes_rounded, label: t.mediaMenu.episodeSummary),
       if (mediaKind.isMusic) ..._musicMenuActions(context, menu, mediaItem),
       if (hasActiveProgress)
         _MenuAction(value: 'play_from_beginning', icon: Symbols.replay_rounded, label: t.mediaMenu.playFromBeginning),
@@ -886,6 +892,12 @@ class MediaContextMenuState extends State<MediaContextMenu> {
         break;
       case 'remove_from_continue_watching':
         await _handleRemoveFromContinueWatching(context, mediaItem);
+        break;
+      case 'episode_summary':
+        final text = mediaItem.summary?.trim() ?? '';
+        if (text.isNotEmpty && context.mounted) {
+          await showFullTextDialog(context, title: mediaItem.title ?? t.discover.overview, text: text);
+        }
         break;
       case 'details':
         outcome.didNavigate = true;

@@ -898,6 +898,7 @@ class _Translations$mediaMenu$de extends Translations$mediaMenu$en {
 	@override String get markSeasonAsWatched => 'Ganze Staffel als gesehen markieren';
 	@override String get addToFavorites => 'Zu Favoriten hinzufügen';
 	@override String get removeFromFavorites => 'Aus Favoriten entfernen';
+	@override String get episodeSummary => 'Folgenbeschreibung';
 }
 
 // Path: rateSheet
@@ -4507,6 +4508,7 @@ extension on TranslationsDe {
 			'mediaMenu.markSeasonAsWatched' => 'Ganze Staffel als gesehen markieren',
 			'mediaMenu.addToFavorites' => 'Zu Favoriten hinzufügen',
 			'mediaMenu.removeFromFavorites' => 'Aus Favoriten entfernen',
+			'mediaMenu.episodeSummary' => 'Folgenbeschreibung',
 			'rateSheet.title' => 'Bewerten',
 			'rateSheet.server' => 'Server',
 			'rateSheet.favorite' => 'Favorit',
@@ -4759,9 +4761,9 @@ extension on TranslationsDe {
 			'profiles.switchingProfile' => 'Profil wird gewechselt…',
 			'profiles.deleteThisProfileTitle' => 'Dieses Profil löschen?',
 			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => '${displayName} entfernen. Verbindungen bleiben unberührt.',
-			'profiles.active' => 'Aktiv',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.active' => 'Aktiv',
 			'profiles.manage' => 'Verwalten',
 			'profiles.delete' => 'Löschen',
 			'profiles.signOut' => 'Abmelden',
@@ -5273,9 +5275,9 @@ extension on TranslationsDe {
 			'liveTv.programsSection' => 'Sendungen',
 			'liveTv.now' => 'Jetzt',
 			'liveTv.today' => 'Heute',
-			'liveTv.tomorrow' => 'Morgen',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.tomorrow' => 'Morgen',
 			'liveTv.midnight' => 'Mitternacht',
 			'liveTv.overnight' => 'Nacht',
 			'liveTv.morning' => 'Morgen',
@@ -5787,9 +5789,9 @@ extension on TranslationsDe {
 			'performanceOverlay.pixelFormat' => 'Pixelformat',
 			'performanceOverlay.hwFormat' => 'HW-Format',
 			'performanceOverlay.matrix' => 'Matrix',
-			'performanceOverlay.primaries' => 'Primärfarben',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.primaries' => 'Primärfarben',
 			'performanceOverlay.transfer' => 'Transfer',
 			'performanceOverlay.renderFps' => 'Render-FPS',
 			'performanceOverlay.displayFps' => 'Display-FPS',
@@ -6301,9 +6303,9 @@ extension on TranslationsDe {
 			'reminders.soonTitle' => 'Gleich geht’s los',
 			'reminders.runningTitle' => 'Läuft gerade',
 			'reminders.tune' => 'Umschalten',
-			'reminders.channelGone' => ({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.',
 			_ => null,
 		} ?? switch (path) {
+			'reminders.channelGone' => ({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.',
 			'remoteKeys.title' => 'Fernbedienung',
 			'remoteKeys.entryDescription' => 'Welche Taste im Player was tut',
 			'remoteKeys.intro' => 'So bedienst du den Player mit der Fernbedienung. Hat deine Fernbedienung eine Taste nicht, übernehmen die Farbtasten.',

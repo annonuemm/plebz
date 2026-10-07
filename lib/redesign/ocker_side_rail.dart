@@ -74,6 +74,14 @@ class OckerSideRail extends StatefulWidget {
   /// that did not would stop fitting them.
   static double collapsedWidth(BuildContext context) => 96 * ockerScale(context);
 
+  /// The rows under destinations, in every rail alive (Plebz).
+  static final Set<FocusNode> _subRowNodes = {};
+
+  /// Whether the cursor is on a row under a destination — the viewer is
+  /// choosing a view, and a page that finishes loading should not take the
+  /// cursor away from there.
+  static bool get subRowFocused => _subRowNodes.any((node) => node.hasPrimaryFocus);
+
   /// The open pane's width, in the same proportion.
   static double expandedWidth(BuildContext context) => 440 * ockerScale(context);
 
@@ -111,7 +119,9 @@ class OckerSideRailState extends State<OckerSideRail> {
 
   FocusNode _subNodeFor(int index) {
     while (_subNodes.length <= index) {
-      _subNodes.add(FocusNode(debugLabel: 'ocker_side_rail_sub_${_subNodes.length}'));
+      final node = FocusNode(debugLabel: 'ocker_side_rail_sub_${_subNodes.length}');
+      _subNodes.add(node);
+      OckerSideRail._subRowNodes.add(node);
     }
     return _subNodes[index];
   }
@@ -145,6 +155,7 @@ class OckerSideRailState extends State<OckerSideRail> {
   @override
   void dispose() {
     FocusManager.instance.removeListener(_onFocusMoved);
+    OckerSideRail._subRowNodes.removeAll(_subNodes);
     for (final node in [..._nodes.values, ..._subNodes]) {
       node.dispose();
     }

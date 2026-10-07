@@ -19,6 +19,15 @@ class LocalWatchPatch {
   final DateTime at;
 
   static String keyOf(String serverId, String itemId) => '$serverId|$itemId';
+
+  Map<String, Object?> toJson() => {'watched': watched, 'offsetMs': offsetMs, 'at': at.toIso8601String()};
+
+  static LocalWatchPatch? fromJson(Object? raw) {
+    if (raw is! Map) return null;
+    final at = raw['at'] is String ? DateTime.tryParse(raw['at'] as String) : null;
+    if (at == null) return null;
+    return LocalWatchPatch(watched: raw['watched'] as bool?, offsetMs: (raw['offsetMs'] as num?)?.toInt(), at: at);
+  }
 }
 
 /// Lays a tracker's watch state over what a server says (fork addition).
@@ -47,7 +56,12 @@ class TrackerWatchOverlay implements WatchStateOverlay {
     if (serverId == null) return item;
     ExternalIds? ids(String? itemId) => itemId == null || itemId.isEmpty ? null : idsOf(serverId, itemId);
 
-    if (_patchFor(item, serverId) case final patch?) return _patched(item, patch);
+    // This device's own change stands until the tracker says something newer
+    // about the same title: a mark or position made here never echoed (a
+    // scrobble refused, a sync missed) is not lost after a few minutes.
+    if (_patchFor(item, serverId) case final patch? when !_trackerNewer(item, serverId, patch.at)) {
+      return _patched(item, patch);
+    }
 
     switch (item.kind) {
       case MediaKind.movie:
@@ -84,6 +98,32 @@ class TrackerWatchOverlay implements WatchStateOverlay {
   }
 
   TrackedShow? _show(ExternalIds? ids) => ids == null ? null : state.show(ids);
+
+  /// Whether the tracker holds anything about [item] from after [at]: a watch
+  /// or a paused session of its own, or a later watch anywhere in its series.
+  bool _trackerNewer(MediaItem item, String serverId, DateTime at) {
+    bool after(DateTime? moment) => moment != null && moment.isAfter(at);
+    ExternalIds? ids(String? itemId) => itemId == null || itemId.isEmpty ? null : idsOf(serverId, itemId);
+    switch (item.kind) {
+      case MediaKind.movie:
+        final movieIds = ids(item.id);
+        if (movieIds == null) return false;
+        return after(state.movie(movieIds)?.watchedAt) || after(state.moviePlayback(movieIds)?.pausedAt);
+      case MediaKind.episode:
+        final showIds = ids(item.grandparentId);
+        if (showIds == null) return false;
+        final season = item.parentIndex;
+        final number = item.index;
+        final paused = season == null || number == null ? null : state.episodePlayback(showIds, season, number);
+        return after(state.show(showIds)?.lastWatchedAt) || after(paused?.pausedAt);
+      case MediaKind.show:
+        return after(_show(ids(item.id))?.lastWatchedAt);
+      case MediaKind.season:
+        return after(_show(ids(item.parentId))?.lastWatchedAt);
+      default:
+        return false;
+    }
+  }
 
   /// The newest patch on [item] itself, or a mark on the season or series it
   /// belongs to.

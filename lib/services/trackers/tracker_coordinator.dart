@@ -842,8 +842,9 @@ class TrackerCoordinator {
       await target.tracker.scrobble(ctx, state, progressPercent);
       target.confirmReported(state);
     } catch (e) {
-      // A tracker write must never disrupt playback.
-      appLogger.d('${target.tracker.name}: scrobble ${state.name} failed', error: e);
+      // A tracker write must never disrupt playback. A warning, not debug: a
+      // profile whose progress lives in the tracker loses it here (Plebz).
+      appLogger.w('${target.tracker.name}: scrobble ${state.name} failed', error: e);
     }
   }
 

@@ -13,6 +13,14 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.9.3 (Build 653)
+
+- Simkl-Profile (Beta): Gesehen-Haken und Fortsetzen-Stellen bleiben auf dem Gerät erhalten, bis Simkl sie bestätigt. Bisher konnten sie nach wenigen Minuten verloren gehen.
+- Simkl-Profile (Beta): Eine Serie, die man über eine andere Mediathek öffnet (etwa aus der Merkliste), macht jetzt auch dort bei der richtigen Folge weiter statt bei S1E1.
+- Catch-up und Live-TV: Spulen lädt erst, wenn du aufhörst zu drücken, und das Bild hält solange an. Kein stotteriges Nachladen mehr zwischendurch.
+- Serienseite: Langes Drücken von OK auf einer Folge zeigt jetzt ganz oben die Folgenbeschreibung.
+- Design Glas: Lädt eine Mediathek-Ansicht noch, lässt sich trotzdem über die Seitenleiste zu Durchsuchen oder Sammlungen wechseln.
+
 ## 1.9.2 (Build 648)
 
 - Design Glas: Auf dem Fernseher sind unter Darstellung die Einstellungen ausgeblendet, die dort keine Wirkung haben (Ansicht, Kartengröße, Rasterabstand, Folgennummer, Fokus-Leuchten, Seitenleiste immer offen, nach Server gruppieren). Auf Handy, Tablet und Mac bleiben sie.

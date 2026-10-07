@@ -267,6 +267,18 @@ void main() {
         expect(hasFocus(tester, NavigationTabId.libraries), isTrue);
       });
 
+      testWidgets('it says when the cursor is on one of the rows, for a page loading behind it', (tester) async {
+        final key = GlobalKey<OckerSideRailState>();
+        await pumpRail(tester, key: key, menu: menu());
+        key.currentState!.focusTab(NavigationTabId.libraries);
+        await tester.pump();
+        expect(OckerSideRail.subRowFocused, isFalse, reason: 'on the destination itself');
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pump();
+        expect(OckerSideRail.subRowFocused, isTrue);
+      });
+
       testWidgets('a second press on the destination folds its rows and back, and the cursor stays', (tester) async {
         final key = GlobalKey<OckerSideRailState>();
         final calls = await pumpRail(tester, key: key, menu: menu());

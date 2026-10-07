@@ -828,6 +828,10 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     currentEpoch: () => _rawPositionEpoch,
     bounds: _liveSeekBounds,
     onChanged: _onLiveSeekTargetChanged,
+    // A second, not upstream's 300 ms: every live skip re-opens the stream,
+    // which on an IPTV archive takes seconds, and a remote's taps come further
+    // apart than 300 ms — each gap re-opened at a stop on the way (Plebz).
+    debounce: const Duration(seconds: 1),
   );
 
   /// Coalesces relative skips that arrive in bursts — the OS media session,

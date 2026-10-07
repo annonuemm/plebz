@@ -150,4 +150,27 @@ void main() {
 
     expect(ProgressRouting.overlay(film).isWatched, isFalse);
   });
+
+  test('a position left here survives the app being closed before Simkl has it', () async {
+    simkl.down = true;
+    await bind();
+    final episode = testMediaItem(
+      id: 'e1',
+      serverId: 'plex',
+      kind: MediaKind.episode,
+      grandparentId: 'show',
+      parentIndex: 1,
+      index: 1,
+      durationMs: 1000000,
+    );
+    WatchStateNotifier().notifyProgress(item: episode, viewOffset: 420000, duration: 1000000);
+    await controller.debugFlush();
+
+    // Closed and opened again, Simkl still unreachable.
+    controller.debugReset();
+    controller.rootDirectory = () async => root;
+    await bind();
+
+    expect(ProgressRouting.overlay(episode).viewOffsetMs, 420000);
+  });
 }

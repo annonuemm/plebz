@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 
 import '../../utils/app_logger.dart';
 import '../../utils/external_ids.dart';
+import 'tracker_watch_overlay.dart';
 import 'tracker_watch_state.dart';
 
 /// A tracker-led profile's watch state and server id indexes on disk (fork
@@ -30,6 +31,21 @@ class TrackerWatchFiles {
   }
 
   Future<void> writeState(TrackerWatchState state) => _write(_stateFile, state.toJson());
+
+  File get _patchesFile => File(p.join(directory.path, 'patches.json'));
+
+  /// This device's own marks and positions not yet echoed by the tracker.
+  Future<Map<String, LocalWatchPatch>> readPatches() async {
+    final json = await _read(_patchesFile);
+    if (json is! Map) return {};
+    return {
+      for (final MapEntry(:key, :value) in json.entries)
+        if (key is String) key: ?LocalWatchPatch.fromJson(value),
+    };
+  }
+
+  Future<void> writePatches(Map<String, LocalWatchPatch> patches) =>
+      _write(_patchesFile, {for (final MapEntry(:key, :value) in patches.entries) key: value.toJson()});
 
   Future<Map<String, ExternalIds>> readIndex(String serverId) async {
     final json = await _read(_indexFile(serverId));

@@ -43,6 +43,7 @@ import '../../redesign/ocker_library_column.dart';
 import '../../redesign/ocker_panel_frame.dart';
 import '../../redesign/ocker_submenu.dart';
 import '../../utils/provider_extensions.dart';
+import '../../redesign/ocker_side_rail.dart';
 
 enum LibraryTabType { recommended, browse, collections, playlists }
 
@@ -377,6 +378,14 @@ class _LibrariesScreenState extends State<LibrariesScreen>
     // the tab chip without suppressing, so that completion moves it on.
     if (awaitLoad && tabState is BaseLibraryTabState && tabState.isLoading) {
       _resetOuterScroll();
+      // The redesign has no tab chips — its views are rows in the side rail —
+      // so the chip's node is nowhere on screen, and focus parked there left
+      // the remote stuck until the load ended, the rail's views out of reach.
+      // Park on the rail instead, its views open under "Mediatheken" (Plebz).
+      if (isOckerLayout(context)) {
+        MainScreenFocusScope.focusSidebarOf(context);
+        return;
+      }
       getTabChipFocusNode(tabController.index).requestFocus();
       return;
     }
@@ -445,6 +454,9 @@ class _LibrariesScreenState extends State<LibrariesScreen>
     _loadedTabs.add(tabIndex);
 
     if (suppressAutoFocus) return;
+    // A viewer already among the rail's views while this loaded is choosing
+    // another one; the finished page does not pull the cursor away (Plebz).
+    if (isOckerLayout(context) && OckerSideRail.subRowFocused) return;
 
     if (tabController.index == tabIndex && mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

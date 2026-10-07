@@ -817,7 +817,8 @@
     "playVersion": "Version abspielen …",
     "markSeasonAsWatched": "Ganze Staffel als gesehen markieren",
     "addToFavorites": "Zu Favoriten hinzufügen",
-    "removeFromFavorites": "Aus Favoriten entfernen"
+    "removeFromFavorites": "Aus Favoriten entfernen",
+    "episodeSummary": "Folgenbeschreibung"
   },
   "rateSheet": {
     "title": "Bewerten",

@@ -199,7 +199,54 @@ void main() {
       });
     });
 
-    test('flushes the newer target when a press lands during the seek', () {
+    test('taps half a second apart under a one-second debounce re-open once, at the end', () {
+      fakeAsync((async) {
+        final acc = LiveSeekAccumulator(
+          seek: (target) async {
+            seeks.add(target);
+            return true;
+          },
+          currentEpoch: () => currentEpoch,
+          bounds: () => window,
+          debounce: const Duration(seconds: 1),
+        );
+        // A remote tapped five times — the archive's way of skipping a scene.
+        for (var i = 0; i < 5; i++) {
+          acc.seekBy(-10);
+          async.elapse(const Duration(milliseconds: 500));
+        }
+        expect(seeks, isEmpty, reason: 'nothing re-opens at the stops on the way');
+
+        async.elapse(const Duration(seconds: 1));
+        expect(seeks, [950]);
+        acc.dispose();
+      });
+    });
+
+    test('a press while a slow re-open is under way waits for the presses to stop', () {
+      fakeAsync((async) {
+        gate = Completer<void>();
+        final acc = build();
+        acc.seekBy(-10);
+        async.elapse(const Duration(milliseconds: 300));
+        expect(seeks, [990]);
+
+        // The archive takes its time; the viewer keeps tapping meanwhile.
+        acc.seekBy(-10);
+        async.elapse(const Duration(milliseconds: 200));
+        acc.seekBy(-10);
+        gate!.complete();
+        gate = null;
+        async.flushMicrotasks();
+        expect(seeks, [990], reason: 'still pressing: no re-open at an in-between stop');
+
+        async.elapse(const Duration(milliseconds: 300));
+        expect(seeks, [990, 970]);
+        acc.dispose();
+      });
+    });
+
+    test('flushes the newer target once its debounce runs out when a press lands during the seek', () {
       fakeAsync((async) {
         gate = Completer<void>();
         final acc = build();
@@ -213,8 +260,12 @@ void main() {
         gate = null; // later seeks resolve immediately
         async.flushMicrotasks();
 
-        // The re-entrant flush picks up the newer target — no waiting for a
-        // second debounce, no lost press.
+        // The press is still inside its debounce: the viewer may be pressing
+        // on, so nothing re-opens yet (Plebz) …
+        expect(seeks, [1015]);
+
+        // … and once the presses stop, the newer target goes out — no lost press.
+        async.elapse(const Duration(milliseconds: 300));
         expect(seeks, [1015, 1030]);
         acc.dispose();
       });

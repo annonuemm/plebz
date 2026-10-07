@@ -268,13 +268,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
         title: t.settings.followServerTrackSelections,
         subtitle: t.settings.followServerTrackSelectionsDescription,
       ),
-      if (PlatformDetector.isTV())
-        SettingSwitchTile(
-          pref: SettingsService.zapWithChannelKeys,
-          icon: Symbols.swap_vert_rounded,
-          title: t.settings.zapWithChannelKeys,
-          subtitle: t.settings.zapWithChannelKeysDescription,
-        ),
       // What each remote button does in the player (Plebz).
       if (PlatformDetector.isTV())
         SettingNavigationTile(

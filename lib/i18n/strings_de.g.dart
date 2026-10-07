@@ -686,8 +686,6 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get layoutModePhoneDescription => 'Kompakte Touch-Oberfläche mit unterer Navigation';
 	@override String get liveTvGuideTimeNavigation => 'Zeitauswahl im Programmführer';
 	@override String get liveTvGuideTimeNavigationDescription => 'Blendet die Leiste mit Tag und Uhrzeit über dem Zeitraster ein.';
-	@override String get zapWithChannelKeys => 'Sendertasten der Fernbedienung';
-	@override String get zapWithChannelKeysDescription => 'P+ und P− wechseln im Live-Player den Sender. Für Fernbedienungen, die diese Tasten haben.';
 	@override String get showActorFilmography => 'Vollständige Filmografie';
 	@override String get showActorFilmographyDescription => 'Auf der Seite eines Schauspielers auch die Filme und Serien auflisten, die du nicht hast — ausgegraut. Nutzt deinen TMDB-Schlüssel.';
 	@override String get backupPickTitle => 'Sicherung wählen';
@@ -2858,7 +2856,7 @@ class _Translations$remoteKeys$de extends Translations$remoteKeys$en {
 	@override String get keyLiveRight => 'Rechts';
 	@override String get doLiveRight => 'Gruppen';
 	@override String get keyChannel => 'P+, P−';
-	@override String get doChannel => 'Sender wechseln, wenn unter Wiedergabe „Sendertasten der Fernbedienung“ eingeschaltet ist';
+	@override String get doChannel => 'Sender wechseln';
 	@override String get keyDigits => 'Ziffern 0–9';
 	@override String get doDigits => 'Sendernummer eintippen; nach kurzer Pause wird umgeschaltet';
 	@override String get keyLast => 'Letzter Sender (Last)';
@@ -4318,8 +4316,6 @@ extension on TranslationsDe {
 			'settings.layoutModePhoneDescription' => 'Kompakte Touch-Oberfläche mit unterer Navigation',
 			'settings.liveTvGuideTimeNavigation' => 'Zeitauswahl im Programmführer',
 			'settings.liveTvGuideTimeNavigationDescription' => 'Blendet die Leiste mit Tag und Uhrzeit über dem Zeitraster ein.',
-			'settings.zapWithChannelKeys' => 'Sendertasten der Fernbedienung',
-			'settings.zapWithChannelKeysDescription' => 'P+ und P− wechseln im Live-Player den Sender. Für Fernbedienungen, die diese Tasten haben.',
 			'settings.showActorFilmography' => 'Vollständige Filmografie',
 			'settings.showActorFilmographyDescription' => 'Auf der Seite eines Schauspielers auch die Filme und Serien auflisten, die du nicht hast — ausgegraut. Nutzt deinen TMDB-Schlüssel.',
 			'settings.backupPickTitle' => 'Sicherung wählen',
@@ -4762,10 +4758,10 @@ extension on TranslationsDe {
 			'profiles.addPlezyProfile' => 'Plebz-Profil hinzufügen',
 			'profiles.switchingProfile' => 'Profil wird gewechselt…',
 			'profiles.deleteThisProfileTitle' => 'Dieses Profil löschen?',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => '${displayName} entfernen. Verbindungen bleiben unberührt.',
 			'profiles.active' => 'Aktiv',
+			_ => null,
+		} ?? switch (path) {
 			'profiles.manage' => 'Verwalten',
 			'profiles.delete' => 'Löschen',
 			'profiles.signOut' => 'Abmelden',
@@ -5276,10 +5272,10 @@ extension on TranslationsDe {
 			'liveTv.channelsSection' => 'Kanäle',
 			'liveTv.programsSection' => 'Sendungen',
 			'liveTv.now' => 'Jetzt',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.today' => 'Heute',
 			'liveTv.tomorrow' => 'Morgen',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.midnight' => 'Mitternacht',
 			'liveTv.overnight' => 'Nacht',
 			'liveTv.morning' => 'Morgen',
@@ -5790,10 +5786,10 @@ extension on TranslationsDe {
 			'performanceOverlay.sampleRate' => 'Abtastrate',
 			'performanceOverlay.pixelFormat' => 'Pixelformat',
 			'performanceOverlay.hwFormat' => 'HW-Format',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.matrix' => 'Matrix',
 			'performanceOverlay.primaries' => 'Primärfarben',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.transfer' => 'Transfer',
 			'performanceOverlay.renderFps' => 'Render-FPS',
 			'performanceOverlay.displayFps' => 'Display-FPS',
@@ -6304,10 +6300,10 @@ extension on TranslationsDe {
 			'reminders.isSet' => 'Erinnerung gesetzt',
 			'reminders.soonTitle' => 'Gleich geht’s los',
 			'reminders.runningTitle' => 'Läuft gerade',
-			_ => null,
-		} ?? switch (path) {
 			'reminders.tune' => 'Umschalten',
 			'reminders.channelGone' => ({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.',
+			_ => null,
+		} ?? switch (path) {
 			'remoteKeys.title' => 'Fernbedienung',
 			'remoteKeys.entryDescription' => 'Welche Taste im Player was tut',
 			'remoteKeys.intro' => 'So bedienst du den Player mit der Fernbedienung. Hat deine Fernbedienung eine Taste nicht, übernehmen die Farbtasten.',
@@ -6346,7 +6342,7 @@ extension on TranslationsDe {
 			'remoteKeys.keyLiveRight' => 'Rechts',
 			'remoteKeys.doLiveRight' => 'Gruppen',
 			'remoteKeys.keyChannel' => 'P+, P−',
-			'remoteKeys.doChannel' => 'Sender wechseln, wenn unter Wiedergabe „Sendertasten der Fernbedienung“ eingeschaltet ist',
+			'remoteKeys.doChannel' => 'Sender wechseln',
 			'remoteKeys.keyDigits' => 'Ziffern 0–9',
 			'remoteKeys.doDigits' => 'Sendernummer eintippen; nach kurzer Pause wird umgeschaltet',
 			'remoteKeys.keyLast' => 'Letzter Sender (Last)',

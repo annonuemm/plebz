@@ -1279,15 +1279,6 @@ class SettingsService extends BaseSharedPreferencesService {
   /// keyboard does not appear at all.
   static const useSystemTvKeyboard = BoolPref('use_system_tv_keyboard', defaultValue: true);
 
-  /// Zap with the remote's dedicated channel keys (P+/P−, `CHANNEL_UP` and
-  /// `CHANNEL_DOWN`) in the live player.
-  ///
-  /// Off by default and offered rather than assumed: most remotes have no such
-  /// keys, and on the ones that do, some devices keep them for their own
-  /// tuner. Unlike the arrow keys these mean nothing else, so when they are
-  /// switched on they zap whether the controls are up or down.
-  static const zapWithChannelKeys = BoolPref('zap_with_channel_keys');
-
   /// Fetch each Seerr show's episode count and next air date so the poster
   /// badges can carry them.
   ///
@@ -1949,7 +1940,6 @@ class SettingsService extends BaseSharedPreferencesService {
     automotiveUiScale,
     tvCornerSpotlightBackdrop,
     useSystemTvKeyboard,
-    zapWithChannelKeys,
     showActorFilmography,
     seerrCardEpisodeFacts,
     appThemeVariant,

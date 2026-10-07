@@ -1776,12 +1776,6 @@ class Translations$settings$en {
 	/// en: 'Shows the day and time strip above the guide grid.'
 	String get liveTvGuideTimeNavigationDescription => 'Shows the day and time strip above the guide grid.';
 
-	/// en: 'Channel keys on the remote'
-	String get zapWithChannelKeys => 'Channel keys on the remote';
-
-	/// en: 'Let P+ and P− switch channels in the live player. For remotes that have those keys.'
-	String get zapWithChannelKeysDescription => 'Let P+ and P− switch channels in the live player. For remotes that have those keys.';
-
 	/// en: 'Full filmography for actors'
 	String get showActorFilmography => 'Full filmography for actors';
 
@@ -7221,8 +7215,8 @@ class Translations$remoteKeys$en {
 	/// en: 'P+, P−'
 	String get keyChannel => 'P+, P−';
 
-	/// en: 'Change channel, once “Channel keys on the remote” is on under Playback'
-	String get doChannel => 'Change channel, once “Channel keys on the remote” is on under Playback';
+	/// en: 'Change channel'
+	String get doChannel => 'Change channel';
 
 	/// en: 'Digits 0–9'
 	String get keyDigits => 'Digits 0–9';
@@ -9749,8 +9743,6 @@ extension on Translations {
 			'settings.layoutModePhoneDescription' => 'Compact touch interface with bottom navigation',
 			'settings.liveTvGuideTimeNavigation' => 'Guide time picker',
 			'settings.liveTvGuideTimeNavigationDescription' => 'Shows the day and time strip above the guide grid.',
-			'settings.zapWithChannelKeys' => 'Channel keys on the remote',
-			'settings.zapWithChannelKeysDescription' => 'Let P+ and P− switch channels in the live player. For remotes that have those keys.',
 			'settings.showActorFilmography' => 'Full filmography for actors',
 			'settings.showActorFilmographyDescription' => 'On an actor\'s page, also list the films and series you do not have, greyed out. Uses your TMDB key.',
 			'settings.backupPickTitle' => 'Choose a backup',
@@ -10184,10 +10176,10 @@ extension on Translations {
 			'mpvConfig.presetSaved' => 'Preset saved',
 			'mpvConfig.presetLoaded' => 'Preset loaded',
 			'mpvConfig.presetDeleted' => 'Preset deleted',
-			_ => null,
-		} ?? switch (path) {
 			'mpvConfig.confirmDeletePreset' => 'Are you sure you want to delete this preset?',
 			'mpvConfig.configPlaceholder' => 'gpu-api=vulkan\nhwdec=auto\n# comment',
+			_ => null,
+		} ?? switch (path) {
 			'mpvConfig.lineHint' => 'option=value',
 			'mpvConfig.addLine' => 'Add line',
 			'mpvConfig.removeLine' => 'Remove line',
@@ -10698,10 +10690,10 @@ extension on Translations {
 			'explore.detail.recommendedByUsers' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Recommended by ${n} user', other: 'Recommended by ${n} users', ), 
 			'explore.detail.recommendedBy' => ({required Object who}) => 'Recommended by ${who}',
 			'explore.detail.favoritedBy' => ({required Object who}) => 'Favorited by ${who}',
-			_ => null,
-		} ?? switch (path) {
 			'explore.detail.unairedEpisodes' => ({required Object n}) => '${n} not aired yet',
 			'explore.detail.recommendedByPercent' => ({required Object percent}) => 'Recommended by ${percent} of viewers',
+			_ => null,
+		} ?? switch (path) {
 			'explore.detail.relatedTitles' => 'Related titles',
 			'explore.detail.background' => 'Background',
 			'explore.detail.networks' => 'Networks & Streaming',
@@ -11212,10 +11204,10 @@ extension on Translations {
 			'companionRemote.errors.connectionLost' => 'Connection lost',
 			'companionRemote.closedBeforeAuth' => 'The connection closed before authentication',
 			'videoSettings.playbackSpeed' => 'Playback Speed',
-			_ => null,
-		} ?? switch (path) {
 			'videoSettings.normalSpeed' => 'Normal',
 			'videoSettings.sleepTimerActive' => ({required Object duration}) => 'Active (${duration})',
+			_ => null,
+		} ?? switch (path) {
 			'videoSettings.zoom' => 'Zoom',
 			'videoSettings.sleepTimer' => 'Sleep Timer',
 			'videoSettings.audioSync' => 'Audio Sync',
@@ -11726,10 +11718,10 @@ extension on Translations {
 			'plebz.finish' => 'Done',
 			'plebz.setupAgain' => 'Run setup again',
 			'plebz.setupAgainDescription' => 'Look, sources and services, step by step',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.updateAvailableTitle' => 'Update available',
 			'plebz.updateAvailableBody' => ({required Object release}) => '${release} is ready to install. Your settings and sign-ins stay as they are.',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.updateNow' => 'Update',
 			'plebz.later' => 'Later',
 			'plebz.upToDate' => 'Plebz is up to date',
@@ -11808,7 +11800,7 @@ extension on Translations {
 			'remoteKeys.keyLiveRight' => 'Right',
 			'remoteKeys.doLiveRight' => 'Groups',
 			'remoteKeys.keyChannel' => 'P+, P−',
-			'remoteKeys.doChannel' => 'Change channel, once “Channel keys on the remote” is on under Playback',
+			'remoteKeys.doChannel' => 'Change channel',
 			'remoteKeys.keyDigits' => 'Digits 0–9',
 			'remoteKeys.doDigits' => 'Type a channel number; it switches after a short pause',
 			'remoteKeys.keyLast' => 'Last channel',

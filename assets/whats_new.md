@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.9.1 (Build 645)
+
+- Fernbedienung: P+ und P− wechseln den Sender jetzt immer, der eigene Schalter dafür entfällt.
+- Die Übersicht unter Einstellungen → Wiedergabe → Fernbedienung lässt sich mit der Fernbedienung scrollen, die Farbtasten sind dort jetzt erreichbar.
+
 ## 1.9.0 (Build 643)
 
 - Neu und noch in der Testphase (Beta): Mehrere Personen, ein Plex-Konto. Jedes Profil kann seinen eigenen Fortschritt über Simkl führen. Unter Einstellungen → Dienste → Simkl verbinden und „Eigener Fortschritt über Simkl“ einschalten. Dann kommen Häkchen, Weiter ansehen, Fortsetzen, die nächste Folge und die Merkliste aus dem Simkl-Konto des Profils, nicht mehr vom gemeinsamen Plex-Konto.

@@ -176,24 +176,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('the channel keys stay quiet until they are switched on', (tester) async {
-    await pumpPlayer(tester);
-
-    await press(tester, LogicalKeyboardKey.channelDown);
-    await press(tester, LogicalKeyboardKey.channelUp);
-
-    // Most remotes have no such keys, and some devices keep them for their own
-    // tuner, so nothing happens until the viewer says otherwise.
-    expect(nextChannel, 0);
-    expect(previousChannel, 0);
-
-    endTest(tester);
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
-
-  testWidgets('switched on, P+ and P- zap with the controls down', (tester) async {
-    final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.zapWithChannelKeys, true);
+  testWidgets('P+ and P- zap with the controls down, no switch needed', (tester) async {
     await pumpPlayer(tester);
 
     await press(tester, LogicalKeyboardKey.channelDown);
@@ -207,9 +190,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('switched on, they zap with the controls up as well', (tester) async {
-    final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.zapWithChannelKeys, true);
+  testWidgets('P+ and P- zap with the controls up as well', (tester) async {
     await pumpPlayer(tester);
 
     // The arrow keys only zap while the chrome is down, because up there they

@@ -16,12 +16,13 @@ extension _PlexVideoControlsKeyEventMethods on _PlexVideoControlsState {
   /// Zap on P+/P−, whether the controls are up or down.
   ///
   /// Unlike the arrow keys these mean nothing else anywhere in the player, so
-  /// there is no state in which handling them would steal something. Off
-  /// unless the viewer has said their remote has them.
+  /// there is no state in which handling them would steal something. Always
+  /// on since 1.9.1 (the switch for them went): a remote without the keys
+  /// never sends them, and a device that keeps them for its own tuner never
+  /// passes them on.
   KeyEventResult _handleChannelKey(KeyEvent event, LogicalKeyboardKey key) {
     if (!_isChannelKey(key)) return KeyEventResult.ignored;
     if (!_canZapChannels || !widget.canControl) return KeyEventResult.ignored;
-    if (!SettingsService.instance.read(SettingsService.zapWithChannelKeys)) return KeyEventResult.ignored;
 
     // Key-down only, for the same reason the arrow keys are: a held key would
     // queue switches the tuner cannot keep up with.

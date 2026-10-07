@@ -607,8 +607,6 @@
     "layoutModePhoneDescription": "Compact touch interface with bottom navigation",
     "liveTvGuideTimeNavigation": "Guide time picker",
     "liveTvGuideTimeNavigationDescription": "Shows the day and time strip above the guide grid.",
-    "zapWithChannelKeys": "Channel keys on the remote",
-    "zapWithChannelKeysDescription": "Let P+ and P− switch channels in the live player. For remotes that have those keys.",
     "showActorFilmography": "Full filmography for actors",
     "showActorFilmographyDescription": "On an actor's page, also list the films and series you do not have, greyed out. Uses your TMDB key.",
     "backupPickTitle": "Choose a backup"
@@ -2876,7 +2874,7 @@
     "keyLiveRight": "Right",
     "doLiveRight": "Groups",
     "keyChannel": "P+, P−",
-    "doChannel": "Change channel, once “Channel keys on the remote” is on under Playback",
+    "doChannel": "Change channel",
     "keyDigits": "Digits 0–9",
     "doDigits": "Type a channel number; it switches after a short pause",
     "keyLast": "Last channel",

@@ -25,7 +25,10 @@ class RemoteKeysScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final keys = t.remoteKeys;
     final theme = Theme.of(context);
-    Widget row(String key, String does) => FocusableListTile(title: Text(key), subtitle: Text(does));
+    // A row without an action takes no focus, and a remote could then neither
+    // scroll the page nor reach the colour keys below; the empty action is
+    // what makes each row a stop on the way down.
+    Widget row(String key, String does) => FocusableListTile(title: Text(key), subtitle: Text(does), onTap: () {});
     Widget note(String text) => Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Text(text, style: theme.textTheme.bodyMedium),

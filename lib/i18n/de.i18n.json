@@ -607,8 +607,6 @@
     "layoutModePhoneDescription": "Kompakte Touch-Oberfläche mit unterer Navigation",
     "liveTvGuideTimeNavigation": "Zeitauswahl im Programmführer",
     "liveTvGuideTimeNavigationDescription": "Blendet die Leiste mit Tag und Uhrzeit über dem Zeitraster ein.",
-    "zapWithChannelKeys": "Sendertasten der Fernbedienung",
-    "zapWithChannelKeysDescription": "P+ und P− wechseln im Live-Player den Sender. Für Fernbedienungen, die diese Tasten haben.",
     "showActorFilmography": "Vollständige Filmografie",
     "showActorFilmographyDescription": "Auf der Seite eines Schauspielers auch die Filme und Serien auflisten, die du nicht hast — ausgegraut. Nutzt deinen TMDB-Schlüssel.",
     "backupPickTitle": "Sicherung wählen"
@@ -2876,7 +2874,7 @@
     "keyLiveRight": "Rechts",
     "doLiveRight": "Gruppen",
     "keyChannel": "P+, P−",
-    "doChannel": "Sender wechseln, wenn unter Wiedergabe „Sendertasten der Fernbedienung“ eingeschaltet ist",
+    "doChannel": "Sender wechseln",
     "keyDigits": "Ziffern 0–9",
     "doDigits": "Sendernummer eintippen; nach kurzer Pause wird umgeschaltet",
     "keyLast": "Letzter Sender (Last)",

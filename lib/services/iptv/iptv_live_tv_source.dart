@@ -452,7 +452,32 @@ class IptvLiveTvSource implements LiveTvSupport {
   int? get lastProgrammeStart => _guideState?.lastStart;
 
   @override
-  Future<List<LiveTvProgram>> fetchSchedule({DateTime? from, DateTime? to}) async {
+  Future<List<LiveTvProgram>> fetchSchedule({DateTime? from, DateTime? to}) => _schedule(
+    from: from == null ? null : from.millisecondsSinceEpoch ~/ 1000,
+    to: to == null ? null : to.millisecondsSinceEpoch ~/ 1000,
+  );
+
+  /// The programme [channel]'s guide has running at [at] (epoch seconds), or
+  /// null. One channel at one moment, asked of the store as such: reading the
+  /// whole guide to find it cost seconds on every channel change once the
+  /// guide no longer sat in memory (Plebz).
+  Future<LiveTvProgram?> _programAt(LiveTvChannel channel, int at) async {
+    // Programmes are filed under the channel's EPG id, or its key where it
+    // was matched by name.
+    final identifier = channel.identifier ?? channel.key;
+    final programs = await _schedule(from: at, to: at, only: {identifier});
+    for (final program in programs) {
+      if (program.channelIdentifier != identifier) continue;
+      final begins = program.beginsAt;
+      final ends = program.endsAt;
+      if (begins == null || ends == null || begins > at || ends <= at) continue;
+      return program;
+    }
+    return null;
+  }
+
+  /// [from]..[to] in epoch seconds, on the channels showing — or on [only].
+  Future<List<LiveTvProgram>> _schedule({int? from, int? to, Set<String>? only}) async {
     await _restoreFromDisk();
     final shown = await _shownChannels();
     final wanted = {for (final channel in shown) channel.key};
@@ -474,17 +499,13 @@ class IptvLiveTvSource implements LiveTvSupport {
     if (state == null) return const [];
     // Only what the channels showing have: a guide read for more keeps the
     // rest, unseen, until it is read again.
-    final identifiers = {
-      for (final channel in shown) ...[channel.key, ?channel.identifier],
-    };
+    final identifiers =
+        only ??
+        {
+          for (final channel in shown) ...[channel.key, ?channel.identifier],
+        };
     try {
-      return await _guide.window(
-        source.id,
-        state.generation,
-        from: from == null ? null : from.millisecondsSinceEpoch ~/ 1000,
-        to: to == null ? null : to.millisecondsSinceEpoch ~/ 1000,
-        channels: identifiers,
-      );
+      return await _guide.window(source.id, state.generation, from: from, to: to, channels: identifiers);
     } catch (error, stackTrace) {
       appLogger.w('IPTV ${source.name}: the stored guide could not be read', error: error, stackTrace: stackTrace);
       return const [];
@@ -845,14 +866,8 @@ class IptvLiveTvSource implements LiveTvSupport {
     int limited(int seconds) => seconds.clamp(60, math.min(6 * 60 * 60, available)).toInt();
 
     try {
-      final programs = await fetchSchedule();
-      for (final program in programs) {
-        if (program.channelIdentifier != channel.identifier) continue;
-        final begins = program.beginsAt;
-        final ends = program.endsAt;
-        if (begins == null || ends == null || begins > at || ends <= at) continue;
-        return limited(ends - at);
-      }
+      final program = await _programAt(channel, at);
+      if (program?.endsAt case final ends?) return limited(ends - at);
     } catch (error, stackTrace) {
       appLogger.d('IPTV ${source.name}: archive duration lookup failed', error: error, stackTrace: stackTrace);
     }
@@ -890,13 +905,10 @@ class IptvLiveTvSource implements LiveTvSupport {
   Future<LiveProgramInfo> _currentProgramFor(LiveTvChannel channel) async {
     try {
       final now = _now().millisecondsSinceEpoch ~/ 1000;
-      final programs = await fetchSchedule();
-      for (final program in programs) {
-        if (program.channelIdentifier != channel.identifier) continue;
-        final begins = program.beginsAt;
-        final ends = program.endsAt;
-        if (begins == null || ends == null || begins > now || ends <= now) continue;
-        return LiveProgramInfo(id: program.key, beginsAt: begins, durationMs: (ends - begins) * 1000);
+      final program = await _programAt(channel, now);
+      if (program != null) {
+        final begins = program.beginsAt!;
+        return LiveProgramInfo(id: program.key, beginsAt: begins, durationMs: (program.endsAt! - begins) * 1000);
       }
     } catch (error, stackTrace) {
       appLogger.d('IPTV ${source.name}: current programme lookup failed', error: error, stackTrace: stackTrace);

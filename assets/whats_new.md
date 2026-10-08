@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.10.2 (Build 668)
+
+- IPTV: Umschalten und Senderstart sind wieder so schnell wie vor 1.10.1.
+
 ## 1.10.1 (Build 666)
 
 - IPTV: Das TV-Programm lädt deutlich schneller und braucht viel weniger Speicher, besonders auf schwächeren Boxen und Fire TV Sticks. „TV-Programm neu laden“ lädt nur noch das Programm, nicht die Senderliste, und das bisherige bleibt sichtbar, bis das neue da ist.

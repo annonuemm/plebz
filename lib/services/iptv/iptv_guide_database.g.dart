@@ -1395,6 +1395,10 @@ abstract class _$IptvGuideDatabase extends GeneratedDatabase {
     'guide_programs_window',
     'CREATE INDEX guide_programs_window ON guide_programs (source_id, generation, begins_at)',
   );
+  late final Index guideProgramsChannel = Index(
+    'guide_programs_channel',
+    'CREATE INDEX guide_programs_channel ON guide_programs (source_id, generation, channel, begins_at)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1403,6 +1407,7 @@ abstract class _$IptvGuideDatabase extends GeneratedDatabase {
     guidePrograms,
     guideSources,
     guideProgramsWindow,
+    guideProgramsChannel,
   ];
 }
 

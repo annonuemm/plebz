@@ -63,6 +63,9 @@ const int _longestProgrammeSeconds = 2 * 24 * 60 * 60;
 
 const String _genreSeparator = '\u001f';
 
+/// Up to how many channels a window names them to the database.
+const int _channelsAskedDirectly = 64;
+
 /// Kept in a database of its own — see [IptvGuideDatabase].
 class DriftIptvGuideStore implements IptvGuideStore {
   DriftIptvGuideStore(this._db);
@@ -103,6 +106,11 @@ class DriftIptvGuideStore implements IptvGuideStore {
               condition &
               t.beginsAt.isBiggerOrEqualValue(from - _longestProgrammeSeconds) &
               t.endsAt.isBiggerOrEqualValue(from);
+        }
+        // A few channels — the player's one — are asked of the channel index
+        // rather than read out of every channel's window.
+        if (channels != null && channels.length <= _channelsAskedDirectly) {
+          condition = condition & (t.channel.isIn(channels) | t.channel.equals(''));
         }
         return condition;
       })

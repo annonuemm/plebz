@@ -14,6 +14,8 @@ part 'iptv_guide_database.g.dart';
 /// source over — so the old guide is what every reader sees until the new
 /// one is whole.
 @TableIndex(name: 'guide_programs_window', columns: {#sourceId, #generation, #beginsAt})
+// One channel's programmes: what the player asks for on every channel change.
+@TableIndex(name: 'guide_programs_channel', columns: {#sourceId, #generation, #channel, #beginsAt})
 class GuidePrograms extends Table {
   TextColumn get sourceId => text()();
   IntColumn get generation => integer()();
@@ -79,16 +81,21 @@ class IptvGuideDatabase extends _$IptvGuideDatabase {
   );
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onUpgrade: (m, from, to) async {
-      // A cache has nothing worth migrating: start over.
+      if (from == 1 && to == 2) {
+        // Only an index added: the guide in hand stays.
+        await m.createIndex(guideProgramsChannel);
+        return;
+      }
+      // Otherwise a cache has nothing worth migrating: start over.
       for (final table in allTables) {
         await m.deleteTable(table.actualTableName);
-        await m.createTable(table);
       }
+      await m.createAll();
     },
   );
 }

@@ -1684,4 +1684,27 @@ http://provider/stream/ard
       expect((await schedule).map((program) => program.title), ['Aus der ersten']);
     });
   });
+
+  test('tuning a channel names what is on it from the guide, without reading the whole guide', () async {
+    const guide = '''
+<tv>
+  <programme start="20240504190000 +0000" stop="20240504201500 +0000" channel="das-erste.de"><title>Davor</title></programme>
+  <programme start="20240504201500 +0000" stop="20240504214500 +0000" channel="das-erste.de"><title>Tagesschau</title></programme>
+  <programme start="20240504214500 +0000" stop="20240504230000 +0000" channel="das-erste.de"><title>Danach</title></programme>
+</tv>
+''';
+    final source = _m3uSource(
+      MockClient((request) async => _ok(request.url.path.endsWith('.m3u') ? _playlist : guide)),
+      epgUrl: 'http://provider/epg.xml',
+      now: () => DateTime.utc(2024, 5, 4, 20, 30),
+    );
+    final channels = await source.fetchChannels();
+
+    final session = await source.startPlayback(channels.first.key);
+
+    final begins = DateTime.utc(2024, 5, 4, 20, 15).millisecondsSinceEpoch ~/ 1000;
+    expect(session?.program.beginsAt, begins);
+    expect(session?.program.durationMs, 90 * 60 * 1000);
+    expect(session?.program.id, 'iptv:${channels.first.key}:$begins');
+  });
 }

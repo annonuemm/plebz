@@ -107,6 +107,7 @@ class IptvDiskCache {
   Future<void> _write(String sourceId, IptvCacheEntry entry) async {
     if (entry.isEmpty) return;
     File? temp;
+    final writing = Stopwatch()..start();
     try {
       final raw = entry.channels.length + entry.programs.length < _isolateThresholdEntries
           ? _encodeEntry(entry)
@@ -120,7 +121,10 @@ class IptvDiskCache {
       await temp.writeAsString(raw, flush: true);
       await temp.rename(file.path);
       temp = null;
-      appLogger.d('IPTV cache: stored ${entry.channels.length} channels and ${entry.programs.length} programmes');
+      appLogger.i(
+        'IPTV cache timing: stored ${entry.channels.length} channels and ${entry.programs.length} programmes, '
+        '${(raw.length / (1 << 20)).toStringAsFixed(1)} MB in ${writing.elapsedMilliseconds} ms',
+      );
     } catch (e) {
       appLogger.w('IPTV cache: could not write $sourceId', error: e);
     } finally {

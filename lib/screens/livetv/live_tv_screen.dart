@@ -413,16 +413,37 @@ class _LiveTvScreenState extends State<LiveTvScreen>
       return;
     }
     // A server reloads its guide on request; an IPTV source has nobody to
-    // ask, so refreshing it means dropping the cached playlist and guide and
-    // reading them again.
-    context.read<IptvSourcesProvider?>()?.refreshAll();
+    // ask, so it reads its guide again itself — the guide only, while the one
+    // on screen stays (Plebz).
+    final iptv = context.read<IptvSourcesProvider?>();
+    final hasServers = context.read<MultiServerProvider>().liveTvServers.isNotEmpty;
+    if (iptv != null) unawaited(_refreshIptvGuides(iptv, announce: !hasServers));
     await _broadcastToDvrs(
       actionLabel: 'Reload guide',
       successMessage: t.liveTv.guideReloadRequested,
       failureMessage: t.liveTv.guideReloadFailed,
       action: (dvr, serverInfo) => dvr.reloadGuide(serverInfo.dvrKey),
     );
-    await _loadChannels();
+    // The servers' channels are asked for again; with IPTV alone there is
+    // nothing to ask, and reloading would only blank the guide on screen.
+    if (hasServers) await _loadChannels();
+  }
+
+  /// The IPTV half of "TV-Programm neu laden": every source reads its guide
+  /// again in the background, the grid keeps the one it shows, and takes the
+  /// new one when it is whole. [announce] says so where no server's own
+  /// message will.
+  Future<void> _refreshIptvGuides(IptvSourcesProvider iptv, {required bool announce}) async {
+    await iptv.ensureLoaded();
+    if (!mounted || iptv.liveTvSources.isEmpty) return;
+    if (announce) showSnackBar(context, t.liveTv.guideReloadRequested);
+    final read = await iptv.refreshGuides();
+    if (!mounted) return;
+    if (read) {
+      _guideTabKey.currentState?.reloadPrograms();
+    } else {
+      showSnackBar(context, t.liveTv.guideReloadFailed, type: SnackBarType.error);
+    }
   }
 
   /// Runs [action] on every DVR-capable Live TV server in parallel, then

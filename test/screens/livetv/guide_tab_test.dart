@@ -499,9 +499,7 @@ http://provider/stream/ard
     // The playlist and guide are fetched and parsed for real (the XMLTV parse
     // runs on its own isolate), so the load needs wall-clock time rather than
     // pumped frames.
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await _pumpUntilShown(tester, find.text('Tagesschau'));
 
     expect(find.text('Tagesschau'), findsOneWidget);
   });
@@ -1327,9 +1325,7 @@ http://provider/stream/ard
       ),
     );
     await tester.pump();
-    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 500)));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await _pumpUntilShown(tester, find.text('Nachrichten aus aller Welt'));
 
     // What is on stands beside the picture, not only in the grid cell.
     expect(find.text('Nachrichten aus aller Welt'), findsOneWidget);
@@ -1780,4 +1776,16 @@ final class _ScheduleRequest {
   final DateTime from;
   final DateTime to;
   final Completer<List<LiveTvProgram>> completer = Completer<List<LiveTvProgram>>();
+}
+
+/// Lets a real load — the playlist and guide read by [IptvLiveTvSource], the
+/// guide in an isolate of its own, as it arrives — run until [finder] shows,
+/// for at most a few seconds of wall-clock time. Each step hands the isolate's
+/// answers to the test's fake clock, which the load's next step waits on.
+Future<void> _pumpUntilShown(WidgetTester tester, Finder finder) async {
+  for (var step = 0; step < 100 && finder.evaluate().isEmpty; step++) {
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+  }
 }

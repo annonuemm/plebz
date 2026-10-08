@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
@@ -10,6 +11,7 @@ import 'package:plezy/models/livetv_channel.dart';
 import 'package:plezy/models/livetv_program.dart';
 import 'package:plezy/services/favorite_channels_repository.dart';
 import 'package:plezy/services/iptv/iptv_disk_cache.dart';
+import 'package:plezy/services/iptv/iptv_guide_store.dart';
 import 'package:plezy/services/iptv/iptv_catchup.dart';
 import 'package:plezy/services/iptv/iptv_live_tv_source.dart';
 import 'package:plezy/services/iptv/iptv_local_files.dart';
@@ -99,6 +101,7 @@ IptvLiveTvSource _m3uSource(
   FavoriteChannelsRepository? favorites,
   DateTime Function()? now,
   IptvDiskCache? diskCache,
+  IptvGuideStore? guideStore,
   Duration Function()? diskCacheMaxAge,
   bool mergeDuplicates = false,
   LiveTvChannelLayout Function()? layout,
@@ -115,6 +118,7 @@ IptvLiveTvSource _m3uSource(
   favorites: favorites ?? _MemoryFavorites(),
   now: now ?? DateTime.now,
   diskCache: diskCache,
+  guideStore: guideStore,
   diskCacheMaxAge: diskCacheMaxAge,
   mergeDuplicates: () => mergeDuplicates,
   channelLayout: layout == null ? null : () async => layout(),
@@ -387,11 +391,14 @@ void main() {
   group('kept across restarts', () {
     late Directory root;
     late IptvDiskCache cache;
+    // The guide's own store outlives a restart as the database on the box does.
+    late MemoryIptvGuideStore guides;
     var now = DateTime(2026, 8, 29, 12);
 
     setUp(() async {
       root = await Directory.systemTemp.createTemp('iptv_source_cache');
       cache = IptvDiskCache(directoryProvider: () async => root);
+      guides = MemoryIptvGuideStore();
       now = DateTime(2026, 8, 29, 12);
     });
 
@@ -408,6 +415,7 @@ void main() {
       epgUrl: 'http://provider/epg.xml',
       now: () => now,
       diskCache: cache,
+      guideStore: guides,
       diskCacheMaxAge: () => maxAge,
     );
 
@@ -957,10 +965,11 @@ http://provider/stream/guarded
       return _ok(_twoChannelGuide);
     });
 
-    IptvLiveTvSource source({IptvDiskCache? diskCache}) => _m3uSource(
+    IptvLiveTvSource source({IptvDiskCache? diskCache, IptvGuideStore? guides}) => _m3uSource(
       counting(),
       epgUrl: 'http://provider/epg.xml',
       diskCache: diskCache,
+      guideStore: guides,
       diskCacheMaxAge: () => const Duration(days: 3),
       layout: () => layout,
     );
@@ -1006,21 +1015,22 @@ http://provider/stream/guarded
       final root = await Directory.systemTemp.createTemp('iptv_hidden_cache');
       addTearDown(() => root.delete(recursive: true));
       final cache = IptvDiskCache(directoryProvider: () async => root);
+      final guides = MemoryIptvGuideStore();
 
       layout = _hideSecondGroup;
-      final first = source(diskCache: cache);
+      final first = source(diskCache: cache, guides: guides);
       await first.fetchSchedule();
       await first.pendingDiskWrite;
       first.close();
 
-      final second = source(diskCache: cache);
+      final second = source(diskCache: cache, guides: guides);
       expect(await second.fetchSchedule(), hasLength(1));
       await second.pendingDiskWrite;
       second.close();
       expect((playlistRequests, guideRequests), (1, 1), reason: 'the same arrangement reads from disk');
 
       layout = LiveTvChannelLayout.empty;
-      final third = source(diskCache: cache);
+      final third = source(diskCache: cache, guides: guides);
       expect(await third.fetchSchedule(), hasLength(2));
       await third.pendingDiskWrite;
       third.close();
@@ -1577,6 +1587,101 @@ http://provider/stream/ard
       final channels = await narrowed.fetchChannels();
       expect(channels.map((channel) => channel.title), ['Sport']);
       expect(asked, ['1'], reason: 'only the chosen category was asked for');
+    });
+  });
+
+  group('reloading the guide by hand', () {
+    String guideTitled(String title) =>
+        '''
+<tv>
+  <programme start="20240504201500 +0000" stop="20240504214500 +0000" channel="das-erste.de">
+    <title>$title</title>
+  </programme>
+</tv>
+''';
+
+    test('reads the guide again and leaves the playlist alone', () async {
+      final asked = <String>[];
+      var title = 'Tagesschau';
+      final source = _m3uSource(
+        MockClient((request) async {
+          asked.add(request.url.path);
+          return _ok(request.url.path.endsWith('.m3u') ? _playlist : guideTitled(title));
+        }),
+        epgUrl: 'http://provider/guide.xml',
+      );
+      await source.fetchSchedule();
+      asked.clear();
+
+      title = 'Tagesthemen';
+      expect(await source.refreshGuide(), isTrue);
+
+      expect(asked, ['/guide.xml'], reason: 'the playlist is not downloaded again');
+      expect((await source.fetchSchedule()).map((program) => program.title), ['Tagesthemen']);
+    });
+
+    test('the guide in hand is served until the new one is whole', () async {
+      final release = Completer<void>();
+      var title = 'Tagesschau';
+      final source = _m3uSource(
+        MockClient((request) async {
+          if (request.url.path.endsWith('.m3u')) return _ok(_playlist);
+          if (title == 'Tagesthemen') await release.future;
+          return _ok(guideTitled(title));
+        }),
+        epgUrl: 'http://provider/guide.xml',
+      );
+      await source.fetchSchedule();
+
+      title = 'Tagesthemen';
+      final refresh = source.refreshGuide();
+      await pumpEventQueue();
+      expect((await source.fetchSchedule()).map((program) => program.title), ['Tagesschau']);
+
+      release.complete();
+      expect(await refresh, isTrue);
+      expect((await source.fetchSchedule()).map((program) => program.title), ['Tagesthemen']);
+    });
+
+    test('when no guide answers, the one on screen stays', () async {
+      var down = false;
+      final source = _m3uSource(
+        MockClient((request) async {
+          if (request.url.path.endsWith('.m3u')) return _ok(_playlist);
+          return down ? http.Response('', 503) : _ok(_guide);
+        }),
+        epgUrl: 'http://provider/guide.xml',
+      );
+      await source.fetchSchedule();
+
+      down = true;
+      expect(await source.refreshGuide(), isFalse);
+      expect((await source.fetchSchedule()).map((program) => program.title), ['Tagesschau']);
+    });
+
+    test('several guides download at once, and the first still owns its channels', () async {
+      final releaseFirst = Completer<void>();
+      final started = <String>[];
+      final source = _m3uSource(
+        MockClient((request) async {
+          final path = request.url.path;
+          if (path.endsWith('.m3u')) return _ok(_playlist);
+          started.add(path);
+          if (path == '/first.xml') {
+            await releaseFirst.future;
+            return _ok(guideTitled('Aus der ersten'));
+          }
+          return _ok(guideTitled('Aus der zweiten'));
+        }),
+        epgUrls: ['http://provider/first.xml', 'http://provider/second.xml'],
+      );
+
+      final schedule = source.fetchSchedule();
+      await pumpEventQueue();
+      expect(started, containsAll(['/first.xml', '/second.xml']), reason: 'the second did not wait for the first');
+
+      releaseFirst.complete();
+      expect((await schedule).map((program) => program.title), ['Aus der ersten']);
     });
   });
 }

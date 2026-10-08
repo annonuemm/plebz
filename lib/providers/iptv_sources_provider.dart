@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../mixins/disposable_change_notifier_mixin.dart';
 import '../models/livetv_channel.dart';
 import '../services/credential_fields.dart';
+import '../services/iptv/iptv_guide_store.dart';
 import '../services/iptv/iptv_local_files.dart';
 import '../services/iptv/iptv_disk_cache.dart';
 import 'live_tv_channel_layout_provider.dart';
@@ -68,6 +69,7 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
   }) => IptvLiveTvSource(
     source,
     diskCache: IptvDiskCache(),
+    guideStore: DriftIptvGuideStore.shared,
     diskCacheMaxAge: () =>
         Duration(days: SettingsService.instanceOrNull?.read(SettingsService.iptvRefreshIntervalDays) ?? 1),
     mergeDuplicates: () => SettingsService.instanceOrNull?.read(SettingsService.iptvMergeDuplicateChannels) ?? false,
@@ -201,7 +203,10 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
       for (final source in _sources)
         if (source.id != sourceId) source,
     ];
-    _liveTvById.remove(sourceId)?.close();
+    // Its stored playlist and guide go with it.
+    _liveTvById.remove(sourceId)
+      ?..invalidate()
+      ..close();
     safeNotifyListeners();
     await _persist();
     await IptvLocalFiles.deleteFor(sourceId);
@@ -219,6 +224,16 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
     } finally {
       reader.close();
     }
+  }
+
+  /// "TV-Programm neu laden" (Plebz): every source's guide read again, all
+  /// at once, its playlist kept and the guide in hand shown until the new one
+  /// is whole — see [IptvLiveTvSource.refreshGuide]. True when at least one
+  /// source read a guide.
+  Future<bool> refreshGuides() async {
+    await ensureLoaded();
+    final results = await Future.wait([for (final source in liveTvSources) source.refreshGuide()]);
+    return results.any((read) => read);
   }
 
   /// Drop cached playlists and guides so the next read hits the network.

@@ -27,6 +27,8 @@ import 'iptv_local_files.dart';
 import 'iptv_source.dart';
 import 'm3u_parser.dart';
 import 'xmltv_parser.dart';
+import 'iptv_guide_store.dart';
+import 'xmltv_stream_reader.dart';
 import 'xtream_api.dart';
 
 /// Live TV backed by an IPTV playlist or an Xtream panel.
@@ -46,6 +48,7 @@ class IptvLiveTvSource implements LiveTvSupport {
     Duration channelCacheTtl = const Duration(minutes: 30),
     Duration guideCacheTtl = const Duration(hours: 2),
     IptvDiskCache? diskCache,
+    IptvGuideStore? guideStore,
     Duration Function()? diskCacheMaxAge,
     bool Function()? mergeDuplicates,
     Future<LiveTvChannelLayout> Function()? channelLayout,
@@ -61,6 +64,7 @@ class IptvLiveTvSource implements LiveTvSupport {
        _channelCacheTtl = channelCacheTtl,
        _guideCacheTtl = guideCacheTtl,
        _diskCache = diskCache,
+       _guide = guideStore ?? MemoryIptvGuideStore(),
        _diskCacheMaxAge = diskCacheMaxAge,
        _now = now,
        _maxResponseBytes = maxResponseBytes;
@@ -83,6 +87,14 @@ class IptvLiveTvSource implements LiveTvSupport {
   /// memory-only, which is what a test wants unless it says otherwise.
   final IptvDiskCache? _diskCache;
 
+  /// Where the guide is kept and read from, one window at a time (Plebz). In
+  /// memory unless told otherwise, which is what a test wants.
+  final IptvGuideStore _guide;
+
+  /// The guide in hand: its generation in [_guide], when it was read, for
+  /// which channels. Null while there is none.
+  IptvGuideState? _guideState;
+
   /// How old the stored copy may be, read at use rather than held: the
   /// interval is a setting and can change between two reads.
   final Duration Function()? _diskCacheMaxAge;
@@ -94,11 +106,6 @@ class IptvLiveTvSource implements LiveTvSupport {
   /// How the viewer arranged the channel list, read at use: a guide is read
   /// only for the channels it leaves showing. Null reads it for all of them.
   final Future<LiveTvChannelLayout> Function()? _channelLayout;
-
-  /// The keys of the channels the held guide was read for; null when it was
-  /// read for all of them. A channel shown again that is not in here has no
-  /// programmes yet, and the guide is read again for it.
-  Set<String>? _guideCoverage;
 
   /// Channel key → the logo the guide names for a channel. Stands in where
   /// the playlist entry names none, and is the next one tried where the
@@ -131,7 +138,7 @@ class IptvLiveTvSource implements LiveTvSupport {
   /// Downloads in flight, shared the same way: callers arriving together get
   /// one playlist and one guide between them, not one each.
   Future<List<LiveTvChannel>>? _channelsLoading;
-  Future<List<LiveTvProgram>>? _scheduleLoading;
+  Future<void>? _scheduleLoading;
 
   /// The write in flight, if any. Callers never wait for it — a fetch is done
   /// when the data is in hand — but a test has to know when the store settled
@@ -145,8 +152,6 @@ class IptvLiveTvSource implements LiveTvSupport {
   // megabytes; both are re-read on a timer rather than per screen visit.
   List<LiveTvChannel>? _channels;
   DateTime? _channelsFetchedAt;
-  List<LiveTvProgram>? _programs;
-  DateTime? _programsFetchedAt;
 
   XtreamApi get _xtream => XtreamApi(
     baseUrl: source.baseUrl ?? '',
@@ -171,9 +176,16 @@ class IptvLiveTvSource implements LiveTvSupport {
     _m3uHeadersByChannelKey.clear();
     _channels = null;
     _channelsFetchedAt = null;
-    _programs = null;
-    _programsFetchedAt = null;
-    _guideCoverage = null;
+    _guideState = null;
+    unawaited(_forgetGuide());
+  }
+
+  Future<void> _forgetGuide() async {
+    try {
+      await _guide.clear(source.id);
+    } catch (error, stackTrace) {
+      appLogger.w('IPTV ${source.name}: the stored guide could not be cleared', error: error, stackTrace: stackTrace);
+    }
   }
 
   @override
@@ -200,10 +212,15 @@ class IptvLiveTvSource implements LiveTvSupport {
   Future<void> _restoreFromDisk() => _diskRestore ??= _readDisk();
 
   Future<void> _readDisk() async {
+    await _readGuideState();
     final cache = _diskCache;
     if (cache == null) return;
 
+    final reading = Stopwatch()..start();
     final entry = await cache.read(source.id);
+    if (entry != null) {
+      _timing('stored copy read', reading, '${entry.channels.length} channels, ${entry.programs.length} programmes');
+    }
     if (entry == null) {
       appLogger.i('IPTV ${source.name}: nothing stored, the playlist and guide will be fetched');
       return;
@@ -232,13 +249,21 @@ class IptvLiveTvSource implements LiveTvSupport {
         ..clear()
         ..addAll(entry.streamHeaders);
     }
-    // A guide stored before logos were read from guides is read once more,
-    // or its channels would wait out the whole interval for their logos. The
-    // playlist is kept: nothing about it changed.
-    if (entry.programs.isNotEmpty && _programs == null && entry.epgLogos != null) {
-      _programs = entry.programs;
-      _programsFetchedAt = entry.savedAt;
-      _guideCoverage = entry.guideCoverage;
+    // The guide is no longer kept in this copy (Plebz): it lives in [_guide].
+    // One stored before is not taken over; it is read again once.
+  }
+
+  /// What the guide store holds for this source. Whether it is still fresh
+  /// is [fetchSchedule]'s question.
+  Future<void> _readGuideState() async {
+    try {
+      final reading = Stopwatch()..start();
+      final state = await _guide.state(source.id);
+      if (state == null || _guideState != null) return;
+      _guideState = state;
+      _timing('stored guide found', reading, 'read ${_ageLabel(_now().difference(state.fetchedAt))} ago');
+    } catch (error, stackTrace) {
+      appLogger.w('IPTV ${source.name}: the stored guide could not be read', error: error, stackTrace: stackTrace);
     }
   }
 
@@ -262,10 +287,9 @@ class IptvLiveTvSource implements LiveTvSupport {
         IptvCacheEntry(
           savedAt: _now(),
           channels: _channels ?? const [],
-          programs: _programs ?? const [],
+          programs: const [],
           streamUrls: Map.of(_m3uUrlByChannelKey),
           streamHeaders: {for (final entry in _m3uHeadersByChannelKey.entries) entry.key: Map.of(entry.value)},
-          guideCoverage: _guideCoverage,
           epgLogos: _epgLogos,
         ),
       ),
@@ -374,7 +398,9 @@ class IptvLiveTvSource implements LiveTvSupport {
     if (body == null) return const [];
 
     // Only the chosen groups: the rest is never kept (see [IptvSource.groups]).
+    final parsing = Stopwatch()..start();
     final entries = parseM3u(body, keepGroup: source.groups == null ? null : source.loadsGroup);
+    _timing('playlist read', parsing, '${entries.length} channels');
     final channels = channelsFromM3u(
       entries,
       sourceId: source.id,
@@ -423,48 +449,51 @@ class IptvLiveTvSource implements LiveTvSupport {
   /// When the last programme of the guide in hand begins, in epoch seconds,
   /// or null while no guide is loaded. Read as it stands and never loading:
   /// the guide's day picker asks it on a key press.
-  int? get lastProgrammeStart {
-    int? last;
-    for (final program in _programs ?? const <LiveTvProgram>[]) {
-      final begins = program.beginsAt;
-      if (begins != null && (last == null || begins > last)) last = begins;
-    }
-    return last;
-  }
+  int? get lastProgrammeStart => _guideState?.lastStart;
 
   @override
   Future<List<LiveTvProgram>> fetchSchedule({DateTime? from, DateTime? to}) async {
     await _restoreFromDisk();
     final shown = await _shownChannels();
     final wanted = {for (final channel in shown) channel.key};
-    final cached = _programs;
-    final fetchedAt = _programsFetchedAt;
+    final held = _guideState;
     final maxAge = _diskCacheMaxAge?.call();
     final ttl = maxAge == null || maxAge < _guideCacheTtl ? _guideCacheTtl : maxAge;
     // A channel shown again since the guide was read has nothing in it.
-    final covered = _guideCoverage?.containsAll(wanted) ?? true;
-    final isFresh = cached != null && fetchedAt != null && _now().difference(fetchedAt) < ttl && covered;
-    final programs = isFresh
-        ? _narrowGuideTo(shown, wanted)
-        : await (_scheduleLoading ??= _downloadSchedule(shown, wanted).whenComplete(() => _scheduleLoading = null));
+    final covered = held?.coverage?.containsAll(wanted) ?? true;
+    final isFresh = held != null && _now().difference(held.fetchedAt) < ttl && covered;
+    if (!isFresh) {
+      await (_scheduleLoading ??= _readGuides(
+        shown,
+        wanted,
+        keepHeldOnFailure: false,
+      ).whenComplete(() => _scheduleLoading = null));
+    }
 
-    if (from == null && to == null) return programs;
-    final fromSeconds = from == null ? null : from.millisecondsSinceEpoch ~/ 1000;
-    final toSeconds = to == null ? null : to.millisecondsSinceEpoch ~/ 1000;
-    return [
-      for (final program in programs)
-        // Overlap, not containment: a programme that started before the window
-        // is still what is on at its beginning.
-        if ((toSeconds == null || (program.beginsAt ?? 0) <= toSeconds) &&
-            (fromSeconds == null || (program.endsAt ?? 0) >= fromSeconds))
-          program,
-    ];
+    final state = _guideState;
+    if (state == null) return const [];
+    // Only what the channels showing have: a guide read for more keeps the
+    // rest, unseen, until it is read again.
+    final identifiers = {
+      for (final channel in shown) ...[channel.key, ?channel.identifier],
+    };
+    try {
+      return await _guide.window(
+        source.id,
+        state.generation,
+        from: from == null ? null : from.millisecondsSinceEpoch ~/ 1000,
+        to: to == null ? null : to.millisecondsSinceEpoch ~/ 1000,
+        channels: identifiers,
+      );
+    } catch (error, stackTrace) {
+      appLogger.w('IPTV ${source.name}: the stored guide could not be read', error: error, stackTrace: stackTrace);
+      return const [];
+    }
   }
 
   /// The channels a guide is read for: the ones the viewer's arrangement
   /// leaves showing. A hidden group of a thousand channels is a thousand
-  /// channels' programmes nobody looks at, kept in memory and written to disk,
-  /// and read back on every start.
+  /// channels' programmes nobody looks at, kept and read back for nothing.
   Future<List<LiveTvChannel>> _shownChannels() async {
     final channels = await fetchChannels();
     final layout = await _channelLayout?.call();
@@ -475,45 +504,85 @@ class IptvLiveTvSource implements LiveTvSupport {
     ];
   }
 
-  /// The held guide cut down to [shown], where more is hidden now than when
-  /// it was read — no download for that. Stored again when anything went, so
-  /// the next start reads the smaller copy.
-  List<LiveTvProgram> _narrowGuideTo(List<LiveTvChannel> shown, Set<String> wanted) {
-    final programs = _programs ?? const <LiveTvProgram>[];
-    final coverage = _guideCoverage;
-    if (coverage != null && coverage.length == wanted.length) return programs;
-    final identifiers = {
-      for (final channel in shown) ...[channel.key, ?channel.identifier],
-    };
-    final narrowed = [
-      for (final program in programs)
-        if (identifiers.contains(program.channelIdentifier)) program,
-    ];
-    _guideCoverage = wanted;
-    if (narrowed.length == programs.length) return programs;
-    _programs = narrowed;
-    unawaited(_saveToDisk());
-    return narrowed;
+  /// "TV-Programm neu laden" (Plebz): the guide read again, the playlist left
+  /// as it is, and the guide in hand served — to the grid, "Jetzt live", the
+  /// player — until the new one is whole. True once a guide was read.
+  ///
+  /// Dropping both, as [invalidate] does, left the screen empty and the
+  /// playlist downloading again for a guide nobody asked to change.
+  Future<bool> refreshGuide() async {
+    await _restoreFromDisk();
+    final shown = await _shownChannels();
+    final wanted = {for (final channel in shown) channel.key};
+    final before = _guideState;
+    await (_scheduleLoading ??= _readGuides(
+      shown,
+      wanted,
+      keepHeldOnFailure: true,
+    ).whenComplete(() => _scheduleLoading = null));
+    return !identical(_guideState, before);
   }
 
-  Future<List<LiveTvProgram>> _downloadSchedule(List<LiveTvChannel> shown, Set<String> wanted) async {
-    final programs = await _loadSchedule(shown);
-    _programs = programs;
-    _guideCoverage = wanted;
-    // Stamp the *new* read. Keeping the first stamp would expire the cache
-    // permanently, re-downloading a multi-megabyte guide on every call the
-    // guide makes from then on.
-    _programsFetchedAt = _now();
-    unawaited(_saveToDisk());
-    return programs;
+  /// Read the guides into a new generation of [_guide], programme by
+  /// programme as each guide is read, and put it in place in one step — the
+  /// one before is what everybody reads until then.
+  ///
+  /// [keepHeldOnFailure]: when no guide answers at all, the guide in hand
+  /// stays rather than an empty one taking its place — a reload by hand must
+  /// not empty the screen. An expired guide is replaced either way: its stamp
+  /// would otherwise send every caller to the network again.
+  Future<void> _readGuides(List<LiveTvChannel> shown, Set<String> wanted, {required bool keepHeldOnFailure}) async {
+    IptvGuideWriter? writer;
+    try {
+      writer = await _guide.begin(source.id);
+      await _loadSchedule(shown, writer);
+      if (writer.count == 0 && keepHeldOnFailure && _guideState != null) {
+        appLogger.w('IPTV ${source.name}: no guide could be read again; keeping the one in hand');
+        await writer.abandon();
+        return;
+      }
+      final storing = Stopwatch()..start();
+      // Stamp the *new* read. Keeping the first stamp would expire the guide
+      // for good, re-downloading it on every call from then on.
+      _guideState = await writer.commit(fetchedAt: _now(), coverage: wanted);
+      _timing('guide stored', storing, '${writer.count} programmes');
+      unawaited(_saveToDisk());
+    } catch (error, stackTrace) {
+      appLogger.w('IPTV ${source.name}: the guide could not be stored', error: error, stackTrace: stackTrace);
+      try {
+        await writer?.abandon();
+      } catch (_) {
+        // Its next begin clears what is left.
+      }
+    }
   }
 
-  Future<List<LiveTvProgram>> _loadSchedule(List<LiveTvChannel> channels) async {
-    if (channels.isEmpty) return const [];
-    return switch (source.kind) {
-      IptvSourceKind.m3u => await _loadXmltvGuides(channels, source.epgUrls),
-      IptvSourceKind.xtream => await _loadXtreamSchedule(channels),
-    };
+  /// Read [channels]' guide into [writer].
+  Future<void> _loadSchedule(List<LiveTvChannel> channels, IptvGuideWriter writer) async {
+    if (channels.isEmpty) return;
+    final loading = Stopwatch()..start();
+    switch (source.kind) {
+      case IptvSourceKind.m3u:
+        await _loadXmltvGuides(channels, source.epgUrls, writer);
+      case IptvSourceKind.xtream:
+        await _loadXtreamSchedule(channels, writer);
+    }
+    _timing('guide complete', loading, '${writer.count} programmes for ${channels.length} channels');
+  }
+
+  /// One line of the timings the log keeps of loading (Plebz): what it took a
+  /// box to fetch, unpack, read and store a source, so a slow one can be told
+  /// apart from a slow provider.
+  void _timing(String step, Stopwatch watch, String what) =>
+      appLogger.i('IPTV ${source.name} timing: $step ${watch.elapsedMilliseconds} ms ($what)');
+
+  /// [url] as a log may name it: host and file, never the query, where a panel
+  /// carries the login.
+  static String _urlLabel(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.host.isEmpty) return 'local file';
+    final file = uri.pathSegments.where((segment) => segment.isNotEmpty).lastOrNull;
+    return file == null ? uri.host : '${uri.host}/$file';
   }
 
   /// Read every configured XMLTV guide and merge them onto [channels].
@@ -525,8 +594,11 @@ class IptvLiveTvSource implements LiveTvSupport {
   /// first does not cover without laying a second timetable over the ones it
   /// does — two timetables whose starts differ by a few minutes printed their
   /// titles over each other in the grid.
-  Future<List<LiveTvProgram>> _loadXmltvGuides(List<LiveTvChannel> channels, List<String> urls) async {
-    if (urls.isEmpty) return const [];
+  ///
+  /// Each guide's programmes go into [writer] once it is merged, so only one
+  /// guide is ever held whole.
+  Future<void> _loadXmltvGuides(List<LiveTvChannel> channels, List<String> urls, IptvGuideWriter writer) async {
+    if (urls.isEmpty) return;
 
     final byXmltvId = <String, LiveTvChannelRef>{};
     final byName = <String, LiveTvChannelRef>{};
@@ -549,33 +621,23 @@ class IptvLiveTvSource implements LiveTvSupport {
         byName.putIfAbsent(variant, () => ref);
       }
     }
-    if (byXmltvId.isEmpty && byName.isEmpty) return const [];
+    if (byXmltvId.isEmpty && byName.isEmpty) return;
 
-    final programs = <LiveTvProgram>[];
     final seenSlots = <String>{};
     // Per channel, what the guides before this one already cover.
     final taken = <String, List<(int, int)>>{};
     // What the guides name as each channel's logo.
     final logos = <String, String>{};
     var readAGuide = false;
-    for (final url in urls) {
-      if (url.isEmpty) continue;
-      final body = await _get(url);
-      if (body == null) continue;
-
-      final XmltvGuide guide;
-      try {
-        guide = await compute(parseXmltvPayload, (
-          contents: body,
-          channelIds: byXmltvId.keys.toSet(),
-          channelNames: byName.keys.toSet(),
-        ));
-      } catch (error, stackTrace) {
-        // Not every URL that answers serves XMLTV — a panel without an
-        // `xmltv.php` hands back its JSON error object instead.
-        appLogger.w('IPTV ${source.name}: $url is not a readable guide', error: error, stackTrace: stackTrace);
-        continue;
-      }
+    // All guides download at once (Plebz), each read as it arrives in an
+    // isolate of its own and never held whole — see [readXmltvStream]. They
+    // are still merged in order, the first one owning its channels.
+    final ids = byXmltvId.keys.toSet();
+    final names = byName.keys.toSet();
+    final reads = [for (final url in urls) url.isEmpty ? Future<XmltvGuide?>.value() : _readGuide(url, ids, names)];
+    for (var i = 0; i < urls.length; i++) {
+      final guide = await reads[i];
+      if (guide == null) continue;
       readAGuide = true;
       final resolved = <String, LiveTvChannelRef>{...byXmltvId};
       for (final entry in guide.matchedChannelNames.entries) {
@@ -599,6 +661,7 @@ class IptvLiveTvSource implements LiveTvSupport {
         ...byGuideChannel.keys.where(byXmltvId.containsKey),
         ...byGuideChannel.keys.where((id) => !byXmltvId.containsKey(id)),
       ];
+      final kept = <LiveTvProgram>[];
       for (final guideChannel in guideChannels) {
         final served = <String, List<(int, int)>>{};
         for (final program in programsFromXmltv(byGuideChannel[guideChannel]!, channelsByXmltvId: resolved)) {
@@ -607,18 +670,16 @@ class IptvLiveTvSource implements LiveTvSupport {
           final ends = program.endsAt;
           if (begins != null && ends != null && _spansOverlap(taken[channel], begins, ends)) continue;
           if (!seenSlots.add('$channel\u0000$begins')) continue;
-          programs.add(program);
+          kept.add(program);
           if (begins != null && ends != null) (served[channel] ??= []).add((begins, ends));
         }
         served.forEach((channel, spans) => taken[channel] = _unionOfSpans([...?taken[channel], ...spans]));
       }
+      await writer.add(kept);
     }
 
     // Not when every guide failed: that says nothing about the logos known.
     if (readAGuide) _learnLogos(logos);
-
-    programs.sort((a, b) => (a.beginsAt ?? 0).compareTo(b.beginsAt ?? 0));
-    return programs;
   }
 
   void _learnLogos(Map<String, String> logos) {
@@ -670,9 +731,9 @@ class IptvLiveTvSource implements LiveTvSupport {
   /// per channel. The per-channel route stays as the fallback for panels that
   /// do not answer the XMLTV endpoint, and is capped — a 5,000-channel panel
   /// would otherwise fire 5,000 requests to fill one screen.
-  Future<List<LiveTvProgram>> _loadXtreamSchedule(List<LiveTvChannel> channels) async {
-    final fromXmltv = await _loadXmltvGuides(channels, [_xtream.xmltv().toString(), ...source.epgUrls]);
-    if (fromXmltv.isNotEmpty) return fromXmltv;
+  Future<void> _loadXtreamSchedule(List<LiveTvChannel> channels, IptvGuideWriter writer) async {
+    await _loadXmltvGuides(channels, [_xtream.xmltv().toString(), ...source.epgUrls], writer);
+    if (writer.count > 0) return;
 
     const maxChannels = 60;
     final programs = <LiveTvProgram>[];
@@ -688,9 +749,7 @@ class IptvLiveTvSource implements LiveTvSupport {
     if (channels.length > maxChannels) {
       appLogger.d('IPTV ${source.name}: guide limited to the first $maxChannels of ${channels.length} channels');
     }
-
-    programs.sort((a, b) => (a.beginsAt ?? 0).compareTo(b.beginsAt ?? 0));
-    return programs;
+    await writer.add(programs);
   }
 
   @override
@@ -901,9 +960,65 @@ class IptvLiveTvSource implements LiveTvSupport {
     }
   }
 
+  /// One guide, read as it downloads — see [readXmltvStream]. Null when it
+  /// could not be read.
+  Future<XmltvGuide?> _readGuide(String url, Set<String> channelIds, Set<String> channelNames) async {
+    final reading = Stopwatch()..start();
+    try {
+      final Stream<List<int>> bytes;
+      if (IptvLocalFiles.isLocal(url)) {
+        final file = File(Uri.parse(url).toFilePath());
+        bytes = file.openRead();
+      } else {
+        final response = await _http.send(http.Request('GET', Uri.parse(url)));
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          // Not read: an error page can be as large as anything else.
+          await response.stream.listen(null).cancel();
+          appLogger.w('IPTV ${source.name}: ${_urlLabel(url)} returned ${response.statusCode}');
+          return null;
+        }
+        bytes = response.stream;
+      }
+      final result = await readXmltvStream(
+        bytes,
+        channelIds: channelIds,
+        channelNames: channelNames,
+        maxBytes: _maxResponseBytes,
+      );
+      switch (result) {
+        case XmltvStreamRead(:final guide, :final packedBytes, :final unpackedBytes):
+          _timing(
+            'guide read',
+            reading,
+            '${_urlLabel(url)}, ${(packedBytes / (1 << 20)).toStringAsFixed(1)} MB downloaded, '
+                '${(unpackedBytes / (1 << 20)).toStringAsFixed(1)} MB read, ${guide.programs.length} programmes kept',
+          );
+          return guide;
+        case XmltvStreamTooLarge():
+          appLogger.w('IPTV ${source.name}: ${_urlLabel(url)} is larger than ${_maxResponseBytes >> 20} MB; not read');
+        case XmltvStreamUnreadable(:final error):
+          // Not every URL that answers serves XMLTV — a panel without an
+          // `xmltv.php` hands back its JSON error object instead.
+          appLogger.w('IPTV ${source.name}: ${_urlLabel(url)} is not a readable guide: $error');
+      }
+    } catch (error, stackTrace) {
+      appLogger.w('IPTV ${source.name}: ${_urlLabel(url)} failed', error: error, stackTrace: stackTrace);
+    }
+    return null;
+  }
+
   Future<String?> _get(String url) async {
+    final bytes = await _getBytes(url);
+    // Providers serve playlists and guides without a charset; the bytes are
+    // UTF-8 in practice, and malformed sequences must not lose the file.
+    return bytes == null ? null : utf8.decode(bytes, allowMalformed: true);
+  }
+
+  /// What [url] serves, unpacked; null when it could not be read.
+  Future<List<int>?> _getBytes(String url) async {
     if (IptvLocalFiles.isLocal(url)) return _readLocal(url);
     try {
+      final downloading = Stopwatch()..start();
       final response = await _http.send(http.Request('GET', Uri.parse(url)));
       if (response.statusCode < 200 || response.statusCode >= 300) {
         // Not read: an error page can be as large as anything else.
@@ -919,11 +1034,14 @@ class IptvLiveTvSource implements LiveTvSupport {
           return null;
         }
       }
-      final unpacked = await _unpack(bytes.takeBytes(), url);
-      if (unpacked == null) return null;
-      // Providers serve playlists and guides without a charset; the bytes are
-      // UTF-8 in practice, and malformed sequences must not lose the file.
-      return utf8.decode(unpacked, allowMalformed: true);
+      final packed = bytes.takeBytes();
+      _timing('download', downloading, '${_urlLabel(url)}, ${(packed.length / (1 << 20)).toStringAsFixed(1)} MB');
+      final unpacking = Stopwatch()..start();
+      final unpacked = await _unpack(packed, url);
+      if (unpacked != null && !identical(unpacked, packed)) {
+        _timing('unpack', unpacking, '${(unpacked.length / (1 << 20)).toStringAsFixed(1)} MB');
+      }
+      return unpacked;
     } catch (error, stackTrace) {
       appLogger.w('IPTV ${source.name}: $url failed', error: error, stackTrace: stackTrace);
       return null;
@@ -931,15 +1049,14 @@ class IptvLiveTvSource implements LiveTvSupport {
   }
 
   /// A playlist (or guide) taken from a local file — see [IptvLocalFiles].
-  Future<String?> _readLocal(String url) async {
+  Future<List<int>?> _readLocal(String url) async {
     try {
       final file = File(Uri.parse(url).toFilePath());
       if (await file.length() > _maxResponseBytes) {
         appLogger.w('IPTV ${source.name}: local file is larger than ${_maxResponseBytes >> 20} MB; not read');
         return null;
       }
-      final unpacked = await _unpack(await file.readAsBytes(), url);
-      return unpacked == null ? null : utf8.decode(unpacked, allowMalformed: true);
+      return await _unpack(await file.readAsBytes(), url);
     } catch (error, stackTrace) {
       appLogger.w('IPTV ${source.name}: local file could not be read', error: error, stackTrace: stackTrace);
       return null;

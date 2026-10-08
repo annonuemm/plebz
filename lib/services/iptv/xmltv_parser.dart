@@ -146,158 +146,183 @@ Set<String> xmltvChannelNameVariants(String value) {
 /// guide. It relies on the `<channel>` blocks preceding the programmes, as
 /// every guide in the wild writes them.
 XmltvGuide parseXmltvGuide(String contents, {Set<String>? channelIds, Set<String> channelNames = const {}}) {
-  final programs = <XmltvProgram>[];
-  final matchedChannelNames = <String, String>{};
+  final reader = XmltvGuideReader(channelIds: channelIds, channelNames: channelNames);
+  for (final event in parseEvents(contents)) {
+    reader.add(event);
+  }
+  return reader.finish();
+}
 
-  String? channelId;
-  int? begins;
-  int? ends;
-  String? title;
-  String? subtitle;
-  String? summary;
-  List<String>? genres;
-  String? country;
-  int? year;
-  String? icon;
-  int? episode;
-  int? season;
-  String? currentText;
-  String? episodeSystem;
-  var inProgramme = false;
-  var keep = false;
-  String? channelBlockId;
+/// [parseXmltvGuide] one event at a time (Plebz), so a guide can be read as it
+/// arrives — chunk by chunk off the network — rather than once it is whole in
+/// memory. Feed it every event of the document in order, then [finish].
+class XmltvGuideReader {
+  XmltvGuideReader({this.channelIds, this.channelNames = const {}});
+
+  final Set<String>? channelIds;
+  final Set<String> channelNames;
+
+  final _programs = <XmltvProgram>[];
+  final _matchedChannelNames = <String, String>{};
+
+  String? _channelId;
+  int? _begins;
+  int? _ends;
+  String? _title;
+  String? _subtitle;
+  String? _summary;
+  List<String>? _genres;
+  String? _country;
+  int? _year;
+  String? _icon;
+  int? _episode;
+  int? _season;
+  String? _currentText;
+  String? _episodeSystem;
+  var _inProgramme = false;
+  var _keep = false;
+  String? _channelBlockId;
   // Every declaration block, not only those read for their names: the icon
   // is wanted for channels known by id as well.
-  String? declaredChannelId;
-  final channelIcons = <String, String>{};
+  String? _declaredChannelId;
+  final _channelIcons = <String, String>{};
 
-  void reset() {
-    channelId = null;
-    begins = null;
-    ends = null;
-    title = null;
-    subtitle = null;
-    summary = null;
-    genres = null;
-    country = null;
-    year = null;
-    icon = null;
-    episode = null;
-    season = null;
-    currentText = null;
-    episodeSystem = null;
+  void _reset() {
+    _channelId = null;
+    _begins = null;
+    _ends = null;
+    _title = null;
+    _subtitle = null;
+    _summary = null;
+    _genres = null;
+    _country = null;
+    _year = null;
+    _icon = null;
+    _episode = null;
+    _season = null;
+    _currentText = null;
+    _episodeSystem = null;
   }
 
-  for (final event in parseEvents(contents)) {
+  void add(XmlEvent event) {
+    final channelIds = this.channelIds;
     if (event is XmlStartElementEvent) {
       switch (event.name) {
         case 'channel':
           // The declaration block, not a programme: read to learn the names
           // this id answers to, and the logo it is drawn with.
-          if (!event.isSelfClosing) declaredChannelId = _attribute(event, 'id');
-          if (channelNames.isNotEmpty && !event.isSelfClosing) channelBlockId = _attribute(event, 'id');
+          if (!event.isSelfClosing) _declaredChannelId = _attribute(event, 'id');
+          if (channelNames.isNotEmpty && !event.isSelfClosing) _channelBlockId = _attribute(event, 'id');
         case 'programme':
-          inProgramme = true;
-          reset();
-          channelId = _attribute(event, 'channel');
-          begins = parseXmltvTime(_attribute(event, 'start'));
-          ends = parseXmltvTime(_attribute(event, 'stop'));
-          keep =
+          _inProgramme = true;
+          _reset();
+          final channelId = _channelId = _attribute(event, 'channel');
+          _begins = parseXmltvTime(_attribute(event, 'start'));
+          _ends = parseXmltvTime(_attribute(event, 'stop'));
+          _keep =
               channelId != null &&
-              (channelIds == null || channelIds.contains(channelId) || matchedChannelNames.containsKey(channelId));
+              (channelIds == null || channelIds.contains(channelId) || _matchedChannelNames.containsKey(channelId));
         case 'icon':
-          if (inProgramme) {
-            if (keep) icon ??= _attribute(event, 'src');
-          } else if (declaredChannelId case final id?) {
+          if (_inProgramme) {
+            if (_keep) _icon ??= _attribute(event, 'src');
+          } else if (_declaredChannelId case final id?) {
             final src = _attribute(event, 'src')?.trim();
-            if (src != null && src.isNotEmpty) channelIcons.putIfAbsent(id, () => src);
+            if (src != null && src.isNotEmpty) _channelIcons.putIfAbsent(id, () => src);
           }
         case 'episode-num':
-          if (inProgramme && keep) episodeSystem = _attribute(event, 'system');
+          if (_inProgramme && _keep) _episodeSystem = _attribute(event, 'system');
       }
       // A self-closing element emits no end event, so its text can never
       // arrive; clearing here keeps a previous sibling's text from leaking.
-      currentText = null;
-      continue;
+      _currentText = null;
+      return;
     }
 
     if (event is XmlTextEvent) {
-      if ((inProgramme && keep) || channelBlockId != null) currentText = (currentText ?? '') + event.value;
-      continue;
+      if ((_inProgramme && _keep) || _channelBlockId != null) _currentText = (_currentText ?? '') + event.value;
+      return;
     }
     if (event is XmlCDATAEvent) {
-      if ((inProgramme && keep) || channelBlockId != null) currentText = (currentText ?? '') + event.value;
-      continue;
+      if ((_inProgramme && _keep) || _channelBlockId != null) _currentText = (_currentText ?? '') + event.value;
+      return;
     }
 
     if (event is XmlEndElementEvent) {
-      final text = currentText?.trim();
-      currentText = null;
+      final text = _currentText?.trim();
+      final keep = _keep;
+      _currentText = null;
       switch (event.name) {
         case 'display-name':
-          final id = channelBlockId;
+          final id = _channelBlockId;
           if (id != null && !(channelIds?.contains(id) ?? false) && (text?.isNotEmpty ?? false)) {
             for (final variant in xmltvChannelNameVariants(text!)) {
               if (!channelNames.contains(variant)) continue;
-              matchedChannelNames.putIfAbsent(id, () => variant);
+              _matchedChannelNames.putIfAbsent(id, () => variant);
               break;
             }
           }
         case 'channel':
-          channelBlockId = null;
-          declaredChannelId = null;
+          _channelBlockId = null;
+          _declaredChannelId = null;
         case 'title':
-          if (keep && (text?.isNotEmpty ?? false)) title ??= text;
+          if (keep && (text?.isNotEmpty ?? false)) _title ??= text;
         case 'sub-title':
-          if (keep && (text?.isNotEmpty ?? false)) subtitle ??= text;
+          if (keep && (text?.isNotEmpty ?? false)) _subtitle ??= text;
         case 'desc':
-          if (keep && (text?.isNotEmpty ?? false)) summary ??= text;
+          if (keep && (text?.isNotEmpty ?? false)) _summary ??= text;
         case 'category':
           // Several tags per programme, so collected rather than kept once.
-          if (keep && (text?.isNotEmpty ?? false)) (genres ??= <String>[]).add(text!);
+          if (keep && (text?.isNotEmpty ?? false)) (_genres ??= <String>[]).add(text!);
         case 'country':
-          if (keep && (text?.isNotEmpty ?? false)) country ??= text;
+          if (keep && (text?.isNotEmpty ?? false)) _country ??= text;
         case 'date':
           // "2019" or "20190411": the year is the first four digits either way.
           if (keep && (text?.isNotEmpty ?? false)) {
             final digits = text!.trim();
-            if (digits.length >= 4) year ??= int.tryParse(digits.substring(0, 4));
+            if (digits.length >= 4) _year ??= int.tryParse(digits.substring(0, 4));
           }
         case 'episode-num':
           if (keep && (text?.isNotEmpty ?? false)) {
-            final parsed = _episodeNumbers(text!, system: episodeSystem);
-            season ??= parsed.season;
-            episode ??= parsed.episode;
+            final parsed = _episodeNumbers(text!, system: _episodeSystem);
+            _season ??= parsed.season;
+            _episode ??= parsed.episode;
           }
         case 'programme':
-          if (keep && begins != null && ends != null && (title?.isNotEmpty ?? false)) {
-            programs.add(
+          final begins = _begins;
+          final ends = _ends;
+          final title = _title;
+          if (keep && begins != null && ends != null && title != null && title.isNotEmpty) {
+            _programs.add(
               XmltvProgram(
-                channelId: channelId!,
-                title: title!,
-                beginsAt: begins!,
-                endsAt: ends!,
-                subtitle: subtitle,
-                summary: summary,
-                genres: genres,
-                country: country,
-                year: year,
-                episodeNumber: episode,
-                seasonNumber: season,
-                icon: icon,
+                channelId: _channelId!,
+                title: title,
+                beginsAt: begins,
+                endsAt: ends,
+                subtitle: _subtitle,
+                summary: _summary,
+                genres: _genres,
+                country: _country,
+                year: _year,
+                episodeNumber: _episode,
+                seasonNumber: _season,
+                icon: _icon,
               ),
             );
           }
-          inProgramme = false;
-          keep = false;
-          reset();
+          _inProgramme = false;
+          _keep = false;
+          _reset();
       }
     }
   }
 
-  // Only the channels this guide is read for: a guide declares thousands.
-  channelIcons.removeWhere((id, _) => !(channelIds?.contains(id) ?? true) && !matchedChannelNames.containsKey(id));
-  return XmltvGuide(programs: programs, matchedChannelNames: matchedChannelNames, channelIcons: channelIcons);
+  /// The guide read so far.
+  XmltvGuide finish() {
+    final channelIds = this.channelIds;
+    // Only the channels this guide is read for: a guide declares thousands.
+    _channelIcons.removeWhere((id, _) => !(channelIds?.contains(id) ?? true) && !_matchedChannelNames.containsKey(id));
+    return XmltvGuide(programs: _programs, matchedChannelNames: _matchedChannelNames, channelIcons: _channelIcons);
+  }
 }
 
 /// The programmes of [contents] — [parseXmltvGuide] without the name matching.

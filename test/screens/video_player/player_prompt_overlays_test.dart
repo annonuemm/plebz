@@ -253,19 +253,32 @@ void main() {
     await tester.pump();
     expect(find.bySemanticsLabel('Loading video'), findsOneWidget, reason: 'a mid-playback stall loads again');
 
-    // A channel switch keeps the outgoing channel's last frame on screen, so
-    // the spinner has to speak for a picture that is deliberately not moving.
+    // A channel switch keeps the outgoing channel's last frame on screen and
+    // stays quiet — even while the new stream buffers — until it runs long;
+    // then the spinner speaks for a picture that is deliberately not moving.
     isBuffering.value = false;
     await tester.pump();
     expect(find.bySemanticsLabel('Loading video'), findsNothing);
 
     isSwitchingChannel.value = true;
+    isBuffering.value = true;
     await tester.pump();
-    expect(find.bySemanticsLabel('Loading video'), findsOneWidget);
+    expect(find.bySemanticsLabel('Loading video'), findsNothing, reason: 'a zap is quiet');
+
+    await tester.pump(VideoPlayerBufferingOverlay.switchSpinnerDelay);
+    expect(find.bySemanticsLabel('Loading video'), findsOneWidget, reason: 'a slow switch is not left silent');
 
     isSwitchingChannel.value = false;
+    isBuffering.value = false;
     await tester.pump();
     expect(find.bySemanticsLabel('Loading video'), findsNothing);
+
+    // The next zap starts quiet again.
+    isSwitchingChannel.value = true;
+    await tester.pump();
+    expect(find.bySemanticsLabel('Loading video'), findsNothing);
+    isSwitchingChannel.value = false;
+    await tester.pump();
 
     semantics.dispose();
   });

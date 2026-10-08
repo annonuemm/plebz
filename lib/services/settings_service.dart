@@ -1378,12 +1378,14 @@ class SettingsService extends BaseSharedPreferencesService {
   static const continueWatchingAction = EnumPref<ContinueWatchingAction>(
     'continue_watching_action',
     values: ContinueWatchingAction.values,
-    defaultValue: ContinueWatchingAction.play,
+    // Plebz: the page first, as Plex does — the season and the other
+    // episodes one step away, the play button on it.
+    defaultValue: ContinueWatchingAction.details,
   );
   static const episodeAction = EnumPref<EpisodeAction>(
     'episode_action',
     values: EpisodeAction.values,
-    defaultValue: EpisodeAction.play,
+    defaultValue: EpisodeAction.details,
   );
   static const mpvConfigText = _MpvConfigTextPref();
 

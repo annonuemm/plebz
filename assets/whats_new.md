@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.10.3 (Build 671)
+
+- Live-TV: Beim Umschalten erscheint kein Ladekreis mehr. Das letzte Bild bleibt ruhig stehen, bis der neue Sender da ist.
+- Folgen und „Weiterschauen“ öffnen jetzt zuerst ihre Seite statt sofort abzuspielen, so kommst du direkt zur Staffel. Wer lieber sofort abspielt, stellt das unter Einstellungen → Darstellung → Startseite um.
+
 ## 1.10.2 (Build 668)
 
 - IPTV: Umschalten und Senderstart sind wieder so schnell wie vor 1.10.1.

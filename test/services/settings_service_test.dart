@@ -116,16 +116,20 @@ void main() {
   });
 
   group('SettingsService episode action', () {
-    test('defaults to play and resets to play', () async {
+    test('defaults to the details page and resets to it, for episodes and Continue Watching alike', () async {
       final settings = await SettingsService.getInstance();
 
-      expect(settings.read(SettingsService.episodeAction), EpisodeAction.play);
-
-      await settings.write(SettingsService.episodeAction, EpisodeAction.details);
       expect(settings.read(SettingsService.episodeAction), EpisodeAction.details);
+      expect(settings.read(SettingsService.continueWatchingAction), ContinueWatchingAction.details);
+
+      await settings.write(SettingsService.episodeAction, EpisodeAction.play);
+      await settings.write(SettingsService.continueWatchingAction, ContinueWatchingAction.play);
+      expect(settings.read(SettingsService.episodeAction), EpisodeAction.play);
+      expect(settings.read(SettingsService.continueWatchingAction), ContinueWatchingAction.play);
 
       await settings.resetAllSettings();
-      expect(settings.read(SettingsService.episodeAction), EpisodeAction.play);
+      expect(settings.read(SettingsService.episodeAction), EpisodeAction.details);
+      expect(settings.read(SettingsService.continueWatchingAction), ContinueWatchingAction.details);
     });
   });
 

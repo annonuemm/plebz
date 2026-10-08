@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/foundation.dart' show ValueListenable, listEquals;
@@ -80,15 +81,20 @@ class PlayerLoadingIndicator extends StatelessWidget {
   }
 }
 
-class VideoPlayerBufferingOverlay extends StatelessWidget {
+class VideoPlayerBufferingOverlay extends StatefulWidget {
   final ValueListenable<bool> isBuffering;
   final ValueListenable<bool> hasFirstFrame;
   final ValueListenable<bool> isExiting;
 
   /// True while a live channel switch runs. The picture is frozen on the
-  /// outgoing channel for that stretch rather than blanked, so the spinner is
-  /// what distinguishes "switching" from "stuck".
+  /// outgoing channel for that stretch rather than blanked; the spinner only
+  /// joins it once the switch runs past [switchSpinnerDelay] (Plebz), to tell
+  /// "slow" from "stuck" — a zap of a second showed it on every press, which
+  /// the viewer found restless.
   final ValueListenable<bool> isSwitchingChannel;
+
+  /// How long a channel switch runs quietly before the spinner shows.
+  static const Duration switchSpinnerDelay = Duration(seconds: 2);
 
   const VideoPlayerBufferingOverlay({
     super.key,
@@ -99,21 +105,70 @@ class VideoPlayerBufferingOverlay extends StatelessWidget {
   });
 
   @override
+  State<VideoPlayerBufferingOverlay> createState() => _VideoPlayerBufferingOverlayState();
+}
+
+class _VideoPlayerBufferingOverlayState extends State<VideoPlayerBufferingOverlay> {
+  Timer? _switchTimer;
+  bool _switchOverdue = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.isSwitchingChannel.addListener(_onSwitching);
+    _onSwitching();
+  }
+
+  @override
+  void didUpdateWidget(VideoPlayerBufferingOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isSwitchingChannel != widget.isSwitchingChannel) {
+      oldWidget.isSwitchingChannel.removeListener(_onSwitching);
+      widget.isSwitchingChannel.addListener(_onSwitching);
+      _onSwitching();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.isSwitchingChannel.removeListener(_onSwitching);
+    _switchTimer?.cancel();
+    super.dispose();
+  }
+
+  /// A switch begun or ended: either way the next one starts quiet.
+  void _onSwitching() {
+    _switchTimer?.cancel();
+    _switchTimer = null;
+    if (widget.isSwitchingChannel.value) {
+      _switchTimer = Timer(VideoPlayerBufferingOverlay.switchSpinnerDelay, () {
+        if (mounted) setState(() => _switchOverdue = true);
+      });
+    }
+    if (_switchOverdue && mounted) setState(() => _switchOverdue = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: PipService().isPipActive,
       builder: (context, isInPip, child) {
         if (isInPip) return const SizedBox.shrink();
         return ValueListenableBuilder<bool>(
-          valueListenable: isBuffering,
+          valueListenable: widget.isBuffering,
           builder: (context, buffering, child) {
             return ValueListenableBuilder<bool>(
-              valueListenable: isSwitchingChannel,
+              valueListenable: widget.isSwitchingChannel,
               builder: (context, switching, child) {
                 return ValueListenableBuilder<bool>(
-                  valueListenable: hasFirstFrame,
+                  valueListenable: widget.hasFirstFrame,
                   builder: (context, hasFrame, child) {
-                    if ((!buffering && !switching && hasFrame) || isExiting.value) return const SizedBox.shrink();
+                    if (widget.isExiting.value) return const SizedBox.shrink();
+                    // A zap: the last frame stands still and nothing spins —
+                    // not even for the new stream's own buffering — until it
+                    // has taken longer than a zap should.
+                    if (switching && !_switchOverdue) return const SizedBox.shrink();
+                    if (!buffering && !switching && hasFrame) return const SizedBox.shrink();
                     return Positioned.fill(
                       child: IgnorePointer(
                         child: Center(

@@ -1,4 +1,7 @@
 import 'dart:async';
+import '../utils/tone_mapped_logo_image.dart';
+import '../theme/mono_tokens.dart';
+import '../redesign/ocker_skin.dart' show OckerFlatFocusInk, OckerKeepColours;
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -229,6 +232,13 @@ class LiveTvChannelLogo extends StatelessWidget {
     return candidates;
   }
 
+  /// The tone a logo is drawn in: the caller's, or — on a flat focus fill,
+  /// which is white (Plebz) — darkened where the logo is light, as a white
+  /// wordmark would vanish there. Its other colours stay as they are.
+  Color? _toneAt(BuildContext context) => OckerFlatFocusInk.invertingAt(context)
+      ? channelLogoToneTargetFor(surface: Colors.white, foreground: tokens(context).bg)
+      : logoToneTarget;
+
   @override
   Widget build(BuildContext context) {
     final ratio = MediaQuery.devicePixelRatioOf(context);
@@ -251,9 +261,9 @@ class LiveTvChannelLogo extends StatelessWidget {
       return _logo(context, candidates, index + 1);
     }
 
-    if (_svgBytes[logo] case final bytes?) return _svg(bytes, next);
+    if (_svgBytes[logo] case final bytes?) return OckerKeepColours(child: _svg(bytes, next));
     // Named an SVG: straight there, no attempt the decoder is sure to fail.
-    if (_namesSvg(logo)) return _svgRead(logo, next);
+    if (_namesSvg(logo)) return OckerKeepColours(child: _svgRead(logo, next));
     return OptimizedMediaImage.thumb(
       key: ValueKey(logo),
       client: client,
@@ -261,7 +271,7 @@ class LiveTvChannelLogo extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
-      logoToneTarget: logoToneTarget,
+      logoToneTarget: _toneAt(context),
       placeholder: (_, _) => const SizedBox.shrink(),
       // Not an image the decoder knows: perhaps an SVG under another name.
       errorWidget: (context, _, _) => _svgRead(logo, next),
@@ -290,7 +300,7 @@ class LiveTvChannelLogo extends StatelessWidget {
           width: width,
           height: height,
           fit: fit,
-          logoToneTarget: logoToneTarget,
+          logoToneTarget: _toneAt(context),
           placeholder: (_, _) => const SizedBox.shrink(),
           errorWidget: (context, _, _) {
             _markDead(logo);

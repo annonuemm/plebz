@@ -203,13 +203,17 @@ class _UltraBlurFocusReporterState extends State<UltraBlurFocusReporter> {
 /// corner-to-corner blend, as one textured quad, the cheapest thing the box
 /// can draw.
 class UltraBlurLayer extends StatefulWidget {
-  const UltraBlurLayer({super.key, required this.colors});
+  const UltraBlurLayer({super.key, required this.colors, this.dim = defaultDim});
 
   final ValueListenable<UltraBlurColors?> colors;
 
   /// How far the corners are taken towards black, so light text keeps its
   /// contrast over a light poster.
-  static const double dim = 0.3;
+  final double dim;
+
+  /// The shell's ground, which only ever has a scrim of black over it where
+  /// words stand on it.
+  static const double defaultDim = 0.3;
 
   static const Duration crossfade = Duration(milliseconds: 450);
 
@@ -252,7 +256,7 @@ class _UltraBlurLayerState extends State<UltraBlurLayer> with SingleTickerProvid
   Future<void> _onColors() async {
     final generation = ++_generation;
     final colors = widget.colors.value;
-    final image = colors == null ? null : await _imageOf(colors);
+    final image = colors == null ? null : await _imageOf(colors, widget.dim);
     if (!mounted || generation != _generation) {
       image?.dispose();
       return;
@@ -272,10 +276,10 @@ class _UltraBlurLayerState extends State<UltraBlurLayer> with SingleTickerProvid
     WidgetsBinding.instance.addPostFrameCallback((_) => image.dispose());
   }
 
-  static Future<ui.Image> _imageOf(UltraBlurColors colors) {
+  static Future<ui.Image> _imageOf(UltraBlurColors colors, double dim) {
     final pixels = Uint8List(16);
     void put(int index, Color color) {
-      final c = Color.lerp(color, const Color(0xFF000000), UltraBlurLayer.dim)!;
+      final c = Color.lerp(color, const Color(0xFF000000), dim)!;
       pixels[index * 4] = (c.r * 255).round();
       pixels[index * 4 + 1] = (c.g * 255).round();
       pixels[index * 4 + 2] = (c.b * 255).round();

@@ -117,7 +117,12 @@ class _GlassHomeFace extends StatelessWidget {
       children: [
         OckerGlassFocusFill(shape: const CircleBorder(), bright: focused),
         Center(
-          child: AppIcon(Symbols.home_rounded, color: tk.ink(focused ? 1 : 0.85), size: size / 2),
+          // On a flat focus fill (white) the glyph goes dark.
+          child: AppIcon(
+            Symbols.home_rounded,
+            color: focused ? (tk.flat ? tk.bg : tk.ink(1)) : tk.ink(0.85),
+            size: size / 2,
+          ),
         ),
       ],
     );

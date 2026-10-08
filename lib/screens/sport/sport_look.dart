@@ -21,7 +21,7 @@ import '../../widgets/focusable_tab_chip.dart' show activeTabChipColor;
 /// the leagues and no side rail to walk back to — that is decided by the
 /// screen, not here.
 class SportLook {
-  SportLook._(this.context, {required this.ocker, required this.scale, required this.tk});
+  SportLook._(this.context, {required this.ocker, required this.scale, required this.tk}) : flat = tk.flat;
 
   factory SportLook.of(BuildContext context) {
     final ocker = isOckerLayout(context);
@@ -41,7 +41,30 @@ class SportLook {
   final double scale;
   final MonoTokens tk;
 
-  OckerType get _type => OckerType(scale);
+  /// "Redesign – Flach" (Plebz): the matchday as a title on the left, days and
+  /// labels in sentence case, the table on a panel of its own.
+  final bool flat;
+
+  OckerType get _type => OckerType(scale, flat: flat);
+
+  /// [text] as a label over a block is written: capitals, but not under
+  /// "Flach".
+  String headingCase(String text) => _type.headingCase(text);
+
+  /// The league's name over the page, under "Flach".
+  TextStyle get leagueLabel => TextStyle(fontFamily: _type.body.fontFamily, fontSize: 18 * scale, height: 1);
+
+  /// "Spieltag 5", under "Flach": the page's title.
+  TextStyle get matchdayTitle => TextStyle(
+    fontFamily: _type.body.fontFamily,
+    fontSize: 34 * scale,
+    fontWeight: .w700,
+    letterSpacing: -0.5 * scale,
+    height: 1,
+  );
+
+  /// "Samstag, 10. Oktober" over its games.
+  TextStyle get dayHeading => flat ? heading.copyWith(fontSize: 18 * scale) : heading;
   TextTheme get _text => Theme.of(context).textTheme;
 
   Color ink(double opacity) => tk.ink(opacity);
@@ -54,7 +77,7 @@ class SportLook {
 
   /// One match line. Tall enough for a crest with air around it; the list is
   /// read top to bottom and nine to ten of these make a matchday.
-  double get matchRowHeight => (ocker ? 64 : 48) * scale;
+  double get matchRowHeight => (flat ? 62 : (ocker ? 64 : 48)) * scale;
 
   double get gap => (ocker ? 18 : 12) * scale;
 
@@ -63,7 +86,7 @@ class SportLook {
       ? TextStyle(
           fontFamily: _type.body.fontFamily,
           fontSize: 22 * scale,
-          fontWeight: strong ? .w700 : .w500,
+          fontWeight: strong ? .w700 : (flat ? .w600 : .w500),
           height: 1.1,
         )
       : (_text.titleMedium ?? const TextStyle()).copyWith(

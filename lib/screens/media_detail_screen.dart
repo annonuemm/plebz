@@ -23,6 +23,7 @@ import '../utils/media_navigation_helper.dart';
 import '../widgets/rating_bottom_sheet.dart';
 
 import '../focus/dpad_navigator.dart';
+import '../focus/focus_theme.dart';
 import '../focus/dpad_select_long_press_controller.dart';
 import '../focus/focusable_action_bar.dart';
 import '../focus/focusable_wrapper.dart';
@@ -49,6 +50,9 @@ import '../widgets/media_rating_badge.dart';
 import '../widgets/fitted_metadata_line.dart';
 import '../i18n/strings.g.dart';
 import '../redesign/ocker_skin.dart';
+import '../redesign/ocker_type.dart';
+import '../widgets/plebz_start_animation.dart' show plebzMarkColours;
+import '../theme/flat_focus_ring.dart';
 import '../theme/glass_backdrop.dart';
 import '../theme/mono_tokens.dart';
 import '../widgets/corner_backdrop.dart';
@@ -1129,6 +1133,21 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     Alignment? alignment,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    // "Flach" (Plebz): the start page's title, set tight, with no halo — the
+    // scrims carry the contrast.
+    if (ockerFlat(context)) {
+      final size = fontSize ?? Theme.of(context).textTheme.displaySmall?.fontSize ?? 36;
+      return FittingTitleText(
+        title,
+        style: OckerType.of(context).spotlightTitle().copyWith(
+          color: color ?? colorScheme.onSurface,
+          fontSize: size,
+          letterSpacing: -0.027 * size,
+        ),
+        textAlign: textAlign,
+        alignment: alignment ?? (textAlign == TextAlign.center ? Alignment.center : Alignment.centerLeft),
+      );
+    }
     final baseStyle = (Theme.of(context).textTheme.displaySmall ?? const TextStyle()).copyWith(
       color: color ?? colorScheme.onSurface,
       // The serif has one weight; asking for another has the renderer fake it.
@@ -2521,6 +2540,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     final metadata = _metadata;
 
     if (PlatformDetector.isTV()) {
+      if (_tvDetailUsesSeasonTabs(metadata)) {
+        _focusTvDetailSeasonTab();
+        return;
+      }
       _tvDetailRailKey.currentState?.requestFocus();
       return;
     }
@@ -3795,7 +3818,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     }
     final hideSpoilers = SettingsService.instance.read(SettingsService.hideSpoilers);
     final detailScale = TvLayoutConstants.scaleForSize(size);
-    final rawRailHeight = _estimateTvDetailRailHeight(size, detailHubs);
+    final seasonTabs = _tvDetailUsesSeasonTabs(metadata);
+    final rawRailHeight =
+        _estimateTvDetailRailHeight(size, detailHubs) +
+        (seasonTabs ? _tvDetailSeasonTabsHeight * TvLayoutConstants.scaleForSize(size) : 0);
     if (!_tvDetailRevealed && _isTvDetailReadyToReveal(metadata)) {
       // The page opens on the play button for shows as well: landing in the
       // episode rail would raise it at once and hide the title area.
@@ -3971,31 +3997,39 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                 if (hasFocus == _tvDetailRailsRaised) return;
                 setStateIfMounted(() => _tvDetailRailsRaised = hasFocus);
               },
-              child: TvBrowseRail(
-                key: _tvDetailRailKey,
-                hubs: detailHubs,
-                focusMemory: _hubFocusMemory,
-                iconForHub: _getTvDetailHubIcon,
-                // Every copy of one title carries the same poster, so a
-                // label-free card says nothing. This rail is read, not
-                // recognised: keep the library name and its quality visible
-                // whatever the user's card style is set to.
-                fullCardLayoutForHub: _tvDetailFullCardLayoutForHub,
-                onFocusedHubItemChanged: _handleTvDetailFocusedRailItemChanged,
-                onRefresh: (source) => unawaited(_refreshItemInPlace(source)),
-                onActiveHubChanged: _handleTvDetailHubChanged,
-                onActivateItem: _handleTvDetailRailItemActivated,
-                trailingForHub: _tvDetailTrailingState,
-                leadingItemForHub: _tvDetailLeadingItemForHub,
-                onRetryHub: _retryTvDetailHub,
-                onNavigateUp: _focusTvDetailActionRow,
-                onBack: _popMediaDetailIfBackNotSuppressed,
-                tallPosterScale: _tvDetailTallPosterScale,
-                widePosterScaleForHub: _tvDetailWidePosterScaleForHub,
-                initialHubId: _tvDetailInitialHubId(metadata),
-                initialItemId: _tvDetailInitialItemId(metadata),
-                episodePosterModeForHub: _tvDetailEpisodePosterModeForHub,
-                showTitleImpliedForHub: _isTvDetailEpisodeHub,
+              child: _withTvDetailSeasonTabs(
+                show: seasonTabs,
+                scale: detailScale,
+                left: spotlightLeft,
+                rail: TvBrowseRail(
+                  key: _tvDetailRailKey,
+                  hubs: detailHubs,
+                  focusMemory: _hubFocusMemory,
+                  iconForHub: _getTvDetailHubIcon,
+                  // Every copy of one title carries the same poster, so a
+                  // label-free card says nothing. This rail is read, not
+                  // recognised: keep the library name and its quality visible
+                  // whatever the user's card style is set to.
+                  fullCardLayoutForHub: _tvDetailFullCardLayoutForHub,
+                  onFocusedHubItemChanged: _handleTvDetailFocusedRailItemChanged,
+                  onRefresh: (source) => unawaited(_refreshItemInPlace(source)),
+                  onActiveHubChanged: _handleTvDetailHubChanged,
+                  onActivateItem: _handleTvDetailRailItemActivated,
+                  trailingForHub: _tvDetailTrailingState,
+                  leadingItemForHub: _tvDetailLeadingItemForHub,
+                  onRetryHub: _retryTvDetailHub,
+                  onNavigateUp: seasonTabs ? _focusTvDetailSeasonTab : _focusTvDetailActionRow,
+                  onBack: _popMediaDetailIfBackNotSuppressed,
+                  tallPosterScale: _tvDetailTallPosterScale,
+                  widePosterScaleForHub: _tvDetailWidePosterScaleForHub,
+                  initialHubId: _tvDetailInitialHubId(metadata),
+                  initialItemId: _tvDetailInitialItemId(metadata),
+                  episodePosterModeForHub: _tvDetailEpisodePosterModeForHub,
+                  showTitleImpliedForHub: _isTvDetailEpisodeHub,
+                  // "Flach": the rows start where the buttons above them do
+                  // (the viewer's call).
+                  contentLeft: ockerFlat(context) ? spotlightLeft : null,
+                ),
               ),
             ),
           ),
@@ -4086,6 +4120,8 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           hasEpisodeTitle: reservesEpisodeTitle,
           heroLayout: heroLayout,
           hasQualityLine: _tvDetailReservesQualityRow(context, metadata),
+          flatFacts: ockerFlat(context),
+          titleCap: _tvDetailRaisedTitleCap(context, heroLayout: heroLayout),
         );
         final metrics = TvDetailHeaderMetrics(
           availableHeight: availableHeight,
@@ -4097,6 +4133,8 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           hasEpisodeTitle: reservesEpisodeTitle,
           heroLayout: heroLayout,
           hasQualityLine: _tvDetailReservesQualityRow(context, metadata),
+          flatFacts: ockerFlat(context),
+          titleCap: _tvDetailRaisedTitleCap(context, heroLayout: heroLayout),
           descriptionLines: hasDescription
               ? _tvDetailSummaryLineCount(context, description, probe, constraints.maxWidth)
               : 0,
@@ -4275,7 +4313,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       parts.add(MetadataLineText(lineMetadata.year.toString(), dropPriority: 0));
     }
     if (lineMetadata.contentRating != null) {
-      parts.add(MetadataLineText(formatContentRating(lineMetadata.contentRating!), dropPriority: 2));
+      parts.add(MetadataLineText(formatContentRating(lineMetadata.contentRating!), dropPriority: 2, badge: true));
     }
     // Only where there is one: a show's own runtime is 0, and the field read
     // "0min" beside the year until focus landed on an episode.
@@ -4303,7 +4341,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     // for: they are the first to go when it runs out, from the last one back.
     if (!lineMetadata.isEpisode) {
       for (final genre in metadata.genres ?? const <String>[]) {
-        if (genre.trim().isNotEmpty) parts.add(MetadataLineText(genre.trim(), dropPriority: 5));
+        if (genre.trim().isNotEmpty) parts.add(MetadataLineText(genre.trim(), dropPriority: 5, quiet: true));
       }
     }
 
@@ -4512,12 +4550,17 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     // The same size as the genre line directly below it: at TV distance the
     // two read as one block of facts, and the boxes were carrying the row's
     // emphasis on their own anyway.
-    final textStyle = TextStyle(
-      color: _tvDetailForegroundColor(context),
-      fontSize: 16 * scale,
-      fontWeight: .w700,
-      letterSpacing: 0.1,
-    );
+    // "Flach": the start page's plain facts, quieter than the title, at the
+    // size this page's budget reserves for them.
+    final flat = ockerFlat(context);
+    final textStyle = flat
+        ? OckerType.of(context).spotlightFacts.copyWith(color: tokens(context).ink(0.66), fontSize: 16 * scale)
+        : TextStyle(
+            color: _tvDetailForegroundColor(context),
+            fontSize: 16 * scale,
+            fontWeight: .w700,
+            letterSpacing: 0.1,
+          );
     // Two rows: year, age and length first, the picture and sound below —
     // each fact on a capsule of glass under "Glas", in a box elsewhere.
     final twoRows = _tvDetailReservesQualityRow(context, metadata);
@@ -4527,9 +4570,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     // Each fact in its own box: on a full-screen title area the row is read
     // at a distance, and a box separates more clearly than a bullet between
     // two words of similar weight.
-    Widget line(List<MetadataLinePart> parts) => FittedMetadataLine(
-      textStyle: monoFacts(context, textStyle),
+    Widget line(List<MetadataLinePart> parts, {bool secondary = false}) => FittedMetadataLine(
+      textStyle: flat ? textStyle : monoFacts(context, textStyle),
       parts: parts,
+      secondary: secondary,
       chipped: true,
       chipSpacing: 8 * scale,
       ratingIconSize: textStyle.fontSize,
@@ -4538,7 +4582,13 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     );
     if (!twoRows) return line(parts);
 
-    final metrics = TvDetailHeaderMetrics(availableHeight: 0, scale: scale, hasDescription: false, hasGenres: false);
+    final metrics = TvDetailHeaderMetrics(
+      availableHeight: 0,
+      scale: scale,
+      hasDescription: false,
+      hasGenres: false,
+      flatFacts: flat,
+    );
     return Column(
       mainAxisSize: .min,
       crossAxisAlignment: .start,
@@ -4551,7 +4601,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
         SizedBox(
           key: const ValueKey('tv_detail_quality_row'),
           height: metrics.metadataLineHeight,
-          child: Align(alignment: .centerLeft, child: line(_tvDetailMetadataParts(context, metadata, quality: true))),
+          child: Align(
+            alignment: .centerLeft,
+            child: line(_tvDetailMetadataParts(context, metadata, quality: true), secondary: true),
+          ),
         ),
       ],
     );
@@ -4682,6 +4735,25 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           size: 0,
         ),
       );
+    } else if (metadata.isShow && !_showEpisodesDirectly && _seasons.isNotEmpty && ockerFlat(context)) {
+      // "Flach" (Plebz): the one row of the chosen season's episodes, under a
+      // row of season tabs of its own (see [_buildTvDetailSeasonTabs]) — not a
+      // row per season. A show of many seasons is then two rows to pass, not
+      // one per season, going down and coming back up (the viewer's call).
+      // The page still opens on the season and the episode to go on with:
+      // [_selectedSeasonIndex] is that season from the start.
+      final season = _seasons[_selectedSeasonIndex.clamp(0, _seasons.length - 1)];
+      final state = _seasonEpisodePager.stateFor(season.id);
+      final total = state.totalCount > _episodes.length ? state.totalCount : (season.leafCount ?? _episodes.length);
+      hubs.add(
+        MediaHub(
+          id: '$_tvDetailSeasonHubIdPrefix$_selectedSeasonIndex',
+          title: _tvDetailSeasonLabel(season),
+          type: 'episode',
+          items: _episodes,
+          size: total,
+        ),
+      );
     } else if (metadata.isShow && !_showEpisodesDirectly && _seasons.isNotEmpty) {
       // Emit a hub for every season so TV users can choose a season before its
       // episodes are fetched. Extra pages load in-place when focus reaches the
@@ -4694,7 +4766,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
         hubs.add(
           MediaHub(
             id: '$_tvDetailSeasonHubIdPrefix$i',
-            title: season.title?.isNotEmpty == true ? season.title! : (season.displaySubtitle ?? season.displayTitle),
+            title: _tvDetailSeasonLabel(season),
             type: 'episode',
             items: episodes,
             size: total,
@@ -4760,6 +4832,102 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     hubs.addAll(_relatedHubs.where((hub) => hub.items.isNotEmpty));
     return hubs;
   }
+
+  /// "Flach" with the rows raised (Plebz): the title at the start page's size
+  /// — a line of its title, as the spotlight sets it — so the summary keeps
+  /// its lines; with the title area to itself it stays large.
+  double? _tvDetailRaisedTitleCap(BuildContext context, {required bool heroLayout}) {
+    if (heroLayout || !ockerFlat(context)) return null;
+    return (OckerType.of(context).spotlightTitle().fontSize ?? 30) * 1.2;
+  }
+
+  /// "Flach" on a television (Plebz): whether the seasons stand as a row of
+  /// tabs over the one row of episodes — a show of two seasons or more.
+  bool _tvDetailUsesSeasonTabs(MediaItem metadata) =>
+      ockerFlat(context) && metadata.isShow && !_showEpisodesDirectly && !_seasonsLoadFailed && _seasons.length > 1;
+
+  /// How tall the tab row stands over the rows, in the detail page's scale:
+  /// the bar at its foot, and the room above it that parts it from the
+  /// buttons. More above than below, so the tabs read with the episodes they
+  /// choose rather than with the buttons (the viewer's call).
+  static const double _tvDetailSeasonTabsHeight = 62;
+
+  /// The tab of the season on show.
+  void _focusTvDetailSeasonTab() {
+    _updateSeasonTabFocusNodes(_seasons.length);
+    if (_seasons.isEmpty) return _focusTvDetailActionRow();
+    final index = _selectedSeasonIndex.clamp(0, _seasons.length - 1);
+    _tvDetailActionRowHasFocus = false;
+    _clearTvDetailFocusedEpisode();
+    _seasonTabFocusNodes[index].requestFocus();
+  }
+
+  /// [rail] under the season tabs where [show] says so — a row of its own
+  /// just above the rows, low and plain, so the tabs and the episodes are on
+  /// screen together. The rows used to give every row the same height, and a
+  /// row of tabs among them stood as tall as a row of episodes (the viewer's
+  /// call).
+  ///
+  /// UP from a tab is the buttons, DOWN the episodes; LEFT and RIGHT choose
+  /// the season next door, and the row under them follows at once.
+  Widget _withTvDetailSeasonTabs({
+    required bool show,
+    required double scale,
+    required double left,
+    required Widget rail,
+  }) {
+    if (!show) return rail;
+    _updateSeasonTabFocusNodes(_seasons.length);
+    void choose(int index) {
+      if (index < 0 || index >= _seasons.length) return;
+      _selectTvDetailSeason(index);
+      _seasonTabFocusNodes[index].requestFocus();
+      _scrollSeasonTabIntoView(index);
+    }
+
+    return Column(
+      mainAxisSize: .min,
+      crossAxisAlignment: .start,
+      children: [
+        SizedBox(
+          key: const ValueKey('tv_detail_season_tabs'),
+          height: _tvDetailSeasonTabsHeight * scale,
+          child: Padding(
+            // The bar's own edge, not its first word, in line with the buttons
+            // above it and the rows under it.
+            padding: EdgeInsets.only(
+              left: left + TabChipStrip.overhangOf(context).left,
+              right: TvBrowseRailLayout.horizontalInsetForScale(scale),
+            ),
+            child: Align(
+              alignment: .bottomLeft,
+              child: TabChipStrip(
+                children: [
+                  for (var i = 0; i < _seasons.length; i++)
+                    FocusableTabChip(
+                      label: _tvDetailSeasonLabel(_seasons[i]),
+                      isSelected: i == _selectedSeasonIndex,
+                      focusNode: _seasonTabFocusNodes[i],
+                      onSelect: () => choose(i),
+                      onNavigateLeft: i > 0 ? () => choose(i - 1) : null,
+                      onNavigateRight: i < _seasons.length - 1 ? () => choose(i + 1) : null,
+                      onNavigateDown: () => _tvDetailRailKey.currentState?.requestFocus(),
+                      onNavigateUp: _focusTvDetailActionRow,
+                      onBack: _popMediaDetailIfBackNotSuppressed,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        rail,
+      ],
+    );
+  }
+
+  /// A season's name in a row's heading or on its tab.
+  String _tvDetailSeasonLabel(MediaItem season) =>
+      season.title?.isNotEmpty == true ? season.title! : (season.displaySubtitle ?? season.displayTitle);
 
   String? _tvDetailInitialHubId(MediaItem metadata) {
     if (metadata.isShow && !_showEpisodesDirectly && _seasons.isNotEmpty) {
@@ -4856,6 +5024,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       _clearTvDetailFocusedEpisode();
       return;
     }
+
     if (!_isTvDetailEpisodeHub(hub) || !item.isEpisode) {
       _clearTvDetailFocusedEpisode();
       return;
@@ -4884,7 +5053,14 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     if (hub.items.isEmpty) _clearTvDetailFocusedEpisode();
     if (!hub.id.startsWith(_tvDetailSeasonHubIdPrefix)) return;
     final seasonIndex = int.tryParse(hub.id.substring(_tvDetailSeasonHubIdPrefix.length));
-    if (seasonIndex == null || seasonIndex < 0 || seasonIndex >= _seasons.length) return;
+    if (seasonIndex == null) return;
+    _selectTvDetailSeason(seasonIndex);
+  }
+
+  /// Makes [seasonIndex] the season whose episodes the page shows, from the
+  /// pager where it has them and fetched where not.
+  void _selectTvDetailSeason(int seasonIndex) {
+    if (seasonIndex < 0 || seasonIndex >= _seasons.length) return;
     final season = _seasons[seasonIndex];
     final state = _seasonEpisodePager.stateFor(season.id);
     final hasLoadedState =

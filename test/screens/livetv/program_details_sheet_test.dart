@@ -22,11 +22,16 @@ void main() {
 
   final begins = DateTime(2026, 8, 29, 20, 15);
 
+  // One moment for every programme still to come: two read a second apart
+  // are two different programmes, and a reminder set on the one in the sheet
+  // was then not found on the one the test asked about.
+  final aheadStart = DateTime.now().add(const Duration(hours: 2));
+
   LiveTvProgram program({bool airing = false, bool ahead = false}) {
     final start = airing
         ? DateTime.now().subtract(const Duration(minutes: 20))
         : ahead
-        ? DateTime.now().add(const Duration(hours: 2))
+        ? aheadStart
         : begins;
     return LiveTvProgram(
       title: 'Tatort',

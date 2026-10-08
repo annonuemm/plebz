@@ -391,7 +391,7 @@ class OckerFacts extends StatelessWidget {
       parts.add(MetadataLineText(t.discover.tvShow, dropPriority: 3));
     }
     if (item.contentRating case final rating?) {
-      parts.add(MetadataLineText(formatContentRating(rating), dropPriority: 2));
+      parts.add(MetadataLineText(formatContentRating(rating), dropPriority: 2, badge: true));
     }
     if (item.hasRuntime) parts.add(MetadataLineText(formatDurationTextual(item.durationMs!), dropPriority: 1));
     if (item.editionTitle case final edition? when edition.trim().isNotEmpty) {
@@ -404,7 +404,7 @@ class OckerFacts extends StatelessWidget {
     // out of room.
     if (!item.isEpisode) {
       for (final genre in (item.genres ?? const <String>[]).take(2)) {
-        if (genre.trim().isNotEmpty) parts.add(MetadataLineText(genre.trim(), dropPriority: 5));
+        if (genre.trim().isNotEmpty) parts.add(MetadataLineText(genre.trim(), dropPriority: 5, quiet: true));
       }
     }
 

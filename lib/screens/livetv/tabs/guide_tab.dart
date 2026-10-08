@@ -1515,7 +1515,7 @@ class GuideTabState extends State<GuideTab>
       children: [
         // Hidden, the strip also gives up its focus row: the guide then opens
         // on now and is travelled with the D-pad alone.
-        if (_showsTimeNavigation) _buildTimeNavigation(theme),
+        if (_showsTimeNavigation && !_timePillInRuler) _buildTimeNavigation(theme),
         Expanded(
           child: ListenableBuilder(
             listenable: _gridHorizontalController,
@@ -1526,7 +1526,16 @@ class GuideTabState extends State<GuideTab>
               children: [
                 Row(
                   children: [
-                    SizedBox(width: _channelColumnWidth, height: _timeHeaderHeight),
+                    SizedBox(
+                      width: _channelColumnWidth,
+                      height: _timeHeaderHeight,
+                      child: _timePillInRuler
+                          ? _buildFlatTimePill(
+                              _dayLabel(_gridStart),
+                              formatClockTime(_gridStart, is24Hour: MediaQuery.alwaysUse24HourFormatOf(context)),
+                            )
+                          : null,
+                    ),
                     Expanded(
                       child: SingleChildScrollView(
                         controller: _headerHorizontalController,
@@ -1665,15 +1674,38 @@ class GuideTabState extends State<GuideTab>
         child: Column(
           mainAxisSize: .min,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              color: tk.accent,
-              child: Text(
-                formatClockTime(now, is24Hour: MediaQuery.alwaysUse24HourFormatOf(context)),
-                style: type.nowChip.copyWith(color: tk.bg),
-                maxLines: 1,
+            // "Flach": level with the ruler's times rather than above them —
+            // the pill is as tall as its figures and its padding.
+            if (ockerFlat(context))
+              SizedBox(height: ((_timeHeaderHeight - 26 * ockerScale(context)) / 2).clamp(0.0, double.infinity)),
+            if (ockerFlat(context))
+              // "Flach": a pill of the accent, its figures in whichever of white
+              // or the ground reads on it — a picked yellow takes the dark.
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10 * ockerScale(context), vertical: 6 * ockerScale(context)),
+                decoration: ShapeDecoration(color: tk.accent, shape: const StadiumBorder()),
+                child: Text(
+                  formatClockTime(now, is24Hour: MediaQuery.alwaysUse24HourFormatOf(context)),
+                  style: type.nowChip.copyWith(
+                    fontFamily: type.metadata.fontFamily,
+                    fontSize: 14 * ockerScale(context),
+                    fontWeight: .w700,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: ThemeData.estimateBrightnessForColor(tk.accent) == Brightness.dark ? Colors.white : tk.bg,
+                  ),
+                  maxLines: 1,
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                color: tk.accent,
+                child: Text(
+                  formatClockTime(now, is24Hour: MediaQuery.alwaysUse24HourFormatOf(context)),
+                  style: type.nowChip.copyWith(color: tk.bg),
+                  maxLines: 1,
+                ),
               ),
-            ),
             Expanded(child: Container(width: 2, color: tk.accent)),
           ],
         ),
@@ -2145,6 +2177,7 @@ class GuideTabState extends State<GuideTab>
         // washes of ink rather than fills, and focus a pane of bright glass
         // behind the block instead of a ring round it.
         final glass = ockerGlass(context);
+        final flat = ockerFlat(context);
         final Color fillColor;
         final Color titleColor;
         final Color subtitleColor;
@@ -2152,6 +2185,14 @@ class GuideTabState extends State<GuideTab>
           fillColor = Colors.transparent;
           titleColor = tk.ink(1);
           subtitleColor = tk.ink(0.72);
+        } else if (flat) {
+          // "Flach", from the design: three steps of ink — what is gone
+          // faintest, what is on brightest — and the gone ones' words dimmed
+          // with them. Focus is the white fill behind, as everywhere.
+          final gone = isPast && !isArchived;
+          fillColor = tk.ink(gone ? 0.025 : (isCurrentlyAiring ? 0.09 : 0.055));
+          titleColor = gone ? tk.ink(0.4) : tk.ink(1);
+          subtitleColor = gone ? tk.ink(0.3) : tk.ink(0.5);
         } else if (glass) {
           fillColor = tk.ink(isPast && !isArchived ? 0.03 : (isCurrentlyAiring ? 0.11 : 0.06));
           titleColor = isPast && !isArchived ? tk.text.withValues(alpha: 0.5) : tk.text;
@@ -2187,10 +2228,14 @@ class GuideTabState extends State<GuideTab>
         // `radiusSm` on focus, which was invisible while both were zero and is
         // a different-looking block now that neither is: focus changes what is
         // drawn *on* a thing in this design, never the shape of the thing.
-        final radius = BorderRadius.circular(tk.radiusXs);
+        // "Flach" rounds them further and sets them apart a little more,
+        // between the rows most: the design's 12, 6 and 8.
+        final radius = BorderRadius.circular(flat ? 12 * ockerScale(context) : tk.radiusXs);
 
         final block = Padding(
-          padding: EdgeInsets.only(right: tk.groupGap, bottom: tk.groupGap),
+          padding: flat
+              ? EdgeInsets.only(right: 6 * ockerScale(context), bottom: 8 * ockerScale(context))
+              : EdgeInsets.only(right: tk.groupGap, bottom: tk.groupGap),
           child: OckerGlassFocusBehind.wrap(
             glass && isFocused,
             RoundedRectangleBorder(borderRadius: radius),
@@ -2418,7 +2463,21 @@ class _ChannelCellState extends State<_ChannelCell> {
     // The white plate focus draws elsewhere is dark glass here, and a logo
     // is toned against what is actually behind it.
     final plateFocused = widget.isFocused && !glass;
-    final radius = BorderRadius.circular(widget.isFocused ? tk.radiusSm : tk.radiusXs);
+    // "Flach" (Plebz): the programme blocks' own corner and gaps, so a logo
+    // stands level with its row — the blocks took the design's rounder corner
+    // and their room below, and the logos beside them looked out of step (the
+    // viewer's call).
+    final flat = ockerFlat(context);
+    final scale = ockerScale(context);
+    final gapRight = flat ? 6 * scale : tk.groupGap;
+    final gapBelow = flat ? 8 * scale : tk.groupGap;
+    final radius = BorderRadius.circular(
+      flat
+          ? 12 * scale
+          : widget.isFocused
+          ? tk.radiusSm
+          : tk.radiusXs,
+    );
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -2429,7 +2488,7 @@ class _ChannelCellState extends State<_ChannelCell> {
         child: SizedBox(
           height: widget.rowHeight,
           child: Padding(
-            padding: EdgeInsets.only(right: tk.groupGap, bottom: tk.groupGap),
+            padding: EdgeInsets.only(right: gapRight, bottom: gapBelow),
             child: OckerGlassFocusBehind.wrap(
               glass && widget.isFocused,
               RoundedRectangleBorder(borderRadius: radius),
@@ -2462,8 +2521,8 @@ class _ChannelCellState extends State<_ChannelCell> {
                         LiveTvChannelLogo(
                           channel: widget.channel,
                           client: widget.client,
-                          width: widget.channelColumnWidth - 16,
-                          height: widget.rowHeight - 16,
+                          width: widget.channelColumnWidth - gapRight - 16,
+                          height: widget.rowHeight - gapBelow - 12,
                           logoToneTarget: channelLogoToneTargetFor(
                             surface: plateFocused ? theme.colorScheme.primary : tk.surface,
                             foreground: plateFocused ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,

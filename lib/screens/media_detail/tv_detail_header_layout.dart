@@ -73,6 +73,19 @@ class TvDetailHeaderMetrics {
   /// go on a line of their own below year, age and length.
   final bool hasQualityLine;
 
+  /// "Flach": the facts are plain words, not boxes, so their rows need no room
+  /// for an outline and stand close — to each other and to the title — with
+  /// the summary set further off. At one spacing throughout the two rows and
+  /// the summary read as three separate things (the user's call).
+  final bool flatFacts;
+
+  /// The most the title may take, where a page sets it smaller than the logo
+  /// slot allows: "Flach" with the rows raised sets it at the start page's
+  /// size, and what that leaves goes to the summary (the viewer's call — the
+  /// big title had left no line of description). Also the least it needs, so
+  /// the summary is not given up for room a title this size does not want.
+  final double? titleCap;
+
   const TvDetailHeaderMetrics({
     required this.availableHeight,
     required this.scale,
@@ -82,6 +95,8 @@ class TvDetailHeaderMetrics {
     this.heroLayout = false,
     this.descriptionLines,
     this.hasQualityLine = false,
+    this.flatFacts = false,
+    this.titleCap,
   });
 
   /// Lines the summary may grow to.
@@ -131,10 +146,10 @@ class TvDetailHeaderMetrics {
   /// than Roboto. The spare few points cost the summary nothing measurable and
   /// cover both. Any more and the slack shows as air around the boxes, because
   /// the row is centred in whatever this reserves.
-  double get metadataLineHeight => 33 * scale;
+  double get metadataLineHeight => (flatFacts ? 22 : 33) * scale;
 
   /// Between the two rows of facts, where there are two.
-  double get metadataRowGap => 6 * scale;
+  double get metadataRowGap => (flatFacts ? 0 : 6) * scale;
 
   /// The facts, one row or two.
   double get metadataBlockHeight => hasQualityLine ? metadataLineHeight * 2 + metadataRowGap : metadataLineHeight;
@@ -151,7 +166,7 @@ class TvDetailHeaderMetrics {
 
   /// Air above the summary. Wider in the hero layout: a six-line block needs
   /// separating from the facts above it, or the two read as one paragraph.
-  double get summaryGap => (heroLayout ? 16.0 : 6.0) * scale;
+  double get summaryGap => (heroLayout ? (flatFacts ? 20.0 : 16.0) : (flatFacts ? 12.0 : 6.0)) * scale;
 
   double get summaryFontSize => availableHeight < 260 * scale ? 16.2 * scale : 18 * scale;
 
@@ -191,8 +206,11 @@ class TvDetailHeaderMetrics {
 /// guarantees over the loop it replaced: the page always names itself, where
 /// before it could end up showing neither logo nor title.
 TvDetailHeaderLayout resolveTvDetailHeaderLayout(TvDetailHeaderMetrics metrics) {
+  final cap = metrics.titleCap;
   TvDetailHeaderLayout titled(int lines, double remaining, TvDetailTitleMode mode) {
-    final height = mode == TvDetailTitleMode.logo
+    final height = cap != null
+        ? remaining.clamp(0.0, cap)
+        : mode == TvDetailTitleMode.logo
         ? remaining.clamp(0.0, metrics.desiredLogoHeight)
         : remaining.clamp(0.0, metrics.maxTitleFontSize * 1.2);
     return TvDetailHeaderLayout(
@@ -207,9 +225,10 @@ TvDetailHeaderLayout resolveTvDetailHeaderLayout(TvDetailHeaderMetrics metrics) 
 
   final firstLines = metrics.hasDescription ? metrics.maxSummaryLines : 0;
 
+  final leastTitle = cap == null || cap > metrics.minLogoHeight ? metrics.minLogoHeight : cap;
   for (var lines = firstLines; lines >= 0; lines--) {
     final remaining = metrics.availableHeight - metrics.fixedHeightFor(lines);
-    if (remaining < metrics.minLogoHeight && lines > 0) continue;
+    if (remaining < leastTitle && lines > 0) continue;
     final mode = remaining >= metrics.minTitleHeight ? TvDetailTitleMode.logo : TvDetailTitleMode.text;
     return titled(lines, remaining < 0 ? 0 : remaining, mode);
   }

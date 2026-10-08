@@ -417,7 +417,7 @@ class AppMenuSheet<T> extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            title!.toUpperCase(),
+            OckerType.of(context).headingCase(title!),
             style: OckerType.of(context).sectionHeading.copyWith(color: tk.ink(0.45)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1017,7 +1017,8 @@ class _GlassRowMarks extends StatelessWidget {
             ),
           ),
         ),
-        child,
+        // Flat focus is a white fill: the row's words turn dark on it.
+        OckerFlatFocusInk(invert: focused, child: child),
       ],
     );
   }

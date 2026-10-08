@@ -13,6 +13,13 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.11.0 (Build 692)
+
+- Neues Design „Redesign – Flach“: aufgebaut wie Glas, aber flach und ruhig, ohne Glasflächen und Schatten. Was den Fokus hat, wird weiß mit dunkler Schrift, und die Akzentfarbe wählst du frei. Zu finden unter Einstellungen → Darstellung → Design.
+- In Flach haben Serien Staffel-Reiter direkt über den Folgen, dein Profil sitzt unten in der Navigation, und das Live-TV-Programm ist neu gestaltet.
+- Neue Hintergründe für Glas und Flach: Neben OLED gibt es jetzt Off-Black und eine eigene Farbe zum Aussuchen. Zu finden unter Einstellungen → Darstellung → Hintergrund.
+- Laufzeiten stehen jetzt mit Leerzeichen da, zum Beispiel „1 Std 20 Min“.
+
 ## 1.10.3 (Build 671)
 
 - Live-TV: Beim Umschalten erscheint kein Ladekreis mehr. Das letzte Bild bleibt ruhig stehen, bis der neue Sender da ist.

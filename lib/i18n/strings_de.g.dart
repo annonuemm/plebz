@@ -583,9 +583,17 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get showPlaybackTracksStatusDescription => 'Zeigt in der Ecke, welche Tonspur und welche Untertitel beim Abspielen genommen würden. Aus verschwindet die Zeile; an der Wiedergabe ändert sich nichts.';
 	@override String get appThemeVariantGlas => 'Redesign – Glas';
 	@override String get appThemeVariantGlasDescription => 'Das Redesign: Menüs, Infos, „Als nächstes“ und die Player-Leiste schweben als Glas über dem Bild – durchscheinend, mit Glanz und einer Lichtkante, und hinter der Schrift eine festere Fläche, damit sie auch über hellen Postern lesbar bleibt. Auf dem Fernseher ordnet es auch die Seiten neu, auf Handy, Tablet und Mac bleibt der vertraute Aufbau. Die Akzentfarbe wählst du selbst.';
+	@override String get appThemeVariantFlach => 'Redesign – Flach';
+	@override String get appThemeVariantFlachDescription => 'Aufgebaut wie Glas, aber flach und ruhig: keine Glasflächen, kein Glanz, keine Schatten. Was den Fokus hat, wird zur weißen Fläche mit dunkler Schrift, Poster bekommen einen weißen Rahmen. Auf dem Fernseher ordnet es die Seiten neu wie Glas. Die Akzentfarbe wählst du frei.';
+	@override String get flachAccent => 'Akzentfarbe';
+	@override String get flachAccentDescription => 'Jede Farbe, die du willst – für Fortschritt, die gewählte Seite und den gewählten Filter.';
 	@override String get glasGround => 'Hintergrund';
 	@override String get glasGroundAccent => 'Hintergrund des Designs';
-	@override String get glasGroundAccentDescription => 'Der weiche Verlauf im Ton der Akzentfarbe.';
+	@override String get glasGroundAccentDescription => 'Der dunkle Grund des Designs mit einem dezenten Schein der Akzentfarbe.';
+	@override String get glasGroundOffBlack => 'Off-Black';
+	@override String get glasGroundOffBlackDescription => 'Sehr dunkles Grau (#121212) – ruhiger als reines Schwarz.';
+	@override String get glasGroundCustom => 'Eigene Farbe';
+	@override String get glasGroundCustomDescription => 'Jede Farbe, die du willst. Zu helle Farben werden abgedunkelt, damit die Schrift lesbar bleibt.';
 	@override String get glasGroundOled => 'OLED';
 	@override String get glasGroundOledDescription => 'Komplett schwarz – für OLED-Bildschirme.';
 	@override String get glasAccent => 'Akzentfarbe';
@@ -1718,6 +1726,7 @@ class _Translations$liveTv$de extends Translations$liveTv$en {
 	@override String get channelsSection => 'Kanäle';
 	@override String get programsSection => 'Sendungen';
 	@override String get now => 'Jetzt';
+	@override String fromTime({required Object time}) => 'ab ${time}';
 	@override String get today => 'Heute';
 	@override String get tomorrow => 'Morgen';
 	@override String get midnight => 'Mitternacht';
@@ -4198,9 +4207,17 @@ extension on TranslationsDe {
 			'settings.showPlaybackTracksStatusDescription' => 'Zeigt in der Ecke, welche Tonspur und welche Untertitel beim Abspielen genommen würden. Aus verschwindet die Zeile; an der Wiedergabe ändert sich nichts.',
 			'settings.appThemeVariantGlas' => 'Redesign – Glas',
 			'settings.appThemeVariantGlasDescription' => 'Das Redesign: Menüs, Infos, „Als nächstes“ und die Player-Leiste schweben als Glas über dem Bild – durchscheinend, mit Glanz und einer Lichtkante, und hinter der Schrift eine festere Fläche, damit sie auch über hellen Postern lesbar bleibt. Auf dem Fernseher ordnet es auch die Seiten neu, auf Handy, Tablet und Mac bleibt der vertraute Aufbau. Die Akzentfarbe wählst du selbst.',
+			'settings.appThemeVariantFlach' => 'Redesign – Flach',
+			'settings.appThemeVariantFlachDescription' => 'Aufgebaut wie Glas, aber flach und ruhig: keine Glasflächen, kein Glanz, keine Schatten. Was den Fokus hat, wird zur weißen Fläche mit dunkler Schrift, Poster bekommen einen weißen Rahmen. Auf dem Fernseher ordnet es die Seiten neu wie Glas. Die Akzentfarbe wählst du frei.',
+			'settings.flachAccent' => 'Akzentfarbe',
+			'settings.flachAccentDescription' => 'Jede Farbe, die du willst – für Fortschritt, die gewählte Seite und den gewählten Filter.',
 			'settings.glasGround' => 'Hintergrund',
 			'settings.glasGroundAccent' => 'Hintergrund des Designs',
-			'settings.glasGroundAccentDescription' => 'Der weiche Verlauf im Ton der Akzentfarbe.',
+			'settings.glasGroundAccentDescription' => 'Der dunkle Grund des Designs mit einem dezenten Schein der Akzentfarbe.',
+			'settings.glasGroundOffBlack' => 'Off-Black',
+			'settings.glasGroundOffBlackDescription' => 'Sehr dunkles Grau (#121212) – ruhiger als reines Schwarz.',
+			'settings.glasGroundCustom' => 'Eigene Farbe',
+			'settings.glasGroundCustomDescription' => 'Jede Farbe, die du willst. Zu helle Farben werden abgedunkelt, damit die Schrift lesbar bleibt.',
 			'settings.glasGroundOled' => 'OLED',
 			'settings.glasGroundOledDescription' => 'Komplett schwarz – für OLED-Bildschirme.',
 			'settings.glasAccent' => 'Akzentfarbe',
@@ -4250,6 +4267,8 @@ extension on TranslationsDe {
 			'settings.hardwareTestSections.device' => 'Gerät',
 			'settings.hardwareTestSections.display' => 'Bildschirm',
 			'settings.hardwareTestSections.colour' => 'Farbe & HDR',
+			_ => null,
+		} ?? switch (path) {
 			'settings.hardwareTestSections.audio' => 'Ton',
 			'settings.hardwareTestSections.video' => 'Video-Decoder',
 			'settings.hardwareTestLabels.model' => 'Modell',
@@ -4258,8 +4277,6 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.televisionMode' => 'Fernsehmodus',
 			'settings.hardwareTestLabels.currentMode' => 'Aktueller Modus',
 			'settings.hardwareTestLabels.modeSwitching' => 'Moduswechsel',
-			_ => null,
-		} ?? switch (path) {
 			'settings.hardwareTestLabels.displayMode' => 'Modus',
 			'settings.hardwareTestLabels.displayModes' => 'Bildschirmmodi',
 			'settings.hardwareTestLabels.hdrFormats' => 'HDR-Formate',
@@ -4764,6 +4781,8 @@ extension on TranslationsDe {
 			'mpvConfig.presetLoaded' => 'Voreinstellung geladen',
 			'mpvConfig.presetDeleted' => 'Voreinstellung gelöscht',
 			'mpvConfig.confirmDeletePreset' => 'Diese Voreinstellung wirklich löschen?',
+			_ => null,
+		} ?? switch (path) {
 			'mpvConfig.configPlaceholder' => 'gpu-api=vulkan\nhwdec=auto\n# comment',
 			'mpvConfig.lineHint' => 'option=value',
 			'mpvConfig.addLine' => 'Zeile hinzufügen',
@@ -4772,8 +4791,6 @@ extension on TranslationsDe {
 			'dialog.confirmAction' => 'Aktion bestätigen',
 			'profiles.addPlezyProfile' => 'Plebz-Profil hinzufügen',
 			'profiles.switchingProfile' => 'Profil wird gewechselt…',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.deleteThisProfileTitle' => 'Dieses Profil löschen?',
 			'profiles.deleteThisProfileMessage' => ({required Object displayName}) => '${displayName} entfernen. Verbindungen bleiben unberührt.',
 			'profiles.active' => 'Aktiv',
@@ -5278,6 +5295,8 @@ extension on TranslationsDe {
 			'liveTv.unknownHub' => 'Unbekannt',
 			'liveTv.unknownError' => 'Unbekannter Fehler',
 			'liveTv.channelNumber' => ({required Object number}) => 'Kanal ${number}',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.unknownChannel' => 'Unbekannter Kanal',
 			'liveTv.live' => 'LIVE',
 			'liveTv.reloadGuide' => 'TV-Programm neu laden',
@@ -5286,9 +5305,8 @@ extension on TranslationsDe {
 			'liveTv.searchNoResults' => ({required Object query}) => 'Keine Treffer für „${query}“',
 			'liveTv.channelsSection' => 'Kanäle',
 			'liveTv.programsSection' => 'Sendungen',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.now' => 'Jetzt',
+			'liveTv.fromTime' => ({required Object time}) => 'ab ${time}',
 			'liveTv.today' => 'Heute',
 			'liveTv.tomorrow' => 'Morgen',
 			'liveTv.midnight' => 'Mitternacht',
@@ -5791,6 +5809,8 @@ extension on TranslationsDe {
 			'performanceOverlay.app' => 'App',
 			'performanceOverlay.decoder' => 'Decoder',
 			'performanceOverlay.rawDecoder' => 'Raw-Decoder',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.tunneling' => 'Tunneling',
 			'performanceOverlay.passthrough' => 'Durchleitung',
 			'performanceOverlay.aspect' => 'Seitenverhältnis',
@@ -5800,8 +5820,6 @@ extension on TranslationsDe {
 			'performanceOverlay.p7Conversion' => 'P7-Konv.',
 			'performanceOverlay.sampleRate' => 'Abtastrate',
 			'performanceOverlay.pixelFormat' => 'Pixelformat',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.hwFormat' => 'HW-Format',
 			'performanceOverlay.matrix' => 'Matrix',
 			'performanceOverlay.primaries' => 'Primärfarben',
@@ -6305,6 +6323,8 @@ extension on TranslationsDe {
 			'plebz.noMatchingDownload' => 'Dieses Release hat keine Datei für dieses Gerät.',
 			'plebz.whatsNew' => 'Was ist neu',
 			'plebz.whatsNewDescription' => 'Was sich mit jeder Version geändert hat',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.whatsNewEmpty' => 'Zu dieser Version gibt es noch keine Notizen.',
 			'localFiles.wrongTypeTitle' => 'Falscher Dateityp',
 			'localFiles.wrongTypeMessage' => ({required Object types}) => 'Gewählt werden kann eine Datei vom Typ ${types}.',
@@ -6314,8 +6334,6 @@ extension on TranslationsDe {
 			'localFiles.accessUnavailable' => 'Diese Box bietet keine Einstellung für den Dateizugriff an. Er lässt sich nur über einen PC freischalten:\nadb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow',
 			'localFiles.accessDenied' => 'Ohne den Zugriff auf alle Dateien kann Plebz hier keine Ordner durchsuchen.',
 			'localFiles.volumes' => 'Speicherorte',
-			_ => null,
-		} ?? switch (path) {
 			'localFiles.up' => 'Eine Ebene höher',
 			'localFiles.noVolumes' => 'Kein Speicher gefunden.',
 			'localFiles.unreadable' => 'Dieser Ordner lässt sich nicht lesen.',

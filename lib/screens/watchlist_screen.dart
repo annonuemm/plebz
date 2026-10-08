@@ -245,11 +245,11 @@ class WatchlistScreenState extends State<WatchlistScreen>
   /// tab is. First under the redesign, then in the original look too, at a
   /// viewer's request.
   List<FocusableAction> _filterActions() => [
-    for (final (value, label) in [
+    for (final (index, (value, label)) in [
       (WatchlistTypeFilter.all, t.watchlist.typeAll),
       (WatchlistTypeFilter.movies, t.watchlist.typeMovies),
       (WatchlistTypeFilter.shows, t.watchlist.typeShows),
-    ])
+    ].indexed)
       FocusableAction(
         tooltip: label,
         onPressed: () => _applyFilter(_filter.withType(value)),
@@ -258,6 +258,8 @@ class WatchlistScreenState extends State<WatchlistScreen>
                 label: label,
                 active: _filter.type == value,
                 focused: state.showFocus,
+                first: index == 0,
+                last: index == WatchlistTypeFilter.values.length - 1,
                 onTap: () => _applyFilter(_filter.withType(value)),
               )
             : _PlainTypeWord(
@@ -521,16 +523,29 @@ class _PlainTypeWord extends StatelessWidget {
 /// otherwise; focus is the capsule (or the ring) every word in the redesign
 /// takes.
 class _TypeWord extends StatelessWidget {
-  const _TypeWord({required this.label, required this.active, required this.focused, required this.onTap});
+  const _TypeWord({
+    required this.label,
+    required this.active,
+    required this.focused,
+    required this.onTap,
+    this.first = false,
+    this.last = false,
+  });
 
   final String label;
   final bool active;
   final bool focused;
   final VoidCallback onTap;
 
+  /// Where the word stands among the three — under "Flach" they share one
+  /// track, which rounds off at its ends.
+  final bool first;
+  final bool last;
+
   @override
   Widget build(BuildContext context) {
     final tk = tokens(context);
+    if (tk.flat) return _buildFlat(context, tk);
     final type = OckerType.of(context);
     final scale = ockerScale(context);
     // On a phone held upright the bar's actions have little room: the words
@@ -556,6 +571,66 @@ class _TypeWord extends StatelessWidget {
                 builder: (context, ink) => Text(
                   label,
                   style: style.copyWith(color: ink, fontSize: narrow ? math.min(style.fontSize ?? 14, 14) : null),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+extension on _TypeWord {
+  /// "Flach" (Plebz): a segmented switch — the three words on one faint
+  /// track, the one on show on a lighter segment in a heavier weight, focus
+  /// the white segment every control takes there.
+  Widget _buildFlat(BuildContext context, MonoTokens tk) {
+    final scale = ockerScale(context);
+    final inset = 4 * scale;
+    final end = Radius.circular(999);
+    final segment = focused
+        ? tk.ink(1)
+        : active
+        ? tk.ink(0.16)
+        : Colors.transparent;
+    final ink = focused
+        ? tk.bg
+        : active
+        ? tk.ink(1)
+        : tk.ink(0.55);
+    return Semantics(
+      button: true,
+      selected: active,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          // The room before the next control, past the track's end.
+          padding: EdgeInsets.only(right: last ? 20 * scale : 0),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: tk.ink(0.06),
+              borderRadius: BorderRadius.horizontal(left: first ? end : Radius.zero, right: last ? end : Radius.zero),
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(first ? inset : inset / 2, inset, last ? inset : inset / 2, inset),
+              child: Container(
+                height: 44 * scale,
+                padding: EdgeInsets.symmetric(horizontal: 22 * scale),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: segment, borderRadius: BorderRadius.all(end)),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: OckerType.of(context)
+                      .groupEntry(active: active)
+                      .copyWith(
+                        fontSize: 19 * scale,
+                        color: ink,
+                        fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+                      ),
                 ),
               ),
             ),

@@ -118,6 +118,73 @@ void main() {
       expect(hasFocus(tester, tabs[index - 1].id), isTrue);
     });
 
+    testWidgets('under Flach the profile stands at the foot: its symbol shut, its name open, below every destination', (
+      tester,
+    ) async {
+      tvView(tester);
+      final key = GlobalKey<OckerSideRailState>();
+      Future<void> pump({required bool expanded, AppThemeVariant variant = AppThemeVariant.flach}) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: monoTheme(dark: true, variant: variant),
+            home: Scaffold(
+              body: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  height: 720,
+                  child: OckerSideRail(
+                    key: key,
+                    tabs: tabs,
+                    selectedTab: NavigationTabId.discover,
+                    expanded: expanded,
+                    onDestinationSelected: (_) {},
+                    onNavigateToContent: () {},
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      final word = find.descendant(
+        of: find.byKey(OckerSideRail.profileKey),
+        matching: find.text(t.profiles.sectionTitle),
+      );
+      await pump(expanded: false);
+      expect(find.byKey(OckerSideRail.profileKey), findsOneWidget);
+      expect(word, findsNothing, reason: 'shut, only the symbol');
+
+      await pump(expanded: true);
+      expect(word, findsOneWidget);
+      expect(
+        tester.getTopLeft(find.byKey(OckerSideRail.profileKey)).dy,
+        greaterThan(tester.getBottomLeft(find.byKey(OckerSideRail.itemKey(tabs.last.id))).dy),
+      );
+
+      // DOWN from the last destination reaches it, and UP goes back.
+      key.currentState!.focusTab(tabs.last.id);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      expect(Focus.of(tester.element(word)).hasFocus, isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(hasFocus(tester, tabs.last.id), isTrue);
+
+      // The list keeps between the mark and the profile row: what runs past
+      // either is cut off there, not drawn behind them.
+      final list = tester.widget<SingleChildScrollView>(
+        find.descendant(of: find.byType(OckerSideRail), matching: find.byType(SingleChildScrollView)),
+      );
+      expect(list.clipBehavior, Clip.hardEdge);
+
+      // Glas keeps its profile in the start page's header.
+      await pump(expanded: true, variant: AppThemeVariant.glas);
+      expect(find.byKey(OckerSideRail.profileKey), findsNothing);
+    });
+
     testWidgets('the ends stop rather than wrap', (tester) async {
       final key = GlobalKey<OckerSideRailState>();
       await pumpRail(tester, key: key);

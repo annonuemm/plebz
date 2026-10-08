@@ -311,7 +311,7 @@ class OckerPosterTileState extends State<OckerPosterTile> {
           // [PaintScale].
           child:
               TweenAnimationBuilder<double>(
-                tween: Tween<double>(end: _focused ? FocusTheme.focusScaleFor(context) : 1.0),
+                tween: Tween<double>(end: _focused ? FocusTheme.posterFocusScaleFor(context) : 1.0),
                 duration: tk.fast,
                 curve: Curves.easeOutCubic,
                 builder: (context, value, child) => PaintScale(scale: value, child: child!),

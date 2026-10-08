@@ -239,7 +239,7 @@ class _LibraryQuickPickerSheetState extends State<LibraryQuickPickerSheet> {
         mainAxisSize: .min,
         children: [
           Text(
-            t.libraries.selectLibrary.toUpperCase(),
+            OckerType.of(context).headingCase(t.libraries.selectLibrary),
             style: OckerType.of(context).sectionHeading.copyWith(color: tk.ink(0.45)),
           ),
           SizedBox(height: 14 * scale),

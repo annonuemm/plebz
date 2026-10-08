@@ -42,9 +42,13 @@ void main() {
     });
 
     test('glass is its own: the other variants stay filled', () {
-      for (final variant in AppThemeVariant.values.where((v) => v != AppThemeVariant.glas)) {
+      for (final variant in AppThemeVariant.values.where((v) => !isRedesignVariant(v))) {
         expect(tokensOf(monoTheme(dark: true, variant: variant)).glass, isFalse, reason: variant.name);
       }
+      // "Flach" keeps glass's structure and paints it flat (Plebz).
+      final flat = tokensOf(monoTheme(dark: true, variant: AppThemeVariant.flach));
+      expect((flat.glass, flat.flat), (true, true));
+      expect(tokensOf(monoTheme(dark: true, variant: AppThemeVariant.glas)).flat, isFalse);
     });
 
     test('each accent brings its whole palette', () {
@@ -765,7 +769,11 @@ void main() {
         everyElement(isA<GlassBackdropTransitions>()),
         reason: 'every page travels on the ground',
       );
-      for (final variant in AppThemeVariant.values.where((v) => v != AppThemeVariant.glas)) {
+      // "Flach" travels on the same ground, painted plain (Plebz).
+      final flat = monoTheme(dark: true, variant: AppThemeVariant.flach);
+      expect(flat.scaffoldBackgroundColor.a, 0);
+      expect(flat.pageTransitionsTheme.builders.values, everyElement(isA<GlassBackdropTransitions>()));
+      for (final variant in AppThemeVariant.values.where((v) => !isRedesignVariant(v))) {
         final theme = monoTheme(dark: true, variant: variant);
         expect(theme.scaffoldBackgroundColor, tokensOf(theme).bg, reason: variant.name);
         expect(theme.pageTransitionsTheme.builders.values.whereType<GlassBackdropTransitions>(), isEmpty);

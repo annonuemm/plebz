@@ -1470,14 +1470,38 @@ class Translations$settings$en {
 	/// en: 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones, tablets and the Mac keep their familiar layout. You pick the accent colour.'
 	String get appThemeVariantGlasDescription => 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones, tablets and the Mac keep their familiar layout. You pick the accent colour.';
 
+	/// en: 'Redesign – Flat'
+	String get appThemeVariantFlach => 'Redesign – Flat';
+
+	/// en: 'Laid out like Glass, but flat and calm: no glass panes, no sheen, no shadows. What holds focus turns into a white fill with dark type, posters get a white frame. On a television it rearranges the screens like Glass. You pick the accent colour freely.'
+	String get appThemeVariantFlachDescription => 'Laid out like Glass, but flat and calm: no glass panes, no sheen, no shadows. What holds focus turns into a white fill with dark type, posters get a white frame. On a television it rearranges the screens like Glass. You pick the accent colour freely.';
+
+	/// en: 'Accent colour'
+	String get flachAccent => 'Accent colour';
+
+	/// en: 'Any colour you like — for progress, the page on show and the chosen filter.'
+	String get flachAccentDescription => 'Any colour you like — for progress, the page on show and the chosen filter.';
+
 	/// en: 'Background'
 	String get glasGround => 'Background';
 
 	/// en: 'The design's own'
 	String get glasGroundAccent => 'The design\'s own';
 
-	/// en: 'The soft gradient in the accent colour's hue.'
-	String get glasGroundAccentDescription => 'The soft gradient in the accent colour\'s hue.';
+	/// en: 'The design's dark ground with a faint glow of the accent colour.'
+	String get glasGroundAccentDescription => 'The design\'s dark ground with a faint glow of the accent colour.';
+
+	/// en: 'Off-black'
+	String get glasGroundOffBlack => 'Off-black';
+
+	/// en: 'A very dark grey (#121212) – softer than pure black.'
+	String get glasGroundOffBlackDescription => 'A very dark grey (#121212) – softer than pure black.';
+
+	/// en: 'Your own colour'
+	String get glasGroundCustom => 'Your own colour';
+
+	/// en: 'Any colour you like. Colours that are too light are darkened so the text stays readable.'
+	String get glasGroundCustomDescription => 'Any colour you like. Colours that are too light are darkened so the text stays readable.';
 
 	/// en: 'OLED'
 	String get glasGroundOled => 'OLED';
@@ -4279,6 +4303,9 @@ class Translations$liveTv$en {
 
 	/// en: 'Now'
 	String get now => 'Now';
+
+	/// en: 'from ${time}'
+	String fromTime({required Object time}) => 'from ${time}';
 
 	/// en: 'Today'
 	String get today => 'Today';
@@ -9649,9 +9676,17 @@ extension on Translations {
 			'settings.showPlaybackTracksStatusDescription' => 'Names the audio track and subtitles Play would start with, in the corner. Off, the line goes; nothing about playback changes.',
 			'settings.appThemeVariantGlas' => 'Redesign – Glass',
 			'settings.appThemeVariantGlasDescription' => 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones, tablets and the Mac keep their familiar layout. You pick the accent colour.',
+			'settings.appThemeVariantFlach' => 'Redesign – Flat',
+			'settings.appThemeVariantFlachDescription' => 'Laid out like Glass, but flat and calm: no glass panes, no sheen, no shadows. What holds focus turns into a white fill with dark type, posters get a white frame. On a television it rearranges the screens like Glass. You pick the accent colour freely.',
+			'settings.flachAccent' => 'Accent colour',
+			'settings.flachAccentDescription' => 'Any colour you like — for progress, the page on show and the chosen filter.',
 			'settings.glasGround' => 'Background',
 			'settings.glasGroundAccent' => 'The design\'s own',
-			'settings.glasGroundAccentDescription' => 'The soft gradient in the accent colour\'s hue.',
+			'settings.glasGroundAccentDescription' => 'The design\'s dark ground with a faint glow of the accent colour.',
+			'settings.glasGroundOffBlack' => 'Off-black',
+			'settings.glasGroundOffBlackDescription' => 'A very dark grey (#121212) – softer than pure black.',
+			'settings.glasGroundCustom' => 'Your own colour',
+			'settings.glasGroundCustomDescription' => 'Any colour you like. Colours that are too light are darkened so the text stays readable.',
 			'settings.glasGroundOled' => 'OLED',
 			'settings.glasGroundOledDescription' => 'Completely black — for OLED screens.',
 			'settings.glasAccent' => 'Accent colour',
@@ -9692,6 +9727,8 @@ extension on Translations {
 			'settings.showServerActivitiesAction' => 'Show server activity',
 			'settings.showServerActivitiesActionDescription' => 'Keep the server activity button in the Home toolbar',
 			'settings.hideHomeActionsUntilFocus' => 'Hide the home toolbar until focused',
+			_ => null,
+		} ?? switch (path) {
 			'settings.hideHomeActionsUntilFocusDescription' => 'Refresh, profile and the rest stay invisible while you are in the content, and appear when the remote goes up to them. Touch is unaffected.',
 			'settings.showDownloadAction' => 'Download button',
 			'settings.showDownloadActionDescription' => 'Show the download button on movie and episode pages. Downloads stay available from the ⋮ menu.',
@@ -9700,8 +9737,6 @@ extension on Translations {
 			'settings.hardwareTestUnavailable' => 'Not available on this platform',
 			'settings.hardwareTestSections.device' => 'Device',
 			'settings.hardwareTestSections.display' => 'Display',
-			_ => null,
-		} ?? switch (path) {
 			'settings.hardwareTestSections.colour' => 'Colour & HDR',
 			'settings.hardwareTestSections.audio' => 'Audio',
 			'settings.hardwareTestSections.video' => 'Video decoders',
@@ -10206,6 +10241,8 @@ extension on Translations {
 			'mpvConfig.title' => 'mpv.conf',
 			'mpvConfig.description' => 'Advanced video player settings',
 			'mpvConfig.presets' => 'Presets',
+			_ => null,
+		} ?? switch (path) {
 			'mpvConfig.noPresets' => 'No saved presets',
 			'mpvConfig.saveAsPreset' => 'Save as Preset...',
 			'mpvConfig.presetName' => 'Preset Name',
@@ -10214,8 +10251,6 @@ extension on Translations {
 			'mpvConfig.deletePreset' => 'Delete',
 			'mpvConfig.presetSaved' => 'Preset saved',
 			'mpvConfig.presetLoaded' => 'Preset loaded',
-			_ => null,
-		} ?? switch (path) {
 			'mpvConfig.presetDeleted' => 'Preset deleted',
 			'mpvConfig.confirmDeletePreset' => 'Are you sure you want to delete this preset?',
 			'mpvConfig.configPlaceholder' => 'gpu-api=vulkan\nhwdec=auto\n# comment',
@@ -10720,6 +10755,8 @@ extension on Translations {
 			'explore.detail.tags' => 'Tags',
 			'explore.detail.revealSpoilerTags' => 'Show spoiler tags',
 			'explore.detail.links' => 'Links',
+			_ => null,
+		} ?? switch (path) {
 			'explore.detail.watchOn' => 'Watch on',
 			'explore.detail.watchTrailer' => 'Watch trailer',
 			'explore.detail.openOn' => ({required Object site}) => 'Open on ${site}',
@@ -10728,8 +10765,6 @@ extension on Translations {
 			'explore.detail.schedule' => 'Schedule',
 			'explore.detail.recommendedByUsers' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'Recommended by ${n} user', other: 'Recommended by ${n} users', ), 
 			'explore.detail.recommendedBy' => ({required Object who}) => 'Recommended by ${who}',
-			_ => null,
-		} ?? switch (path) {
 			'explore.detail.favoritedBy' => ({required Object who}) => 'Favorited by ${who}',
 			'explore.detail.unairedEpisodes' => ({required Object n}) => '${n} not aired yet',
 			'explore.detail.recommendedByPercent' => ({required Object percent}) => 'Recommended by ${percent} of viewers',
@@ -10771,6 +10806,7 @@ extension on Translations {
 			'liveTv.channelsSection' => 'Channels',
 			'liveTv.programsSection' => 'Programs',
 			'liveTv.now' => 'Now',
+			'liveTv.fromTime' => ({required Object time}) => 'from ${time}',
 			'liveTv.today' => 'Today',
 			'liveTv.tomorrow' => 'Tomorrow',
 			'liveTv.midnight' => 'Midnight',
@@ -11233,6 +11269,8 @@ extension on Translations {
 			'companionRemote.remote.subtitles' => 'Subtitles',
 			'companionRemote.remote.audio' => 'Audio',
 			'companionRemote.remote.searchHint' => 'Search on desktop...',
+			_ => null,
+		} ?? switch (path) {
 			'companionRemote.errors.noNetworkInterface' => 'No network interface found',
 			'companionRemote.errors.authenticationFailed' => 'Authentication failed',
 			'companionRemote.errors.serverStartFailed' => ({required Object error}) => 'Failed to start remote server: ${error}',
@@ -11242,8 +11280,6 @@ extension on Translations {
 			'companionRemote.errors.connectionLostAfterAttempts' => ({required Object attempts}) => 'Connection lost after ${attempts} attempts',
 			'companionRemote.errors.connectionLost' => 'Connection lost',
 			'companionRemote.closedBeforeAuth' => 'The connection closed before authentication',
-			_ => null,
-		} ?? switch (path) {
 			'videoSettings.playbackSpeed' => 'Playback Speed',
 			'videoSettings.normalSpeed' => 'Normal',
 			'videoSettings.sleepTimerActive' => ({required Object duration}) => 'Active (${duration})',
@@ -11747,6 +11783,8 @@ extension on Translations {
 			'plebz.morePlaybackDescription' => 'Player, picture, sound, quality and more',
 			'plebz.allSettings' => 'All settings',
 			'plebz.allSettingsDescription' => 'Every setting, including the advanced ones',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.welcomeTitle' => 'Welcome to Plebz',
 			'plebz.welcomeBody' => 'Set up in a few steps: how it looks, where your films, series and channels come from, and which services join in. Everything can be changed later in the settings.',
 			'plebz.getStarted' => 'Let\'s go',
@@ -11756,8 +11794,6 @@ extension on Translations {
 			'plebz.iptvOnly' => 'IPTV only',
 			'plebz.defaultProfileName' => 'Home',
 			'plebz.extrasTitle' => 'Almost done',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.extrasBody' => 'Add more sources and connect the services you use. Everything here is optional, apart from one source to watch from.',
 			'plebz.sourcesGroup' => 'Sources',
 			'plebz.extrasGroup' => 'Extras',

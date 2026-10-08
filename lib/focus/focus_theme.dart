@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/device_performance.dart';
+import '../redesign/ocker_skin.dart' show ockerScale;
+import '../theme/flat_focus_ring.dart';
 import '../theme/glass_focus_decoration.dart';
 import '../theme/mono_tokens.dart';
 import '../utils/platform_detector.dart';
@@ -17,6 +19,21 @@ class FocusTheme {
   static double focusScaleFor(BuildContext context, [double scale = focusScale]) =>
       Theme.of(context).extension<MonoTokens>()?.focusScaleEnabled == false ? 1.0 : scale;
   static const double fullCardFocusScale = 1.03;
+
+  /// How much a focused poster grows: [focusScale], or under "Redesign –
+  /// Flach" (Plebz) the design's 1.06 — there the movement comes from the
+  /// growth, and the ring around it stays thin.
+  static double posterFocusScaleFor(BuildContext context) {
+    final tk = Theme.of(context).extension<MonoTokens>();
+    return focusScaleFor(context, tk?.flat == true ? flatPosterFocusScale : focusScale);
+  }
+
+  static const double flatPosterFocusScale = 1.06;
+
+  /// "Flach"'s ring around a picture, at the 1920-wide reference
+  /// ([ockerScale]): the band of ground, then the ring.
+  static const double flatRingGap = 4;
+  static const double flatRingWidth = 3;
 
   /// Round 40px player controls: the card scale is imperceptible on a
   /// control that small, so the focused disc grows enough to be seen move.
@@ -68,6 +85,28 @@ class FocusTheme {
     final corner = radii ?? BorderRadius.circular(flatRadius(context, borderRadius));
     final tk = Theme.of(context).extension<MonoTokens>();
     final strokeWidth = tk?.focusBorderWidth ?? focusBorderWidth;
+    // Under "Redesign – Flach" (Plebz) a plain white frame — unless the
+    // caller names a colour of its own. Aligned as the caller asks: a row in
+    // a list draws it inside, where its card does not clip it away.
+    if (tk != null && tk.flat && color == null) {
+      // Around a picture — a ring outside its edge — the design's thin ring
+      // with air between it and the artwork.
+      if (borderStrokeAlign == BorderSide.strokeAlignOutside) {
+        final scale = ockerScale(context);
+        return FlatFocusRingDecoration(
+          ink: tk.ink(1),
+          ground: tk.bg,
+          gap: flatRingGap * scale,
+          ringWidth: flatRingWidth * scale,
+          opacity: isFocused ? 1 : 0,
+          borderRadius: corner,
+        );
+      }
+      return BoxDecoration(
+        borderRadius: corner,
+        border: Border.all(color: isFocused ? tk.ink(1) : Colors.transparent, width: 3, strokeAlign: borderStrokeAlign),
+      );
+    }
     // Under "Redesign – Glas" the ring is the pane's lit edge — unless the
     // caller names a colour of its own, which then means something and is kept.
     if (tk != null && tk.glass && color == null) {

@@ -342,10 +342,14 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
           // The redesign has no light or dark to name: its design, and OLED
           // where its ground is black.
           final mode = themeProvider.themeMode;
-          final look = themeProvider.variant == settings.AppThemeVariant.glas
-              ? (mode == settings.ThemeMode.oled
-                    ? '${t.settings.appThemeVariantGlas} · ${t.settings.glasGroundOled}'
-                    : t.settings.appThemeVariantGlas)
+          final redesignName = switch (themeProvider.variant) {
+            settings.AppThemeVariant.glas => t.settings.appThemeVariantGlas,
+            settings.AppThemeVariant.flach => t.settings.appThemeVariantFlach,
+            settings.AppThemeVariant.standard => null,
+          };
+          final ground = storedRedesignGround(settings.SettingsService.instance);
+          final look = redesignName != null
+              ? (ground == RedesignGround.design ? redesignName : '$redesignName · ${redesignGroundLabel(ground)}')
               : themeModeLabel(mode);
           // The redesign on a television sizes its grids itself (Plebz).
           final summary = isOckerLayout(context) ? look : '$look · ${t.settings.libraryDensity} $libraryDensity';

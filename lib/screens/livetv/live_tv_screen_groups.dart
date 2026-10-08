@@ -517,14 +517,53 @@ extension _LiveTvScreenFork on _LiveTvScreenState {
                   _closeGroupColumn(resumeWhereItWas: true);
                   return KeyEventResult.handled;
                 }
+                // UP or DOWN past the first or last group stays on it
+                // (Plebz): traversal would walk out of the column, which then
+                // shut and opened again elsewhere.
+                final direction = event.logicalKey.isDownKey
+                    ? TraversalDirection.down
+                    : event.logicalKey.isUpKey
+                    ? TraversalDirection.up
+                    : null;
+                if (direction != null) {
+                  final current = FocusManager.instance.primaryFocus;
+                  final nodes = [for (final option in _channelGroupOptions) _groupChipFocusNode(option.key)];
+                  final at = current == null ? -1 : nodes.indexOf(current);
+                  if (at < 0) return KeyEventResult.ignored;
+                  final next = at + (direction == TraversalDirection.down ? 1 : -1);
+                  if (next < 0 || next >= nodes.length) return KeyEventResult.handled;
+                  nodes[next].requestFocus();
+                  if (nodes[next].context case final rowContext?) {
+                    Scrollable.ensureVisible(
+                      rowContext,
+                      alignmentPolicy: next > at
+                          ? ScrollPositionAlignmentPolicy.keepVisibleAtEnd
+                          : ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+                    );
+                  }
+                  return KeyEventResult.handled;
+                }
                 return KeyEventResult.ignored;
               },
               // The redesign's top margin. Outside the scrollable, not as its
               // padding: padding is part of what scrolls, so the rows would
               // travel up into it.
               child: Padding(
-                padding: EdgeInsets.only(top: isOckerLayout(context) ? ockerContentTop(context) : 0),
-                child: glass
+                // Flat (Plebz): the column runs the full height, square; its
+                // rows start where the content does.
+                padding: EdgeInsets.only(
+                  top: isOckerLayout(context) && !ockerFlat(context) ? ockerContentTop(context) : 0,
+                ),
+                child: glass && ockerFlat(context)
+                    ? OckerGlass(
+                        borderRadius: BorderRadius.zero,
+                        scrimInset: 0,
+                        child: Padding(
+                          padding: EdgeInsets.only(top: isOckerLayout(context) ? ockerContentTop(context) : 0),
+                          child: list,
+                        ),
+                      )
+                    : glass
                     // Under glass a panel floating clear of the edges, its
                     // corners concentric with the rows' — their corner and
                     // the room round them — and lit at its edge; nearly

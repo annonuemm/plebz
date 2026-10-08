@@ -1186,6 +1186,148 @@ http://provider/stream/ard
     expect(find.byIcon(Symbols.history_rounded), findsOneWidget);
   });
 
+  testWidgets('under Flach the day and time are a pill at the head of the ruler, not a strip above it', (tester) async {
+    resetSharedPreferencesForTest();
+    SettingsService.resetForTesting();
+    await SettingsService.getInstance();
+    TvDetectionService.debugSetAppleTVOverride(true);
+    GuidePreviewPlayerState.debugSuppressPlayback = true;
+    addTearDown(() => GuidePreviewPlayerState.debugSuppressPlayback = false);
+    final multiServer = testMultiServerProvider(MultiServerManager());
+    addTearDown(multiServer.dispose);
+    tester.view.devicePixelRatio = 2;
+    tester.view.physicalSize = const Size(1920, 1080);
+    addTearDown(() {
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetPhysicalSize();
+    });
+
+    Future<void> pumpGuide(AppThemeVariant variant) async {
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: InputModeTracker(
+            child: MultiProvider(
+              providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
+              child: MaterialApp(
+                theme: monoTheme(dark: true, variant: variant),
+                home: Scaffold(body: GuideTab(channels: [_channel()])),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    await pumpGuide(AppThemeVariant.flach);
+    final pill = find.textContaining(t.liveTv.fromTime(time: ''), findRichText: true);
+    expect(pill, findsOneWidget);
+    expect(find.byIcon(Symbols.keyboard_arrow_down_rounded), findsNothing, reason: 'the strip above is gone');
+
+    // Glas keeps its strip.
+    await pumpGuide(AppThemeVariant.glas);
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.textContaining(t.liveTv.fromTime(time: ''), findRichText: true), findsNothing);
+    expect(find.byIcon(Symbols.keyboard_arrow_down_rounded), findsOneWidget);
+  });
+
+  testWidgets('under Flach a channel\'s cell stands level with its programmes: same top, same foot, same corner', (
+    tester,
+  ) async {
+    resetSharedPreferencesForTest();
+    SettingsService.resetForTesting();
+    await SettingsService.getInstance();
+    TvDetectionService.debugSetAppleTVOverride(true);
+    GuidePreviewPlayerState.debugSuppressPlayback = true;
+    addTearDown(() => GuidePreviewPlayerState.debugSuppressPlayback = false);
+
+    final now = DateTime.now().toUtc();
+    String xmltvTime(DateTime value) =>
+        '${value.year.toString().padLeft(4, '0')}${value.month.toString().padLeft(2, '0')}'
+        '${value.day.toString().padLeft(2, '0')}${value.hour.toString().padLeft(2, '0')}'
+        '${value.minute.toString().padLeft(2, '0')}00 +0000';
+    final guide =
+        '''
+<tv>
+  <programme start="${xmltvTime(now.subtract(const Duration(minutes: 30)))}" stop="${xmltvTime(now.add(const Duration(minutes: 30)))}" channel="das-erste.de">
+    <title>Tagesschau</title>
+  </programme>
+</tv>
+''';
+    const playlist = '''
+#EXTM3U
+#EXTINF:-1 tvg-id="das-erste.de",Das Erste HD
+http://provider/stream/ard
+''';
+    final iptv = IptvSourcesProvider(
+      profileId: 'profile-1',
+      buildSource: (source) => IptvLiveTvSource(
+        source,
+        httpClient: MockClient(
+          (request) async => http.Response(request.url.path.endsWith('.m3u') ? playlist : guide, 200),
+        ),
+      ),
+    );
+    addTearDown(iptv.dispose);
+    await iptv.save(
+      const IptvSource(
+        id: 'src',
+        name: 'Mein IPTV',
+        kind: IptvSourceKind.m3u,
+        playlistUrl: 'http://provider/list.m3u',
+        epgUrls: ['http://provider/epg.xml'],
+      ),
+    );
+    final multiServer = testMultiServerProvider(MultiServerManager());
+    addTearDown(multiServer.dispose);
+    tester.view.devicePixelRatio = 2;
+    tester.view.physicalSize = const Size(1920, 1080);
+    addTearDown(() {
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetPhysicalSize();
+    });
+    final channel = LiveTvChannel(
+      key: 'iptv:src:das-erste.de',
+      identifier: 'das-erste.de',
+      title: 'Das Erste HD',
+      serverId: 'src',
+      serverName: 'Mein IPTV',
+    );
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: InputModeTracker(
+          child: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer),
+              ChangeNotifierProvider<IptvSourcesProvider>.value(value: iptv),
+            ],
+            child: MaterialApp(
+              theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+              home: Scaffold(body: GuideTab(channels: [channel])),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await _pumpUntilShown(tester, find.text('Tagesschau'));
+    // The grid's block, not the band's title over it.
+    final programme = find.text('Tagesschau').last;
+
+    Material plateOf(Finder inside) =>
+        tester.widget<Material>(find.ancestor(of: inside, matching: find.byType(Material)).first);
+    Rect rectOf(Finder inside) => tester.getRect(find.ancestor(of: inside, matching: find.byType(Material)).first);
+    final cell = find.text('Das Erste HD').last;
+    expect(rectOf(cell).top, closeTo(rectOf(programme).top, 0.5));
+    expect(rectOf(cell).bottom, closeTo(rectOf(programme).bottom, 0.5));
+    expect(
+      (plateOf(cell).shape! as RoundedRectangleBorder).borderRadius,
+      (plateOf(programme).shape! as RoundedRectangleBorder).borderRadius,
+    );
+  });
+
   testWidgets('the time strip goes away when the setting says so', (tester) async {
     resetSharedPreferencesForTest();
     SettingsService.resetForTesting();

@@ -195,6 +195,11 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
   /// Glas" says yes; read it through `ockerGlass`.
   final bool glass;
 
+  /// "Redesign – Flach" (Plebz): the glass surfaces keep their structure and
+  /// behaviour — [glass] stays true — but are painted flat: no sheen, no lit
+  /// edge, solid fills, focus a white fill with what stands on it inverted.
+  final bool flat;
+
   /// How much of the [accent] the glass capsule wears on the one chosen — the
   /// destination on show, the chosen row of a menu. A faint wash in most
   /// palettes; one that is only black, white and red spends its red there.
@@ -265,6 +270,7 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
     this.focusScaleEnabled = true,
     this.redesignLayout = false,
     this.glass = false,
+    this.flat = false,
     this.accentWash = 0.22,
   });
 
@@ -299,6 +305,7 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
     bool? focusScaleEnabled,
     bool? redesignLayout,
     bool? glass,
+    bool? flat,
     double? accentWash,
   }) => MonoTokens(
     radiusSm: radiusSm ?? this.radiusSm,
@@ -330,6 +337,7 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
     focusScaleEnabled: focusScaleEnabled ?? this.focusScaleEnabled,
     redesignLayout: redesignLayout ?? this.redesignLayout,
     glass: glass ?? this.glass,
+    flat: flat ?? this.flat,
     accentWash: accentWash ?? this.accentWash,
   );
 
@@ -373,6 +381,7 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
       focusScaleEnabled: t < 0.5 ? focusScaleEnabled : other.focusScaleEnabled,
       redesignLayout: t < 0.5 ? redesignLayout : other.redesignLayout,
       glass: t < 0.5 ? glass : other.glass,
+      flat: t < 0.5 ? flat : other.flat,
       accentWash: lerpDouble(accentWash, other.accentWash, t)!,
     );
   }

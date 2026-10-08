@@ -355,7 +355,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
                     else
                       ..._matchItems(look, compact: _isCompact(look, constraints.maxWidth)),
                     SizedBox(height: look.gap * 2),
-                    _SportTable(rows: _table, look: look, highlight: _highlightedTeams),
+                    _SportTable(rows: _table, look: look, highlight: _highlightedTeams, league: widget.league),
                   ],
                 ),
               ),
@@ -386,7 +386,13 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
             SizedBox(width: look.gap * 2),
             SizedBox(
               width: tableWidth,
-              child: _SportTable(rows: _table, look: look, highlight: _highlightedTeams, fitHeight: true),
+              child: _SportTable(
+                rows: _table,
+                look: look,
+                highlight: _highlightedTeams,
+                league: widget.league,
+                fitHeight: true,
+              ),
             ),
           ],
         );
@@ -458,6 +464,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
 
   Widget _buildMatchdayBar(SportLook look) {
     final (previous, next) = _neighbours;
+    if (look.flat) return _buildFlatMatchdayBar(look, previous, next);
     final bar = SizedBox(
       height: (look.ocker ? 76 : 60) * look.scale,
       child: Row(
@@ -497,6 +504,42 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     );
   }
 
+  /// "Flach" (Plebz): the matchday as the page's title on the left — its
+  /// dates and "aktuell" quietly beside it — and the two arrows as round
+  /// buttons at the right of the fixtures. Pressing the title still opens the
+  /// season.
+  Widget _buildFlatMatchdayBar(SportLook look, int? previous, int? next) {
+    return SizedBox(
+      height: 64 * look.scale,
+      child: Row(
+        children: [
+          Expanded(
+            child: Align(alignment: Alignment.centerLeft, child: _buildMatchdayButton(look)),
+          ),
+          _buildArrow(
+            look,
+            node: _previousNode,
+            icon: Symbols.chevron_left_rounded,
+            target: previous,
+            label: previous == null ? null : t.sport.matchday(n: previous),
+            onNavigateLeft: _matchdayNode.requestFocus,
+            onNavigateRight: _nextNode.requestFocus,
+          ),
+          SizedBox(width: 10 * look.scale),
+          _buildArrow(
+            look,
+            node: _nextNode,
+            icon: Symbols.chevron_right_rounded,
+            target: next,
+            label: next == null ? null : t.sport.matchday(n: next),
+            onNavigateLeft: _previousNode.requestFocus,
+            onNavigateRight: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
   /// One of the two arrows. At either end of the season the arrow stays where
   /// it is, dimmed and doing nothing, so the cursor never loses its footing
   /// and the bar keeps its shape.
@@ -509,14 +552,14 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     required VoidCallback onNavigateLeft,
     required VoidCallback onNavigateRight,
   }) {
-    final size = (look.ocker ? 64 : 48) * look.scale;
+    final size = (look.flat ? 54 : (look.ocker ? 64 : 48)) * look.scale;
     void step() {
       if (target != null) unawaited(_selectMatchday(target));
     }
 
     return FocusableWrapper(
       focusNode: node,
-      borderRadius: look.tk.radiusSm,
+      borderRadius: look.flat ? size / 2 : look.tk.radiusSm,
       useBackgroundFocus: true,
       glassFocus: true,
       semanticLabel: label,
@@ -527,10 +570,14 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
       onNavigateDown: _focusFirstMatch,
       child: SportTap(
         onTap: step,
-        child: SizedBox.square(
-          dimension: size,
-          child: Center(
-            child: AppIcon(icon, size: size * 0.6, color: look.ink(target == null ? 0.2 : 0.85)),
+        child: DecoratedBox(
+          // Flat: a round button of its own, as on the other pages.
+          decoration: look.flat ? BoxDecoration(color: look.ink(0.06), shape: BoxShape.circle) : const BoxDecoration(),
+          child: SizedBox.square(
+            dimension: size,
+            child: Center(
+              child: AppIcon(icon, size: size * (look.flat ? 0.5 : 0.6), color: look.ink(target == null ? 0.2 : 0.85)),
+            ),
           ),
         ),
       ),
@@ -546,6 +593,39 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     final dates = _dateRange(LocaleSettings.currentLocale.intlLocaleName);
     final isCurrent = selected != null && selected == _currentMatchday;
     final detail = look.time.copyWith(color: look.ink(0.6));
+    final Widget face;
+    if (look.flat) {
+      final quiet = look.leagueLabel.copyWith(color: look.ink(0.55));
+      face = Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12 * look.scale, vertical: 8 * look.scale),
+        child: Row(
+          mainAxisSize: .min,
+          crossAxisAlignment: .baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(label, style: look.matchdayTitle.copyWith(color: look.ink(1))),
+            if (dates != null) ...[
+              SizedBox(width: 14 * look.scale),
+              Flexible(
+                child: Text(dates, maxLines: 1, overflow: TextOverflow.ellipsis, style: quiet),
+              ),
+            ],
+            if (isCurrent) ...[
+              SizedBox(width: 14 * look.scale),
+              Text(
+                t.sport.current,
+                style: quiet.copyWith(color: look.live, fontSize: 15 * look.scale, fontWeight: .w600),
+              ),
+            ],
+          ],
+        ),
+      );
+    } else {
+      face = Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16 * look.scale, vertical: 4 * look.scale),
+        child: _matchdayFace(look, label: label, style: style, dates: dates, isCurrent: isCurrent, detail: detail),
+      );
+    }
     return FocusableWrapper(
       key: _matchdayKey,
       focusNode: _matchdayNode,
@@ -555,48 +635,55 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
       semanticLabel: label,
       onSelect: () => unawaited(_chooseMatchday()),
       onNavigateUp: widget.onExitUp,
-      onNavigateLeft: _previousNode.requestFocus,
-      onNavigateRight: _nextNode.requestFocus,
+      // Flat: the title leads the bar and both arrows follow it.
+      onNavigateLeft: look.flat ? (widget.onExitLeft ?? () {}) : _previousNode.requestFocus,
+      onNavigateRight: look.flat ? _previousNode.requestFocus : _nextNode.requestFocus,
       onNavigateDown: _focusFirstMatch,
-      child: SportTap(
-        onTap: () => unawaited(_chooseMatchday()),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16 * look.scale, vertical: 4 * look.scale),
-          child: Column(
-            mainAxisSize: .min,
-            children: [
-              Row(
-                mainAxisSize: .min,
-                children: [
-                  Text(label, style: style),
-                  SizedBox(width: 4 * look.scale),
-                  AppIcon(Symbols.keyboard_arrow_down_rounded, size: style.fontSize! * 1.1, color: look.ink(0.72)),
-                ],
-              ),
-              // The redesign sets both lines at a line height of 1, so
-              // without a gap the dates would touch the label.
-              if (dates != null || isCurrent) SizedBox(height: (look.ocker ? 7 : 3) * look.scale),
-              if (dates != null || isCurrent)
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      if (dates != null) TextSpan(text: dates),
-                      if (dates != null && isCurrent) const TextSpan(text: ' · '),
-                      if (isCurrent)
-                        TextSpan(
-                          text: t.sport.current,
-                          style: TextStyle(color: look.live),
-                        ),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: detail,
-                ),
-            ],
-          ),
+      child: SportTap(onTap: () => unawaited(_chooseMatchday()), child: face),
+    );
+  }
+
+  /// "Spieltag 5 ⌄" over its dates, in the bar's middle.
+  Widget _matchdayFace(
+    SportLook look, {
+    required String label,
+    required TextStyle style,
+    required String? dates,
+    required bool isCurrent,
+    required TextStyle detail,
+  }) {
+    return Column(
+      mainAxisSize: .min,
+      children: [
+        Row(
+          mainAxisSize: .min,
+          children: [
+            Text(label, style: style),
+            SizedBox(width: 4 * look.scale),
+            AppIcon(Symbols.keyboard_arrow_down_rounded, size: style.fontSize! * 1.1, color: look.ink(0.72)),
+          ],
         ),
-      ),
+        // The redesign sets both lines at a line height of 1, so
+        // without a gap the dates would touch the label.
+        if (dates != null || isCurrent) SizedBox(height: (look.ocker ? 7 : 3) * look.scale),
+        if (dates != null || isCurrent)
+          Text.rich(
+            TextSpan(
+              children: [
+                if (dates != null) TextSpan(text: dates),
+                if (dates != null && isCurrent) const TextSpan(text: ' · '),
+                if (isCurrent)
+                  TextSpan(
+                    text: t.sport.current,
+                    style: TextStyle(color: look.live),
+                  ),
+              ],
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: detail,
+          ),
+      ],
     );
   }
 
@@ -656,7 +743,10 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
         items.add(
           Padding(
             padding: EdgeInsets.only(top: i == 0 ? 0 : look.gap, bottom: look.gap / 2, left: 4 * look.scale),
-            child: Text(_dayLabel(matchDay, locale).toUpperCase(), style: look.heading.copyWith(color: look.ink(0.55))),
+            child: Text(
+              look.headingCase(_dayLabel(matchDay, locale)),
+              style: look.dayHeading.copyWith(color: look.ink(0.55)),
+            ),
           ),
         );
       }
@@ -872,14 +962,68 @@ class _SportTable extends StatelessWidget {
   /// be scrolled to with a remote.
   final bool fitHeight;
 
-  const _SportTable({required this.rows, required this.look, required this.highlight, this.fitHeight = false});
+  /// Which league, for where its table's zones fall.
+  final SportLeague league;
+
+  const _SportTable({
+    required this.rows,
+    required this.look,
+    required this.highlight,
+    required this.league,
+    this.fitHeight = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (rows.isEmpty) return const SizedBox.shrink();
+    // "Flach" (Plebz): the table stands on a panel of its own, as the detail
+    // panel does on the other pages, under a title rather than a label.
+    if (look.flat) {
+      final pad = 16 * look.scale;
+      return Container(
+        // Beside the fixtures the panel runs to the foot of the page.
+        constraints: fitHeight ? const BoxConstraints.expand() : null,
+        padding: EdgeInsets.fromLTRB(pad, pad + 4 * look.scale, pad, pad),
+        decoration: BoxDecoration(
+          color: look.ink(0.045),
+          border: Border.all(color: look.ink(0.08)),
+          borderRadius: BorderRadius.circular(24 * look.scale),
+        ),
+        child: _buildTable(context),
+      );
+    }
+    return _buildTable(context);
+  }
+
+  /// Where a place in the table stands for something — the places that go
+  /// up, or into Europe, and the ones that go down — as a stroke at its left
+  /// under "Flach": strongest for the top, quieter for the next, quietest for
+  /// the foot. Null for the places between.
+  double? _zoneStrength(int position) {
+    final count = rows.length;
+    final (top, next, bottom) = switch (league) {
+      // Champions League, then the Europa places; the play-off and the drop.
+      SportLeague.bundesliga1 => (4, 6, 3),
+      // Promotion, the play-off; the play-off and the drop.
+      SportLeague.bundesliga2 => (2, 3, 3),
+      // Promotion, the play-off; the drop.
+      SportLeague.liga3 => (2, 3, 4),
+    };
+    if (position <= top) return 0.55;
+    if (position <= next) return 0.28;
+    if (position > count - bottom) return 0.18;
+    return null;
+  }
+
+  Widget _buildTable(BuildContext context) {
     final heading = Padding(
       padding: EdgeInsets.only(bottom: look.gap / 2, left: 4 * look.scale),
-      child: Text(t.sport.table.toUpperCase(), style: look.heading.copyWith(color: look.ink(0.55))),
+      child: Text(
+        look.headingCase(t.sport.table),
+        style: look.flat
+            ? look.matchdayTitle.copyWith(fontSize: 24 * look.scale, color: look.ink(1))
+            : look.heading.copyWith(color: look.ink(0.55)),
+      ),
     );
     if (!fitHeight) {
       return Column(
@@ -916,6 +1060,8 @@ class _SportTable extends StatelessWidget {
       height: height ?? (look.ocker ? 34 : 26) * look.scale,
       child: Row(
         children: [
+          // In line with the rows' places, past their zone strokes.
+          if (look.flat) SizedBox(width: 11 * look.scale),
           SizedBox(
             width: _positionWidth,
             child: Text(t.sport.position, style: style),
@@ -934,15 +1080,26 @@ class _SportTable extends StatelessWidget {
     final lit = highlight.contains(row.team.id);
     final style = look.tableCell(strong: lit).copyWith(color: look.ink(lit ? 1 : 0.82));
     final difference = row.goalDifference > 0 ? '+${row.goalDifference}' : '${row.goalDifference}';
+    final zone = look.flat ? _zoneStrength(row.position) : null;
     return Container(
       height: height,
       padding: EdgeInsets.symmetric(horizontal: 4 * look.scale),
       decoration: BoxDecoration(
-        color: lit ? look.ink(0.12) : Colors.transparent,
-        borderRadius: BorderRadius.circular(look.tk.radiusXs),
+        color: lit ? look.ink(look.flat ? 0.08 : 0.12) : Colors.transparent,
+        borderRadius: BorderRadius.circular(look.flat ? 12 * look.scale : look.tk.radiusXs),
       ),
       child: Row(
         children: [
+          if (look.flat)
+            Container(
+              width: 3 * look.scale,
+              height: (height * 0.5).clamp(0.0, 24 * look.scale),
+              margin: EdgeInsets.only(right: 8 * look.scale),
+              decoration: BoxDecoration(
+                color: zone == null ? Colors.transparent : look.ink(zone),
+                borderRadius: BorderRadius.circular(2 * look.scale),
+              ),
+            ),
           SizedBox(
             width: _positionWidth - 4 * look.scale,
             child: Text('${row.position}', style: style),

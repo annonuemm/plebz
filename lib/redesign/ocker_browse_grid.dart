@@ -202,12 +202,16 @@ class OckerGridGeometry {
     // along the top and the sides are the ones that reach: at the old one
     // pixel the ring vanished on those sides, and the lit edge of "Glas" lost
     // exactly its brightest stretch, top left.
-    final growth = FocusTheme.focusScaleFor(context) - 1;
+    final growth = FocusTheme.posterFocusScaleFor(context) - 1;
+    // "Flach" rings a poster further out: a band of ground, then the ring.
+    final ringReach = ockerFlat(context)
+        ? (FocusTheme.flatRingGap + FocusTheme.flatRingWidth) * ockerScale(context)
+        : _ringReach;
     final columns = ockerGridColumnsFor(context, columnWidth);
     final estimate = ockerTileWidthFor(context, columnWidth, columns: columns);
     final bleed = Offset(
-      (estimate * growth / 2 + _ringReach).ceilToDouble(),
-      (estimate * OckerLayout.tileHeight / OckerLayout.tileWidth * growth / 2 + _ringReach).ceilToDouble(),
+      (estimate * growth / 2 + ringReach).ceilToDouble(),
+      (estimate * OckerLayout.tileHeight / OckerLayout.tileWidth * growth / 2 + ringReach).ceilToDouble(),
     );
     // The room comes out of the tiles, not out of the page: they narrow by a
     // pixel or two so five still fit the same column.

@@ -67,6 +67,11 @@ extension _GuideTabFork on GuideTabState {
   /// centred cluster rather than a full-width bar, so it needs less.
   double get _timeNavigationHeight => _ockerLayout ? 32.0 : 44.0;
 
+  /// "Flach" (Plebz): the day and the time are a pill at the head of the
+  /// ruler, over the channel column, instead of a strip of their own above
+  /// it — the design's place, and the strip's height goes to the rows.
+  bool get _timePillInRuler => _showsTimeNavigation && _ockerLayout && ockerFlat(context);
+
   /// Whether the band above the grid — the live picture, the title of what is
   /// on, and its description — is drawn at all.
   ///
@@ -257,7 +262,7 @@ extension _GuideTabFork on GuideTabState {
   /// What is left for the rows once the time ruler and the navigation strip
   /// above them have had theirs.
   void _measureGridHeight(double maxHeight) {
-    final chrome = _timeHeaderHeight + (_showsTimeNavigation ? _timeNavigationHeight : 0.0);
+    final chrome = _timeHeaderHeight + (_showsTimeNavigation && !_timePillInRuler ? _timeNavigationHeight : 0.0);
     final rows = maxHeight - chrome;
     if (rows.isFinite && rows > 0) _gridHeight = rows;
   }
@@ -340,6 +345,76 @@ extension _GuideTabFork on GuideTabState {
     );
   }
 
+  /// `‹ Heute ab 16:30 ›` under "Flach": one faint pill at the head of the
+  /// ruler, each of its three parts focusable as the strip's were. Scaled
+  /// down rather than cut where a long day name would not fit the column.
+  Widget _buildFlatTimePill(String dayLabel, String timeLabel) {
+    final tk = tokens(context);
+    final type = OckerType.of(context);
+    final scale = ockerScale(context);
+    final label = type.metadata.copyWith(fontSize: 17 * scale, fontWeight: .w500);
+
+    Widget arrow({required int index, required IconData icon, required int hours}) => _timeNavFocusWrap(
+      index: index,
+      child: ClickableCursor(
+        child: GestureDetector(
+          onTap: () => _shiftTimeRange(hours),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 8 * scale),
+            child: AppIcon(icon, size: 22 * scale, color: tk.ink(0.6)),
+          ),
+        ),
+      ),
+    );
+
+    return Align(
+      alignment: .centerLeft,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: .centerLeft,
+        child: Container(
+          height: 44 * scale,
+          padding: EdgeInsets.symmetric(horizontal: 6 * scale),
+          decoration: ShapeDecoration(color: tk.ink(0.06), shape: const StadiumBorder()),
+          child: Row(
+            mainAxisSize: .min,
+            children: [
+              arrow(index: 0, icon: Symbols.chevron_left_rounded, hours: -2),
+              _timeNavFocusWrap(
+                index: 1,
+                child: ClickableCursor(
+                  child: GestureDetector(
+                    key: _dayPickerKey,
+                    onTap: _showDayPicker,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 8 * scale),
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: dayLabel,
+                              style: label.copyWith(color: tk.ink(1), fontWeight: .w600),
+                            ),
+                            TextSpan(
+                              text: ' ${t.liveTv.fromTime(time: timeLabel)}',
+                              style: label.copyWith(color: tk.ink(0.5)),
+                            ),
+                          ],
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              arrow(index: 2, icon: Symbols.chevron_right_rounded, hours: 2),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   /// When a programme starts and how long it runs, inside its own block.
   ///
   /// Mono and regular where the title above it is the interface face at 600.
@@ -395,7 +470,10 @@ class _ProgramBlockBody extends StatelessWidget {
           child: FractionallySizedBox(
             alignment: .centerLeft,
             widthFactor: fraction,
-            child: Container(height: 2, color: accent),
+            // Under "Flach" the focused block inverts what it holds, so its
+            // words stay dark on the white; the bar is a colour, not a word,
+            // and keeps its accent (the user's call).
+            child: OckerKeepColours(child: Container(height: 2, color: accent)),
           ),
         ),
       ],

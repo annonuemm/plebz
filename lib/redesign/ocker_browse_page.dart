@@ -235,7 +235,11 @@ class OckerBrowsePageState extends State<OckerBrowsePage> {
     if (header == null) {
       return widget.filters.isEmpty
           ? const SizedBox.shrink()
-          : OckerGridFilterBand(location: widget.location, children: widget.filters);
+          : OckerGridFilterBand(
+              location: widget.location,
+              count: widget.totalCount ?? widget.items.length,
+              children: widget.filters,
+            );
     }
     // The switcher's pane reaches past its row; set in by as much, its edge
     // lines up with the posters' below, as the filters' does.

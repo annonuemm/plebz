@@ -87,6 +87,10 @@ class OckerLibraryColumnScope extends InheritedWidget {
 
 class OckerLibraryColumnState extends State<OckerLibraryColumn> {
   final Map<String, FocusNode> _nodes = {};
+
+  /// The rows' libraries in the order they stand, top to bottom, as last
+  /// built: what UP and DOWN step through.
+  List<String> _rowOrder = const [];
   final _scroll = ScrollController();
 
   bool _open = false;
@@ -213,6 +217,32 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
       _close(returnFocus: true);
       return KeyEventResult.handled;
     }
+    // UP or DOWN past the first or last row stays on it (Plebz). Left to
+    // traversal, DOWN from the last row walked onto the posters beside the
+    // column; the column, losing focus, shut, and opened again elsewhere.
+    final direction = event.logicalKey.isDownKey
+        ? TraversalDirection.down
+        : event.logicalKey.isUpKey
+        ? TraversalDirection.up
+        : null;
+    if (direction != null) {
+      final current = FocusManager.instance.primaryFocus;
+      final at = _rowOrder.indexWhere((key) => _nodes[key] == current);
+      if (at < 0) return KeyEventResult.ignored;
+      final next = at + (direction == TraversalDirection.down ? 1 : -1);
+      if (next < 0 || next >= _rowOrder.length) return KeyEventResult.handled;
+      final node = _nodeFor(_rowOrder[next]);
+      node.requestFocus();
+      if (node.context case final rowContext?) {
+        Scrollable.ensureVisible(
+          rowContext,
+          alignmentPolicy: next > at
+              ? ScrollPositionAlignmentPolicy.keepVisibleAtEnd
+              : ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+        );
+      }
+      return KeyEventResult.handled;
+    }
     return KeyEventResult.ignored;
   }
 
@@ -239,6 +269,7 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
     final scale = ockerScale(context);
     final width = _width(context);
     final radius = BorderRadius.circular(tk.radiusSm + 8);
+    final order = <String>[];
     final rows = buildLibraryServerEntries<Widget>(
       widget.libraries,
       groupByServer: widget.groupByServer,
@@ -253,27 +284,31 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
           constrainText: true,
         ),
       ),
-      buildItem: (library, {required bool showServerName}) => Padding(
-        // Under glass the marks are panes, and a pane wants air round it.
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        child: FocusableListTile(
-          key: OckerLibraryColumn.rowKey(library.globalKey),
-          focusNode: _nodeFor(library.globalKey),
-          selected: library.globalKey == widget.selectedKey,
-          glassMarks: true,
-          title: Text(library.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-          subtitle: showServerName
-              ? LibraryServerLabel(
-                  library: library,
-                  badgeSize: 10,
-                  style: TextStyle(color: tk.ink(0.5)),
-                  constrainText: true,
-                )
-              : null,
-          onTap: () => _choose(library.globalKey),
-        ),
-      ),
+      buildItem: (library, {required bool showServerName}) {
+        order.add(library.globalKey);
+        return Padding(
+          // Under glass the marks are panes, and a pane wants air round it.
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          child: FocusableListTile(
+            key: OckerLibraryColumn.rowKey(library.globalKey),
+            focusNode: _nodeFor(library.globalKey),
+            selected: library.globalKey == widget.selectedKey,
+            glassMarks: true,
+            title: Text(library.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+            subtitle: showServerName
+                ? LibraryServerLabel(
+                    library: library,
+                    badgeSize: 10,
+                    style: TextStyle(color: tk.ink(0.5)),
+                    constrainText: true,
+                  )
+                : null,
+            onTap: () => _choose(library.globalKey),
+          ),
+        );
+      },
     );
+    _rowOrder = order;
 
     // Every row built, not just the ones in view: a library list is short,
     // and a row the list has not built is one the cursor cannot be put on —
@@ -305,15 +340,32 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
             child: Focus(
               onFocusChange: _onFocusChange,
               onKeyEvent: _onKey,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(12 * scale, ockerContentTop(context) + 12 * scale, 12 * scale, 12 * scale),
-                child: OckerGlass(
-                  key: OckerLibraryColumn.paneKey,
-                  borderRadius: radius,
-                  scrimInset: 0,
-                  child: ClipRRect(borderRadius: radius, child: list),
-                ),
-              ),
+              // Flat (Plebz): the column runs the full height, square, its rows
+              // starting where the content does.
+              child: ockerFlat(context)
+                  ? OckerGlass(
+                      key: OckerLibraryColumn.paneKey,
+                      borderRadius: BorderRadius.zero,
+                      scrimInset: 0,
+                      child: Padding(
+                        padding: EdgeInsets.only(top: ockerContentTop(context)),
+                        child: list,
+                      ),
+                    )
+                  : Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        12 * scale,
+                        ockerContentTop(context) + 12 * scale,
+                        12 * scale,
+                        12 * scale,
+                      ),
+                      child: OckerGlass(
+                        key: OckerLibraryColumn.paneKey,
+                        borderRadius: radius,
+                        scrimInset: 0,
+                        child: ClipRRect(borderRadius: radius, child: list),
+                      ),
+                    ),
             ),
           ),
         ),

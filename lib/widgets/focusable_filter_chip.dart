@@ -141,7 +141,11 @@ class _FocusableFilterChipState extends State<FocusableFilterChip> with Focusabl
         // as the tabs, where a word spent here is a word taken from them, and
         // the sheet each one opens names itself anyway — unless the chip
         // asks to say what it holds.
-        child: widget.spellOut
+        // "Flach" (Plebz): a pill with the glyph and the word, as the design
+        // draws a library's filter and sort.
+        child: ockerFlat(context)
+            ? OckerFlatLabelledControl(icon: icon, label: widget.label, focused: showFocus)
+            : widget.spellOut
             ? _spelledOut(context, showFocus: showFocus)
             : OckerFilterGlyph(icon: icon, focused: showFocus),
       );

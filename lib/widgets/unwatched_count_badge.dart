@@ -42,6 +42,8 @@ class UnwatchedCountBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tk = tokens(context);
+    if (tk.flat) return _buildFlat(tk);
     return Container(
       height: size,
       constraints: BoxConstraints(minWidth: size),
@@ -65,6 +67,35 @@ class UnwatchedCountBadge extends StatelessWidget {
           // "Ocker", where counters are one of the three jobs that family has.
           // Every other variant keeps the bold it has always had.
           style: _numeralStyle(context, fontSize),
+        ),
+      ),
+    );
+  }
+
+  /// "Redesign – Flach" (Plebz): a dark pill with the count in ink. A row of
+  /// white circles was the loudest thing on the screen; dark, the number is
+  /// still read and no longer shouts. No blur behind it — a frosted chip on
+  /// every poster of a row costs a weak box more than it shows.
+  Widget _buildFlat(MonoTokens tk) {
+    final height = size * 26 / 30;
+    return Container(
+      height: height,
+      constraints: BoxConstraints(minWidth: size),
+      padding: EdgeInsets.symmetric(horizontal: height * 0.3),
+      decoration: BoxDecoration(color: tk.bg.withValues(alpha: 0.82), borderRadius: BorderRadius.circular(height / 2)),
+      child: Center(
+        widthFactor: 1,
+        child: Text(
+          count > 999 ? '999+' : '$count',
+          maxLines: 1,
+          softWrap: false,
+          style: TextStyle(
+            color: tk.ink(0.92),
+            fontSize: fontSize * 14 / 18,
+            fontWeight: FontWeight.w600,
+            height: 1,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
         ),
       ),
     );

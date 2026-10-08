@@ -34,6 +34,11 @@ class OckerGuidePanel extends StatelessWidget {
   /// exactly the 480 x 270 the detail panel draws everywhere else.
   static const bandHeight = OckerLayout.panelStillHeight;
 
+  /// "Flach"'s band: taller, for its larger facts and description and a third
+  /// line of the description — the schedule under it gives up the height (the
+  /// viewer's call). The picture grows with it and stays 16:9.
+  static const flatBandHeight = 280.0;
+
   /// The channel the preview is actually tuned to, which is not necessarily
   /// the one under the cursor — the picture stays put while the guide is read.
   final LiveTvChannel? previewChannel;
@@ -72,7 +77,8 @@ class OckerGuidePanel extends StatelessWidget {
     final tk = tokens(context);
     final type = OckerType.of(context);
     final scale = ockerScale(context);
-    final height = OckerLayout.panelStillHeight * scale;
+    final flat = ockerFlat(context);
+    final height = (flat ? flatBandHeight : bandHeight) * scale;
     final program = focusedProgram;
     final is24Hour = MediaQuery.alwaysUse24HourFormatOf(context);
 
@@ -82,7 +88,7 @@ class OckerGuidePanel extends StatelessWidget {
         crossAxisAlignment: .start,
         children: [
           _Picture(
-            width: OckerLayout.panelWidth * scale,
+            width: height * 16 / 9,
             height: height,
             previewChannel: previewChannel,
             playerKey: playerKey,
@@ -167,7 +173,7 @@ class OckerGuidePanel extends StatelessWidget {
                     Flexible(
                       child: Text(
                         summary.trim(),
-                        maxLines: 2,
+                        maxLines: flat ? 3 : 2,
                         overflow: TextOverflow.ellipsis,
                         style: type.guideSummary.copyWith(color: tk.ink(0.78)),
                       ),

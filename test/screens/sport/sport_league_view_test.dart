@@ -244,6 +244,32 @@ void main() {
     expect(find.text(t.sport.matchday(n: 4)), findsOneWidget);
   });
 
+  testWidgets('under Flach the matchday is a title on the left, the arrows after it, the table on a panel', (
+    tester,
+  ) async {
+    final key = GlobalKey<SportLeagueViewState>();
+    await pumpLeague(tester, provider(), key: key, variant: AppThemeVariant.flach);
+
+    final label = tester.getRect(find.text(t.sport.matchday(n: 4)));
+    final previous = tester.getRect(part('sport_matchday_previous'));
+    final next = tester.getRect(part('sport_matchday_next'));
+    expect(label.right, lessThan(previous.left));
+    expect(previous.right, lessThan(next.left));
+    expect(find.text(t.sport.table), findsOneWidget, reason: 'a title, not a label in capitals');
+
+    await focusMatchday(tester, key);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_matchday_previous');
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_matchday_next');
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_matchday');
+  });
+
   testWidgets('at the first matchday the left arrow stays, dimmed, and does nothing', (tester) async {
     final api = provider()..routes['/getmatchdata/bl1/2026/1'] = <Object?>[];
     final key = GlobalKey<SportLeagueViewState>();

@@ -5,6 +5,7 @@ import '../../../focus/dpad_navigator.dart';
 import '../../../i18n/strings.g.dart';
 import '../../../media/library_query.dart';
 import '../../../media/media_filter.dart';
+import '../../../theme/mono_tokens.dart';
 import '../../../widgets/app_icon.dart';
 import '../../../widgets/focusable_list_tile.dart';
 
@@ -15,6 +16,18 @@ import '../../../widgets/focusable_list_tile.dart';
 /// has to be drawn explicitly or the control reads as "nothing chosen".
 ButtonStyle _segmentStyle(BuildContext context) {
   final colors = Theme.of(context).colorScheme;
+  // "Flach" (Plebz): the choice on show is solid ink. A row with focus is
+  // inverted there, and the faint wash the other themes use turned into a
+  // grey on white that a television's panel did not show at all.
+  final tk = Theme.of(context).extension<MonoTokens>();
+  if (tk != null && tk.flat) {
+    return SegmentedButton.styleFrom(
+      visualDensity: const VisualDensity(vertical: -3),
+      foregroundColor: tk.ink(0.7),
+      selectedForegroundColor: tk.bg,
+      selectedBackgroundColor: tk.ink(1),
+    );
+  }
   return SegmentedButton.styleFrom(
     // Match FocusableListTile's dense visual density so the segments fit the
     // tile's trailing height cap.

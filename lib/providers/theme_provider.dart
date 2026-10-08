@@ -14,6 +14,11 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   settings.ThemeMode _themeMode = settings.ThemeMode.system;
   settings.AppThemeVariant _variant = settings.AppThemeVariant.standard;
   settings.GlasAccent _glasAccent = settings.GlasAccent.eisblau;
+  Color _flachAccent = flachDefaultAccent;
+
+  /// The redesigns' plain ground where one is chosen, null for the design's
+  /// own — see [plainGroundFrom].
+  Color? _plainGround;
   late Brightness _systemBrightness;
 
   ThemeProvider() {
@@ -26,6 +31,8 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
       _themeMode = loaded.read(settings.SettingsService.themeMode);
       _variant = supportedAppThemeVariant(loaded.read(settings.SettingsService.appThemeVariant));
       _glasAccent = loaded.read(settings.SettingsService.glasAccent);
+      _flachAccent = flachAccentFromHex(loaded.read(settings.SettingsService.flachAccent));
+      _plainGround = plainGroundFrom(loaded);
       GlassEdgeSpin.instance.enabled = loaded.read(settings.SettingsService.glasSpinningFocus);
     }
     applyIconDefaultsFor(_variant);
@@ -34,6 +41,10 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
         settings.SettingsService.themeMode,
         settings.SettingsService.appThemeVariant,
         settings.SettingsService.glasAccent,
+        settings.SettingsService.flachAccent,
+        settings.SettingsService.redesignOffBlack,
+        settings.SettingsService.redesignCustomGround,
+        settings.SettingsService.redesignGroundColour,
         settings.SettingsService.glasSpinningFocus,
       ],
       onRefresh: (service) {
@@ -44,6 +55,8 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
           service.read(settings.SettingsService.themeMode),
           service.read(settings.SettingsService.appThemeVariant),
           glasAccent: service.read(settings.SettingsService.glasAccent),
+          flachAccent: flachAccentFromHex(service.read(settings.SettingsService.flachAccent)),
+          ground: (colour: plainGroundFrom(service)),
         );
       },
     );
@@ -70,6 +83,8 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     settings.ThemeMode mode,
     settings.AppThemeVariant stored, {
     settings.GlasAccent? glasAccent,
+    Color? flachAccent,
+    ({Color? colour})? ground,
     bool forceNotify = false,
   }) {
     // What this host can draw, not what the profile asked for: a redesign
@@ -77,9 +92,18 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     // theme rather than painting a television interface into a window.
     final variant = supportedAppThemeVariant(stored);
     final accent = glasAccent ?? _glasAccent;
-    final changed = _themeMode != mode || _variant != variant || _glasAccent != accent;
+    final flat = flachAccent ?? _flachAccent;
+    final plain = ground == null ? _plainGround : ground.colour;
+    final changed =
+        _themeMode != mode ||
+        _variant != variant ||
+        _glasAccent != accent ||
+        _flachAccent != flat ||
+        _plainGround != plain;
     _themeMode = mode;
     _glasAccent = accent;
+    _flachAccent = flat;
+    _plainGround = plain;
     if (_variant != variant) {
       _variant = variant;
       // Icon defaults are statics, not part of ThemeData: they have to be
@@ -94,6 +118,18 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
 
   settings.GlasAccent get glasAccent => _glasAccent;
 
+  Color get flachAccent => _flachAccent;
+
+  /// The redesigns' plain ground as the settings choose it: the viewer's own
+  /// colour where that is on, off-black where that is, null for the design's
+  /// own. OLED is the theme mode's and decided apart from this.
+  static Color? plainGroundFrom(settings.SettingsService service) {
+    if (service.read(settings.SettingsService.redesignCustomGround)) {
+      return redesignGroundFromHex(service.read(settings.SettingsService.redesignGroundColour));
+    }
+    return service.read(settings.SettingsService.redesignOffBlack) ? redesignOffBlackGround : null;
+  }
+
   settings.ThemeMode get themeMode => _themeMode;
 
   /// Dark palette for [mode], honouring the OLED variant.
@@ -105,7 +141,16 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     settings.ThemeMode mode, {
     settings.AppThemeVariant variant = settings.AppThemeVariant.standard,
     settings.GlasAccent glasAccent = settings.GlasAccent.eisblau,
-  }) => monoTheme(dark: true, oled: mode == settings.ThemeMode.oled, variant: variant, glasAccent: glasAccent);
+    Color flachAccent = flachDefaultAccent,
+    Color? plainGround,
+  }) => monoTheme(
+    dark: true,
+    oled: mode == settings.ThemeMode.oled,
+    plainGround: plainGround,
+    variant: variant,
+    glasAccent: glasAccent,
+    flachAccent: flachAccent,
+  );
 
   /// Material equivalent of the app's own [settings.ThemeMode].
   static ThemeMode materialThemeModeFor(settings.ThemeMode mode) => switch (mode) {
@@ -115,8 +160,15 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     settings.ThemeMode.system => ThemeMode.system,
   };
 
-  ThemeData get lightTheme => monoTheme(dark: false, variant: _variant, glasAccent: _glasAccent);
-  ThemeData get darkTheme => darkThemeFor(_themeMode, variant: _variant, glasAccent: _glasAccent);
+  ThemeData get lightTheme =>
+      monoTheme(dark: false, variant: _variant, glasAccent: _glasAccent, flachAccent: _flachAccent);
+  ThemeData get darkTheme => darkThemeFor(
+    _themeMode,
+    variant: _variant,
+    glasAccent: _glasAccent,
+    flachAccent: _flachAccent,
+    plainGround: _plainGround,
+  );
 
   ThemeMode get materialThemeMode => materialThemeModeFor(_themeMode);
 
@@ -151,6 +203,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
         service.read(settings.SettingsService.themeMode),
         service.read(settings.SettingsService.appThemeVariant),
         glasAccent: service.read(settings.SettingsService.glasAccent),
+        ground: (colour: plainGroundFrom(service)),
         forceNotify: true,
       );
     }

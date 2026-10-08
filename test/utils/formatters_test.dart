@@ -105,6 +105,15 @@ void main() {
     });
   });
 
+  test('German short units stand apart from their numbers; symbols stay close', () async {
+    const duration = Duration(hours: 1, minutes: 20);
+    await LocaleSettings.setLocale(AppLocale.de);
+    expect(formatDurationTextual(duration.inMilliseconds), '1 Std 20 Min');
+    expect(formatDurationTextual(const Duration(minutes: 43).inMilliseconds), '43 Min');
+    await LocaleSettings.setLocale(AppLocale.en);
+    expect(formatDurationTextual(duration.inMilliseconds), '1h 20min');
+  });
+
   group('Traditional Chinese formatting', () {
     test('uses script-specific compact-number symbols', () async {
       await LocaleSettings.setLocale(AppLocale.zh);

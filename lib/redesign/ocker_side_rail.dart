@@ -3,11 +3,17 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:provider/provider.dart';
 
 import '../focus/dpad_navigator.dart';
+import '../i18n/strings.g.dart';
 import '../navigation/navigation_tabs.dart';
+import '../profiles/active_profile_provider.dart';
+import '../profiles/profile_menu.dart';
+import '../widgets/app_menu.dart';
 import '../theme/mono_tokens.dart';
 import '../widgets/app_icon.dart';
+import '../widgets/plebz_start_animation.dart' show PlebzLockup, PlebzMark, plebzMarkColours;
 import '../widgets/side_navigation_rail.dart' show SideNavigationRailState;
 import 'ocker_skin.dart';
 import 'ocker_submenu.dart';
@@ -94,12 +100,19 @@ class OckerSideRail extends StatefulWidget {
   /// The pane the open rail stands on, for tests.
   static const paneKey = Key('ocker_side_rail_pane');
 
+  /// The profile row at the rail's foot under "Flach", for tests.
+  static const profileKey = ValueKey('ocker_side_rail_profile');
+
   @override
   State<OckerSideRail> createState() => OckerSideRailState();
 }
 
 class OckerSideRailState extends State<OckerSideRail> {
   final Map<NavigationTabId, FocusNode> _nodes = {};
+
+  /// "Flach" (Plebz): the profile row at the foot, below every destination.
+  final FocusNode _profileNode = FocusNode(debugLabel: 'ocker_side_rail_profile');
+  final GlobalKey _profileRowKey = GlobalKey();
 
   /// The rows under the destination on show, by position.
   final List<FocusNode> _subNodes = [];
@@ -156,7 +169,7 @@ class OckerSideRailState extends State<OckerSideRail> {
   void dispose() {
     FocusManager.instance.removeListener(_onFocusMoved);
     OckerSideRail._subRowNodes.removeAll(_subNodes);
-    for (final node in [..._nodes.values, ..._subNodes]) {
+    for (final node in [..._nodes.values, ..._subNodes, _profileNode]) {
       node.dispose();
     }
     super.dispose();
@@ -188,7 +201,33 @@ class OckerSideRailState extends State<OckerSideRail> {
       if (tab.id == widget.selectedTab && widget.expanded)
         for (var i = 0; i < (_openMenu?.items.length ?? 0); i++) _subNodeFor(i),
     ],
+    if (tokens(context).flat) _profileNode,
   ];
+
+  /// The row's word where no profile is named. A getter of its own because
+  /// [_buildAt]'s `t` is the opening, not the translations.
+  String get _profilesWord => t.profiles.sectionTitle;
+
+  /// SELECT on the profile row: the profile menu, as the start page's header
+  /// opens it — on a television a sheet, elsewhere beside the row.
+  Future<void> _openProfileMenu() async {
+    final box = _profileRowKey.currentContext?.findRenderObject() as RenderBox?;
+    final anchor = box == null || !box.hasSize ? null : box.localToGlobal(Offset.zero) & box.size;
+    final value = await showAdaptiveAppMenu<String>(
+      context,
+      entries: ProfileMenu.entries(context),
+      title: t.profiles.sectionTitle,
+      anchorRect: anchor,
+      position: anchor == null ? Offset.zero : null,
+      focusFirstItem: true,
+    );
+    if (value == null || !mounted) return;
+    await ProfileMenu.handle(
+      context,
+      value,
+      openSettings: () => widget.onDestinationSelected(NavigationTabId.settings),
+    );
+  }
 
   void _step(int delta) {
     final order = _order;
@@ -264,13 +303,20 @@ class OckerSideRailState extends State<OckerSideRail> {
     final tk = tokens(context);
     final scale = ockerScale(context);
     final collapsed = OckerSideRail.collapsedWidth(context);
-    final margin = 16 * scale;
+    // Flat (Plebz): the open pane runs to the screen's left, top and foot,
+    // square — the viewer's call.
+    final margin = tk.flat ? 0.0 : 16 * scale;
     final paneWidth = OckerSideRail.expandedWidth(context);
     final width = lerpDouble(collapsed, paneWidth + 2 * margin, t)!;
-    final radius = BorderRadius.circular(tk.radiusSm + 8);
-    final top = MediaQuery.paddingOf(context).top + ockerContentTop(context);
+    final radius = tk.flat ? BorderRadius.zero : BorderRadius.circular(tk.radiusSm + 8);
+    final safeTop = MediaQuery.paddingOf(context).top;
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    // "Flach" (Plebz) stands the Plebz mark at the head of the strip as its
+    // anchor, and the destinations a clear step below it.
+    final top = safeTop + (tk.flat ? _flatRowsTop * scale : ockerContentTop(context));
     final geometry = _RailGeometry(
       t: t,
+      flat: tk.flat,
       scale: scale,
       collapsedWidth: collapsed,
       paneLeft: margin * t,
@@ -308,71 +354,155 @@ class OckerSideRailState extends State<OckerSideRail> {
                 ),
               ),
             ),
+          // Over the column of symbols at every stage of the opening, so it
+          // stays flush with them as they move into the pane; the name slides
+          // in beside it as the rail opens, as on the start screen.
+          if (tk.flat)
+            Positioned(
+              top: safeTop + _flatMarkTop * scale,
+              left: geometry.iconLeft + (geometry.iconSize - PlebzMark.widthFor(_flatMarkHeight * scale)) / 2,
+              child: PlebzLockup(markHeight: _flatMarkHeight * scale, colours: plebzMarkColours(context), name: t),
+            ),
           Positioned(
             left: 0,
             right: 0,
-            top: top,
-            bottom: margin,
-            child: SingleChildScrollView(
-              clipBehavior: Clip.none,
-              child: Column(
-                crossAxisAlignment: .start,
-                children: [
-                  for (final tab in widget.tabs) ...[
-                    _RailItem(
-                      key: OckerSideRail.itemKey(tab.id),
-                      tab: tab,
-                      geometry: geometry,
-                      active: tab.id == widget.selectedTab,
-                      // Rows to fold, and which way they are.
-                      folding: tab.id == widget.selectedTab && _menu != null ? (menu != null) : null,
-                      focusNode: _nodeFor(tab.id),
-                      onKey: (event) => _onKey(event, onSelect: () => _select(tab.id)),
-                      onTap: () => _select(tab.id),
-                    ),
-                    // Unfolding with the pane, so the destinations below make
-                    // room as it opens rather than jumping. There, still
-                    // folded shut, from the moment the rail is asked open:
-                    // the cursor is put on one of them then, before the pane
-                    // has begun to move.
-                    if (tab.id == widget.selectedTab && menu != null && (t > 0 || widget.expanded))
-                      ClipRect(
-                        // Top left, not top centre: centred, the rows' block —
-                        // as wide as the pane, narrower than the rail with its
-                        // margin — slid right by half that margin.
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          heightFactor: t.clamp(0.0, 1.0),
-                          child: Column(
-                            crossAxisAlignment: .start,
-                            children: [
-                              for (var i = 0; i < menu.items.length; i++) ...[
-                                if (menu.items[i].gapBefore) SizedBox(height: 12 * scale),
-                                _RailSubItem(
-                                  key: OckerSideRail.subItemKey(i),
-                                  item: menu.items[i],
-                                  geometry: geometry,
-                                  focusNode: _subNodeFor(i),
-                                  onKey: (event) => _onKey(
-                                    event,
-                                    onSelect: () => _selectSub(menu.items[i]),
-                                    onLeft: () => _nodeFor(tab.id).requestFocus(),
+            // "Flach": the list keeps between the mark and the profile row,
+            // and the rows fade out at its two edges when it is scrolled —
+            // a destination's open rows ran on behind both (the viewer's
+            // call). The fade lies in padding of its own, so a list at rest
+            // stands exactly where it did.
+            top: tk.flat ? top - _flatListFade * scale : top,
+            bottom: tk.flat ? _flatProfileBottom * scale + safeBottom + geometry.rowHeight : margin,
+            child: _FlatListEdges(
+              fade: tk.flat ? _flatListFade * scale : 0,
+              child: SingleChildScrollView(
+                clipBehavior: tk.flat ? Clip.hardEdge : Clip.none,
+                padding: tk.flat ? EdgeInsets.symmetric(vertical: _flatListFade * scale) : null,
+                child: Column(
+                  crossAxisAlignment: .start,
+                  children: [
+                    for (final tab in widget.tabs) ...[
+                      _RailItem(
+                        key: OckerSideRail.itemKey(tab.id),
+                        icon: tab.icon,
+                        label: tab.getLabel(),
+                        geometry: geometry,
+                        active: tab.id == widget.selectedTab,
+                        // Rows to fold, and which way they are.
+                        folding: tab.id == widget.selectedTab && _menu != null ? (menu != null) : null,
+                        focusNode: _nodeFor(tab.id),
+                        onKey: (event) => _onKey(event, onSelect: () => _select(tab.id)),
+                        onTap: () => _select(tab.id),
+                      ),
+                      // Unfolding with the pane, so the destinations below make
+                      // room as it opens rather than jumping. There, still
+                      // folded shut, from the moment the rail is asked open:
+                      // the cursor is put on one of them then, before the pane
+                      // has begun to move.
+                      if (tab.id == widget.selectedTab && menu != null && (t > 0 || widget.expanded))
+                        ClipRect(
+                          // Top left, not top centre: centred, the rows' block —
+                          // as wide as the pane, narrower than the rail with its
+                          // margin — slid right by half that margin.
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            heightFactor: t.clamp(0.0, 1.0),
+                            child: Column(
+                              crossAxisAlignment: .start,
+                              children: [
+                                for (var i = 0; i < menu.items.length; i++) ...[
+                                  if (menu.items[i].gapBefore) SizedBox(height: 12 * scale),
+                                  _RailSubItem(
+                                    key: OckerSideRail.subItemKey(i),
+                                    item: menu.items[i],
+                                    geometry: geometry,
+                                    focusNode: _subNodeFor(i),
+                                    onKey: (event) => _onKey(
+                                      event,
+                                      onSelect: () => _selectSub(menu.items[i]),
+                                      onLeft: () => _nodeFor(tab.id).requestFocus(),
+                                    ),
+                                    onTap: () => _selectSub(menu.items[i]),
                                   ),
-                                  onTap: () => _selectSub(menu.items[i]),
-                                ),
+                                ],
+                                SizedBox(height: 8 * scale),
                               ],
-                              SizedBox(height: 8 * scale),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
+          // "Flach" (Plebz): who is watching, at the foot — the symbol while
+          // the rail is shut, and the current profile's name beside it once
+          // it opens. It used to sit at the start page's top right (the
+          // viewer's call).
+          if (tk.flat)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: safeBottom + _flatProfileBottom * scale,
+              child: Selector<ActiveProfileProvider?, String?>(
+                selector: (_, profiles) => profiles?.active?.displayName,
+                builder: (context, name, _) => KeyedSubtree(
+                  key: OckerSideRail.profileKey,
+                  child: _RailItem(
+                    key: _profileRowKey,
+                    icon: Symbols.account_circle_rounded,
+                    label: name ?? _profilesWord,
+                    geometry: geometry,
+                    active: false,
+                    folding: null,
+                    focusNode: _profileNode,
+                    onKey: (event) => _onKey(event, onSelect: () => _openProfileMenu()),
+                    onTap: () => _openProfileMenu(),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
+    );
+  }
+}
+
+/// Where "Flach" stands the mark and the first destination, from the top.
+const double _flatMarkTop = 56;
+const double _flatMarkHeight = 34;
+const double _flatRowsTop = 202;
+
+/// How far above the screen's foot "Flach" stands its profile row.
+const double _flatProfileBottom = 40;
+
+/// How deep "Flach" fades its list out at the top and the foot.
+const double _flatListFade = 24;
+
+/// [child] fading out over [fade] at its top and its foot; [child] alone where
+/// [fade] is nothing.
+class _FlatListEdges extends StatelessWidget {
+  const _FlatListEdges({required this.fade, required this.child});
+
+  final double fade;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (fade <= 0) return child;
+    return ShaderMask(
+      blendMode: BlendMode.dstIn,
+      shaderCallback: (bounds) {
+        final edge = bounds.height <= 0 ? 0.0 : (fade / bounds.height).clamp(0.0, 0.5);
+        return LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: const [Color(0x00FFFFFF), Color(0xFFFFFFFF), Color(0xFFFFFFFF), Color(0x00FFFFFF)],
+          stops: [0, edge, 1 - edge, 1],
+        ).createShader(bounds);
+      },
+      child: child,
     );
   }
 }
@@ -381,6 +511,7 @@ class OckerSideRailState extends State<OckerSideRail> {
 class _RailGeometry {
   const _RailGeometry({
     required this.t,
+    required this.flat,
     required this.scale,
     required this.collapsedWidth,
     required this.paneLeft,
@@ -389,6 +520,10 @@ class _RailGeometry {
   });
 
   final double t;
+
+  /// "Redesign – Flach" (Plebz): smaller symbols on a tighter pitch — 60 to a
+  /// row and 12 between.
+  final bool flat;
   final double scale;
   final double collapsedWidth;
   final double paneLeft;
@@ -399,8 +534,8 @@ class _RailGeometry {
   final double labelRight;
 
   double get inset => 10 * scale;
-  double get iconSize => 44 * scale;
-  double get rowHeight => 88 * scale;
+  double get iconSize => (flat ? 30 : 44) * scale;
+  double get rowHeight => (flat ? 72 : 88) * scale;
   double get subRowHeight => 72 * scale;
 
   double get _shutCapsule => (collapsedWidth - 8).clamp(0.0, 80 * scale).toDouble();
@@ -427,7 +562,8 @@ void _revealOnFocus(BuildContext context, bool hasFocus) {
 class _RailItem extends StatefulWidget {
   const _RailItem({
     super.key,
-    required this.tab,
+    required this.icon,
+    required this.label,
     required this.geometry,
     required this.active,
     required this.folding,
@@ -436,7 +572,8 @@ class _RailItem extends StatefulWidget {
     required this.onTap,
   });
 
-  final NavigationTab tab;
+  final IconData icon;
+  final String label;
   final _RailGeometry geometry;
   final bool active;
 
@@ -452,7 +589,11 @@ class _RailItem extends StatefulWidget {
 }
 
 class _RailItemState extends State<_RailItem> {
-  bool _focused = false;
+  /// Read from the node itself rather than kept from the last change: a row
+  /// rebuilt as the rail opens can arrive already holding focus, and a flag
+  /// that only a change sets left it looking unfocused until the cursor
+  /// moved (Plebz).
+  bool get _focused => widget.focusNode.hasFocus;
 
   @override
   Widget build(BuildContext context) {
@@ -461,18 +602,20 @@ class _RailItemState extends State<_RailItem> {
     final g = widget.geometry;
     final scale = g.scale;
     final height = g.rowHeight;
-    final capsuleHeight = lerpDouble(64 * scale, height - 8 * scale, g.t)!;
+    final capsuleHeight = g.flat ? 60 * scale : lerpDouble(64 * scale, height - 8 * scale, g.t)!;
     final lit = _focused || widget.active;
+    // Flat focus is a white fill: the glyph and word on it go dark (Plebz).
+    final flatFocused = _focused && tk.flat;
 
     return Semantics(
       button: true,
       selected: widget.active,
-      label: widget.tab.getLabel(),
+      label: widget.label,
       child: Focus(
         focusNode: widget.focusNode,
         onKeyEvent: (_, event) => widget.onKey(event),
         onFocusChange: (has) {
-          setState(() => _focused = has);
+          setState(() {});
           _revealOnFocus(context, has);
         },
         child: GestureDetector(
@@ -483,7 +626,9 @@ class _RailItemState extends State<_RailItem> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                if (_focused || widget.active)
+                // Flat (Plebz): the destination on show is told by its glyph
+                // in the accent, not by a pane behind it.
+                if (_focused || (widget.active && !tk.flat))
                   Positioned(
                     left: g.capsuleLeft,
                     width: g.capsuleWidth,
@@ -492,21 +637,36 @@ class _RailItemState extends State<_RailItem> {
                     child: OckerGlassFocusFill(
                       shape: const StadiumBorder(),
                       bright: _focused,
-                      tint: widget.active ? 1 : 0,
+                      tint: widget.active && !tk.flat ? 1 : 0,
+                    ),
+                  ),
+                // Flat: the destination on show is its glyph at full ink and a
+                // short stroke of the accent at the screen's edge. A glyph in
+                // the accent read as a fault rather than as "here".
+                if (widget.active && tk.flat)
+                  Positioned(
+                    left: 0,
+                    top: (height - 24 * scale) / 2,
+                    width: 3 * scale,
+                    height: 24 * scale,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: tk.accent,
+                        borderRadius: BorderRadius.horizontal(right: Radius.circular(3 * scale)),
+                      ),
                     ),
                   ),
                 Positioned(
                   left: g.iconLeft,
                   top: (height - g.iconSize) / 2,
                   child: OckerInk(
-                    color: lit ? tk.ink(1) : tk.ink(0.55),
-                    builder: (context, ink) => AppIcon(
-                      widget.tab.icon,
-                      size: g.iconSize,
-                      fill: navIconFill,
-                      weight: navIconWeight,
-                      color: ink,
-                    ),
+                    color: flatFocused
+                        ? tk.bg
+                        : tk.flat
+                        ? tk.ink(widget.active ? 1 : 0.42)
+                        : (lit ? tk.ink(1) : tk.ink(0.55)),
+                    builder: (context, ink) =>
+                        AppIcon(widget.icon, size: g.iconSize, fill: navIconFill, weight: navIconWeight, color: ink),
                   ),
                 ),
                 if (g.t > 0)
@@ -521,9 +681,13 @@ class _RailItemState extends State<_RailItem> {
                         children: [
                           Expanded(
                             child: OckerInk(
-                              color: lit ? tk.ink(1) : tk.ink(0.55),
+                              color: flatFocused
+                                  ? tk.bg
+                                  : tk.flat
+                                  ? tk.ink(widget.active ? 1 : 0.62)
+                                  : (lit ? tk.ink(1) : tk.ink(0.55)),
                               builder: (context, ink) => Text(
-                                widget.tab.getLabel(),
+                                widget.label,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 softWrap: false,
@@ -537,7 +701,7 @@ class _RailItemState extends State<_RailItem> {
                             AppIcon(
                               open ? Symbols.expand_less_rounded : Symbols.expand_more_rounded,
                               size: 30 * scale,
-                              color: lit ? tk.ink(0.72) : tk.ink(0.35),
+                              color: flatFocused ? tk.bg.withValues(alpha: 0.72) : (lit ? tk.ink(0.72) : tk.ink(0.35)),
                             ),
                         ],
                       ),
@@ -577,7 +741,11 @@ class _RailSubItem extends StatefulWidget {
 }
 
 class _RailSubItemState extends State<_RailSubItem> {
-  bool _focused = false;
+  /// Read from the node itself rather than kept from the last change: a row
+  /// rebuilt as the rail opens can arrive already holding focus, and a flag
+  /// that only a change sets left it looking unfocused until the cursor
+  /// moved (Plebz).
+  bool get _focused => widget.focusNode.hasFocus;
 
   @override
   Widget build(BuildContext context) {
@@ -597,12 +765,15 @@ class _RailSubItemState extends State<_RailSubItem> {
     final tileLeft = g.capsuleLeft + indent;
     final tileWidth = (g.capsuleWidth - 2 * indent).clamp(0.0, double.infinity).toDouble();
     final glyphSize = 30 * scale;
+    final flatFocused = _focused && tk.flat;
     final glyph =
-        item.leading ??
+        // A glyph of the caller's own is inverted on a flat focus fill; the
+        // rail's own symbol is simply drawn dark there (Plebz).
+        (item.leading == null ? null : OckerFlatFocusInk(invert: _focused, child: item.leading!)) ??
         (item.icon == null
             ? null
             : OckerInk(
-                color: lit ? tk.ink(0.9) : tk.ink(0.5),
+                color: flatFocused ? tk.bg : (lit ? tk.ink(0.9) : tk.ink(0.5)),
                 // Outlines, as the destinations' symbols are: a filled glyph
                 // under them read as the one standing out.
                 builder: (context, ink) =>
@@ -617,7 +788,7 @@ class _RailSubItemState extends State<_RailSubItem> {
         focusNode: widget.focusNode,
         onKeyEvent: (_, event) => widget.onKey(event),
         onFocusChange: (has) {
-          setState(() => _focused = has);
+          setState(() {});
           _revealOnFocus(context, has);
         },
         child: GestureDetector(
@@ -629,7 +800,8 @@ class _RailSubItemState extends State<_RailSubItem> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                if (_focused || item.selected)
+                // Flat: the one on show is told by its word in the accent.
+                if (_focused || (item.selected && !tk.flat))
                   Positioned(
                     left: tileLeft,
                     width: tileWidth,
@@ -638,7 +810,7 @@ class _RailSubItemState extends State<_RailSubItem> {
                     child: OckerGlassFocusFill(
                       shape: const StadiumBorder(),
                       bright: _focused,
-                      tint: item.selected ? 1 : 0,
+                      tint: item.selected && !tk.flat ? 1 : 0,
                     ),
                   ),
                 if (glyph != null)
@@ -649,6 +821,20 @@ class _RailSubItemState extends State<_RailSubItem> {
                     height: glyphSize,
                     child: FittedBox(child: glyph),
                   ),
+                // Flat: the row on show is its words at full ink and a short
+                // stroke of the accent just before them — the navigation's
+                // mark, a size down. A word in the accent was too faint to
+                // find (Plebz).
+                if (item.selected && tk.flat)
+                  Positioned(
+                    left: g.labelLeft - 14 * scale,
+                    top: (height - 20 * scale) / 2,
+                    width: 3 * scale,
+                    height: 20 * scale,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(color: tk.accent, borderRadius: BorderRadius.circular(3 * scale)),
+                    ),
+                  ),
                 Positioned(
                   left: g.labelLeft,
                   width: g.labelWidth,
@@ -657,7 +843,7 @@ class _RailSubItemState extends State<_RailSubItem> {
                   child: Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: OckerInk(
-                      color: lit ? tk.ink(1) : tk.ink(0.62),
+                      color: _focused && tk.flat ? tk.bg : (lit ? tk.ink(1) : tk.ink(0.62)),
                       builder: (context, ink) => Text(
                         item.label,
                         maxLines: 1,

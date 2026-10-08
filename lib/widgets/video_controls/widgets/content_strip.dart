@@ -652,7 +652,7 @@ class ContentStripState extends State<ContentStrip> {
             // Round the item's margin, concentric with the thumbnail's corner.
             child: _GlassStripMarks(current: isCurrent, radius: thumbRadius + horizontalMargin),
           ),
-          result,
+          _FlatStripInk(child: result),
         ],
       );
     }
@@ -660,6 +660,20 @@ class ContentStripState extends State<ContentStrip> {
       child: GestureDetector(onTap: onTap, child: result),
     );
   }
+}
+
+/// Over [_GlassStripMarks]' bright pane under "Flach" (Plebz): the pane is
+/// white there, so the item's words go dark while it has focus — they stood
+/// white on white in the player's queue (the viewer's report). The picture
+/// keeps its colours ([OptimizedMediaImage] does that for itself).
+class _FlatStripInk extends StatelessWidget {
+  const _FlatStripInk({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      OckerFlatFocusInk(invert: CardFocusScope.maybeOf(context) ?? false, child: child);
 }
 
 /// Behind a strip item under glass: one pane that is bright while the item

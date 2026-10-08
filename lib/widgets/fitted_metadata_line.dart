@@ -21,9 +21,18 @@ sealed class MetadataLinePart {
 
 /// A plain text field: year, certification, runtime, a quality label.
 class MetadataLineText extends MetadataLinePart {
-  const MetadataLineText(this.text, {required super.dropPriority});
+  const MetadataLineText(this.text, {required super.dropPriority, this.badge = false, this.quiet = false});
 
   final String text;
+
+  /// A genre: under "Flach" set after the facts, a step quieter and joined by
+  /// commas rather than dots, so the line reads as the facts, then what kind
+  /// of thing it is.
+  final bool quiet;
+
+  /// An age rating: under "Flach", where the facts are plain words with dots
+  /// between, the one fact still drawn in an outline.
+  final bool badge;
 }
 
 /// A text field led by a glyph instead of a word: the pre-play track summary
@@ -93,7 +102,12 @@ class FittedMetadataLine extends StatelessWidget {
     this.ratingEntrySpacing,
     this.chipped = false,
     this.chipSpacing,
+    this.secondary = false,
   });
+
+  /// The second row of facts — the picture and the sound: under "Flach" set
+  /// smaller and quieter than the row above, so the two do not read as one.
+  final bool secondary;
 
   /// Style shared by every text part, the separators, and the badge values.
   final TextStyle textStyle;
@@ -138,6 +152,13 @@ class FittedMetadataLine extends StatelessWidget {
   static String separatorFor(BuildContext context) =>
       Theme.of(context).extension<MonoTokens>()?.monoFontFamily == null ? separator : monoSeparator;
 
+  /// The dot between two facts under "Flach", with air either side of it.
+  static const String flatSeparator = '·';
+
+  /// What the outline around a [MetadataLineText.badge] adds to its width:
+  /// its padding and its hairlines, and the step it stands off the dot.
+  static double flatBadgeOverhead(double fontSize) => (fontSize * 8 / 19 + 1) * 2;
+
   /// Gap between a [MetadataLineIconText] glyph and its text.
   static const double iconTextGap = 4;
 
@@ -148,23 +169,46 @@ class FittedMetadataLine extends StatelessWidget {
       builder: (context, constraints) {
         // A capsule of glass rather than an outline: rounder, so it wants more
         // room at its ends and a little more above and below the words.
-        final glass = chipped && ockerGlass(context);
+        // "Flach" (Plebz) sets a chipped line as words with dots between: three
+        // boxes read as three buttons that are not. Only a [badge] keeps one.
+        final flat = chipped && ockerFlat(context);
+        final boxed = chipped && !flat;
+        final glass = boxed && ockerGlass(context);
         // Every glass chip in the same weight, whoever draws it: bold, as the
         // detail page and the spotlight set theirs. A thin fact on one card
         // and a bold one on the next read as two different things.
-        final textStyle = glass ? this.textStyle.copyWith(fontWeight: FontWeight.w700) : this.textStyle;
+        //
+        // "Flach": a rank instead — the facts bright and semibold, the genres
+        // after them quieter, the second row smaller and quieter still. The
+        // viewer's call: at one strength the line ran together.
+        final tk = flat ? tokens(context) : null;
+        final ambient = DefaultTextStyle.of(context).style;
+        final sizeFactor = tk != null && secondary ? 0.82 : 1.0;
+        final textStyle = glass
+            ? this.textStyle.copyWith(fontWeight: FontWeight.w700)
+            : tk != null
+            ? this.textStyle.copyWith(
+                color: tk.ink(secondary ? 0.45 : 0.92),
+                fontWeight: secondary ? FontWeight.w500 : FontWeight.w600,
+                fontSize: (ambient.merge(this.textStyle).fontSize ?? 13) * sizeFactor,
+              )
+            : this.textStyle;
+        final quietStyle = tk == null
+            ? textStyle
+            : textStyle.copyWith(color: tk.ink(0.55), fontWeight: FontWeight.w500);
         // Text merges its style over the ambient default, so measuring with
         // the bare style would drop the theme's font metrics.
-        final effectiveStyle = DefaultTextStyle.of(context).style.merge(textStyle);
+        final effectiveStyle = ambient.merge(textStyle);
+        final quietEffectiveStyle = ambient.merge(quietStyle);
         final textScaler = MediaQuery.textScalerOf(context);
         final textDirection = Directionality.of(context);
-        final iconSize = ratingIconSize ?? effectiveStyle.fontSize ?? 13;
+        final iconSize = ratingIconSize != null ? ratingIconSize! * sizeFactor : effectiveStyle.fontSize ?? 13;
         final badgeGap = ratingSpacing ?? 4;
         final entryGap = ratingEntrySpacing ?? 10;
 
-        double textWidth(String text) => cachedSingleLineTextSize(
+        double textWidth(String text, [TextStyle? style]) => cachedSingleLineTextSize(
           text,
-          style: effectiveStyle,
+          style: style ?? effectiveStyle,
           textScaler: textScaler,
           textDirection: textDirection,
         ).width;
@@ -175,7 +219,10 @@ class FittedMetadataLine extends StatelessWidget {
         final unitWidths = <List<double>>[
           for (final part in parts)
             switch (part) {
-              MetadataLineText(:final text) => <double>[textWidth(text)],
+              MetadataLineText(:final text, :final badge, :final quiet) => <double>[
+                textWidth(text, flat && quiet ? quietEffectiveStyle : null) +
+                    (flat && badge ? flatBadgeOverhead(effectiveStyle.fontSize ?? 13) : 0),
+              ],
               MetadataLineIconText(:final text, :final detail) => <double>[
                 iconSize + iconTextGap + textWidth(text),
                 if (detail != null) textWidth('${MetadataLineIconText.detailSeparator}$detail'),
@@ -199,9 +246,24 @@ class FittedMetadataLine extends StatelessWidget {
         // would shed nothing until the boxes were already over the edge.
         final chipPaddingH = fontSize * (glass ? 0.75 : 0.5);
         final chipPaddingV = fontSize * (glass ? 0.3 : 0.2);
-        final chipOverhead = chipped ? (chipPaddingH + 1) * 2 : 0.0;
+        final chipOverhead = boxed ? (chipPaddingH + 1) * 2 : 0.0;
         final gap = separatorFor(context);
-        final gapWidth = chipped ? (chipSpacing ?? fontSize * 0.5) : textWidth(gap);
+        final flatGapSide = fontSize * 0.32;
+        final gapWidth = boxed
+            ? (chipSpacing ?? fontSize * 0.5)
+            : flat
+            ? textWidth(flatSeparator) + flatGapSide * 2
+            : textWidth(gap);
+        final separatorStyle = tk != null ? textStyle.copyWith(color: tk.ink(0.35)) : textStyle;
+        bool isQuiet(int index) => flat && parts[index] is MetadataLineText && (parts[index] as MetadataLineText).quiet;
+        // Under "Flach": a dot between facts, a wider step before the first
+        // genre, a comma between genres.
+        final quietLead = fontSize;
+        final quietJoin = textWidth(', ', quietEffectiveStyle);
+        double gapBetween(int previous, int next) {
+          if (!isQuiet(next)) return gapWidth;
+          return isQuiet(previous) ? quietJoin : quietLead;
+        }
 
         double partWidth(int index) {
           final kept = keptUnits[index];
@@ -223,13 +285,13 @@ class FittedMetadataLine extends StatelessWidget {
 
         double totalWidth() {
           var total = 0.0;
-          var keptParts = 0;
+          var previous = -1;
           for (var index = 0; index < parts.length; index++) {
             if (keptUnits[index] == 0) continue;
             total += partWidth(index);
-            keptParts++;
+            if (previous >= 0) total += gapBetween(previous, index);
+            previous = index;
           }
-          if (keptParts > 1) total += gapWidth * (keptParts - 1);
           return total;
         }
 
@@ -246,14 +308,37 @@ class FittedMetadataLine extends StatelessWidget {
         }
 
         final children = <Widget>[];
+        var previous = -1;
         for (var index = 0; index < parts.length; index++) {
           final kept = keptUnits[index];
           if (kept == 0) continue;
-          if (children.isNotEmpty) {
-            children.add(chipped ? SizedBox(width: gapWidth) : Text(gap, maxLines: 1, style: textStyle));
+          final last = previous;
+          previous = index;
+          if (last >= 0 && isQuiet(index)) {
+            children.add(isQuiet(last) ? Text(', ', maxLines: 1, style: quietStyle) : SizedBox(width: quietLead));
+          } else if (last >= 0) {
+            children.add(
+              boxed
+                  ? SizedBox(width: gapWidth)
+                  : flat
+                  ? Padding(
+                      padding: EdgeInsets.symmetric(horizontal: flatGapSide),
+                      child: Text(flatSeparator, maxLines: 1, style: separatorStyle),
+                    )
+                  : Text(gap, maxLines: 1, style: textStyle),
+            );
           }
           final content = switch (parts[index]) {
-            MetadataLineText(:final text) => Text(text, maxLines: 1, style: textStyle),
+            MetadataLineText(:final text, :final badge) when flat && badge => _FlatBadge(
+              text: text,
+              style: textStyle,
+              fontSize: fontSize,
+            ),
+            MetadataLineText(:final text, :final quiet) => Text(
+              text,
+              maxLines: 1,
+              style: quiet ? quietStyle : textStyle,
+            ),
             MetadataLineIconText(:final icon, :final text, :final detail) => Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -287,7 +372,7 @@ class FittedMetadataLine extends StatelessWidget {
                       child: content,
                     ),
                   )
-                : chipped
+                : boxed
                 ? Container(
                     padding: EdgeInsets.symmetric(horizontal: chipPaddingH, vertical: chipPaddingV),
                     decoration: BoxDecoration(
@@ -304,6 +389,33 @@ class FittedMetadataLine extends StatelessWidget {
         if (children.isEmpty) return const SizedBox.shrink();
         return Row(mainAxisSize: MainAxisSize.min, children: children);
       },
+    );
+  }
+}
+
+/// An age rating among plain facts under "Flach": a hairline outline, the
+/// figure a size down and a weight up, so it reads as a mark, not a word.
+class _FlatBadge extends StatelessWidget {
+  const _FlatBadge({required this.text, required this.style, required this.fontSize});
+
+  final String text;
+  final TextStyle style;
+  final double fontSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = tokens(context);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: fontSize * 8 / 19, vertical: fontSize * 3 / 19),
+      decoration: BoxDecoration(
+        border: Border.all(color: tk.ink(0.28)),
+        borderRadius: BorderRadius.circular(fontSize * 6 / 19),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        style: style.copyWith(fontSize: fontSize * 15 / 19, fontWeight: FontWeight.w600, color: tk.ink(0.8)),
+      ),
     );
   }
 }

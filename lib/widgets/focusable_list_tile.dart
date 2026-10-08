@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../focus/input_mode_tracker.dart';
 import '../focus/focus_theme.dart';
@@ -136,6 +138,9 @@ class _FocusableListTileState extends State<FocusableListTile> with FocusableTil
 /// One function for plain, switch and checkbox rows alike. The switch and
 /// checkbox rows kept Material's pale plate long after the plain rows lost it,
 /// and a settings page is mostly those.
+/// The accent stroke beside the row on show under "Flach", for tests.
+const flatSelectedStrokeKey = ValueKey('flat_selected_stroke');
+
 Widget _ockerRowMark(
   BuildContext context,
   Widget tile, {
@@ -144,13 +149,17 @@ Widget _ockerRowMark(
   bool glassMarks = false,
 }) {
   if ((glassMarks || OckerOnGlass.appliesAt(context)) && ockerGlass(context)) {
+    // Flat (Plebz): the row on show is a short stroke of the accent beside
+    // its words, as in the navigation, not a pane — the viewer's call.
+    final flat = ockerFlat(context);
+    final scale = ockerScale(context);
     return Stack(
       fit: StackFit.passthrough,
       children: [
         Positioned.fill(
           child: IgnorePointer(
             child: AnimatedOpacity(
-              opacity: showFocus || selected ? 1 : 0,
+              opacity: showFocus || (selected && !flat) ? 1 : 0,
               duration: ockerInkFade(context),
               curve: Curves.easeOutCubic,
               child: OckerGlassFocusFill(
@@ -161,7 +170,27 @@ Widget _ockerRowMark(
             ),
           ),
         ),
-        tile,
+        // Flat focus is a white fill: the row's words turn dark on it.
+        OckerFlatFocusInk(invert: showFocus, child: tile),
+        if (flat && selected)
+          Positioned(
+            left: 6 * scale,
+            top: 0,
+            bottom: 0,
+            child: IgnorePointer(
+              child: Center(
+                child: Container(
+                  key: flatSelectedStrokeKey,
+                  width: math.max(3 * scale, 2),
+                  height: 24 * scale,
+                  decoration: BoxDecoration(
+                    color: tokens(context).accent,
+                    borderRadius: BorderRadius.circular(3 * scale),
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }

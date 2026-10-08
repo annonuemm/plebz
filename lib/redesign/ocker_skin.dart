@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../services/device_performance.dart';
 import '../services/settings_service.dart';
@@ -402,12 +403,149 @@ Widget ockerActiveMark(BuildContext context, {required String label, required Te
 /// answers for the theme it is drawn in.
 bool ockerGlass(BuildContext context) => Theme.of(context).extension<MonoTokens>()?.glass == true;
 
+/// Whether the glass is painted flat — "Redesign – Flach" (Plebz). The glass
+/// surfaces keep their structure and behaviour, [ockerGlass] stays true; only
+/// what they look like changes: solid fills, no sheen, no lit edge, focus a
+/// white fill with what stands on it inverted ([OckerFlatFocusInk]).
+bool ockerFlat(BuildContext context) => Theme.of(context).extension<MonoTokens>()?.flat == true;
+
+/// What stands on a flat focus fill, inverted while [invert] (Plebz): white
+/// type and glyphs come out dark on the white fill, whatever colour each was
+/// given — one place for it, rather than every word and icon asking.
+///
+/// Pictures are kept as they are: an image or a channel logo under it wraps
+/// itself in [OckerKeepColours], which inverts it back.
+///
+/// Always in the tree, inverting or not, so focus arriving never rebuilds
+/// what it wraps (a widget swapped in around a focused control would remount
+/// it and lose the focus it just took). Costs nothing while not inverting: no
+/// layer is pushed.
+class OckerFlatFocusInk extends StatelessWidget {
+  const OckerFlatFocusInk({super.key, required this.invert, required this.child});
+
+  final bool invert;
+  final Widget child;
+
+  /// Whether what is drawn at [context] comes out inverted.
+  static bool invertingAt(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_FlatInvertScope>()?.inverted ?? false;
+
+  @override
+  Widget build(BuildContext context) {
+    final on = invert && ockerFlat(context);
+    return _FlatInvertScope(
+      inverted: invertingAt(context) != on,
+      child: _FlatInvert(invert: on, child: child),
+    );
+  }
+}
+
+/// A picture under a flat focus fill (Plebz), in its own colours: inverted
+/// back where [OckerFlatFocusInk] inverts around it.
+class OckerKeepColours extends StatelessWidget {
+  const OckerKeepColours({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final inverted = OckerFlatFocusInk.invertingAt(context);
+    return _FlatInvertScope(
+      inverted: false,
+      child: _FlatInvert(invert: inverted, child: child),
+    );
+  }
+}
+
+class _FlatInvertScope extends InheritedWidget {
+  const _FlatInvertScope({required this.inverted, required super.child});
+
+  final bool inverted;
+
+  @override
+  bool updateShouldNotify(_FlatInvertScope oldWidget) => oldWidget.inverted != inverted;
+}
+
+class _FlatInvert extends SingleChildRenderObjectWidget {
+  const _FlatInvert({required this.invert, super.child});
+
+  final bool invert;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => RenderOckerFlatFocusInk(invert);
+
+  @override
+  void updateRenderObject(BuildContext context, RenderOckerFlatFocusInk renderObject) {
+    renderObject.invert = invert;
+  }
+}
+
+class RenderOckerFlatFocusInk extends RenderProxyBox {
+  RenderOckerFlatFocusInk(this._invert);
+
+  static const _inverted = ColorFilter.matrix(<double>[
+    -1, 0, 0, 0, 255, //
+    0, -1, 0, 0, 255, //
+    0, 0, -1, 0, 255, //
+    0, 0, 0, 1, 0, //
+  ]);
+
+  bool _invert;
+
+  set invert(bool value) {
+    if (value == _invert) return;
+    _invert = value;
+    markNeedsCompositingBitsUpdate();
+    markNeedsPaint();
+  }
+
+  @override
+  bool get alwaysNeedsCompositing => child != null && _invert;
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    if (!_invert || child == null) {
+      layer = null;
+      super.paint(context, offset);
+      return;
+    }
+    final filter = (layer as ColorFilterLayer?) ?? ColorFilterLayer();
+    filter.colorFilter = _inverted;
+    layer = filter;
+    final reach = (offset & size).inflate(size.shortestSide / 2);
+    context.pushLayer(
+      filter,
+      (context, offset) {
+        // On the devices the layer is bounded by what is drawn in it, and text
+        // is measured by its line box: the tops of letters that overrun it were
+        // cut off. A wash too faint to see, reaching past the box, bounds the
+        // layer wide enough.
+        context.canvas.drawRect(reach, Paint()..color = const Color(0x01000000));
+        super.paint(context, offset);
+      },
+      offset,
+      childPaintBounds: reach,
+    );
+  }
+}
+
+/// The lit edge for [shape], or none where the glass is flat.
+CustomPainter? _edge(BuildContext context, ShapeBorder shape) =>
+    ockerFlat(context) ? null : _OckerGlassEdge(shape, Directionality.of(context));
+
+/// A flat surface's fill (Plebz): the ink at [strength] over the ground,
+/// opaque.
+Color _flatFill(BuildContext context, double strength) {
+  final tk = tokens(context);
+  return Color.alphaBlend(tk.ink(strength), tk.bg);
+}
+
 /// Whether the play buttons wear the logo's gradient: Glas in the Plebz
 /// palette (fork addition). Told apart by its accent, which no other palette
 /// shares and the OLED ground leaves as it is.
 bool ockerPlebzPlay(BuildContext context) {
   final tk = Theme.of(context).extension<MonoTokens>();
-  return tk != null && tk.glass && tk.accent == glasPalette(GlasAccent.plebz).accent;
+  return tk != null && tk.glass && !tk.flat && tk.accent == glasPalette(GlasAccent.plebz).accent;
 }
 
 /// A play button's ground under the Plebz palette: a capsule of the same
@@ -459,7 +597,7 @@ class OckerPlebzPlayGround extends StatelessWidget {
     } else {
       final sheen = focused ? const [0.34, 0.12, 0.22] : const [0.12, 0.03, 0.07];
       pane = CustomPaint(
-        foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context)),
+        foregroundPainter: _edge(context, shape),
         child: DecoratedBox(
           decoration: ShapeDecoration(shape: shape, color: tk.bg.withValues(alpha: 0.30)),
           child: Stack(
@@ -517,6 +655,7 @@ Color ockerGlassGround(BuildContext context) => tokens(context).bg.withValues(al
 /// light falling on a pane rather than a wash over it.
 LinearGradient ockerGlassSheen(BuildContext context) {
   final tk = tokens(context);
+  if (tk.flat) return const LinearGradient(colors: [Colors.transparent, Colors.transparent]);
   return LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -533,7 +672,10 @@ LinearGradient ockerGlassSheen(BuildContext context) {
 /// them stays glass. Over the glass it comes to about three quarters ground,
 /// which keeps even the muted ink legible over a white poster.
 BoxDecoration ockerGlassScrim(BuildContext context, {BorderRadius? borderRadius}) => BoxDecoration(
-  color: Color.lerp(tokens(context).bg, Colors.black, 0.35)!.withValues(alpha: 0.55),
+  // A flat surface is opaque already: nothing to firm up.
+  color: ockerFlat(context)
+      ? Colors.transparent
+      : Color.lerp(tokens(context).bg, Colors.black, 0.35)!.withValues(alpha: 0.55),
   borderRadius: borderRadius,
 );
 
@@ -589,6 +731,13 @@ class OckerGlass extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (ockerFlat(context)) {
+      // Flat: one solid surface, a step lighter than the ground.
+      return DecoratedBox(
+        decoration: BoxDecoration(color: _flatFill(context, 0.05), borderRadius: borderRadius),
+        child: Padding(padding: EdgeInsets.all(scrimInset), child: child),
+      );
+    }
     return CustomPaint(
       foregroundPainter: _OckerGlassEdge(
         RoundedRectangleBorder(borderRadius: borderRadius),
@@ -633,6 +782,8 @@ class OckerGlassPlate extends StatelessWidget {
     final tk = tokens(context);
     final Widget body = lit
         ? ColoredBox(color: tk.ink(1))
+        : ockerFlat(context)
+        ? ColoredBox(color: _flatFill(context, 0.08))
         : ColoredBox(
             color: ockerGlassGround(context),
             child: firm
@@ -649,7 +800,7 @@ class OckerGlassPlate extends StatelessWidget {
           child: ClipPath(
             clipper: ShapeBorderClipper(shape: shape, textDirection: Directionality.of(context)),
             child: CustomPaint(
-              foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context)),
+              foregroundPainter: _edge(context, shape),
               child: SizedBox.expand(child: body),
             ),
           ),
@@ -766,10 +917,12 @@ class _OckerWordFocusState extends State<OckerWordFocus> {
 
   @override
   Widget build(BuildContext context) {
+    // Flat focus is a white fill: what stands on it is inverted (Plebz).
+    final child = OckerFlatFocusInk(invert: widget.focused, child: widget.child);
     // On a band, the band draws both capsules; the word only says where.
     if (_band != null) {
       if (widget.focused || widget.active) _reportSoon(context);
-      return widget.child;
+      return child;
     }
     final outset = widget.outset ?? ockerWordCapsuleOutset(context);
     final lift = widget.focused ? ockerWordFocusLift(context) : 0.0;
@@ -784,7 +937,7 @@ class _OckerWordFocusState extends State<OckerWordFocus> {
             bottom: -(outset.bottom + lift),
             child: _OckerGlassCapsule(bright: widget.focused, tint: widget.active ? 1 : 0),
           ),
-        widget.child,
+        child,
       ],
     );
   }
@@ -794,8 +947,10 @@ class _OckerWordFocusState extends State<OckerWordFocus> {
 /// as long as the capsule's glide, and late in it, so the word lights as the
 /// capsule arrives rather than a moment before. Instant everywhere else, and
 /// on the reduced tier.
-Duration ockerInkFade(BuildContext context) =>
-    ockerGlass(context) ? ockerGlassMotion(const Duration(milliseconds: 240)) : Duration.zero;
+Duration ockerInkFade(BuildContext context) => ockerGlass(context) && !ockerFlat(context)
+    ? ockerGlassMotion(const Duration(milliseconds: 240))
+    // Flat focus jumps (Plebz): the ink goes with it at once.
+    : Duration.zero;
 
 /// [full] for the glass focus's own motion — the capsule's glide and the ink
 /// fading with it: on the full tier, or wherever the viewer switched them on
@@ -894,7 +1049,7 @@ class OckerGlassFocusBehind extends StatelessWidget {
       fit: StackFit.passthrough,
       children: [
         Positioned.fill(child: OckerGlassFocusFill(shape: shape)),
-        child,
+        OckerFlatFocusInk(invert: true, child: child),
       ],
     );
   }
@@ -903,7 +1058,9 @@ class OckerGlassFocusBehind extends StatelessWidget {
 /// How much taller a focused word's capsule stands than a resting one, each
 /// way: past the band's even margin round a resting capsule, and a few pixels
 /// out of the band.
-double ockerWordFocusLift(BuildContext context) => ockerBandMargin(context) + 4 * ockerScale(context);
+double ockerWordFocusLift(BuildContext context) =>
+    // Flat: focus and the one on show are the same segment, one size.
+    ockerFlat(context) ? 0 : ockerBandMargin(context) + 4 * ockerScale(context);
 
 /// The wash every palette started with; the sheen stands whole up to it.
 const _faintWash = 0.22;
@@ -930,6 +1087,18 @@ class _OckerGlassCapsule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tk = tokens(context);
+    if (tk.flat) {
+      // Flat: focus a solid white fill (what stands on it is inverted, see
+      // [OckerFlatFocusInk]); the one on show a lighter segment of ink, as a
+      // segmented switch marks it — the accent is kept for "now" and "play".
+      final Color fill = bright ? tk.ink(1) : tk.ink(0.16 * tint);
+      return IgnorePointer(
+        child: DecoratedBox(
+          decoration: ShapeDecoration(shape: shape, color: fill),
+          child: const SizedBox.expand(),
+        ),
+      );
+    }
     final wash = tk.accentWash * tint;
     final giveWay = 1 - 0.6 * math.max(0, wash - _faintWash);
     final sheen = [
@@ -974,7 +1143,11 @@ class _OckerGlassCapsule extends StatelessWidget {
 /// inside: a band of words over the page is not a menu over a poster, and the
 /// darker inner box read as a second band.
 class OckerGlassBand extends StatefulWidget {
-  const OckerGlassBand({super.key, required this.overhang, required this.child});
+  const OckerGlassBand({super.key, required this.overhang, required this.child, this.flatTrack = false});
+
+  /// Under "Flach", whether the words stand on a faint track of ink — a row
+  /// of tabs, read as one segmented switch. Elsewhere there is no band.
+  final bool flatTrack;
 
   /// The band's focus capsule, and the quiet one for the word on show.
   @visibleForTesting
@@ -1091,8 +1264,12 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
   Rect? get _focusRect => _path?.transform(Curves.easeOutCubic.transform(_glide.value));
 
   void _follow() {
-    _glide.duration = ockerGlassMotion(const Duration(milliseconds: 220));
-    _presence.duration = ockerGlassMotion(const Duration(milliseconds: 140));
+    // Flat focus jumps: a solid white fill gliding under words that invert
+    // the moment focus lands would show them dark on the dark ground on the
+    // way.
+    final flat = mounted && ockerFlat(context);
+    _glide.duration = flat ? Duration.zero : ockerGlassMotion(const Duration(milliseconds: 220));
+    _presence.duration = flat ? Duration.zero : ockerGlassMotion(const Duration(milliseconds: 140));
     final to = _focus.value;
     if (to == null) {
       _held = false;
@@ -1126,24 +1303,40 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
         key: _stackKey,
         clipBehavior: Clip.none,
         children: [
-          Positioned(
-            left: -overhang.left,
-            top: -overhang.top,
-            right: -overhang.right,
-            bottom: -overhang.bottom,
-            child: IgnorePointer(
-              child: CustomPaint(
-                foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context)),
+          // Flat: the words stand on the ground itself — or, for a row of
+          // tabs, on a faint track of ink.
+          if (ockerFlat(context) && widget.flatTrack)
+            Positioned(
+              left: -overhang.left,
+              top: -overhang.top,
+              right: -overhang.right,
+              bottom: -overhang.bottom,
+              child: IgnorePointer(
                 child: DecoratedBox(
-                  decoration: ShapeDecoration(shape: shape, color: ockerGlassGround(context)),
+                  decoration: ShapeDecoration(shape: shape, color: tokens(context).ink(0.06)),
+                  child: const SizedBox.expand(),
+                ),
+              ),
+            ),
+          if (!ockerFlat(context))
+            Positioned(
+              left: -overhang.left,
+              top: -overhang.top,
+              right: -overhang.right,
+              bottom: -overhang.bottom,
+              child: IgnorePointer(
+                child: CustomPaint(
+                  foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context)),
                   child: DecoratedBox(
-                    decoration: ShapeDecoration(shape: shape, gradient: ockerGlassSheen(context)),
-                    child: const SizedBox.expand(),
+                    decoration: ShapeDecoration(shape: shape, color: ockerGlassGround(context)),
+                    child: DecoratedBox(
+                      decoration: ShapeDecoration(shape: shape, gradient: ockerGlassSheen(context)),
+                      child: const SizedBox.expand(),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           Positioned.fill(
             child: IgnorePointer(
               child: AnimatedBuilder(

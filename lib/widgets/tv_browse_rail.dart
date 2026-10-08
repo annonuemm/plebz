@@ -25,6 +25,7 @@ import '../screens/hub_detail_screen.dart';
 import '../services/device_performance.dart';
 import '../services/settings_service.dart';
 import '../redesign/ocker_skin.dart';
+import '../redesign/ocker_type.dart';
 import '../theme/mono_tokens.dart';
 import '../utils/layout_constants.dart';
 import '../utils/media_image_helper.dart';
@@ -128,6 +129,14 @@ class TvBrowseRailLayout {
   static double scaleForSize(Size size) => TvLayoutConstants.scaleForSize(size);
 
   static double horizontalInsetForScale(double scale) => (24 * scale).clamp(18, 40).toDouble();
+
+  /// How far a row's first card stands in from the rail's own inset: room for
+  /// its focus ring and a gutter.
+  static double railEdgePaddingForScale(double scale) => FocusTheme.focusBorderWidth * 2 * scale + (12 * scale);
+
+  /// The room a [MediaCard] keeps round its picture for its focus ring: its
+  /// picture stands this far inside the card.
+  static const double mediaCardInset = 3;
 
   static double railTopPaddingForScale(double scale) => 12 * scale;
 
@@ -235,7 +244,7 @@ class TvBrowseRailLayout {
     bool hasLeading = false,
   }) {
     final focusExtra = FocusTheme.focusBorderWidth * 2 * scale;
-    final railEdgePadding = focusExtra + (12 * scale);
+    final railEdgePadding = railEdgePaddingForScale(scale);
     // Full-card rails keep their own scale-derived gutter, like full-bleed
     // grids; every other rail follows the user's grid-spacing setting, scaled
     // with the rest of the rail metrics (#2226).
@@ -605,7 +614,14 @@ class TvBrowseRail extends StatefulWidget {
     this.showTitleImpliedForHub,
     this.menuLeadingEntriesFor,
     this.backgroundBleedLeft,
+    this.contentLeft,
   });
+
+  /// Where the rows' first cards and their headings stand, from the rail's
+  /// left edge, when the page lines them up with something above them —
+  /// "Flach"'s detail page, with its buttons (Plebz). Null for the rail's own
+  /// inset, the headings a little left of the cards.
+  final double? contentLeft;
 
   @override
   State<TvBrowseRail> createState() => TvBrowseRailState();
@@ -889,6 +905,13 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
   int _defaultSlotFor(MediaHub hub) {
     final total = _totalItemCount(hub);
     return total == 0 ? 0 : _leadingCountFor(hub).clamp(0, total - 1);
+  }
+
+  /// How many titles a row holds, as the server counts them; null while it
+  /// does not say.
+  static int? _hubLength(MediaHub hub) {
+    final length = hub.size > hub.items.length ? hub.size : hub.items.length;
+    return length > 0 ? length : null;
   }
 
   int _totalItemCount(MediaHub hub) => _leadingCountFor(hub) + hub.items.length + (_hasTrailingFor(hub) ? 1 : 0);
@@ -1390,7 +1413,20 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
 
   double _scale(BuildContext context) => TvBrowseRailLayout.scaleForSize(MediaQuery.sizeOf(context));
 
-  double _horizontalInset(BuildContext context) => TvBrowseRailLayout.horizontalInsetForScale(_scale(context));
+  double _horizontalInset(BuildContext context) {
+    final scale = _scale(context);
+    final left = widget.contentLeft;
+    if (left == null) return TvBrowseRailLayout.horizontalInsetForScale(scale);
+    // A row is drawn shifted left by its room for a growing card, so its
+    // first card stands that much less than the edge padding in — and what
+    // is lined up is the card's picture, inside the card's own room.
+    return (left -
+            TvBrowseRailLayout.railEdgePaddingForScale(scale) +
+            TvBrowseRailLayout.railInteractionExpansionForScale(scale) -
+            TvBrowseRailLayout.mediaCardInset)
+        .clamp(0.0, double.infinity)
+        .toDouble();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1629,8 +1665,15 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
               ListenableSelector<bool>(
                 listenable: _focusModel,
                 selector: isActiveHub,
-                builder: (context, isActive, _) =>
-                    _buildHubHeader(context, hub: hub, hubIndex: hubIndex, isActive: isActive, scale: scale),
+                builder: (context, isActive, _) => Padding(
+                  // Lined up with the cards where the page asks for that.
+                  padding: EdgeInsets.only(
+                    left: widget.contentLeft == null
+                        ? 0
+                        : metrics.railEdgePadding - interactionExpansion + TvBrowseRailLayout.mediaCardInset,
+                  ),
+                  child: _buildHubHeader(context, hub: hub, hubIndex: hubIndex, isActive: isActive, scale: scale),
+                ),
               ),
               _buildHubRail(
                 hub: hub,
@@ -1763,7 +1806,13 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     // set here. What a row is called matters less than what is in it, and the
     // serif is the other end of the same rule — it is spent on titles only.
     final base = Theme.of(context).textTheme.titleMedium;
-    final titleStyle = ocker
+    // "Flach" names a row in sentence case, semibold, with its length beside it
+    // in a quieter weight — the design's one voice per level.
+    final flat = ockerFlat(context);
+    final flatType = flat ? OckerType.of(context) : null;
+    final titleStyle = flatType != null
+        ? flatType.sectionHeading.copyWith(color: tokens(context).ink(isActive ? 0.94 : 0.62))
+        : ocker
         ? base?.copyWith(
             fontFamily: tokens(context).monoFontFamily,
             color: titleColor,
@@ -1778,7 +1827,9 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
             height: 1,
             fontWeight: isActive ? FontWeight.w800 : FontWeight.w700,
           );
-    final serverStyle = ocker
+    final serverStyle = flatType != null
+        ? flatType.counter.copyWith(color: tokens(context).ink(0.40))
+        : ocker
         ? base?.copyWith(
             fontFamily: tokens(context).monoFontFamily,
             color: serverColor,
@@ -1807,12 +1858,16 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                       child: Text(
                         // Upper case is half of what makes it read as a label;
                         // the mono face is the other half.
-                        ocker ? hub.title.toUpperCase() : hub.title,
+                        ocker && !flat ? hub.title.toUpperCase() : hub.title,
                         maxLines: 1,
                         overflow: .ellipsis,
                         style: titleStyle,
                       ),
                     ),
+                    if (_hubLength(hub) case final length? when flatType != null) ...[
+                      SizedBox(width: 14 * ockerScale(context)),
+                      Text('$length', style: serverStyle),
+                    ],
                     if (showServerName) ...[
                       SizedBox(width: 8 * scale),
                       Text(ocker ? '·' : '•', style: serverStyle),
@@ -1993,7 +2048,11 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                       context: context,
                       isFocused: focus.$1,
                       borderRadius: tokens(context).radiusSm,
-                      focusScale: fullCardLayout ? TvBrowseRailLayout.fullCardFocusScale : FocusTheme.focusScale,
+                      focusScale: fullCardLayout
+                          ? TvBrowseRailLayout.fullCardFocusScale
+                          : ockerFlat(context)
+                          ? FocusTheme.flatPosterFocusScale
+                          : FocusTheme.focusScale,
                       useFocusGlow: fullCardLayout,
                       showGlow: focus.$2,
                       // The card draws the border itself (poster rect for

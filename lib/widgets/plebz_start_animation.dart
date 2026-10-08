@@ -253,6 +253,66 @@ class PlebzStartAnimationState extends State<PlebzStartAnimation> with TickerPro
   }
 }
 
+/// The mark at rest, [height] tall — the anchor at the top of "Flach"'s
+/// navigation (Plebz).
+class PlebzMark extends StatelessWidget {
+  const PlebzMark({super.key, required this.height, this.colours = plebzLogoColours});
+
+  final double height;
+  final List<Color> colours;
+
+  /// How wide the mark stands at [height].
+  static double widthFor(double height) => height * _MarkPainter.viewBox.width / _MarkPainter.viewBox.height;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    size: Size(widthFor(height), height),
+    painter: _MarkPainter(drawn: 1, colours: colours),
+  );
+}
+
+/// The mark with "Plebz" beside it, the name shown to [name] of the way —
+/// the open navigation's head, laid out as the start screen sets the two.
+class PlebzLockup extends StatelessWidget {
+  const PlebzLockup({super.key, required this.markHeight, this.colours = plebzLogoColours, this.name = 1});
+
+  final double markHeight;
+  final List<Color> colours;
+
+  /// 0 for the mark alone, 1 for the name in full.
+  final double name;
+
+  @override
+  Widget build(BuildContext context) {
+    final textHeight = PlebzStartAnimation.textHeightFor(markHeight);
+    final shown = name.clamp(0.0, 1.0);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PlebzMark(height: markHeight, colours: colours),
+        if (shown > 0)
+          ClipRect(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              widthFactor: shown,
+              child: Opacity(
+                opacity: shown,
+                child: Padding(
+                  padding: EdgeInsets.only(left: textHeight * PlebzStartAnimation._sideGap),
+                  child: Image.asset(
+                    'assets/plebz_wordmark.png',
+                    height: textHeight,
+                    filterQuality: FilterQuality.medium,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 /// The mark, drawn up to [drawn] of its stroke, with a sheen at [sheen] of
 /// its run when one is passing.
 class _MarkPainter extends CustomPainter {

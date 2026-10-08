@@ -11,7 +11,7 @@ import '../../providers/seerr_account_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/recommendations_service.dart';
 import '../../services/settings_service.dart' hide ThemeMode;
-import '../../theme/mono_theme.dart' show redesignOfferedHere, supportedAppThemeVariant;
+import '../../theme/mono_theme.dart' show isRedesignVariant, redesignOfferedHere, supportedAppThemeVariant;
 import '../../focus/focusable_slider.dart';
 import '../../services/device_performance.dart';
 import '../../utils/dialogs.dart';
@@ -23,7 +23,7 @@ import '../../widgets/settings_page.dart';
 import '../../widgets/settings_builder.dart';
 import '../../widgets/settings_section.dart';
 import '../../redesign/ocker_skin.dart' show isOckerLayout;
-import 'plebz_settings_rows.dart' show plebzThemeModeRow;
+import 'plebz_settings_rows.dart' show flachAccentTile, plebzThemeModeRow;
 import 'settings_utils.dart';
 import '../../utils/fork_identity.dart';
 
@@ -56,9 +56,11 @@ class AppearanceSettingsScreen extends StatelessWidget {
             // look that is otherwise not there.
             SettingValueBuilder<AppThemeVariant>(
               pref: SettingsService.appThemeVariant,
-              builder: (context, variant, _) => supportedAppThemeVariant(variant) == AppThemeVariant.glas
-                  ? _glasAccentSelector()
-                  : const SizedBox.shrink(),
+              builder: (context, variant, _) => switch (supportedAppThemeVariant(variant)) {
+                AppThemeVariant.glas => _glasAccentSelector(),
+                AppThemeVariant.flach => flachAccentTile(),
+                AppThemeVariant.standard => const SizedBox.shrink(),
+              },
             ),
             // The glass focus's own motion, apart from the rest of the effects.
             // Not on a phone or tablet: a finger never puts focus anywhere.
@@ -89,12 +91,16 @@ class AppearanceSettingsScreen extends StatelessWidget {
             if (PlatformDetector.isTV())
               SettingValueBuilder<AppThemeVariant>(
                 pref: SettingsService.appThemeVariant,
-                builder: (context, variant, _) => supportedAppThemeVariant(variant) == AppThemeVariant.glas
+                builder: (context, variant, _) => isRedesignVariant(supportedAppThemeVariant(variant))
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Both redesigns: under "Flach" the colours take
+                          // the place of its plain ground (the user's wish).
                           SettingSwitchTile(
-                            pref: SettingsService.glasUltraBlur,
+                            pref: SettingsService.ultraBlurFor(
+                              flat: supportedAppThemeVariant(variant) == AppThemeVariant.flach,
+                            ),
                             icon: Symbols.gradient_rounded,
                             title: t.settings.glasUltraBlur,
                             subtitle: t.settings.glasUltraBlurDescription,
@@ -621,6 +627,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
     subtitleBuilder: (value) => switch (supportedAppThemeVariant(value)) {
       AppThemeVariant.standard => t.settings.appThemeVariantStandard,
       AppThemeVariant.glas => t.settings.appThemeVariantGlas,
+      AppThemeVariant.flach => t.settings.appThemeVariantFlach,
     },
     options: [
       DialogOption(
@@ -634,6 +641,12 @@ class AppearanceSettingsScreen extends StatelessWidget {
           value: AppThemeVariant.glas,
           title: t.settings.appThemeVariantGlas,
           subtitle: t.settings.appThemeVariantGlasDescription,
+        ),
+      if (redesignOfferedHere)
+        DialogOption(
+          value: AppThemeVariant.flach,
+          title: t.settings.appThemeVariantFlach,
+          subtitle: t.settings.appThemeVariantFlachDescription,
         ),
     ],
   );

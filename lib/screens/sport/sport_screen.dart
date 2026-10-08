@@ -205,10 +205,10 @@ class SportScreenState extends State<SportScreen>
         children: [
           // Which league this is, said where the chips would have said it.
           Text(
-            _labelOf(_leagues[tabController.index]).toUpperCase(),
-            style: look.heading.copyWith(color: tk.ink(0.72)),
+            look.headingCase(_labelOf(_leagues[tabController.index])),
+            style: (look.flat ? look.leagueLabel : look.heading).copyWith(color: tk.ink(look.flat ? 0.6 : 0.72)),
           ),
-          SizedBox(height: 16 * scale),
+          SizedBox(height: (look.flat ? 8 : 16) * scale),
           Expanded(child: views),
         ],
       ),

@@ -312,7 +312,8 @@ class _TrailerStageScreenState extends State<TrailerStageScreen> with WidgetsBin
       if (item.year != null) MetadataLineText(item.year.toString(), dropPriority: 0),
       if (mediaRatingsFor(item) case final ratings when ratings.isNotEmpty)
         MetadataLineRatings(ratings, dropPriority: 1),
-      if (item.contentRating != null) MetadataLineText(formatContentRating(item.contentRating!), dropPriority: 2),
+      if (item.contentRating != null)
+        MetadataLineText(formatContentRating(item.contentRating!), dropPriority: 2, badge: true),
       // The genres are the reason this line exists on the stage: with several
       // chosen, knowing which one you are looking at is the whole point.
       if (item.genres case final genres? when genres.isNotEmpty)

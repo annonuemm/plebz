@@ -981,6 +981,121 @@ void main() {
     const flattenHub = MediaHub(id: 'detail_episodes', title: 'Episodes', type: 'episode', items: <MediaItem>[]);
     expect(rail.leadingItemForHub!(flattenHub), isNull);
   });
+  testWidgets('under Flach the seasons are a row of tabs over the one row of the chosen season\'s episodes', (
+    tester,
+  ) async {
+    await SettingsService.getInstance();
+
+    final show = testMediaItem(
+      id: 'show_1',
+      backend: MediaBackend.jellyfin,
+      kind: MediaKind.show,
+      title: 'The Show',
+      serverId: 'server_1',
+      serverName: 'Server',
+    );
+    MediaItem season(int n) => testMediaItem(
+      id: 'season_$n',
+      backend: MediaBackend.jellyfin,
+      kind: MediaKind.season,
+      title: 'Season $n',
+      index: n,
+      parentId: show.id,
+      serverId: show.serverId,
+      serverName: show.serverName,
+    );
+    MediaItem episode(MediaItem season) => testMediaItem(
+      id: 'episode_${season.index}',
+      backend: MediaBackend.jellyfin,
+      kind: MediaKind.episode,
+      title: 'Episode of ${season.title}',
+      index: 1,
+      parentId: season.id,
+      parentIndex: season.index,
+      grandparentId: show.id,
+      serverId: show.serverId,
+      serverName: show.serverName,
+    );
+    final seasons = [season(1), season(2), season(3)];
+    final client = _FakeMediaServerClient(
+      show: show,
+      childrenByParent: {
+        show.id: seasons,
+        for (final s in seasons) s.id: [episode(s)],
+      },
+    );
+    final provider = testMultiServer(clients: [client]).provider;
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: ChangeNotifierProvider<MultiServerProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+            home: withProfileNavigationScope(
+              child: SizedBox(width: 1280, height: 720, child: MediaDetailScreen(metadata: show)),
+            ),
+          ),
+        ),
+      ),
+    );
+    for (var i = 0; i < 4; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    TvBrowseRail rail() => tester.widget<TvBrowseRail>(find.byType(TvBrowseRail));
+    List<MediaHub> episodeRows() => rail().hubs.where((hub) => hub.id.startsWith('detail_season_')).toList();
+    final tabs = find.descendant(
+      of: find.byKey(const ValueKey('tv_detail_season_tabs')),
+      matching: find.byType(FocusableTabChip),
+    );
+    List<FocusableTabChip> chips() => tester.widgetList<FocusableTabChip>(tabs).toList();
+    int? focusedTab() {
+      final index = chips().indexWhere((chip) => chip.focusNode?.hasFocus ?? false);
+      return index < 0 ? null : index;
+    }
+
+    Future<void> press(LogicalKeyboardKey key) async {
+      await tester.sendKeyEvent(key);
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    // The tabs stand over one row of episodes, the first season's.
+    expect(chips().map((chip) => chip.label), ['Season 1', 'Season 2', 'Season 3']);
+    expect(chips().map((chip) => chip.isSelected), [true, false, false]);
+    expect(rail().hubs.where((hub) => hub.type == 'chip'), isEmpty, reason: 'not a row of the rail');
+    expect(episodeRows().single.items.single.id, 'episode_1');
+
+    // Down from the buttons: the tab of the season on show, not the episodes.
+    await press(LogicalKeyboardKey.arrowDown);
+    expect(focusedTab(), 0);
+
+    // The episodes, the rows' heading and the tabs start where the buttons
+    // do (the viewer's call).
+    final heading = find.descendant(of: find.byType(TvBrowseRail), matching: find.text('Season 1'));
+    final card = find.descendant(of: find.byType(TvBrowseRail), matching: find.byType(MediaCard)).first;
+    final picture = find.descendant(of: card, matching: find.byType(ClipRRect)).first;
+    final contentLeft = rail().contentLeft;
+    expect(contentLeft, isNotNull);
+    expect(tester.getTopLeft(heading).dx, closeTo(contentLeft!, 0.5));
+    expect(tester.getTopLeft(picture).dx, closeTo(contentLeft, 0.5));
+
+    // Right chooses the next season, and the one row follows.
+    await press(LogicalKeyboardKey.arrowRight);
+    expect(focusedTab(), 1);
+    expect(chips().map((chip) => chip.isSelected), [false, true, false]);
+    expect(episodeRows().single.items.single.id, 'episode_2');
+    expect(rail().leadingItemForHub!(episodeRows().single)?.id, 'season_2');
+
+    // Down into the episodes, up again onto that season's tab.
+    await press(LogicalKeyboardKey.arrowDown);
+    expect(focusedTab(), isNull);
+    await press(LogicalKeyboardKey.arrowUp);
+    expect(focusedTab(), 1);
+  });
+
   testWidgets('TV detail reveal still waits for the supplemental sections', (tester) async {
     // Counterpart to the test above: the early paint does NOT move the TV
     // reveal. `_isTvDetailReadyToReveal` additionally requires extras, related

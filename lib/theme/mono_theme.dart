@@ -82,6 +82,27 @@ const plebzGradient = LinearGradient(
 /// ground is this, which is how the backdrop tells the two apart.
 const glasOledGround = Color(0xFF000000);
 
+/// The redesigns' ground with the off-black choice on
+/// ([SettingsService.redesignOffBlack]): the dark grey Material calls its
+/// dark surface, softer than black, and as plain — no lift, no glow. No
+/// palette's own ground is this either.
+const redesignOffBlackGround = Color(0xFF121212);
+
+/// How light a ground of the viewer's own colour may be, as an HSV value: the
+/// redesigns' ink stays light, and over a lighter ground it stops reading.
+const redesignGroundMaxValue = 0.35;
+
+/// A ground of the viewer's own colour ([SettingsService.redesignGroundColour]),
+/// taken down to [redesignGroundMaxValue] where it is lighter; off-black for
+/// anything that does not read as `#RRGGBB`.
+Color redesignGroundFromHex(String hex) {
+  final digits = hex.replaceFirst('#', '');
+  final value = digits.length == 6 ? int.tryParse(digits, radix: 16) : null;
+  if (value == null) return redesignOffBlackGround;
+  final hsv = HSVColor.fromColor(Color(0xFF000000 | value));
+  return hsv.value <= redesignGroundMaxValue ? hsv.toColor() : hsv.withValue(redesignGroundMaxValue).toColor();
+}
+
 /// How much of its accent a palette spends on the chosen capsule.
 ///
 /// Only red differs. The faint wash that marks it in the others reads as
@@ -96,7 +117,22 @@ double glasAccentWash(GlasAccent accent) => accent == GlasAccent.rot ? 0.7 : 0.2
 /// the hairline focus ring, the absence of shadows — all of that belongs to
 /// the redesign and answers here. Which ground and which accent is a separate
 /// question with a separate switch.
-bool isRedesignVariant(AppThemeVariant variant) => variant == AppThemeVariant.glas;
+bool isRedesignVariant(AppThemeVariant variant) => variant == AppThemeVariant.glas || variant == AppThemeVariant.flach;
+
+/// "Redesign – Flach"'s ground and ink (Plebz): the design's near-black with a
+/// trace of violet, an all but neutral white the viewer chose, the accent the
+/// viewer's own.
+const flachGround = Color(0xFF08070C);
+const flachInk = Color(0xFFF9FAFB);
+const flachDefaultAccent = Color(0xFFA866EE);
+
+/// [SettingsService.flachAccent]'s `#RRGGBB` as a colour; the default violet
+/// for anything that does not read as one.
+Color flachAccentFromHex(String hex) {
+  final digits = hex.replaceFirst('#', '');
+  final value = digits.length == 6 ? int.tryParse(digits, radix: 16) : null;
+  return value == null ? flachDefaultAccent : Color(0xFF000000 | value);
+}
 
 bool? _debugRedesignOffered;
 
@@ -137,14 +173,27 @@ List<AppThemeVariant> get offeredAppThemeVariants => [
 AppThemeVariant supportedAppThemeVariant(AppThemeVariant variant) =>
     isRedesignVariant(variant) && !redesignOfferedHere ? AppThemeVariant.standard : variant;
 
-final Map<({bool dark, bool oled, TargetPlatform platform, AppThemeVariant variant, GlasAccent? glasAccent}), ThemeData>
+final Map<
+  ({
+    bool dark,
+    bool oled,
+    Color? plainGround,
+    TargetPlatform platform,
+    AppThemeVariant variant,
+    GlasAccent? glasAccent,
+    Color? flachAccent,
+  }),
+  ThemeData
+>
 _monoThemeCache = {};
 
 ThemeData monoTheme({
   required bool dark,
   bool oled = false,
+  Color? plainGround,
   AppThemeVariant variant = AppThemeVariant.standard,
   GlasAccent glasAccent = GlasAccent.eisblau,
+  Color flachAccent = flachDefaultAccent,
 }) {
   // ThemeData derives several defaults from defaultTargetPlatform. The variant
   // is part of the key too: the redesign is a different theme, not a tint of
@@ -153,9 +202,12 @@ ThemeData monoTheme({
   final key = (
     dark: dark || oled,
     oled: oled,
+    // Only where it paints anything: the redesigns, and not over OLED's black.
+    plainGround: oled || !isRedesignVariant(variant) ? null : plainGround,
     platform: defaultTargetPlatform,
     variant: variant,
     glasAccent: variant == AppThemeVariant.glas ? glasAccent : null,
+    flachAccent: variant == AppThemeVariant.flach ? flachAccent : null,
   );
   final cached = _monoThemeCache[key];
   if (cached != null) return cached;
@@ -163,9 +215,11 @@ ThemeData monoTheme({
   final theme = _buildMonoTheme(
     dark: key.dark,
     oled: key.oled,
+    plainGround: key.plainGround,
     platform: key.platform,
     variant: key.variant,
     glasAccent: glasAccent,
+    flachAccent: flachAccent,
   );
   _monoThemeCache[key] = theme;
   return theme;
@@ -174,15 +228,18 @@ ThemeData monoTheme({
 ThemeData _buildMonoTheme({
   required bool dark,
   required bool oled,
+  required Color? plainGround,
   required TargetPlatform platform,
   required AppThemeVariant variant,
   required GlasAccent glasAccent,
+  required Color flachAccent,
 }) {
   // Which structure to build, and which of its two palettes to paint it in.
   // Its corner, its typeface and its want of shadows follow from the first;
   // only colour follows from the second.
   final redesign = isRedesignVariant(variant);
-  final glas = glasPalette(glasAccent);
+  final flat = variant == AppThemeVariant.flach;
+  final glas = flat ? (bg: flachGround, text: flachInk, accent: flachAccent) : glasPalette(glasAccent);
 
   // neutral greys tuned for crisp contrast
   final ({Color bg, Color surface, Color outline, Color text, Color textMuted}) c;
@@ -191,12 +248,13 @@ ThemeData _buildMonoTheme({
     // one ground and one ink per palette and says outright that a value not in
     // it should not appear in the UI; a light counterpart would have to be
     // invented rather than read off. So the light/dark switch does not reach
-    // it. OLED does, as the one other ground: black in place of the palette's
-    // own, the ink and the accent untouched.
+    // it. OLED does, as one other ground: black in place of the palette's
+    // own, the ink and the accent untouched — and a plain colour, off-black or
+    // the viewer's own (see [ThemeProvider]).
     //
     // `surface` is the design's block fill (ink at 6%) already composited over
     // the ground, because Flutter surfaces are painted opaque.
-    final ground = oled ? glasOledGround : glas.bg;
+    final ground = oled ? glasOledGround : plainGround ?? glas.bg;
     c = (
       bg: ground,
       // The block fill composited over the ground.
@@ -498,7 +556,8 @@ ThemeData _buildMonoTheme({
         shadowsEnabled: !redesign,
         redesignLayout: redesign,
         glass: redesign,
-        accentWash: redesign ? glasAccentWash(glasAccent) : 0.22,
+        flat: flat,
+        accentWash: redesign && !flat ? glasAccentWash(glasAccent) : 0.22,
       ),
     ],
   );
@@ -515,7 +574,7 @@ void applyIconDefaultsFor(AppThemeVariant variant) {
       AppThemeVariant.standard => 1,
       // Ocker fills exactly two glyphs, and neither of them goes through here:
       // the play triangle and the LIVE marker draw their own.
-      AppThemeVariant.glas => 0,
+      AppThemeVariant.glas || AppThemeVariant.flach => 0,
     },
     weight: switch (variant) {
       AppThemeVariant.standard => 700,
@@ -523,6 +582,9 @@ void applyIconDefaultsFor(AppThemeVariant variant) {
       // beside it, which is the whole argument for letting words do the
       // naming and leaving the symbol as a hint.
       AppThemeVariant.glas => 200,
+      // Flat leans on words and a few plain glyphs; a little more ink keeps
+      // the glyphs from vanishing without glass to sit on.
+      AppThemeVariant.flach => 300,
     },
   );
 }

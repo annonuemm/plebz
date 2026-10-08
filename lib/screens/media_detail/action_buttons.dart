@@ -172,6 +172,23 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
         // Under glass the buttons lie bare on one band — see [actionBar] — and
         // focus is the band's capsule gliding along them.
         final glass = ockerGlass(context);
+        // "Flach" (Plebz): each a disc of its own, a faint ink at rest and the
+        // white of focus; the play segments wear a gradient instead (see
+        // [flatPlayGround]).
+        if (tk.flat) {
+          return ButtonStyle(
+            padding: padding != null ? WidgetStatePropertyAll(padding) : null,
+            minimumSize: WidgetStatePropertyAll(padding == null ? Size.square(actionSize) : Size(0, actionSize)),
+            maximumSize: padding == null ? WidgetStatePropertyAll(Size.square(actionSize)) : null,
+            fixedSize: padding == null ? WidgetStatePropertyAll(Size.square(actionSize)) : null,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+            overlayColor: noOverlay,
+            backgroundColor: WidgetStatePropertyAll(showFocus ? tk.ink(1) : tk.ink(0.10)),
+            foregroundColor: WidgetStatePropertyAll(showFocus ? tk.bg : foregroundColor ?? tk.ink(0.9)),
+            shape: WidgetStatePropertyAll(shape ?? (padding == null ? const CircleBorder() : const StadiumBorder())),
+          );
+        }
         return ButtonStyle(
           padding: padding != null ? WidgetStatePropertyAll(padding) : null,
           minimumSize: WidgetStatePropertyAll(padding == null ? Size.square(actionSize) : Size(0, actionSize)),
@@ -219,8 +236,46 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
       backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
       foregroundColor: const WidgetStatePropertyAll(Colors.white),
     );
-    Widget plebzGround(Widget button, OutlinedBorder shape, bool focused) =>
-        plebzPlay ? OckerPlebzPlayGround(focused: focused, shape: shape, child: button) : button;
+    // "Flach": the one loud action — a gradient from the accent, and focus a
+    // thin ring standing off it, as round a poster.
+    final flat = ockerFlat(context);
+    Widget flatPlayGround(Widget button, OutlinedBorder shape, bool focused) {
+      final tk = tokens(context);
+      final scale = ockerScale(context);
+      return DecoratedBox(
+        decoration: ShapeDecoration(
+          shape: shape,
+          gradient: LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            colors: plebzMarkColours(context),
+            stops: const [0, 0.55, 1],
+          ),
+          shadows: focused ? [BoxShadow(color: tk.accent.withValues(alpha: 0.35), blurRadius: 40 * scale)] : null,
+        ),
+        position: DecorationPosition.background,
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: FlatFocusRingDecoration(
+            ink: tk.ink(1),
+            ground: tk.bg,
+            gap: FocusTheme.flatRingGap * scale,
+            ringWidth: FocusTheme.flatRingWidth * scale,
+            opacity: focused ? 1 : 0,
+            borderRadius: shape is RoundedRectangleBorder
+                ? shape.borderRadius.resolve(Directionality.of(context))
+                : BorderRadius.circular(actionSize / 2),
+          ),
+          child: button,
+        ),
+      );
+    }
+
+    Widget plebzGround(Widget button, OutlinedBorder shape, bool focused) => flat
+        ? flatPlayGround(button, shape, focused)
+        : plebzPlay
+        ? OckerPlebzPlayGround(focused: focused, shape: shape, child: button)
+        : button;
     // A capsule, as the glass focus is: half its height for a corner.
     const playCapsule = StadiumBorder();
 
@@ -228,7 +283,7 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
       final style = actionButtonStyle(
         showFocus: state.showFocus,
         padding: .symmetric(horizontal: isTv ? 17 * tvScale : 16, vertical: isTv ? 9 * tvScale : 0),
-        shape: playShape ?? (plebzPlay ? playCapsule : null),
+        shape: playShape ?? (plebzPlay || flat ? playCapsule : null),
       );
       return Semantics(
         label: playSemanticsLabel,
@@ -240,7 +295,7 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
           child: plebzGround(
             FilledButton(
               onPressed: onPlayPressed,
-              style: plebzPlay ? plebzStyle.merge(style) : style,
+              style: plebzPlay || flat ? plebzStyle.merge(style) : style,
               child: playButtonLabel.isNotEmpty
                   ? Row(
                       mainAxisSize: .min,
@@ -279,7 +334,7 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
             child: plebzGround(
               FilledButton(
                 onPressed: onPlayVersionPressed,
-                style: plebzPlay ? plebzStyle.merge(versionStyle) : versionStyle,
+                style: plebzPlay || flat ? plebzStyle.merge(versionStyle) : versionStyle,
                 child: AppIcon(Symbols.keyboard_arrow_down_rounded, fill: 1, size: playIconSize),
               ),
               versionShape,
@@ -544,7 +599,8 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
     Widget actionBar(List<FocusableAction> actions) {
       // Under glass the row is one band, as the header's destinations are,
       // and focus the band's capsule gliding from button to button.
-      final glass = ockerGlass(context);
+      // Flat: each button is its own shape and marks its own focus.
+      final glass = ockerGlass(context) && !ockerFlat(context);
       final bar = FocusableActionBar(
         actions: actions,
         spacing: gap,

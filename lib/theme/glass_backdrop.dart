@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/settings_service.dart' show GlasAccent;
-import 'mono_theme.dart' show glasOledGround, glasPalette;
+import 'mono_theme.dart' show flachGround, glasPalette;
 import 'mono_tokens.dart';
 
 /// The ground of "Redesign – Glas", in the manner of Apple TV's own: a flat
@@ -19,10 +19,10 @@ import 'mono_tokens.dart';
 /// own takes none from its accent: red over a grey lift reads as brown, and
 /// the black of black, white and red should stay black.
 ///
-/// With the OLED choice on there is no ground to speak of: black, flat, and no
-/// light on it.
+/// With a plain ground chosen — OLED, off-black, a colour of the viewer's own —
+/// there is no ground to speak of: the one colour, flat, and no light on it.
 LinearGradient glassBackdropGradient(MonoTokens tk) {
-  if (_oled(tk)) return const LinearGradient(colors: [glasOledGround, glasOledGround]);
+  if (_plain(tk)) return LinearGradient(colors: [tk.bg, tk.bg]);
   if (_neutral(tk)) return neutralGlassBackdropGradient;
   // Black, flat: the light on it is the accent's own glow from below.
   if (_hueless(tk.bg)) return LinearGradient(colors: [tk.bg, tk.bg]);
@@ -47,7 +47,7 @@ LinearGradient glassBackdropGradient(MonoTokens tk) {
 /// pure colour, unmixed with any grey, rising from below the foot — a red
 /// glow on black rather than a reddish grey, which is what read as brown.
 RadialGradient glassBackdropGlow(MonoTokens tk) {
-  if (_oled(tk)) return const RadialGradient(colors: [Color(0x00000000), Color(0x00000000)]);
+  if (_plain(tk)) return const RadialGradient(colors: [Color(0x00000000), Color(0x00000000)]);
   if (_neutral(tk)) return neutralGlassBackdropGlow;
   if (_hueless(tk.bg)) {
     return RadialGradient(
@@ -123,7 +123,45 @@ class _SquashedVertically extends GradientTransform {
 
 bool _neutral(MonoTokens tk) => tk.bg == glasPalette(GlasAccent.grau).bg;
 
-bool _oled(MonoTokens tk) => tk.bg == glasOledGround;
+/// OLED's black, the off-black or the viewer's own colour: a ground chosen to
+/// be one flat colour — anything but the palette's own.
+bool _plain(MonoTokens tk) =>
+    tk.flat ? tk.bg != flachGround : !GlasAccent.values.any((accent) => glasPalette(accent).bg == tk.bg);
+
+/// "Flach" on its own ground: the accent, faint, in two lights — one at the
+/// top left behind the logo, one at the bottom right — so the plain dark
+/// carries the colour the viewer picked (the user's call). Nothing on a plain
+/// ground — off-black, OLED, the viewer's own colour.
+///
+/// Public because the start page's spotlight covers the whole screen with its
+/// picture and scrims of solid ground, and lays these over them again.
+List<RadialGradient> flachGroundGlows(MonoTokens tk) {
+  if (!tk.flat || tk.bg != flachGround) return const [];
+  RadialGradient light(Alignment center, double radius, double alpha) => RadialGradient(
+    center: center,
+    radius: radius,
+    colors: [
+      tk.accent.withValues(alpha: alpha),
+      tk.accent.withValues(alpha: alpha * 0.4),
+      tk.accent.withValues(alpha: 0),
+    ],
+    stops: const [0, 0.45, 1],
+  );
+  return [light(const Alignment(-0.95, -1), 0.9, 0.16), light(const Alignment(1, 1), 1.0, 0.12)];
+}
+
+/// [flachGroundGlows] as a layer over whatever is under it.
+class FlachGroundGlow extends StatelessWidget {
+  const FlachGroundGlow({super.key, required this.glows});
+
+  final List<RadialGradient> glows;
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    fit: StackFit.expand,
+    children: [for (final glow in glows) DecoratedBox(decoration: BoxDecoration(gradient: glow))],
+  );
+}
 
 /// [child] on the glass ground, where the theme is glass; [child] alone
 /// everywhere else.
@@ -136,7 +174,21 @@ class GlassBackdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     final tk = Theme.of(context).extension<MonoTokens>();
     if (tk == null || !tk.glass) return child;
-    if (_oled(tk)) return ColoredBox(color: glasOledGround, child: child);
+    // Flat (Plebz): no gradient, only the accent's two faint lights — and the
+    // same widgets on every ground, so switching it keeps the page under it.
+    if (tk.flat) {
+      return ColoredBox(
+        color: tk.bg,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            IgnorePointer(child: FlachGroundGlow(glows: flachGroundGlows(tk))),
+            child,
+          ],
+        ),
+      );
+    }
+    if (_plain(tk)) return ColoredBox(color: tk.bg, child: child);
     return DecoratedBox(
       decoration: BoxDecoration(gradient: glassBackdropGradient(tk)),
       child: DecoratedBox(

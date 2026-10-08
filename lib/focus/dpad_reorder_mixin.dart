@@ -59,7 +59,8 @@ class DpadReorderRowMark extends StatelessWidget {
             ),
           ),
         ),
-        child,
+        // Flat focus is a white fill: what stands on it is inverted (Plebz).
+        OckerFlatFocusInk(invert: isRowFocused && !isMoving, child: child),
       ],
     );
   }
@@ -95,7 +96,7 @@ class DpadReorderButtonFocus extends StatelessWidget {
             ),
           ),
         ),
-        child,
+        OckerFlatFocusInk(invert: isFocused, child: child),
       ],
     );
   }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../redesign/ocker_skin.dart' show OckerKeepColours;
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui';
@@ -214,10 +215,12 @@ class OptimizedMediaImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = localFilePath;
-    if (path == null) {
-      return _buildResolved(context, LocalFileResolution.missing, null);
-    }
-    return ResolvedLocalFile(path: path, cacheMissing: cacheMissingLocalFile, builder: _buildResolved);
+    // A picture keeps its colours under a flat focus fill (Plebz).
+    return OckerKeepColours(
+      child: path == null
+          ? _buildResolved(context, LocalFileResolution.missing, null)
+          : ResolvedLocalFile(path: path, cacheMissing: cacheMissingLocalFile, builder: _buildResolved),
+    );
   }
 
   Widget _buildResolved(BuildContext context, LocalFileResolution resolution, File? localFile) {

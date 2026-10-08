@@ -54,7 +54,8 @@ Widget buildFocusChrome(
             ),
           ),
         ),
-        child,
+        // Flat focus is a white fill: what stands on it is inverted (Plebz).
+        OckerFlatFocusInk(invert: showFocus, child: child),
       ],
     );
   } else {

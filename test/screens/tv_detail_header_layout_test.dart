@@ -130,4 +130,45 @@ void main() {
       expect(used, lessThanOrEqualTo(metrics.availableHeight + 0.01));
     });
   });
+
+  test('under Flach the two rows of facts stand closer to each other than the summary stands to them', () {
+    for (final hero in [false, true]) {
+      TvDetailHeaderMetrics metrics({required bool flat}) => TvDetailHeaderMetrics(
+        availableHeight: 400,
+        scale: _tvScale,
+        hasDescription: true,
+        hasGenres: false,
+        heroLayout: hero,
+        hasQualityLine: true,
+        flatFacts: flat,
+      );
+      final flat = metrics(flat: true);
+      // Plain words at 16 and 13 on the rows, height 1: what each row leaves
+      // above and below its line.
+      final firstSlack = (flat.metadataLineHeight - 16 * _tvScale) / 2;
+      final secondSlack = (flat.metadataLineHeight - 16 * 0.82 * _tvScale) / 2;
+      final betweenRows = firstSlack + flat.metadataRowGap + secondSlack;
+      final toSummary = secondSlack + flat.summaryGap;
+      expect(betweenRows * 1.5, lessThan(toSummary), reason: 'hero: $hero');
+      expect(flat.metadataBlockHeight, lessThan(metrics(flat: false).metadataBlockHeight), reason: 'hero: $hero');
+    }
+  });
+
+  test('a title capped at the start page\'s size leaves the summary lines a logo slot would have taken', () {
+    TvDetailHeaderMetrics metrics({double? cap}) => TvDetailHeaderMetrics(
+      availableHeight: 220,
+      scale: _tvScale,
+      hasDescription: true,
+      hasGenres: false,
+      hasEpisodeTitle: true,
+      hasQualityLine: true,
+      flatFacts: true,
+      titleCap: cap,
+    );
+    final open = resolveTvDetailHeaderLayout(metrics());
+    final capped = resolveTvDetailHeaderLayout(metrics(cap: 36));
+    expect(capped.summaryLines, greaterThan(open.summaryLines));
+    expect(capped.summaryLines, greaterThanOrEqualTo(2));
+    expect(capped.titleHeight, lessThanOrEqualTo(36));
+  });
 }

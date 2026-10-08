@@ -62,7 +62,10 @@ String formatDurationTextual(int milliseconds, {bool abbreviated = true}) {
     abbreviated: abbreviated,
     locale: durationLocale,
     delimiter: abbreviated ? ' ' : ', ',
-    spacer: '',
+    // German is the one language whose short units are words ("Std",
+    // "Min") rather than symbols ("h", "min", "分"), and a word glued to its
+    // number reads as a typo: "1 Std 20 Min", not "1Std 20Min".
+    spacer: abbreviated && durationLocale is GermanDurationLocale ? ' ' : '',
     tersity: duration.inMinutes == 0 ? DurationTersity.second : DurationTersity.minute,
   );
 }

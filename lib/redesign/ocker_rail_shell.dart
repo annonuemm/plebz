@@ -34,7 +34,7 @@ import 'ultra_blur_backdrop.dart';
 /// whole width drew its right-hand column off the edge by the rail's strip.
 class OckerRailShell extends StatefulWidget {
   /// The destinations whose ground follows the focused title, where that is
-  /// switched on ([SettingsService.glasUltraBlur]).
+  /// switched on ([SettingsService.ultraBlurFor]).
   static const Set<NavigationTabId> ultraBlurDestinations = {NavigationTabId.discover, NavigationTabId.explore};
 
   /// The destinations, already filtered — see [OckerSideRail.tabs].
@@ -124,7 +124,7 @@ class _OckerRailShellState extends State<OckerRailShell> {
     final railWidth = OckerSideRail.collapsedWidth(context);
 
     return SettingValueBuilder<bool>(
-      pref: SettingsService.glasUltraBlur,
+      pref: SettingsService.ultraBlurFor(flat: tokens(context).flat),
       builder: (context, ultraBlurOn, _) {
         // Home and Explore only (the user's call): every other destination
         // keeps the theme's own ground, and its posters report to nothing.
@@ -256,7 +256,11 @@ class _Chrome extends StatelessWidget {
         children: [
           builder(context),
           SizedBox(width: 18 * scale),
-          SystemClock(style: OckerType.of(context).clock.copyWith(color: tk.ink(0.72))),
+          SystemClock(
+            style: OckerType.of(
+              context,
+            ).clock.copyWith(color: tk.ink(tk.flat ? 0.62 : 0.72), fontWeight: tk.flat ? FontWeight.w500 : null),
+          ),
         ],
       ),
     );

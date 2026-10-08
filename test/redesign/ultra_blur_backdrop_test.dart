@@ -7,6 +7,7 @@ import 'package:plezy/database/app_database.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/media/ids.dart';
 import 'package:plezy/media/media_backend.dart';
+import 'package:plezy/media/media_item.dart';
 import 'package:plezy/media/media_kind.dart';
 import 'package:plezy/media/ultra_blur_colors.dart';
 import 'package:plezy/models/catalog/catalog_item.dart';
@@ -17,6 +18,7 @@ import 'package:plezy/services/plex_api_cache.dart';
 import 'package:plezy/services/plex_client.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/widgets/tv_spotlight_background.dart';
 
 import '../test_helpers/backend_client_fixtures.dart';
 import '../test_helpers/http_fixtures.dart';
@@ -285,6 +287,54 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(UltraBlurLayer), findsNothing);
     expect(screenKey.currentState, same(screen));
+  });
+
+  testWidgets('under Flach the spotlight runs into the colours through its own two fades', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final ambient = UltraBlurAmbient((owner: (_) => null, any: () => null));
+    addTearDown(ambient.dispose);
+    const item = MediaItem.plex(id: 'movie_1', kind: MediaKind.movie, title: 'Flat Movie', year: 2024);
+
+    Future<void> pump(AppThemeVariant variant, {required bool colours}) async {
+      final spotlight = TvSpotlightBackground(
+        item: item,
+        client: null,
+        allowNetwork: false,
+        compact: true,
+        contentTop: 80,
+        contentBottom: 200,
+      );
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: MaterialApp(
+            theme: monoTheme(dark: true, variant: variant),
+            home: Scaffold(
+              body: SizedBox.expand(
+                child: colours ? UltraBlurScope(ambient: ambient, child: spotlight) : spotlight,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+
+    await pump(AppThemeVariant.flach, colours: true);
+    final layers = tester.widgetList<UltraBlurLayer>(find.byType(UltraBlurLayer)).toList();
+    expect(layers, hasLength(2), reason: 'one copy for the side fade, one for the foot');
+    expect(layers.map((layer) => layer.dim), everyElement(TvSpotlightBackground.flatUltraBlurDim));
+    for (final layer in find.byType(UltraBlurLayer).evaluate()) {
+      expect(find.ancestor(of: find.byWidget(layer.widget), matching: find.byType(ShaderMask)), findsOneWidget);
+    }
+
+    await pump(AppThemeVariant.flach, colours: false);
+    expect(find.byType(UltraBlurLayer), findsNothing);
+
+    // Glas paints them under its shell and only lightens its scrims here.
+    await pump(AppThemeVariant.glas, colours: true);
+    expect(find.byType(UltraBlurLayer), findsNothing);
   });
 }
 

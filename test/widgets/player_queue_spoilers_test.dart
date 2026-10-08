@@ -128,6 +128,25 @@ void main() {
       expect(fills(tester).map((f) => f.bright), everyElement(isFalse));
     });
 
+    testWidgets('under Flach the focused item\'s words go dark on the white pane, the others stay light', (
+      tester,
+    ) async {
+      final key = await pumpStrip(tester, monoTheme(dark: true, variant: AppThemeVariant.flach));
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown); // keyboard mode
+      key.currentState!.requestInitialFocus();
+      await tester.pumpAndSettle();
+
+      bool inverted(String title) => OckerFlatFocusInk.invertingAt(tester.element(find.text(title)));
+      expect(fills(tester).first.bright, isTrue);
+      expect(inverted('Spoiler Episode'), isTrue, reason: 'white on white in the player before');
+      expect(inverted('Watched Episode'), isFalse);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pumpAndSettle();
+      expect(inverted('Spoiler Episode'), isFalse);
+      expect(inverted('Watched Episode'), isTrue);
+    });
+
     testWidgets('focus is one bright pane, keeping the wash on the one playing', (tester) async {
       final key = await pumpStrip(tester, monoTheme(dark: true, variant: AppThemeVariant.glas));
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown); // keyboard mode

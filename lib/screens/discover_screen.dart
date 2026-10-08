@@ -47,12 +47,9 @@ import '../widgets/app_menu.dart';
 import '../widgets/clickable_cursor.dart';
 import '../widgets/loading_indicator_box.dart';
 import '../widgets/profile_switching_overlay.dart';
-import 'profile/profile_switch_screen.dart';
-import 'profile/profile_teardown.dart';
 import '../profiles/active_profile_provider.dart';
-import '../profiles/profile.dart';
-import '../profiles/profile_activation.dart';
 import '../profiles/profile_avatar.dart';
+import '../profiles/profile_menu.dart';
 import '../services/settings_service.dart';
 import '../widgets/settings_builder.dart';
 import '../widgets/fitting_title_text.dart';
@@ -62,7 +59,6 @@ import '../mixins/refreshable.dart';
 import '../mixins/tab_visibility_aware.dart';
 import '../i18n/strings.g.dart';
 import '../utils/app_logger.dart';
-import '../utils/dialogs.dart';
 import '../utils/formatters.dart';
 import '../utils/hub_icons.dart';
 import '../utils/media_navigation_helper.dart';
@@ -112,7 +108,13 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   bool get _areHubsLoading => _discover.areHubsLoading;
   String? get _errorMessage => _discover.errorMessage == null ? null : t.errors.unableToLoad(context: t.discover.title);
 
-  bool _switchingProfile = false;
+  /// A switch begun from the profile menu — here or from the rail's foot.
+  bool get _switchingProfile => ProfileMenu.switching.value;
+
+  void _onProfileSwitching() {
+    if (mounted) setState(() {});
+  }
+
   final PageController _heroController = PageController();
   final ScrollController _scrollController = ScrollController();
   final ValueNotifier<int> _heroIndex = ValueNotifier<int>(0);
@@ -550,6 +552,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   @override
   void initState() {
     super.initState();
+    ProfileMenu.switching.addListener(_onProfileSwitching);
     WidgetsBinding.instance.addObserver(this);
     _heroFocusNode = FocusNode(debugLabel: 'hero_section');
     _heroFocusNode.addListener(_onHeroFocusChanged);
@@ -671,6 +674,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
   @override
   void dispose() {
+    ProfileMenu.switching.removeListener(_onProfileSwitching);
     _discover.removeListener(_onDiscoverChanged);
     WidgetsBinding.instance.removeObserver(this);
     // The rotation belongs to this screen's time on show, not to the
@@ -895,27 +899,6 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     return serverIds.length > 1;
   }
 
-  Future<void> _handleLogout() async {
-    final confirm = await showConfirmDialog(
-      context,
-      title: t.common.logout,
-      message: t.messages.logoutConfirm,
-      confirmText: t.common.logout,
-      isDestructive: true,
-    );
-
-    if (confirm && mounted) {
-      await logoutAllProfiles(context);
-    }
-  }
-
-  void _handleSwitchProfile(BuildContext context) {
-    Navigator.of(
-      context,
-      rootNavigator: true,
-    ).push(MaterialPageRoute(builder: (context) => const ProfileSwitchScreen()));
-  }
-
   void _handleOpenSettings(BuildContext context) {
     final mainScope = MainScreenFocusScope.of(context, listen: false);
     if (mainScope != null) {
@@ -933,7 +916,6 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   FocusableAction _buildUserMenuAction(BuildContext context) {
     final activeProvider = context.watch<ActiveProfileProvider>();
     final active = activeProvider.active;
-    final profiles = activeProvider.profiles;
 
     AppMenuButton<String> menu({Widget? icon, Widget? child}) => AppMenuButton<String>(
       key: _userMenuKey,
@@ -942,9 +924,9 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       tooltip: t.profiles.sectionTitle,
       adaptiveSheet: true,
       anchorAlignment: AppMenuAnchorAlignment.end,
-      onSelected: (value) => unawaited(_handleUserMenuAction(context, value)),
-      entriesBuilder: (context) =>
-          _userMenuItems(context, activeProfile: active, profiles: profiles, activeProvider: activeProvider),
+      onSelected: (value) =>
+          unawaited(ProfileMenu.handle(context, value, openSettings: () => _handleOpenSettings(context))),
+      entriesBuilder: ProfileMenu.entries,
       child: child,
     );
 
@@ -984,67 +966,6 @@ class _DiscoverScreenState extends State<DiscoverScreen>
               ),
       ),
     );
-  }
-
-  List<AppMenuEntry<String>> _userMenuItems(
-    BuildContext context, {
-    required Profile? activeProfile,
-    required List<Profile> profiles,
-    required ActiveProfileProvider activeProvider,
-  }) {
-    final theme = Theme.of(context);
-    final switchable = profiles.where((p) => p.id != activeProfile?.id).toList();
-
-    return [
-      for (final p in switchable)
-        AppMenuItem<String>(
-          value: 'profile:${p.id}',
-          leading: ProfileAvatar(profile: p, size: 24, avatarUrl: activeProvider.avatarUrlFor(p.id)),
-          label: p.displayName,
-          trailing: p.isPinProtected
-              ? AppIcon(Symbols.lock_rounded, fill: 1, size: 14, color: theme.colorScheme.onSurfaceVariant)
-              : null,
-        ),
-      if (switchable.isNotEmpty) const AppMenuDivider(),
-      AppMenuItem<String>(value: 'manage_profiles', icon: Symbols.group_rounded, label: t.profiles.sectionTitle),
-      AppMenuItem<String>(value: 'settings', icon: Symbols.settings_rounded, label: t.common.settings),
-      AppMenuItem<String>(value: 'logout', icon: Symbols.logout_rounded, label: t.common.logout),
-    ];
-  }
-
-  Future<void> _handleUserMenuAction(BuildContext context, String value) async {
-    if (_switchingProfile) return;
-    if (value == 'logout') {
-      unawaited(_handleLogout());
-      return;
-    }
-    if (value == 'manage_profiles') {
-      _handleSwitchProfile(context);
-      return;
-    }
-    if (value == 'settings') {
-      _handleOpenSettings(context);
-      return;
-    }
-    if (value.startsWith('profile:')) {
-      final id = value.substring('profile:'.length);
-      final active = context.read<ActiveProfileProvider>();
-      final target = active.profiles.where((p) => p.id == id).firstOrNull;
-      if (target == null) return;
-      await _switchProfileFromMenu(target);
-    }
-  }
-
-  Future<void> _switchProfileFromMenu(Profile profile) async {
-    if (_switchingProfile) return;
-    setState(() => _switchingProfile = true);
-    try {
-      await switchProfileFromUi(context, profile);
-    } finally {
-      if (mounted) {
-        setState(() => _switchingProfile = false);
-      }
-    }
   }
 
   /// The screen's own chrome — refresh, profile, whatever the switches allow —
@@ -1204,8 +1125,9 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                     onPressed: () => _serverActivitiesButtonKey.currentState?.togglePanel(),
                     child: ServerActivitiesButton(key: _serverActivitiesButtonKey),
                   ),
-                // User menu — profiles + sign out
-                _buildUserMenuAction(context),
+                // User menu — profiles + sign out. Under "Flach" on a
+                // television it lives at the rail's foot instead (Plebz).
+                if (!(isOckerLayout(context) && ockerFlat(context))) _buildUserMenuAction(context),
               ],
             );
           },

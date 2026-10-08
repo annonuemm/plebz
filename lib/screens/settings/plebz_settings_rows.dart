@@ -11,7 +11,7 @@ import '../../providers/iptv_sources_provider.dart';
 import '../../services/settings_service.dart' hide ThemeMode;
 import '../../services/settings_service.dart' as settings show ThemeMode;
 import '../../services/settings_mutation_service.dart';
-import '../../theme/mono_theme.dart' show redesignOfferedHere, supportedAppThemeVariant;
+import '../../theme/mono_theme.dart' show isRedesignVariant, redesignOfferedHere, supportedAppThemeVariant;
 import '../../utils/platform_detector.dart';
 import '../../utils/snackbar_helper.dart';
 import '../../widgets/overlay_sheet.dart';
@@ -248,20 +248,25 @@ List<Widget> plebzAppearanceRows() => [
   _themeVariantSelector(),
   SettingValueBuilder<AppThemeVariant>(
     pref: SettingsService.appThemeVariant,
-    builder: (context, variant, _) =>
-        supportedAppThemeVariant(variant) == AppThemeVariant.glas ? _glasAccentSelector() : const SizedBox.shrink(),
+    builder: (context, variant, _) => switch (supportedAppThemeVariant(variant)) {
+      AppThemeVariant.glas => _glasAccentSelector(),
+      AppThemeVariant.flach => flachAccentTile(),
+      AppThemeVariant.standard => const SizedBox.shrink(),
+    },
   ),
   plebzThemeModeRow(),
 ];
 
 /// Light or dark — or, under the redesign, which has no light half, the
-/// ground it stands on: its palette's own, or black for an OLED screen.
+/// ground it stands on: its palette's own, an off-black, black for an OLED
+/// screen, or a colour of the viewer's own.
 ///
-/// One stored choice either way ([SettingsService.themeMode]): OLED is the
-/// same value in both, so a viewer who has it keeps it across designs.
+/// OLED is [SettingsService.themeMode] either way, so a viewer who has it
+/// keeps it across designs; the others are the redesigns' own switches
+/// ([SettingsService.redesignOffBlack], [SettingsService.redesignCustomGround]).
 Widget plebzThemeModeRow({IconData icon = Symbols.dark_mode_rounded}) => SettingValueBuilder<AppThemeVariant>(
   pref: SettingsService.appThemeVariant,
-  builder: (context, variant, _) => supportedAppThemeVariant(variant) == AppThemeVariant.glas
+  builder: (context, variant, _) => isRedesignVariant(supportedAppThemeVariant(variant))
       ? const _GlasGroundTile()
       : SettingSelectionTile<settings.ThemeMode>(
           pref: SettingsService.themeMode,
@@ -272,47 +277,127 @@ Widget plebzThemeModeRow({IconData icon = Symbols.dark_mode_rounded}) => Setting
         ),
 );
 
-/// The redesign's ground: the palette's own, or black.
+/// The grounds the redesigns can stand on.
+enum RedesignGround { design, offBlack, oled, custom }
+
+/// Which of them the stored choices amount to: OLED wins, then the viewer's
+/// own colour, then off-black.
+RedesignGround redesignGroundOf(settings.ThemeMode mode, {required bool offBlack, bool custom = false}) =>
+    mode == settings.ThemeMode.oled
+    ? RedesignGround.oled
+    : custom
+    ? RedesignGround.custom
+    : offBlack
+    ? RedesignGround.offBlack
+    : RedesignGround.design;
+
+/// The same, read from the settings.
+RedesignGround storedRedesignGround(SettingsService service) => redesignGroundOf(
+  service.read(SettingsService.themeMode),
+  offBlack: service.read(SettingsService.redesignOffBlack),
+  custom: service.read(SettingsService.redesignCustomGround),
+);
+
+String redesignGroundLabel(RedesignGround ground) => switch (ground) {
+  RedesignGround.design => t.settings.glasGroundAccent,
+  RedesignGround.offBlack => t.settings.glasGroundOffBlack,
+  RedesignGround.oled => t.settings.glasGroundOled,
+  RedesignGround.custom => t.settings.glasGroundCustom,
+};
+
+/// The redesign's ground: the palette's own, off-black, black, or a colour of
+/// the viewer's own, picked with the accent's picker.
 class _GlasGroundTile extends StatelessWidget {
   const _GlasGroundTile();
 
+  Future<void> _store(BuildContext context, RedesignGround ground, {String? colour}) async {
+    final service = SettingsService.instance;
+    final wasOled = service.read(SettingsService.themeMode) == settings.ThemeMode.oled;
+    const mutation = SettingsMutationService();
+    // The colour and the plain grounds first: leaving OLED for one of them
+    // then lands on it in one step, not on the design's ground in between.
+    final writes = <Future<SettingsEffectFailure?> Function()>[
+      if (colour != null) () => mutation.write(context, SettingsService.redesignGroundColour, colour),
+      () => mutation.write(context, SettingsService.redesignCustomGround, ground == RedesignGround.custom),
+      () => mutation.write(context, SettingsService.redesignOffBlack, ground == RedesignGround.offBlack),
+      // Leaving OLED settles on dark, the redesign's own side; a stored light
+      // or system choice is left alone for the other designs.
+      if ((ground == RedesignGround.oled) != wasOled)
+        () => mutation.write(
+          context,
+          SettingsService.themeMode,
+          ground == RedesignGround.oled ? settings.ThemeMode.oled : settings.ThemeMode.dark,
+        ),
+    ];
+    for (final write in writes) {
+      if (!context.mounted) return;
+      final failure = await write();
+      if (failure != null) {
+        if (context.mounted) showErrorSnackBar(context, failure.display);
+        return;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SettingValueBuilder<settings.ThemeMode>(
-      pref: SettingsService.themeMode,
-      builder: (context, mode, _) {
-        final oled = mode == settings.ThemeMode.oled;
+    return SettingsBuilder(
+      prefs: const [
+        SettingsService.themeMode,
+        SettingsService.redesignOffBlack,
+        SettingsService.redesignCustomGround,
+        SettingsService.redesignGroundColour,
+      ],
+      builder: (context) {
+        final service = SettingsService.instance;
+        final ground = storedRedesignGround(service);
+        final colourHex = service.read(SettingsService.redesignGroundColour);
         return SettingNavigationTile(
           icon: Symbols.contrast_rounded,
           title: t.settings.glasGround,
-          subtitle: oled ? t.settings.glasGroundOled : t.settings.glasGroundAccent,
+          subtitle: redesignGroundLabel(ground),
           onTap: () async {
-            final picked = await showSelectionDialog<bool>(
+            final picked = await showSelectionDialog<RedesignGround>(
               context: context,
               title: t.settings.glasGround,
               options: [
                 DialogOption(
-                  value: false,
+                  value: RedesignGround.design,
                   title: t.settings.glasGroundAccent,
                   subtitle: t.settings.glasGroundAccentDescription,
                 ),
                 DialogOption(
-                  value: true,
+                  value: RedesignGround.offBlack,
+                  title: t.settings.glasGroundOffBlack,
+                  subtitle: t.settings.glasGroundOffBlackDescription,
+                ),
+                DialogOption(
+                  value: RedesignGround.oled,
                   title: t.settings.glasGroundOled,
                   subtitle: t.settings.glasGroundOledDescription,
                 ),
+                DialogOption(
+                  value: RedesignGround.custom,
+                  title: t.settings.glasGroundCustom,
+                  subtitle: t.settings.glasGroundCustomDescription,
+                ),
               ],
-              currentValue: oled,
+              currentValue: ground,
             );
-            // Leaving OLED settles on dark, the redesign's own side; a stored
-            // light or system choice is left alone for the other designs.
-            if (picked == null || picked.value == oled || !context.mounted) return;
-            final failure = await const SettingsMutationService().write(
-              context,
-              SettingsService.themeMode,
-              picked.value ? settings.ThemeMode.oled : settings.ThemeMode.dark,
-            );
-            if (failure != null && context.mounted) showErrorSnackBar(context, failure.display);
+            if (picked == null || !context.mounted) return;
+            // The viewer's own colour is picked every time it is chosen —
+            // chosen again, it is the way to change it.
+            if (picked.value == RedesignGround.custom) {
+              showColorInputDialog(
+                context: context,
+                title: t.settings.glasGroundCustom,
+                currentHex: colourHex,
+                onSave: (hex) => _store(context, RedesignGround.custom, colour: hex),
+              );
+              return;
+            }
+            if (picked.value == ground) return;
+            await _store(context, picked.value);
           },
         );
       },
@@ -327,6 +412,7 @@ Widget _themeVariantSelector() => SettingSelectionTile<AppThemeVariant>(
   subtitleBuilder: (value) => switch (supportedAppThemeVariant(value)) {
     AppThemeVariant.standard => t.settings.appThemeVariantStandard,
     AppThemeVariant.glas => t.settings.appThemeVariantGlas,
+    AppThemeVariant.flach => t.settings.appThemeVariantFlach,
   },
   options: [
     DialogOption(
@@ -340,7 +426,22 @@ Widget _themeVariantSelector() => SettingSelectionTile<AppThemeVariant>(
         title: t.settings.appThemeVariantGlas,
         subtitle: t.settings.appThemeVariantGlasDescription,
       ),
+    if (redesignOfferedHere)
+      DialogOption(
+        value: AppThemeVariant.flach,
+        title: t.settings.appThemeVariantFlach,
+        subtitle: t.settings.appThemeVariantFlachDescription,
+      ),
   ],
+);
+
+/// "Redesign – Flach"'s accent (Plebz): any colour, picked on the colour
+/// picker the subtitle colours use.
+Widget flachAccentTile() => SettingColorTile(
+  pref: SettingsService.flachAccent,
+  icon: Symbols.colors_rounded,
+  title: t.settings.flachAccent,
+  subtitle: t.settings.flachAccentDescription,
 );
 
 Widget _glasAccentSelector() => SettingSelectionTile<GlasAccent>(

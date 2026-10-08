@@ -15,6 +15,9 @@ import 'focus_builders.dart';
 /// indicator). The strip shrink-wraps like `mainAxisSize: min` and scrolls
 /// instead. D-pad stays correct: chips center themselves on focus via the
 /// chip mixin, so LEFT/RIGHT reaches off-screen tabs.
+/// The gap between two tabs on "Flach"'s track, at 1920.
+const double _flatChipGap = 4;
+
 class TabChipStrip extends StatelessWidget {
   final List<Widget> children;
 
@@ -25,6 +28,11 @@ class TabChipStrip extends StatelessWidget {
   /// its chip's padding, and the rule's room, off the row's edge.
   static EdgeInsets overhangOf(BuildContext context) {
     final scale = ockerScale(context);
+    // Flat: the tabs stand two apart, and the capsule needs no room for a
+    // lift — see [FocusableTabChip].
+    if (ockerFlat(context)) {
+      return ockerBandOverhang(context, wordInset: EdgeInsets.symmetric(horizontal: _flatChipGap * scale / 2));
+    }
     return ockerBandOverhang(
       context,
       wordInset: EdgeInsets.symmetric(horizontal: 11 * scale, vertical: 6 * scale + (4 + 2) * scale / 2),
@@ -39,6 +47,7 @@ class TabChipStrip extends StatelessWidget {
       clipBehavior: ockerGlass(context) ? Clip.none : Clip.hardEdge,
       child: OckerGlassBand(
         overhang: overhangOf(context),
+        flatTrack: true,
         child: Row(mainAxisSize: .min, children: children),
       ),
     );
@@ -227,16 +236,19 @@ class _FocusableTabChipState extends State<FocusableTabChip> with FocusableChipS
     final active = widget.isSelected;
     final glass = ockerGlass(context);
     final markRoom = (4 + 2) * scale / 2;
+    final flat = tk.flat;
 
     // Faded under glass, in step with the capsule.
     final label = OckerInk(
-      color: active || showFocus ? tk.ink(1) : tk.ink(0.5),
+      color: active || showFocus ? tk.ink(1) : tk.ink(flat ? 0.55 : 0.5),
       builder: (context, ink) => Text(
         widget.label,
         // On a phone or tablet at the size the original look sets its tabs, a
         // point up: at the redesign's own a library's three views no longer
         // fit across a phone, and the row began to scroll where it had not.
-        style: type.groupEntry(active: active).copyWith(color: ink, fontSize: ockerLookOnly(context) ? 15 : null),
+        style: type
+            .groupEntry(active: active)
+            .copyWith(color: ink, fontSize: ockerLookOnly(context) ? 15 : (flat ? 19 * scale : null)),
       ),
     );
 
@@ -263,8 +275,10 @@ class _FocusableTabChipState extends State<FocusableTabChip> with FocusableChipS
       borderRadius: 0,
       child: Padding(
         // Horizontal room between neighbouring words; the ring's own offset
-        // supplies the rest.
-        padding: EdgeInsets.symmetric(horizontal: 11 * scale, vertical: 6 * scale),
+        // supplies the rest. Flat: a segment's width apart, on one track.
+        padding: flat
+            ? EdgeInsets.symmetric(horizontal: _flatChipGap * scale / 2)
+            : EdgeInsets.symmetric(horizontal: 11 * scale, vertical: 6 * scale),
         // IntrinsicWidth so the rule below can be exactly as wide as the word
         // above it: the strip is laid out in an unbounded Row, where a
         // stretched child has nothing to stretch to.
@@ -276,14 +290,23 @@ class _FocusableTabChipState extends State<FocusableTabChip> with FocusableChipS
               // Under glass the capsule marks the tab on show, so the rule
               // gives way; its room is split above and below the word, which
               // then sits in the middle of the glass at the same height.
-              if (glass) SizedBox(height: markRoom),
+              if (glass && !flat) SizedBox(height: markRoom),
               // The ring, or under glass a capsule — see [OckerWordFocus].
               OckerWordFocus(
                 focused: showFocus,
                 active: active,
-                child: Padding(padding: EdgeInsets.all(tk.focusRingOffset), child: body),
+                // Flat: the segment the design draws — 44 tall with the
+                // capsule's own outset, 22 either side of the word.
+                child: Padding(
+                  padding: flat
+                      ? EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 6.5 * scale)
+                      : EdgeInsets.all(tk.focusRingOffset),
+                  child: body,
+                ),
               ),
-              if (glass)
+              if (glass && flat)
+                const SizedBox.shrink()
+              else if (glass)
                 SizedBox(height: markRoom)
               else ...[
                 // The same short gap the header's destinations use, so the two

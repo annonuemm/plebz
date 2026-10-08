@@ -7,6 +7,9 @@ import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
 import '../redesign/ocker_skin.dart';
+import '../redesign/ocker_type.dart';
+import '../theme/glass_backdrop.dart' show FlachGroundGlow, flachGroundGlows;
+import '../theme/mono_tokens.dart';
 import '../redesign/ultra_blur_backdrop.dart';
 import '../media/ultra_blur_colors.dart';
 
@@ -200,6 +203,7 @@ class TvSpotlightBackground extends StatelessWidget {
   /// part of the screen the colours were to show on. The picture then fades
   /// into the colours, as on Plex.
   Widget _buildScrims(BuildContext context, Color bgColor, {required bool useCorner}) {
+    if (ockerFlat(context)) return _buildFlatScrims(context, bgColor);
     final ambient = UltraBlurScope.of(context);
     Widget standard() => Stack(
       fit: StackFit.expand,
@@ -257,6 +261,80 @@ class TvSpotlightBackground extends StatelessWidget {
     );
   }
 
+  /// "Redesign – Flach" (Plebz): scrims in several steps with no seam, so the
+  /// picture runs softly into the ground, with the ground's faint lights of
+  /// the accent over them ([flachGroundGlows]).
+  ///
+  /// Solid ground under the words and the rows, the picture only where
+  /// nothing is written on it. The detail page ([showInfo] off — it draws its
+  /// own header) gives the picture a little more of the width.
+  ///
+  /// While the ground takes the focused title's colours ([UltraBlurAmbient])
+  /// the same two fades are laid over again in those colours, so the picture
+  /// runs into them rather than into the plain ground. Here, not under the
+  /// shell: the picture fills the screen, and the solid parts of these
+  /// scrims are all of the ground there is to see.
+  Widget _buildFlatScrims(BuildContext context, Color bgColor) {
+    final detail = !showInfo;
+    final ambient = UltraBlurScope.of(context);
+    LinearGradient side(Color Function(double alpha) paint) => LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: [paint(1), paint(1), paint(0.86), paint(detail ? 0.5 : 0.55), paint(detail ? 0.12 : 0.18), paint(0)],
+      stops: detail ? const [0, 0.26, 0.38, 0.52, 0.70, 0.86] : const [0, 0.34, 0.44, 0.56, 0.72, 0.88],
+    );
+    LinearGradient foot(Color Function(double alpha) paint) => LinearGradient(
+      begin: Alignment.bottomCenter,
+      end: Alignment.topCenter,
+      colors: [paint(1), paint(1), paint(detail ? 0.8 : 0.82), paint(detail ? 0.3 : 0.35), paint(0)],
+      stops: detail ? const [0, 0.24, 0.36, 0.52, 0.68] : const [0, 0.30, 0.42, 0.56, 0.70],
+    );
+    Color ground(double alpha) => bgColor.withValues(alpha: alpha);
+    Color mask(double alpha) => Colors.white.withValues(alpha: alpha);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        RasterizedGradient(gradient: side(ground)),
+        RasterizedGradient(gradient: foot(ground)),
+        // One copy per fade, each masked by it: the two cover what the two
+        // scrims cover together, where one copy under both masks would only
+        // cover where they overlap.
+        if (ambient != null)
+          RepaintBoundary(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                for (final fade in [side(mask), foot(mask)])
+                  ShaderMask(
+                    blendMode: BlendMode.dstIn,
+                    shaderCallback: fade.createShader,
+                    child: UltraBlurLayer(colors: ambient, dim: flatUltraBlurDim),
+                  ),
+              ],
+            ),
+          ),
+        // The ground's own two lights of the accent, which these scrims of
+        // solid ground would otherwise cover — gone while the colours show,
+        // which are the ground then.
+        if (ambient == null)
+          FlachGroundGlow(glows: flachGroundGlows(tokens(context)))
+        else
+          ValueListenableBuilder<UltraBlurColors?>(
+            valueListenable: ambient,
+            builder: (context, colors, glow) =>
+                AnimatedOpacity(opacity: colors == null ? 1 : 0, duration: UltraBlurLayer.crossfade, child: glow),
+            child: FlachGroundGlow(glows: flachGroundGlows(tokens(context))),
+          ),
+      ],
+    );
+  }
+
+  /// How dark the colours are under "Flach". The words and the rows stand on
+  /// them directly, with no scrim of black between, so they are taken further
+  /// towards black than the shell's ground: about where Glas's corner
+  /// spotlight ends up with its own scrim over the colours.
+  static const double flatUltraBlurDim = 0.5;
+
   /// The scrim, at one strength for every variant.
   ///
   /// "Ocker" had a heavier, wider one for a while. It was written for the
@@ -276,6 +354,7 @@ class TvSpotlightBackground extends StatelessWidget {
   }
 
   Widget _buildInfo(BuildContext context, MediaItem media, double width) {
+    if (ockerFlat(context)) return _buildFlatInfo(context, media, width);
     final scale = _scale(context);
     final colorScheme = Theme.of(context).colorScheme;
     final shouldHideSpoiler = hideSpoilers && media.shouldHideSpoiler;
@@ -315,6 +394,48 @@ class TvSpotlightBackground extends StatelessWidget {
               height: compact ? 1.34 : 1.45,
             ),
           ),
+      ],
+    );
+  }
+
+  /// The block under "Flach" (Plebz): the title, a line of plain facts, and
+  /// three lines of description at most — on the design's own steps of 20 and
+  /// 22 between them, the prose a little wider for its larger type.
+  Widget _buildFlatInfo(BuildContext context, MediaItem media, double width) {
+    final tk = tokens(context);
+    final type = OckerType.of(context);
+    final scale = ockerScale(context);
+    final shouldHideSpoiler = hideSpoilers && media.shouldHideSpoiler;
+    final summary = shouldHideSpoiler ? null : media.summary;
+    final title = media.grandparentTitle ?? media.displayTitle;
+    final prose = type.synopsis.copyWith(color: tk.ink(0.78));
+
+    return Column(
+      crossAxisAlignment: .start,
+      mainAxisSize: .min,
+      children: [
+        _buildLogoOrTitle(context, media, title, width),
+        // Closer than the summary below: the facts belong to the title. At
+        // the design's 20 against 22 the line floated between the two.
+        SizedBox(height: 10 * scale),
+        _buildMetadataLine(context, media),
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 840 * scale),
+          child: shouldHideSpoiler && media.isEpisode
+              ? Padding(
+                  padding: EdgeInsets.only(top: 22 * scale),
+                  child: Text(media.title ?? '', maxLines: 2, overflow: .ellipsis, style: prose),
+                )
+              : SpotlightSummary(
+                  item: media,
+                  client: client,
+                  summary: summary,
+                  allowFillIn: !shouldHideSpoiler,
+                  gap: 22 * scale,
+                  maxLines: 3,
+                  style: prose,
+                ),
+        ),
       ],
     );
   }
@@ -440,6 +561,13 @@ class TvSpotlightBackground extends StatelessWidget {
   Widget _buildTitle(BuildContext context, String title) {
     final scale = _scale(context);
     final colorScheme = Theme.of(context).colorScheme;
+    if (ockerFlat(context)) {
+      return FittingTitleText(
+        title,
+        alignment: Alignment.bottomLeft,
+        style: OckerType.of(context).spotlightTitle().copyWith(color: tokens(context).ink(1)),
+      );
+    }
     return FittingTitleText(
       title,
       // Stands on the floor of the slot, like the logo it appears instead of,
@@ -471,12 +599,15 @@ class TvSpotlightBackground extends StatelessWidget {
     // reads as a sentence of facts — right for a proportional face, wrong for
     // this one.
     final metadataSize = _metadataFontSize(scale);
-    final textStyle = TextStyle(
-      color: colorScheme.onSurface,
-      fontSize: metadataSize,
-      fontWeight: .w700,
-      letterSpacing: isOcker(context) ? metadataSize * 0.07 : 0.1,
-    );
+    final flat = ockerFlat(context);
+    final textStyle = flat
+        ? OckerType.of(context).spotlightFacts.copyWith(color: tokens(context).ink(0.66))
+        : TextStyle(
+            color: colorScheme.onSurface,
+            fontSize: metadataSize,
+            fontWeight: .w700,
+            letterSpacing: isOcker(context) ? metadataSize * 0.07 : 0.1,
+          );
 
     // The detail page's order, so a title is described the same way wherever
     // it is shown: which episode, when, what kind, for whom, how long, which
@@ -494,7 +625,7 @@ class TvSpotlightBackground extends StatelessWidget {
       parts.add(MetadataLineText(t.discover.tvShow, dropPriority: 3));
     }
     if (media.contentRating != null) {
-      parts.add(MetadataLineText(formatContentRating(media.contentRating!), dropPriority: 2));
+      parts.add(MetadataLineText(formatContentRating(media.contentRating!), dropPriority: 2, badge: true));
     }
     if (media.hasRuntime) {
       parts.add(MetadataLineText(formatDurationTextual(media.durationMs!), dropPriority: 1));
@@ -511,7 +642,7 @@ class TvSpotlightBackground extends StatelessWidget {
     final line = parts.isEmpty
         ? null
         : FittedMetadataLine(
-            textStyle: monoFacts(context, textStyle),
+            textStyle: flat ? textStyle : monoFacts(context, textStyle),
             parts: parts,
             // Same boxes as the detail page: this line is read across a room,
             // and a box tells two facts apart where a bullet between words of
@@ -532,8 +663,10 @@ class TvSpotlightBackground extends StatelessWidget {
       mainAxisSize: .min,
       children: [
         Flexible(child: line),
-        // A gap, not a bullet: the boxes already do the separating.
-        SizedBox(width: 8 * scale),
+        // A gap, not a bullet: the boxes already do the separating. Under
+        // "Flach" the same air as between two facts; the trailing fact brings
+        // its own mark.
+        SizedBox(width: flat ? 16 * ockerScale(context) : 8 * scale),
         trailing,
       ],
     );

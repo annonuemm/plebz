@@ -61,10 +61,15 @@ class OckerSectionHeading extends StatelessWidget {
     return Row(
       crossAxisAlignment: .center,
       children: [
-        Text(title.toUpperCase(), style: type.sectionHeading.copyWith(color: trailing ? tk.ink(0.42) : tk.ink(1))),
+        Text(
+          type.headingCase(title),
+          style: type.sectionHeading.copyWith(
+            color: type.flat ? tk.ink(trailing ? 0.62 : 0.94) : (trailing ? tk.ink(0.42) : tk.ink(1)),
+          ),
+        ),
         if (count != null) ...[
-          SizedBox(width: 12 * scale),
-          Text('$count', style: type.counter.copyWith(color: tk.ink(0.38))),
+          SizedBox(width: (type.flat ? 14 : 12) * scale),
+          Text('$count', style: type.counter.copyWith(color: tk.ink(type.flat ? 0.40 : 0.38))),
         ],
         SizedBox(width: 16 * scale),
         // The room stays whether or not anything is drawn in it: it is what

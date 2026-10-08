@@ -72,6 +72,14 @@ enum AppThemeVariant {
   ///
   /// Its colours are the viewer's to pick — see [GlasAccent].
   glas,
+
+  /// "Redesign – Flach" (Plebz): the redesign's structure and focus as Glas
+  /// has them, painted flat — no panes of glass, no sheen, no lit edges, no
+  /// shadows. Rows are separated by space and type alone, focus is a solid
+  /// white fill with the words on it turned dark, a poster's focus a white
+  /// frame. One accent, any colour the viewer picks
+  /// ([SettingsService.flachAccent]).
+  flach,
 }
 
 /// The accent "Redesign – Glas" is drawn in, chosen in the settings.
@@ -1348,9 +1356,36 @@ class SettingsService extends BaseSharedPreferencesService {
   /// apart.
   static const glasSmoothFocus = BoolPref('glas_smooth_focus', defaultValue: false);
 
+  /// The accent of "Redesign – Flach", as `#RRGGBB`: any colour, the viewer's
+  /// pick. Starts on the logo's violet.
+  static const flachAccent = StringPref('flach_accent', defaultValue: '#A866EE');
+
+  /// The redesigns' ground as an off-black (#121212) in place of the design's
+  /// own, while [themeMode] is not OLED — which is black, and wins. Its own
+  /// switch rather than a fifth [ThemeMode]: the standard design's light and
+  /// dark know nothing of it.
+  static const redesignOffBlack = BoolPref('redesign_off_black', defaultValue: false);
+
+  /// The redesigns' ground in a colour of the viewer's own
+  /// ([redesignGroundColour]), while [themeMode] is not OLED. Wins over
+  /// [redesignOffBlack].
+  static const redesignCustomGround = BoolPref('redesign_custom_ground', defaultValue: false);
+
+  /// That colour, as `#RRGGBB`, kept while another ground is chosen so a
+  /// return to it starts where it was left.
+  static const redesignGroundColour = StringPref('redesign_ground_colour', defaultValue: '#1B1726');
+
   /// Under glass, the ground takes the colours of the Plex title holding focus
   /// — Plex's "UltraBlur". A test, off until switched on.
   static const glasUltraBlur = BoolPref('glas_ultra_blur', defaultValue: false);
+
+  /// The same under "Flach". A switch of its own, so each redesign keeps the
+  /// viewer's choice in each. Off to start with: Flach starts on its own
+  /// ground, the accent's (the user's call — it was on for a build).
+  static const flachUltraBlur = BoolPref('flach_ultra_blur', defaultValue: false);
+
+  /// The poster-colour switch of the redesign [flat] says.
+  static BoolPref ultraBlurFor({required bool flat}) => flat ? flachUltraBlur : glasUltraBlur;
 
   /// Under glass on a television, the column down the right of a library and
   /// the watchlist describing the focused title. Off, its width goes to more
@@ -1947,8 +1982,13 @@ class SettingsService extends BaseSharedPreferencesService {
     seerrCardEpisodeFacts,
     appThemeVariant,
     glasAccent,
+    flachAccent,
+    redesignOffBlack,
+    redesignCustomGround,
+    redesignGroundColour,
     glasSmoothFocus,
     glasUltraBlur,
+    flachUltraBlur,
     glasDetailPanel,
     glasSpinningFocus,
     showLibraryPlaylistsTab,

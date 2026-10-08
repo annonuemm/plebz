@@ -6,6 +6,7 @@ import 'package:plezy/models/livetv_program.dart';
 import 'package:plezy/providers/multi_server_provider.dart';
 import 'package:plezy/redesign/ocker_guide_panel.dart';
 import 'package:plezy/redesign/ocker_skin.dart';
+import 'package:plezy/redesign/ocker_type.dart';
 import 'package:plezy/screens/livetv/guide_preview_player.dart';
 import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/settings_service.dart';
@@ -111,5 +112,54 @@ void main() {
     expect(OckerGuidePanel.streamFpsLabel(50), '50 fps');
     expect(OckerGuidePanel.streamFpsLabel(25.001), '25 fps');
     expect(OckerGuidePanel.streamFpsLabel(29.97), '29.97 fps');
+  });
+
+  testWidgets('under Flach the band is taller, its lines larger, and the description gets a third line', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final servers = testMultiServerProvider(MultiServerManager());
+    addTearDown(servers.dispose);
+    final described = LiveTvProgram(
+      title: 'Goldrausch',
+      beginsAt: 1_800_000_000,
+      endsAt: 1_800_003_600,
+      summary: 'Andreas und Benni folgen dem Ruf eines Freundes nach Westaustralien.',
+    );
+
+    Future<({Size band, Text summary, double facts})> pump(AppThemeVariant variant) async {
+      await tester.pumpWidget(
+        ChangeNotifierProvider<MultiServerProvider>.value(
+          value: servers,
+          child: MaterialApp(
+            theme: monoTheme(dark: true, variant: variant),
+            home: Scaffold(
+              body: Align(
+                alignment: Alignment.topLeft,
+                child: OckerGuidePanel(previewChannel: erste, focusedChannel: erste, focusedProgram: described),
+              ),
+            ),
+          ),
+        ),
+      );
+      // MaterialApp animates from one theme to the next.
+      await tester.pump(const Duration(seconds: 1));
+      final context = tester.element(find.byType(OckerGuidePanel));
+      return (
+        band: tester.getSize(find.byType(OckerGuidePanel)),
+        summary: tester.widget<Text>(find.text(described.summary!)),
+        facts: OckerType.of(context).guideFacts.fontSize!,
+      );
+    }
+
+    final glas = await pump(AppThemeVariant.glas);
+    final flach = await pump(AppThemeVariant.flach);
+    expect(flach.band.height, greaterThan(glas.band.height));
+    expect(flach.summary.maxLines, 3);
+    expect(glas.summary.maxLines, 2);
+    expect(flach.facts, greaterThan(glas.facts));
+    expect(flach.summary.style!.fontSize, greaterThan(glas.summary.style!.fontSize!));
   });
 }

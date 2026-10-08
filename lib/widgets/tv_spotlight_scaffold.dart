@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../redesign/ocker_skin.dart';
+import '../redesign/ocker_type.dart';
+import '../theme/mono_tokens.dart';
 import '../i18n/strings.g.dart';
 import '../media/catalog_item_ref.dart';
 import '../media/media_hub.dart';
@@ -315,6 +317,24 @@ class _CatalogSpotlightBackgroundState extends State<CatalogSpotlightBackground>
     final label = episode == null
         ? t.explore.badge.nextAiringIn(duration: duration)
         : t.explore.badge.nextEpisodeIn(episode: episode, duration: duration);
+    if (ockerFlat(context)) {
+      // "Flach" (Plebz): one more fact on the line, in its type — led by a
+      // dot of the accent, which there means "new, or soon".
+      final tk = tokens(context);
+      final ockerScaleNow = ockerScale(context);
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7 * ockerScaleNow,
+            height: 7 * ockerScaleNow,
+            decoration: BoxDecoration(color: tk.accent, shape: BoxShape.circle),
+          ),
+          SizedBox(width: 8 * ockerScaleNow),
+          Text(label, maxLines: 1, style: OckerType.of(context).spotlightFacts.copyWith(color: tk.ink(0.9))),
+        ],
+      );
+    }
     final scale = TvLayoutConstants.scaleOf(context);
     return Text(
       label,

@@ -1,5 +1,9 @@
-import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../i18n/strings.g.dart';
 import '../theme/mono_tokens.dart';
 import '../widgets/app_icon.dart';
 import 'ocker_browse_grid.dart';
@@ -37,9 +41,13 @@ class OckerFilterGlyph extends StatelessWidget {
   /// ring — which is drawn outside its box — has somewhere to be.
   static const gap = 4.0;
 
+  /// Between one control and the next on "Flach"'s line, at 1920.
+  static const flatGap = 20.0;
+
   @override
   Widget build(BuildContext context) {
     final tk = tokens(context);
+    if (tk.flat) return _buildFlat(context, tk);
     // These lie on a band with the words beside them, so they take its
     // weight: a heavier stroke and a brighter rest, which a hairline glyph on
     // glass did not have.
@@ -60,6 +68,102 @@ class OckerFilterGlyph extends StatelessWidget {
   }
 }
 
+extension on OckerFilterGlyph {
+  /// "Flach" (Plebz): a round button of its own, a faint disc of ink at rest
+  /// and the white of focus when it holds it — the design's toolbar, where
+  /// each control is a shape rather than a glyph on a shared band.
+  Widget _buildFlat(BuildContext context, MonoTokens tk) {
+    final scale = ockerScale(context);
+    final diameter = 52 * scale;
+    return Padding(
+      padding: EdgeInsets.only(right: OckerFilterGlyph.flatGap * scale),
+      child: OckerFlatControl(
+        focused: focused,
+        shape: const CircleBorder(),
+        child: SizedBox.square(
+          dimension: diameter,
+          child: Center(
+            child: AppIcon(
+              icon,
+              fill: 0,
+              size: math.max(24 * scale, 13),
+              weight: 400,
+              color: focused ? tk.bg : tk.ink(0.7),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A control on "Flach"'s toolbar: the shape filled with a faint ink at rest
+/// and with the white of focus while it holds it. What stands on it picks its
+/// own colour for the two.
+class OckerFlatControl extends StatelessWidget {
+  const OckerFlatControl({super.key, required this.focused, required this.child, this.shape = const StadiumBorder()});
+
+  final bool focused;
+  final ShapeBorder shape;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = tokens(context);
+    return DecoratedBox(
+      decoration: ShapeDecoration(shape: shape, color: focused ? tk.ink(1) : tk.ink(0.06)),
+      child: child,
+    );
+  }
+}
+
+/// A labelled control on "Flach"'s toolbar — a library's filter and sort: the
+/// glyph and the word on a pill, 52 tall at 1920.
+class OckerFlatLabelledControl extends StatelessWidget {
+  const OckerFlatLabelledControl({super.key, required this.icon, required this.label, required this.focused});
+
+  final IconData icon;
+  final String label;
+  final bool focused;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = tokens(context);
+    final scale = ockerScale(context);
+    final ink = focused ? tk.bg : tk.ink(0.85);
+    return Padding(
+      padding: EdgeInsets.only(right: 12 * scale),
+      child: OckerFlatControl(
+        focused: focused,
+        child: SizedBox(
+          height: 52 * scale,
+          child: Padding(
+            padding: EdgeInsets.only(left: 16 * scale, right: 20 * scale),
+            child: Row(
+              mainAxisSize: .min,
+              children: [
+                AppIcon(icon, fill: 0, size: math.max(24 * scale, 13), weight: 400, color: ink),
+                SizedBox(width: 10 * scale),
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontFamily: OckerType.of(context).groupEntry(active: false).fontFamily,
+                    fontSize: 19 * scale,
+                    fontWeight: FontWeight.w500,
+                    height: 1,
+                    color: ink,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// The filters over a grid's top left: the glyphs on a band of glass, and
 /// the gap to the first row of posters below it.
 ///
@@ -67,7 +171,7 @@ class OckerFilterGlyph extends StatelessWidget {
 /// two need only drift a pixel apart for the page beneath them to be two
 /// pages.
 class OckerGridFilterBand extends StatelessWidget {
-  const OckerGridFilterBand({super.key, required this.children, this.withGapBelow = true, this.location});
+  const OckerGridFilterBand({super.key, required this.children, this.withGapBelow = true, this.location, this.count});
 
   final List<Widget> children;
 
@@ -81,6 +185,9 @@ class OckerGridFilterBand extends StatelessWidget {
   /// the band alone.
   final String? location;
 
+  /// How many titles the list holds, beside [location] under "Flach".
+  final int? count;
+
   /// Between the band and the first row of posters, at 1920.
   static const gapBelow = 18.0;
 
@@ -89,7 +196,11 @@ class OckerGridFilterBand extends StatelessWidget {
     // The glyphs keep [OckerFilterGlyph.gap] round themselves; the band's
     // pane reaches that far past its row, so the row is set in by as much and
     // the pane's edge lines up with the posters' below.
-    final overhang = ockerBandOverhang(context, wordInset: const EdgeInsets.all(OckerFilterGlyph.gap));
+    // Flat: no band to reach past; each control is its own shape, the first
+    // flush with the posters.
+    final overhang = ockerFlat(context)
+        ? EdgeInsets.zero
+        : ockerBandOverhang(context, wordInset: const EdgeInsets.all(OckerFilterGlyph.gap));
     final band = OckerGlassBand(
       overhang: overhang,
       child: Row(mainAxisSize: .min, children: children),
@@ -114,7 +225,7 @@ class OckerGridFilterBand extends StatelessWidget {
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.only(right: pastPosters),
-                        child: OckerLocationLabel(location),
+                        child: OckerLocationLabel(location, count: count),
                       ),
                     ),
                   ],
@@ -128,18 +239,66 @@ class OckerGridFilterBand extends StatelessWidget {
 /// Where the viewer is, over the right of a grid: the section headings' mono
 /// capitals, a step quieter, since the posters below are what is being read.
 class OckerLocationLabel extends StatelessWidget {
-  const OckerLocationLabel(this.text, {super.key});
+  const OckerLocationLabel(this.text, {super.key, this.count});
 
   final String text;
 
+  /// Shown after the source under "Flach"; null leaves it out.
+  final int? count;
+
   @override
   Widget build(BuildContext context) {
+    final type = OckerType.of(context);
+    if (type.flat) return _buildFlat(context, type);
     return Text(
-      text.toUpperCase(),
+      type.headingCase(text),
       textAlign: TextAlign.right,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: OckerType.of(context).sectionHeading.copyWith(color: tokens(context).ink(0.6)),
+      // Under "Flach" a filter word is quieter than the row name beside it.
+      style: (type.flat ? type.counter : type.sectionHeading).copyWith(color: tokens(context).ink(0.6)),
+    );
+  }
+}
+
+extension on OckerLocationLabel {
+  /// "Flach" (Plebz): the page's name is a title, not a label — "Merkliste"
+  /// large and bold, its source and length quietly beside it ("Plex · 42").
+  Widget _buildFlat(BuildContext context, OckerType type) {
+    final tk = tokens(context);
+    final scale = ockerScale(context);
+    final cut = text.indexOf(' · ');
+    final name = cut < 0 ? text : text.substring(0, cut);
+    final source = cut < 0 ? null : text.substring(cut + 3);
+    final length = count == null
+        ? null
+        : NumberFormat.decimalPattern(LocaleSettings.currentLocale.languageCode).format(count);
+    final quiet = [?source, ?length].join(' · ');
+    return Row(
+      mainAxisAlignment: .end,
+      crossAxisAlignment: .baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Flexible(
+          child: Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: type.sectionHeading.fontFamily,
+              fontSize: 28 * scale,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5 * scale,
+              height: 1,
+              color: tk.ink(1),
+            ),
+          ),
+        ),
+        if (quiet.isNotEmpty) ...[
+          SizedBox(width: 12 * scale),
+          Text(quiet, maxLines: 1, style: type.counter.copyWith(color: tk.ink(0.42))),
+        ],
+      ],
     );
   }
 }

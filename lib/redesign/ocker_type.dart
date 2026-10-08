@@ -22,9 +22,13 @@ class OckerType {
   /// 1.0 at 1920 wide; see [ockerScale].
   final double scale;
 
-  const OckerType(this.scale);
+  /// "Redesign – Flach" (Plebz): one voice per level, no tracked-out capitals.
+  /// The handful of styles it redraws ask this; the rest are shared.
+  final bool flat;
 
-  factory OckerType.of(BuildContext context) => OckerType(ockerScale(context));
+  const OckerType(this.scale, {this.flat = false});
+
+  factory OckerType.of(BuildContext context) => OckerType(ockerScale(context), flat: ockerFlat(context));
 
   double _px(double referenceSize) => referenceSize * scale;
 
@@ -70,6 +74,34 @@ class OckerType {
   /// whether a logo will turn up in its place, or it would reflow under the
   /// reader when the answer arrives.
   double titleBoxHeight({bool withGroupBar = false}) => _px(withGroupBar ? 60 : 64) * 1.08;
+
+  /// The name of the title the start page or a detail page is about, under
+  /// "Flach": 60 on the start page, 76 on a detail page, set tight.
+  ///
+  /// Its own style rather than a larger [detailTitle]: that one is also the
+  /// title of the guide band and the info sheet, which have no room to grow.
+  TextStyle spotlightTitle({bool detail = false}) {
+    final size = _px(detail ? 76 : 60);
+    return TextStyle(
+      fontFamily: ockerUiFontFamily,
+      fontWeight: .w700,
+      fontSize: size,
+      letterSpacing: -0.027 * size,
+      height: 1.04,
+    );
+  }
+
+  /// The line of facts under [spotlightTitle]: plain words with dots between.
+  ///
+  /// 23, a step over the design's 19: the viewer found it small on the
+  /// television.
+  TextStyle get spotlightFacts => TextStyle(
+    fontFamily: ockerUiFontFamily,
+    fontSize: _px(23),
+    fontWeight: .w500,
+    height: 1,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
 
   /// The line under a title: an episode, a subtitle, a second name.
   ///
@@ -125,7 +157,13 @@ class OckerType {
   /// left of a page, and on the backdrop a focused row unfolds into. One size,
   /// because they are the same sentence about the same thing — and a reader
   /// who looks from one to the other should not have to change focus.
-  TextStyle get synopsis => TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(18 * readingScale), height: 1.6);
+  ///
+  /// "Flach" sets it at 25 with a line and a half: the wider leading was what
+  /// made four short lines read as a texture rather than a sentence, and the
+  /// design's 21 read small on the television (the viewer's call).
+  TextStyle get synopsis => flat
+      ? TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(25), height: 1.5, letterSpacing: 0)
+      : TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(18 * readingScale), height: 1.6);
 
   /// Credits, and anything else that is body copy one notch down.
   TextStyle get secondary => TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(15), height: 1.6);
@@ -150,10 +188,14 @@ class OckerType {
   /// from a sofa that is not a size, it is a footnote. The band has the height
   /// to spare — it is fixed at [OckerLayout.panelStillHeight] and the text
   /// beside the picture did not fill it.
-  TextStyle get guideFacts => metadata.copyWith(fontSize: _px(19));
+  ///
+  /// "Flach" sets them as its start page sets its facts and its prose, 23 and
+  /// 25: the design's 19 and 21 read small on the television there too (the
+  /// viewer's call).
+  TextStyle get guideFacts => metadata.copyWith(fontSize: _px(flat ? 23 : 19));
 
   /// Two lines of programme description, one notch under the facts beside it.
-  TextStyle get guideSummary => TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(21), height: 1.5);
+  TextStyle get guideSummary => TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(flat ? 25 : 21), height: 1.5);
 
   TextStyle get primaryButton =>
       TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(19), fontWeight: .w700, height: 1);
@@ -178,10 +220,29 @@ class OckerType {
   /// above them got, for the same reason. A television reports half the width
   /// the design was drawn at and is read from a sofa; at 14 the name of a
   /// shelf was seven points on the panel, which is a size for a footnote.
-  TextStyle get sectionHeading =>
-      TextStyle(fontFamily: ockerMonoFontFamily, fontSize: _px(19), letterSpacing: _px(2.4), height: 1);
+  ///
+  /// "Flach" sets a row's name in sentence case, semibold: tracked capitals
+  /// competed with the title above them. Callers leave the case alone there
+  /// ([headingCase]).
+  TextStyle get sectionHeading => flat
+      ? TextStyle(
+          fontFamily: ockerUiFontFamily,
+          fontSize: _px(23),
+          fontWeight: .w600,
+          letterSpacing: _px(-0.2),
+          height: 1,
+        )
+      : _monoLabel;
 
-  TextStyle get eyebrow => sectionHeading;
+  /// [text] as a heading is written: in capitals everywhere but "Flach".
+  String headingCase(String text) => flat ? text : text.toUpperCase();
+
+  /// The eyebrow keeps the mono label in every variant: it names a kind of
+  /// thing above a title, which is what a label is for.
+  TextStyle get eyebrow => _monoLabel;
+
+  TextStyle get _monoLabel =>
+      TextStyle(fontFamily: ockerMonoFontFamily, fontSize: _px(19), letterSpacing: _px(2.4), height: 1);
 
   /// The source label at the left of a group-bar row.
   TextStyle get sourceLabel =>
@@ -189,13 +250,21 @@ class OckerType {
 
   /// The count beside a heading or a group entry. A step under the heading it
   /// belongs to, and it moved up with it.
-  TextStyle get counter => TextStyle(
-    fontFamily: ockerMonoFontFamily,
-    fontSize: _px(16),
-    letterSpacing: _px(1.4),
-    height: 1,
-    fontFeatures: const [FontFeature.tabularFigures()],
-  );
+  TextStyle get counter => flat
+      ? TextStyle(
+          fontFamily: ockerUiFontFamily,
+          fontSize: _px(17),
+          fontWeight: .w500,
+          height: 1,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        )
+      : TextStyle(
+          fontFamily: ockerMonoFontFamily,
+          fontSize: _px(16),
+          letterSpacing: _px(1.4),
+          height: 1,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        );
 
   /// A broadcast time inside the Live-TV grid: the hour a programme starts and
   /// how long it runs, and the scale along the top.

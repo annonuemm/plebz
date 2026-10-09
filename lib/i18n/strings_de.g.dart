@@ -615,6 +615,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get glasUltraBlurDescription => 'Auf Startseite und Erkunden nimmt der Hintergrund die Farben des Titels mit dem Fokus an.';
 	@override String get glasDetailPanel => 'Beschreibung neben den Postern';
 	@override String get glasDetailPanelDescription => 'Mediathek und Merkliste zeigen rechts die Beschreibung des gewählten Titels. Ausgeschaltet passen mehr Poster in eine Reihe.';
+	@override String get redesignSeasonTabs => 'Staffeln als Reiter';
+	@override String get redesignSeasonTabsDescription => 'Bei Serien stehen die Staffeln als Reiter über einer Reihe Episoden. Ausgeschaltet hat jede Staffel ihre eigene Reihe.';
 	@override String get glasSpinningFocus => 'Fokusrahmen dreht sich';
 	@override String get glasSpinningFocusDescription => 'Das Glanzlicht des Fokusrahmens wandert langsam um ihn herum und hält still, solange du dich bewegst. Kostet ein wenig Leistung.';
 	@override String get homeTitleLogos => 'Logos auf Start und Erkunden';
@@ -4239,6 +4241,8 @@ extension on TranslationsDe {
 			'settings.glasUltraBlurDescription' => 'Auf Startseite und Erkunden nimmt der Hintergrund die Farben des Titels mit dem Fokus an.',
 			'settings.glasDetailPanel' => 'Beschreibung neben den Postern',
 			'settings.glasDetailPanelDescription' => 'Mediathek und Merkliste zeigen rechts die Beschreibung des gewählten Titels. Ausgeschaltet passen mehr Poster in eine Reihe.',
+			'settings.redesignSeasonTabs' => 'Staffeln als Reiter',
+			'settings.redesignSeasonTabsDescription' => 'Bei Serien stehen die Staffeln als Reiter über einer Reihe Episoden. Ausgeschaltet hat jede Staffel ihre eigene Reihe.',
 			'settings.glasSpinningFocus' => 'Fokusrahmen dreht sich',
 			'settings.glasSpinningFocusDescription' => 'Das Glanzlicht des Fokusrahmens wandert langsam um ihn herum und hält still, solange du dich bewegst. Kostet ein wenig Leistung.',
 			'settings.homeTitleLogos' => 'Logos auf Start und Erkunden',
@@ -4265,10 +4269,10 @@ extension on TranslationsDe {
 			'settings.hardwareTestDescription' => 'Was dieses Gerät unterstützt: Auflösungen, HDR, Ton und Decoder',
 			'settings.hardwareTestUnavailable' => 'Auf dieser Plattform nicht verfügbar',
 			'settings.hardwareTestSections.device' => 'Gerät',
-			'settings.hardwareTestSections.display' => 'Bildschirm',
-			'settings.hardwareTestSections.colour' => 'Farbe & HDR',
 			_ => null,
 		} ?? switch (path) {
+			'settings.hardwareTestSections.display' => 'Bildschirm',
+			'settings.hardwareTestSections.colour' => 'Farbe & HDR',
 			'settings.hardwareTestSections.audio' => 'Ton',
 			'settings.hardwareTestSections.video' => 'Video-Decoder',
 			'settings.hardwareTestLabels.model' => 'Modell',
@@ -4779,10 +4783,10 @@ extension on TranslationsDe {
 			'mpvConfig.deletePreset' => 'Löschen',
 			'mpvConfig.presetSaved' => 'Voreinstellung gespeichert',
 			'mpvConfig.presetLoaded' => 'Voreinstellung geladen',
-			'mpvConfig.presetDeleted' => 'Voreinstellung gelöscht',
-			'mpvConfig.confirmDeletePreset' => 'Diese Voreinstellung wirklich löschen?',
 			_ => null,
 		} ?? switch (path) {
+			'mpvConfig.presetDeleted' => 'Voreinstellung gelöscht',
+			'mpvConfig.confirmDeletePreset' => 'Diese Voreinstellung wirklich löschen?',
 			'mpvConfig.configPlaceholder' => 'gpu-api=vulkan\nhwdec=auto\n# comment',
 			'mpvConfig.lineHint' => 'option=value',
 			'mpvConfig.addLine' => 'Zeile hinzufügen',
@@ -5293,10 +5297,10 @@ extension on TranslationsDe {
 			'liveTv.liveStreamFailed' => 'Livestream fehlgeschlagen',
 			'liveTv.unknownProgram' => 'Unbekannte Sendung',
 			'liveTv.unknownHub' => 'Unbekannt',
-			'liveTv.unknownError' => 'Unbekannter Fehler',
-			'liveTv.channelNumber' => ({required Object number}) => 'Kanal ${number}',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.unknownError' => 'Unbekannter Fehler',
+			'liveTv.channelNumber' => ({required Object number}) => 'Kanal ${number}',
 			'liveTv.unknownChannel' => 'Unbekannter Kanal',
 			'liveTv.live' => 'LIVE',
 			'liveTv.reloadGuide' => 'TV-Programm neu laden',
@@ -5807,10 +5811,10 @@ extension on TranslationsDe {
 			'performanceOverlay.performance' => 'Leistung',
 			'performanceOverlay.buffer' => 'Puffer',
 			'performanceOverlay.app' => 'App',
-			'performanceOverlay.decoder' => 'Decoder',
-			'performanceOverlay.rawDecoder' => 'Raw-Decoder',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.decoder' => 'Decoder',
+			'performanceOverlay.rawDecoder' => 'Raw-Decoder',
 			'performanceOverlay.tunneling' => 'Tunneling',
 			'performanceOverlay.passthrough' => 'Durchleitung',
 			'performanceOverlay.aspect' => 'Seitenverhältnis',
@@ -6321,10 +6325,10 @@ extension on TranslationsDe {
 			'plebz.openSettings' => 'Einstellungen öffnen',
 			'plebz.updateFailed' => 'Das Update konnte nicht geladen oder installiert werden.',
 			'plebz.noMatchingDownload' => 'Dieses Release hat keine Datei für dieses Gerät.',
-			'plebz.whatsNew' => 'Was ist neu',
-			'plebz.whatsNewDescription' => 'Was sich mit jeder Version geändert hat',
 			_ => null,
 		} ?? switch (path) {
+			'plebz.whatsNew' => 'Was ist neu',
+			'plebz.whatsNewDescription' => 'Was sich mit jeder Version geändert hat',
 			'plebz.whatsNewEmpty' => 'Zu dieser Version gibt es noch keine Notizen.',
 			'localFiles.wrongTypeTitle' => 'Falscher Dateityp',
 			'localFiles.wrongTypeMessage' => ({required Object types}) => 'Gewählt werden kann eine Datei vom Typ ${types}.',

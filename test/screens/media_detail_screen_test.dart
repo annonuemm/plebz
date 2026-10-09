@@ -72,6 +72,90 @@ import '../test_helpers/profile_navigation.dart';
 import '../test_helpers/media_items.dart';
 import '../test_helpers/multi_server_fixtures.dart';
 
+/// A show of three seasons, one episode each, on a TV detail page under
+/// [variant], with that redesign's season tabs switched to [tabs].
+Future<void> _pumpThreeSeasonShow(
+  WidgetTester tester,
+  AppThemeVariant variant, {
+  required bool tabs,
+  bool withVersions = false,
+}) async {
+  await SettingsService.getInstance();
+  await SettingsService.instance.write(SettingsService.seasonTabsFor(flat: variant == AppThemeVariant.flach), tabs);
+
+  final show = testMediaItem(
+    id: 'show_1',
+    backend: MediaBackend.jellyfin,
+    kind: MediaKind.show,
+    title: 'The Show',
+    serverId: 'server_1',
+    serverName: 'Server',
+  );
+  MediaItem season(int n) => testMediaItem(
+    id: 'season_$n',
+    backend: MediaBackend.jellyfin,
+    kind: MediaKind.season,
+    title: 'Season $n',
+    index: n,
+    parentId: show.id,
+    serverId: show.serverId,
+    serverName: show.serverName,
+  );
+  MediaItem episode(MediaItem season) => testMediaItem(
+    id: 'episode_${season.index}',
+    backend: MediaBackend.jellyfin,
+    kind: MediaKind.episode,
+    title: 'Episode of ${season.title}',
+    summary: 'What happens in ${season.title}.',
+    durationMs: 1380000,
+    mediaVersions: withVersions ? const [MediaVersion(id: 'v1', videoResolution: '1080', bitrate: 7300)] : null,
+    index: 1,
+    parentId: season.id,
+    parentIndex: season.index,
+    grandparentId: show.id,
+    serverId: show.serverId,
+    serverName: show.serverName,
+  );
+  final seasons = [season(1), season(2), season(3)];
+  final client = _FakeMediaServerClient(
+    show: show,
+    childrenByParent: {
+      show.id: seasons,
+      for (final s in seasons) s.id: [episode(s)],
+    },
+    mediaSourcesById: {
+      if (withVersions)
+        for (final s in seasons)
+          'episode_${s.index}': MediaSourceInfo(
+            videoUrl: '',
+            audioTracks: [],
+            subtitleTracks: [],
+            chapters: [],
+            mediaSourceId: 'v1',
+            mediaIndex: 0,
+          ),
+    },
+  );
+  final provider = testMultiServer(clients: [client]).provider;
+
+  await tester.pumpWidget(
+    TranslationProvider(
+      child: ChangeNotifierProvider<MultiServerProvider>.value(
+        value: provider,
+        child: MaterialApp(
+          theme: monoTheme(dark: true, variant: variant),
+          home: withProfileNavigationScope(
+            child: SizedBox(width: 1280, height: 720, child: MediaDetailScreen(metadata: show)),
+          ),
+        ),
+      ),
+    ),
+  );
+  for (var i = 0; i < 4; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -981,67 +1065,10 @@ void main() {
     const flattenHub = MediaHub(id: 'detail_episodes', title: 'Episodes', type: 'episode', items: <MediaItem>[]);
     expect(rail.leadingItemForHub!(flattenHub), isNull);
   });
-  testWidgets('under Flach the seasons are a row of tabs over the one row of the chosen season\'s episodes', (
+  testWidgets('with its switch on, under Flach the seasons are a row of tabs over the chosen season\'s episodes', (
     tester,
   ) async {
-    await SettingsService.getInstance();
-
-    final show = testMediaItem(
-      id: 'show_1',
-      backend: MediaBackend.jellyfin,
-      kind: MediaKind.show,
-      title: 'The Show',
-      serverId: 'server_1',
-      serverName: 'Server',
-    );
-    MediaItem season(int n) => testMediaItem(
-      id: 'season_$n',
-      backend: MediaBackend.jellyfin,
-      kind: MediaKind.season,
-      title: 'Season $n',
-      index: n,
-      parentId: show.id,
-      serverId: show.serverId,
-      serverName: show.serverName,
-    );
-    MediaItem episode(MediaItem season) => testMediaItem(
-      id: 'episode_${season.index}',
-      backend: MediaBackend.jellyfin,
-      kind: MediaKind.episode,
-      title: 'Episode of ${season.title}',
-      index: 1,
-      parentId: season.id,
-      parentIndex: season.index,
-      grandparentId: show.id,
-      serverId: show.serverId,
-      serverName: show.serverName,
-    );
-    final seasons = [season(1), season(2), season(3)];
-    final client = _FakeMediaServerClient(
-      show: show,
-      childrenByParent: {
-        show.id: seasons,
-        for (final s in seasons) s.id: [episode(s)],
-      },
-    );
-    final provider = testMultiServer(clients: [client]).provider;
-
-    await tester.pumpWidget(
-      TranslationProvider(
-        child: ChangeNotifierProvider<MultiServerProvider>.value(
-          value: provider,
-          child: MaterialApp(
-            theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
-            home: withProfileNavigationScope(
-              child: SizedBox(width: 1280, height: 720, child: MediaDetailScreen(metadata: show)),
-            ),
-          ),
-        ),
-      ),
-    );
-    for (var i = 0; i < 4; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
+    await _pumpThreeSeasonShow(tester, AppThemeVariant.flach, tabs: true);
 
     TvBrowseRail rail() => tester.widget<TvBrowseRail>(find.byType(TvBrowseRail));
     List<MediaHub> episodeRows() => rail().hubs.where((hub) => hub.id.startsWith('detail_season_')).toList();
@@ -1071,6 +1098,8 @@ void main() {
     // Down from the buttons: the tab of the season on show, not the episodes.
     await press(LogicalKeyboardKey.arrowDown);
     expect(focusedTab(), 0);
+    // The buttons step out of sight while the rows are raised.
+    expect(tester.widget<Offstage>(find.byKey(const ValueKey('tv_detail_action_row'))).offstage, isTrue);
 
     // The episodes, the rows' heading and the tabs start where the buttons
     // do (the viewer's call).
@@ -1094,6 +1123,180 @@ void main() {
     expect(focusedTab(), isNull);
     await press(LogicalKeyboardKey.arrowUp);
     expect(focusedTab(), 1);
+  });
+
+  testWidgets('by default a row per season, one under the other, in Flach as in Glas', (tester) async {
+    for (final variant in [AppThemeVariant.flach, AppThemeVariant.glas]) {
+      await _pumpThreeSeasonShow(tester, variant, tabs: false);
+      final rail = tester.widget<TvBrowseRail>(find.byType(TvBrowseRail));
+      expect(rail.hubs.where((hub) => hub.id.startsWith('detail_season_')).map((hub) => hub.title), [
+        'Season 1',
+        'Season 2',
+        'Season 3',
+      ], reason: variant.name);
+      expect(find.byKey(const ValueKey('tv_detail_season_tabs')), findsNothing, reason: variant.name);
+    }
+  });
+
+  testWidgets(
+    'with its switch on, Glas has the season tabs too, in line with the buttons, which step aside while below',
+    (tester) async {
+      await _pumpThreeSeasonShow(tester, AppThemeVariant.glas, tabs: true);
+
+      final rail = tester.widget<TvBrowseRail>(find.byType(TvBrowseRail));
+      final rows = rail.hubs.where((hub) => hub.id.startsWith('detail_season_')).toList();
+      expect(rows.single.items.single.id, 'episode_1');
+      final tabs = find.descendant(
+        of: find.byKey(const ValueKey('tv_detail_season_tabs')),
+        matching: find.byType(FocusableTabChip),
+      );
+      expect(tester.widgetList<FocusableTabChip>(tabs).map((chip) => chip.label), ['Season 1', 'Season 2', 'Season 3']);
+      // The rows start where the buttons do, and the tab bar over them.
+      expect(rail.contentLeft, isNotNull);
+      // Glas sets a row's heading in capitals.
+      final heading = find.descendant(
+        of: find.byType(TvBrowseRail),
+        matching: find.textContaining(RegExp('^season 1\$', caseSensitive: false)),
+      );
+      final bar = find.descendant(
+        of: find.byKey(const ValueKey('tv_detail_season_tabs')),
+        matching: find.byType(TabChipStrip),
+      );
+      // The bar's pane reaches its overhang past the strip.
+      final paneLeft = tester.getTopLeft(bar).dx - TabChipStrip.overhangOf(tester.element(bar)).left;
+      expect(paneLeft, closeTo(tester.getTopLeft(heading).dx, 0.5));
+
+      // Down from the buttons: the tab of the season on show.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(tester.widgetList<FocusableTabChip>(tabs).first.focusNode?.hasFocus, isTrue);
+
+      // With the rows raised the buttons step out of sight, kept in the tree;
+      // UP brings them back, focused.
+      Offstage actionRow() => tester.widget<Offstage>(find.byKey(const ValueKey('tv_detail_action_row')));
+      expect(actionRow().offstage, isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(actionRow().offstage, isFalse);
+      final focused = FocusManager.instance.primaryFocus?.context;
+      expect(focused, isNotNull);
+      expect(
+        find.ancestor(of: find.byWidget(focused!.widget), matching: find.byKey(const ValueKey('tv_detail_action_row'))),
+        findsWidgets,
+      );
+    },
+  );
+
+  testWidgets('in both redesigns a focused episode\'s name stands under its facts, over its description', (
+    tester,
+  ) async {
+    for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+      await _pumpThreeSeasonShow(tester, variant, tabs: false);
+      tester.state<TvBrowseRailState>(find.byType(TvBrowseRail)).requestFocus();
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      final name = find.byKey(const ValueKey('tv_detail_episode_title'));
+      expect(tester.widget<Text>(name).data, 'Episode of Season 1', reason: variant.name);
+      final information = find.byKey(const ValueKey('tv_detail_information_semantics'));
+      final facts = find.descendant(of: information, matching: find.byType(FittedMetadataLine)).last;
+      final summary = find.descendant(of: information, matching: find.text('What happens in Season 1.'));
+      expect(tester.getTopLeft(name).dy, greaterThanOrEqualTo(tester.getBottomLeft(facts).dy), reason: variant.name);
+      expect(tester.getBottomLeft(name).dy, lessThanOrEqualTo(tester.getTopLeft(summary).dy), reason: variant.name);
+    }
+  });
+
+  testWidgets('in both redesigns raised rows take one row of facts, the picture beside them, without the bitrate', (
+    tester,
+  ) async {
+    for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+      // A fresh page for each: the last one's raised rows would carry over.
+      await tester.pumpWidget(const SizedBox());
+      await _pumpThreeSeasonShow(tester, variant, tabs: false, withVersions: true);
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final qualityRow = find.byKey(const ValueKey('tv_detail_quality_row'));
+      // The title area open: two rows, the bitrate in the second.
+      expect(
+        find.descendant(of: qualityRow, matching: find.text('1080p')),
+        findsOneWidget,
+        reason: variant.name,
+      );
+      expect(
+        find.descendant(of: qualityRow, matching: find.text('7.3 Mbps')),
+        findsOneWidget,
+        reason: variant.name,
+      );
+
+      tester.state<TvBrowseRailState>(find.byType(TvBrowseRail)).requestFocus();
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      final information = find.byKey(const ValueKey('tv_detail_information_semantics'));
+      expect(qualityRow, findsNothing, reason: variant.name);
+      expect(
+        find.descendant(of: information, matching: find.text('7.3 Mbps')),
+        findsNothing,
+        reason: variant.name,
+      );
+      final resolution = find.descendant(of: information, matching: find.text('1080p'));
+      expect(resolution, findsOneWidget, reason: variant.name);
+      final episode = find.descendant(of: information, matching: find.text('S1 E1'));
+      expect(tester.getCenter(resolution).dy, closeTo(tester.getCenter(episode).dy, 1), reason: variant.name);
+    }
+  });
+
+  testWidgets('with one server the page still names a copy in another of its libraries', (tester) async {
+    await SettingsService.getInstance();
+    final movie = testMediaItem(
+      id: 'movie_1',
+      backend: MediaBackend.jellyfin,
+      kind: MediaKind.movie,
+      title: 'The Film',
+      libraryId: 'lib_hd',
+      libraryTitle: 'Filme',
+      serverId: 'server_1',
+      serverName: 'Server',
+    );
+    final fourK = testMediaItem(
+      id: 'movie_2',
+      backend: MediaBackend.jellyfin,
+      kind: MediaKind.movie,
+      title: 'The Film',
+      libraryId: 'lib_4k',
+      libraryTitle: 'Filme - 4K',
+      serverId: 'server_1',
+      serverName: 'Server',
+    );
+    final client = _FakeMediaServerClient(show: movie, childrenByParent: {}, externalIdMatches: [movie, fourK]);
+    final provider = testMultiServer(clients: [client]).provider;
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: ChangeNotifierProvider<MultiServerProvider>.value(
+          value: provider,
+          child: MaterialApp(
+            theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+            home: withProfileNavigationScope(
+              child: SizedBox(width: 1280, height: 720, child: MediaDetailScreen(metadata: movie)),
+            ),
+          ),
+        ),
+      ),
+    );
+    for (var i = 0; i < 4; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    final rail = tester.widget<TvBrowseRail>(find.byType(TvBrowseRail));
+    final copies = rail.hubs.singleWhere((hub) => hub.id == 'detail_other_copies');
+    expect(copies.items, hasLength(1), reason: 'the copy on show is not listed');
   });
 
   testWidgets('TV detail reveal still waits for the supplemental sections', (tester) async {
@@ -3904,6 +4107,10 @@ class _FakeMediaServerClient implements MediaServerClient {
   final Future<List<MediaItem>>? pendingPlayableDescendants;
   final Map<String, MediaSourceInfo> mediaSourcesById;
   final Map<String, Map<String, dynamic>> rawItems;
+
+  /// What the server's own external-id lookup answers: copies of the title,
+  /// in any of its libraries.
+  final List<MediaItem> externalIdMatches;
   Completer<void>? sourceGate;
   int itemReads = 0;
   int sourceReads = 0;
@@ -3934,6 +4141,7 @@ class _FakeMediaServerClient implements MediaServerClient {
     this.pendingPlayableDescendants,
     this.mediaSourcesById = const {},
     Map<String, Map<String, dynamic>>? rawItems,
+    this.externalIdMatches = const [],
   }) : rawItems = rawItems ?? {},
        childrenPageFuturesByStart = childrenPageFuturesByStart ?? {};
 
@@ -3975,6 +4183,16 @@ class _FakeMediaServerClient implements MediaServerClient {
 
   @override
   Future<ExternalIds> fetchExternalIds(String itemId) async => const ExternalIds(tvdb: 4711);
+
+  @override
+  Future<List<MediaItem>?> findByExternalIds(
+    ExternalIds ids, {
+    required MediaKind kind,
+    List<String> titles = const [],
+    int? year,
+    String? plexGuid,
+    ExternalSeasonRef? season,
+  }) async => externalIdMatches;
 
   @override
   Future<MediaItem?> fetchItem(String id) async {

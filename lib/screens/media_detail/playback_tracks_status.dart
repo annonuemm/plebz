@@ -135,6 +135,7 @@ extension _MediaDetailPlaybackTracksStatus on _MediaDetailScreenState {
     BuildContext context,
     MediaItem metadata, {
     bool schedule = false,
+    bool includeBitrate = true,
   }) {
     final target = _playbackTargetItem(metadata);
     if (target == null) return null;
@@ -159,6 +160,7 @@ extension _MediaDetailPlaybackTracksStatus on _MediaDetailScreenState {
             // What the display is handed, not what the file holds: with the
             // switch on, media3 plays the base layer and the row says so.
             dolbyVisionDisabled: _dolbyVisionDisabled,
+            includeBitrate: includeBitrate,
           );
     // What the file itself carries, for the rows the probe cannot describe:
     // a source that came back without audio rows, or with a row that names
@@ -182,8 +184,11 @@ extension _MediaDetailPlaybackTracksStatus on _MediaDetailScreenState {
   /// push the chip off the fitted line entirely. A row that names no format
   /// falls back to the container's own audio stream, the same file's fact by
   /// a different route.
-  List<String> _playbackQualityLabels(BuildContext context, MediaItem metadata) {
-    final resolved = _resolvedPlayback(context, metadata, schedule: true);
+  ///
+  /// [includeBitrate] false leaves the bitrate out: the redesigns' one row of
+  /// facts under raised rows has no room for it (Plebz).
+  List<String> _playbackQualityLabels(BuildContext context, MediaItem metadata, {bool includeBitrate = true}) {
+    final resolved = _resolvedPlayback(context, metadata, schedule: true, includeBitrate: includeBitrate);
     if (resolved == null) return const [];
     final row = resolved.preview?.audio;
     final audioFormat = (row == null ? null : buildAudioTrackLabel(row)) ?? resolved.containerAudioLabel;

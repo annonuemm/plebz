@@ -978,19 +978,28 @@ class _SportTable extends StatelessWidget {
     if (rows.isEmpty) return const SizedBox.shrink();
     // "Flach" (Plebz): the table stands on a panel of its own, as the detail
     // panel does on the other pages, under a title rather than a label.
+    // Glas: the same panel as a card of glass, as its detail panel is.
     if (look.flat) {
       final pad = 16 * look.scale;
-      return Container(
-        // Beside the fixtures the panel runs to the foot of the page.
-        constraints: fitHeight ? const BoxConstraints.expand() : null,
-        padding: EdgeInsets.fromLTRB(pad, pad + 4 * look.scale, pad, pad),
-        decoration: BoxDecoration(
-          color: look.ink(0.045),
-          border: Border.all(color: look.ink(0.08)),
-          borderRadius: BorderRadius.circular(24 * look.scale),
-        ),
-        child: _buildTable(context),
-      );
+      final padding = EdgeInsets.fromLTRB(pad, pad + 4 * look.scale, pad, pad);
+      final radius = BorderRadius.circular(24 * look.scale);
+      final panel = ockerFlat(context)
+          ? Container(
+              padding: padding,
+              decoration: BoxDecoration(
+                color: look.ink(0.045),
+                border: Border.all(color: look.ink(0.08)),
+                borderRadius: radius,
+              ),
+              child: _buildTable(context),
+            )
+          : OckerGlass(
+              borderRadius: radius,
+              scrimInset: 0,
+              child: Padding(padding: padding, child: _buildTable(context)),
+            );
+      // Beside the fixtures the panel runs to the foot of the page.
+      return fitHeight ? SizedBox.expand(child: panel) : panel;
     }
     return _buildTable(context);
   }

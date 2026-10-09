@@ -114,7 +114,7 @@ void main() {
     expect(OckerGuidePanel.streamFpsLabel(29.97), '29.97 fps');
   });
 
-  testWidgets('under Flach the band is taller, its lines larger, and the description gets a third line', (
+  testWidgets('Flach\'s band is taller, its lines larger, the description three lines — and Glas wears it too', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1920, 1080);
@@ -154,12 +154,18 @@ void main() {
       );
     }
 
+    // Glas wears Flach's sizes too (ockerFlatSizes), so the two match; the
+    // band's own old size is what both grew from.
     final glas = await pump(AppThemeVariant.glas);
     final flach = await pump(AppThemeVariant.flach);
-    expect(flach.band.height, greaterThan(glas.band.height));
+    // Both at the same scale: the band's height and the facts' 23 grow alike.
+    final scale = flach.facts / 23;
+    expect(flach.band.height, closeTo(OckerGuidePanel.flatBandHeight * scale, 0.01));
+    expect(OckerGuidePanel.flatBandHeight, greaterThan(OckerGuidePanel.bandHeight));
+    expect(glas.band.height, flach.band.height);
     expect(flach.summary.maxLines, 3);
-    expect(glas.summary.maxLines, 2);
-    expect(flach.facts, greaterThan(glas.facts));
-    expect(flach.summary.style!.fontSize, greaterThan(glas.summary.style!.fontSize!));
+    expect(glas.summary.maxLines, 3);
+    expect(glas.facts, flach.facts);
+    expect(glas.summary.style!.fontSize, flach.summary.style!.fontSize);
   });
 }

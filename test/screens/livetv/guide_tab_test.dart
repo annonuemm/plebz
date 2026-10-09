@@ -1186,7 +1186,9 @@ http://provider/stream/ard
     expect(find.byIcon(Symbols.history_rounded), findsOneWidget);
   });
 
-  testWidgets('under Flach the day and time are a pill at the head of the ruler, not a strip above it', (tester) async {
+  testWidgets('under Flach (and Glas) the day and time are a pill at the head of the ruler, not a strip above it', (
+    tester,
+  ) async {
     resetSharedPreferencesForTest();
     SettingsService.resetForTesting();
     await SettingsService.getInstance();
@@ -1225,11 +1227,11 @@ http://provider/stream/ard
     expect(pill, findsOneWidget);
     expect(find.byIcon(Symbols.keyboard_arrow_down_rounded), findsNothing, reason: 'the strip above is gone');
 
-    // Glas keeps its strip.
+    // Glas wears Flach's sizes (ockerFlatSizes), the pill with them.
     await pumpGuide(AppThemeVariant.glas);
     await tester.pump(const Duration(seconds: 1));
-    expect(find.textContaining(t.liveTv.fromTime(time: ''), findRichText: true), findsNothing);
-    expect(find.byIcon(Symbols.keyboard_arrow_down_rounded), findsOneWidget);
+    expect(find.textContaining(t.liveTv.fromTime(time: ''), findRichText: true), findsOneWidget);
+    expect(find.byIcon(Symbols.keyboard_arrow_down_rounded), findsNothing);
   });
 
   testWidgets('under Flach a channel\'s cell stands level with its programmes: same top, same foot, same corner', (

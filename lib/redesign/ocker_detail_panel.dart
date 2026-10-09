@@ -42,7 +42,22 @@ class OckerDetailPanel extends StatelessWidget {
   /// starts, and the grid beside them does not move a pixel.
   final double? width;
 
-  const OckerDetailPanel({super.key, required this.resolveClient, this.withGroupBar = false, this.width});
+  /// How far the card runs on past [width] to the screen's right edge, square
+  /// there (Plebz): the page's right margin, which left more air outside the
+  /// card than between it and the posters (the viewer's call). What it adds
+  /// goes to the card's contents.
+  final double bleedRight;
+
+  const OckerDetailPanel({
+    super.key,
+    required this.resolveClient,
+    this.withGroupBar = false,
+    this.width,
+    this.bleedRight = 0,
+  });
+
+  /// The card's whole width, [bleedRight] included.
+  double _cardWidth(double scale) => (width ?? OckerLayout.panelWidth * scale) + bleedRight;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +82,7 @@ class OckerDetailPanel extends StatelessWidget {
   }
 
   Widget _buildPanel(BuildContext context, MediaItem item, MonoTokens tk, OckerType type, double scale) {
-    final width = this.width ?? OckerLayout.panelWidth * scale;
+    final width = _cardWidth(scale);
     // The room inside the pane.
     final wordsInset = 18 * scale;
     final wordsWidth = width - 2 * wordsInset;
@@ -113,7 +128,8 @@ class OckerDetailPanel extends StatelessWidget {
       Expanded(
         child: LayoutBuilder(
           builder: (context, box) {
-            final style = type.synopsis.copyWith(color: tk.ink(0.72));
+            // Flach's size in both redesigns (Plebz, the viewer's call).
+            final style = type.spotlightSynopsis.copyWith(color: tk.ink(0.72));
             final line = MediaQuery.textScalerOf(context).scale(style.fontSize ?? 18) * (style.height ?? 1.2);
             final gap = 20 * scale;
             // No ceiling: the card runs to the foot of the page, and the
@@ -178,19 +194,26 @@ class OckerDetailPanel extends StatelessWidget {
   /// The glass card, the panel's full width and down to [glassCardFoot] above
   /// the foot of the page, holding [child].
   Widget _glassCard(BuildContext context, MonoTokens tk, double scale, Widget child) {
+    final corner = Radius.circular(tk.radiusSm + 8);
     return SizedBox(
-      width: width ?? OckerLayout.panelWidth * scale,
+      width: _cardWidth(scale),
       height: double.infinity,
       child: Padding(
         padding: EdgeInsets.only(bottom: glassCardFoot * scale),
-        child: OckerGlass(borderRadius: BorderRadius.circular(tk.radiusSm + 8), scrimInset: 18 * scale, child: child),
+        child: OckerGlass(
+          // Square where it runs into the screen's edge.
+          borderRadius: bleedRight > 0 ? BorderRadius.horizontal(left: corner) : BorderRadius.all(corner),
+          scrimInset: 18 * scale,
+          child: child,
+        ),
       ),
     );
   }
 
   /// How big the title is set under glass, against the panel's own title:
-  /// half first, then 30 % up from that.
-  static const glassTitleScale = 0.65;
+  /// half first, then 30 % up from that, and a fifth up again (Plebz, the
+  /// viewer's call).
+  static const glassTitleScale = 0.78;
 
   /// The title as type under glass: the panel's own title at [glassTitleScale].
   TextStyle _glassTitle(OckerType type) {

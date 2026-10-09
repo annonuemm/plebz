@@ -341,7 +341,8 @@ class _CatalogSpotlightBackgroundState extends State<CatalogSpotlightBackground>
       maxLines: 1,
       style: TextStyle(
         color: Theme.of(context).colorScheme.onSurface,
-        fontSize: 16 * scale,
+        // Glas on "Flach"'s sizes: as large as the facts beside it.
+        fontSize: ockerFlatSizes(context) ? OckerType.of(context).spotlightFacts.fontSize : 16 * scale,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.1,
       ),

@@ -198,10 +198,11 @@ class OckerBrowsePageState extends State<OckerBrowsePage> {
         // away would only have stretched its columns into wider posters than
         // every other screen's. The narrow inset goes where the content meets
         // the rail, the design's margin to the far edge.
+        // The panel runs on through the right margin to the screen's edge.
         padding: EdgeInsets.fromLTRB(
           ockerFlushLeftInset(context),
           ockerContentTop(context),
-          OckerLayout.safeMargin * scale,
+          showPanel ? 0 : OckerLayout.safeMargin * scale,
           0,
         ),
         // The describing column stands on the right, from the top; the
@@ -220,7 +221,11 @@ class OckerBrowsePageState extends State<OckerBrowsePage> {
             ),
             if (showPanel) ...[
               SizedBox(width: OckerLayout.rowGutter * scale),
-              OckerDetailPanel(resolveClient: widget.resolveClient, width: ockerGridPanelWidth(context)),
+              OckerDetailPanel(
+                resolveClient: widget.resolveClient,
+                width: ockerGridPanelWidth(context),
+                bleedRight: OckerLayout.safeMargin * scale,
+              ),
             ],
           ],
         ),

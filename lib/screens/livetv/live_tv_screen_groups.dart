@@ -550,9 +550,11 @@ extension _LiveTvScreenFork on _LiveTvScreenState {
               // travel up into it.
               child: Padding(
                 // Flat (Plebz): the column runs the full height, square; its
-                // rows start where the content does.
+                // rows start where the content does. Glas: the panel keeps the
+                // same room to the screen's top as to its foot (the viewer's
+                // call), so no margin over it.
                 padding: EdgeInsets.only(
-                  top: isOckerLayout(context) && !ockerFlat(context) ? ockerContentTop(context) : 0,
+                  top: isOckerLayout(context) && !ockerFlat(context) && !glass ? ockerContentTop(context) : 0,
                 ),
                 child: glass && ockerFlat(context)
                     ? OckerGlass(

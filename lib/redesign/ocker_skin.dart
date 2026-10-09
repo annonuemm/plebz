@@ -409,6 +409,14 @@ bool ockerGlass(BuildContext context) => Theme.of(context).extension<MonoTokens>
 /// white fill with what stands on it inverted ([OckerFlatFocusInk]).
 bool ockerFlat(BuildContext context) => Theme.of(context).extension<MonoTokens>()?.flat == true;
 
+/// Whether "Flach"'s sizes apply (Plebz) — the spotlight's title, facts and
+/// description, and the Live-TV band with its time pill in the ruler.
+///
+/// Glas wears them too, on trial (the viewer's wish, 2026-10-09): only the
+/// sizes and the arrangement, the paint stays Glas's own. Answering
+/// [ockerFlat] here puts Glas back on its old sizes.
+bool ockerFlatSizes(BuildContext context) => ockerGlass(context);
+
 /// What stands on a flat focus fill, inverted while [invert] (Plebz): white
 /// type and glyphs come out dark on the white fill, whatever colour each was
 /// given — one place for it, rather than every word and icon asking.

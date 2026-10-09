@@ -86,8 +86,8 @@ Anything above the first version is not a note.
 
       expect(
         span.toPlainText(),
-        'Updated\n\nPlebz 1.2.0 (Build 559)\nLive TV\n•  First, bold word\n      •  nested'
-        '\n\nPlebz 1.1.0 (Build 557)\n•  Second',
+        'Updated\n\nPlebz 1.2.0\nLive TV\n•  First, bold word\n      •  nested'
+        '\n\nPlebz 1.1.0\n•  Second',
       );
     });
   });

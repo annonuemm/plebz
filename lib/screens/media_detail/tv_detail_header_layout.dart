@@ -79,6 +79,21 @@ class TvDetailHeaderMetrics {
   /// the summary read as three separate things (the user's call).
   final bool flatFacts;
 
+  /// Glas (Plebz): the capsules at the start page's size, the same with the
+  /// title area open and with the rows raised, and a focused episode's name a
+  /// step smaller — at the old sizes a raised header had no line left for the
+  /// description (the viewer's call).
+  final bool compactGlass;
+
+  /// Either redesign with the rows raised (Plebz): the action row is out of sight — its
+  /// buttons act on the title, not on the row under the cursor, and UP brings
+  /// them back with the title area — so its height goes to the summary, which
+  /// may then run to [hiddenActionsLineCeiling] lines (the viewer's call).
+  final bool hidesActions;
+
+  /// The summary's ceiling while [hidesActions].
+  static const int hiddenActionsLineCeiling = 5;
+
   /// The most the title may take, where a page sets it smaller than the logo
   /// slot allows: "Flach" with the rows raised sets it at the start page's
   /// size, and what that leaves goes to the summary (the viewer's call — the
@@ -96,6 +111,8 @@ class TvDetailHeaderMetrics {
     this.descriptionLines,
     this.hasQualityLine = false,
     this.flatFacts = false,
+    this.compactGlass = false,
+    this.hidesActions = false,
     this.titleCap,
   });
 
@@ -105,7 +122,7 @@ class TvDetailHeaderMetrics {
   /// moment later. Six where the title area owns it: at that width six lines
   /// is roughly a full synopsis, and beyond it the block starts competing with
   /// the artwork it sits on.
-  int get summaryLineCeiling => heroLayout ? 6 : 3;
+  int get summaryLineCeiling => heroLayout ? 6 : (hidesActions ? hiddenActionsLineCeiling : 3);
 
   /// What the summary may take here: the ceiling, or the lines this text needs
   /// if that is fewer.
@@ -146,17 +163,24 @@ class TvDetailHeaderMetrics {
   /// than Roboto. The spare few points cost the summary nothing measurable and
   /// cover both. Any more and the slack shows as air around the boxes, because
   /// the row is centred in whatever this reserves.
-  double get metadataLineHeight => (flatFacts ? 22 : 33) * scale;
+  double get metadataLineHeight => (flatFacts ? 22 : (compactGlass ? 28 : 33)) * scale;
 
   /// Between the two rows of facts, where there are two.
-  double get metadataRowGap => (flatFacts ? 0 : 6) * scale;
+  double get metadataRowGap => (flatFacts ? 0 : (compactGlass ? 4 : 6)) * scale;
+
+  /// The type of the facts on [compactGlass]'s capsules: the start page's
+  /// facts, in this page's scale.
+  static const double compactGlassFactsSize = 13.5;
+
+  /// A focused episode's name.
+  double get episodeTitleFontSize => (compactGlass ? 20 : 24) * scale;
 
   /// The facts, one row or two.
   double get metadataBlockHeight => hasQualityLine ? metadataLineHeight * 2 + metadataRowGap : metadataLineHeight;
 
   double get genreLineHeight => 22 * scale;
 
-  double get episodeTitleLineHeight => 30 * scale;
+  double get episodeTitleLineHeight => (compactGlass ? 26 : 30) * scale;
 
   double get episodeTitleGap => 4 * scale;
 
@@ -168,11 +192,14 @@ class TvDetailHeaderMetrics {
   /// separating from the facts above it, or the two read as one paragraph.
   double get summaryGap => (heroLayout ? (flatFacts ? 20.0 : 16.0) : (flatFacts ? 12.0 : 6.0)) * scale;
 
-  double get summaryFontSize => availableHeight < 260 * scale ? 16.2 * scale : 18 * scale;
+  /// The summary's type: a step smaller in a short header. Both redesigns
+  /// ([compactGlass], [flatFacts]) keep that smaller step in both states, so
+  /// the text does not change size as the rows come up (the viewer's call).
+  double get summaryFontSize => compactGlass || flatFacts || availableHeight < 260 * scale ? 16.2 * scale : 18 * scale;
 
   double get summaryLineHeight => summaryFontSize * 1.35;
 
-  double get actionHeight => 46 * scale;
+  double get actionHeight => hidesActions ? 0 : 46 * scale;
 
   /// Air below the summary, before the buttons.
   double get actionGap => (heroLayout ? 24.0 : 12.0) * scale;

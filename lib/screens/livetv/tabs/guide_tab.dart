@@ -1676,9 +1676,9 @@ class GuideTabState extends State<GuideTab>
           children: [
             // "Flach": level with the ruler's times rather than above them —
             // the pill is as tall as its figures and its padding.
-            if (ockerFlat(context))
+            if (ockerFlatSizes(context))
               SizedBox(height: ((_timeHeaderHeight - 26 * ockerScale(context)) / 2).clamp(0.0, double.infinity)),
-            if (ockerFlat(context))
+            if (ockerFlatSizes(context))
               // "Flach": a pill of the accent, its figures in whichever of white
               // or the ground reads on it — a picked yellow takes the dark.
               Container(

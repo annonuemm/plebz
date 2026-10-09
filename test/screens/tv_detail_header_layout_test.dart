@@ -171,4 +171,40 @@ void main() {
     expect(capped.summaryLines, greaterThanOrEqualTo(2));
     expect(capped.titleHeight, lessThanOrEqualTo(36));
   });
+
+  test('Glas\'s smaller capsules and episode name, with the title capped, leave the summary three lines', () {
+    TvDetailHeaderMetrics metrics({required bool compact}) => TvDetailHeaderMetrics(
+      availableHeight: 240,
+      scale: _tvScale,
+      hasDescription: true,
+      hasGenres: false,
+      hasEpisodeTitle: true,
+      hasQualityLine: true,
+      compactGlass: compact,
+      titleCap: 36,
+    );
+    final compact = metrics(compact: true);
+    expect(compact.metadataBlockHeight, lessThan(metrics(compact: false).metadataBlockHeight));
+    expect(compact.episodeTitleFontSize, lessThan(metrics(compact: false).episodeTitleFontSize));
+    expect(resolveTvDetailHeaderLayout(compact).summaryLines, 3);
+    expect(resolveTvDetailHeaderLayout(metrics(compact: false)).summaryLines, lessThan(3));
+  });
+
+  test('Glas and Flach set the summary at the short header\'s size with the title area open too', () {
+    TvDetailHeaderMetrics metrics({bool compact = false, bool flat = false, required bool hero}) =>
+        TvDetailHeaderMetrics(
+          availableHeight: 600,
+          scale: _tvScale,
+          hasDescription: true,
+          hasGenres: false,
+          heroLayout: hero,
+          compactGlass: compact,
+          flatFacts: flat,
+        );
+    expect(metrics(hero: true).summaryFontSize, 18 * _tvScale);
+    expect(metrics(compact: true, hero: true).summaryFontSize, 16.2 * _tvScale);
+    expect(metrics(compact: true, hero: false).summaryFontSize, 16.2 * _tvScale);
+    expect(metrics(flat: true, hero: true).summaryFontSize, 16.2 * _tvScale);
+    expect(metrics(flat: true, hero: false).summaryFontSize, 16.2 * _tvScale);
+  });
 }

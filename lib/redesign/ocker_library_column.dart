@@ -352,13 +352,10 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
                         child: list,
                       ),
                     )
+                  // Glas: the same room above the pane as below it, the screen's
+                  // edge either way (the viewer's call).
                   : Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        12 * scale,
-                        ockerContentTop(context) + 12 * scale,
-                        12 * scale,
-                        12 * scale,
-                      ),
+                      padding: EdgeInsets.all(12 * scale),
                       child: OckerGlass(
                         key: OckerLibraryColumn.paneKey,
                         borderRadius: radius,

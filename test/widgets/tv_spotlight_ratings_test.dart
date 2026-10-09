@@ -82,10 +82,10 @@ void main() {
 
     expect(find.ancestor(of: find.text('1992'), matching: find.byType(OckerGlassPlate)), findsOneWidget);
     expect(find.textContaining('•'), findsNothing);
-    // Close to the synopsis: the capsules stand apart by their shape.
+    // On "Flach"'s step to the synopsis (ockerFlatSizes): 22 at this scale.
     final chip = tester.getRect(find.ancestor(of: find.text('1992'), matching: find.byType(OckerGlassPlate)));
     final synopsis = tester.getRect(find.text('A short synopsis.'));
-    expect(synopsis.top - chip.bottom, lessThanOrEqualTo(16.5));
+    expect(synopsis.top - chip.bottom, closeTo(22, 0.5));
   });
 
   testWidgets('the spotlight\'s facts follow the detail page\'s order', (tester) async {

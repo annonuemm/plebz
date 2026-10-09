@@ -192,6 +192,9 @@ class _TvColorPickerState extends State<TvColorPicker> with ControllerDisposerMi
           maxLength: 6,
           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F]'))],
           onChanged: _onHexChanged,
+          // Passing over the field with the D-pad must not raise a keyboard
+          // (Plebz): it opens on OK only.
+          tvTextInputAutoOpenBehavior: TvTextInputAutoOpenBehavior.never,
         ),
       ],
     );

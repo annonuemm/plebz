@@ -1566,6 +1566,12 @@ class Translations$settings$en {
 	/// en: 'Libraries and the watchlist show the selected title's description on the right. Off, more posters fit in a row.'
 	String get glasDetailPanelDescription => 'Libraries and the watchlist show the selected title\'s description on the right. Off, more posters fit in a row.';
 
+	/// en: 'Seasons as tabs'
+	String get redesignSeasonTabs => 'Seasons as tabs';
+
+	/// en: 'A show's seasons stand as tabs over one row of episodes. Off, every season has a row of its own.'
+	String get redesignSeasonTabsDescription => 'A show\'s seasons stand as tabs over one row of episodes. Off, every season has a row of its own.';
+
 	/// en: 'Turning focus edge'
 	String get glasSpinningFocus => 'Turning focus edge';
 
@@ -9708,6 +9714,8 @@ extension on Translations {
 			'settings.glasUltraBlurDescription' => 'On Home and Explore the background takes the colours of the title in focus.',
 			'settings.glasDetailPanel' => 'Description beside the posters',
 			'settings.glasDetailPanelDescription' => 'Libraries and the watchlist show the selected title\'s description on the right. Off, more posters fit in a row.',
+			'settings.redesignSeasonTabs' => 'Seasons as tabs',
+			'settings.redesignSeasonTabsDescription' => 'A show\'s seasons stand as tabs over one row of episodes. Off, every season has a row of its own.',
 			'settings.glasSpinningFocus' => 'Turning focus edge',
 			'settings.glasSpinningFocusDescription' => 'The glint on the focus edge travels slowly round it and holds still while you move. Costs a little performance.',
 			'settings.homeTitleLogos' => 'Logos on Home and Explore',
@@ -9725,10 +9733,10 @@ extension on Translations {
 			'settings.showCompanionRemoteAction' => 'Show remote control',
 			'settings.showCompanionRemoteActionDescription' => 'Keep the companion remote button in the Home toolbar',
 			'settings.showServerActivitiesAction' => 'Show server activity',
-			'settings.showServerActivitiesActionDescription' => 'Keep the server activity button in the Home toolbar',
-			'settings.hideHomeActionsUntilFocus' => 'Hide the home toolbar until focused',
 			_ => null,
 		} ?? switch (path) {
+			'settings.showServerActivitiesActionDescription' => 'Keep the server activity button in the Home toolbar',
+			'settings.hideHomeActionsUntilFocus' => 'Hide the home toolbar until focused',
 			'settings.hideHomeActionsUntilFocusDescription' => 'Refresh, profile and the rest stay invisible while you are in the content, and appear when the remote goes up to them. Touch is unaffected.',
 			'settings.showDownloadAction' => 'Download button',
 			'settings.showDownloadActionDescription' => 'Show the download button on movie and episode pages. Downloads stay available from the ⋮ menu.',
@@ -10239,10 +10247,10 @@ extension on Translations {
 			'subtitlingStyling.renderResolutionScreen' => 'Screen resolution',
 			'subtitlingStyling.renderResolutionVideo' => 'Video resolution',
 			'mpvConfig.title' => 'mpv.conf',
-			'mpvConfig.description' => 'Advanced video player settings',
-			'mpvConfig.presets' => 'Presets',
 			_ => null,
 		} ?? switch (path) {
+			'mpvConfig.description' => 'Advanced video player settings',
+			'mpvConfig.presets' => 'Presets',
 			'mpvConfig.noPresets' => 'No saved presets',
 			'mpvConfig.saveAsPreset' => 'Save as Preset...',
 			'mpvConfig.presetName' => 'Preset Name',
@@ -10753,10 +10761,10 @@ extension on Translations {
 			'explore.detail.revenue' => 'Box office',
 			'explore.detail.contentAdvisory' => 'Age guidance',
 			'explore.detail.tags' => 'Tags',
-			'explore.detail.revealSpoilerTags' => 'Show spoiler tags',
-			'explore.detail.links' => 'Links',
 			_ => null,
 		} ?? switch (path) {
+			'explore.detail.revealSpoilerTags' => 'Show spoiler tags',
+			'explore.detail.links' => 'Links',
 			'explore.detail.watchOn' => 'Watch on',
 			'explore.detail.watchTrailer' => 'Watch trailer',
 			'explore.detail.openOn' => ({required Object site}) => 'Open on ${site}',
@@ -11267,10 +11275,10 @@ extension on Translations {
 			'companionRemote.remote.volumeUp' => 'Up',
 			'companionRemote.remote.fullscreen' => 'Fullscreen',
 			'companionRemote.remote.subtitles' => 'Subtitles',
-			'companionRemote.remote.audio' => 'Audio',
-			'companionRemote.remote.searchHint' => 'Search on desktop...',
 			_ => null,
 		} ?? switch (path) {
+			'companionRemote.remote.audio' => 'Audio',
+			'companionRemote.remote.searchHint' => 'Search on desktop...',
 			'companionRemote.errors.noNetworkInterface' => 'No network interface found',
 			'companionRemote.errors.authenticationFailed' => 'Authentication failed',
 			'companionRemote.errors.serverStartFailed' => ({required Object error}) => 'Failed to start remote server: ${error}',
@@ -11781,10 +11789,10 @@ extension on Translations {
 			'plebz.moreAppearanceDescription' => 'Cards, home screen, navigation and more',
 			'plebz.morePlayback' => 'More playback settings',
 			'plebz.morePlaybackDescription' => 'Player, picture, sound, quality and more',
-			'plebz.allSettings' => 'All settings',
-			'plebz.allSettingsDescription' => 'Every setting, including the advanced ones',
 			_ => null,
 		} ?? switch (path) {
+			'plebz.allSettings' => 'All settings',
+			'plebz.allSettingsDescription' => 'Every setting, including the advanced ones',
 			'plebz.welcomeTitle' => 'Welcome to Plebz',
 			'plebz.welcomeBody' => 'Set up in a few steps: how it looks, where your films, series and channels come from, and which services join in. Everything can be changed later in the settings.',
 			'plebz.getStarted' => 'Let\'s go',

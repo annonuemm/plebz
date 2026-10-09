@@ -57,4 +57,31 @@ void main() {
       isTrue,
     );
   });
+
+  testWidgets('under Glas the pane stands as far from the screen\'s top as from its foot', (tester) async {
+    final libraries = [MediaLibrary(id: 'Filme', backend: MediaBackend.plex, title: 'Filme', serverId: 'plex')];
+    final columnKey = GlobalKey<OckerLibraryColumnState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        home: Scaffold(
+          body: OckerLibraryColumn(
+            key: columnKey,
+            libraries: libraries,
+            selectedKey: libraries.first.globalKey,
+            groupByServer: false,
+            onSelected: (_) {},
+            onFocusContent: () {},
+            child: const SizedBox.expand(),
+          ),
+        ),
+      ),
+    );
+    columnKey.currentState!.open();
+    await tester.pumpAndSettle();
+
+    final pane = tester.getRect(find.byKey(OckerLibraryColumn.paneKey));
+    final screen = tester.getSize(find.byType(Scaffold));
+    expect(pane.top, closeTo(screen.height - pane.bottom, 0.5));
+  });
 }

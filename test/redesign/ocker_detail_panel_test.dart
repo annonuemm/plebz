@@ -120,6 +120,18 @@ void main() {
     );
   }
 
+  testWidgets('glas and flach set the description at the same size', (tester) async {
+    final item = testMediaItem(id: 'gleich', title: 'Gleich', summary: 'Ein Satz.');
+    final films = MediaHub(id: 'filme', title: 'Filme', type: 'movie', items: [item]);
+    bus.report(OckerFocused(item: item, hub: films, index: 0));
+    double size() => tester.widget<Text>(find.text('Ein Satz.')).style!.fontSize!;
+
+    await pumpPanel(tester, variant: AppThemeVariant.glas);
+    final glas = size();
+    await pumpPanel(tester, variant: AppThemeVariant.flach);
+    expect(glas, size());
+  });
+
   testWidgets('glas: the name is type, smaller than the panel\'s own, and the card stands still down to the foot', (
     tester,
   ) async {

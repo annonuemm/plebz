@@ -1654,11 +1654,13 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
   FocusNode _otherCopyFocusNode(MediaItem copy) =>
       _otherCopyFocusNodes.putIfAbsent(copy.globalKey, () => FocusNode(debugLabel: 'other_copy_${copy.globalKey}'));
 
-  /// Look this title up on every other online server, so the page can say
-  /// where else it exists and in what quality.
+  /// Look this title up on every online server, so the page can say where
+  /// else it exists and in what quality.
   ///
-  /// Skipped outright with a single server online: the fan-out would cost a
-  /// request wave per detail page open to return a guaranteed empty result.
+  /// With a single server online too (Plebz): the server's own lookup spans
+  /// all its libraries, so a copy in another one — "Filme" and "Filme - 4K" —
+  /// is found there. It costs a few requests per page open; the viewer wanted
+  /// the comparison on a one-server setup.
   Future<void> _loadOtherServerCopies() async {
     final metadata = _fullMetadata ?? _metadata;
     if (widget.isOffline || !(metadata.isMovie || metadata.isShow)) return;
@@ -1666,7 +1668,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     // Nullable read: hosts without the provider (widget tests) simply never
     // show the section, mirroring how the watchlist action resolves.
     final multiServer = Provider.of<MultiServerProvider?>(context, listen: false);
-    if (multiServer == null || multiServer.serverManager.onlineClients.length < 2) return;
+    if (multiServer == null || multiServer.serverManager.onlineClients.isEmpty) return;
 
     final serverId = serverIdOrNull(metadata.serverId);
     final client = serverId == null ? null : multiServer.serverManager.getClient(serverId);
@@ -3932,16 +3934,20 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           right: spotlightLeft,
           bottom: foregroundBottom,
           height: _tvDetailActionSize * detailScale,
-          child: ValueListenableBuilder<MediaItem?>(
-            valueListenable: _tvDetailFocusedEpisode,
-            builder: (context, _, _) => Align(
-              alignment: .bottomRight,
-              child: _buildPlaybackTracksStatus(
-                context,
-                metadata,
-                isTv: true,
-                tvScale: detailScale,
-                maxWidth: size.width * 0.40 - spotlightLeft * 2,
+          // What Play would start with leaves with the buttons it describes.
+          child: Offstage(
+            offstage: _tvDetailHidesActions(context, titleAreaExpanded: !railsRaised),
+            child: ValueListenableBuilder<MediaItem?>(
+              valueListenable: _tvDetailFocusedEpisode,
+              builder: (context, _, _) => Align(
+                alignment: .bottomRight,
+                child: _buildPlaybackTracksStatus(
+                  context,
+                  metadata,
+                  isTv: true,
+                  tvScale: detailScale,
+                  maxWidth: size.width * 0.40 - spotlightLeft * 2,
+                ),
               ),
             ),
           ),
@@ -4000,6 +4006,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
               child: _withTvDetailSeasonTabs(
                 show: seasonTabs,
                 scale: detailScale,
+                // In line with the buttons, as the rows under them are.
                 left: spotlightLeft,
                 rail: TvBrowseRail(
                   key: _tvDetailRailKey,
@@ -4026,9 +4033,9 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                   initialItemId: _tvDetailInitialItemId(metadata),
                   episodePosterModeForHub: _tvDetailEpisodePosterModeForHub,
                   showTitleImpliedForHub: _isTvDetailEpisodeHub,
-                  // "Flach": the rows start where the buttons above them do
-                  // (the viewer's call).
-                  contentLeft: ockerFlat(context) ? spotlightLeft : null,
+                  // Both redesigns: the rows start where the buttons above
+                  // them do (the viewer's call, Flach first, Glas since 695).
+                  contentLeft: ockerGlass(context) ? spotlightLeft : null,
                 ),
               ),
             ),
@@ -4099,6 +4106,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
         // gaps, and the summary — an episode's, at that moment — drops to
         // nothing.
         final heroLayout = titleAreaExpanded;
+        final hidesActions = _tvDetailHidesActions(context, titleAreaExpanded: titleAreaExpanded);
         final hasDescription = description != null && description.isNotEmpty;
         // Measured before the budget is drawn up: reserving the ceiling for a
         // short synopsis leaves the slack as a hole above the buttons and robs
@@ -4119,8 +4127,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           hasGenres: false,
           hasEpisodeTitle: reservesEpisodeTitle,
           heroLayout: heroLayout,
-          hasQualityLine: _tvDetailReservesQualityRow(context, metadata),
+          hasQualityLine: _tvDetailReservesQualityRow(context, metadata, titleAreaExpanded: titleAreaExpanded),
           flatFacts: ockerFlat(context),
+          compactGlass: _tvDetailCompactGlass(context),
+          hidesActions: hidesActions,
           titleCap: _tvDetailRaisedTitleCap(context, heroLayout: heroLayout),
         );
         final metrics = TvDetailHeaderMetrics(
@@ -4132,8 +4142,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           hasGenres: false,
           hasEpisodeTitle: reservesEpisodeTitle,
           heroLayout: heroLayout,
-          hasQualityLine: _tvDetailReservesQualityRow(context, metadata),
+          hasQualityLine: _tvDetailReservesQualityRow(context, metadata, titleAreaExpanded: titleAreaExpanded),
           flatFacts: ockerFlat(context),
+          compactGlass: _tvDetailCompactGlass(context),
+          hidesActions: hidesActions,
           titleCap: _tvDetailRaisedTitleCap(context, heroLayout: heroLayout),
           descriptionLines: hasDescription
               ? _tvDetailSummaryLineCount(context, description, probe, constraints.maxWidth)
@@ -4144,7 +4156,6 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
         final metadataLineHeight = metrics.metadataBlockHeight;
         final logoMetadataGap = metrics.logoMetadataGap;
         final summaryFontSize = metrics.summaryFontSize;
-        final actionHeight = metrics.actionHeight;
         final actionGap = metrics.actionGap;
         final summaryMaxLines = layout.summaryLines;
 
@@ -4155,6 +4166,37 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
 
         final titleBlock = showTitleBlock
             ? _tvDetailTitleBlock(context, metadata, layout, logoWidth, constraints.maxWidth, foregroundColor)
+            : null;
+
+        // Both redesigns (Plebz): a focused episode's name stands under its
+        // facts, over the description it heads — the facts already say which
+        // episode it is (the viewer's call).
+        final episodeTitleOverSummary = ockerGlass(context);
+        // Over the summary the name keeps close to it and apart from the
+        // facts: the summary's gap moves above the name, and the name stands
+        // on the floor of its line (the viewer's call). The same room in all.
+        final summaryShown = summaryMaxLines > 0 && description != null;
+        final nameHugsSummary = hasEpisodeTitle && episodeTitleOverSummary && summaryShown;
+        final nameToSummary = 2 * scale;
+        final episodeTitleLine = hasEpisodeTitle
+            ? SizedBox(
+                height: metrics.episodeTitleLineHeight,
+                child: Align(
+                  alignment: nameHugsSummary ? .bottomLeft : .centerLeft,
+                  child: Text(
+                    episodeTitle,
+                    key: const ValueKey('tv_detail_episode_title'),
+                    maxLines: 1,
+                    overflow: .ellipsis,
+                    style: TextStyle(
+                      color: foregroundColor,
+                      fontSize: metrics.episodeTitleFontSize,
+                      fontWeight: .w700,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+              )
             : null;
 
         return ClipRect(
@@ -4211,36 +4253,34 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                                   crossAxisAlignment: .start,
                                   children: [
                                     if (titleBlock != null) ...[titleBlock, SizedBox(height: logoMetadataGap)],
-                                    if (hasEpisodeTitle) ...[
-                                      SizedBox(
-                                        height: metrics.episodeTitleLineHeight,
-                                        child: Align(
-                                          alignment: .centerLeft,
-                                          child: Text(
-                                            episodeTitle,
-                                            key: const ValueKey('tv_detail_episode_title'),
-                                            maxLines: 1,
-                                            overflow: .ellipsis,
-                                            style: TextStyle(
-                                              color: foregroundColor,
-                                              fontSize: 24 * scale,
-                                              fontWeight: .w700,
-                                              height: 1.2,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                                    // Above the facts in the original look; the redesigns
+                                    // set it over the description it heads.
+                                    if (hasEpisodeTitle && !episodeTitleOverSummary) ...[
+                                      episodeTitleLine!,
                                       SizedBox(height: metrics.episodeTitleGap),
                                     ],
                                     SizedBox(
                                       height: metadataLineHeight,
                                       child: Align(
                                         alignment: .centerLeft,
-                                        child: _buildTvDetailMetadataLine(context, metadata, scale),
+                                        child: _buildTvDetailMetadataLine(
+                                          context,
+                                          metadata,
+                                          scale,
+                                          titleAreaExpanded: titleAreaExpanded,
+                                        ),
                                       ),
                                     ),
-                                    if (summaryMaxLines > 0 && description != null) ...[
-                                      SizedBox(height: metrics.summaryGap),
+                                    if (hasEpisodeTitle && episodeTitleOverSummary) ...[
+                                      SizedBox(
+                                        height:
+                                            metrics.episodeTitleGap +
+                                            (nameHugsSummary ? metrics.summaryGap - nameToSummary : 0),
+                                      ),
+                                      episodeTitleLine!,
+                                    ],
+                                    if (summaryShown) ...[
+                                      SizedBox(height: nameHugsSummary ? nameToSummary : metrics.summaryGap),
                                       // No reserved box: a three-line synopsis in a
                                       // six-line frame left its unused lines as a
                                       // hole between the text and the buttons.
@@ -4261,7 +4301,14 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                             ),
                           ),
                           SizedBox(height: actionGap),
-                          SizedBox(height: actionHeight, child: _buildActionButtons(metadata)),
+                          // Out of sight rather than out of the tree while the
+                          // rows are raised: UP focuses the play button, and
+                          // a button that had left the tree could not take it.
+                          Offstage(
+                            key: const ValueKey('tv_detail_action_row'),
+                            offstage: hidesActions,
+                            child: SizedBox(height: _tvDetailActionSize * scale, child: _buildActionButtons(metadata)),
+                          ),
                         ],
                       ),
                     ),
@@ -4298,7 +4345,12 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
   /// identify the item (#1893).
   /// The facts under the title. [quality] picks a row where there are two:
   /// true the picture and sound, false everything else, null the lot.
-  List<MetadataLinePart> _tvDetailMetadataParts(BuildContext context, MediaItem metadata, {bool? quality}) {
+  List<MetadataLinePart> _tvDetailMetadataParts(
+    BuildContext context,
+    MediaItem metadata, {
+    bool? quality,
+    bool includeBitrate = true,
+  }) {
     final lineMetadata = _tvDetailFocusedEpisode.value ?? metadata;
     final parts = <MetadataLinePart>[];
     if (quality == true) {
@@ -4327,7 +4379,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       parts.add(MetadataLineText(edition.trim(), dropPriority: 3));
     }
     if (quality == null) {
-      for (final label in _playbackQualityLabels(context, metadata)) {
+      for (final label in _playbackQualityLabels(context, metadata, includeBitrate: includeBitrate)) {
         parts.add(MetadataLineText(label, dropPriority: 3));
       }
     }
@@ -4546,25 +4598,38 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     );
   }
 
-  Widget _buildTvDetailMetadataLine(BuildContext context, MediaItem metadata, double scale) {
+  Widget _buildTvDetailMetadataLine(
+    BuildContext context,
+    MediaItem metadata,
+    double scale, {
+    required bool titleAreaExpanded,
+  }) {
     // The same size as the genre line directly below it: at TV distance the
     // two read as one block of facts, and the boxes were carrying the row's
     // emphasis on their own anyway.
     // "Flach": the start page's plain facts, quieter than the title, at the
     // size this page's budget reserves for them.
     final flat = ockerFlat(context);
+    final compactGlass = _tvDetailCompactGlass(context);
     final textStyle = flat
         ? OckerType.of(context).spotlightFacts.copyWith(color: tokens(context).ink(0.66), fontSize: 16 * scale)
         : TextStyle(
             color: _tvDetailForegroundColor(context),
-            fontSize: 16 * scale,
+            fontSize: (compactGlass ? TvDetailHeaderMetrics.compactGlassFactsSize : 16) * scale,
             fontWeight: .w700,
             letterSpacing: 0.1,
           );
     // Two rows: year, age and length first, the picture and sound below —
     // each fact on a capsule of glass under "Glas", in a box elsewhere.
-    final twoRows = _tvDetailReservesQualityRow(context, metadata);
-    final parts = _tvDetailMetadataParts(context, metadata, quality: twoRows ? false : null);
+    final twoRows = _tvDetailReservesQualityRow(context, metadata, titleAreaExpanded: titleAreaExpanded);
+    // One row under raised rows in the redesigns: the picture and sound join
+    // it, without the bitrate.
+    final parts = _tvDetailMetadataParts(
+      context,
+      metadata,
+      quality: twoRows ? false : null,
+      includeBitrate: !_tvDetailOneFactsRow(context, titleAreaExpanded: titleAreaExpanded),
+    );
     if (parts.isEmpty && !twoRows) return const SizedBox.shrink();
 
     // Each fact in its own box: on a full-screen title area the row is read
@@ -4588,6 +4653,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       hasDescription: false,
       hasGenres: false,
       flatFacts: flat,
+      compactGlass: compactGlass,
     );
     return Column(
       mainAxisSize: .min,
@@ -4618,8 +4684,18 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
   /// picture and sound are only known once the playback source has resolved,
   /// after the header has been laid out; a row that arrived then would push
   /// everything below it out of the budget.
-  bool _tvDetailReservesQualityRow(BuildContext context, MediaItem metadata) =>
-      metadata.isMovie || metadata.isShow || metadata.isSeason || metadata.isEpisode;
+  ///
+  /// Not in the redesigns while the rows are raised ([_tvDetailOneFactsRow]).
+  bool _tvDetailReservesQualityRow(BuildContext context, MediaItem metadata, {required bool titleAreaExpanded}) =>
+      !_tvDetailOneFactsRow(context, titleAreaExpanded: titleAreaExpanded) &&
+      (metadata.isMovie || metadata.isShow || metadata.isSeason || metadata.isEpisode);
+
+  /// Both redesigns with the rows raised (Plebz): one row of facts, the
+  /// picture and sound in it beside the episode's own and the bitrate left
+  /// out — the room the second row took goes to the description. The title
+  /// area, open, keeps both rows and the bitrate (the viewer's call).
+  bool _tvDetailOneFactsRow(BuildContext context, {required bool titleAreaExpanded}) =>
+      !titleAreaExpanded && ockerGlass(context);
 
   String? _tvDetailDescription(MediaItem metadata, {required bool hideSpoilers}) {
     final focusedEpisode = _tvDetailFocusedEpisode.value;
@@ -4735,11 +4811,12 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           size: 0,
         ),
       );
-    } else if (metadata.isShow && !_showEpisodesDirectly && _seasons.isNotEmpty && ockerFlat(context)) {
-      // "Flach" (Plebz): the one row of the chosen season's episodes, under a
-      // row of season tabs of its own (see [_buildTvDetailSeasonTabs]) — not a
-      // row per season. A show of many seasons is then two rows to pass, not
-      // one per season, going down and coming back up (the viewer's call).
+    } else if (metadata.isShow && !_showEpisodesDirectly && _seasons.isNotEmpty && _tvDetailSeasonTabsOn) {
+      // Season tabs (Plebz, a switch in either redesign): the one row of the
+      // chosen season's episodes, under a row of season tabs of its own (see
+      // [_withTvDetailSeasonTabs]) — not a row per season. A show of many
+      // seasons is then two rows to pass, not one per season, going down and
+      // coming back up (the viewer's call).
       // The page still opens on the season and the episode to go on with:
       // [_selectedSeasonIndex] is that season from the start.
       final season = _seasons[_selectedSeasonIndex.clamp(0, _seasons.length - 1)];
@@ -4835,16 +4912,34 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
 
   /// "Flach" with the rows raised (Plebz): the title at the start page's size
   /// — a line of its title, as the spotlight sets it — so the summary keeps
-  /// its lines; with the title area to itself it stays large.
+  /// its lines; with the title area to itself it stays large. Glas too, on
+  /// Flach's sizes ([ockerFlatSizes]).
   double? _tvDetailRaisedTitleCap(BuildContext context, {required bool heroLayout}) {
-    if (heroLayout || !ockerFlat(context)) return null;
+    if (heroLayout || !ockerFlatSizes(context)) return null;
     return (OckerType.of(context).spotlightTitle().fontSize ?? 30) * 1.2;
   }
 
-  /// "Flach" on a television (Plebz): whether the seasons stand as a row of
-  /// tabs over the one row of episodes — a show of two seasons or more.
+  /// Either redesign with the rows raised (Plebz): the action row steps out of
+  /// sight — see [TvDetailHeaderMetrics.hidesActions].
+  bool _tvDetailHidesActions(BuildContext context, {required bool titleAreaExpanded}) =>
+      !titleAreaExpanded && ockerGlass(context);
+
+  /// Glas's header on the start page's sizes (Plebz): see
+  /// [TvDetailHeaderMetrics.compactGlass].
+  bool _tvDetailCompactGlass(BuildContext context) => ockerFlatSizes(context) && !ockerFlat(context);
+
+  /// Whether the redesign on show has its season tabs switched on (Plebz):
+  /// one switch each for Glas and "Flach", both off to start with — a row per
+  /// season, one under the other.
+  bool get _tvDetailSeasonTabsOn =>
+      ockerGlass(context) &&
+      (SettingsService.instanceOrNull?.read(SettingsService.seasonTabsFor(flat: ockerFlat(context))) ?? false);
+
+  /// On a television (Plebz): whether the seasons stand as a row of tabs over
+  /// the one row of episodes — a show of two seasons or more, where
+  /// [_tvDetailSeasonTabsOn].
   bool _tvDetailUsesSeasonTabs(MediaItem metadata) =>
-      ockerFlat(context) && metadata.isShow && !_showEpisodesDirectly && !_seasonsLoadFailed && _seasons.length > 1;
+      _tvDetailSeasonTabsOn && metadata.isShow && !_showEpisodesDirectly && !_seasonsLoadFailed && _seasons.length > 1;
 
   /// How tall the tab row stands over the rows, in the detail page's scale:
   /// the bar at its foot, and the room above it that parts it from the

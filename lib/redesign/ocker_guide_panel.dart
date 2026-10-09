@@ -36,7 +36,8 @@ class OckerGuidePanel extends StatelessWidget {
 
   /// "Flach"'s band: taller, for its larger facts and description and a third
   /// line of the description — the schedule under it gives up the height (the
-  /// viewer's call). The picture grows with it and stays 16:9.
+  /// viewer's call). The picture grows with it and stays 16:9. Glas too while
+  /// [ockerFlatSizes] holds.
   static const flatBandHeight = 280.0;
 
   /// The channel the preview is actually tuned to, which is not necessarily
@@ -77,7 +78,7 @@ class OckerGuidePanel extends StatelessWidget {
     final tk = tokens(context);
     final type = OckerType.of(context);
     final scale = ockerScale(context);
-    final flat = ockerFlat(context);
+    final flat = ockerFlatSizes(context);
     final height = (flat ? flatBandHeight : bandHeight) * scale;
     final program = focusedProgram;
     final is24Hour = MediaQuery.alwaysUse24HourFormatOf(context);

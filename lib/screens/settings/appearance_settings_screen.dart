@@ -106,6 +106,14 @@ class AppearanceSettingsScreen extends StatelessWidget {
                             subtitle: t.settings.glasUltraBlurDescription,
                           ),
                           SettingSwitchTile(
+                            pref: SettingsService.seasonTabsFor(
+                              flat: supportedAppThemeVariant(variant) == AppThemeVariant.flach,
+                            ),
+                            icon: Symbols.tab_rounded,
+                            title: t.settings.redesignSeasonTabs,
+                            subtitle: t.settings.redesignSeasonTabsDescription,
+                          ),
+                          SettingSwitchTile(
                             pref: SettingsService.glasDetailPanel,
                             icon: Symbols.view_sidebar_rounded,
                             title: t.settings.glasDetailPanel,

@@ -103,7 +103,9 @@ TextSpan plebzWhatsNewSpan(List<PlebzWhatsNewEntry> entries, {String? lead}) {
     if (children.isNotEmpty) children.add(const TextSpan(text: '\n\n'));
     children.add(
       TextSpan(
-        text: 'Plebz ${entry.version} (Build ${entry.build})',
+        // The version alone: the build number orders the sections and is not
+        // for the reader (the viewer's call).
+        text: 'Plebz ${entry.version}',
         style: const TextStyle(fontWeight: FontWeight.w700),
       ),
     );

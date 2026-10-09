@@ -13,6 +13,16 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.12.0 (Build 702)
+
+- Glas übernimmt die Größen von Flach: Die Infobox auf Startseite, Erkunden und Mediathek „Empfohlen“ und der obere Bereich im Live-TV sind jetzt so groß wie bei Flach. Die Tagesauswahl im TV-Programm sitzt direkt in der Zeitleiste.
+- Staffeln als Reiter sind jetzt ein Schalter, für Glas und Flach getrennt: Einstellungen → Darstellung → Staffeln als Reiter. Ausgeschaltet (Standard) stehen alle Staffeln untereinander.
+- Detailseiten in Glas und Flach: Bist du in den Staffeln oder Folgen, verschwindet die Knopfreihe, und die Beschreibung bekommt den Platz. Bild und Ton stehen dann in einer Zeile mit der Folge, der Folgentitel direkt über der Beschreibung. Infos und Schrift sind kleiner und bleiben gleich groß, und alles darunter beginnt bündig mit den Knöpfen.
+- Merkliste und Mediathek: Die Infobox rechts reicht bis an den Bildschirmrand, Titel und Beschreibung sind größer.
+- Glas: Die Bundesliga ist aufgebaut wie bei Flach, mit dem Spieltag oben links und der Tabelle auf einer eigenen Karte. Die Gruppenspalten haben oben und unten den gleichen Abstand.
+- „Auch verfügbar auf“ erscheint jetzt auch mit nur einem Server, zum Beispiel wenn ein Film in „Filme“ und in „Filme – 4K“ liegt.
+- Farbwähler: Die Tastatur für den Farbcode öffnet sich nur noch mit OK, nicht mehr beim Vorbeiscrollen.
+
 ## 1.11.0 (Build 692)
 
 - Neues Design „Redesign – Flach“: aufgebaut wie Glas, aber flach und ruhig, ohne Glasflächen und Schatten. Was den Fokus hat, wird weiß mit dunkler Schrift, und die Akzentfarbe wählst du frei. Zu finden unter Einstellungen → Darstellung → Design.

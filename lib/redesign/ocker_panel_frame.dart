@@ -85,10 +85,11 @@ class _OckerPanelFrameState extends State<OckerPanelFrame> {
         // holds a grid too, and a grid handed more width answers with bigger
         // posters. The narrow inset goes where the content meets the rail,
         // the design's margin to the far edge.
+        // The panel runs on through the right margin to the screen's edge.
         padding: EdgeInsets.fromLTRB(
           ockerFlushLeftInset(context),
           ockerContentTop(context),
-          OckerLayout.safeMargin * scale,
+          showPanel ? 0 : OckerLayout.safeMargin * scale,
           0,
         ),
         child: showPanel
@@ -98,8 +99,12 @@ class _OckerPanelFrameState extends State<OckerPanelFrame> {
                   Expanded(child: content),
                   SizedBox(width: OckerLayout.rowGutter * scale),
                   SizedBox(
-                    width: columnWidth,
-                    child: OckerDetailPanel(resolveClient: widget.resolveClient, width: columnWidth),
+                    width: columnWidth + OckerLayout.safeMargin * scale,
+                    child: OckerDetailPanel(
+                      resolveClient: widget.resolveClient,
+                      width: columnWidth,
+                      bleedRight: OckerLayout.safeMargin * scale,
+                    ),
                   ),
                 ],
               )

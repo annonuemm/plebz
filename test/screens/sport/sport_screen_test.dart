@@ -95,13 +95,14 @@ void main() {
     final key = await pumpScreen(tester, AppThemeVariant.glas);
 
     expect(tester.takeException(), isNull);
-    expect(find.text(t.sport.bundesliga1.toUpperCase()), findsOneWidget);
+    // Glas names the league as Flach does, in sentence case over the page.
+    expect(find.text(t.sport.bundesliga1), findsOneWidget);
     expect(find.text(t.sport.bundesliga2), findsNothing);
 
     key.currentState!.ockerRailMenu!.items[2].onSelect();
     await pumpUntil(tester, () => find.text('TSV 1860 München').evaluate().isNotEmpty);
-    expect(find.text(t.sport.liga3.toUpperCase()), findsOneWidget);
-    expect(find.text(t.sport.bundesliga1.toUpperCase()), findsNothing);
+    expect(find.text(t.sport.liga3), findsOneWidget);
+    expect(find.text(t.sport.bundesliga1), findsNothing);
   });
 
   testWidgets('redesign: the page lays no flat ground over the glass one', (tester) async {

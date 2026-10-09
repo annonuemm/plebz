@@ -26,9 +26,14 @@ class OckerType {
   /// The handful of styles it redraws ask this; the rest are shared.
   final bool flat;
 
-  const OckerType(this.scale, {this.flat = false});
+  /// Whether the sizes "Flach" redrew apply — see [ockerFlatSizes]. Follows
+  /// [flat] unless given.
+  final bool flatSizes;
 
-  factory OckerType.of(BuildContext context) => OckerType(ockerScale(context), flat: ockerFlat(context));
+  const OckerType(this.scale, {this.flat = false, bool? flatSizes}) : flatSizes = flatSizes ?? flat;
+
+  factory OckerType.of(BuildContext context) =>
+      OckerType(ockerScale(context), flat: ockerFlat(context), flatSizes: ockerFlatSizes(context));
 
   double _px(double referenceSize) => referenceSize * scale;
 
@@ -162,8 +167,13 @@ class OckerType {
   /// made four short lines read as a texture rather than a sentence, and the
   /// design's 21 read small on the television (the viewer's call).
   TextStyle get synopsis => flat
-      ? TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(25), height: 1.5, letterSpacing: 0)
+      ? spotlightSynopsis
       : TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(18 * readingScale), height: 1.6);
+
+  /// The description under [spotlightTitle]: "Flach"'s [synopsis], which
+  /// Glas's spotlight sets too where [flatSizes] holds.
+  TextStyle get spotlightSynopsis =>
+      TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(25), height: 1.5, letterSpacing: 0);
 
   /// Credits, and anything else that is body copy one notch down.
   TextStyle get secondary => TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(15), height: 1.6);
@@ -191,11 +201,12 @@ class OckerType {
   ///
   /// "Flach" sets them as its start page sets its facts and its prose, 23 and
   /// 25: the design's 19 and 21 read small on the television there too (the
-  /// viewer's call).
-  TextStyle get guideFacts => metadata.copyWith(fontSize: _px(flat ? 23 : 19));
+  /// viewer's call). Glas follows while [flatSizes] holds.
+  TextStyle get guideFacts => metadata.copyWith(fontSize: _px(flatSizes ? 23 : 19));
 
   /// Two lines of programme description, one notch under the facts beside it.
-  TextStyle get guideSummary => TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(flat ? 25 : 21), height: 1.5);
+  TextStyle get guideSummary =>
+      TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(flatSizes ? 25 : 21), height: 1.5);
 
   TextStyle get primaryButton =>
       TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(19), fontWeight: .w700, height: 1);

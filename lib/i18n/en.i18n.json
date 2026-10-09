@@ -507,6 +507,8 @@
     "glasUltraBlurDescription": "On Home and Explore the background takes the colours of the title in focus.",
     "glasDetailPanel": "Description beside the posters",
     "glasDetailPanelDescription": "Libraries and the watchlist show the selected title's description on the right. Off, more posters fit in a row.",
+    "redesignSeasonTabs": "Seasons as tabs",
+    "redesignSeasonTabsDescription": "A show's seasons stand as tabs over one row of episodes. Off, every season has a row of its own.",
     "glasSpinningFocus": "Turning focus edge",
     "glasSpinningFocusDescription": "The glint on the focus edge travels slowly round it and holds still while you move. Costs a little performance.",
     "homeTitleLogos": "Logos on Home and Explore",

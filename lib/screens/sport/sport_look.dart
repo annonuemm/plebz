@@ -21,7 +21,7 @@ import '../../widgets/focusable_tab_chip.dart' show activeTabChipColor;
 /// the leagues and no side rail to walk back to — that is decided by the
 /// screen, not here.
 class SportLook {
-  SportLook._(this.context, {required this.ocker, required this.scale, required this.tk}) : flat = tk.flat;
+  SportLook._(this.context, {required this.ocker, required this.scale, required this.tk}) : flat = tk.glass;
 
   factory SportLook.of(BuildContext context) {
     final ocker = isOckerLayout(context);
@@ -41,8 +41,10 @@ class SportLook {
   final double scale;
   final MonoTokens tk;
 
-  /// "Redesign – Flach" (Plebz): the matchday as a title on the left, days and
-  /// labels in sentence case, the table on a panel of its own.
+  /// Both redesigns (Plebz): the matchday as a title on the left, days and
+  /// labels in sentence case, the table on a panel of its own. "Flach" first;
+  /// Glas took the arrangement over at the viewer's word (2026-10-09), its
+  /// panel a card of glass.
   final bool flat;
 
   OckerType get _type => OckerType(scale, flat: flat);

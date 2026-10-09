@@ -206,7 +206,7 @@ Future<_FakeCatalogSourcesProvider> _pumpWatchlist(
   // wears the look alone.
   bool television = true,
 }) async {
-  if (variant == AppThemeVariant.glas && television) {
+  if (isRedesignVariant(variant) && television) {
     TvDetectionService.debugSetAppleTVOverride(true);
     addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
   }
@@ -715,6 +715,18 @@ void main() {
     // The same poster, give or take the rounding of the gaps.
     expect(without.width, closeTo(withPanel.width, withPanel.width * 0.02));
   });
+
+  for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+    testWidgets('${variant.name}: the description card runs to the screen\'s right edge', (tester) async {
+      await _pumpWatchlist(tester, [_FakeWatchlistSource(CatalogSourceId.simkl, 'Simkl', total: 20)], variant: variant);
+      final screen = tester.view.physicalSize / tester.view.devicePixelRatio;
+      final panel = tester.getRect(find.byType(OckerDetailPanel));
+      expect(panel.right, closeTo(screen.width, 0.5));
+      // The posters keep the gutter to the card they had to the margin.
+      final posters = find.byType(OckerPosterTile);
+      expect(tester.getRect(posters.first).right, lessThan(panel.left));
+    });
+  }
 
   testWidgets('with the full-card layout off the glass watchlist names each poster under it', (tester) async {
     await SettingsService.instance.write(SettingsService.tvFullCardLayout, false);

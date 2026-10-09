@@ -1387,6 +1387,19 @@ class SettingsService extends BaseSharedPreferencesService {
   /// The poster-colour switch of the redesign [flat] says.
   static BoolPref ultraBlurFor({required bool flat}) => flat ? flachUltraBlur : glasUltraBlur;
 
+  /// Under Glas on a television, a show's seasons as a row of tabs over the
+  /// one row of the chosen season's episodes, instead of a row per season.
+  /// Off by default: every season its own row, one under the other.
+  static const glasSeasonTabs = BoolPref('glas_season_tabs', defaultValue: false);
+
+  /// The same under "Flach", a switch of its own. Off by default too: the rows
+  /// one under the other are the default in both (the user's call; the tabs
+  /// were Flach's only arrangement from 686 to 1.11.0).
+  static const flachSeasonTabs = BoolPref('flach_season_tabs', defaultValue: false);
+
+  /// The season-tab switch of the redesign [flat] says.
+  static BoolPref seasonTabsFor({required bool flat}) => flat ? flachSeasonTabs : glasSeasonTabs;
+
   /// Under glass on a television, the column down the right of a library and
   /// the watchlist describing the focused title. Off, its width goes to more
   /// posters in each row.
@@ -1989,6 +2002,8 @@ class SettingsService extends BaseSharedPreferencesService {
     glasSmoothFocus,
     glasUltraBlur,
     flachUltraBlur,
+    glasSeasonTabs,
+    flachSeasonTabs,
     glasDetailPanel,
     glasSpinningFocus,
     showLibraryPlaylistsTab,

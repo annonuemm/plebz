@@ -69,8 +69,9 @@ extension _GuideTabFork on GuideTabState {
 
   /// "Flach" (Plebz): the day and the time are a pill at the head of the
   /// ruler, over the channel column, instead of a strip of their own above
-  /// it — the design's place, and the strip's height goes to the rows.
-  bool get _timePillInRuler => _showsTimeNavigation && _ockerLayout && ockerFlat(context);
+  /// it — the design's place, and the strip's height goes to the rows. Glas
+  /// too while [ockerFlatSizes] holds.
+  bool get _timePillInRuler => _showsTimeNavigation && _ockerLayout && ockerFlatSizes(context);
 
   /// Whether the band above the grid — the live picture, the title of what is
   /// on, and its description — is drawn at all.

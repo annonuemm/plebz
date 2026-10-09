@@ -354,7 +354,7 @@ class TvSpotlightBackground extends StatelessWidget {
   }
 
   Widget _buildInfo(BuildContext context, MediaItem media, double width) {
-    if (ockerFlat(context)) return _buildFlatInfo(context, media, width);
+    if (ockerFlatSizes(context)) return _buildFlatInfo(context, media, width);
     final scale = _scale(context);
     final colorScheme = Theme.of(context).colorScheme;
     final shouldHideSpoiler = hideSpoilers && media.shouldHideSpoiler;
@@ -400,7 +400,8 @@ class TvSpotlightBackground extends StatelessWidget {
 
   /// The block under "Flach" (Plebz): the title, a line of plain facts, and
   /// three lines of description at most — on the design's own steps of 20 and
-  /// 22 between them, the prose a little wider for its larger type.
+  /// 22 between them, the prose a little wider for its larger type. Glas sets
+  /// the same block while [ockerFlatSizes] holds, its facts still capsules.
   Widget _buildFlatInfo(BuildContext context, MediaItem media, double width) {
     final tk = tokens(context);
     final type = OckerType.of(context);
@@ -408,7 +409,7 @@ class TvSpotlightBackground extends StatelessWidget {
     final shouldHideSpoiler = hideSpoilers && media.shouldHideSpoiler;
     final summary = shouldHideSpoiler ? null : media.summary;
     final title = media.grandparentTitle ?? media.displayTitle;
-    final prose = type.synopsis.copyWith(color: tk.ink(0.78));
+    final prose = type.spotlightSynopsis.copyWith(color: tk.ink(0.78));
 
     return Column(
       crossAxisAlignment: .start,
@@ -561,11 +562,17 @@ class TvSpotlightBackground extends StatelessWidget {
   Widget _buildTitle(BuildContext context, String title) {
     final scale = _scale(context);
     final colorScheme = Theme.of(context).colorScheme;
-    if (ockerFlat(context)) {
+    if (ockerFlatSizes(context)) {
       return FittingTitleText(
         title,
         alignment: Alignment.bottomLeft,
-        style: OckerType.of(context).spotlightTitle().copyWith(color: tokens(context).ink(1)),
+        style: OckerType.of(context).spotlightTitle().copyWith(
+          color: tokens(context).ink(1),
+          // Glas keeps the shadow that lifts its title off the picture.
+          shadows: ockerFlat(context)
+              ? null
+              : [Shadow(color: colorScheme.surface.withValues(alpha: 0.8), blurRadius: 12)],
+        ),
       );
     }
     return FittingTitleText(
@@ -598,8 +605,11 @@ class TvSpotlightBackground extends StatelessWidget {
     // standard theme sets, which is close enough to nothing that the line
     // reads as a sentence of facts — right for a proportional face, wrong for
     // this one.
-    final metadataSize = _metadataFontSize(scale);
     final flat = ockerFlat(context);
+    // Glas on "Flach"'s sizes: its capsules carry the facts at Flach's size.
+    final metadataSize = ockerFlatSizes(context)
+        ? OckerType.of(context).spotlightFacts.fontSize!
+        : _metadataFontSize(scale);
     final textStyle = flat
         ? OckerType.of(context).spotlightFacts.copyWith(color: tokens(context).ink(0.66))
         : TextStyle(

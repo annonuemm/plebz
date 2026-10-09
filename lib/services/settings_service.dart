@@ -1387,6 +1387,11 @@ class SettingsService extends BaseSharedPreferencesService {
   /// The poster-colour switch of the redesign [flat] says.
   static BoolPref ultraBlurFor({required bool flat}) => flat ? flachUltraBlur : glasUltraBlur;
 
+  /// A ready-made "Flach" look — accent and ground together ([flachPresets],
+  /// by id). Empty for the viewer's own: [flachAccent] and the shared
+  /// redesign ground. Flach's alone, so Glas keeps its ground.
+  static const flachPreset = StringPref('flach_preset', defaultValue: '');
+
   /// Under Glas on a television, a show's seasons as a row of tabs over the
   /// one row of the chosen season's episodes, instead of a row per season.
   /// Off by default: every season its own row, one under the other.
@@ -2004,6 +2009,7 @@ class SettingsService extends BaseSharedPreferencesService {
     flachUltraBlur,
     glasSeasonTabs,
     flachSeasonTabs,
+    flachPreset,
     glasDetailPanel,
     glasSpinningFocus,
     showLibraryPlaylistsTab,

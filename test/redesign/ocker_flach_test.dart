@@ -385,6 +385,23 @@ void main() {
       }
     });
 
+    test('every look stands on an off-black of its own — never black — and carries the accent\'s lights', () {
+      expect(flachPresets.map((preset) => preset.id).toSet(), hasLength(flachPresets.length));
+      expect(flachPresets.first.id, 'standard');
+      for (final preset in flachPresets) {
+        final ground = HSVColor.fromColor(preset.ground);
+        expect(ground.value, inInclusiveRange(0.03, 0.16), reason: preset.id);
+        final tk = monoTheme(
+          dark: true,
+          plainGround: preset.ground,
+          variant: AppThemeVariant.flach,
+          flachAccent: preset.accent,
+        ).extension<MonoTokens>()!;
+        expect(tk.bg, preset.ground, reason: preset.id);
+        expect(flachGroundGlows(tk), hasLength(2), reason: preset.id);
+      }
+    });
+
     test('the stored choices read as one of three grounds', () {
       expect(redesignGroundOf(ThemeMode.dark, offBlack: false), RedesignGround.design);
       expect(redesignGroundOf(ThemeMode.dark, offBlack: true), RedesignGround.offBlack);

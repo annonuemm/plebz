@@ -6,6 +6,8 @@ import 'package:plezy/providers/theme_provider.dart';
 import 'package:plezy/screens/settings/settings_utils.dart';
 import 'package:plezy/services/base_shared_preferences_service.dart';
 import 'package:plezy/services/settings_service.dart' as settings;
+import 'package:plezy/theme/mono_theme.dart' show flachPresetById, flachGround;
+import 'package:plezy/theme/mono_tokens.dart';
 
 import '../test_helpers/prefs.dart';
 
@@ -49,6 +51,33 @@ void main() {
 
       final svc = await settings.SettingsService.getInstance();
       expect(svc.read(settings.SettingsService.themeMode), next);
+
+      p.dispose();
+    });
+
+    test('a Flach look draws its accent and its ground under Flach, and leaves Glas alone', () async {
+      final svc = await settings.SettingsService.getInstance();
+      await svc.write(settings.SettingsService.themeMode, settings.ThemeMode.dark);
+      await svc.write(settings.SettingsService.appThemeVariant, settings.AppThemeVariant.flach);
+      await svc.write(settings.SettingsService.flachPreset, 'kino');
+      final p = ThemeProvider();
+      await Future.delayed(Duration.zero);
+      MonoTokens tk() => p.darkTheme.extension<MonoTokens>()!;
+      final kino = flachPresetById('kino')!;
+
+      expect(tk().bg, kino.ground);
+      expect(tk().accent, kino.accent);
+
+      // Back to the viewer's own colours: Flach's own ground again.
+      await svc.write(settings.SettingsService.flachPreset, '');
+      await Future.delayed(Duration.zero);
+      expect(tk().bg, flachGround);
+
+      // Glas never wears a Flach look.
+      await svc.write(settings.SettingsService.flachPreset, 'kino');
+      await svc.write(settings.SettingsService.appThemeVariant, settings.AppThemeVariant.glas);
+      await Future.delayed(Duration.zero);
+      expect(tk().bg, isNot(kino.ground));
 
       p.dispose();
     });

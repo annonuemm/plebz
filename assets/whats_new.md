@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.13.0 (Build 704)
+
+- Flach hat jetzt Farbprofile: neun fertige Kombinationen aus Akzentfarbe und passendem Hintergrund, zum Beispiel Nordlicht, Glut, Mitternacht, Kirschblüte, Amethyst oder Kino. Ein Profil wählen, und alles passt zusammen. Zu finden unter Einstellungen → Darstellung → Farbprofil. Wer lieber selbst mischt, ändert einfach Akzentfarbe oder Hintergrund.
+
 ## 1.12.0 (Build 702)
 
 - Glas übernimmt die Größen von Flach: Die Infobox auf Startseite, Erkunden und Mediathek „Empfohlen“ und der obere Bereich im Live-TV sind jetzt so groß wie bei Flach. Die Tagesauswahl im TV-Programm sitzt direkt in der Zeitleiste.

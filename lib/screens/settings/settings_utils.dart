@@ -44,7 +44,10 @@ class DialogOption<T> {
   final String title;
   final String? subtitle;
 
-  const DialogOption({required this.value, required this.title, this.subtitle});
+  /// Drawn at the row's end — a swatch, say (Plebz).
+  final Widget? trailing;
+
+  const DialogOption({required this.value, required this.title, this.subtitle, this.trailing});
 }
 
 typedef _SettingsDialogContentBuilder =
@@ -202,6 +205,7 @@ Future<DialogOption<T>?> showSelectionDialog<T>({
             value: i,
             label: options[i].title,
             subtitle: options[i].subtitle,
+            trailing: options[i].trailing,
             selected: options[i].value == currentValue,
           ),
       ],
@@ -226,6 +230,7 @@ Future<DialogOption<T>?> showSelectionDialog<T>({
                 ),
                 title: Text(option.title),
                 subtitle: option.subtitle != null ? Text(option.subtitle!) : null,
+                trailing: option.trailing,
                 selected: selected,
                 autofocus: focusFirstItem && selected,
                 onTap: () => Navigator.pop(dialogContext, option),

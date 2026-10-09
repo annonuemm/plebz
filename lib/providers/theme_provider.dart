@@ -16,6 +16,10 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   settings.GlasAccent _glasAccent = settings.GlasAccent.eisblau;
   Color _flachAccent = flachDefaultAccent;
 
+  /// [settings.SettingsService.flachPreset]: a ready-made Flach look, or empty
+  /// for the viewer's own colours.
+  String _flachPreset = '';
+
   /// The redesigns' plain ground where one is chosen, null for the design's
   /// own — see [plainGroundFrom].
   Color? _plainGround;
@@ -32,6 +36,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
       _variant = supportedAppThemeVariant(loaded.read(settings.SettingsService.appThemeVariant));
       _glasAccent = loaded.read(settings.SettingsService.glasAccent);
       _flachAccent = flachAccentFromHex(loaded.read(settings.SettingsService.flachAccent));
+      _flachPreset = loaded.read(settings.SettingsService.flachPreset);
       _plainGround = plainGroundFrom(loaded);
       GlassEdgeSpin.instance.enabled = loaded.read(settings.SettingsService.glasSpinningFocus);
     }
@@ -42,6 +47,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
         settings.SettingsService.appThemeVariant,
         settings.SettingsService.glasAccent,
         settings.SettingsService.flachAccent,
+        settings.SettingsService.flachPreset,
         settings.SettingsService.redesignOffBlack,
         settings.SettingsService.redesignCustomGround,
         settings.SettingsService.redesignGroundColour,
@@ -56,6 +62,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
           service.read(settings.SettingsService.appThemeVariant),
           glasAccent: service.read(settings.SettingsService.glasAccent),
           flachAccent: flachAccentFromHex(service.read(settings.SettingsService.flachAccent)),
+          flachPreset: service.read(settings.SettingsService.flachPreset),
           ground: (colour: plainGroundFrom(service)),
         );
       },
@@ -84,6 +91,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     settings.AppThemeVariant stored, {
     settings.GlasAccent? glasAccent,
     Color? flachAccent,
+    String? flachPreset,
     ({Color? colour})? ground,
     bool forceNotify = false,
   }) {
@@ -93,16 +101,19 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     final variant = supportedAppThemeVariant(stored);
     final accent = glasAccent ?? _glasAccent;
     final flat = flachAccent ?? _flachAccent;
+    final preset = flachPreset ?? _flachPreset;
     final plain = ground == null ? _plainGround : ground.colour;
     final changed =
         _themeMode != mode ||
         _variant != variant ||
         _glasAccent != accent ||
         _flachAccent != flat ||
+        _flachPreset != preset ||
         _plainGround != plain;
     _themeMode = mode;
     _glasAccent = accent;
     _flachAccent = flat;
+    _flachPreset = preset;
     _plainGround = plain;
     if (_variant != variant) {
       _variant = variant;
@@ -118,7 +129,16 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
 
   settings.GlasAccent get glasAccent => _glasAccent;
 
-  Color get flachAccent => _flachAccent;
+  /// Flach's accent as drawn: the look's where one is chosen.
+  Color get flachAccent => _activeFlachPreset?.accent ?? _flachAccent;
+
+  /// The look Flach wears, while it is the design on show.
+  FlachPreset? get _activeFlachPreset =>
+      _variant == settings.AppThemeVariant.flach ? flachPresetById(_flachPreset) : null;
+
+  /// The redesigns' plain ground as drawn: under Flach the look's own ground
+  /// where one is chosen, otherwise the settings' ([plainGroundFrom]).
+  Color? get _drawnPlainGround => _activeFlachPreset?.ground ?? _plainGround;
 
   /// The redesigns' plain ground as the settings choose it: the viewer's own
   /// colour where that is on, off-black where that is, null for the design's
@@ -161,13 +181,13 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   };
 
   ThemeData get lightTheme =>
-      monoTheme(dark: false, variant: _variant, glasAccent: _glasAccent, flachAccent: _flachAccent);
+      monoTheme(dark: false, variant: _variant, glasAccent: _glasAccent, flachAccent: flachAccent);
   ThemeData get darkTheme => darkThemeFor(
     _themeMode,
     variant: _variant,
     glasAccent: _glasAccent,
-    flachAccent: _flachAccent,
-    plainGround: _plainGround,
+    flachAccent: flachAccent,
+    plainGround: _drawnPlainGround,
   );
 
   ThemeMode get materialThemeMode => materialThemeModeFor(_themeMode);
@@ -203,6 +223,8 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
         service.read(settings.SettingsService.themeMode),
         service.read(settings.SettingsService.appThemeVariant),
         glasAccent: service.read(settings.SettingsService.glasAccent),
+        flachAccent: flachAccentFromHex(service.read(settings.SettingsService.flachAccent)),
+        flachPreset: service.read(settings.SettingsService.flachPreset),
         ground: (colour: plainGroundFrom(service)),
         forceNotify: true,
       );

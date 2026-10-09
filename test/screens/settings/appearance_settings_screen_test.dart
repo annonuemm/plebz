@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/providers/theme_provider.dart';
@@ -81,6 +81,56 @@ void main() {
     expect(find.text(t.settings.glasAccent), findsOneWidget);
     expect(find.text(t.settings.glasAccentEisblau), findsOneWidget, reason: 'the accent on show by default');
     expect(find.text(t.settings.glasSmoothFocus), findsOneWidget, reason: 'the glide, apart from the effects');
+  });
+
+  testWidgets('Flach offers its colour profiles; one sets accent and look, a ground of your own leaves it', (
+    tester,
+  ) async {
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+    final service = SettingsService.instanceOrNull!;
+    await service.write(SettingsService.appThemeVariant, AppThemeVariant.flach);
+    await service.write(SettingsService.themeMode, ThemeMode.dark);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1000, 3000);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    debugRedesignOfferedHere = true;
+    addTearDown(() => debugRedesignOfferedHere = null);
+
+    final theme = ThemeProvider();
+    addTearDown(theme.dispose);
+    await tester.pumpWidget(
+      ChangeNotifierProvider<ThemeProvider>.value(
+        value: theme,
+        child: TranslationProvider(
+          child: MaterialApp(
+            theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+            home: const AppearanceSettingsScreen(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(t.settings.flachPreset), findsOneWidget);
+    expect(find.text(t.settings.flachPresetCustom), findsOneWidget);
+
+    await tester.tap(find.text(t.settings.flachPreset));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(t.settings.flachPresetKino).last);
+    await tester.pumpAndSettle();
+    expect(service.read(SettingsService.flachPreset), 'kino');
+    expect(service.read(SettingsService.flachAccent), '#E50914');
+    expect(find.text(t.settings.flachPresetGround), findsOneWidget, reason: 'the ground row names the look');
+
+    // A ground of the viewer's own leaves the look; its accent stays.
+    await tester.tap(find.text(t.settings.glasGround));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(t.settings.glasGroundOffBlack).last);
+    await tester.pumpAndSettle();
+    expect(service.read(SettingsService.flachPreset), '');
+    expect(service.read(SettingsService.redesignOffBlack), isTrue);
+    expect(service.read(SettingsService.flachAccent), '#E50914');
   });
 
   testWidgets('glass on a television leaves out the rows it has nothing to steer with', (tester) async {

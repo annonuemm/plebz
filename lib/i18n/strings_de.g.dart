@@ -587,6 +587,18 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get appThemeVariantFlachDescription => 'Aufgebaut wie Glas, aber flach und ruhig: keine Glasflächen, kein Glanz, keine Schatten. Was den Fokus hat, wird zur weißen Fläche mit dunkler Schrift, Poster bekommen einen weißen Rahmen. Auf dem Fernseher ordnet es die Seiten neu wie Glas. Die Akzentfarbe wählst du frei.';
 	@override String get flachAccent => 'Akzentfarbe';
 	@override String get flachAccentDescription => 'Jede Farbe, die du willst – für Fortschritt, die gewählte Seite und den gewählten Filter.';
+	@override String get flachPreset => 'Farbprofil';
+	@override String get flachPresetCustom => 'Eigene';
+	@override String get flachPresetGround => 'Aus dem Farbprofil';
+	@override String get flachPresetStandard => 'Standard';
+	@override String get flachPresetNordlicht => 'Nordlicht';
+	@override String get flachPresetGlut => 'Glut';
+	@override String get flachPresetMitternacht => 'Mitternacht';
+	@override String get flachPresetKirschbluete => 'Kirschblüte';
+	@override String get flachPresetAmethyst => 'Amethyst';
+	@override String get flachPresetBernstein => 'Bernstein';
+	@override String get flachPresetSafran => 'Safran';
+	@override String get flachPresetKino => 'Kino';
 	@override String get glasGround => 'Hintergrund';
 	@override String get glasGroundAccent => 'Hintergrund des Designs';
 	@override String get glasGroundAccentDescription => 'Der dunkle Grund des Designs mit einem dezenten Schein der Akzentfarbe.';
@@ -4213,6 +4225,18 @@ extension on TranslationsDe {
 			'settings.appThemeVariantFlachDescription' => 'Aufgebaut wie Glas, aber flach und ruhig: keine Glasflächen, kein Glanz, keine Schatten. Was den Fokus hat, wird zur weißen Fläche mit dunkler Schrift, Poster bekommen einen weißen Rahmen. Auf dem Fernseher ordnet es die Seiten neu wie Glas. Die Akzentfarbe wählst du frei.',
 			'settings.flachAccent' => 'Akzentfarbe',
 			'settings.flachAccentDescription' => 'Jede Farbe, die du willst – für Fortschritt, die gewählte Seite und den gewählten Filter.',
+			'settings.flachPreset' => 'Farbprofil',
+			'settings.flachPresetCustom' => 'Eigene',
+			'settings.flachPresetGround' => 'Aus dem Farbprofil',
+			'settings.flachPresetStandard' => 'Standard',
+			'settings.flachPresetNordlicht' => 'Nordlicht',
+			'settings.flachPresetGlut' => 'Glut',
+			'settings.flachPresetMitternacht' => 'Mitternacht',
+			'settings.flachPresetKirschbluete' => 'Kirschblüte',
+			'settings.flachPresetAmethyst' => 'Amethyst',
+			'settings.flachPresetBernstein' => 'Bernstein',
+			'settings.flachPresetSafran' => 'Safran',
+			'settings.flachPresetKino' => 'Kino',
 			'settings.glasGround' => 'Hintergrund',
 			'settings.glasGroundAccent' => 'Hintergrund des Designs',
 			'settings.glasGroundAccentDescription' => 'Der dunkle Grund des Designs mit einem dezenten Schein der Akzentfarbe.',
@@ -4257,6 +4281,8 @@ extension on TranslationsDe {
 			'settings.averageRatingsDescription' => 'Einen Durchschnittswert statt je einem Wert pro Quelle anzeigen (IMDb, TMDB, Rotten Tomatoes)',
 			'settings.showWatchTogetherAction' => 'Gemeinsam ansehen anzeigen',
 			'settings.showWatchTogetherActionDescription' => 'Schaltfläche für Gemeinsam ansehen in der Startleiste behalten',
+			_ => null,
+		} ?? switch (path) {
 			'settings.showCompanionRemoteAction' => 'Fernbedienung anzeigen',
 			'settings.showCompanionRemoteActionDescription' => 'Schaltfläche für die Fernbedienung in der Startleiste behalten',
 			'settings.showServerActivitiesAction' => 'Serveraktivität anzeigen',
@@ -4269,8 +4295,6 @@ extension on TranslationsDe {
 			'settings.hardwareTestDescription' => 'Was dieses Gerät unterstützt: Auflösungen, HDR, Ton und Decoder',
 			'settings.hardwareTestUnavailable' => 'Auf dieser Plattform nicht verfügbar',
 			'settings.hardwareTestSections.device' => 'Gerät',
-			_ => null,
-		} ?? switch (path) {
 			'settings.hardwareTestSections.display' => 'Bildschirm',
 			'settings.hardwareTestSections.colour' => 'Farbe & HDR',
 			'settings.hardwareTestSections.audio' => 'Ton',
@@ -4771,6 +4795,8 @@ extension on TranslationsDe {
 			'subtitlingStyling.italic' => 'Kursiv',
 			'subtitlingStyling.renderResolution' => 'Render-Auflösung',
 			'subtitlingStyling.renderResolutionScreen' => 'Bildschirmauflösung',
+			_ => null,
+		} ?? switch (path) {
 			'subtitlingStyling.renderResolutionVideo' => 'Videoauflösung',
 			'mpvConfig.title' => 'mpv-Konfiguration',
 			'mpvConfig.description' => 'Erweiterte Videoplayer-Einstellungen',
@@ -4783,8 +4809,6 @@ extension on TranslationsDe {
 			'mpvConfig.deletePreset' => 'Löschen',
 			'mpvConfig.presetSaved' => 'Voreinstellung gespeichert',
 			'mpvConfig.presetLoaded' => 'Voreinstellung geladen',
-			_ => null,
-		} ?? switch (path) {
 			'mpvConfig.presetDeleted' => 'Voreinstellung gelöscht',
 			'mpvConfig.confirmDeletePreset' => 'Diese Voreinstellung wirklich löschen?',
 			'mpvConfig.configPlaceholder' => 'gpu-api=vulkan\nhwdec=auto\n# comment',
@@ -5285,6 +5309,8 @@ extension on TranslationsDe {
 			'watchlist.typeMovies' => 'Filme',
 			'watchlist.typeShows' => 'Serien',
 			'watchlist.anyStatus' => 'Gesehen und ungesehen',
+			_ => null,
+		} ?? switch (path) {
 			'watchlist.unwatchedOnly' => 'Nicht gesehen',
 			'watchlist.watchedOnly' => 'Gesehen',
 			'liveTv.title' => 'Live-TV',
@@ -5297,8 +5323,6 @@ extension on TranslationsDe {
 			'liveTv.liveStreamFailed' => 'Livestream fehlgeschlagen',
 			'liveTv.unknownProgram' => 'Unbekannte Sendung',
 			'liveTv.unknownHub' => 'Unbekannt',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.unknownError' => 'Unbekannter Fehler',
 			'liveTv.channelNumber' => ({required Object number}) => 'Kanal ${number}',
 			'liveTv.unknownChannel' => 'Unbekannter Kanal',
@@ -5799,6 +5823,8 @@ extension on TranslationsDe {
 			'videoSettings.hdrToneMappingFailed' => 'Das HDR-Tone-Mapping konnte nicht geändert werden – der vorherige Modus ist weiterhin aktiv.',
 			'videoSettings.audioOutput' => 'Audioausgabe',
 			'videoSettings.performanceOverlay' => 'Leistungsanzeige',
+			_ => null,
+		} ?? switch (path) {
 			'videoSettings.audioOutputDolbyAtmos' => 'Dolby Atmos',
 			'videoSettings.audioOutputDolbyAudio' => 'Dolby Audio',
 			'videoSettings.audioOutputSurround' => 'Surround',
@@ -5811,8 +5837,6 @@ extension on TranslationsDe {
 			'performanceOverlay.performance' => 'Leistung',
 			'performanceOverlay.buffer' => 'Puffer',
 			'performanceOverlay.app' => 'App',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.decoder' => 'Decoder',
 			'performanceOverlay.rawDecoder' => 'Raw-Decoder',
 			'performanceOverlay.tunneling' => 'Tunneling',
@@ -6313,6 +6337,8 @@ extension on TranslationsDe {
 			'plebz.upToDate' => 'Plebz ist auf dem neuesten Stand',
 			'plebz.checking' => 'Suche nach Updates …',
 			'plebz.checkFailed' => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.updatedTitle' => 'Plebz wurde aktualisiert',
 			'plebz.updatedBody' => ({required Object version, required Object build}) => 'Du nutzt jetzt Plebz ${version} (Build ${build}).',
 			'plebz.checkForUpdates' => 'Nach Updates suchen',
@@ -6325,8 +6351,6 @@ extension on TranslationsDe {
 			'plebz.openSettings' => 'Einstellungen öffnen',
 			'plebz.updateFailed' => 'Das Update konnte nicht geladen oder installiert werden.',
 			'plebz.noMatchingDownload' => 'Dieses Release hat keine Datei für dieses Gerät.',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.whatsNew' => 'Was ist neu',
 			'plebz.whatsNewDescription' => 'Was sich mit jeder Version geändert hat',
 			'plebz.whatsNewEmpty' => 'Zu dieser Version gibt es noch keine Notizen.',

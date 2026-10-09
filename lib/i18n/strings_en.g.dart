@@ -1482,6 +1482,42 @@ class Translations$settings$en {
 	/// en: 'Any colour you like — for progress, the page on show and the chosen filter.'
 	String get flachAccentDescription => 'Any colour you like — for progress, the page on show and the chosen filter.';
 
+	/// en: 'Colour profile'
+	String get flachPreset => 'Colour profile';
+
+	/// en: 'Custom'
+	String get flachPresetCustom => 'Custom';
+
+	/// en: 'From the colour profile'
+	String get flachPresetGround => 'From the colour profile';
+
+	/// en: 'Standard'
+	String get flachPresetStandard => 'Standard';
+
+	/// en: 'Northern lights'
+	String get flachPresetNordlicht => 'Northern lights';
+
+	/// en: 'Ember'
+	String get flachPresetGlut => 'Ember';
+
+	/// en: 'Midnight'
+	String get flachPresetMitternacht => 'Midnight';
+
+	/// en: 'Cherry blossom'
+	String get flachPresetKirschbluete => 'Cherry blossom';
+
+	/// en: 'Amethyst'
+	String get flachPresetAmethyst => 'Amethyst';
+
+	/// en: 'Amber'
+	String get flachPresetBernstein => 'Amber';
+
+	/// en: 'Saffron'
+	String get flachPresetSafran => 'Saffron';
+
+	/// en: 'Cinema'
+	String get flachPresetKino => 'Cinema';
+
 	/// en: 'Background'
 	String get glasGround => 'Background';
 
@@ -9686,6 +9722,18 @@ extension on Translations {
 			'settings.appThemeVariantFlachDescription' => 'Laid out like Glass, but flat and calm: no glass panes, no sheen, no shadows. What holds focus turns into a white fill with dark type, posters get a white frame. On a television it rearranges the screens like Glass. You pick the accent colour freely.',
 			'settings.flachAccent' => 'Accent colour',
 			'settings.flachAccentDescription' => 'Any colour you like — for progress, the page on show and the chosen filter.',
+			'settings.flachPreset' => 'Colour profile',
+			'settings.flachPresetCustom' => 'Custom',
+			'settings.flachPresetGround' => 'From the colour profile',
+			'settings.flachPresetStandard' => 'Standard',
+			'settings.flachPresetNordlicht' => 'Northern lights',
+			'settings.flachPresetGlut' => 'Ember',
+			'settings.flachPresetMitternacht' => 'Midnight',
+			'settings.flachPresetKirschbluete' => 'Cherry blossom',
+			'settings.flachPresetAmethyst' => 'Amethyst',
+			'settings.flachPresetBernstein' => 'Amber',
+			'settings.flachPresetSafran' => 'Saffron',
+			'settings.flachPresetKino' => 'Cinema',
 			'settings.glasGround' => 'Background',
 			'settings.glasGroundAccent' => 'The design\'s own',
 			'settings.glasGroundAccentDescription' => 'The design\'s dark ground with a faint glow of the accent colour.',
@@ -9721,6 +9769,8 @@ extension on Translations {
 			'settings.homeTitleLogos' => 'Logos on Home and Explore',
 			'settings.homeTitleLogosDescription' => 'Shows the title logos of films and shows in the spotlight. Off, the title is set as text there; detail pages keep their logos.',
 			'settings.seerrCardEpisodeFacts' => 'Episode facts on Seerr posters',
+			_ => null,
+		} ?? switch (path) {
 			'settings.seerrCardEpisodeFactsDescription' => 'Shows the episode count and the next air date on Seerr show posters. Off by default: Seerr does not send either with a row, so each show costs one extra request to your instance.',
 			'settings.showCatalogDetailFacts' => 'Show detail facts',
 			'settings.showCatalogDetailFactsDescription' => 'Original title, alternative titles, country, studios and budget on Explore detail pages',
@@ -9733,8 +9783,6 @@ extension on Translations {
 			'settings.showCompanionRemoteAction' => 'Show remote control',
 			'settings.showCompanionRemoteActionDescription' => 'Keep the companion remote button in the Home toolbar',
 			'settings.showServerActivitiesAction' => 'Show server activity',
-			_ => null,
-		} ?? switch (path) {
 			'settings.showServerActivitiesActionDescription' => 'Keep the server activity button in the Home toolbar',
 			'settings.hideHomeActionsUntilFocus' => 'Hide the home toolbar until focused',
 			'settings.hideHomeActionsUntilFocusDescription' => 'Refresh, profile and the rest stay invisible while you are in the content, and appear when the remote goes up to them. Touch is unaffected.',
@@ -10235,6 +10283,8 @@ extension on Translations {
 			'subtitlingStyling.overrideScale' => 'Scale',
 			'subtitlingStyling.overrideForce' => 'Force',
 			'subtitlingStyling.overrideStrip' => 'Remove styling',
+			_ => null,
+		} ?? switch (path) {
 			'subtitlingStyling.positionTop' => 'Top',
 			'subtitlingStyling.positionBottom' => 'Bottom',
 			'subtitlingStyling.useMargins' => 'Use margins',
@@ -10247,8 +10297,6 @@ extension on Translations {
 			'subtitlingStyling.renderResolutionScreen' => 'Screen resolution',
 			'subtitlingStyling.renderResolutionVideo' => 'Video resolution',
 			'mpvConfig.title' => 'mpv.conf',
-			_ => null,
-		} ?? switch (path) {
 			'mpvConfig.description' => 'Advanced video player settings',
 			'mpvConfig.presets' => 'Presets',
 			'mpvConfig.noPresets' => 'No saved presets',
@@ -10749,6 +10797,8 @@ extension on Translations {
 			'explore.broadcastWithZone' => ({required Object day, required Object time, required Object timezone}) => 'Airs ${day} at ${time} ${timezone}',
 			'explore.detail.originalTitle' => 'Original title',
 			'explore.detail.alsoKnownAs' => 'Also known as',
+			_ => null,
+		} ?? switch (path) {
 			'explore.detail.studios' => 'Studios',
 			'explore.detail.country' => 'Country',
 			'explore.detail.language' => 'Language',
@@ -10761,8 +10811,6 @@ extension on Translations {
 			'explore.detail.revenue' => 'Box office',
 			'explore.detail.contentAdvisory' => 'Age guidance',
 			'explore.detail.tags' => 'Tags',
-			_ => null,
-		} ?? switch (path) {
 			'explore.detail.revealSpoilerTags' => 'Show spoiler tags',
 			'explore.detail.links' => 'Links',
 			'explore.detail.watchOn' => 'Watch on',
@@ -11263,6 +11311,8 @@ extension on Translations {
 			'companionRemote.remote.tabLibraries' => 'Libraries',
 			'companionRemote.remote.tabSearch' => 'Search',
 			'companionRemote.remote.tabDownloads' => 'Downloads',
+			_ => null,
+		} ?? switch (path) {
 			'companionRemote.remote.tabSettings' => 'Settings',
 			'companionRemote.remote.previous' => 'Previous',
 			'companionRemote.remote.playPause' => 'Play/Pause',
@@ -11275,8 +11325,6 @@ extension on Translations {
 			'companionRemote.remote.volumeUp' => 'Up',
 			'companionRemote.remote.fullscreen' => 'Fullscreen',
 			'companionRemote.remote.subtitles' => 'Subtitles',
-			_ => null,
-		} ?? switch (path) {
 			'companionRemote.remote.audio' => 'Audio',
 			'companionRemote.remote.searchHint' => 'Search on desktop...',
 			'companionRemote.errors.noNetworkInterface' => 'No network interface found',
@@ -11777,6 +11825,8 @@ extension on Translations {
 			'sport.place' => ({required Object n}) => 'Position ${n}',
 			'sport.notStarted' => 'Not kicked off yet',
 			'sport.loadFailed' => 'The fixtures could not be loaded.',
+			_ => null,
+		} ?? switch (path) {
 			'sport.noMatches' => 'No fixtures for this matchday.',
 			'sport.today' => 'Today',
 			'sport.tomorrow' => 'Tomorrow',
@@ -11789,8 +11839,6 @@ extension on Translations {
 			'plebz.moreAppearanceDescription' => 'Cards, home screen, navigation and more',
 			'plebz.morePlayback' => 'More playback settings',
 			'plebz.morePlaybackDescription' => 'Player, picture, sound, quality and more',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.allSettings' => 'All settings',
 			'plebz.allSettingsDescription' => 'Every setting, including the advanced ones',
 			'plebz.welcomeTitle' => 'Welcome to Plebz',

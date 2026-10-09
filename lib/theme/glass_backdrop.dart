@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/settings_service.dart' show GlasAccent;
-import 'mono_theme.dart' show flachGround, glasPalette;
+import 'mono_theme.dart' show glasPalette, isFlachPresetGround;
 import 'mono_tokens.dart';
 
 /// The ground of "Redesign – Glas", in the manner of Apple TV's own: a flat
@@ -126,7 +126,7 @@ bool _neutral(MonoTokens tk) => tk.bg == glasPalette(GlasAccent.grau).bg;
 /// OLED's black, the off-black or the viewer's own colour: a ground chosen to
 /// be one flat colour — anything but the palette's own.
 bool _plain(MonoTokens tk) =>
-    tk.flat ? tk.bg != flachGround : !GlasAccent.values.any((accent) => glasPalette(accent).bg == tk.bg);
+    tk.flat ? !isFlachPresetGround(tk.bg) : !GlasAccent.values.any((accent) => glasPalette(accent).bg == tk.bg);
 
 /// "Flach" on its own ground: the accent, faint, in two lights — one at the
 /// top left behind the logo, one at the bottom right — so the plain dark
@@ -136,7 +136,9 @@ bool _plain(MonoTokens tk) =>
 /// Public because the start page's spotlight covers the whole screen with its
 /// picture and scrims of solid ground, and lays these over them again.
 List<RadialGradient> flachGroundGlows(MonoTokens tk) {
-  if (!tk.flat || tk.bg != flachGround) return const [];
+  // The design's own ground and every look's ([flachPresets]) — the looks were
+  // picked with these lights on.
+  if (!tk.flat || !isFlachPresetGround(tk.bg)) return const [];
   RadialGradient light(Alignment center, double radius, double alpha) => RadialGradient(
     center: center,
     radius: radius,

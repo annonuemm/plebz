@@ -134,6 +134,44 @@ Color flachAccentFromHex(String hex) {
   return value == null ? flachDefaultAccent : Color(0xFF000000 | value);
 }
 
+/// A ready-made "Flach" look (Plebz): an accent and the ground it was picked
+/// for, chosen together in one step — the viewer's wish, for those who would
+/// rather not mix their own. Every ground is an off-black tinted towards its
+/// accent, never black (OLED stays its own choice and wins over a ground).
+class FlachPreset {
+  const FlachPreset(this.id, {required this.accent, required this.ground});
+
+  /// What [SettingsService.flachPreset] stores.
+  final String id;
+  final Color accent;
+  final Color ground;
+}
+
+/// The looks on offer, the design's own first.
+const flachPresets = <FlachPreset>[
+  FlachPreset('standard', accent: flachDefaultAccent, ground: flachGround),
+  FlachPreset('nordlicht', accent: Color(0xFF2DD4BF), ground: Color(0xFF0A1417)),
+  FlachPreset('glut', accent: Color(0xFFFF7A45), ground: Color(0xFF15100D)),
+  FlachPreset('mitternacht', accent: Color(0xFF6E8BFF), ground: Color(0xFF0A0D18)),
+  FlachPreset('kirschbluete', accent: Color(0xFFFF5C8A), ground: Color(0xFF150A10)),
+  FlachPreset('amethyst', accent: Color(0xFFA78BFA), ground: Color(0xFF120D1C)),
+  FlachPreset('bernstein', accent: Color(0xFFF2B544), ground: Color(0xFF12100B)),
+  FlachPreset('safran', accent: Color(0xFFE5A00D), ground: Color(0xFF1F2326)),
+  FlachPreset('kino', accent: Color(0xFFE50914), ground: Color(0xFF141414)),
+];
+
+/// The look [id] names, or null for the viewer's own colours.
+FlachPreset? flachPresetById(String id) {
+  for (final preset in flachPresets) {
+    if (preset.id == id) return preset;
+  }
+  return null;
+}
+
+/// Whether [ground] is one of the looks' own grounds, which carry the
+/// accent's lights as the design's own ground does.
+bool isFlachPresetGround(Color ground) => flachPresets.any((preset) => preset.ground == ground);
+
 bool? _debugRedesignOffered;
 
 /// Whether this host offers the redesign at all.

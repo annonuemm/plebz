@@ -11,7 +11,9 @@ import '../../providers/iptv_sources_provider.dart';
 import '../../services/settings_service.dart' hide ThemeMode;
 import '../../services/settings_service.dart' as settings show ThemeMode;
 import '../../services/settings_mutation_service.dart';
-import '../../theme/mono_theme.dart' show isRedesignVariant, redesignOfferedHere, supportedAppThemeVariant;
+import '../../redesign/ocker_skin.dart' show OckerKeepColours;
+import '../../theme/mono_theme.dart'
+    show FlachPreset, flachPresetById, flachPresets, isRedesignVariant, redesignOfferedHere, supportedAppThemeVariant;
 import '../../utils/platform_detector.dart';
 import '../../utils/snackbar_helper.dart';
 import '../../widgets/overlay_sheet.dart';
@@ -250,7 +252,7 @@ List<Widget> plebzAppearanceRows() => [
     pref: SettingsService.appThemeVariant,
     builder: (context, variant, _) => switch (supportedAppThemeVariant(variant)) {
       AppThemeVariant.glas => _glasAccentSelector(),
-      AppThemeVariant.flach => flachAccentTile(),
+      AppThemeVariant.flach => flachColourTiles(),
       AppThemeVariant.standard => const SizedBox.shrink(),
     },
   ),
@@ -314,9 +316,13 @@ class _GlasGroundTile extends StatelessWidget {
     final service = SettingsService.instance;
     final wasOled = service.read(SettingsService.themeMode) == settings.ThemeMode.oled;
     const mutation = SettingsMutationService();
+    // Flach (Plebz): a ground of the viewer's leaves the look — its accent
+    // stays, already stored when the look was chosen.
+    final leavesLook = _flachLookActive(service);
     // The colour and the plain grounds first: leaving OLED for one of them
     // then lands on it in one step, not on the design's ground in between.
     final writes = <Future<SettingsEffectFailure?> Function()>[
+      if (leavesLook) () => mutation.write(context, SettingsService.flachPreset, ''),
       if (colour != null) () => mutation.write(context, SettingsService.redesignGroundColour, colour),
       () => mutation.write(context, SettingsService.redesignCustomGround, ground == RedesignGround.custom),
       () => mutation.write(context, SettingsService.redesignOffBlack, ground == RedesignGround.offBlack),
@@ -347,15 +353,19 @@ class _GlasGroundTile extends StatelessWidget {
         SettingsService.redesignOffBlack,
         SettingsService.redesignCustomGround,
         SettingsService.redesignGroundColour,
+        SettingsService.flachPreset,
+        SettingsService.appThemeVariant,
       ],
       builder: (context) {
         final service = SettingsService.instance;
         final ground = storedRedesignGround(service);
         final colourHex = service.read(SettingsService.redesignGroundColour);
+        // Under a Flach look its ground is the look's, unless OLED wins.
+        final fromLook = _flachLookActive(service) && ground != RedesignGround.oled;
         return SettingNavigationTile(
           icon: Symbols.contrast_rounded,
           title: t.settings.glasGround,
-          subtitle: redesignGroundLabel(ground),
+          subtitle: fromLook ? t.settings.flachPresetGround : redesignGroundLabel(ground),
           onTap: () async {
             final picked = await showSelectionDialog<RedesignGround>(
               context: context,
@@ -396,7 +406,7 @@ class _GlasGroundTile extends StatelessWidget {
               );
               return;
             }
-            if (picked.value == ground) return;
+            if (picked.value == ground && !fromLook) return;
             await _store(context, picked.value);
           },
         );
@@ -435,14 +445,112 @@ Widget _themeVariantSelector() => SettingSelectionTile<AppThemeVariant>(
   ],
 );
 
+/// Whether a ready-made look ([SettingsService.flachPreset]) is on and
+/// Flach the design on show.
+bool _flachLookActive(SettingsService service) =>
+    supportedAppThemeVariant(service.read(SettingsService.appThemeVariant)) == AppThemeVariant.flach &&
+    flachPresetById(service.read(SettingsService.flachPreset)) != null;
+
+/// "Redesign – Flach"'s colours (Plebz): a ready-made look, then the accent.
+Widget flachColourTiles() => Column(mainAxisSize: .min, children: [const _FlachLookTile(), flachAccentTile()]);
+
 /// "Redesign – Flach"'s accent (Plebz): any colour, picked on the colour
-/// picker the subtitle colours use.
+/// picker the subtitle colours use. A colour of the viewer's leaves the look
+/// ([SettingsService.flachPreset]); its ground goes back to the settings'.
 Widget flachAccentTile() => SettingColorTile(
   pref: SettingsService.flachAccent,
   icon: Symbols.colors_rounded,
   title: t.settings.flachAccent,
   subtitle: t.settings.flachAccentDescription,
+  onAfterWrite: (_) => SettingsService.instance.write(SettingsService.flachPreset, ''),
 );
+
+/// The looks' names.
+String flachPresetLabel(FlachPreset preset) => switch (preset.id) {
+  'nordlicht' => t.settings.flachPresetNordlicht,
+  'glut' => t.settings.flachPresetGlut,
+  'mitternacht' => t.settings.flachPresetMitternacht,
+  'kirschbluete' => t.settings.flachPresetKirschbluete,
+  'amethyst' => t.settings.flachPresetAmethyst,
+  'bernstein' => t.settings.flachPresetBernstein,
+  'safran' => t.settings.flachPresetSafran,
+  'kino' => t.settings.flachPresetKino,
+  _ => t.settings.flachPresetStandard,
+};
+
+/// A look as a swatch: its ground, its accent as a dot. Kept in its colours
+/// under the flat focus fill.
+Widget _flachLookSwatch(BuildContext context, FlachPreset preset) => OckerKeepColours(
+  child: Container(
+    width: 44,
+    height: 28,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: preset.ground,
+      borderRadius: BorderRadius.circular(6),
+      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+    ),
+    child: Container(
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(color: preset.accent, shape: BoxShape.circle),
+    ),
+  ),
+);
+
+/// "Farbprofil": a ready-made Flach look, accent and ground together. Chosen,
+/// the accent is stored too, so the colour row and its picker show it and
+/// start from it.
+class _FlachLookTile extends StatelessWidget {
+  const _FlachLookTile();
+
+  @override
+  Widget build(BuildContext context) {
+    return SettingsBuilder(
+      prefs: const [SettingsService.flachPreset],
+      builder: (context) {
+        final service = SettingsService.instance;
+        final current = flachPresetById(service.read(SettingsService.flachPreset));
+        return SettingNavigationTile(
+          icon: Symbols.palette_rounded,
+          title: t.settings.flachPreset,
+          subtitle: current == null ? t.settings.flachPresetCustom : flachPresetLabel(current),
+          onTap: () async {
+            final picked = await showSelectionDialog<String>(
+              context: context,
+              title: t.settings.flachPreset,
+              options: [
+                for (final preset in flachPresets)
+                  DialogOption(
+                    value: preset.id,
+                    title: flachPresetLabel(preset),
+                    trailing: _flachLookSwatch(context, preset),
+                  ),
+              ],
+              currentValue: current?.id ?? '',
+            );
+            if (picked == null || !context.mounted) return;
+            final preset = flachPresetById(picked.value)!;
+            const mutation = SettingsMutationService();
+            final argb = preset.accent.toARGB32() & 0xFFFFFF;
+            final hex = '#${argb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
+            for (final write in <Future<SettingsEffectFailure?> Function()>[
+              () => mutation.write(context, SettingsService.flachAccent, hex),
+              () => mutation.write(context, SettingsService.flachPreset, preset.id),
+            ]) {
+              if (!context.mounted) return;
+              final failure = await write();
+              if (failure != null) {
+                if (context.mounted) showErrorSnackBar(context, failure.display);
+                return;
+              }
+            }
+          },
+        );
+      },
+    );
+  }
+}
 
 Widget _glasAccentSelector() => SettingSelectionTile<GlasAccent>(
   pref: SettingsService.glasAccent,

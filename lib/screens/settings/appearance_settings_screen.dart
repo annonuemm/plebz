@@ -23,7 +23,7 @@ import '../../widgets/settings_page.dart';
 import '../../widgets/settings_builder.dart';
 import '../../widgets/settings_section.dart';
 import '../../redesign/ocker_skin.dart' show isOckerLayout;
-import 'plebz_settings_rows.dart' show flachAccentTile, plebzThemeModeRow;
+import 'plebz_settings_rows.dart' show flachColourTiles, plebzThemeModeRow;
 import 'settings_utils.dart';
 import '../../utils/fork_identity.dart';
 
@@ -58,7 +58,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
               pref: SettingsService.appThemeVariant,
               builder: (context, variant, _) => switch (supportedAppThemeVariant(variant)) {
                 AppThemeVariant.glas => _glasAccentSelector(),
-                AppThemeVariant.flach => flachAccentTile(),
+                AppThemeVariant.flach => flachColourTiles(),
                 AppThemeVariant.standard => const SizedBox.shrink(),
               },
             ),

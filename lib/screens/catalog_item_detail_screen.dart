@@ -1668,6 +1668,9 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
           overhang: EdgeInsets.all(ockerBandMargin(context)),
           child: FocusableActionBar(
             key: _actionBarKey,
+            // On the stage, Flach's discs at a detail page's size: the
+            // toolbar's own read as an afterthought beside the copy's button.
+            flatGlyphDiameter: stage ? 46 * TvLayoutConstants.scaleOf(context) : null,
             wrapBuiltAction: ockerGlass(context)
                 ? (context, state, child) =>
                       OckerWordFocus(focused: state.showFocus, outset: EdgeInsets.zero, child: child)

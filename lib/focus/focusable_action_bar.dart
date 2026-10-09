@@ -90,6 +90,11 @@ class FocusableActionBar extends StatefulWidget {
   /// how a row on a band of glass reports each button to the band's focus.
   final Widget Function(BuildContext context, FocusableActionBuildState state, Widget child)? wrapBuiltAction;
 
+  /// Under "Flach", how big each icon action's disc is drawn, where a row
+  /// stands beside a detail page's own and should match it (Plebz). Null for
+  /// the toolbar's size, [OckerFilterGlyph]'s own.
+  final double? flatGlyphDiameter;
+
   const FocusableActionBar({
     super.key,
     required this.actions,
@@ -102,6 +107,7 @@ class FocusableActionBar extends StatefulWidget {
     this.onFocusChange,
     this.spacing = 0,
     this.wrapBuiltAction,
+    this.flatGlyphDiameter,
   });
 
   @override
@@ -351,6 +357,7 @@ class FocusableActionBarState extends State<FocusableActionBar> {
         // Small where the redesign sets these beside the tabs; a toolbar's own
         // size where the layout is the app's own and they sit in an app bar.
         size: isOckerLayout(context) ? OckerFilterGlyph.glyphSize : action.iconSize,
+        flatDiameter: widget.flatGlyphDiameter,
       ),
     );
     if (action.tooltip case final tooltip?) glyph = Tooltip(message: tooltip, child: glyph);

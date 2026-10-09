@@ -29,7 +29,18 @@ class OckerFilterGlyph extends StatelessWidget {
   /// this that belongs to the look; the size belongs to the row.
   final double size;
 
-  const OckerFilterGlyph({super.key, required this.icon, required this.focused, this.size = glyphSize});
+  /// Under "Flach", the disc's diameter where a row wants a size of its own
+  /// (Plebz: the Explore detail stage matches a detail page's buttons). Null
+  /// for the toolbar's.
+  final double? flatDiameter;
+
+  const OckerFilterGlyph({
+    super.key,
+    required this.icon,
+    required this.focused,
+    this.size = glyphSize,
+    this.flatDiameter,
+  });
 
   /// The glyph's own size — deliberately a fixed number rather than one scaled
   /// with the viewport. These are the quietest marks on the screen, and below
@@ -74,7 +85,7 @@ extension on OckerFilterGlyph {
   /// each control is a shape rather than a glyph on a shared band.
   Widget _buildFlat(BuildContext context, MonoTokens tk) {
     final scale = ockerScale(context);
-    final diameter = 52 * scale;
+    final diameter = flatDiameter ?? 52 * scale;
     return Padding(
       padding: EdgeInsets.only(right: OckerFilterGlyph.flatGap * scale),
       child: OckerFlatControl(
@@ -86,7 +97,7 @@ extension on OckerFilterGlyph {
             child: AppIcon(
               icon,
               fill: 0,
-              size: math.max(24 * scale, 13),
+              size: flatDiameter == null ? math.max(24 * scale, 13) : diameter * 0.5,
               weight: 400,
               color: focused ? tk.bg : tk.ink(0.7),
             ),

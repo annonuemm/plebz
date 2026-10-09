@@ -13,6 +13,12 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.14.1 (Build 715)
+
+- Flach: Uhr und Sync-Knopf auf der Startseite bleiben auch über hellen Hintergrundbildern gut lesbar.
+- Flach: Auf den Detailseiten unter Erkunden sind die runden Knöpfe für Merkliste, Anfragen und Trailer größer, so groß wie auf den anderen Detailseiten.
+- Auf dem Fernseher mit Glas oder Flach sind die Schalter „Detailangaben anzeigen“ und „Crew anzeigen“ verschwunden. Diese Angaben stehen jetzt immer im Steckbrief neben der Infobox.
+
 ## 1.14.0 (Build 711)
 
 - Erkunden: Die Detailseite eines Titels sieht auf dem Fernseher jetzt aus wie jede andere Detailseite in Glas und Flach, mit großem Bild, Titel, Beschreibung und Knöpfen. Rechts daneben steht ein Steckbrief, zum Beispiel mit Regie, Studio, Land und dem nächsten Sendetermin. Darunter liegen deine Kopien, die Besetzung und ähnliche Titel als Reihen.

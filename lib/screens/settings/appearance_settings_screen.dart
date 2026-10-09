@@ -44,6 +44,8 @@ class AppearanceSettingsScreen extends StatelessWidget {
     // have nothing left to steer there (Plebz). On a phone, tablet or Mac it
     // is a look only, and they keep working.
     final glasLayout = isOckerLayout(context);
+    // The catalog detail stage's condition (CatalogItemDetailScreen._usesStage).
+    final catalogStage = glasLayout && PlatformDetector.isTV();
     return SettingsPage(
       title: Text(t.settings.appearance),
       children: [
@@ -239,14 +241,17 @@ class AppearanceSettingsScreen extends StatelessWidget {
                 title: t.settings.showActorFilmography,
                 subtitle: t.settings.showActorFilmographyDescription,
               ),
-            if (hasExplore)
+            // Not on a television under the redesigns: there an Explore
+            // title's page shows its facts on the fact sheet beside the info
+            // box, always, and these two switches steer nothing (Plebz).
+            if (hasExplore && !catalogStage)
               SettingSwitchTile(
                 pref: SettingsService.showCatalogDetailFacts,
                 icon: Symbols.list_alt_rounded,
                 title: t.settings.showCatalogDetailFacts,
                 subtitle: t.settings.showCatalogDetailFactsDescription,
               ),
-            if (hasExplore)
+            if (hasExplore && !catalogStage)
               SettingSwitchTile(
                 pref: SettingsService.showCatalogDetailCrew,
                 icon: Symbols.movie_edit_rounded,

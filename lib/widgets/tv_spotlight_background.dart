@@ -296,9 +296,19 @@ class TvSpotlightBackground extends StatelessWidget {
     );
     Color ground(double alpha) => bgColor.withValues(alpha: alpha);
     Color mask(double alpha) => Colors.white.withValues(alpha: alpha);
+    // The top edge, faintly: the clock and the screen's own buttons stand
+    // there on the picture, and a white one took them out entirely (the
+    // viewer's report). Glas has its own black fade there.
+    final top = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [ground(0.7), ground(0.35), ground(0)],
+      stops: const [0, 0.12, 0.26],
+    );
     return Stack(
       fit: StackFit.expand,
       children: [
+        RasterizedGradient(gradient: top),
         RasterizedGradient(gradient: side(ground)),
         RasterizedGradient(gradient: foot(ground)),
         // One copy per fade, each masked by it: the two cover what the two

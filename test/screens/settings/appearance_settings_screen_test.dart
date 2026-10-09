@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart' hide ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/i18n/strings.g.dart';
+import 'package:plezy/providers/catalog_sources_provider.dart';
 import 'package:plezy/providers/theme_provider.dart';
+import 'package:plezy/redesign/ocker_skin.dart' show debugOckerLayoutOnThisHost;
 import 'package:plezy/screens/settings/appearance_settings_screen.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
@@ -178,6 +180,45 @@ void main() {
     }
   });
 
+  testWidgets('the Explore page\'s facts and crew switches leave a television under the redesigns', (tester) async {
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+    debugOckerLayoutOnThisHost = true;
+    addTearDown(() => debugOckerLayoutOnThisHost = null);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1000, 6000);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    final sources = _ExploreConnected();
+    addTearDown(sources.dispose);
+
+    Future<void> pumpWith(AppThemeVariant variant) async {
+      final theme = ThemeProvider();
+      addTearDown(theme.dispose);
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ThemeProvider>.value(value: theme),
+            ChangeNotifierProvider<CatalogSourcesProvider>.value(value: sources),
+          ],
+          child: MaterialApp(
+            theme: monoTheme(dark: true, variant: variant),
+            home: const AppearanceSettingsScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await pumpWith(AppThemeVariant.glas);
+    expect(find.text(t.settings.showCatalogDetailFacts), findsNothing);
+    expect(find.text(t.settings.showCatalogDetailCrew), findsNothing);
+
+    await pumpWith(AppThemeVariant.standard);
+    expect(find.text(t.settings.showCatalogDetailFacts), findsOneWidget);
+    expect(find.text(t.settings.showCatalogDetailCrew), findsOneWidget);
+  });
+
   testWidgets('on a phone glass is offered with its accent, but not the focus switches', (tester) async {
     tester.view.devicePixelRatio = 1;
     // Wide, so the test face's box glyphs fit; what makes this a phone is the
@@ -203,4 +244,10 @@ void main() {
     expect(find.text(t.settings.glasSmoothFocus), findsNothing, reason: 'a finger never puts focus anywhere');
     expect(find.text(t.settings.glasSpinningFocus), findsNothing);
   });
+}
+
+/// Explore with a source connected, so its rows are offered at all.
+class _ExploreConnected extends CatalogSourcesProvider {
+  @override
+  bool get hasAnySource => true;
 }

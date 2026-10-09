@@ -20,6 +20,7 @@ import '../i18n/app_locale_utils.dart';
 import '../i18n/strings.g.dart';
 import '../media/ids.dart';
 import '../media/library_copy_quality.dart';
+import '../media/media_backend.dart';
 import '../media/media_hub.dart';
 import '../media/media_item.dart';
 import '../media/media_item_merge.dart';
@@ -59,6 +60,7 @@ import '../widgets/corner_backdrop.dart';
 import '../widgets/focusable_tab_chip.dart';
 import '../widgets/hub_section.dart';
 import '../redesign/ocker_skin.dart';
+import '../redesign/ocker_type.dart';
 import '../widgets/library_copy_jump_button.dart';
 import '../widgets/library_copy_tile.dart';
 import '../widgets/optimized_media_image.dart';
@@ -67,6 +69,9 @@ import '../widgets/seerr_request_sheet.dart';
 import '../widgets/settings_builder.dart';
 import '../widgets/settings_section.dart';
 import '../widgets/stat_chip.dart';
+import '../widgets/tv_browse_rail.dart';
+import '../widgets/tv_spotlight_background.dart';
+import '../utils/layout_constants.dart';
 
 /// Detail screen for a catalog item (Explore tab). Renders from provider
 /// data — no media server required — and resolves library availability in
@@ -134,6 +139,26 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
   /// moved there only the first time the button can be pressed, and only
   /// from where the page put it.
   bool _bestCopyFocusSettled = false;
+
+  /// The redesign's stage on a television (Plebz): whether the rows are up
+  /// over the title area. See [_buildStage].
+  bool _stageRowsRaised = false;
+  final _stageRailKey = GlobalKey<TvBrowseRailState>();
+
+  /// What the stage's buttons take, with the line over them and the note
+  /// under them, measured after layout: the info box stands on top of it, and
+  /// a guess left the description over the buttons when a note ("30 of 99
+  /// episodes") was there.
+  final _stageButtonsKey = GlobalKey();
+  double? _stageButtonsHeight;
+
+  void _measureStageButtons() {
+    final box = _stageButtonsKey.currentContext?.findRenderObject();
+    if (!mounted || box is! RenderBox || !box.hasSize) return;
+    final height = box.size.height;
+    if (_stageButtonsHeight != null && (height - _stageButtonsHeight!).abs() < 1) return;
+    setState(() => _stageButtonsHeight = height);
+  }
 
   /// Cast/characters from the item's own source; null while loading (the
   /// section only renders once loaded non-empty).
@@ -1617,6 +1642,7 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
     required bool? onWatchlist,
     required int? tmdbId,
     required double? width,
+    bool stage = false,
   }) {
     final item = _item;
     final theme = Theme.of(context);
@@ -1633,7 +1659,7 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
             child: button,
           );
     return [
-      const SizedBox(height: 16),
+      if (!stage) const SizedBox(height: 16),
       if (_hasActions)
         // Under glass one band, as the
         // header's destinations are, and
@@ -1646,7 +1672,7 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
                 ? (context, state, child) =>
                       OckerWordFocus(focused: state.showFocus, outset: EdgeInsets.zero, child: child)
                 : null,
-            onNavigateDown: _focusSectionBelowActions,
+            onNavigateDown: stage ? _focusStageRows : _focusSectionBelowActions,
             onNavigateUp: PlatformDetector.isTV() ? _focusHomeButton : null,
             actions: [
               // The title on the viewer's own server, in its
@@ -1716,6 +1742,388 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
     ];
   }
 
+  /// Whether the page stands as the redesign's detail stage (Plebz): on a
+  /// television under Glas or Flach, the layout a title from the viewer's own
+  /// libraries gets — the picture, the title and its facts, the buttons, and
+  /// rows under them (the viewer's call: the scrolling page read as a
+  /// stranger in the redesign). Everywhere else the scrolling page.
+  bool _usesStage(BuildContext context) => PlatformDetector.isTV() && isOckerLayout(context);
+
+  static const _stageCopiesHubId = 'catalog_stage_copies';
+  static const _stageCastHubId = 'catalog_stage_cast';
+  static const _stageRelationsHubId = 'catalog_stage_relations';
+  static const _stageRelatedHubId = 'catalog_stage_related';
+
+  void _focusStageRows() => _stageRailKey.currentState?.requestFocus();
+
+  /// The stage's rows: the viewer's copies first, then who is in it, what it
+  /// belongs to, and what is like it — the scrolling page's order.
+  List<MediaHub> _stageHubs() {
+    final hubs = <MediaHub>[];
+    final copies = _matches ?? const <MediaItem>[];
+    if (copies.isNotEmpty) {
+      hubs.add(
+        MediaHub(
+          id: _stageCopiesHubId,
+          title: t.explore.inTheseLibraries,
+          type: 'mixed',
+          items: [
+            for (final copy in copies)
+              copy.copyWith(title: libraryCopyName(copy), parentTitle: libraryCopyServer(copy)),
+          ],
+          size: copies.length,
+        ),
+      );
+    }
+    final cast = _cast ?? const <CatalogCastMember>[];
+    if (cast.isNotEmpty) {
+      hubs.add(
+        MediaHub(
+          id: _stageCastHubId,
+          title: const {CatalogSourceId.mal, CatalogSourceId.anilist}.contains(_item.source)
+              ? t.explore.characters
+              : t.explore.cast,
+          type: 'person',
+          items: [
+            for (var index = 0; index < cast.length; index++)
+              MediaItem(
+                id: 'catalog_cast_$index',
+                backend: MediaBackend.plex,
+                kind: MediaKind.unknown,
+                title: cast[index].name,
+                parentTitle: cast[index].secondary,
+                thumbPath: cast[index].imageUrl,
+              ),
+          ],
+          size: cast.length,
+        ),
+      );
+    }
+    if (_relationEntries.isNotEmpty) {
+      hubs.add(
+        MediaHub(
+          id: _stageRelationsHubId,
+          title: t.explore.detail.relatedTitles,
+          type: 'mixed',
+          items: [for (final entry in _relationEntries) entry.item.toMediaItem()],
+          size: _relationEntries.length,
+        ),
+      );
+    }
+    final related = _related ?? const <CatalogItem>[];
+    if (related.isNotEmpty) {
+      hubs.add(
+        MediaHub(
+          id: _stageRelatedHubId,
+          title: t.discover.moreLikeThis,
+          type: 'mixed',
+          items: [for (final item in related) item.toMediaItem()],
+          size: related.length,
+        ),
+      );
+    }
+    return hubs;
+  }
+
+  IconData _stageHubIcon(MediaHub hub, int index) => switch (hub.id) {
+    _stageCopiesHubId => Symbols.video_library_rounded,
+    _stageCastHubId => Symbols.people_rounded,
+    _stageRelationsHubId => Symbols.link_rounded,
+    _ => Symbols.recommend_rounded,
+  };
+
+  /// A copy opens on its own server, as its row on the scrolling page does; a
+  /// member of the cast opens nothing there either. Catalog titles are left
+  /// to the rail, which opens their own page.
+  Future<bool> _activateStageItem(MediaHub hub, MediaItem item) async {
+    if (hub.id == _stageCopiesHubId) {
+      final original = _matches?.firstWhereOrNull((copy) => copy.globalKey == item.globalKey);
+      if (original != null) _openCopy(original);
+      return true;
+    }
+    return hub.id == _stageCastHubId;
+  }
+
+  /// Over the buttons while there is no copy to name: still looking, none
+  /// found, or servers that could not be asked. A copy names itself on the
+  /// first button.
+  Widget? _stageLibraryStatus() {
+    final tk = tokens(context);
+    final style = OckerType.of(context).spotlightFacts.copyWith(color: tk.ink(0.7));
+    final size = style.fontSize ?? 14;
+    final matches = _matches;
+    Widget line(Widget lead, String text) => Row(
+      mainAxisSize: .min,
+      children: [
+        lead,
+        SizedBox(width: size * 0.5),
+        Flexible(
+          child: Text(text, style: style, maxLines: 1, overflow: .ellipsis),
+        ),
+      ],
+    );
+    if (matches == null || (matches.isEmpty && _resolvingMatches)) {
+      return line(
+        SizedBox(width: size, height: size, child: const CircularProgressIndicator(strokeWidth: 2)),
+        t.explore.checkingLibrary,
+      );
+    }
+    if (matches.isNotEmpty) return null;
+    final unchecked = _uncheckedServerIds.length;
+    return line(
+      AppIcon(
+        unchecked == 0 ? Symbols.info_rounded : Symbols.cloud_off_rounded,
+        fill: 1,
+        size: size,
+        color: tk.ink(0.7),
+      ),
+      unchecked == 0 ? t.explore.notInLibrary : t.explore.libraryCheckFailed(n: unchecked),
+    );
+  }
+
+  /// The stage's fact sheet (Plebz): what the scrolling page lists under its
+  /// overview and the info box beside it does not already say, at most seven
+  /// lines of one line each — a series' run and its next episode, a film's
+  /// director, writer, budget and takings, then when, where and by whom.
+  /// Producers (long lists) and the content advisory (the rating is in the
+  /// facts line) stay off. The viewer's call:
+  /// facts behind an info button were facts nobody read. Cast stays a row.
+  List<({String label, String value})> _stageFacts() {
+    final item = _item;
+    final locale = LocaleSettings.currentLocale.intlLocaleName;
+    final dateFormat = DateFormat.yMMMd(locale);
+    final facts = <({String label, String value})>[];
+    void add(String label, String? value) {
+      if (value != null && value.trim().isNotEmpty) facts.add((label: label, value: value.trim()));
+    }
+
+    String? firstAndMore(Iterable<String>? values, {String Function(String value)? displayName}) {
+      final list = [
+        for (final value in values ?? const <String>[])
+          if (value.trim().isNotEmpty) displayName?.call(value.trim()) ?? value.trim(),
+      ];
+      if (list.isEmpty) return null;
+      return list.length == 1 ? list.first : '${list.first} +${list.length - 1}';
+    }
+
+    final isSeries = item.kind != MediaKind.movie;
+    if (isSeries) {
+      final status = item.airStatus == null ? null : statusLabel(item.airStatus!);
+      final episodes = item.episodeCount == null ? null : t.explore.episodeCount(n: item.episodeCount!);
+      add(t.explore.detail.status, [?status, ?episodes].join(' · '));
+      if (item.nextEpisode case final next?) {
+        final duration = formatDurationTextual(next.timeUntil(DateTime.now()).inMilliseconds);
+        add(
+          t.explore.detail.nextEpisode,
+          next.episode == null ? duration : t.explore.badge.nextEpisodeIn(episode: next.episode!, duration: duration),
+        );
+      }
+    }
+    if (item.releaseDate case final date?) add(t.explore.detail.released, dateFormat.format(date.toLocal()));
+    if (!isSeries) {
+      for (final role in const [CatalogCreditRole.director, CatalogCreditRole.writer]) {
+        add(
+          creditRoleLabel(role),
+          firstAndMore((item.credits ?? const []).where((c) => c.role == role).map((c) => c.name)),
+        );
+      }
+    }
+    if (isSeries && (item.network?.trim().isNotEmpty ?? false)) {
+      add(t.explore.detail.networks, item.network);
+    } else {
+      add(t.explore.detail.studios, firstAndMore(item.studios));
+    }
+    add(t.explore.detail.country, firstAndMore(item.countries, displayName: CountryCodes.getDisplayName));
+    if (isSeries) {
+      if (item.endDate case final date?) add(t.explore.detail.ended, dateFormat.format(date.toLocal()));
+    } else {
+      final money = NumberFormat.compactSimpleCurrency(locale: locale, name: 'USD');
+      if (item.budget case final budget?) add(t.explore.detail.budget, money.format(budget));
+      if (item.revenue case final revenue?) add(t.explore.detail.revenue, money.format(revenue));
+    }
+    // Seven at most: a film's run of facts is longer than a series', and
+    // still one line each.
+    return facts.take(7).toList();
+  }
+
+  /// [_stageFacts] on a card of its own — glass under Glas, flat under Flach
+  /// ([OckerGlass] paints either): the picture stands behind this side of the
+  /// stage, and words straight on a photograph do not read.
+  Widget? _buildStageFactSheet() {
+    final facts = _stageFacts();
+    if (facts.isEmpty) return null;
+    final tk = tokens(context);
+    final type = OckerType.of(context);
+    final scale = ockerScale(context);
+    final value = type.spotlightFacts.copyWith(fontSize: 19 * scale, color: tk.ink(0.9), height: 1.25);
+    final label = type.counter.copyWith(fontSize: 15 * scale, color: tk.ink(0.55), height: 1.25);
+    return OckerGlass(
+      borderRadius: BorderRadius.circular(tk.radiusSm + 8),
+      scrimInset: 18 * scale,
+      child: Column(
+        mainAxisSize: .min,
+        crossAxisAlignment: .start,
+        children: [
+          for (var index = 0; index < facts.length; index++)
+            Padding(
+              padding: EdgeInsets.only(top: index == 0 ? 0 : 9 * scale),
+              child: Row(
+                crossAxisAlignment: .baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  SizedBox(
+                    width: 170 * scale,
+                    child: Text(type.headingCase(facts[index].label), maxLines: 1, overflow: .ellipsis, style: label),
+                  ),
+                  Expanded(
+                    child: Text(facts[index].value, maxLines: 1, overflow: .ellipsis, style: value),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// The redesign's detail stage on a television — see [_usesStage].
+  ///
+  /// The title area is the start page's info box over the title's picture
+  /// ([TvSpotlightBackground]), the buttons under it; DOWN raises the rows
+  /// over it, the buttons stepping out of sight as they do on a detail page,
+  /// and UP from the rows brings them back.
+  Widget _buildStage(BuildContext hostContext, {required bool? onWatchlist, required int? tmdbId}) {
+    final item = _item;
+    final size = MediaQuery.sizeOf(context);
+    final scale = TvLayoutConstants.scaleOf(context);
+    final left = (56 * scale).clamp(36.0, 72.0).toDouble();
+    final viewInsets = MediaQuery.paddingOf(context);
+    final backdrop = item.backdropFor(MediaImageHelper.artworkTargetPx(context, size.width, imageType: ImageType.art));
+    final logo = item.logoUrl;
+    final media = item.toMediaItem().copyWith(
+      artPath: backdrop ?? item.backdropUrl,
+      backdropPaths: backdrop == null ? null : [backdrop],
+      clearLogoPath: logo != null && logo.isNotEmpty ? logo : null,
+    );
+    final hubs = _stageHubs();
+    final raised = _stageRowsRaised && hubs.isNotEmpty;
+    // The rows take the lower half; their posters at the start page's size.
+    final railTop = size.height * 0.5;
+    // What stands under the info box: the line on the copies, the buttons,
+    // and the note under them — as high off the foot as a detail page holds
+    // its buttons.
+    final buttonsBottom = 96 * scale;
+    final status = _stageLibraryStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measureStageButtons());
+    final belowInfo = buttonsBottom + (_stageButtonsHeight ?? 52 * scale) + 12 * scale;
+    final duration = MediaQuery.disableAnimationsOf(context) ? Duration.zero : const Duration(milliseconds: 220);
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        TvSpotlightBackground(
+          item: media,
+          client: null,
+          compact: true,
+          contentLeft: left,
+          contentTop: viewInsets.top + 72 * scale,
+          contentBottom: raised ? size.height - railTop + 16 * scale : belowInfo,
+          cornerProgress: raised ? 1 : 0,
+          // The title area to itself has the room a detail page gives its
+          // description; under the rows, the start page's three lines.
+          summaryMaxLines: raised ? 3 : 6,
+        ),
+        Positioned(
+          left: left,
+          right: size.width * 0.4,
+          bottom: buttonsBottom,
+          // Out of sight rather than out of the tree while the rows are up:
+          // UP from them focuses the first button.
+          child: Offstage(
+            offstage: raised,
+            child: Column(
+              key: _stageButtonsKey,
+              mainAxisSize: .min,
+              crossAxisAlignment: .start,
+              children: [
+                if (status != null) ...[status, SizedBox(height: 12 * scale)],
+                ..._actionsSection(hostContext, onWatchlist: onWatchlist, tmdbId: tmdbId, width: null, stage: true),
+              ],
+            ),
+          ),
+        ),
+        if (_buildStageFactSheet() case final sheet?)
+          Positioned(
+            right: left,
+            bottom: buttonsBottom,
+            width: size.width * 0.34,
+            // With the buttons: under the rows the info box keeps the room.
+            child: Offstage(offstage: raised, child: sheet),
+          ),
+        if (hubs.isNotEmpty)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 10 * scale,
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: raised ? 0 : 1,
+                duration: duration,
+                child: Center(
+                  child: AppIcon(
+                    Symbols.keyboard_arrow_down_rounded,
+                    size: 28 * scale,
+                    color: tokens(context).ink(0.5),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        // Parked below the edge until focus goes down, and still laid out,
+        // so DOWN from the buttons reaches it.
+        AnimatedPositioned(
+          duration: duration,
+          curve: Curves.easeOutCubic,
+          left: 0,
+          right: 0,
+          top: raised ? railTop : size.height,
+          height: size.height - railTop,
+          child: Focus(
+            skipTraversal: true,
+            onFocusChange: (hasFocus) {
+              if (hasFocus == _stageRowsRaised) return;
+              setState(() => _stageRowsRaised = hasFocus);
+            },
+            child: hubs.isEmpty
+                ? const SizedBox.shrink()
+                : TvBrowseRail(
+                    key: _stageRailKey,
+                    hubs: hubs,
+                    focusMemory: _hubFocusMemory,
+                    iconForHub: _stageHubIcon,
+                    onActivateItem: _activateStageItem,
+                    onNavigateUp: _requestActionBarFocus,
+                    onBack: () => Navigator.of(context).maybePop(),
+                    // The copies keep their library and server visible under
+                    // the card, as on a detail page.
+                    fullCardLayoutForHub: (hub) => hub.id == _stageCopiesHubId ? false : null,
+                    tallPosterScale: TvBrowseRailLayout.compactTallPosterScale,
+                    contentLeft: left,
+                  ),
+          ),
+        ),
+        Positioned(
+          top: viewInsets.top + 20 * scale,
+          left: left,
+          child: DetailHomeButton(
+            focusNode: _homeButtonFocusNode,
+            onNavigateDown: () => _actionBarKey.currentState?.requestFocusOnFirst(),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = _item;
@@ -1739,6 +2147,20 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
 
     final viewInsets = MediaQuery.paddingOf(context);
     final blockSystemBack = PlatformDetector.isTV() || InputModeTracker.shouldBlockSystemBack(context);
+    if (_usesStage(context)) {
+      return OverlaySheetHost(
+        canPop: !blockSystemBack,
+        onSystemBack: _handleSystemBack,
+        child: Builder(
+          builder: (hostContext) => Focus(
+            onKeyEvent: (_, event) => handleBackKeyNavigation(hostContext, event),
+            child: Scaffold(
+              body: _buildStage(hostContext, onWatchlist: onWatchlist, tmdbId: tmdbId),
+            ),
+          ),
+        ),
+      );
+    }
     // Match the established detail-screen back policy: TV/keyboard back is
     // owned by the focus tree, while native mobile back and iOS swipe-back
     // remain route-driven. The overlay host always gets first refusal.

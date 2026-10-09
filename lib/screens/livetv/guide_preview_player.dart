@@ -10,6 +10,7 @@ import '../../i18n/strings.g.dart';
 import '../../media/ids.dart';
 import '../../media/live_tv_support.dart';
 import '../../models/livetv_channel.dart';
+import '../../utils/mpv_hwdec.dart';
 import '../../mpv/mpv.dart';
 import '../../mpv/player/video_rect_support.dart';
 import '../../mpv/player/platform/player_android.dart';
@@ -197,7 +198,11 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       }
 
       final settings = await SettingsService.getInstance();
-      final player = Player(useExoPlayer: settings.read(SettingsService.useExoPlayer));
+      final hardwareDecoding = settings.read(SettingsService.enableHardwareDecoding);
+      final player = Player(
+        useExoPlayer: settings.read(SettingsService.useExoPlayer),
+        hardwareDecoding: hardwareDecoding,
+      );
       // Before the first call that builds the native surface: the layer it is
       // composited in is read once, when it is created. Both Android backends
       // answer this — a picture inside the widget tree is a Flutter texture on
@@ -213,6 +218,9 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
         default:
           break;
       }
+      // The decoder the full screen uses, after the surface choice above:
+      // left unset, mpv decoded the preview in software (Plebz).
+      await player.setProperty('hwdec', mpvHwdecValue(hardwareDecoding));
       await _applyAudioSettings(player, settings);
       if (!mounted || generation != _generation) {
         await player.dispose();

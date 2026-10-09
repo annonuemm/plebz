@@ -8572,6 +8572,12 @@ class Translations$explore$detail$en {
 
 	/// en: 'Networks & Streaming'
 	String get networks => 'Networks & Streaming';
+
+	/// en: 'Status'
+	String get status => 'Status';
+
+	/// en: 'Next episode'
+	String get nextEpisode => 'Next episode';
 }
 
 // Path: liveTv.recordSettings
@@ -10827,6 +10833,8 @@ extension on Translations {
 			'explore.detail.relatedTitles' => 'Related titles',
 			'explore.detail.background' => 'Background',
 			'explore.detail.networks' => 'Networks & Streaming',
+			'explore.detail.status' => 'Status',
+			'explore.detail.nextEpisode' => 'Next episode',
 			'explore.totalResults' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '${n} result', other: '${n} results', ), 
 			'explore.watchlistKeptLocally' => ({required Object provider}) => 'Kept in Plebz: ${provider} does not know this title yet. It moves to that watchlist once it does.',
 			'explore.watchlistKeptLocallyNoIds' => 'Kept in Plebz: the server holds no external ids for this title, so it stays on this device.',
@@ -11309,10 +11317,10 @@ extension on Translations {
 			'companionRemote.remote.tabNavigation' => 'Tab Navigation',
 			'companionRemote.remote.tabDiscover' => 'Discover',
 			'companionRemote.remote.tabLibraries' => 'Libraries',
-			'companionRemote.remote.tabSearch' => 'Search',
-			'companionRemote.remote.tabDownloads' => 'Downloads',
 			_ => null,
 		} ?? switch (path) {
+			'companionRemote.remote.tabSearch' => 'Search',
+			'companionRemote.remote.tabDownloads' => 'Downloads',
 			'companionRemote.remote.tabSettings' => 'Settings',
 			'companionRemote.remote.previous' => 'Previous',
 			'companionRemote.remote.playPause' => 'Play/Pause',
@@ -11823,10 +11831,10 @@ extension on Translations {
 			'sport.penalty' => 'penalty',
 			'sport.spectators' => ({required Object n}) => '${n} spectators',
 			'sport.place' => ({required Object n}) => 'Position ${n}',
-			'sport.notStarted' => 'Not kicked off yet',
-			'sport.loadFailed' => 'The fixtures could not be loaded.',
 			_ => null,
 		} ?? switch (path) {
+			'sport.notStarted' => 'Not kicked off yet',
+			'sport.loadFailed' => 'The fixtures could not be loaded.',
 			'sport.noMatches' => 'No fixtures for this matchday.',
 			'sport.today' => 'Today',
 			'sport.tomorrow' => 'Tomorrow',

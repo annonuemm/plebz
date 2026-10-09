@@ -58,6 +58,10 @@ class TvSpotlightBackground extends StatelessWidget {
   /// Optional caller-owned fact appended to the existing metadata line.
   final Widget? metadataTrailing;
 
+  /// How many lines the description may take, where a page has more room than
+  /// the start page's three or four (Plebz: the catalog detail stage).
+  final int? summaryMaxLines;
+
   const TvSpotlightBackground({
     super.key,
     required this.item,
@@ -72,6 +76,7 @@ class TvSpotlightBackground extends StatelessWidget {
     this.allowNetwork = true,
     this.cornerProgress,
     this.metadataTrailing,
+    this.summaryMaxLines,
   });
 
   double _scale(BuildContext context) => TvLayoutConstants.scaleOf(context);
@@ -387,7 +392,7 @@ class TvSpotlightBackground extends StatelessWidget {
             summary: summary,
             allowFillIn: !shouldHideSpoiler,
             gap: _summaryGap(context, scale),
-            maxLines: compact ? 3 : 4,
+            maxLines: summaryMaxLines ?? (compact ? 3 : 4),
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: colorScheme.onSurface.withValues(alpha: 0.78),
               fontSize: _summaryFontSize(scale),
@@ -433,7 +438,7 @@ class TvSpotlightBackground extends StatelessWidget {
                   summary: summary,
                   allowFillIn: !shouldHideSpoiler,
                   gap: 22 * scale,
-                  maxLines: 3,
+                  maxLines: summaryMaxLines ?? 3,
                   style: prose,
                 ),
         ),

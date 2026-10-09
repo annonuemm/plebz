@@ -1,3 +1,4 @@
+import '../utils/mpv_hwdec.dart';
 import 'dart:async';
 import '../services/playback_launch_observer.dart';
 import '../media/ids.dart';
@@ -1876,7 +1877,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       if (!Platform.isAndroid) {
         await currentPlayer.setLogLevel(debugLoggingEnabled ? 'v' : 'warn');
       }
-      await currentPlayer.setProperty('hwdec', _getHwdecValue(enableHardwareDecoding));
+      await currentPlayer.setProperty('hwdec', mpvHwdecValue(enableHardwareDecoding));
 
       // Deinterlacing (#2149) is mpv-only by design — ExoPlayer has no filter
       // chain. `auto` deinterlaces only content flagged interlaced. Wrapped:
@@ -3163,23 +3164,4 @@ String _sanitizedSubtitleColor(String value, String fallback) {
     return '#$cleaned';
   }
   return fallback;
-}
-
-/// Returns the appropriate hwdec value based on platform and user preference.
-String _getHwdecValue(bool enabled) {
-  if (!enabled) return 'no';
-
-  if (Platform.isMacOS || Platform.isIOS) {
-    return 'videotoolbox';
-  } else if (Platform.isAndroid) {
-    // The fork vo=mediacodec takes MediaCodec decoder buffers straight to the
-    // video plane; its query_format accepts IMGFMT_MEDIACODEC and nothing
-    // else, so -copy can never draw there and the entry is only ever reached
-    // under the GL vos. It stays because it is the only hardware path left
-    // below API 26, where the direct AImageReader interop mediacodec needs
-    // does not exist (minSdk 25 for Fire OS 6).
-    return 'mediacodec,mediacodec-copy';
-  } else {
-    return 'auto'; // Windows, Linux
-  }
 }

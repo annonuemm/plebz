@@ -3438,6 +3438,8 @@ class _Translations$explore$detail$de extends Translations$explore$detail$en {
 	@override String get relatedTitles => 'Verwandte Titel';
 	@override String get background => 'Hintergrund';
 	@override String get networks => 'Sender & Streaming';
+	@override String get status => 'Status';
+	@override String get nextEpisode => 'Nächste Folge';
 }
 
 // Path: liveTv.recordSettings
@@ -5297,6 +5299,8 @@ extension on TranslationsDe {
 			'explore.detail.relatedTitles' => 'Verwandte Titel',
 			'explore.detail.background' => 'Hintergrund',
 			'explore.detail.networks' => 'Sender & Streaming',
+			'explore.detail.status' => 'Status',
+			'explore.detail.nextEpisode' => 'Nächste Folge',
 			'explore.totalResults' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Ergebnis', other: '${n} Ergebnisse', ), 
 			'explore.watchlistKeptLocally' => ({required Object provider}) => 'In Plebz gemerkt: ${provider} kennt diesen Titel noch nicht. Sobald er dort auftaucht, wandert er auf die Merkliste dort.',
 			'explore.watchlistKeptLocallyNoIds' => 'In Plebz gemerkt: Der Server hat für diesen Titel keine externen IDs, darum bleibt er auf diesem Gerät.',
@@ -5307,10 +5311,10 @@ extension on TranslationsDe {
 			'watchlist.showsOnly' => 'Nur Serien',
 			'watchlist.typeAll' => 'Alle',
 			'watchlist.typeMovies' => 'Filme',
-			'watchlist.typeShows' => 'Serien',
-			'watchlist.anyStatus' => 'Gesehen und ungesehen',
 			_ => null,
 		} ?? switch (path) {
+			'watchlist.typeShows' => 'Serien',
+			'watchlist.anyStatus' => 'Gesehen und ungesehen',
 			'watchlist.unwatchedOnly' => 'Nicht gesehen',
 			'watchlist.watchedOnly' => 'Gesehen',
 			'liveTv.title' => 'Live-TV',
@@ -5821,10 +5825,10 @@ extension on TranslationsDe {
 			'videoSettings.hdrToneMappingPlayer' => 'Player',
 			'videoSettings.hdrToneMappingPlayerDescription' => 'Im Player an die maximale Helligkeit des Displays anpassen und das Ergebnis anschließend an den Compositor melden.',
 			'videoSettings.hdrToneMappingFailed' => 'Das HDR-Tone-Mapping konnte nicht geändert werden – der vorherige Modus ist weiterhin aktiv.',
-			'videoSettings.audioOutput' => 'Audioausgabe',
-			'videoSettings.performanceOverlay' => 'Leistungsanzeige',
 			_ => null,
 		} ?? switch (path) {
+			'videoSettings.audioOutput' => 'Audioausgabe',
+			'videoSettings.performanceOverlay' => 'Leistungsanzeige',
 			'videoSettings.audioOutputDolbyAtmos' => 'Dolby Atmos',
 			'videoSettings.audioOutputDolbyAudio' => 'Dolby Audio',
 			'videoSettings.audioOutputSurround' => 'Surround',
@@ -6335,10 +6339,10 @@ extension on TranslationsDe {
 			'plebz.updateNow' => 'Aktualisieren',
 			'plebz.later' => 'Später',
 			'plebz.upToDate' => 'Plebz ist auf dem neuesten Stand',
-			'plebz.checking' => 'Suche nach Updates …',
-			'plebz.checkFailed' => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.',
 			_ => null,
 		} ?? switch (path) {
+			'plebz.checking' => 'Suche nach Updates …',
+			'plebz.checkFailed' => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.',
 			'plebz.updatedTitle' => 'Plebz wurde aktualisiert',
 			'plebz.updatedBody' => ({required Object version, required Object build}) => 'Du nutzt jetzt Plebz ${version} (Build ${build}).',
 			'plebz.checkForUpdates' => 'Nach Updates suchen',

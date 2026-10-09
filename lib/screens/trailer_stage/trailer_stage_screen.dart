@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../utils/mpv_hwdec.dart';
 import '../../focus/focusable_action_bar.dart';
 import '../../i18n/strings.g.dart';
 import '../../media/media_item.dart';
@@ -165,7 +166,11 @@ class _TrailerStageScreenState extends State<TrailerStageScreen> with WidgetsBin
       if (!mounted || generation != _generation) return;
 
       final settings = await SettingsService.getInstance();
-      final player = Player(useExoPlayer: settings.read(SettingsService.useExoPlayer));
+      final hardwareDecoding = settings.read(SettingsService.enableHardwareDecoding);
+      final player = Player(
+        useExoPlayer: settings.read(SettingsService.useExoPlayer),
+        hardwareDecoding: hardwareDecoding,
+      );
       // Before the first call that builds the native surface: the layer a
       // surface is composited in is read once, when it is made, and cannot be
       // changed afterwards. Without this the picture is born *behind* the
@@ -182,6 +187,9 @@ class _TrailerStageScreenState extends State<TrailerStageScreen> with WidgetsBin
         default:
           break;
       }
+      // The decoder the full screen uses, after the surface choice above:
+      // left unset, mpv decoded the trailers in software (Plebz).
+      await player.setProperty('hwdec', mpvHwdecValue(hardwareDecoding));
       if (!mounted || generation != _generation) {
         await player.dispose();
         return;

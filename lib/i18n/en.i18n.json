@@ -1708,7 +1708,9 @@
       "recommendedByPercent": "Recommended by ${percent} of viewers",
       "relatedTitles": "Related titles",
       "background": "Background",
-      "networks": "Networks & Streaming"
+      "networks": "Networks & Streaming",
+      "status": "Status",
+      "nextEpisode": "Next episode"
     },
     "totalResults": {
       "one": "${n} result",

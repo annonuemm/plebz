@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.14.0 (Build 711)
+
+- Erkunden: Die Detailseite eines Titels sieht auf dem Fernseher jetzt aus wie jede andere Detailseite in Glas und Flach, mit großem Bild, Titel, Beschreibung und Knöpfen. Rechts daneben steht ein Steckbrief, zum Beispiel mit Regie, Studio, Land und dem nächsten Sendetermin. Darunter liegen deine Kopien, die Besetzung und ähnliche Titel als Reihen.
+- Live-TV und Trailer am Stück: Mit mpv als Player nutzt das kleine Vorschaufenster jetzt die Hardware-Dekodierung. Auf Boxen wie dem Fire TV Cube erscheint dort wieder ein Bild, und überall läuft die Vorschau sparsamer.
+
 ## 1.13.0 (Build 704)
 
 - Flach hat jetzt Farbprofile: neun fertige Kombinationen aus Akzentfarbe und passendem Hintergrund, zum Beispiel Nordlicht, Glut, Mitternacht, Kirschblüte, Amethyst oder Kino. Ein Profil wählen, und alles passt zusammen. Zu finden unter Einstellungen → Darstellung → Farbprofil. Wer lieber selbst mischt, ändert einfach Akzentfarbe oder Hintergrund.

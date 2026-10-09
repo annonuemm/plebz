@@ -1708,7 +1708,9 @@
       "recommendedByPercent": "Von ${percent} der Zuschauer empfohlen",
       "relatedTitles": "Verwandte Titel",
       "background": "Hintergrund",
-      "networks": "Sender & Streaming"
+      "networks": "Sender & Streaming",
+      "status": "Status",
+      "nextEpisode": "Nächste Folge"
     },
     "totalResults": {
       "one": "${n} Ergebnis",

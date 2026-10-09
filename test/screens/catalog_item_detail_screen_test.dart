@@ -30,6 +30,8 @@ import 'package:plezy/providers/catalog_sources_provider.dart';
 import 'package:plezy/providers/multi_server_provider.dart';
 import 'package:plezy/providers/seerr_account_provider.dart';
 import 'package:plezy/screens/catalog_item_detail_screen.dart';
+import 'package:plezy/redesign/ocker_skin.dart' show debugOckerLayoutOnThisHost;
+import 'package:plezy/widgets/tv_browse_rail.dart';
 import 'package:plezy/widgets/detail_home_button.dart';
 import 'package:plezy/services/catalog/catalog_source.dart';
 import 'package:plezy/services/catalog/catalog_library_matcher.dart';
@@ -369,6 +371,7 @@ Future<void> _pumpDetail(
   bool settle = true,
   List<MediaServerClient> clients = const [],
   void Function(MediaItem copy)? onOpenLibraryCopy,
+  AppThemeVariant variant = AppThemeVariant.standard,
 }) async {
   final sources = _FakeCatalogSourcesProvider(source, seerr: seerr);
   if (account != null) sources.followAccount(account);
@@ -393,7 +396,7 @@ Future<void> _pumpDetail(
           if (account != null) ChangeNotifierProvider<SeerrAccountProvider>.value(value: account),
         ],
         child: MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(dark: true, variant: variant),
           home: pushedRoute
               ? Builder(
                   builder: (context) => Scaffold(
@@ -438,6 +441,120 @@ void main() {
   });
 
   setUp(LibraryCopyQualityLoader.clearForTesting);
+
+  group('the redesign\'s stage on a television', () {
+    setUp(() => debugOckerLayoutOnThisHost = true);
+    tearDown(() => debugOckerLayoutOnThisHost = null);
+
+    for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+      testWidgets('${variant.name}: the title area, the buttons, and rows that rise under them', (tester) async {
+        tester.view.physicalSize = const Size(1920, 1080);
+        tester.view.devicePixelRatio = 2;
+        addTearDown(tester.view.reset);
+        await _pumpDetail(
+          tester,
+          _FakeCatalogSource(),
+          variant: variant,
+          matches: [_libraryCopy(id: 'c1', libraryTitle: 'Filme', videoResolution: '1080')],
+        );
+        await tester.pump(const Duration(seconds: 1));
+
+        // Not the scrolling page: a stage with rows under it.
+        expect(find.byKey(const Key('catalog_detail_scroll')), findsNothing);
+        final rail = tester.widget<TvBrowseRail>(find.byType(TvBrowseRail));
+        expect(rail.hubs.first.id, 'catalog_stage_copies');
+        expect(rail.hubs.first.items.single.title, 'Filme');
+
+        // DOWN from the buttons raises the rows; the buttons step aside.
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        for (var i = 0; i < 6; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        final railBox = tester.getRect(find.byType(TvBrowseRail));
+        expect(railBox.top, lessThan(540), reason: 'the rows are up');
+        final buttons = find
+            .ancestor(
+              of: find.byType(FocusableActionBar, skipOffstage: false),
+              matching: find.byType(Offstage, skipOffstage: false),
+            )
+            .first;
+        expect(tester.widget<Offstage>(buttons).offstage, isTrue);
+
+        // UP brings the buttons back.
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        for (var i = 0; i < 6; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        expect(tester.widget<Offstage>(buttons).offstage, isFalse);
+      });
+    }
+
+    testWidgets('a note under the buttons pushes the info box up rather than under it', (tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      final copy = _libraryCopy(id: 'c1', libraryTitle: 'Filme', videoResolution: '1080');
+      await _pumpDetail(
+        tester,
+        _FakeCatalogSource(),
+        variant: AppThemeVariant.glas,
+        matcherBuilder: (multiServer) => _ScriptedMatcher(multiServer, [
+          () => (
+            items: [copy],
+            succeededServerIds: const <String>{},
+            cancelledServerIds: const <String>{},
+            failedServerIds: const {'server-2'},
+            unqueriedServerIds: const <String>{},
+          ),
+        ]),
+      );
+      await tester.pump(const Duration(seconds: 1));
+
+      // The note is there, under the buttons.
+      final bar = tester.getRect(find.byType(FocusableActionBar));
+      final note = find.textContaining(t.explore.notChecked(servers: '').trim());
+      expect(note, findsWidgets);
+      expect(tester.getRect(note.last).top, greaterThan(bar.bottom - 1));
+      // And the description ends above the buttons.
+      expect(tester.getRect(find.text('Overview')).bottom, lessThanOrEqualTo(bar.top));
+    });
+
+    testWidgets('a series\' run, next episode, date, network and country stand on a sheet beside the info box', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      final item = CatalogItem(
+        source: CatalogSourceId.trakt,
+        kind: MediaKind.show,
+        title: 'The Agency',
+        overview: 'Overview',
+        airStatus: CatalogAirStatus.airing,
+        episodeCount: 8,
+        network: 'Paramount+',
+        countries: const ['US'],
+        releaseDate: DateTime(2026, 9, 23),
+        rating: 6.5,
+        ids: const CatalogItemIds(tmdb: 1),
+      );
+      await _pumpDetail(tester, _FakeCatalogSource(), item: item, variant: AppThemeVariant.glas);
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.byTooltip(t.discover.overview), findsNothing, reason: 'no info button any more');
+      final status = find.text('${t.explore.status.airing} · ${t.explore.episodeCount(n: 8)}');
+      expect(status, findsOneWidget);
+      expect(find.text('Paramount+'), findsOneWidget);
+      // Beside the info box, not under it.
+      expect(tester.getRect(status).left, greaterThan(tester.getRect(find.text('Overview')).right));
+    });
+
+    testWidgets('the original look on a television keeps the scrolling page', (tester) async {
+      await _pumpDetail(tester, _FakeCatalogSource());
+      expect(find.byKey(const Key('catalog_detail_scroll')), findsOneWidget);
+      expect(find.byType(TvBrowseRail), findsNothing);
+    });
+  });
 
   group('best copy', _bestCopyTests);
 

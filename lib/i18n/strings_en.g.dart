@@ -624,6 +624,15 @@ class Translations$settings$en {
 	/// en: 'mpv'
 	String get mpv => 'mpv';
 
+	/// en: 'Player for IPTV'
+	String get iptvPlayerBackend => 'Player for IPTV';
+
+	/// en: 'Same as films and shows'
+	String get iptvPlayerSameAsFilms => 'Same as films and shows';
+
+	/// en: 'For IPTV channels in the guide preview and full screen. The player above stays for everything else.'
+	String get iptvPlayerBackendDescription => 'For IPTV channels in the guide preview and full screen. The player above stays for everything else.';
+
 	/// en: 'Hardware Decoding'
 	String get hardwareDecoding => 'Hardware Decoding';
 
@@ -9454,6 +9463,9 @@ extension on Translations {
 			'settings.playerBackend' => 'Player Backend',
 			'settings.exoPlayer' => 'ExoPlayer',
 			'settings.mpv' => 'mpv',
+			'settings.iptvPlayerBackend' => 'Player for IPTV',
+			'settings.iptvPlayerSameAsFilms' => 'Same as films and shows',
+			'settings.iptvPlayerBackendDescription' => 'For IPTV channels in the guide preview and full screen. The player above stays for everything else.',
 			'settings.hardwareDecoding' => 'Hardware Decoding',
 			'settings.hardwareDecodingDescription' => 'Use hardware acceleration when available',
 			'settings.playbackBuffer' => 'Playback Buffer',
@@ -9784,11 +9796,11 @@ extension on Translations {
 			'settings.redesignSeasonTabsDescription' => 'A show\'s seasons stand as tabs over one row of episodes. Off, every season has a row of its own.',
 			'settings.glasSpinningFocus' => 'Turning focus edge',
 			'settings.glasSpinningFocusDescription' => 'The glint on the focus edge travels slowly round it and holds still while you move. Costs a little performance.',
+			_ => null,
+		} ?? switch (path) {
 			'settings.homeTitleLogos' => 'Logos on Home and Explore',
 			'settings.homeTitleLogosDescription' => 'Shows the title logos of films and shows in the spotlight. Off, the title is set as text there; detail pages keep their logos.',
 			'settings.seerrCardEpisodeFacts' => 'Episode facts on Seerr posters',
-			_ => null,
-		} ?? switch (path) {
 			'settings.seerrCardEpisodeFactsDescription' => 'Shows the episode count and the next air date on Seerr show posters. Off by default: Seerr does not send either with a row, so each show costs one extra request to your instance.',
 			'settings.showCatalogDetailFacts' => 'Show detail facts',
 			'settings.showCatalogDetailFactsDescription' => 'Original title, alternative titles, country, studios and budget on Explore detail pages',
@@ -10298,11 +10310,11 @@ extension on Translations {
 			'subtitlingStyling.textColor' => 'Text Color',
 			'subtitlingStyling.borderSize' => 'Border Size',
 			'subtitlingStyling.borderColor' => 'Border Color',
+			_ => null,
+		} ?? switch (path) {
 			'subtitlingStyling.backgroundOpacity' => 'Background Opacity',
 			'subtitlingStyling.backgroundColor' => 'Background Color',
 			'subtitlingStyling.position' => 'Position',
-			_ => null,
-		} ?? switch (path) {
 			'subtitlingStyling.assOverride' => 'ASS Override',
 			'subtitlingStyling.overrideScale' => 'Scale',
 			'subtitlingStyling.overrideForce' => 'Force',
@@ -10812,11 +10824,11 @@ extension on Translations {
 			'explore.relation.spinOff' => 'Spin-off',
 			'explore.relation.alternativeVersion' => 'Alternative version',
 			'explore.relation.summary' => 'Summary',
+			_ => null,
+		} ?? switch (path) {
 			'explore.relation.parentStory' => 'Parent story',
 			'explore.relation.adaptation' => 'Adaptation',
 			'explore.relation.other' => 'Related',
-			_ => null,
-		} ?? switch (path) {
 			'explore.broadcast' => ({required Object day, required Object time}) => 'Airs ${day} at ${time}',
 			'explore.broadcastWithZone' => ({required Object day, required Object time, required Object timezone}) => 'Airs ${day} at ${time} ${timezone}',
 			'explore.detail.originalTitle' => 'Original title',
@@ -11326,11 +11338,11 @@ extension on Translations {
 			'companionRemote.remote.reconnecting' => 'Reconnecting...',
 			'companionRemote.remote.attemptOf' => ({required Object current}) => 'Attempt ${current} of 5',
 			'companionRemote.remote.retryNow' => 'Retry Now',
+			_ => null,
+		} ?? switch (path) {
 			'companionRemote.remote.tabRemote' => 'Remote',
 			'companionRemote.remote.tabPlay' => 'Play',
 			'companionRemote.remote.tabMore' => 'More',
-			_ => null,
-		} ?? switch (path) {
 			'companionRemote.remote.menu' => 'Menu',
 			'companionRemote.remote.tabNavigation' => 'Tab Navigation',
 			'companionRemote.remote.tabDiscover' => 'Discover',
@@ -11840,11 +11852,11 @@ extension on Translations {
 			'sport.noGoals' => 'No goals yet',
 			'sport.broadcast' => 'Broadcast',
 			'sport.searchingGuide' => 'Searching the guide …',
+			_ => null,
+		} ?? switch (path) {
 			'sport.notInGuide' => 'This match is not in the guide.',
 			'sport.leagueChannels' => ({required Object league}) => 'Channels for the ${league}',
 			'sport.conference' => 'Conference',
-			_ => null,
-		} ?? switch (path) {
 			'sport.ownGoal' => 'own goal',
 			'sport.penalty' => 'penalty',
 			'sport.spectators' => ({required Object n}) => '${n} spectators',

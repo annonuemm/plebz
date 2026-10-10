@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.16.0 (Build 725)
+
+- IPTV-Sender können jetzt einen eigenen Player haben. Unter Einstellungen → Videowiedergabe → Weitere Wiedergabe → „Player für IPTV“ wählst du ExoPlayer oder mpv. Der Player darüber gilt dann für Filme, Serien und das Live-TV von Plex und Jellyfin. Voreingestellt ist „Wie bei Filmen und Serien“, es ändert sich also nichts, solange du nichts umstellst.
+
 ## 1.15.0 (Build 723)
 
 - Live-TV (Beta): Die laufende Vorschau im Programmführer wird mit OK zum Vollbild und mit Zurück wieder zur Vorschau, ohne neu zu laden. Einschalten unter Einstellungen → Live-TV → „Vorschau nahtlos ins Vollbild (Beta)“. 4K-Sender können im Vollbild ruckeln. Für volle Qualität mit HDR gibt es darunter den Schalter „Vollbild auf der Videofläche“. Mit ExoPlayer klappt das meist gut, mit mpv kann das Bild je nach Box kurz hängen.

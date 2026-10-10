@@ -1752,7 +1752,12 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       final playbackBufferTier = settingsService.read(SettingsService.playbackBufferTier);
       final enableHardwareDecoding = settingsService.read(SettingsService.enableHardwareDecoding);
       final debugLoggingEnabled = settingsService.read(SettingsService.enableDebugLogging);
-      final useExoPlayer = settingsService.read(SettingsService.useExoPlayer);
+      // IPTV channels may play on a backend of their own (Plebz); the
+      // channel this screen opens on decides, and a zap keeps the player.
+      final launchesIptv =
+          widget.isLive &&
+          context.read<IptvSourcesProvider?>()?.liveTvForSourceId(widget.live!.channel.serverId ?? '') != null;
+      final useExoPlayer = settingsService.useExoPlayerFor(iptv: launchesIptv);
 
       // Kick off getPlaybackData() before the Windows display-mode sync, the
       // music-session teardown in claimVideo(), player construction, and the

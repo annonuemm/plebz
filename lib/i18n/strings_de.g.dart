@@ -310,6 +310,9 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get playerBackend => 'Wiedergabe-Engine';
 	@override String get exoPlayer => 'ExoPlayer';
 	@override String get mpv => 'mpv';
+	@override String get iptvPlayerBackend => 'Player für IPTV';
+	@override String get iptvPlayerSameAsFilms => 'Wie bei Filmen und Serien';
+	@override String get iptvPlayerBackendDescription => 'Gilt für IPTV-Sender in der Vorschau und im Vollbild. Der Player darüber bleibt für alles andere.';
 	@override String get hardwareDecoding => 'Hardwaredekodierung';
 	@override String get hardwareDecodingDescription => 'Hardwarebeschleunigung verwenden, sofern verfügbar';
 	@override String get playbackBuffer => 'Wiedergabepuffer';
@@ -3954,6 +3957,9 @@ extension on TranslationsDe {
 			'settings.playerBackend' => 'Wiedergabe-Engine',
 			'settings.exoPlayer' => 'ExoPlayer',
 			'settings.mpv' => 'mpv',
+			'settings.iptvPlayerBackend' => 'Player für IPTV',
+			'settings.iptvPlayerSameAsFilms' => 'Wie bei Filmen und Serien',
+			'settings.iptvPlayerBackendDescription' => 'Gilt für IPTV-Sender in der Vorschau und im Vollbild. Der Player darüber bleibt für alles andere.',
 			'settings.hardwareDecoding' => 'Hardwaredekodierung',
 			'settings.hardwareDecodingDescription' => 'Hardwarebeschleunigung verwenden, sofern verfügbar',
 			'settings.playbackBuffer' => 'Wiedergabepuffer',
@@ -4284,11 +4290,11 @@ extension on TranslationsDe {
 			'settings.showCatalogDetailCrew' => 'Crew anzeigen',
 			'settings.showCatalogDetailCrewDescription' => 'Regie, Drehbuch und Produktion auf den Erkunden-Detailseiten',
 			'settings.averageRatings' => 'Bewertungen zusammenfassen',
+			_ => null,
+		} ?? switch (path) {
 			'settings.averageRatingsDescription' => 'Einen Durchschnittswert statt je einem Wert pro Quelle anzeigen (IMDb, TMDB, Rotten Tomatoes)',
 			'settings.showWatchTogetherAction' => 'Gemeinsam ansehen anzeigen',
 			'settings.showWatchTogetherActionDescription' => 'Schaltfläche für Gemeinsam ansehen in der Startleiste behalten',
-			_ => null,
-		} ?? switch (path) {
 			'settings.showCompanionRemoteAction' => 'Fernbedienung anzeigen',
 			'settings.showCompanionRemoteActionDescription' => 'Schaltfläche für die Fernbedienung in der Startleiste behalten',
 			'settings.showServerActivitiesAction' => 'Serveraktivität anzeigen',
@@ -4798,11 +4804,11 @@ extension on TranslationsDe {
 			'subtitlingStyling.positionTop' => 'Oben',
 			'subtitlingStyling.positionBottom' => 'Unten',
 			'subtitlingStyling.useMargins' => 'Ränder verwenden',
+			_ => null,
+		} ?? switch (path) {
 			'subtitlingStyling.useMarginsDescription' => 'Textuntertitel im Bereich außerhalb des Videos zulassen. Gestylte Untertitel behalten möglicherweise ihre ursprüngliche Position.',
 			'subtitlingStyling.anchorToScreen' => 'Am Bildschirm verankern',
 			'subtitlingStyling.anchorToScreenDescription' => 'Textuntertitel in den schwarzen Balken unter Breitbildvideos anzeigen',
-			_ => null,
-		} ?? switch (path) {
 			'subtitlingStyling.bold' => 'Fett',
 			'subtitlingStyling.italic' => 'Kursiv',
 			'subtitlingStyling.renderResolution' => 'Render-Auflösung',
@@ -5312,11 +5318,11 @@ extension on TranslationsDe {
 			'explore.totalResults' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Ergebnis', other: '${n} Ergebnisse', ), 
 			'explore.watchlistKeptLocally' => ({required Object provider}) => 'In Plebz gemerkt: ${provider} kennt diesen Titel noch nicht. Sobald er dort auftaucht, wandert er auf die Merkliste dort.',
 			'explore.watchlistKeptLocallyNoIds' => 'In Plebz gemerkt: Der Server hat für diesen Titel keine externen IDs, darum bleibt er auf diesem Gerät.',
+			_ => null,
+		} ?? switch (path) {
 			'watchlist.typeFilter' => 'Anzeigen',
 			'watchlist.statusFilter' => 'Status',
 			'watchlist.allTypes' => 'Filme und Serien',
-			_ => null,
-		} ?? switch (path) {
 			'watchlist.moviesOnly' => 'Nur Filme',
 			'watchlist.showsOnly' => 'Nur Serien',
 			'watchlist.typeAll' => 'Alle',
@@ -5826,11 +5832,11 @@ extension on TranslationsDe {
 			'videoSettings.audioSync' => 'Audio-Synchronisation',
 			'videoSettings.subtitleSync' => 'Untertitel-Synchronisation',
 			'videoSettings.hdr' => 'HDR',
+			_ => null,
+		} ?? switch (path) {
 			'videoSettings.hdrUnsupported' => 'HDR ist hier nicht verfügbar – dieser Desktop-Compositor oder Videoausgang kann es nicht übertragen.',
 			'videoSettings.hdrToneMapping' => 'HDR-Tone-Mapping',
 			'videoSettings.hdrToneMappingCompositor' => 'Compositor',
-			_ => null,
-		} ?? switch (path) {
 			'videoSettings.hdrToneMappingCompositorDescription' => 'Die HDR-Metadaten der Quelle durchreichen und vom Desktop-Compositor anpassen lassen.',
 			'videoSettings.hdrToneMappingPlayer' => 'Player',
 			'videoSettings.hdrToneMappingPlayerDescription' => 'Im Player an die maximale Helligkeit des Displays anpassen und das Ergebnis anschließend an den Compositor melden.',
@@ -6340,11 +6346,11 @@ extension on TranslationsDe {
 			'plebz.profilesHintConnectFirst' => 'Verbinde unten unter Dienste zuerst Simkl für dieses Profil.',
 			'plebz.addSourceFirst' => 'Füge zuerst eine Quelle hinzu: einen Server oder eine IPTV-Playlist.',
 			'plebz.finish' => 'Fertig',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.setupAgain' => 'Einrichtung erneut starten',
 			'plebz.setupAgainDescription' => 'Aussehen, Quellen und Dienste, Schritt für Schritt',
 			'plebz.updateAvailableTitle' => 'Update verfügbar',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.updateAvailableBody' => ({required Object release}) => '${release} ist bereit zur Installation. Deine Einstellungen und Anmeldungen bleiben erhalten.',
 			'plebz.updateNow' => 'Aktualisieren',
 			'plebz.later' => 'Später',

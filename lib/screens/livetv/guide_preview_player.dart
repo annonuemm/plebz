@@ -16,6 +16,7 @@ import '../../mpv/player/video_rect_support.dart';
 import '../../mpv/player/platform/player_android.dart';
 import '../../mpv/player/platform/player_android_mpv.dart';
 import '../../providers/multi_server_provider.dart';
+import '../../services/iptv/iptv_live_tv_source.dart' show IptvPlaybackSession;
 import '../../services/iptv/iptv_stream_probing.dart';
 import '../../services/live_picture_handover.dart';
 import '../../services/playback_coordinator.dart';
@@ -282,7 +283,9 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       // opens the way that player opens a channel; see [_applyOpeningRoute].
       final mayHandOver = LivePictureHandover.enabledIn(settings);
       final player = Player(
-        useExoPlayer: settings.read(SettingsService.useExoPlayer),
+        // IPTV may have a player of its own; the full-screen player resolves
+        // the same way, so a hand-over always finds the backend it expects.
+        useExoPlayer: settings.useExoPlayerFor(iptv: session is IptvPlaybackSession),
         hardwareDecoding: hardwareDecoding,
       );
       // Before the first call that builds the native surface: the layer it is

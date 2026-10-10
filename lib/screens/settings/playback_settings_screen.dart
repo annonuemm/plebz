@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:provider/provider.dart';
 
 import '../../i18n/strings.g.dart';
 import '../../media/library_copy_quality.dart';
@@ -9,6 +10,7 @@ import '../../models/audio_channel_limit.dart';
 import '../../models/audio_quality_preset.dart';
 import '../../models/transcode_quality_preset.dart';
 import '../../models/player_setting_scope.dart';
+import '../../providers/iptv_sources_provider.dart';
 import '../../utils/audio_channel_limit_labels.dart';
 import '../../utils/quality_preset_labels.dart';
 import '../../services/settings_service.dart';
@@ -40,6 +42,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
     return SettingsBuilder(
       prefs: const [
         SettingsService.useExoPlayer,
+        SettingsService.iptvPlayerBackend,
         SettingsService.matchRefreshRate,
         SettingsService.matchDynamicRange,
         SettingsService.matchContentFrameRate,
@@ -51,6 +54,12 @@ class PlaybackSettingsScreen extends StatelessWidget {
       builder: (context) {
         final svc = SettingsService.instance;
         final exoActive = Platform.isAndroid && svc.read(SettingsService.useExoPlayer);
+        // IPTV may play on the other backend (Plebz): its settings stay
+        // reachable while either player is in use.
+        final hasIptv = Platform.isAndroid && (context.watch<IptvSourcesProvider?>()?.sources.isNotEmpty ?? false);
+        final iptvOnExo = hasIptv && svc.useExoPlayerFor(iptv: true);
+        final exoInUse = exoActive || iptvOnExo;
+        final mpvInUse = !exoActive || (hasIptv && !iptvOnExo);
         // Switching the display to the video's rate or resolution is for a
         // television on HDMI; on a phone or tablet it would only downshift
         // the panel, so those rows are Android TV only.
@@ -81,14 +90,15 @@ class PlaybackSettingsScreen extends StatelessWidget {
               title: t.settings.player,
               children: [
                 if (Platform.isAndroid) _playerBackendSelector(),
+                if (hasIptv) _iptvPlayerBackendTile(),
                 if (PlatformDetector.supportsExternalPlayers()) _externalPlayerTile(),
-                if (!exoActive) _mpvConfigTile(),
+                if (mpvInUse) _mpvConfigTile(),
                 // mpv's shaders, choosable without starting a video (Plebz).
                 if (!exoActive) ?shaderPresetSettingTile(context),
                 _hardwareDecodingTile(),
-                if (exoActive) _playbackBufferTile(),
-                if (exoActive) _tunneledPlaybackTile(),
-                if (exoActive && tunnelingOn) _tunneledPlaybackLiveTvTile(),
+                if (exoInUse) _playbackBufferTile(),
+                if (exoInUse) _tunneledPlaybackTile(),
+                if (exoInUse && tunnelingOn) _tunneledPlaybackLiveTvTile(),
                 if (PlatformDetector.supportsPictureInPicture()) _autoPipTile(),
                 // The guide's preview growing into the player as it plays (Plebz).
                 ?livePictureHandoverSettingTile(),
@@ -109,10 +119,10 @@ class PlaybackSettingsScreen extends StatelessWidget {
                 // Nothing left to choose once Dolby Vision is off entirely.
                 if (dolbyVisionSettled && !dolbyVisionOff) _dvConversionModeTile(),
                 // mpv-only: ExoPlayer always leaves the conversion to the device.
-                if (Platform.isAndroid && !exoActive) _hdrSdrConversionTile(),
+                if (Platform.isAndroid && mpvInUse) _hdrSdrConversionTile(),
                 // mpv-only (#2149): ExoPlayer has no filter chain, so the
                 // tile disappears while the ExoPlayer backend is active.
-                if (!exoActive) _deinterlaceTile(),
+                if (mpvInUse) _deinterlaceTile(),
                 // TODO: "Extend video into display cutout" toggle (#1769)
                 // goes here, Android-only.
               ],
@@ -468,6 +478,24 @@ class PlaybackSettingsScreen extends StatelessWidget {
       ButtonSegment(value: false, label: Text(t.settings.mpv)),
     ],
   );
+
+  /// The player for IPTV channels (Plebz), under the main choice, which then
+  /// keeps films, shows and a server's live TV.
+  Widget _iptvPlayerBackendTile() => SettingSelectionTile<IptvPlayerChoice>(
+    pref: SettingsService.iptvPlayerBackend,
+    icon: Symbols.live_tv_rounded,
+    title: t.settings.iptvPlayerBackend,
+    subtitleBuilder: (choice) => '${_iptvPlayerChoiceLabel(choice)} · ${t.settings.iptvPlayerBackendDescription}',
+    options: IptvPlayerChoice.values
+        .map((choice) => DialogOption(value: choice, title: _iptvPlayerChoiceLabel(choice)))
+        .toList(),
+  );
+
+  String _iptvPlayerChoiceLabel(IptvPlayerChoice choice) => switch (choice) {
+    IptvPlayerChoice.sameAsFilms => t.settings.iptvPlayerSameAsFilms,
+    IptvPlayerChoice.exoPlayer => t.settings.exoPlayer,
+    IptvPlayerChoice.mpv => t.settings.mpv,
+  };
 
   Widget _externalPlayerTile() => SettingsBuilder(
     prefs: [SettingsService.useExternalPlayer, SettingsService.selectedExternalPlayer],

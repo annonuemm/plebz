@@ -108,6 +108,32 @@ void main() {
     });
   });
 
+  group('the player IPTV plays on', () {
+    test('follows the main choice until it is given one of its own', () async {
+      expect(settings.useExoPlayerFor(iptv: true), isFalse);
+      await settings.write(SettingsService.useExoPlayer, true);
+      expect(settings.useExoPlayerFor(iptv: true), isTrue);
+      expect(settings.useExoPlayerFor(iptv: false), isTrue);
+
+      await settings.write(SettingsService.iptvPlayerBackend, IptvPlayerChoice.mpv);
+      expect(settings.useExoPlayerFor(iptv: true), isFalse);
+      expect(settings.useExoPlayerFor(iptv: false), isTrue, reason: 'films and shows keep the main choice');
+
+      await settings.write(SettingsService.useExoPlayer, false);
+      await settings.write(SettingsService.iptvPlayerBackend, IptvPlayerChoice.exoPlayer);
+      expect(settings.useExoPlayerFor(iptv: true), isTrue);
+      expect(settings.useExoPlayerFor(iptv: false), isFalse);
+    });
+
+    test("live tunnelling stops the hand-over when IPTV plays on ExoPlayer, whatever films use", () async {
+      await settings.write(SettingsService.liveTvSeamlessFullscreen, true);
+      await settings.write(SettingsService.tunneledPlaybackLiveTv, true);
+      await settings.write(SettingsService.iptvPlayerBackend, IptvPlayerChoice.exoPlayer);
+
+      expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isFalse);
+    });
+  });
+
   group('canMove', () {
     test('an IPTV stream on a player that can leave its texture', () {
       expect(LivePictureHandover.canMove(_MovablePlayer(), _iptvSession()), isTrue);

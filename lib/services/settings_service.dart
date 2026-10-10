@@ -233,6 +233,9 @@ extension HdrSdrConversionNativeValue on HdrSdrConversion {
 
 enum PlaybackBufferTier { auto, large, extraLarge }
 
+/// The player IPTV channels use (Plebz): the main choice, or one of their own.
+enum IptvPlayerChoice { sameAsFilms, exoPlayer, mpv }
+
 extension PlaybackBufferTierNativeValue on PlaybackBufferTier {
   String get nativeValue => switch (this) {
     PlaybackBufferTier.auto => 'auto',
@@ -950,6 +953,35 @@ class SettingsService extends BaseSharedPreferencesService {
   /// need the new backend on the old one. Dropping it ([onInit]) puts every
   /// install on mpv; choosing ExoPlayer again writes this key and sticks.
   static const useExoPlayer = BoolPref('android_use_exoplayer');
+
+  /// The player for IPTV channels, in the guide's preview and full screen
+  /// (Plebz). Off its default, [useExoPlayer] keeps films, shows and a media
+  /// server's live TV while IPTV plays on the other backend — on the user's
+  /// box the two do better at different things.
+  static const iptvPlayerBackend = EnumPref<IptvPlayerChoice>(
+    'iptv_player_backend',
+    values: IptvPlayerChoice.values,
+    defaultValue: IptvPlayerChoice.sameAsFilms,
+  );
+
+  /// Whether a session plays on ExoPlayer: an [iptv] one by
+  /// [iptvPlayerBackend], everything else by [useExoPlayer]. The one place
+  /// the rule is stated, so the preview, the full-screen player and the
+  /// hand-over between them can never pick different backends.
+  bool useExoPlayerFor({required bool iptv}) {
+    if (iptv) {
+      switch (read(iptvPlayerBackend)) {
+        case IptvPlayerChoice.exoPlayer:
+          return true;
+        case IptvPlayerChoice.mpv:
+          return false;
+        case IptvPlayerChoice.sameAsFilms:
+          break;
+      }
+    }
+    return read(useExoPlayer);
+  }
+
   static const startupSection = EnumPref<NavigationTabId>(
     'startup_section',
     values: NavigationTabId.values,
@@ -1970,6 +2002,7 @@ class SettingsService extends BaseSharedPreferencesService {
     playerAlwaysOnTop,
     specialsOrdering,
     useExoPlayer,
+    iptvPlayerBackend,
     startupSection,
     showExploreTab,
     showSportTab,

@@ -62,7 +62,7 @@ class LivePictureHandover {
       enabledForLiveTv: settings.read(SettingsService.matchContentFrameRateLiveTv),
     );
     final tunnels =
-        settings.read(SettingsService.useExoPlayer) &&
+        settings.useExoPlayerFor(iptv: true) &&
         SettingsService.tunneledPlaybackFor(
           isLive: true,
           enabled: settings.read(SettingsService.tunneledPlayback),

@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:plezy/widgets/app_icon.dart';
 
+import '../../redesign/ocker_skin.dart' show OckerKeepColours;
 import '../../focus/focusable_button.dart';
 import '../../focus/focusable_text_field.dart';
 import '../../i18n/strings.g.dart';
@@ -110,15 +111,19 @@ class _PlayerTile extends StatelessWidget {
 
     Widget leading;
     if (player.iconAsset != null) {
+      // A player's icon is a picture: kept in its colours under "Flach"'s
+      // inverted focus (Plebz).
       leading = ClipRRect(
         borderRadius: BorderRadius.all(Radius.circular(flatRadius(context, 6))),
         child: player.iconAsset!.endsWith('.svg')
-            ? SvgPicture.asset(player.iconAsset!, width: 32, height: 32)
-            : Image.asset(
-                player.iconAsset!,
-                width: 32,
-                height: 32,
-                errorBuilder: (_, _, _) => const AppIcon(Symbols.play_circle_rounded, fill: 1, size: 32),
+            ? OckerKeepColours(child: SvgPicture.asset(player.iconAsset!, width: 32, height: 32))
+            : OckerKeepColours(
+                child: Image.asset(
+                  player.iconAsset!,
+                  width: 32,
+                  height: 32,
+                  errorBuilder: (_, _, _) => const AppIcon(Symbols.play_circle_rounded, fill: 1, size: 32),
+                ),
               ),
       );
     } else if (player.id == 'system_default') {

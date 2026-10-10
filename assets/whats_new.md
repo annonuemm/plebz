@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.18.1 (Build 743)
+
+- Sport: Ergebnisse sind nach dem Aktualisieren sofort aktuell. Vorher konnten sie bis zu einigen Stunden hinterherhängen.
+- Flach: Farbfelder, Dienste-Logos und Player-Symbole in den Einstellungen behalten beim Fokus ihre Farben.
+
 ## 1.18.0 (Build 741)
 
 - Einstellungen neu aufgebaut: Links stehen alle Bereiche in drei Gruppen, rechts öffnet sich der gewählte Bereich. Schon beim Durchgehen der Liste siehst du, was drin ist.

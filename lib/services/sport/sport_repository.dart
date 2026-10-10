@@ -56,10 +56,16 @@ class SportRepository {
     'now:${league.shortcut}',
     ttl: (_) => _currentTtl,
     fetch: () async {
-      final matches = await _client.fetchCurrentMatchday(league);
-      if (matches == null || matches.isEmpty) return null;
-      final season = matches.first.season;
-      final order = matches.first.matchday.order;
+      final currentAnswer = await _client.fetchCurrentMatchday(league);
+      if (currentAnswer == null || currentAnswer.isEmpty) return null;
+      final season = currentAnswer.first.season;
+      final order = currentAnswer.first.matchday.order;
+      // The provider keeps its "current" answer for hours on its own side —
+      // on a Saturday evening it still had the afternoon's games at the fifth
+      // minute. It is good for which matchday it is; the scores come from the
+      // matchday asked for by number, which is up to date.
+      final numbered = await matchday(league, season, order);
+      final matches = numbered == null || numbered.isEmpty ? currentAnswer : numbered;
 
       // Only when a game is still to come well after the rest does it matter
       // when the next matchday starts — and only then is it asked for early.

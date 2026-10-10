@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../screens/settings/settings_utils.dart';
+import '../redesign/ocker_skin.dart' show OckerKeepColours;
 import '../services/settings_service.dart';
 import '../theme/mono_tokens.dart';
 import '../services/settings_mutation_service.dart';
@@ -385,13 +386,17 @@ class SettingColorTile extends StatelessWidget {
         icon: icon,
         title: title,
         subtitle: settingSubtitle(subtitle),
-        trailing: Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: hexToColor(hex),
-            borderRadius: BorderRadius.circular(flatRadius(context, 6)),
-            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        // The colour itself, kept as it is under Flach's inverted focus
+        // (Plebz).
+        trailing: OckerKeepColours(
+          child: Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: hexToColor(hex),
+              borderRadius: BorderRadius.circular(flatRadius(context, 6)),
+              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            ),
           ),
         ),
         onTap: () => showColorInputDialog(

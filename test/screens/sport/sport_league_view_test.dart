@@ -196,9 +196,9 @@ void main() {
     expect(find.text(t.sport.table.toUpperCase()), findsOneWidget);
     expect(find.text('Leipzig'), findsOneWidget, reason: 'the table names clubs short');
 
-    // The current matchday's fixtures came with "current"; nothing else was
-    // fetched for them.
-    expect(api.requests, isNot(contains('/getmatchdata/bl1/2026/4')));
+    // "Current" says which matchday it is; its scores are asked for by number,
+    // once — the provider keeps its "current" answer for hours.
+    expect(api.countOf('/getmatchdata/bl1/2026/4'), 1);
 
     // Table and fixtures side by side, not one under the other.
     final fixture = tester.getRect(find.text('FC Bayern München'));

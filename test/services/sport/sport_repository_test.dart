@@ -41,6 +41,23 @@ void main() {
     expect(current.matches.single.id, 4);
   });
 
+  test("takes the scores from the numbered matchday, not the provider's stale current answer", () async {
+    // The provider kept its "current" answer for hours (seen on a Saturday
+    // evening): a game long over still read as just begun there, while the
+    // matchday asked for by number had the result.
+    final api = FakeOpenLigaDb({
+      '/getmatchdata/bl1': [openLigaMatch(id: 4, matchday: 4, kickoffUtc: kickoff, home: home, away: away)],
+      '/getmatchdata/bl1/2026/4': [
+        openLigaMatch(id: 4, matchday: 4, kickoffUtc: kickoff, home: home, away: away, finished: true, result: (2, 3)),
+      ],
+    });
+    now = kickoff.add(const Duration(hours: 4));
+    final current = await atNow(() => api.repository().current(SportLeague.bundesliga1));
+
+    expect(current!.matchday, 4);
+    expect(current.matches.single.isFinished, isTrue);
+  });
+
   test('asks the provider once for as long as an answer is fresh', () async {
     final api = provider();
     final repo = api.repository();

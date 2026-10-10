@@ -615,9 +615,17 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
             ],
             if (isCurrent) ...[
               SizedBox(width: 14 * look.scale),
-              Text(
-                t.sport.current,
-                style: quiet.copyWith(color: look.live, fontSize: 15 * look.scale, fontWeight: .w600),
+              // In ink on the white focus fill, which turns it dark: the
+              // accent, inverted with the title, came out as its complement.
+              Builder(
+                builder: (context) => Text(
+                  t.sport.current,
+                  style: quiet.copyWith(
+                    color: OckerFlatFocusInk.invertingAt(context) ? look.ink(1) : look.live,
+                    fontSize: 15 * look.scale,
+                    fontWeight: .w600,
+                  ),
+                ),
               ),
             ],
           ],
@@ -828,11 +836,20 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
                 SizedBox(
                   width: (look.ocker ? 104 : (compact ? 58 : 76)) * look.scale,
                   child: Center(
-                    child: Text(
-                      score == null ? '–:–' : '${score.home} : ${score.away}',
-                      style: look
-                          .score(strong: score != null)
-                          .copyWith(color: live ? look.live : look.ink(score == null ? 0.4 : 1)),
+                    // On Flach's white focus fill what stands on it is
+                    // inverted, and the accent came out as its complement. In
+                    // ink there, the score turns dark like the names beside it.
+                    child: Builder(
+                      builder: (context) => Text(
+                        score == null ? '–:–' : '${score.home} : ${score.away}',
+                        style: look
+                            .score(strong: score != null)
+                            .copyWith(
+                              color: live && !OckerFlatFocusInk.invertingAt(context)
+                                  ? look.live
+                                  : look.ink(score == null ? 0.4 : 1),
+                            ),
+                      ),
                     ),
                   ),
                 ),
@@ -870,13 +887,17 @@ class _LiveBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.centerLeft,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 6 * look.scale, vertical: 3 * look.scale),
-        decoration: BoxDecoration(color: look.live, borderRadius: BorderRadius.circular(look.tk.radiusXs)),
-        child: Text(t.sport.live, style: look.badge.copyWith(color: Colors.white)),
-      ),
+      // A signal in its own colours, on Flach's white focus fill too: inverted
+      // with the row, the accent badge came out in its complement.
+      child: OckerKeepColours(child: _badge()),
     );
   }
+
+  Widget _badge() => Container(
+    padding: EdgeInsets.symmetric(horizontal: 6 * look.scale, vertical: 3 * look.scale),
+    decoration: BoxDecoration(color: look.live, borderRadius: BorderRadius.circular(look.tk.radiusXs)),
+    child: Text(t.sport.live, style: look.badge.copyWith(color: Colors.white)),
+  );
 }
 
 /// A club in a fixture line: its crest on the side nearest the score, its

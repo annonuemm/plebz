@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.17.3 (Build 739)
+
+- Flach: Auf der Sport-Seite bleibt der LIVE-Kasten beim Fokus rot, Spielstand und „aktuell“ werden dunkel statt türkis.
+- Flach: In Mediatheken und Merkliste beginnen die Poster etwas tiefer, sodass ein fokussiertes Poster in der ersten Reihe nicht mehr an die Filter stößt.
+
 ## 1.17.2 (Build 736)
 
 - Glas und Flach: Der Fortschrittsbalken liegt jetzt als runder Balken im Poster, knapp über der Unterkante. Bei Flach ist er in der Akzentfarbe, bei Glas weiß.

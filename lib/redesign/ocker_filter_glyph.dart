@@ -199,8 +199,13 @@ class OckerGridFilterBand extends StatelessWidget {
   /// How many titles the list holds, beside [location] under "Flach".
   final int? count;
 
-  /// Between the band and the first row of posters, at 1920.
-  static const gapBelow = 18.0;
+  /// Between the band and the first row of posters.
+  ///
+  /// A focused poster grows past its box and its ring sits outside that, up
+  /// into this gap. "Flach" grows its posters more and rings them further out:
+  /// at Glas's 18 (at 1920) a focused poster in the first row touched the
+  /// filters (the viewer's report), so Flach keeps twice that.
+  static double gapBelowOf(BuildContext context) => (ockerFlat(context) ? 36.0 : 18.0) * ockerScale(context);
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +223,7 @@ class OckerGridFilterBand extends StatelessWidget {
     );
     final location = this.location;
     return Padding(
-      padding: EdgeInsets.only(left: overhang.left, bottom: withGapBelow ? gapBelow * ockerScale(context) : 0),
+      padding: EdgeInsets.only(left: overhang.left, bottom: withGapBelow ? gapBelowOf(context) : 0),
       child: location == null || location.isEmpty
           ? band
           : LayoutBuilder(

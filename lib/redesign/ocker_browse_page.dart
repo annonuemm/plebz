@@ -250,7 +250,7 @@ class OckerBrowsePageState extends State<OckerBrowsePage> {
     // lines up with the posters' below, as the filters' does.
     final overhang = ockerGlass(context) ? TabChipStrip.overhangOf(context) : EdgeInsets.zero;
     return Padding(
-      padding: EdgeInsets.only(bottom: OckerGridFilterBand.gapBelow * scale),
+      padding: EdgeInsets.only(bottom: OckerGridFilterBand.gapBelowOf(context)),
       child: Row(
         children: [
           Flexible(

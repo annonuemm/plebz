@@ -23,6 +23,7 @@ import 'package:plezy/media/media_sort.dart';
 import 'package:plezy/media/server_capabilities.dart';
 import 'package:plezy/models/plex/plex_config.dart';
 import 'package:plezy/providers/multi_server_provider.dart';
+import 'package:plezy/focus/focus_theme.dart';
 import 'package:plezy/focus/focusable_action_bar.dart';
 import 'package:plezy/focus/input_mode_tracker.dart';
 import 'package:plezy/redesign/ocker_browse_grid.dart';
@@ -462,6 +463,52 @@ void main() {
     // A lone `Size=0` makes PMS return the whole section, so the schema probe
     // has to carry the start offset too.
     expect(harness.filterMetadataRequests.single.queryParameters['X-Plex-Container-Start'], '0');
+  });
+
+  testWidgets('under "Flach" a focused poster in the first row keeps clear of the filters', (tester) async {
+    await SettingsService.instance.write(SettingsService.tvFullCardLayout, true);
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1920, 1080);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      InputModeTracker(
+        child: MaterialApp(
+          theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+          home: Scaffold(
+            body: OckerBrowsePage(
+              title: 'Merkliste',
+              items: [for (var i = 0; i < 12; i++) testMediaItem(id: 'w$i', title: 'Title $i', serverId: 'srv')],
+              resolveClient: (_) => null,
+              onPlay: (_, _) {},
+              onExitToHeader: () {},
+              showHeading: false,
+              showCount: false,
+              filters: [
+                FocusableActionBar(
+                  actions: [FocusableAction(icon: Icons.filter_alt, onPressed: () {})],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final band = tester.getRect(
+      find.descendant(of: find.byType(OckerGridFilterBand), matching: find.byType(OckerGlassBand)),
+    );
+    final poster = tester.getRect(find.byType(OckerPosterTile).first);
+    final scale = ockerScale(tester.element(find.byType(OckerBrowsePage)));
+    // What a focused poster draws above its box: half its growth, then the
+    // band of ground and the ring.
+    final reach =
+        poster.height * (FocusTheme.flatPosterFocusScale - 1) / 2 +
+        (FocusTheme.flatRingGap + FocusTheme.flatRingWidth) * scale;
+    expect(poster.top - reach - band.bottom, greaterThanOrEqualTo(12 * scale), reason: 'clear room above the ring');
   });
 
   group('under "Glas" with the side rail', () {

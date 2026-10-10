@@ -7,8 +7,10 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:plezy/focus/focusable_wrapper.dart';
+import 'package:plezy/focus/input_mode_tracker.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/providers/iptv_sources_provider.dart';
+import 'package:plezy/redesign/ocker_skin.dart';
 import 'package:plezy/providers/multi_server_provider.dart';
 import 'package:plezy/screens/sport/sport_broadcast_finder.dart';
 import 'package:plezy/screens/sport/sport_league_view.dart';
@@ -19,6 +21,7 @@ import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/services/sport/sport_models.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/theme/mono_tokens.dart';
 import 'package:plezy/utils/platform_detector.dart';
 import 'package:plezy/widgets/app_menu.dart';
 
@@ -109,22 +112,26 @@ void main() {
     VoidCallback? onExitUp,
     GlobalKey<SportLeagueViewState>? key,
     SportBroadcastFinder? broadcastFinder,
+    bool tracksInput = false,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
+    Widget app(Widget child) => tracksInput ? InputModeTracker(child: child) : child;
     await tester.pumpWidget(
-      MaterialApp(
-        theme: monoTheme(dark: true, variant: variant),
-        home: Scaffold(
-          body: SportLeagueView(
-            key: key,
-            league: SportLeague.bundesliga1,
-            isActive: true,
-            onExitUp: onExitUp ?? () {},
-            repository: api.repository(),
-            broadcastFinder: broadcastFinder,
+      app(
+        MaterialApp(
+          theme: monoTheme(dark: true, variant: variant),
+          home: Scaffold(
+            body: SportLeagueView(
+              key: key,
+              league: SportLeague.bundesliga1,
+              isActive: true,
+              onExitUp: onExitUp ?? () {},
+              repository: api.repository(),
+              broadcastFinder: broadcastFinder,
+            ),
           ),
         ),
       ),
@@ -322,6 +329,49 @@ void main() {
     expect(find.text(t.sport.matchday(n: 5)), findsOneWidget);
     expect(find.textContaining(t.sport.current), findsNothing, reason: 'matchday 5 is not the current one');
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_matchday', reason: 'back on the button');
+  });
+
+  testWidgets('under Flach a running game on the focus fill keeps its LIVE badge red and darkens its score', (
+    tester,
+  ) async {
+    // Focus shows as the white fill only while the remote is in use.
+    await pumpLeague(tester, provider(), variant: AppThemeVariant.flach, tracksInput: true);
+    Color scoreColour() => tester.widget<Text>(find.text('0 : 1')).style!.color!;
+    final tk = tokens(tester.element(find.text('0 : 1')));
+    expect(scoreColour(), isNot(tk.ink(1)), reason: 'off focus, the running score in the live colour');
+
+    // DOWN from the game above: a key that navigates is what shows focus.
+    tester.widget<FocusableWrapper>(part('sport_match_401')).focusNode!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_match_402');
+
+    expect(OckerFlatFocusInk.invertingAt(tester.element(find.text('0 : 1'))), isTrue);
+    expect(scoreColour(), tk.ink(1), reason: 'ink, which the fill turns dark — not the accent turned its complement');
+    expect(
+      find.ancestor(of: find.text(t.sport.live), matching: find.byType(OckerKeepColours)),
+      findsOneWidget,
+      reason: 'the badge in its own colours',
+    );
+  });
+
+  testWidgets('under Flach the current matchday\'s "current" turns dark on the focus fill, not its complement', (
+    tester,
+  ) async {
+    final key = GlobalKey<SportLeagueViewState>();
+    await pumpLeague(tester, provider(), variant: AppThemeVariant.flach, key: key, tracksInput: true);
+    Color currentColour() => tester.widget<Text>(find.text(t.sport.current)).style!.color!;
+    final tk = tokens(tester.element(find.text(t.sport.current)));
+    expect(currentColour(), isNot(tk.ink(1)), reason: 'off focus, in the live colour');
+
+    await focusMatchday(tester, key);
+    // LEFT leads nowhere from the title under Flach; it shows the focus.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_matchday');
+
+    expect(currentColour(), tk.ink(1));
   });
 
   testWidgets('a game row does not grow on focus: its time would be clipped at the edge', (tester) async {

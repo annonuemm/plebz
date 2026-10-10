@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.17.2 (Build 736)
+
+- Glas und Flach: Der Fortschrittsbalken liegt jetzt als runder Balken im Poster, knapp über der Unterkante. Bei Flach ist er in der Akzentfarbe, bei Glas weiß.
+- Jetzt live: Laufende Spiele zeigen kein Ergebnis mehr, das bei 0:0 stehen bleibt. Zwischen den Wappen steht jetzt „vs.“.
+
 ## 1.17.1 (Build 733)
 
 - Flach: Seiten blenden ruhiger ineinander über, vor allem auf schwächeren Boxen.

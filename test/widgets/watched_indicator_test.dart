@@ -4,6 +4,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:plezy/media/media_kind.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/theme/mono_tokens.dart';
 import 'package:plezy/widgets/media_progress_bar.dart';
 import 'package:plezy/widgets/unwatched_count_badge.dart';
 import 'package:plezy/widgets/watched_indicator.dart';
@@ -53,5 +54,58 @@ void main() {
 
     await pump(tester, WatchedIndicator(item: inProgressMovie));
     expect(find.byType(MediaProgressBar), findsOneWidget, reason: 'progress bars are not indicators');
+  });
+
+  group('the progress bar', () {
+    final inProgressMovie = testMediaItem(
+      id: 'movie-3',
+      kind: MediaKind.movie,
+      durationMs: 100000,
+      viewOffsetMs: 40000,
+    );
+
+    Future<(Rect, Color)> barOn(WidgetTester tester, ThemeData theme) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: 200,
+              height: 300,
+              child: Stack(children: [WatchedIndicator(item: inProgressMovie)]),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final bar = find.byType(LinearProgressIndicator);
+      final colour = tester.widget<LinearProgressIndicator>(bar).valueColor!.value!;
+      return (tester.getRect(bar), colour);
+    }
+
+    testWidgets('floats inside the picture in both redesigns: white under Glas, the accent under Flach', (
+      tester,
+    ) async {
+      final glas = monoTheme(dark: true, variant: AppThemeVariant.glas);
+      final (glasBar, glasFill) = await barOn(tester, glas);
+      expect(glasBar.left, closeTo(14, 0.5), reason: 'room from the side');
+      expect(200 - glasBar.right, closeTo(14, 0.5));
+      expect(300 - glasBar.bottom, closeTo(7.7, 0.5), reason: 'less room from the foot: it sits low');
+      expect(glasBar.height, 5);
+      expect(glasFill, glas.extension<MonoTokens>()!.ink(1));
+
+      final flach = monoTheme(dark: true, variant: AppThemeVariant.flach);
+      final (flachBar, flachFill) = await barOn(tester, flach);
+      expect(flachBar, glasBar, reason: 'the same place in both');
+      expect(flachFill, flach.extension<MonoTokens>()!.accent);
+    });
+
+    testWidgets('the standard design keeps it along the bottom edge', (tester) async {
+      final (bar, _) = await barOn(tester, monoTheme(dark: true));
+      expect(bar.left, 0);
+      expect(bar.right, 200);
+      expect(bar.bottom, 300);
+    });
   });
 }

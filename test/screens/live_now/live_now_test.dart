@@ -147,7 +147,7 @@ void main() {
       );
     }
 
-    testWidgets('a game on now says so, with its score and its pairing', (tester) async {
+    testWidgets('a game on now says so, with its pairing and no score that would stand still', (tester) async {
       await withClock(Clock.fixed(_now), () async {
         final match = _match(
           1,
@@ -164,7 +164,9 @@ void main() {
         );
 
         expect(find.text(t.sport.live), findsOneWidget);
-        expect(find.text('1:0'), findsOneWidget);
+        // OpenLigaDB does not keep the goals current while a game is on.
+        expect(find.text('1:0'), findsNothing);
+        expect(find.text(t.sport.versus), findsOneWidget);
         expect(find.text('Bayern – Dortmund'), findsOneWidget);
         expect(find.text(t.sport.bundesliga1), findsOneWidget);
       });

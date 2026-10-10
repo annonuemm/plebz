@@ -60,12 +60,12 @@ String liveNowLeagueName(SportLeague league) => switch (league) {
   SportLeague.liga3 => t.sport.liga3,
 };
 
-/// "LIVE 2:1" for a game on now, "Heute 20:30" for one still to come.
+/// "LIVE" for a game on now, "Heute 20:30" for one still to come.
+///
+/// No score: OpenLigaDB does not keep a game's goals current while it is on,
+/// so a running game stood at 0:0 to the end (the viewer's report).
 String liveNowGameStatus(SportMatch match, DateTime now) {
-  if (match.isLive(now)) {
-    final score = match.scoreAt(now);
-    return score == null ? t.sport.live : '${t.sport.live} ${score.home}:${score.away}';
-  }
+  if (match.isLive(now)) return t.sport.live;
   return '${t.sport.today} ${DateFormat.Hm().format(match.kickoff.toLocal())}';
 }
 
@@ -169,7 +169,6 @@ class _GameCard extends StatelessWidget {
     final match = entry.match;
     final now = clock.now();
     final live = match.isLive(now);
-    final score = match.scoreAt(now);
     final small = height * 0.11;
     final crest = height * 0.38;
     final pad = height * 0.09;
@@ -212,14 +211,12 @@ class _GameCard extends StatelessWidget {
               children: [
                 SportCrest(team: match.home, size: crest),
                 SizedBox(width: height * 0.1),
+                // The pairing, not a score: OpenLigaDB does not keep a game's
+                // goals current while it is on, and a running game stood at
+                // 0:0 to the end (the viewer's report).
                 Text(
-                  score == null ? '–' : '${score.home}:${score.away}',
-                  style: TextStyle(
-                    color: tk.ink(live ? 1 : 0.6),
-                    fontSize: height * 0.2,
-                    fontWeight: FontWeight.w800,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
+                  t.sport.versus,
+                  style: TextStyle(color: tk.ink(live ? 1 : 0.6), fontSize: height * 0.17, fontWeight: FontWeight.w700),
                 ),
                 SizedBox(width: height * 0.1),
                 SportCrest(team: match.away, size: crest),

@@ -23,6 +23,17 @@ class MediaProgressBar extends StatelessWidget {
     this.minHeight,
   });
 
+  /// The track on a poster: a hole punched in the artwork, not a surface —
+  /// the bar sits on whatever photograph is behind it, and a theme surface
+  /// colour is a guess about a ground that is not there.
+  static const Color posterTrack = Color(0x80000000);
+
+  /// The bar's colour in the redesigns: white under Glas — the accent there
+  /// marks the resume row once, on the rule under its heading — and the
+  /// accent under Flach, as Plex draws it (the viewer's call, 2026-10-10).
+  static Color redesignFill(BuildContext context) =>
+      ockerFlat(context) ? tokens(context).accent : tokens(context).ink(1);
+
   @override
   Widget build(BuildContext context) {
     final progress = duration > 0 ? viewOffset / duration : 0.0;
@@ -31,20 +42,12 @@ class MediaProgressBar extends StatelessWidget {
 
     return LinearProgressIndicator(
       value: progress.clamp(0.0, 1.0),
-      // On a poster the track is a hole punched in the artwork, not a surface:
-      // the bar sits on whatever photograph happens to be behind it, and a
-      // theme surface colour is a guess about a ground that is not there.
       backgroundColor:
-          backgroundColor ??
-          (redesign ? const Color(0x80000000) : Theme.of(context).colorScheme.surfaceContainerHighest),
-      // Ink, not the accent — in the redesign the accent marks the resume row
-      // once, on the rule under its heading. Repeating it on every poster in
-      // that row spent the colour a dozen times to say what the rule already
-      // said. What the bar has to say is *how far*, and a white line on a
-      // black track says that at any distance. The bar inside an opened tile
+          backgroundColor ?? (redesign ? posterTrack : Theme.of(context).colorScheme.surfaceContainerHighest),
+      // What the bar has to say is *how far*. The bar inside an opened tile
       // is a different widget and keeps the accent: there it is alone.
       valueColor: AlwaysStoppedAnimation<Color>(
-        valueColor ?? (redesign ? tokens(context).ink(1) : Theme.of(context).colorScheme.primary),
+        valueColor ?? (redesign ? redesignFill(context) : Theme.of(context).colorScheme.primary),
       ),
       minHeight: minHeight ?? 4,
     );

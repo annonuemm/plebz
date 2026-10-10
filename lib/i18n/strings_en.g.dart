@@ -6933,6 +6933,9 @@ class Translations$sport$en {
 	/// en: 'LIVE'
 	String get live => 'LIVE';
 
+	/// en: 'vs.'
+	String get versus => 'vs.';
+
 	/// en: 'Goals'
 	String get goals => 'Goals';
 
@@ -11856,10 +11859,11 @@ extension on Translations {
 			'sport.halftime' => 'Half time',
 			'sport.finalScore' => 'Full time',
 			'sport.live' => 'LIVE',
+			'sport.versus' => 'vs.',
 			'sport.goals' => 'Goals',
-			'sport.noGoals' => 'No goals yet',
 			_ => null,
 		} ?? switch (path) {
+			'sport.noGoals' => 'No goals yet',
 			'sport.broadcast' => 'Broadcast',
 			'sport.searchingGuide' => 'Searching the guide …',
 			'sport.notInGuide' => 'This match is not in the guide.',

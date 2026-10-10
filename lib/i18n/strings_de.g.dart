@@ -2738,6 +2738,7 @@ class _Translations$sport$de extends Translations$sport$en {
 	@override String get halftime => 'Halbzeit';
 	@override String get finalScore => 'Endstand';
 	@override String get live => 'LIVE';
+	@override String get versus => 'vs.';
 	@override String get goals => 'Tore';
 	@override String get noGoals => 'Noch keine Tore';
 	@override String get broadcast => 'Übertragung';
@@ -6306,6 +6307,7 @@ extension on TranslationsDe {
 			'sport.halftime' => 'Halbzeit',
 			'sport.finalScore' => 'Endstand',
 			'sport.live' => 'LIVE',
+			'sport.versus' => 'vs.',
 			'sport.goals' => 'Tore',
 			'sport.noGoals' => 'Noch keine Tore',
 			'sport.broadcast' => 'Übertragung',
@@ -6347,9 +6349,9 @@ extension on TranslationsDe {
 			'plebz.extrasGroup' => 'Extras',
 			'plebz.profilesGroup' => 'Mehrere Personen?',
 			'plebz.profilesHint' => 'Plebz kann mehrere Profile haben, auch wenn alle dasselbe Plex-Konto nutzen. Damit jede Person ihren eigenen Fortschritt, eigene Häkchen und eine eigene Merkliste hat, verbinde jedes Profil mit einem eigenen Simkl-Konto und schalte dort „Eigener Fortschritt über Simkl“ ein. Weitere Profile legst du unter Einstellungen → Profile → „Plebz-Profil hinzufügen“ an.',
-			'plebz.profilesHintConnectFirst' => 'Verbinde unten unter Dienste zuerst Simkl für dieses Profil.',
 			_ => null,
 		} ?? switch (path) {
+			'plebz.profilesHintConnectFirst' => 'Verbinde unten unter Dienste zuerst Simkl für dieses Profil.',
 			'plebz.addSourceFirst' => 'Füge zuerst eine Quelle hinzu: einen Server oder eine IPTV-Playlist.',
 			'plebz.finish' => 'Fertig',
 			'plebz.setupAgain' => 'Einrichtung erneut starten',

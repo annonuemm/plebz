@@ -16,8 +16,8 @@ import 'unwatched_count_badge.dart';
 /// [compact] for dense surfaces (folder tree rows, episode thumbnails).
 /// Add a preset here instead of hand-rolling a new overlay variant.
 enum WatchedIndicatorSize {
-  standard(checkInset: 4, checkPadding: 4, checkIconSize: 16, barRadius: 8, barMinHeight: 4),
-  compact(checkInset: 3, checkPadding: 2, checkIconSize: 12, barRadius: 6, barMinHeight: 3);
+  standard(checkInset: 4, checkPadding: 4, checkIconSize: 16, barRadius: 8, barMinHeight: 4, floatingBarHeight: 5),
+  compact(checkInset: 3, checkPadding: 2, checkIconSize: 12, barRadius: 6, barMinHeight: 3, floatingBarHeight: 3);
 
   const WatchedIndicatorSize({
     required this.checkInset,
@@ -25,6 +25,7 @@ enum WatchedIndicatorSize {
     required this.checkIconSize,
     required this.barRadius,
     required this.barMinHeight,
+    required this.floatingBarHeight,
   });
 
   final double checkInset;
@@ -32,6 +33,9 @@ enum WatchedIndicatorSize {
   final double checkIconSize;
   final double barRadius;
   final double barMinHeight;
+
+  /// The bar's height where it floats inside the picture (the redesigns).
+  final double floatingBarHeight;
 }
 
 /// Watched/progress overlay for media artwork: watched checkmark,
@@ -62,6 +66,11 @@ class WatchedIndicator extends StatelessWidget {
     final bool showWatched = SettingsService.instance.read(SettingsService.showWatchedIndicators);
     final hasActiveProgress = item.hasActiveProgress;
     final unwatched = item.unwatchedCount;
+    // The redesigns float the bar inside the picture, clear of its edges and
+    // round at both ends (the viewer's call, 2026-10-10). Along the bottom
+    // edge it lost its dark track wherever a poster ran dark at the foot, and
+    // read as a loose stroke under the picture.
+    final floating = ockerGlass(context);
     final barRadius = BorderRadius.only(
       bottomLeft: Radius.circular(flatRadius(context, size.barRadius)),
       bottomRight: Radius.circular(flatRadius(context, size.barRadius)),
@@ -98,7 +107,15 @@ class WatchedIndicator extends StatelessWidget {
             child: UnwatchedCountBadge(count: unwatched),
           ),
         // Progress bar for partially watched content (episodes/movies)
-        if (hasActiveProgress)
+        if (hasActiveProgress && floating)
+          _floatingBar(
+            MediaProgressBar(
+              viewOffset: item.viewOffsetMs!,
+              duration: item.durationMs!,
+              minHeight: size.floatingBarHeight,
+            ),
+          )
+        else if (hasActiveProgress)
           Positioned(
             bottom: 0,
             left: 0,
@@ -113,7 +130,16 @@ class WatchedIndicator extends StatelessWidget {
             ),
           ),
         // Progress bar for seasons (viewed leaves / total leaves).
-        if (item.isSeason && item.isPartiallyWatched)
+        if (item.isSeason && item.isPartiallyWatched && floating)
+          _floatingBar(
+            LinearProgressIndicator(
+              value: item.leafWatchFraction,
+              backgroundColor: MediaProgressBar.posterTrack,
+              valueColor: AlwaysStoppedAnimation<Color>(MediaProgressBar.redesignFill(context)),
+              minHeight: size.floatingBarHeight,
+            ),
+          )
+        else if (item.isSeason && item.isPartiallyWatched)
           Positioned(
             bottom: 0,
             left: 0,
@@ -133,4 +159,22 @@ class WatchedIndicator extends StatelessWidget {
       ],
     );
   }
+
+  /// [bar] floating at the foot of the picture, a little in from its sides and
+  /// less from the bottom, so it sits low (the viewer's call) — the room grows
+  /// with the picture, so a thumbnail keeps it in proportion.
+  Widget _floatingBar(Widget bar) => Positioned.fill(
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final room = (constraints.maxWidth * 0.07).clamp(5.0, 14.0);
+        return Padding(
+          padding: EdgeInsets.fromLTRB(room, 0, room, room * 0.55),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: ClipRRect(borderRadius: BorderRadius.circular(size.floatingBarHeight / 2), child: bar),
+          ),
+        );
+      },
+    ),
+  );
 }

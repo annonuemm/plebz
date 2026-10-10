@@ -22,6 +22,13 @@ const upstreamBaseVersion = '2.22.0';
 /// x86_64 device finds no file for itself and says so.
 const plebzReleaseRepository = 'annonuemm/plebz';
 
+/// How Plebz introduces itself to Wikimedia, which serves most of the Sport
+/// tab's crests. Its servers throttle requests from a client that does not
+/// name itself and a way to reach it: with the plain "Plezy" every other
+/// image gets, a burst of crests came back as 429 for 39 of 44 clubs, this way
+/// for a handful at most. The release repository is the public contact.
+const wikimediaUserAgent = 'Plebz (https://github.com/$plebzReleaseRepository)';
+
 /// Whether this build can update itself: Android only (the Mac build is
 /// private), and only once there is a repository to ask.
 bool get plebzUpdatesAvailable =>

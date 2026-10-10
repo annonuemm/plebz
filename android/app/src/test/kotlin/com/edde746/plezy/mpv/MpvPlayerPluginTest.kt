@@ -1479,6 +1479,52 @@ class MpvPlayerPluginTest {
   }
 
   /**
+   * The guide's preview on the video plane (Plebz): the container keeps its
+   * full-screen layout and is scaled and moved onto the box — a transform,
+   * so the picture's fit inside it is untouched — and a full-screen box
+   * puts it back as it was.
+   */
+  @Test
+  fun aPictureOnThePlaneIsScaledOntoItsBox() {
+    val core = testVideoCore { _, _ -> }
+    core.followsVideoRect = true
+    val container = installVideoRectViews(core)
+
+    core.setViewport(100, 50, 600, 331)
+    shadowOf(Looper.getMainLooper()).idle()
+
+    assertEquals(0f, container.pivotX)
+    assertEquals(0f, container.pivotY)
+    assertEquals(500f / 1001f, container.scaleX, 0.0001f)
+    assertEquals(281f / 701f, container.scaleY, 0.0001f)
+    assertEquals(100f, container.translationX)
+    assertEquals(50f, container.translationY)
+
+    core.setViewport(0, 0, 1001, 701)
+    shadowOf(Looper.getMainLooper()).idle()
+
+    assertEquals(1f, container.scaleX)
+    assertEquals(1f, container.scaleY)
+    assertEquals(0f, container.translationX)
+    assertEquals(0f, container.translationY)
+    core.dispose()
+  }
+
+  /** A full-screen session never follows a rect: its container is left alone. */
+  @Test
+  fun aFullScreenSessionIgnoresTheViewport() {
+    val core = testVideoCore { _, _ -> }
+    val container = installVideoRectViews(core)
+
+    core.setViewport(100, 50, 600, 331)
+    shadowOf(Looper.getMainLooper()).idle()
+
+    assertEquals(1f, container.scaleX)
+    assertEquals(0f, container.translationX)
+    core.dispose()
+  }
+
+  /**
    * An adopted native session, without libmpv: Robolectric no-ops
    * `System.loadLibrary`, and pre-closing the wrapper makes [MpvPlayer.close]
    * return before its JNI call, so the core's lifecycle paths that require a

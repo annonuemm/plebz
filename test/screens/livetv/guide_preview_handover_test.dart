@@ -7,6 +7,7 @@ import 'package:plezy/mpv/player/video_rect_support.dart';
 import 'package:plezy/screens/livetv/guide_preview_player.dart';
 import 'package:plezy/services/iptv/iptv_live_tv_source.dart';
 import 'package:plezy/services/live_picture_handover.dart';
+import 'package:plezy/widgets/video_surface_hole.dart';
 
 /// A playing picture whose output can leave its texture, as both Android
 /// backends' can; just enough of a player for the preview box to draw it.
@@ -53,6 +54,21 @@ class _PicturePlayer implements Player, VideoOutputHandover, VideoTextureTarget 
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/// The same picture on the video plane, in a box behind the guide.
+class _PlanePicturePlayer extends _PicturePlayer implements VideoViewportTarget {
+  @override
+  bool get rendersToTexture => false;
+
+  @override
+  bool get followsVideoRect => true;
+
+  @override
+  bool videoRectDriven = false;
+
+  @override
+  Future<void> driveVideoRect({required int left, required int top, required int right, required int bottom}) async {}
 }
 
 final _channel = LiveTvChannel(key: 'iptv-1', identifier: 'das-erste', callSign: 'Das Erste HD');
@@ -112,6 +128,21 @@ void main() {
     await pumpPreview(tester, null);
     expect(find.byType(Video), findsNothing);
     expect(player.disposed, isFalse);
+  });
+
+  testWidgets('a picture on the plane plays through a hole, at once, and can be handed on', (tester) async {
+    final player = _PlanePicturePlayer();
+    await pumpPreview(tester, null);
+    previewKey.currentState!.adopt(_picture(player));
+    await pumpPreview(tester, _channel);
+
+    expect(find.byType(VideoSurfaceHole), findsOneWidget);
+    // Back from full screen it is playing already: no black wait for a first frame.
+    final video = tester.widget<Video>(find.byType(Video));
+    expect(video.hasFirstFrame?.value, isTrue);
+
+    expect(previewKey.currentState!.releaseForHandover()?.player, same(player));
+    await tester.pump(const Duration(milliseconds: 150));
   });
 
   testWidgets('a picture waiting for its channel is stopped when another replaces it or the box goes', (tester) async {

@@ -80,6 +80,7 @@ import '../services/player_sync_offsets.dart';
 import '../services/scoped_player_prefs.dart';
 import '../services/iptv/iptv_stream_probing.dart';
 import '../services/live_picture_handover.dart';
+import '../widgets/video_surface_hole.dart';
 import '../services/live_tv_last_selection.dart';
 import '../services/settings_service.dart';
 import '../services/sleep_timer_service.dart';
@@ -1417,6 +1418,13 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
 
     _currentMetadata = widget.metadata;
     _handedOverPicture = widget.live?.handover;
+    // A picture on the plane grows with the page from the first frame on.
+    final growingPicture = _handedOverPicture;
+    if (growingPicture != null && LivePictureHandover.isOnPlane(growingPicture.player)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _movePlaneWithRoute(growingPicture.player, growing: true);
+      });
+    }
     widget.launchObserver?.attach(_launchSnapshot, ownsPlayback: _ownsLaunchPlayback);
     _activeRouteGuard.activate(
       this,

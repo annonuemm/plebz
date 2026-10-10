@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:math' as math;
 
+import 'package:cached_network_image_ce/cached_network_image.dart' show HttpExceptionWithStatus;
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +15,7 @@ import '../../i18n/strings.g.dart';
 import '../../models/livetv_channel.dart';
 import '../../providers/multi_server_provider.dart';
 import '../../services/sport/sport_broadcast_matching.dart';
+import '../../services/sport/sport_crest_fallback.dart';
 import '../../services/sport/sport_models.dart';
 import '../../services/sport/sport_repository.dart';
 import '../../theme/mono_tokens.dart';
@@ -916,14 +919,100 @@ class _TeamCell extends StatelessWidget {
 }
 
 /// A club's crest, or a plain shield where the provider has none.
-class SportCrest extends StatelessWidget {
+///
+/// Wikimedia, where most crests live, throttles a burst of image requests
+/// (429), and a whole matchday's crests are one such burst: the crests that
+/// lost out came back on their own, a little later, one by one. A crest whose
+/// link is dead (404) — or that keeps failing — is taken from the club's
+/// Wikipedia article instead ([SportCrestFallback]).
+class SportCrest extends StatefulWidget {
   final SportTeam team;
   final double size;
 
   const SportCrest({super.key, required this.team, required this.size});
 
+  /// How long a throttled crest waits before it asks again: growing, with a
+  /// little spread so a matchday's crests do not all come back at once.
+  @visibleForTesting
+  static Duration retryDelay(int attempt, {int spreadMs = 0}) =>
+      Duration(milliseconds: 800 * (1 << attempt.clamp(0, 4)) + spreadMs);
+
+  /// Throttled or a passing fault: ask again, a few times. A link that is not
+  /// there (404, 410) goes to the fallback at once.
+  @visibleForTesting
+  static bool shouldRetry(int? statusCode, int attempt) =>
+      attempt < _maxRetries && statusCode != 404 && statusCode != 410;
+
+  static const int _maxRetries = 4;
+
+  @override
+  State<SportCrest> createState() => _SportCrestState();
+}
+
+class _SportCrestState extends State<SportCrest> {
+  static final math.Random _spread = math.Random();
+
+  String? _url;
+  int _attempt = 0;
+  int? _failedAttempt;
+  Timer? _retry;
+  bool _askedFallback = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _url = widget.team.iconUrl;
+    if (_url == null) unawaited(_takeFallback());
+  }
+
+  @override
+  void didUpdateWidget(covariant SportCrest oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.team.id == widget.team.id && oldWidget.team.iconUrl == widget.team.iconUrl) return;
+    _retry?.cancel();
+    _retry = null;
+    _url = widget.team.iconUrl;
+    _attempt = 0;
+    _failedAttempt = null;
+    _askedFallback = false;
+    if (_url == null) unawaited(_takeFallback());
+  }
+
+  @override
+  void dispose() {
+    _retry?.cancel();
+    super.dispose();
+  }
+
+  void _onFailed(Object error) {
+    if (!mounted || _failedAttempt == _attempt) return;
+    _failedAttempt = _attempt;
+    final status = error is HttpExceptionWithStatus ? error.statusCode : null;
+    if (SportCrest.shouldRetry(status, _attempt)) {
+      _retry = Timer(SportCrest.retryDelay(_attempt, spreadMs: _spread.nextInt(600)), () {
+        _retry = null;
+        if (mounted) setState(() => _attempt++);
+      });
+    } else {
+      unawaited(_takeFallback());
+    }
+  }
+
+  Future<void> _takeFallback() async {
+    if (_askedFallback) return;
+    _askedFallback = true;
+    final url = await SportCrestFallback.instance.crestFor(widget.team);
+    if (!mounted || url == null || url == _url) return;
+    setState(() {
+      _url = url;
+      _attempt = 0;
+      _failedAttempt = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final size = widget.size;
     // The image's own stand-ins are a filled plate with a 40px glyph — made
     // for a poster, and at a crest's size the glyph spills over the club's
     // name. A crest that is loading shows nothing; one that cannot be had
@@ -931,17 +1020,23 @@ class SportCrest extends StatelessWidget {
     Widget shield(BuildContext context) => Center(
       child: Icon(Symbols.shield_rounded, size: size * 0.8, color: tokens(context).ink(0.3)),
     );
+    final url = _url;
     return SizedBox.square(
       dimension: size,
-      child: team.iconUrl == null
+      child: url == null
           ? shield(context)
           : OptimizedMediaImage.thumb(
-              imagePath: team.iconUrl,
+              // A new attempt is a new image, so the failed load is asked again.
+              key: ValueKey('$url#$_attempt'),
+              imagePath: url,
               width: size,
               height: size,
               fit: BoxFit.contain,
               placeholder: (_, _) => const SizedBox.shrink(),
-              errorWidget: (context, _, _) => shield(context),
+              errorWidget: (context, _, error) {
+                WidgetsBinding.instance.addPostFrameCallback((_) => _onFailed(error));
+                return shield(context);
+              },
             ),
     );
   }

@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.17.0 (Build 728)
+
+- Live-TV (Test): Unter „Vorschau nahtlos ins Vollbild (Beta)“ gibt es den neuen Schalter „Vorschau auf der Videofläche (Test)“. Die Vorschau läuft dann direkt auf der Videofläche der Box statt in der App. Sender mit Zeilensprung (interlaced) laufen dadurch schon in der Vorschau ruhiger, und das Bild muss beim Großziehen nicht mehr umziehen. Beim Wachsen und Schrumpfen kann kurz ein schmaler schwarzer Rand zu sehen sein.
+- Sport: Die Vereinswappen laden zuverlässiger und fehlen nicht mehr mal hier, mal da.
+
 ## 1.16.0 (Build 725)
 
 - IPTV-Sender können jetzt einen eigenen Player haben. Unter Einstellungen → Videowiedergabe → Weitere Wiedergabe → „Player für IPTV“ wählst du ExoPlayer oder mpv. Der Player darüber gilt dann für Filme, Serien und das Live-TV von Plex und Jellyfin. Voreingestellt ist „Wie bei Filmen und Serien“, es ändert sich also nichts, solange du nichts umstellst.

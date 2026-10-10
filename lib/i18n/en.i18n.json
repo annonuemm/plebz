@@ -638,6 +638,8 @@
     "liveTvSeamlessFullscreenDescription": "In the guide, the playing preview grows into the full-screen player on OK and shrinks back into its box on Back, without loading again. IPTV channels only. Turning this on turns off \"Match frame rate for live TV\" and \"Tunnelled playback for live TV\", and live TV no longer switches the \"Automatic resolution\": each of these switches would interrupt the picture. Films and shows keep their settings. A shader in the mpv player can make the move stutter briefly.",
     "liveTvSeamlessWindowSurface": "Full screen on the video surface",
     "liveTvSeamlessWindowSurfaceDescription": "Off: the picture stays on the app's own canvas in full screen too. Nothing has to move, so nothing freezes and the sound stays in step; the box draws every frame itself, and there is no HDR and no subtitle display. On: once grown, the picture moves onto the TV's video surface, with full quality and HDR. Some boxes do not handle that move reliably: the picture can stall briefly, freeze or lose sync with the sound.",
+    "liveTvSeamlessPlanePreview": "Preview on the video surface (test)",
+    "liveTvSeamlessPlanePreviewDescription": "Instead of the app's canvas, the preview plays straight on the box's video surface, and the app leaves a hole for it where the box is. That way the box deinterlaces interlaced channels such as the RAW copies in the preview too, and growing into full screen needs no move. While the picture grows or shrinks, a thin edge can show for a moment.",
     "showActorFilmography": "Full filmography for actors",
     "showActorFilmographyDescription": "On an actor's page, also list the films and series you do not have, greyed out. Uses your TMDB key.",
     "backupPickTitle": "Choose a backup"

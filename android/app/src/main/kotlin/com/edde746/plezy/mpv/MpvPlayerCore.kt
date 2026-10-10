@@ -2034,6 +2034,42 @@ class MpvPlayerCore private constructor(
     get() = renderToTexture
 
   /**
+   * The picture sits in a box behind a hole in the app — the guide's preview
+   * on the video plane, growing into full screen and shrinking back (Plebz) —
+   * rather than filling the screen. The container keeps its full-screen
+   * layout, so the picture's own fit inside it is unchanged, and is scaled
+   * and moved onto [viewport]: a transform, not a layout, so moving it every
+   * frame of an animation costs no layout pass, and a SurfaceView follows its
+   * transform in step with the window (API 24+). Set before [initialize].
+   */
+  @Volatile var followsVideoRect = false
+
+  /** The box, in window pixels: left, top, right, bottom. Null until reported. */
+  private var viewport: IntArray? = null
+
+  fun setViewport(left: Int, top: Int, right: Int, bottom: Int) {
+    runOnMain {
+      viewport = intArrayOf(left, top, right, bottom)
+      applyViewport()
+    }
+  }
+
+  private fun applyViewport() {
+    if (!followsVideoRect) return
+    val container = surfaceContainer ?: return
+    val box = viewport ?: return
+    val width = container.width
+    val height = container.height
+    if (width <= 0 || height <= 0) return
+    container.pivotX = 0f
+    container.pivotY = 0f
+    container.scaleX = (box[2] - box[0]).toFloat() / width
+    container.scaleY = (box[3] - box[1]).toFloat() / height
+    container.translationX = (box[0] - container.left).toFloat()
+    container.translationY = (box[1] - container.top).toFloat()
+  }
+
+  /**
    * The window surface a full-screen session draws into, composited behind
    * the Flutter view: a container with the video surface and, on the plane,
    * the OSD surface above it. Built at [initialize] for an ordinary session,
@@ -2067,8 +2103,10 @@ class MpvPlayerCore private constructor(
       val sv = surfaceView
       if (sv != null) applySurfaceSize(sv.width, sv.height)
       applyVideoRectLayout()
+      applyViewport()
     }
     contentView.viewTreeObserver.addOnGlobalLayoutListener(overlayLayoutListener)
+    applyViewport()
 
     PlayerDebugLog.d(TAG) { "SurfaceView added to content view" }
   }

@@ -1147,6 +1147,14 @@ class SettingsService extends BaseSharedPreferencesService {
   /// move at all, and the box draws every frame through the app.
   static const liveTvSeamlessWindowSurface = BoolPref('live_tv_seamless_window_surface');
 
+  /// The alternative to the canvas (Plebz, a test beside it): the preview plays
+  /// on the television's video surface from the start, in a box behind a
+  /// hole the guide leaves for it, and the growth moves the surface with the
+  /// page — no move between surfaces at all, and the box's own deinterlacer
+  /// for interlaced channels (an IPTV "RAW" copy) in the preview too. Off by
+  /// default; [liveTvSeamlessWindowSurface] only counts while it is off.
+  static const liveTvSeamlessPlanePreview = BoolPref('live_tv_seamless_plane_preview');
+
   /// How many days a stored IPTV playlist and guide stay good for.
   ///
   /// Neither changes by the hour, and both are expensive: a playlist runs to
@@ -2109,6 +2117,7 @@ class SettingsService extends BaseSharedPreferencesService {
     liveTvGuideTimeNavigation,
     liveTvSeamlessFullscreen,
     liveTvSeamlessWindowSurface,
+    liveTvSeamlessPlanePreview,
     iptvRefreshIntervalDays,
     iptvMergeDuplicateChannels,
     iptvHideGroupCountryPrefix,

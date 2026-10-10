@@ -233,6 +233,11 @@ extension _VideoPlayerBuildMethods on VideoPlayerScreenState {
               // macOS PiP placeholder — video is in PiP window, show background with icon
               // Placed before Video so controls render on top
               if (Platform.isMacOS) const VideoPlayerMacPipPlaceholder(),
+              // On the plane (the guide's test alternative) the picture is
+              // behind the app: clear what lies under the page, the guide
+              // while the player grows out of it or shrinks back.
+              if (player != null && LivePictureHandover.isOnPlane(player!))
+                const Positioned.fill(child: VideoSurfaceHole()),
               Center(
                 child: LayoutBuilder(
                   builder: (context, constraints) {

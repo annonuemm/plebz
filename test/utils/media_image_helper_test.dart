@@ -1,6 +1,7 @@
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/utils/fork_identity.dart';
 import 'package:plezy/media/media_item.dart';
 import 'package:plezy/media/media_kind.dart';
 import 'package:plezy/media/media_server_client.dart';
@@ -25,6 +26,30 @@ class _SizedUrlFakeClient implements MediaServerClient {
 MediaItem _item(MediaKind kind) => testMediaItem(kind: kind);
 
 void main() {
+  group('MediaImageHelper.artworkRequestHeaders', () {
+    test("Wikimedia's image hosts get Plebz's name and contact, everything else stays Plezy", () {
+      // Wikimedia throttled a matchday's crests (429) for a client that does
+      // not name itself.
+      expect(
+        MediaImageHelper.artworkRequestHeaders(
+          'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/X.svg/250px-X.svg.png',
+        ),
+        {'User-Agent': wikimediaUserAgent},
+      );
+      expect(
+        MediaImageHelper.artworkRequestHeaders(
+          'https://thumb.wikimedia.org/wikipedia/de/thumb/f/f7/Y.svg/250px-Y.svg.png',
+        ),
+        {'User-Agent': wikimediaUserAgent},
+      );
+      expect(MediaImageHelper.artworkRequestHeaders('https://i.imgur.com/abc.png'), {'User-Agent': 'Plezy'});
+      expect(MediaImageHelper.artworkRequestHeaders('http://192.168.1.2:32400/photo/:/transcode?x=1'), {
+        'User-Agent': 'Plezy',
+      });
+      expect(wikimediaUserAgent, contains('github.com/annonuemm/plebz'));
+    });
+  });
+
   group('MediaImageHelper.getOptimizedImageUrl', () {
     test('adds size hints to absolute Jellyfin artwork URLs', () {
       final url = MediaImageHelper.getOptimizedImageUrl(

@@ -20,7 +20,8 @@ import '../video_rect_support.dart';
 /// widget tree, but its buffer still has to be told how many pixels the box is
 /// worth. Without a texture the native side answers `no-texture` and the
 /// full-screen session keeps placing its own surface, exactly as before.
-class PlayerAndroidMpv extends PlayerNative implements VideoTextureTarget, VideoRectTarget, VideoOutputHandover {
+class PlayerAndroidMpv extends PlayerNative
+    implements VideoTextureTarget, VideoRectTarget, VideoOutputHandover, VideoViewportTarget {
   PlayerAndroidMpv({super.hardwareDecoding});
 
   /// Whether this player's picture goes in a box rather than over the window.
@@ -37,6 +38,7 @@ class PlayerAndroidMpv extends PlayerNative implements VideoTextureTarget, Video
 
   @override
   Future<Map<String, Object?>> platformInitializeArguments() async {
+    if (followsVideoRect) return const {'followsVideoRect': true};
     if (!inlineSurface) return const {};
     // Before initialize: the core takes this texture's surface as its video
     // output instead of building a window surface of its own.
@@ -52,6 +54,7 @@ class PlayerAndroidMpv extends PlayerNative implements VideoTextureTarget, Video
     required int bottom,
     required double devicePixelRatio,
   }) async {
+    if (videoRectDriven) return;
     final outcome = await invoke<String>('setVideoRect', {
       'left': left,
       'top': top,
@@ -62,6 +65,18 @@ class PlayerAndroidMpv extends PlayerNative implements VideoTextureTarget, Video
     // Debug rather than info: this fires on every layout pass, and it only
     // matters while chasing a picture that is not showing up.
     appLogger.d('Video rect $left,$top → $right,$bottom (dpr $devicePixelRatio): ${outcome ?? 'no answer'}');
+  }
+
+  @override
+  bool followsVideoRect = false;
+
+  @override
+  bool videoRectDriven = false;
+
+  @override
+  Future<void> driveVideoRect({required int left, required int top, required int right, required int bottom}) async {
+    if (disposed) return;
+    await invoke<String>('setVideoRect', {'left': left, 'top': top, 'right': right, 'bottom': bottom});
   }
 
   @override

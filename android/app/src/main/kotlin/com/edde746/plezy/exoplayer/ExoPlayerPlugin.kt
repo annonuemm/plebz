@@ -124,7 +124,17 @@ class ExoPlayerPlugin :
   private var mpvSignalGate: MpvSignalGate? = null
   private var mpvCoreNeedsReplacement = false
   internal var createMpvCore: (Activity) -> MpvPlayerCore =
-    { MpvPlayerCore(it, hardwareDecoding = fallbackHardwareDecoding()) }
+    { MpvPlayerCore(it, hardwareDecoding = fallbackHardwareDecoding()).also(::carryViewport) }
+
+  // A session whose picture sits in a box behind the app (Plebz): the box
+  // follows a fallback core too.
+  private var followsVideoRect = false
+  private var lastViewport: IntArray? = null
+
+  private fun carryViewport(core: MpvPlayerCore) {
+    core.followsVideoRect = followsVideoRect
+    lastViewport?.let { core.setViewport(it[0], it[1], it[2], it[3]) }
+  }
   internal var initializeMpvCore: (MpvPlayerCore, (Boolean) -> Unit) -> Unit = { core, onInitialized ->
     core.initialize(onInitialized)
   }
@@ -325,6 +335,8 @@ class ExoPlayerPlugin :
     // Decided here rather than later: the surface reads its compositing layer
     // when it is created and keeps it.
     val inlineSurface = call.argument<Boolean>("inlineSurface") ?: false
+    followsVideoRect = call.argument<Boolean>("followsVideoRect") ?: false
+    lastViewport = null
     // Seed the request here rather than waiting for Dart's separate setAudioPassthrough
     // call, so a fallback raised before that arrives still derives audio-spdif correctly.
     audioPassthroughRequested = audioPassthroughEnabled
@@ -361,6 +373,7 @@ class ExoPlayerPlugin :
         val core = ExoPlayerCore(currentActivity).apply {
           delegate = this@ExoPlayerPlugin
           this.debugLoggingEnabled = this@ExoPlayerPlugin.debugLoggingEnabled
+          this.followsVideoRect = this@ExoPlayerPlugin.followsVideoRect
         }
         playerCore = core
         coreInstanceId = call.argument<Number>("instanceId")?.toLong()
@@ -1146,6 +1159,13 @@ class ExoPlayerPlugin :
     }
     val entry = textureEntry
     if (entry == null) {
+      if (followsVideoRect && right > left && bottom > top) {
+        lastViewport = intArrayOf(left, top, right, bottom)
+        playerCore?.setViewport(left, top, right, bottom)
+        mpvCore?.setViewport(left, top, right, bottom)
+        result.success("viewport(${right - left}x${bottom - top})")
+        return
+      }
       result.success("no-texture")
       return
     }

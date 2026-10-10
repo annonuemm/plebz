@@ -1869,6 +1869,12 @@ class Translations$settings$en {
 	/// en: 'Off: the picture stays on the app's own canvas in full screen too. Nothing has to move, so nothing freezes and the sound stays in step; the box draws every frame itself, and there is no HDR and no subtitle display. On: once grown, the picture moves onto the TV's video surface, with full quality and HDR. Some boxes do not handle that move reliably: the picture can stall briefly, freeze or lose sync with the sound.'
 	String get liveTvSeamlessWindowSurfaceDescription => 'Off: the picture stays on the app\'s own canvas in full screen too. Nothing has to move, so nothing freezes and the sound stays in step; the box draws every frame itself, and there is no HDR and no subtitle display. On: once grown, the picture moves onto the TV\'s video surface, with full quality and HDR. Some boxes do not handle that move reliably: the picture can stall briefly, freeze or lose sync with the sound.';
 
+	/// en: 'Preview on the video surface (test)'
+	String get liveTvSeamlessPlanePreview => 'Preview on the video surface (test)';
+
+	/// en: 'Instead of the app's canvas, the preview plays straight on the box's video surface, and the app leaves a hole for it where the box is. That way the box deinterlaces interlaced channels such as the RAW copies in the preview too, and growing into full screen needs no move. While the picture grows or shrinks, a thin edge can show for a moment.'
+	String get liveTvSeamlessPlanePreviewDescription => 'Instead of the app\'s canvas, the preview plays straight on the box\'s video surface, and the app leaves a hole for it where the box is. That way the box deinterlaces interlaced channels such as the RAW copies in the preview too, and growing into full screen needs no move. While the picture grows or shrinks, a thin edge can show for a moment.';
+
 	/// en: 'Full filmography for actors'
 	String get showActorFilmography => 'Full filmography for actors';
 
@@ -9906,6 +9912,8 @@ extension on Translations {
 			'settings.liveTvSeamlessFullscreenDescription' => 'In the guide, the playing preview grows into the full-screen player on OK and shrinks back into its box on Back, without loading again. IPTV channels only. Turning this on turns off "Match frame rate for live TV" and "Tunnelled playback for live TV", and live TV no longer switches the "Automatic resolution": each of these switches would interrupt the picture. Films and shows keep their settings. A shader in the mpv player can make the move stutter briefly.',
 			'settings.liveTvSeamlessWindowSurface' => 'Full screen on the video surface',
 			'settings.liveTvSeamlessWindowSurfaceDescription' => 'Off: the picture stays on the app\'s own canvas in full screen too. Nothing has to move, so nothing freezes and the sound stays in step; the box draws every frame itself, and there is no HDR and no subtitle display. On: once grown, the picture moves onto the TV\'s video surface, with full quality and HDR. Some boxes do not handle that move reliably: the picture can stall briefly, freeze or lose sync with the sound.',
+			'settings.liveTvSeamlessPlanePreview' => 'Preview on the video surface (test)',
+			'settings.liveTvSeamlessPlanePreviewDescription' => 'Instead of the app\'s canvas, the preview plays straight on the box\'s video surface, and the app leaves a hole for it where the box is. That way the box deinterlaces interlaced channels such as the RAW copies in the preview too, and growing into full screen needs no move. While the picture grows or shrinks, a thin edge can show for a moment.',
 			'settings.showActorFilmography' => 'Full filmography for actors',
 			'settings.showActorFilmographyDescription' => 'On an actor\'s page, also list the films and series you do not have, greyed out. Uses your TMDB key.',
 			'settings.backupPickTitle' => 'Choose a backup',
@@ -10308,10 +10316,10 @@ extension on Translations {
 			'subtitlingStyling.background' => 'Background',
 			'subtitlingStyling.fontSize' => 'Font Size',
 			'subtitlingStyling.textColor' => 'Text Color',
-			'subtitlingStyling.borderSize' => 'Border Size',
-			'subtitlingStyling.borderColor' => 'Border Color',
 			_ => null,
 		} ?? switch (path) {
+			'subtitlingStyling.borderSize' => 'Border Size',
+			'subtitlingStyling.borderColor' => 'Border Color',
 			'subtitlingStyling.backgroundOpacity' => 'Background Opacity',
 			'subtitlingStyling.backgroundColor' => 'Background Color',
 			'subtitlingStyling.position' => 'Position',
@@ -10822,10 +10830,10 @@ extension on Translations {
 			'explore.relation.sequel' => 'Sequel',
 			'explore.relation.sideStory' => 'Side story',
 			'explore.relation.spinOff' => 'Spin-off',
-			'explore.relation.alternativeVersion' => 'Alternative version',
-			'explore.relation.summary' => 'Summary',
 			_ => null,
 		} ?? switch (path) {
+			'explore.relation.alternativeVersion' => 'Alternative version',
+			'explore.relation.summary' => 'Summary',
 			'explore.relation.parentStory' => 'Parent story',
 			'explore.relation.adaptation' => 'Adaptation',
 			'explore.relation.other' => 'Related',
@@ -11336,10 +11344,10 @@ extension on Translations {
 			'companionRemote.pairing.unpaired' => ({required Object name}) => '${name} is no longer paired',
 			'companionRemote.remote.disconnectConfirm' => 'Do you want to disconnect from the remote session?',
 			'companionRemote.remote.reconnecting' => 'Reconnecting...',
-			'companionRemote.remote.attemptOf' => ({required Object current}) => 'Attempt ${current} of 5',
-			'companionRemote.remote.retryNow' => 'Retry Now',
 			_ => null,
 		} ?? switch (path) {
+			'companionRemote.remote.attemptOf' => ({required Object current}) => 'Attempt ${current} of 5',
+			'companionRemote.remote.retryNow' => 'Retry Now',
 			'companionRemote.remote.tabRemote' => 'Remote',
 			'companionRemote.remote.tabPlay' => 'Play',
 			'companionRemote.remote.tabMore' => 'More',
@@ -11850,10 +11858,10 @@ extension on Translations {
 			'sport.live' => 'LIVE',
 			'sport.goals' => 'Goals',
 			'sport.noGoals' => 'No goals yet',
-			'sport.broadcast' => 'Broadcast',
-			'sport.searchingGuide' => 'Searching the guide …',
 			_ => null,
 		} ?? switch (path) {
+			'sport.broadcast' => 'Broadcast',
+			'sport.searchingGuide' => 'Searching the guide …',
 			'sport.notInGuide' => 'This match is not in the guide.',
 			'sport.leagueChannels' => ({required Object league}) => 'Channels for the ${league}',
 			'sport.conference' => 'Conference',

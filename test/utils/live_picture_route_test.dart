@@ -58,6 +58,18 @@ void main() {
     expect(find.byKey(playerKey), findsNothing);
   });
 
+  test('the picture on the plane follows the same rectangle as the page', () {
+    const screen = Size(960, 540);
+
+    expect(VideoPlayerRoute.pictureRectAt(box, screen, 0), box);
+    expect(VideoPlayerRoute.pictureRectAt(box, screen, 1), Offset.zero & screen);
+    final halfway = VideoPlayerRoute.pictureRectAt(box, screen, 0.5);
+    expect(halfway.width, greaterThan(box.width));
+    expect(halfway.width, lessThan(screen.width));
+    // Past either end it holds still rather than overshooting.
+    expect(VideoPlayerRoute.pictureRectAt(box, screen, 1.2), Offset.zero & screen);
+  });
+
   testWidgets('a picture that is not given back leaves at once', (tester) async {
     final navigator = await pumpApp(tester);
     final player = route(pictureFrom: box);

@@ -17,7 +17,8 @@ import '../video_rect_support.dart';
 /// tree says. Ask for nothing and it fills the window, which is what a
 /// full-screen player wants; a `Video` drawn beside other content sends its
 /// own bounds, and only then does the picture belong to that box.
-class PlayerAndroid extends PlayerBase implements VideoRectTarget, VideoTextureTarget, VideoOutputHandover {
+class PlayerAndroid extends PlayerBase
+    implements VideoRectTarget, VideoTextureTarget, VideoOutputHandover, VideoViewportTarget {
   static const _methodChannel = MethodChannel('com.plezy/exo_player');
   static const _eventChannel = EventChannel('com.plezy/exo_player/events');
 
@@ -103,6 +104,7 @@ class PlayerAndroid extends PlayerBase implements VideoRectTarget, VideoTextureT
     required int bottom,
     required double devicePixelRatio,
   }) async {
+    if (videoRectDriven) return;
     final outcome = await invoke<String>('setVideoRect', {
       'left': left,
       'top': top,
@@ -113,6 +115,18 @@ class PlayerAndroid extends PlayerBase implements VideoRectTarget, VideoTextureT
     // Debug rather than info: this fires on every layout pass, and it only
     // matters while chasing a picture that is not showing up.
     appLogger.d('Video rect $left,$top → $right,$bottom (dpr $devicePixelRatio): ${outcome ?? 'no answer'}');
+  }
+
+  @override
+  bool followsVideoRect = false;
+
+  @override
+  bool videoRectDriven = false;
+
+  @override
+  Future<void> driveVideoRect({required int left, required int top, required int right, required int bottom}) async {
+    if (disposed) return;
+    await invoke<String>('setVideoRect', {'left': left, 'top': top, 'right': right, 'bottom': bottom});
   }
 
   @override
@@ -193,6 +207,7 @@ class PlayerAndroid extends PlayerBase implements VideoRectTarget, VideoTextureT
       }
       final result = await invoke<bool>('initialize', {
         'inlineSurface': inlineSurface,
+        'followsVideoRect': followsVideoRect,
         'instanceId': nativeInstanceId,
         'bufferTier': _bufferTier,
         'tunnelingEnabled': _tunnelingEnabled,

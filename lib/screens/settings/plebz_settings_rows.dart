@@ -193,18 +193,20 @@ List<Widget> plebzSettingsRows(BuildContext context, {required FocusNode Functio
         ),
       ],
     ),
-    SettingsGroup(
-      title: t.settings.liveTv,
-      children: [
-        SettingSwitchTile(
-          pref: SettingsService.liveTvDefaultFavorites,
-          icon: Symbols.star_rounded,
-          title: t.settings.liveTvDefaultFavorites,
-          subtitle: t.settings.liveTvDefaultFavoritesDescription,
-        ),
-        ?livePictureHandoverSettingTile(),
-        ?livePictureWindowSurfaceSettingTile(),
-      ],
+    SettingsBuilder(
+      prefs: livePictureSettingPrefs,
+      builder: (context) => SettingsGroup(
+        title: t.settings.liveTv,
+        children: [
+          SettingSwitchTile(
+            pref: SettingsService.liveTvDefaultFavorites,
+            icon: Symbols.star_rounded,
+            title: t.settings.liveTvDefaultFavorites,
+            subtitle: t.settings.liveTvDefaultFavoritesDescription,
+          ),
+          ...livePictureSettingTiles(),
+        ],
+      ),
     ),
     SettingsGroup(
       title: t.plebz.appAndUpdates,

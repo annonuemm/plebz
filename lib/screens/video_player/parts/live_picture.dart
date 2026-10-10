@@ -34,10 +34,12 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
 
   /// What the screen shows until the player is initialized when it grew out
   /// of the guide's preview: the picture itself, so the growth starts from a
-  /// playing channel rather than from a spinner. Null otherwise.
+  /// playing channel rather than from a spinner. Null otherwise. On the plane,
+  /// the picture is behind the app, and this is the hole it shows through.
   Widget? _buildHandedOverPicture() {
     final picture = _takenOverPicture ?? _handedOverPicture;
     if (picture == null || !picture.isAlive) return null;
+    if (LivePictureHandover.isOnPlane(picture.player)) return const VideoSurfaceHole();
     return ColoredBox(
       color: Colors.black,
       child: Video(player: picture.player),
@@ -73,10 +75,13 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
     _firstFrame.markReady();
     _http503Watchdog.disarm();
     unawaited(_visualEffects.onFirstFrame());
-    // The picture stays in the texture unless the viewer asked for the
-    // window surface: moving a running decoder froze or desynced it now and
-    // then on the user's box (see SettingsService.liveTvSeamlessWindowSurface).
-    if (SettingsService.instanceOrNull?.read(SettingsService.liveTvSeamlessWindowSurface) ?? false) {
+    // On the plane already (the test alternative), nothing moves. Otherwise
+    // the picture stays in the texture unless the viewer asked for the window
+    // surface: moving a running decoder froze or desynced it now and then on
+    // the user's box (see SettingsService.liveTvSeamlessWindowSurface).
+    if (LivePictureHandover.isOnPlane(currentPlayer)) {
+      appLogger.i('Live picture: on the video surface from the guide on');
+    } else if (SettingsService.instanceOrNull?.read(SettingsService.liveTvSeamlessWindowSurface) ?? false) {
       unawaited(_moveTakenOverPictureToWindow(currentPlayer));
     } else {
       appLogger.i('Live picture: stays in the texture for full screen');
@@ -161,6 +166,58 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
     return hasGrown;
   }
 
+  /// How far ahead of the page the picture on the plane is placed while the
+  /// player grows or shrinks, in animation progress (about two frames of the
+  /// 300 ms): the plane follows a frame or so behind Flutter, and a picture a
+  /// little larger than the hole hides under the guide where one a little
+  /// smaller would leave a black edge inside it.
+  static const double _planeLead = 0.1;
+
+  /// The picture on the plane moved with the page frame by frame while the
+  /// route grows ([growing]) or shrinks back into the guide's box, and placed
+  /// exactly where the page ends up. The `Video` widgets' own reports wait
+  /// meanwhile (`VideoViewportTarget.videoRectDriven`).
+  void _movePlaneWithRoute(Player currentPlayer, {required bool growing}) {
+    if (currentPlayer case final VideoViewportTarget plane when plane.followsVideoRect) {
+      final route = ModalRoute.of(context);
+      final from = route is VideoPlayerRoute ? route.pictureFrom : null;
+      final animation = route?.animation;
+      if (from == null || animation == null) return;
+      final view = View.of(context);
+      final ratio = view.devicePixelRatio;
+      final screen = view.physicalSize / ratio;
+      void place(double value) {
+        final rect = VideoPlayerRoute.pictureRectAt(from, screen, value);
+        unawaited(
+          plane.driveVideoRect(
+            left: (rect.left * ratio).floor(),
+            top: (rect.top * ratio).floor(),
+            right: (rect.right * ratio).ceil(),
+            bottom: (rect.bottom * ratio).ceil(),
+          ),
+        );
+      }
+
+      if (growing && animation.status != AnimationStatus.forward) {
+        place(animation.value);
+        return;
+      }
+      void onTick() => place((animation.value + _planeLead).clamp(0.0, 1.0));
+      late final AnimationStatusListener onStatus;
+      onStatus = (status) {
+        if (status != AnimationStatus.completed && status != AnimationStatus.dismissed) return;
+        animation.removeListener(onTick);
+        animation.removeStatusListener(onStatus);
+        place(animation.value);
+        plane.videoRectDriven = false;
+      };
+      plane.videoRectDriven = true;
+      animation.addListener(onTick);
+      animation.addStatusListener(onStatus);
+      if (growing) onTick();
+    }
+  }
+
   /// Whether Back gives the picture back to the guide's preview instead of
   /// stopping it: only a session that grew out of it, still on an IPTV
   /// stream at the live edge, playing and settled.
@@ -200,17 +257,20 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
     _handingPictureBack = true;
     _chromeController.hide(ignoreHolds: true);
 
-    var inTexture = output.rendersToTexture;
-    if (!inTexture) {
+    // A picture on the plane in a box stays where it is and only shrinks with
+    // the page; one on the window surface goes back into a texture first.
+    final onPlane = LivePictureHandover.isOnPlane(currentPlayer);
+    var inPlace = output.rendersToTexture || onPlane;
+    if (!inPlace) {
       final size = View.of(context).physicalSize;
-      inTexture = await output.moveOutputToTexture(width: size.width.round(), height: size.height.round());
-      if (inTexture && mounted) {
+      inPlace = await output.moveOutputToTexture(width: size.width.round(), height: size.height.round());
+      if (inPlace && mounted) {
         await SchedulerBinding.instance.endOfFrame;
         unawaited(output.releaseWindowOutput());
       }
     }
     if (!mounted) return;
-    if (!inTexture || _shuttingDown || player != currentPlayer || !route.isCurrent || !navigator.canPop()) {
+    if (!inPlace || _shuttingDown || player != currentPlayer || !route.isCurrent || !navigator.canPop()) {
       _handingPictureBack = false;
       return _exitPlayerRoute(navigateHome: false);
     }
@@ -218,6 +278,7 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
     appLogger.d('Live picture: giving ${channel.displayName} back to the guide');
     _setPlayerState(() => _pictureHandedBack = true);
     if (route is VideoPlayerRoute) route.shrinkIntoPictureOnPop();
+    if (onPlane) _movePlaneWithRoute(currentPlayer, growing: false);
     LivePictureReturn.instance.leave(LivePictureHandover(player: currentPlayer, session: session, channel: channel));
     await _exitPlayerRoute(navigateHome: false);
   }

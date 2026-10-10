@@ -43,6 +43,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
       prefs: const [
         SettingsService.useExoPlayer,
         SettingsService.iptvPlayerBackend,
+        ...livePictureSettingPrefs,
         SettingsService.matchRefreshRate,
         SettingsService.matchDynamicRange,
         SettingsService.matchContentFrameRate,
@@ -101,8 +102,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
                 if (exoInUse && tunnelingOn) _tunneledPlaybackLiveTvTile(),
                 if (PlatformDetector.supportsPictureInPicture()) _autoPipTile(),
                 // The guide's preview growing into the player as it plays (Plebz).
-                ?livePictureHandoverSettingTile(),
-                ?livePictureWindowSurfaceSettingTile(),
+                ...livePictureSettingTiles(),
               ],
             ),
 

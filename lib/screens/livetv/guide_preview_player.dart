@@ -27,6 +27,7 @@ import '../../utils/live_tv_player_navigation.dart';
 import '../../utils/platform_detector.dart';
 import '../../utils/tone_mapped_logo_image.dart';
 import '../../widgets/live_tv_channel_logo.dart';
+import '../../widgets/video_surface_hole.dart';
 import '../video_player/player_output_format.dart';
 
 /// The guide's small live picture: whatever [channel] is showing right now.
@@ -88,6 +89,12 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   /// to put its channel in the box. See [adopt].
   LivePictureHandover? _pendingAdoption;
 
+  /// The player came back from full screen already playing: its first frame
+  /// was shown long ago, so the box must not wait for one (on the plane, the
+  /// black it waits behind would cover the picture for good).
+  bool _installedPlaying = false;
+  static final ValueNotifier<bool> _alreadyShowing = ValueNotifier<bool>(true);
+
   /// The picture handed to the full-screen player, still drawn here — not
   /// owned — until the player covers the box: the route's first frame is laid
   /// out offstage, and the box would show the channel's still for it.
@@ -147,7 +154,12 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     final channel = widget.channel;
     if (player == null || session == null || channel == null || _starting || _failed) return null;
     if (!LivePictureHandover.canMove(player, session)) return null;
-    if (player case final VideoOutputHandover output when !output.rendersToTexture) return null;
+    // A picture in a texture, or one on the plane in a box; nothing else is
+    // where the growing player expects it.
+    if (player case final VideoOutputHandover output
+        when !output.rendersToTexture && !LivePictureHandover.isOnPlane(player)) {
+      return null;
+    }
     _generation++;
     _player = null;
     _session = null;
@@ -180,6 +192,7 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   void _install(LivePictureHandover picture) {
     final generation = ++_generation;
     _shownAfterHandover = null;
+    _installedPlaying = true;
     _player = picture.player;
     _session = picture.session;
     _failed = false;
@@ -224,6 +237,7 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   }
 
   Future<void> _start(LiveTvChannel channel) async {
+    _installedPlaying = false;
     final adoption = _pendingAdoption;
     if (adoption != null) {
       _pendingAdoption = null;
@@ -282,6 +296,9 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       // A preview the full-screen player may take over as it plays (Plebz)
       // opens the way that player opens a channel; see [_applyOpeningRoute].
       final mayHandOver = LivePictureHandover.enabledIn(settings);
+      // The test alternative: the picture on the video plane behind a hole in
+      // the guide, so the box deinterlaces it and the growth moves nothing.
+      final onPlane = session is IptvPlaybackSession && LivePictureHandover.planePreviewIn(settings);
       final player = Player(
         // IPTV may have a player of its own; the full-screen player resolves
         // the same way, so a hand-over always finds the backend it expects.
@@ -294,7 +311,8 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       // either, because a surface cannot be ordered that finely.
       switch (player) {
         case PlayerAndroid():
-          player.inlineSurface = true;
+          player.inlineSurface = !onPlane;
+          player.followsVideoRect = onPlane;
           // Tunneled video lives on a hardware plane the app cannot place; a
           // picture in a box has to be composited the ordinary way.
           await player.setProperty('tunneled-playback', 'no');
@@ -303,7 +321,8 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
             await player.setProperty('exo-buffer-tier', settings.read(SettingsService.playbackBufferTier).nativeValue);
           }
         case PlayerAndroidMpv():
-          player.inlineSurface = true;
+          player.inlineSurface = !onPlane;
+          player.followsVideoRect = onPlane;
         default:
           break;
       }
@@ -448,7 +467,10 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
         fit: StackFit.expand,
         children: [
           _buildBacking(player),
-          if (player != null) Video(player: player) else _buildPlaceholder(theme),
+          if (player != null)
+            Video(player: player, hasFirstFrame: _installedPlaying ? _alreadyShowing : null)
+          else
+            _buildPlaceholder(theme),
           if (_starting)
             const Center(child: SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 3))),
         ],
@@ -470,9 +492,11 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   /// underneath. So those pixels are cleared instead, down to the window,
   /// which is what makes the surface visible at all.
   Widget _buildBacking(Player? player) {
-    final showsSurface = player is VideoRectTarget && player is! VideoTextureTarget;
+    final showsSurface =
+        (player is VideoRectTarget && player is! VideoTextureTarget) ||
+        (player != null && LivePictureHandover.isOnPlane(player));
     if (!showsSurface) return const ColoredBox(color: Colors.black);
-    return const _SurfaceHole();
+    return const VideoSurfaceHole();
   }
 
   Widget _buildPlaceholder(ThemeData theme) {
@@ -578,28 +602,4 @@ class GuideStreamInfo {
 
   @override
   int get hashCode => Object.hash(channelKey, width, height, fps, audioCodec, audioChannels);
-}
-
-/// Erases the pixels behind it, so a native surface composited under the
-/// Flutter view shows through.
-///
-/// `Colors.transparent` would not do: it means *paint nothing*, which leaves
-/// whatever the page painted earlier — its background — exactly where it was.
-class _SurfaceHole extends StatelessWidget {
-  const _SurfaceHole();
-
-  @override
-  Widget build(BuildContext context) => const SizedBox.expand(child: CustomPaint(painter: _ClearPainter()));
-}
-
-class _ClearPainter extends CustomPainter {
-  const _ClearPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..blendMode = BlendMode.clear);
-  }
-
-  @override
-  bool shouldRepaint(_ClearPainter oldDelegate) => false;
 }

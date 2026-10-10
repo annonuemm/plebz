@@ -10,6 +10,7 @@ import '../media/media_server_client.dart';
 import '../services/device_performance.dart';
 import '../services/image_cache_service.dart';
 import '../services/settings_service.dart' show EpisodePosterMode;
+import 'fork_identity.dart';
 import 'platform_detector.dart';
 import 'tone_mapped_logo_image.dart';
 
@@ -414,11 +415,22 @@ class MediaImageHelper {
       imageUrl,
       cacheKey: _serverArtworkCacheKey(imageUrl),
       cacheManager: PlexImageCacheManager.instance,
-      headers: const {'User-Agent': 'Plezy'},
+      headers: artworkRequestHeaders(imageUrl),
     );
     final bounded = boundedDecode(provider, memWidth: memWidth, memHeight: memHeight);
     if (logoToneTarget == null) return bounded;
     return ToneMappedLogoImage(bounded, target: logoToneTarget, remapMixed: logoToneRemapMixed);
+  }
+
+  /// The headers an artwork request carries: "Plezy" for the servers, and for
+  /// Wikimedia's image hosts the name and contact its servers want before
+  /// they stop throttling (see [wikimediaUserAgent]).
+  static Map<String, String> artworkRequestHeaders(String imageUrl) {
+    final host = Uri.tryParse(imageUrl)?.host ?? '';
+    if (host == 'upload.wikimedia.org' || host == 'thumb.wikimedia.org') {
+      return const {'User-Agent': wikimediaUserAgent};
+    }
+    return const {'User-Agent': 'Plezy'};
   }
 
   static final _serverArtworkCacheKeys = <String, String>{};

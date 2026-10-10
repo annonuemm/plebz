@@ -29,6 +29,18 @@ class _MovablePlayer extends _FakePlayer implements VideoOutputHandover {
   bool get rendersToTexture => true;
 }
 
+/// A player whose window surface sits in a box behind the app.
+class _PlanePlayer extends _FakePlayer implements VideoOutputHandover, VideoViewportTarget {
+  @override
+  bool get rendersToTexture => false;
+
+  @override
+  bool get followsVideoRect => true;
+
+  @override
+  set videoRectDriven(bool value) {}
+}
+
 class _ServerSession implements LiveTvPlaybackSession {
   bool discarded = false;
 
@@ -131,6 +143,22 @@ void main() {
       await settings.write(SettingsService.iptvPlayerBackend, IptvPlayerChoice.exoPlayer);
 
       expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isFalse);
+    });
+  });
+
+  group('the test alternative on the video plane', () {
+    test('needs the seamless switch and its own', () async {
+      await settings.write(SettingsService.liveTvSeamlessPlanePreview, true);
+      expect(LivePictureHandover.planePreviewIn(settings, isAndroid: true), isFalse);
+
+      await settings.write(SettingsService.liveTvSeamlessFullscreen, true);
+      expect(LivePictureHandover.planePreviewIn(settings, isAndroid: true), isTrue);
+      expect(LivePictureHandover.planePreviewIn(settings, isAndroid: false), isFalse);
+    });
+
+    test('a player is on the plane only when it follows the video rect', () {
+      expect(LivePictureHandover.isOnPlane(_MovablePlayer()), isFalse);
+      expect(LivePictureHandover.isOnPlane(_PlanePlayer()), isTrue);
     });
   });
 

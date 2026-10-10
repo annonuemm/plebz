@@ -62,6 +62,23 @@ abstract interface class VideoOutputHandover {
   Future<void> releaseWindowOutput();
 }
 
+/// A player whose window surface can sit in a box behind a hole in the app
+/// instead of filling the screen (Plebz): the guide's live preview on the
+/// video plane, which grows into the full-screen player and shrinks back with
+/// no move between surfaces at all. Android only, on both backends.
+abstract interface class VideoViewportTarget {
+  /// Set before the core is built: the surface follows the reported rect.
+  bool get followsVideoRect;
+
+  /// While a transition moves the picture itself ([driveVideoRect]), the
+  /// rects a `Video` widget reports are ignored: they describe a page under a
+  /// transform, a frame late.
+  set videoRectDriven(bool value);
+
+  /// Places the picture at this box (window pixels), whatever [videoRectDriven] says.
+  Future<void> driveVideoRect({required int left, required int top, required int right, required int bottom});
+}
+
 /// The desktop implementation. The request is the same on every such platform
 /// — a Windows child HWND and a Wayland subsurface take identical geometry —
 /// so the mixin carries the call instead of each platform repeating it.

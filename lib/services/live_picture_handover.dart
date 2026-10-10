@@ -71,6 +71,17 @@ class LivePictureHandover {
     return !matchesFrameRate && !tunnels;
   }
 
+  /// Whether a preview that may be handed over plays on the video plane, behind
+  /// a hole in the guide, rather than in a texture (the test alternative).
+  static bool planePreviewIn(SettingsService settings, {bool? isAndroid}) =>
+      enabledIn(settings, isAndroid: isAndroid) && settings.read(SettingsService.liveTvSeamlessPlanePreview);
+
+  /// Whether [player] plays on the video plane in a box (see [planePreviewIn]).
+  static bool isOnPlane(Player player) => switch (player) {
+    final VideoViewportTarget target => target.followsVideoRect,
+    _ => false,
+  };
+
   /// Whether this picture can move between texture and window while it plays.
   ///
   /// IPTV only: a playlist stream is just opened, while a server's live

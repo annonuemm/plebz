@@ -319,6 +319,12 @@ open class MpvPlayerPlugin(
     }
     val entry = textureEntry
     if (entry == null) {
+      val core = playerCore
+      if (core?.followsVideoRect == true && right > left && bottom > top) {
+        core.setViewport(left, top, right, bottom)
+        result.success("viewport(${right - left}x${bottom - top})")
+        return
+      }
       result.success("no-texture")
       return
     }
@@ -407,6 +413,9 @@ open class MpvPlayerPlugin(
     // The picture goes in a box beside other content, so it is drawn into the
     // texture created above instead of into a surface of the app's own.
     val inlineSurface = call.argument<Boolean>("inlineSurface") ?: false
+    // The picture sits in a box behind a hole in the app (Plebz); see
+    // MpvPlayerCore.followsVideoRect.
+    val followsVideoRect = call.argument<Boolean>("followsVideoRect") ?: false
     // Video cores need the Activity (surface/view hierarchy); the audio-only
     // core is built on the application context so it can outlive it.
     val coreContext: Context? = if (audioOnly) applicationContext else activity
@@ -470,6 +479,7 @@ open class MpvPlayerPlugin(
           // Before initialize: the core decides its whole view scaffold on
           // whether it has a texture to fill.
           if (inlineSurface) textureOutputSurface = textureSurface
+          this.followsVideoRect = followsVideoRect
         }
         playerCore = core
         coreInstanceId = call.argument<Number>("instanceId")?.toLong()

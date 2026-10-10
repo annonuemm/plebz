@@ -717,6 +717,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get liveTvSeamlessFullscreenDescription => 'Im Programmführer wird die laufende Vorschau mit OK zum Vollbild und mit Zurück wieder zum Kasten, ohne neu zu laden. Nur für IPTV-Sender. Beim Einschalten gehen „Bildrate auch bei Live-TV anpassen“ und „Tunnelwiedergabe für Live-TV“ aus, und Live-TV schaltet die „Automatische Auflösung“ nicht mehr um: Jede dieser Umschaltungen würde das Bild unterbrechen. Filme und Serien behalten ihre Einstellungen. Ein Shader im mpv-Player kann den Übergang kurz stocken lassen.';
 	@override String get liveTvSeamlessWindowSurface => 'Vollbild auf der Videofläche';
 	@override String get liveTvSeamlessWindowSurfaceDescription => 'Aus: Das Bild bleibt auch im Vollbild auf der App-Leinwand. Es muss nichts umziehen, also friert nichts ein und der Ton bleibt synchron; die Box zeichnet jedes Bild selbst, und es gibt kein HDR und keine Untertitel-Anzeige. An: Nach dem Großziehen zieht das Bild auf die Videofläche des Fernsehers um, mit voller Qualität und HDR. Manche Boxen vertragen diesen Umzug nicht zuverlässig: Das Bild kann kurz stocken, einfrieren oder der Ton aus dem Takt geraten.';
+	@override String get liveTvSeamlessPlanePreview => 'Vorschau auf der Videofläche (Test)';
+	@override String get liveTvSeamlessPlanePreviewDescription => 'Die Vorschau läuft statt auf der App-Leinwand direkt auf der Videofläche der Box, die App lässt dafür an der Stelle des Kastens ein Loch. So entschachtelt die Box Zeilensprung-Sender wie die RAW-Kopien auch in der Vorschau, und beim Großziehen muss das Bild nicht umziehen. Beim Wachsen und Schrumpfen kann für einen Moment ein schmaler Rand zu sehen sein.';
 	@override String get showActorFilmography => 'Vollständige Filmografie';
 	@override String get showActorFilmographyDescription => 'Auf der Seite eines Schauspielers auch die Filme und Serien auflisten, die du nicht hast — ausgegraut. Nutzt deinen TMDB-Schlüssel.';
 	@override String get backupPickTitle => 'Sicherung wählen';
@@ -4391,6 +4393,8 @@ extension on TranslationsDe {
 			'settings.liveTvSeamlessFullscreenDescription' => 'Im Programmführer wird die laufende Vorschau mit OK zum Vollbild und mit Zurück wieder zum Kasten, ohne neu zu laden. Nur für IPTV-Sender. Beim Einschalten gehen „Bildrate auch bei Live-TV anpassen“ und „Tunnelwiedergabe für Live-TV“ aus, und Live-TV schaltet die „Automatische Auflösung“ nicht mehr um: Jede dieser Umschaltungen würde das Bild unterbrechen. Filme und Serien behalten ihre Einstellungen. Ein Shader im mpv-Player kann den Übergang kurz stocken lassen.',
 			'settings.liveTvSeamlessWindowSurface' => 'Vollbild auf der Videofläche',
 			'settings.liveTvSeamlessWindowSurfaceDescription' => 'Aus: Das Bild bleibt auch im Vollbild auf der App-Leinwand. Es muss nichts umziehen, also friert nichts ein und der Ton bleibt synchron; die Box zeichnet jedes Bild selbst, und es gibt kein HDR und keine Untertitel-Anzeige. An: Nach dem Großziehen zieht das Bild auf die Videofläche des Fernsehers um, mit voller Qualität und HDR. Manche Boxen vertragen diesen Umzug nicht zuverlässig: Das Bild kann kurz stocken, einfrieren oder der Ton aus dem Takt geraten.',
+			'settings.liveTvSeamlessPlanePreview' => 'Vorschau auf der Videofläche (Test)',
+			'settings.liveTvSeamlessPlanePreviewDescription' => 'Die Vorschau läuft statt auf der App-Leinwand direkt auf der Videofläche der Box, die App lässt dafür an der Stelle des Kastens ein Loch. So entschachtelt die Box Zeilensprung-Sender wie die RAW-Kopien auch in der Vorschau, und beim Großziehen muss das Bild nicht umziehen. Beim Wachsen und Schrumpfen kann für einen Moment ein schmaler Rand zu sehen sein.',
 			'settings.showActorFilmography' => 'Vollständige Filmografie',
 			'settings.showActorFilmographyDescription' => 'Auf der Seite eines Schauspielers auch die Filme und Serien auflisten, die du nicht hast — ausgegraut. Nutzt deinen TMDB-Schlüssel.',
 			'settings.backupPickTitle' => 'Sicherung wählen',
@@ -4802,10 +4806,10 @@ extension on TranslationsDe {
 			'subtitlingStyling.overrideForce' => 'Erzwingen',
 			'subtitlingStyling.overrideStrip' => 'Formatierung entfernen',
 			'subtitlingStyling.positionTop' => 'Oben',
-			'subtitlingStyling.positionBottom' => 'Unten',
-			'subtitlingStyling.useMargins' => 'Ränder verwenden',
 			_ => null,
 		} ?? switch (path) {
+			'subtitlingStyling.positionBottom' => 'Unten',
+			'subtitlingStyling.useMargins' => 'Ränder verwenden',
 			'subtitlingStyling.useMarginsDescription' => 'Textuntertitel im Bereich außerhalb des Videos zulassen. Gestylte Untertitel behalten möglicherweise ihre ursprüngliche Position.',
 			'subtitlingStyling.anchorToScreen' => 'Am Bildschirm verankern',
 			'subtitlingStyling.anchorToScreenDescription' => 'Textuntertitel in den schwarzen Balken unter Breitbildvideos anzeigen',
@@ -5316,10 +5320,10 @@ extension on TranslationsDe {
 			'explore.detail.status' => 'Status',
 			'explore.detail.nextEpisode' => 'Nächste Folge',
 			'explore.totalResults' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Ergebnis', other: '${n} Ergebnisse', ), 
-			'explore.watchlistKeptLocally' => ({required Object provider}) => 'In Plebz gemerkt: ${provider} kennt diesen Titel noch nicht. Sobald er dort auftaucht, wandert er auf die Merkliste dort.',
-			'explore.watchlistKeptLocallyNoIds' => 'In Plebz gemerkt: Der Server hat für diesen Titel keine externen IDs, darum bleibt er auf diesem Gerät.',
 			_ => null,
 		} ?? switch (path) {
+			'explore.watchlistKeptLocally' => ({required Object provider}) => 'In Plebz gemerkt: ${provider} kennt diesen Titel noch nicht. Sobald er dort auftaucht, wandert er auf die Merkliste dort.',
+			'explore.watchlistKeptLocallyNoIds' => 'In Plebz gemerkt: Der Server hat für diesen Titel keine externen IDs, darum bleibt er auf diesem Gerät.',
 			'watchlist.typeFilter' => 'Anzeigen',
 			'watchlist.statusFilter' => 'Status',
 			'watchlist.allTypes' => 'Filme und Serien',
@@ -5830,10 +5834,10 @@ extension on TranslationsDe {
 			'videoSettings.zoom' => 'Zoom',
 			'videoSettings.sleepTimer' => 'Schlaftimer',
 			'videoSettings.audioSync' => 'Audio-Synchronisation',
-			'videoSettings.subtitleSync' => 'Untertitel-Synchronisation',
-			'videoSettings.hdr' => 'HDR',
 			_ => null,
 		} ?? switch (path) {
+			'videoSettings.subtitleSync' => 'Untertitel-Synchronisation',
+			'videoSettings.hdr' => 'HDR',
 			'videoSettings.hdrUnsupported' => 'HDR ist hier nicht verfügbar – dieser Desktop-Compositor oder Videoausgang kann es nicht übertragen.',
 			'videoSettings.hdrToneMapping' => 'HDR-Tone-Mapping',
 			'videoSettings.hdrToneMappingCompositor' => 'Compositor',
@@ -6344,10 +6348,10 @@ extension on TranslationsDe {
 			'plebz.profilesGroup' => 'Mehrere Personen?',
 			'plebz.profilesHint' => 'Plebz kann mehrere Profile haben, auch wenn alle dasselbe Plex-Konto nutzen. Damit jede Person ihren eigenen Fortschritt, eigene Häkchen und eine eigene Merkliste hat, verbinde jedes Profil mit einem eigenen Simkl-Konto und schalte dort „Eigener Fortschritt über Simkl“ ein. Weitere Profile legst du unter Einstellungen → Profile → „Plebz-Profil hinzufügen“ an.',
 			'plebz.profilesHintConnectFirst' => 'Verbinde unten unter Dienste zuerst Simkl für dieses Profil.',
-			'plebz.addSourceFirst' => 'Füge zuerst eine Quelle hinzu: einen Server oder eine IPTV-Playlist.',
-			'plebz.finish' => 'Fertig',
 			_ => null,
 		} ?? switch (path) {
+			'plebz.addSourceFirst' => 'Füge zuerst eine Quelle hinzu: einen Server oder eine IPTV-Playlist.',
+			'plebz.finish' => 'Fertig',
 			'plebz.setupAgain' => 'Einrichtung erneut starten',
 			'plebz.setupAgainDescription' => 'Aussehen, Quellen und Dienste, Schritt für Schritt',
 			'plebz.updateAvailableTitle' => 'Update verfügbar',

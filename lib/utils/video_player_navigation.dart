@@ -45,7 +45,7 @@ class VideoPlayerRoute extends PageRouteBuilder<bool> {
   /// sits, in the navigator's coordinates: the player grows out of it instead
   /// of appearing at once (Plebz), and can shrink back into it on the way out
   /// ([shrinkIntoPictureOnPop]).
-  VideoPlayerRoute({required WidgetBuilder builder, this.watchTogetherLease, Rect? pictureFrom})
+  VideoPlayerRoute({required WidgetBuilder builder, this.watchTogetherLease, this.pictureFrom})
     : super(
         settings: const RouteSettings(name: kVideoPlayerRouteName),
         pageBuilder: (context, _, _) => builder(context),
@@ -58,6 +58,17 @@ class VideoPlayerRoute extends PageRouteBuilder<bool> {
       );
 
   static const Duration _pictureMoveDuration = Duration(milliseconds: 300);
+
+  /// The box the player grows out of (see the constructor), or null.
+  final Rect? pictureFrom;
+
+  /// Where the page stands at [animationValue] of the growth from [from] to a
+  /// screen of [screen]: the one formula the transition and a picture that
+  /// follows it on the video plane both use.
+  static Rect pictureRectAt(Rect from, Size screen, double animationValue) {
+    final t = Curves.easeInOutCubic.transform(animationValue.clamp(0.0, 1.0));
+    return Rect.lerp(from, Offset.zero & screen, t)!;
+  }
 
   static Widget _appearAtOnce(BuildContext context, Animation<double> _, Animation<double> _, Widget child) => child;
 
@@ -692,7 +703,7 @@ class _LivePictureTransition extends StatelessWidget {
       builder: (context, child) {
         final size = MediaQuery.sizeOf(context);
         final t = Curves.easeInOutCubic.transform(animation.value.clamp(0.0, 1.0));
-        final rect = Rect.lerp(from, Offset.zero & size, t)!;
+        final rect = VideoPlayerRoute.pictureRectAt(from, size, animation.value);
         final scaleX = size.width > 0 ? rect.width / size.width : 1.0;
         final scaleY = size.height > 0 ? rect.height / size.height : 1.0;
         final scale = (scaleX + scaleY) / 2;

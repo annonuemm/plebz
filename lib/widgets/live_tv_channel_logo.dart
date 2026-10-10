@@ -239,6 +239,13 @@ class LiveTvChannelLogo extends StatelessWidget {
       ? channelLogoToneTargetFor(surface: Colors.white, foreground: tokens(context).bg)
       : logoToneTarget;
 
+  /// Whether a light mark beside real colour is darkened too. Not on a flat
+  /// focus fill: there only a logo that would vanish on the white is — an
+  /// all-white wordmark, or one with a small accent — while one whose colour
+  /// carries it (Sat.1's ball) keeps its white parts. Darkened, those read as
+  /// a negative of the logo (the viewer's call, 2026-10-10).
+  bool _remapsMixedAt(BuildContext context) => !OckerFlatFocusInk.invertingAt(context);
+
   @override
   Widget build(BuildContext context) {
     final ratio = MediaQuery.devicePixelRatioOf(context);
@@ -272,6 +279,7 @@ class LiveTvChannelLogo extends StatelessWidget {
       height: height,
       fit: fit,
       logoToneTarget: _toneAt(context),
+      logoToneRemapMixed: _remapsMixedAt(context),
       placeholder: (_, _) => const SizedBox.shrink(),
       // Not an image the decoder knows: perhaps an SVG under another name.
       errorWidget: (context, _, _) => _svgRead(logo, next),
@@ -301,6 +309,7 @@ class LiveTvChannelLogo extends StatelessWidget {
           height: height,
           fit: fit,
           logoToneTarget: _toneAt(context),
+          logoToneRemapMixed: _remapsMixedAt(context),
           placeholder: (_, _) => const SizedBox.shrink(),
           errorWidget: (context, _, _) {
             _markDead(logo);

@@ -13,6 +13,7 @@ import 'package:plezy/theme/mono_tokens.dart';
 import 'package:plezy/redesign/ocker_filter_glyph.dart';
 import 'package:plezy/screens/settings/plebz_settings_rows.dart' show RedesignGround, redesignGroundOf;
 import 'package:plezy/theme/glass_backdrop.dart' show flachGroundGlows;
+import 'package:plezy/widgets/app_icon.dart';
 import 'package:plezy/widgets/fitted_metadata_line.dart';
 import 'package:plezy/widgets/focusable_list_tile.dart';
 import 'package:plezy/widgets/focusable_tab_chip.dart';
@@ -272,6 +273,34 @@ void main() {
     expect((pill.decoration! as BoxDecoration).color, tk.bg.withValues(alpha: 0.82));
   });
 
+  testWidgets('a pane is tinted with the accent, a shade darker than the neutral grey it was', (tester) async {
+    Future<Color> paneOn(ThemeData theme) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: const OckerGlass(borderRadius: BorderRadius.zero, child: SizedBox(width: 100, height: 100)),
+        ),
+      );
+      // The theme eases from the last one.
+      await tester.pumpAndSettle();
+      final box = tester.widget<DecoratedBox>(
+        find.descendant(of: find.byType(OckerGlass), matching: find.byType(DecoratedBox)).first,
+      );
+      return (box.decoration as BoxDecoration).color!;
+    }
+
+    final red = _flach(accent: const Color(0xFFE50914));
+    final redPane = await paneOn(red);
+    expect(redPane.r, greaterThan(redPane.b), reason: 'warm beside red lights, not bluish');
+    final tk = red.extension<MonoTokens>()!;
+    final neutral = Color.alphaBlend(tk.ink(0.05), tk.bg);
+    expect(redPane.computeLuminance(), lessThan(neutral.computeLuminance()));
+    expect(redPane.computeLuminance(), greaterThan(tk.bg.computeLuminance()), reason: 'still a step off the ground');
+
+    final bluePane = await paneOn(_flach(accent: const Color(0xFF2E6BFF)));
+    expect(bluePane.b, greaterThan(bluePane.r), reason: 'it follows the accent');
+  });
+
   testWidgets('the rail marks the page on show with a stroke of the accent, under the Plebz mark', (tester) async {
     tester.view.physicalSize = const Size(1280, 720);
     tester.view.devicePixelRatio = 1.0;
@@ -303,6 +332,52 @@ void main() {
         .widgetList<DecoratedBox>(find.byType(DecoratedBox))
         .where((box) => box.decoration is BoxDecoration && (box.decoration as BoxDecoration).color == tk.accent);
     expect(strokes, hasLength(1));
+    // Just before its own glyph, not out at the screen's edge.
+    final stroke = tester.getRect(find.byWidget(strokes.single));
+    final glyph = tester.getRect(
+      find.descendant(of: find.byKey(OckerSideRail.itemKey(NavigationTabId.discover)), matching: find.byType(AppIcon)),
+    );
+    expect(stroke.left, greaterThan(0));
+    expect(glyph.left - stroke.right, inInclusiveRange(4, 14));
+    expect(stroke.center.dy, closeTo(glyph.center.dy, 0.5));
+  });
+
+  testWidgets('the open rail\'s focus fill keeps clear room from both sides of the pane', (tester) async {
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: _flach(),
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              height: 1080,
+              child: OckerSideRail(
+                tabs: NavigationTab.getVisibleTabs(isOffline: false),
+                selectedTab: NavigationTabId.discover,
+                expanded: true,
+                onDestinationSelected: (_) {},
+                onNavigateToContent: () {},
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final row = find.byKey(OckerSideRail.itemKey(NavigationTabId.libraries));
+    tester.widget<Focus>(find.descendant(of: row, matching: find.byType(Focus)).first).focusNode!.requestFocus();
+    await tester.pumpAndSettle();
+
+    final fill = tester.getRect(find.descendant(of: row, matching: find.byType(OckerGlassFocusFill)));
+    final pane = tester.getRect(find.byType(OckerSideRail));
+    // In the design's units, 24 of room either side of a fill 54 high,
+    // whatever the screen scales them by.
+    final unit = fill.height / 54;
+    expect(fill.left - pane.left, closeTo(24 * unit, 0.5));
+    expect(pane.right - fill.right, closeTo(24 * unit, 0.5));
   });
 
   testWidgets('the row on show in a group column is a stroke of the accent, not a pane', (tester) async {

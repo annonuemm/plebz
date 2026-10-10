@@ -2197,7 +2197,7 @@ class GuideTabState extends State<GuideTab>
           // faintest, what is on brightest — and the gone ones' words dimmed
           // with them. Focus is the white fill behind, as everywhere.
           final gone = isPast && !isArchived;
-          fillColor = tk.ink(gone ? 0.025 : (isCurrentlyAiring ? 0.09 : 0.055));
+          fillColor = ockerFlatWash(tk, gone ? 0.025 : (isCurrentlyAiring ? 0.09 : 0.055));
           titleColor = gone ? tk.ink(0.4) : tk.ink(1);
           subtitleColor = gone ? tk.ink(0.3) : tk.ink(0.5);
         } else if (glass) {
@@ -2505,7 +2505,11 @@ class _ChannelCellState extends State<_ChannelCell> {
                 // the cell is there to show. Under glass the fill is a wash over
                 // the page's gradient, and focus a pane of bright glass behind.
                 color: glass
-                    ? (widget.isFocused ? Colors.transparent : tk.ink(_hovered ? 0.10 : 0.06))
+                    ? (widget.isFocused
+                          ? Colors.transparent
+                          : flat
+                          ? ockerFlatWash(tk, _hovered ? 0.10 : 0.06)
+                          : tk.ink(_hovered ? 0.10 : 0.06))
                     : widget.isFocused
                     ? theme.colorScheme.primary
                     : (_hovered

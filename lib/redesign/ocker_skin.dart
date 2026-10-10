@@ -541,11 +541,21 @@ class RenderOckerFlatFocusInk extends RenderProxyBox {
 CustomPainter? _edge(BuildContext context, ShapeBorder shape) =>
     ockerFlat(context) ? null : _OckerGlassEdge(shape, Directionality.of(context));
 
-/// A flat surface's fill (Plebz): the ink at [strength] over the ground,
-/// opaque.
+/// A wash on "Flach"'s surfaces (Plebz), where [MonoTokens.ink] at
+/// [strength] was: the ink taken half the way to the accent.
+///
+/// A neutral grey beside the ground's lights of the accent read as their
+/// opposite — bluish beside a red — and a step too light. Tinted with the
+/// accent, a surface sits in the colour of the lights, a shade darker (the
+/// viewer's call, 2026-10-10). It follows whatever accent is chosen.
+Color ockerFlatWash(MonoTokens tk, double strength) =>
+    Color.lerp(tk.ink(1), tk.accent, 0.52)!.withValues(alpha: (strength * 1.25).clamp(0.0, 1.0));
+
+/// A flat surface's fill (Plebz): [ockerFlatWash] at [strength] over the
+/// ground, opaque.
 Color _flatFill(BuildContext context, double strength) {
   final tk = tokens(context);
-  return Color.alphaBlend(tk.ink(strength), tk.bg);
+  return Color.alphaBlend(ockerFlatWash(tk, strength), tk.bg);
 }
 
 /// Whether the play buttons wear the logo's gradient: Glas in the Plebz

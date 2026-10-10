@@ -533,7 +533,10 @@ class _RailGeometry {
   /// stage of the opening, so nothing reflows as it moves.
   final double labelRight;
 
-  double get inset => 10 * scale;
+  /// The room between the open pane's sides and a capsule. "Flach" (Plebz)
+  /// gives its white focus fill clear room on both, so it reads as a mark on
+  /// the pane rather than a bar across it (the viewer's call, 2026-10-10).
+  double get inset => (flat ? 24 : 10) * scale;
   double get iconSize => (flat ? 30 : 44) * scale;
   double get rowHeight => (flat ? 72 : 88) * scale;
   double get subRowHeight => 72 * scale;
@@ -602,7 +605,7 @@ class _RailItemState extends State<_RailItem> {
     final g = widget.geometry;
     final scale = g.scale;
     final height = g.rowHeight;
-    final capsuleHeight = g.flat ? 60 * scale : lerpDouble(64 * scale, height - 8 * scale, g.t)!;
+    final capsuleHeight = g.flat ? 54 * scale : lerpDouble(64 * scale, height - 8 * scale, g.t)!;
     final lit = _focused || widget.active;
     // Flat focus is a white fill: the glyph and word on it go dark (Plebz).
     final flatFocused = _focused && tk.flat;
@@ -641,19 +644,18 @@ class _RailItemState extends State<_RailItem> {
                     ),
                   ),
                 // Flat: the destination on show is its glyph at full ink and a
-                // short stroke of the accent at the screen's edge. A glyph in
-                // the accent read as a fault rather than as "here".
+                // short stroke of the accent just before it, as its rows below
+                // mark theirs. A glyph in the accent read as a fault rather
+                // than as "here"; a stroke at the screen's edge, far from its
+                // row, as a stray line (the viewer's call, 2026-10-10).
                 if (widget.active && tk.flat)
                   Positioned(
-                    left: 0,
+                    left: g.iconLeft - 16 * scale,
                     top: (height - 24 * scale) / 2,
-                    width: 3 * scale,
+                    width: 4 * scale,
                     height: 24 * scale,
                     child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: tk.accent,
-                        borderRadius: BorderRadius.horizontal(right: Radius.circular(3 * scale)),
-                      ),
+                      decoration: BoxDecoration(color: tk.accent, borderRadius: BorderRadius.circular(2 * scale)),
                     ),
                   ),
                 Positioned(
@@ -663,7 +665,9 @@ class _RailItemState extends State<_RailItem> {
                     color: flatFocused
                         ? tk.bg
                         : tk.flat
-                        ? tk.ink(widget.active ? 1 : 0.42)
+                        // The glyph in its word's grey: a fainter symbol beside
+                        // it read as the row's two halves not matching.
+                        ? tk.ink(widget.active ? 1 : 0.62)
                         : (lit ? tk.ink(1) : tk.ink(0.55)),
                     builder: (context, ink) =>
                         AppIcon(widget.icon, size: g.iconSize, fill: navIconFill, weight: navIconWeight, color: ink),

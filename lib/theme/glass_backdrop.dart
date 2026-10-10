@@ -1,3 +1,7 @@
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../services/settings_service.dart' show GlasAccent;
@@ -152,17 +156,142 @@ List<RadialGradient> flachGroundGlows(MonoTokens tk) {
   return [light(const Alignment(-0.95, -1), 0.9, 0.16), light(const Alignment(1, 1), 1.0, 0.12)];
 }
 
-/// [flachGroundGlows] as a layer over whatever is under it.
+/// [flachGroundGlows] as a layer over whatever is under it — on [ground],
+/// which it then fills, when one is given.
+///
+/// Drawn from a picture prepared once per size (Plebz). Each light is a
+/// radial gradient the size of the screen, worked out pixel by pixel on every
+/// frame when drawn as such: under each page, and twice more on a spotlight
+/// page, which made Flach's page fades stutter on a television. A prepared
+/// picture is one plain pass however many lights and fills went into it.
 class FlachGroundGlow extends StatelessWidget {
-  const FlachGroundGlow({super.key, required this.glows});
+  const FlachGroundGlow({super.key, required this.glows, this.ground});
 
   final List<RadialGradient> glows;
+  final Color? ground;
 
   @override
-  Widget build(BuildContext context) => Stack(
-    fit: StackFit.expand,
-    children: [for (final glow in glows) DecoratedBox(decoration: BoxDecoration(gradient: glow))],
+  Widget build(BuildContext context) => SizedBox.expand(
+    child: CustomPaint(
+      painter: _PreparedGroundPainter(
+        glows: glows,
+        ground: ground,
+        devicePixelRatio: MediaQuery.maybeDevicePixelRatioOf(context) ?? View.of(context).devicePixelRatio,
+      ),
+    ),
   );
+}
+
+class _PreparedGroundPainter extends CustomPainter {
+  const _PreparedGroundPainter({required this.glows, required this.ground, required this.devicePixelRatio});
+
+  final List<RadialGradient> glows;
+  final Color? ground;
+  final double devicePixelRatio;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    final box = Offset.zero & size;
+    if (glows.isEmpty) {
+      // A plain ground is one fill already.
+      if (ground case final ground?) canvas.drawRect(box, Paint()..color = ground);
+      return;
+    }
+    final picture = PreparedGrounds.pictureFor(glows, ground: ground, size: size, devicePixelRatio: devicePixelRatio);
+    canvas.drawImageRect(
+      picture,
+      Offset.zero & Size(picture.width.toDouble(), picture.height.toDouble()),
+      box,
+      Paint()..filterQuality = FilterQuality.low,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_PreparedGroundPainter oldDelegate) =>
+      !listEquals(oldDelegate.glows, glows) ||
+      oldDelegate.ground != ground ||
+      oldDelegate.devicePixelRatio != devicePixelRatio;
+}
+
+/// The pictures [FlachGroundGlow] draws, prepared at the device's pixels and
+/// kept for the few sizes on screen at once: the shell, a page, a spotlight.
+@visibleForTesting
+abstract final class PreparedGrounds {
+  static const int _kept = 3;
+  static const double _largestSide = 1920;
+
+  // Insertion order is use order: the first is the one used longest ago.
+  static final Map<_PreparedGroundKey, ui.Image> _pictures = {};
+
+  /// How many pictures were prepared, for tests.
+  static int debugPrepared = 0;
+
+  static void debugReset() {
+    for (final picture in _pictures.values) {
+      picture.dispose();
+    }
+    _pictures.clear();
+    debugPrepared = 0;
+  }
+
+  static ui.Image pictureFor(
+    List<RadialGradient> glows, {
+    required Color? ground,
+    required Size size,
+    required double devicePixelRatio,
+  }) {
+    // At the device's pixels, but no larger than a 1080p screen: a box that
+    // composites at 4K would hold four times the memory for lights too soft
+    // to tell apart from their double-size copy.
+    final physical = size * devicePixelRatio;
+    final shrink = math.min(1.0, _largestSide / math.max(physical.width, physical.height));
+    final width = math.max(1, (physical.width * shrink).round());
+    final height = math.max(1, (physical.height * shrink).round());
+    final key = _PreparedGroundKey(List.unmodifiable(glows), ground, width, height);
+    final kept = _pictures.remove(key);
+    if (kept != null) return _pictures[key] = kept;
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final box = Offset.zero & Size(width.toDouble(), height.toDouble());
+    if (ground != null) canvas.drawRect(box, Paint()..color = ground);
+    for (final glow in glows) {
+      canvas.drawRect(box, Paint()..shader = glow.createShader(box));
+    }
+    final recording = recorder.endRecording();
+    final picture = recording.toImageSync(width, height);
+    recording.dispose();
+    debugPrepared++;
+
+    _pictures[key] = picture;
+    while (_pictures.length > _kept) {
+      // A frame already recorded keeps its own hold on the picture.
+      _pictures.remove(_pictures.keys.first)!.dispose();
+    }
+    return picture;
+  }
+}
+
+@immutable
+class _PreparedGroundKey {
+  const _PreparedGroundKey(this.glows, this.ground, this.width, this.height);
+
+  final List<RadialGradient> glows;
+  final Color? ground;
+  final int width;
+  final int height;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _PreparedGroundKey &&
+      other.width == width &&
+      other.height == height &&
+      other.ground == ground &&
+      listEquals(other.glows, glows);
+
+  @override
+  int get hashCode => Object.hash(Object.hashAll(glows), ground, width, height);
 }
 
 /// [child] on the glass ground, where the theme is glass; [child] alone
@@ -178,16 +307,15 @@ class GlassBackdrop extends StatelessWidget {
     if (tk == null || !tk.glass) return child;
     // Flat (Plebz): no gradient, only the accent's two faint lights — and the
     // same widgets on every ground, so switching it keeps the page under it.
+    // Ground and lights come as one prepared picture ([FlachGroundGlow]),
+    // which takes the taps that reach it, as the plain fill did.
     if (tk.flat) {
-      return ColoredBox(
-        color: tk.bg,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            IgnorePointer(child: FlachGroundGlow(glows: flachGroundGlows(tk))),
-            child,
-          ],
-        ),
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          FlachGroundGlow(glows: flachGroundGlows(tk), ground: tk.bg),
+          child,
+        ],
       );
     }
     if (_plain(tk)) return ColoredBox(color: tk.bg, child: child);

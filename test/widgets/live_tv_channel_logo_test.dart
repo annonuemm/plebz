@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plezy/models/livetv_channel.dart';
+import 'package:plezy/redesign/ocker_skin.dart';
 import 'package:plezy/services/iptv/public_logo_index.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
@@ -206,6 +207,41 @@ void main() {
       await pumpLogo(tester, LiveTvChannel(key: 'channel/7', title: 'DMAX HD', serverId: 'plex-1'));
 
       expect(drawn(tester), isNull);
+    });
+  });
+
+  group('on Flach\'s white focus fill', () {
+    final sat1 = LiveTvChannel(key: 'iptv:src:sat1', title: 'Sat.1', thumb: 'http://logos.invalid/sat1.png');
+
+    Future<OptimizedMediaImage> drawnFocused(WidgetTester tester, {required bool focused}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+          home: Scaffold(
+            body: OckerFlatFocusInk(
+              invert: focused,
+              child: SizedBox(
+                width: 120,
+                height: 60,
+                child: LiveTvChannelLogo(channel: sat1, client: null, fallback: (_) => Text(sat1.displayName)),
+              ),
+            ),
+          ),
+        ),
+      );
+      return tester.widget<OptimizedMediaImage>(find.byType(OptimizedMediaImage));
+    }
+
+    testWidgets('only a logo that would vanish on the white is darkened', (tester) async {
+      final focused = await drawnFocused(tester, focused: true);
+      expect(focused.logoToneTarget, isNotNull, reason: 'an all-white logo still turns dark');
+      expect(focused.logoToneRemapMixed, isFalse, reason: 'one whose colour carries it keeps its white parts');
+    });
+
+    testWidgets('unfocused, the logo is drawn as the caller asked', (tester) async {
+      final unfocused = await drawnFocused(tester, focused: false);
+      expect(unfocused.logoToneTarget, isNull);
+      expect(unfocused.logoToneRemapMixed, isTrue);
     });
   });
 }

@@ -157,6 +157,17 @@ extension _VideoPlayerPlaybackServiceMethods on VideoPlayerScreenState {
 
     _playerStreamSubscriptions.add(currentPlayer.streams.error.listen(_onPlayerError));
 
+    // How the provider forwards a live stream (ExoPlayer reports it), kept in
+    // the in-app log: the question behind remembering where it forwards to,
+    // for faster zapping (Plebz). Shape only, never the address.
+    if (widget.isLive) {
+      _playerStreamSubscriptions.add(
+        currentPlayer.streams.log
+            .where((log) => log.prefix == 'redirect')
+            .listen((log) => appLogger.i('IPTV: ${log.text}')),
+      );
+    }
+
     // warn is included so we can catch ffmpeg's "HTTP error 4xx/5xx" line in
     // _onPlayerLog — the error-level log that follows omits the status code.
     _playerStreamSubscriptions.add(

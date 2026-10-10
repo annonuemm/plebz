@@ -92,6 +92,31 @@ void main() {
     expect(outcome.isAborted, isTrue);
   });
 
+  test('a file taken over while it plays settles as rendered, on either backend', () async {
+    // The guide's preview handed to the full-screen player (Plebz): no load
+    // will start, and the frame has long been on screen.
+    for (final exo in [false, true]) {
+      final outcome = PlaybackOpenOutcome.armForTesting(player, startsOnAndroidExoPlayer: exo);
+
+      outcome.adoptPlayingFile();
+
+      expect(await outcome.firstFrame, isTrue);
+      expect(await outcome.fileLoaded, isTrue);
+      expect(await outcome.primaryMediaReady, isTrue);
+      expect(outcome.isSettled, isTrue);
+      expect(outcome.isAborted, isFalse);
+    }
+  });
+
+  test('a taken-over file cannot revive an open that already failed', () async {
+    final outcome = PlaybackOpenOutcome.armForTesting(player);
+    outcome.abort('screen disposed');
+
+    outcome.adoptPlayingFile();
+
+    expect(await outcome.firstFrame, isFalse);
+  });
+
   test('abort settles every pending waiter and is idempotent', () async {
     final outcome = PlaybackOpenOutcome.armForTesting(player);
 

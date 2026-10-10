@@ -133,6 +133,16 @@ class PlaybackOpenOutcome {
     _release();
   }
 
+  /// The attempt took over a file that is already playing — the guide's live
+  /// preview handed to the full-screen player (Plebz). Its first frame is on
+  /// screen already and no load will start to delimit signals, so the open
+  /// settles as rendered now.
+  void adoptPlayingFile() {
+    if (isSettled) return;
+    _loadStarted = true;
+    _onPlaybackRestart();
+  }
+
   bool get _mpvSignalsActive => _source == _OpenSignalSource.mpv || _backendSwitched.isCompleted;
 
   void _onFileStarted() {

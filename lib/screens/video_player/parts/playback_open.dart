@@ -195,8 +195,13 @@ extension _VideoPlayerOpenMethods on VideoPlayerScreenState {
     enabledForLiveTv: settingsService.read(SettingsService.matchContentFrameRateLiveTv),
   );
 
+  /// Live TV leaves the resolution alone while the guide's preview may grow
+  /// into this player as it plays (Plebz): the switch would black the screen
+  /// out right where the picture was meant to carry on.
   bool _matchesDisplayResolution(SettingsService settingsService) =>
-      Platform.isAndroid && settingsService.read(SettingsService.matchDisplayResolution);
+      Platform.isAndroid &&
+      settingsService.read(SettingsService.matchDisplayResolution) &&
+      !(widget.isLive && settingsService.read(SettingsService.liveTvSeamlessFullscreen));
 
   /// Resolve where a fresh open should start: explicit request → shuffle
   /// override → locally tracked offline progress → server view offset.

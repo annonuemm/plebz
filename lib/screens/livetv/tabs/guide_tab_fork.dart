@@ -165,6 +165,8 @@ extension _GuideTabFork on GuideTabState {
   /// is released before the full-screen player is opened. That costs the
   /// picture a moment while it is rebuilt — the alternative is two cores,
   /// which is a native change out of proportion to a preview window.
+  /// Unless the playing picture itself can be handed over
+  /// ([_handPictureToFullScreen]).
   Future<void> _tuneOrPreview(LiveTvChannel channel) async {
     final play = widget.onPlayChannel ?? tuneChannel;
     if (!_showsPreview) {
@@ -175,6 +177,7 @@ extension _GuideTabFork on GuideTabState {
       _setPreviewChannel(channel);
       return;
     }
+    if (await _handPictureToFullScreen(channel)) return;
     await _previewKey.currentState?.stopForHandover();
     if (!mounted) return;
     _setPreviewChannel(null);
@@ -184,6 +187,57 @@ extension _GuideTabFork on GuideTabState {
     // it (see [onRefreshPaused]).
     if (!mounted) return;
     _setPreviewChannel(channel);
+  }
+
+  /// The second press, with the picture already playing in the box: the
+  /// full-screen player takes that very picture on and grows out of the box,
+  /// so the channel never stops (Plebz, "Vorschau nahtlos ins Vollbild").
+  /// False when it cannot — the switch is off, or the picture is not one that
+  /// can move — and the ordinary way runs instead.
+  Future<bool> _handPictureToFullScreen(LiveTvChannel channel) async {
+    if (widget.onPlayChannel != null) return false;
+    final settings = SettingsService.instanceOrNull;
+    if (settings == null || !LivePictureHandover.enabledIn(settings)) return false;
+    final preview = _previewKey.currentState;
+    final from = _previewRectInNavigator();
+    if (preview == null || from == null) return false;
+    final picture = preview.releaseForHandover();
+    if (picture == null) return false;
+    final opened = await tuneChannel(channel, handover: picture, pictureFrom: from);
+    if (!opened) {
+      // Nothing took it on: the box plays on.
+      final stillHere = mounted ? _previewKey.currentState : null;
+      if (stillHere == null) {
+        unawaited(picture.release());
+      } else {
+        stillHere.adopt(picture);
+      }
+    }
+    return true;
+  }
+
+  /// Where the preview box sits, in the coordinates of the navigator the
+  /// player is pushed onto — where the player grows from.
+  Rect? _previewRectInNavigator() {
+    final box = _previewKey.currentContext?.findRenderObject();
+    final navigatorBox = Navigator.of(context).context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize || navigatorBox is! RenderBox) return null;
+    return box.localToGlobal(Offset.zero, ancestor: navigatorBox) & box.size;
+  }
+
+  /// The full-screen player giving its picture back on Back: the box takes it
+  /// up and shows its channel, which is where the session ended up.
+  void _takeReturnedPicture() {
+    if (!mounted || !_showsPreview) return;
+    final picture = LivePictureReturn.instance.take();
+    if (picture == null) return;
+    final preview = _previewKey.currentState;
+    if (preview == null) {
+      unawaited(picture.release());
+      return;
+    }
+    preview.adopt(picture);
+    _setPreviewChannel(picture.channel);
   }
 
   LiveTvChannel? _channelAt(int index) => index >= 0 && index < widget.channels.length ? widget.channels[index] : null;

@@ -16,6 +16,8 @@ import '../../mpv/player/video_rect_support.dart';
 import '../../mpv/player/platform/player_android.dart';
 import '../../mpv/player/platform/player_android_mpv.dart';
 import '../../providers/multi_server_provider.dart';
+import '../../services/iptv/iptv_stream_probing.dart';
+import '../../services/live_picture_handover.dart';
 import '../../services/playback_coordinator.dart';
 import '../../services/settings_service.dart';
 import '../../theme/mono_tokens.dart';
@@ -32,7 +34,9 @@ import '../video_player/player_output_format.dart';
 /// core in the app, so the two can never run at once — which is why moving to
 /// full screen stops this one first and the picture is rebuilt there rather
 /// than handed over. The alternative, two cores, is a native change out of
-/// proportion to a preview window.
+/// proportion to a preview window. With "Vorschau nahtlos ins Vollbild"
+/// (Plebz) on, the full-screen player takes this very player over instead
+/// and gives it back on Back ([releaseForHandover], [adopt]).
 ///
 /// Everything here is best-effort. A preview that cannot start says so and
 /// leaves the guide alone: the channel is still one press away from playing
@@ -79,6 +83,15 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   /// there must not ask for a rebuild of an element that is already going.
   bool _disposed = false;
 
+  /// A picture the full-screen player gave back (Plebz), waiting for the guide
+  /// to put its channel in the box. See [adopt].
+  LivePictureHandover? _pendingAdoption;
+
+  /// The picture handed to the full-screen player, still drawn here — not
+  /// owned — until the player covers the box: the route's first frame is laid
+  /// out offstage, and the box would show the channel's still for it.
+  Player? _shownAfterHandover;
+
   @override
   void initState() {
     super.initState();
@@ -105,6 +118,9 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   void dispose() {
     _disposed = true;
     WidgetsBinding.instance.removeObserver(this);
+    final waiting = _pendingAdoption;
+    _pendingAdoption = null;
+    if (waiting != null) unawaited(waiting.release());
     // Nothing awaits this: the widget is going away and the native core has
     // to be released either way.
     unawaited(_stop());
@@ -119,9 +135,63 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   /// Releases the player, so the full-screen one can take the core.
   Future<void> stopForHandover() => _stop();
 
+  /// Lets go of the playing picture without stopping it, for the full-screen
+  /// player to take on and grow out of this box (Plebz). Null when there is
+  /// nothing fit to hand over: a preview still starting or failed, or one
+  /// whose picture cannot leave its texture. The box falls back to the
+  /// channel's still, which the growing picture covers.
+  LivePictureHandover? releaseForHandover() {
+    final player = _player;
+    final session = _session;
+    final channel = widget.channel;
+    if (player == null || session == null || channel == null || _starting || _failed) return null;
+    if (!LivePictureHandover.canMove(player, session)) return null;
+    if (player case final VideoOutputHandover output when !output.rendersToTexture) return null;
+    _generation++;
+    _player = null;
+    _session = null;
+    _shownAfterHandover = player;
+    // Covered by the growing player within a few frames; drawn on under it,
+    // it would be a second live picture to composite through every frame of
+    // the growth.
+    Timer(const Duration(milliseconds: 120), () {
+      if (_disposed || !mounted || !identical(_shownAfterHandover, player)) return;
+      setState(() => _shownAfterHandover = null);
+    });
+    appLogger.d('Guide preview: handing ${channel.displayName} over to full screen');
+    return LivePictureHandover(player: player, session: session, channel: channel);
+  }
+
+  /// Takes up a picture the full-screen player gave back (Plebz): at once when
+  /// the box already shows its channel, else as soon as the guide puts that
+  /// channel in it. A picture for another channel is released instead.
+  void adopt(LivePictureHandover picture) {
+    final waiting = _pendingAdoption;
+    _pendingAdoption = null;
+    if (waiting != null && !identical(waiting, picture)) unawaited(waiting.release());
+    if (widget.channel?.key == picture.channel.key && _player == null && _session == null) {
+      _install(picture);
+      return;
+    }
+    _pendingAdoption = picture;
+  }
+
+  void _install(LivePictureHandover picture) {
+    final generation = ++_generation;
+    _shownAfterHandover = null;
+    _player = picture.player;
+    _session = picture.session;
+    _failed = false;
+    _starting = false;
+    if (!_disposed && mounted) setState(() {});
+    appLogger.d('Guide preview: ${picture.channel.displayName} plays on from full screen');
+    if (widget.streamInfo != null) unawaited(_probeStreamInfo(picture.player, picture.channel, generation));
+  }
+
   Future<void> _stop() async {
     if (_player != null || _session != null) appLogger.d('Guide preview: stopping');
     _generation++;
+    _shownAfterHandover = null;
     final player = _player;
     final session = _session;
     _player = null;
@@ -153,6 +223,15 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   }
 
   Future<void> _start(LiveTvChannel channel) async {
+    final adoption = _pendingAdoption;
+    if (adoption != null) {
+      _pendingAdoption = null;
+      if (adoption.channel.key == channel.key && adoption.isAlive) {
+        _install(adoption);
+        return;
+      }
+      unawaited(adoption.release());
+    }
     final generation = ++_generation;
     setState(() {
       _starting = true;
@@ -199,6 +278,9 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
 
       final settings = await SettingsService.getInstance();
       final hardwareDecoding = settings.read(SettingsService.enableHardwareDecoding);
+      // A preview the full-screen player may take over as it plays (Plebz)
+      // opens the way that player opens a channel; see [_applyOpeningRoute].
+      final mayHandOver = LivePictureHandover.enabledIn(settings);
       final player = Player(
         useExoPlayer: settings.read(SettingsService.useExoPlayer),
         hardwareDecoding: hardwareDecoding,
@@ -213,6 +295,10 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
           // Tunneled video lives on a hardware plane the app cannot place; a
           // picture in a box has to be composited the ordinary way.
           await player.setProperty('tunneled-playback', 'no');
+          // Read when the player is built, so before the first call that builds it.
+          if (mayHandOver) {
+            await player.setProperty('exo-buffer-tier', settings.read(SettingsService.playbackBufferTier).nativeValue);
+          }
         case PlayerAndroidMpv():
           player.inlineSurface = true;
         default:
@@ -221,6 +307,8 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       // The decoder the full screen uses, after the surface choice above:
       // left unset, mpv decoded the preview in software (Plebz).
       await player.setProperty('hwdec', mpvHwdecValue(hardwareDecoding));
+      if (mayHandOver) await _applyOpeningRoute(player, settings);
+      await applyLiveStreamProbing(player, session);
       await _applyAudioSettings(player, settings);
       if (!mounted || generation != _generation) {
         await player.dispose();
@@ -296,6 +384,26 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     notifier.value = info;
   }
 
+  /// What the full-screen player decides when it opens a channel, for a
+  /// preview it may take over without opening anything (Plebz): these choose a
+  /// file's route at open — the Dolby Vision handling, mpv's HDR-to-SDR
+  /// route, its deinterlacer — and writing them under a running picture would
+  /// reset its decoder.
+  Future<void> _applyOpeningRoute(Player player, SettingsService settings) async {
+    try {
+      final dolbyVisionOff = settings.read(SettingsService.disableDolbyVision);
+      final dvConversionMode = settings.read(SettingsService.dvConversionMode);
+      await player.setProperty('dv-conversion-mode', dolbyVisionOff ? 'off' : dvConversionMode.nativeValue);
+      if (player is PlayerAndroidMpv) {
+        await player.setProperty('hdr-sdr-conversion', settings.read(SettingsService.hdrSdrConversion).nativeValue);
+        if (settings.read(SettingsService.deinterlace)) await player.setProperty('deinterlace', 'auto');
+      }
+    } catch (e) {
+      // The picture still plays; a full-screen take-over just inherits less.
+      appLogger.d('Guide preview: opening route not applied', error: e);
+    }
+  }
+
   /// The same audio path the full-screen player takes.
   ///
   /// Without this the preview decoded to PCM while the player passed the
@@ -329,7 +437,8 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final player = _player;
+    final shown = _shownAfterHandover;
+    final player = _player ?? (shown != null && !shown.disposed ? shown : null);
     return ClipRRect(
       borderRadius: BorderRadius.circular(flatRadius(context, 8)),
       child: Stack(

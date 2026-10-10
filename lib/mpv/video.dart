@@ -52,6 +52,7 @@ class _VideoState extends State<Video> {
   double _sentDevicePixelRatio = 0;
   bool _hasFirstFrame = false;
   StreamSubscription<void>? _playbackRestartSubscription;
+  ValueListenable<int?>? _textureSource;
 
   @override
   void initState() {
@@ -59,6 +60,7 @@ class _VideoState extends State<Video> {
     _hasFirstFrame = widget.hasFirstFrame?.value ?? false;
     widget.hasFirstFrame?.addListener(_syncExternalFirstFrame);
     _listenForPlaybackRestart();
+    _listenForTextureChanges();
   }
 
   @override
@@ -72,6 +74,7 @@ class _VideoState extends State<Video> {
     }
     if (oldWidget.player != widget.player) {
       _listenForPlaybackRestart();
+      _listenForTextureChanges();
       _syncExternalFirstFrame();
       // The cache describes the old player's native surface. Keeping it would
       // let the next frame short-circuit as "geometry unchanged", and the
@@ -85,8 +88,21 @@ class _VideoState extends State<Video> {
   void dispose() {
     widget.hasFirstFrame?.removeListener(_syncExternalFirstFrame);
     _playbackRestartSubscription?.cancel();
+    _textureSource?.removeListener(_forgetSentRect);
     super.dispose();
   }
+
+  /// A picture that moves between its texture and a window surface while it
+  /// plays (see [VideoOutputHandover]) has to be told its size again: the
+  /// cache describes the output it left, and a new texture starts sizeless.
+  void _listenForTextureChanges() {
+    _textureSource?.removeListener(_forgetSentRect);
+    final player = widget.player;
+    _textureSource = player is VideoTextureTarget ? (player as VideoTextureTarget).videoTextureId : null;
+    _textureSource?.addListener(_forgetSentRect);
+  }
+
+  void _forgetSentRect() => _hasSentRect = false;
 
   /// Without an external notifier the first playback-restart reveals the
   /// surface. With one, the owner decides: the player screen holds the first

@@ -23,6 +23,7 @@ import 'external_player_screen.dart';
 import 'mpv_config_screen.dart';
 import 'remote_keys_screen.dart';
 import 'settings_utils.dart';
+import 'live_picture_setting.dart';
 import 'shader_preset_setting.dart';
 import 'subtitle_styling_screen.dart';
 
@@ -89,6 +90,9 @@ class PlaybackSettingsScreen extends StatelessWidget {
                 if (exoActive) _tunneledPlaybackTile(),
                 if (exoActive && tunnelingOn) _tunneledPlaybackLiveTvTile(),
                 if (PlatformDetector.supportsPictureInPicture()) _autoPipTile(),
+                // The guide's preview growing into the player as it plays (Plebz).
+                ?livePictureHandoverSettingTile(),
+                ?livePictureWindowSurfaceSettingTile(),
               ],
             ),
 
@@ -504,6 +508,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
     icon: Symbols.live_tv_rounded,
     title: t.settings.matchContentFrameRateLiveTv,
     subtitle: t.settings.matchContentFrameRateLiveTvDescription,
+    onAfterWrite: turnOffSeamlessFullscreenIf,
   );
 
   Widget _matchContentFrameRateTile() => SettingSwitchTile(
@@ -626,6 +631,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
     icon: Symbols.live_tv_rounded,
     title: t.settings.tunneledPlaybackLiveTv,
     subtitle: t.settings.tunneledPlaybackLiveTvDescription,
+    onAfterWrite: turnOffSeamlessFullscreenIf,
   );
 
   Widget _disableDolbyVisionTile() => SettingSwitchTile(

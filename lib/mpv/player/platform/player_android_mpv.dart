@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart' show SchedulerBinding;
 
 import '../../../utils/app_logger.dart';
 import '../player_native.dart';
@@ -19,7 +20,7 @@ import '../video_rect_support.dart';
 /// widget tree, but its buffer still has to be told how many pixels the box is
 /// worth. Without a texture the native side answers `no-texture` and the
 /// full-screen session keeps placing its own surface, exactly as before.
-class PlayerAndroidMpv extends PlayerNative implements VideoTextureTarget, VideoRectTarget {
+class PlayerAndroidMpv extends PlayerNative implements VideoTextureTarget, VideoRectTarget, VideoOutputHandover {
   PlayerAndroidMpv({super.hardwareDecoding});
 
   /// Whether this player's picture goes in a box rather than over the window.
@@ -61,6 +62,44 @@ class PlayerAndroidMpv extends PlayerNative implements VideoTextureTarget, Video
     // Debug rather than info: this fires on every layout pass, and it only
     // matters while chasing a picture that is not showing up.
     appLogger.d('Video rect $left,$top → $right,$bottom (dpr $devicePixelRatio): ${outcome ?? 'no answer'}');
+  }
+
+  @override
+  bool get rendersToTexture => _videoTextureId.value != null;
+
+  @override
+  Future<bool> moveOutputToWindow() async {
+    if (disposed || !initialized || _videoTextureId.value == null) return false;
+    final moved = await invoke<bool>('moveOutputToWindow') ?? false;
+    if (!moved || disposed) return false;
+    // The answer comes a few frames after the decoder was repointed; one more
+    // gives the display time to show the window's picture before the texture
+    // over it goes.
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    if (disposed) return false;
+    inlineSurface = false;
+    _videoTextureId.value = null;
+    // The texture goes once Flutter has drawn a frame without it.
+    await SchedulerBinding.instance.endOfFrame;
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    await invoke<bool>('releaseTextureOutput');
+    return true;
+  }
+
+  @override
+  Future<bool> moveOutputToTexture({required int width, required int height}) async {
+    if (disposed || !initialized || _videoTextureId.value != null) return false;
+    final textureId = await invoke<int>('moveOutputToTexture', {'width': width, 'height': height});
+    if (textureId == null || disposed) return false;
+    inlineSurface = true;
+    _videoTextureId.value = textureId;
+    return true;
+  }
+
+  @override
+  Future<void> releaseWindowOutput() async {
+    if (disposed) return;
+    await invoke<void>('releaseWindowOutput');
   }
 
   @override

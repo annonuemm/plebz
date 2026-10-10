@@ -32,6 +32,7 @@ import '../../../utils/formatters.dart';
 import '../../../utils/live_tv_grouping.dart';
 import '../../../utils/live_tv_matching.dart';
 import '../../../services/settings_service.dart';
+import '../../../services/live_picture_handover.dart';
 import '../../../services/live_tv_last_selection.dart';
 import '../../../services/program_reminders.dart';
 import '../../../utils/platform_detector.dart';
@@ -489,7 +490,12 @@ class GuideTabState extends State<GuideTab>
     _headerHorizontalController.addListener(_syncHeaderToGrid);
     ProgramReminders.instance.addListener(_onRemindersChanged);
     unawaited(ProgramReminders.instance.ensureLoaded());
+    LivePictureReturn.instance.addListener(_returnedPictureListener);
   }
+
+  /// The full-screen player giving its picture back to the box (Plebz); see
+  /// `_takeReturnedPicture`. Held as one closure so it can be removed again.
+  late final VoidCallback _returnedPictureListener = _takeReturnedPicture;
 
   /// A bell set or taken away in the details sheet shows in the grid at once.
   void _onRemindersChanged() {
@@ -553,6 +559,7 @@ class GuideTabState extends State<GuideTab>
   @override
   void dispose() {
     ProgramReminders.instance.removeListener(_onRemindersChanged);
+    LivePictureReturn.instance.removeListener(_returnedPictureListener);
     _programLoadGeneration++;
     _selectLongPressController.dispose();
     _guideFocusNode.dispose();

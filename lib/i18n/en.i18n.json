@@ -631,6 +631,10 @@
     "layoutModePhoneDescription": "Compact touch interface with bottom navigation",
     "liveTvGuideTimeNavigation": "Guide time picker",
     "liveTvGuideTimeNavigationDescription": "Shows the day and time strip above the guide grid.",
+    "liveTvSeamlessFullscreen": "Preview to full screen without a break (Beta)",
+    "liveTvSeamlessFullscreenDescription": "In the guide, the playing preview grows into the full-screen player on OK and shrinks back into its box on Back, without loading again. IPTV channels only. Turning this on turns off \"Match frame rate for live TV\" and \"Tunnelled playback for live TV\", and live TV no longer switches the \"Automatic resolution\": each of these switches would interrupt the picture. Films and shows keep their settings. A shader in the mpv player can make the move stutter briefly.",
+    "liveTvSeamlessWindowSurface": "Full screen on the video surface",
+    "liveTvSeamlessWindowSurfaceDescription": "Off: the picture stays on the app's own canvas in full screen too. Nothing has to move, so nothing freezes and the sound stays in step; the box draws every frame itself, and there is no HDR and no subtitle display. On: once grown, the picture moves onto the TV's video surface, with full quality and HDR. Some boxes do not handle that move reliably: the picture can stall briefly, freeze or lose sync with the sound.",
     "showActorFilmography": "Full filmography for actors",
     "showActorFilmographyDescription": "On an actor's page, also list the films and series you do not have, greyed out. Uses your TMDB key.",
     "backupPickTitle": "Choose a backup"

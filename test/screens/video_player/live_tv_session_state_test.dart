@@ -436,6 +436,19 @@ void main() {
       expect(state.epochForPosition(const Duration(seconds: 10)), 1050);
     });
 
+    test('a stream taken over from the guide preview anchors its position zero before the edge', () {
+      // The preview had played 25 s when the full-screen player took it over
+      // (Plebz): what is on screen now is the capture edge, so position zero
+      // lies 25 s earlier.
+      final state = LiveTvSessionState(null);
+
+      state.markStreamTakenOverAtLiveEdge(capture, const Duration(seconds: 25));
+
+      expect(state.streamStartEpoch, 1015);
+      expect(state.atLiveEdge, isTrue);
+      expect(state.epochForPosition(const Duration(seconds: 25)), 1040);
+    });
+
     test('a heartbeat re-anchors the clock on the playback transcode origin', () {
       final state = LiveTvSessionState(null)..markStreamRestartedAtLiveEdge(capture);
       final playback = CaptureBuffer(startedAt: 1027.5, seekStartSeconds: 0.033, seekEndSeconds: 12);

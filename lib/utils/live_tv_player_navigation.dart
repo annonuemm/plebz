@@ -18,6 +18,7 @@ import '../screens/video_player_screen.dart';
 import '../utils/app_logger.dart';
 import '../utils/snackbar_helper.dart';
 import '../utils/video_player_navigation.dart';
+import '../services/live_picture_handover.dart';
 import '../services/playback_launch_observer.dart';
 
 /// Navigate to the video player for a live TV channel — the single live
@@ -29,7 +30,12 @@ import '../services/playback_launch_observer.dart';
 /// [channels] is the full channel list for channel up/down navigation.
 /// [startPosition] pre-answers the "watch from start" prompt shown when the
 /// channel already has recorded history.
-Future<void> navigateToLiveTv(
+///
+/// [handover] is the guide's preview, still playing [channel], for the player
+/// to take on, and [pictureFrom] the box it plays in (Plebz): the player grows
+/// out of it. True once the player route is on its way; on false the caller
+/// still owns [handover].
+Future<bool> navigateToLiveTv(
   BuildContext context, {
   required MultiServerProvider multiServer,
   required LiveTvChannel channel,
@@ -44,8 +50,10 @@ Future<void> navigateToLiveTv(
   /// [LiveTvSessionArgs.initialGroup]. [channels] stays the whole list.
   String? group,
   LiveTvStartPosition startPosition = LiveTvStartPosition.ask,
+  LivePictureHandover? handover,
+  Rect? pictureFrom,
 }) async {
-  if (!(isLaunchCurrent?.call() ?? true) || !(launchObserver?.isCurrent ?? true)) return;
+  if (!(isLaunchCurrent?.call() ?? true) || !(launchObserver?.isCurrent ?? true)) return false;
   // An IPTV channel belongs to a playlist, not to a media server: it has no
   // entry in `liveTvServers` and no client, so the server checks below would
   // reject every one of them. The player resolves its session from the same
@@ -58,14 +66,14 @@ Future<void> navigateToLiveTv(
     if (serverInfo == null) {
       launchObserver?.mark('blocked', blocker: 'serverUnavailable');
       showErrorSnackBar(context, Translations.of(context).liveTv.serverUnavailable);
-      return;
+      return false;
     }
 
     final client = multiServer.getClientForServer(ServerId(serverInfo.serverId));
     if (client == null) {
       launchObserver?.mark('blocked', blocker: 'serverUnavailable');
       showErrorSnackBar(context, Translations.of(context).liveTv.serverNotConnected);
-      return;
+      return false;
     }
     serverBackend = client.backend;
   }
@@ -91,6 +99,7 @@ Future<void> navigateToLiveTv(
   }
 
   final route = VideoPlayerRoute(
+    pictureFrom: handover == null ? null : pictureFrom,
     builder: (_) => VideoPlayerScreen(
       metadata: placeholder,
       live: LiveTvSessionArgs(
@@ -100,6 +109,7 @@ Future<void> navigateToLiveTv(
         startAtEpoch: startAtEpoch,
         initialGroup: group,
         startPosition: startPosition,
+        handover: handover,
       ),
       launchObserver: launchObserver,
       isLaunchCurrent: isLaunchCurrent,
@@ -108,6 +118,7 @@ Future<void> navigateToLiveTv(
 
   unawaited(route.push(navigator));
   launchObserver?.mark('opening');
+  return true;
 }
 
 /// The backend-neutral placeholder item standing in for a tuned live channel.

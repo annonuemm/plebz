@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../models/livetv_channel.dart';
 import '../../models/livetv_program.dart';
 import '../../providers/multi_server_provider.dart';
+import '../../services/live_picture_handover.dart';
 import '../../utils/live_tv_matching.dart';
 import '../../utils/live_tv_player_navigation.dart';
 import '../../utils/media_image_helper.dart';
@@ -45,15 +46,26 @@ mixin LiveTvActionsMixin<T extends StatefulWidget> on State<T> {
   /// scrobble, channel up/down nav, no resume bookmark). The player starts
   /// the backend-neutral session itself (Plex tune / Jellyfin stream
   /// negotiation under its loading spinner).
-  Future<void> tuneChannel(LiveTvChannel channel, {int? startAtEpoch}) async {
+  ///
+  /// [handover] and [pictureFrom] carry the guide's playing preview into the
+  /// player (see [navigateToLiveTv]). False when the player was not opened,
+  /// which leaves [handover] with the caller.
+  Future<bool> tuneChannel(
+    LiveTvChannel channel, {
+    int? startAtEpoch,
+    LivePictureHandover? handover,
+    Rect? pictureFrom,
+  }) {
     final multiServer = context.read<MultiServerProvider>();
-    await navigateToLiveTv(
+    return navigateToLiveTv(
       context,
       multiServer: multiServer,
       channel: channel,
       channels: liveTvPlayerChannels,
       startAtEpoch: startAtEpoch,
       group: liveTvPlayerGroup,
+      handover: handover,
+      pictureFrom: pictureFrom,
     );
   }
 

@@ -710,6 +710,10 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get layoutModePhoneDescription => 'Kompakte Touch-Oberfläche mit unterer Navigation';
 	@override String get liveTvGuideTimeNavigation => 'Zeitauswahl im Programmführer';
 	@override String get liveTvGuideTimeNavigationDescription => 'Blendet die Leiste mit Tag und Uhrzeit über dem Zeitraster ein.';
+	@override String get liveTvSeamlessFullscreen => 'Vorschau nahtlos ins Vollbild (Beta)';
+	@override String get liveTvSeamlessFullscreenDescription => 'Im Programmführer wird die laufende Vorschau mit OK zum Vollbild und mit Zurück wieder zum Kasten, ohne neu zu laden. Nur für IPTV-Sender. Beim Einschalten gehen „Bildrate auch bei Live-TV anpassen“ und „Tunnelwiedergabe für Live-TV“ aus, und Live-TV schaltet die „Automatische Auflösung“ nicht mehr um: Jede dieser Umschaltungen würde das Bild unterbrechen. Filme und Serien behalten ihre Einstellungen. Ein Shader im mpv-Player kann den Übergang kurz stocken lassen.';
+	@override String get liveTvSeamlessWindowSurface => 'Vollbild auf der Videofläche';
+	@override String get liveTvSeamlessWindowSurfaceDescription => 'Aus: Das Bild bleibt auch im Vollbild auf der App-Leinwand. Es muss nichts umziehen, also friert nichts ein und der Ton bleibt synchron; die Box zeichnet jedes Bild selbst, und es gibt kein HDR und keine Untertitel-Anzeige. An: Nach dem Großziehen zieht das Bild auf die Videofläche des Fernsehers um, mit voller Qualität und HDR. Manche Boxen vertragen diesen Umzug nicht zuverlässig: Das Bild kann kurz stocken, einfrieren oder der Ton aus dem Takt geraten.';
 	@override String get showActorFilmography => 'Vollständige Filmografie';
 	@override String get showActorFilmographyDescription => 'Auf der Seite eines Schauspielers auch die Filme und Serien auflisten, die du nicht hast — ausgegraut. Nutzt deinen TMDB-Schlüssel.';
 	@override String get backupPickTitle => 'Sicherung wählen';
@@ -4377,6 +4381,10 @@ extension on TranslationsDe {
 			'settings.layoutModePhoneDescription' => 'Kompakte Touch-Oberfläche mit unterer Navigation',
 			'settings.liveTvGuideTimeNavigation' => 'Zeitauswahl im Programmführer',
 			'settings.liveTvGuideTimeNavigationDescription' => 'Blendet die Leiste mit Tag und Uhrzeit über dem Zeitraster ein.',
+			'settings.liveTvSeamlessFullscreen' => 'Vorschau nahtlos ins Vollbild (Beta)',
+			'settings.liveTvSeamlessFullscreenDescription' => 'Im Programmführer wird die laufende Vorschau mit OK zum Vollbild und mit Zurück wieder zum Kasten, ohne neu zu laden. Nur für IPTV-Sender. Beim Einschalten gehen „Bildrate auch bei Live-TV anpassen“ und „Tunnelwiedergabe für Live-TV“ aus, und Live-TV schaltet die „Automatische Auflösung“ nicht mehr um: Jede dieser Umschaltungen würde das Bild unterbrechen. Filme und Serien behalten ihre Einstellungen. Ein Shader im mpv-Player kann den Übergang kurz stocken lassen.',
+			'settings.liveTvSeamlessWindowSurface' => 'Vollbild auf der Videofläche',
+			'settings.liveTvSeamlessWindowSurfaceDescription' => 'Aus: Das Bild bleibt auch im Vollbild auf der App-Leinwand. Es muss nichts umziehen, also friert nichts ein und der Ton bleibt synchron; die Box zeichnet jedes Bild selbst, und es gibt kein HDR und keine Untertitel-Anzeige. An: Nach dem Großziehen zieht das Bild auf die Videofläche des Fernsehers um, mit voller Qualität und HDR. Manche Boxen vertragen diesen Umzug nicht zuverlässig: Das Bild kann kurz stocken, einfrieren oder der Ton aus dem Takt geraten.',
 			'settings.showActorFilmography' => 'Vollständige Filmografie',
 			'settings.showActorFilmographyDescription' => 'Auf der Seite eines Schauspielers auch die Filme und Serien auflisten, die du nicht hast — ausgegraut. Nutzt deinen TMDB-Schlüssel.',
 			'settings.backupPickTitle' => 'Sicherung wählen',
@@ -4793,12 +4801,12 @@ extension on TranslationsDe {
 			'subtitlingStyling.useMarginsDescription' => 'Textuntertitel im Bereich außerhalb des Videos zulassen. Gestylte Untertitel behalten möglicherweise ihre ursprüngliche Position.',
 			'subtitlingStyling.anchorToScreen' => 'Am Bildschirm verankern',
 			'subtitlingStyling.anchorToScreenDescription' => 'Textuntertitel in den schwarzen Balken unter Breitbildvideos anzeigen',
+			_ => null,
+		} ?? switch (path) {
 			'subtitlingStyling.bold' => 'Fett',
 			'subtitlingStyling.italic' => 'Kursiv',
 			'subtitlingStyling.renderResolution' => 'Render-Auflösung',
 			'subtitlingStyling.renderResolutionScreen' => 'Bildschirmauflösung',
-			_ => null,
-		} ?? switch (path) {
 			'subtitlingStyling.renderResolutionVideo' => 'Videoauflösung',
 			'mpvConfig.title' => 'mpv-Konfiguration',
 			'mpvConfig.description' => 'Erweiterte Videoplayer-Einstellungen',
@@ -5307,12 +5315,12 @@ extension on TranslationsDe {
 			'watchlist.typeFilter' => 'Anzeigen',
 			'watchlist.statusFilter' => 'Status',
 			'watchlist.allTypes' => 'Filme und Serien',
+			_ => null,
+		} ?? switch (path) {
 			'watchlist.moviesOnly' => 'Nur Filme',
 			'watchlist.showsOnly' => 'Nur Serien',
 			'watchlist.typeAll' => 'Alle',
 			'watchlist.typeMovies' => 'Filme',
-			_ => null,
-		} ?? switch (path) {
 			'watchlist.typeShows' => 'Serien',
 			'watchlist.anyStatus' => 'Gesehen und ungesehen',
 			'watchlist.unwatchedOnly' => 'Nicht gesehen',
@@ -5821,12 +5829,12 @@ extension on TranslationsDe {
 			'videoSettings.hdrUnsupported' => 'HDR ist hier nicht verfügbar – dieser Desktop-Compositor oder Videoausgang kann es nicht übertragen.',
 			'videoSettings.hdrToneMapping' => 'HDR-Tone-Mapping',
 			'videoSettings.hdrToneMappingCompositor' => 'Compositor',
+			_ => null,
+		} ?? switch (path) {
 			'videoSettings.hdrToneMappingCompositorDescription' => 'Die HDR-Metadaten der Quelle durchreichen und vom Desktop-Compositor anpassen lassen.',
 			'videoSettings.hdrToneMappingPlayer' => 'Player',
 			'videoSettings.hdrToneMappingPlayerDescription' => 'Im Player an die maximale Helligkeit des Displays anpassen und das Ergebnis anschließend an den Compositor melden.',
 			'videoSettings.hdrToneMappingFailed' => 'Das HDR-Tone-Mapping konnte nicht geändert werden – der vorherige Modus ist weiterhin aktiv.',
-			_ => null,
-		} ?? switch (path) {
 			'videoSettings.audioOutput' => 'Audioausgabe',
 			'videoSettings.performanceOverlay' => 'Leistungsanzeige',
 			'videoSettings.audioOutputDolbyAtmos' => 'Dolby Atmos',
@@ -6335,12 +6343,12 @@ extension on TranslationsDe {
 			'plebz.setupAgain' => 'Einrichtung erneut starten',
 			'plebz.setupAgainDescription' => 'Aussehen, Quellen und Dienste, Schritt für Schritt',
 			'plebz.updateAvailableTitle' => 'Update verfügbar',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.updateAvailableBody' => ({required Object release}) => '${release} ist bereit zur Installation. Deine Einstellungen und Anmeldungen bleiben erhalten.',
 			'plebz.updateNow' => 'Aktualisieren',
 			'plebz.later' => 'Später',
 			'plebz.upToDate' => 'Plebz ist auf dem neuesten Stand',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.checking' => 'Suche nach Updates …',
 			'plebz.checkFailed' => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.',
 			'plebz.updatedTitle' => 'Plebz wurde aktualisiert',

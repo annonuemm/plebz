@@ -1,4 +1,5 @@
 import '../../models/livetv_channel.dart';
+import '../../services/live_picture_handover.dart';
 
 /// Launch parameters for a live TV session — pure UX data. A
 /// [VideoPlayerScreen] plays live TV iff it was constructed with one of
@@ -50,6 +51,11 @@ class LiveTvSessionArgs {
   /// the player always ask.
   final LiveTvStartPosition startPosition;
 
+  /// The guide's preview, still playing [channel], for the player to take on
+  /// instead of opening the channel again (Plebz). The screen owns it from
+  /// construction: it plays it on, or releases it if it never gets that far.
+  final LivePictureHandover? handover;
+
   const LiveTvSessionArgs({
     required this.channel,
     this.channels,
@@ -57,5 +63,6 @@ class LiveTvSessionArgs {
     this.startAtEpoch,
     this.initialGroup,
     this.startPosition = LiveTvStartPosition.ask,
+    this.handover,
   });
 }

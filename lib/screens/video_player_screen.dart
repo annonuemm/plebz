@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:plezy/widgets/app_icon.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:flutter/scheduler.dart' show SchedulerBinding;
 import 'package:flutter/services.dart';
 import 'package:os_media_controls/os_media_controls.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +17,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import '../mpv/mpv.dart';
 import '../mpv/player/platform/player_android.dart';
 import '../mpv/player/player_native.dart';
+import '../mpv/player/video_rect_support.dart';
 
 import '../services/scrub_preview_source.dart';
 import '../media/media_backend.dart';
@@ -76,6 +78,8 @@ import '../services/display_mode_service.dart';
 import '../services/media_control_router.dart';
 import '../services/player_sync_offsets.dart';
 import '../services/scoped_player_prefs.dart';
+import '../services/iptv/iptv_stream_probing.dart';
+import '../services/live_picture_handover.dart';
 import '../services/live_tv_last_selection.dart';
 import '../services/settings_service.dart';
 import '../services/sleep_timer_service.dart';
@@ -147,6 +151,7 @@ part 'video_player/parts/episode_navigation.dart';
 part 'video_player/parts/episode_queue.dart';
 part 'video_player/parts/errors.dart';
 part 'video_player/parts/lifecycle.dart';
+part 'video_player/parts/live_picture.dart';
 part 'video_player/parts/live_tv.dart';
 part 'video_player/parts/pip.dart';
 part 'video_player/parts/playback_open.dart';
@@ -1230,6 +1235,21 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
   final FirstFrameGate _firstFrame = FirstFrameGate();
   bool _hasFatalPlaybackError = false;
 
+  /// The guide's preview handed over at launch (Plebz), owned by this screen
+  /// until the first initialization takes it on — or, if none does, until
+  /// dispose releases it. See `parts/live_picture.dart`.
+  LivePictureHandover? _handedOverPicture;
+  LivePictureHandover? _takenOverPicture;
+  bool _takenOverPictureStarted = false;
+
+  /// This session grew out of the guide's preview, so Back may give it back.
+  bool _grewOutOfGuidePicture = false;
+  bool _handingPictureBack = false;
+
+  /// Back gave the picture to the guide's preview: the screen goes without
+  /// stopping or disposing the player, which plays on in the box.
+  bool _pictureHandedBack = false;
+
   final ValueNotifier<bool> _isExiting = ValueNotifier<bool>(false);
   final PlayerChromeController _chromeController = PlayerChromeController(
     initiallyVisible: playerChromeStartsVisible(isTv: PlatformDetector.isTV()),
@@ -1396,6 +1416,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     );
 
     _currentMetadata = widget.metadata;
+    _handedOverPicture = widget.live?.handover;
     widget.launchObserver?.attach(_launchSnapshot, ownsPlayback: _ownsLaunchPlayback);
     _activeRouteGuard.activate(
       this,
@@ -1710,6 +1731,16 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
         if (!_isPlayerInitializationCurrent(generation)) return;
       }
 
+      // A picture handed over by the guide grows out of its box first, and
+      // the screen sets itself up around it afterwards: the growth gets every
+      // frame to itself (the set-up running alongside made it stutter on the
+      // user's box). The picture plays on throughout (Plebz).
+      if (_handedOverPicture != null) {
+        initPhase = 'letting the guide preview grow';
+        await _untilPictureHasGrown();
+        if (!_isPlayerInitializationCurrent(generation)) return;
+      }
+
       initPhase = 'loading settings';
       final settingsService = await SettingsService.getInstance();
       // Literal `mounted` check: the kickoff block below reads `context`, and
@@ -1817,8 +1848,15 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       await PlaybackCoordinator.instance.claimVideo();
       if (!mounted || generation != _playerInitializationGeneration) return;
 
-      initPhase = 'creating player';
-      final currentPlayer = Player(useExoPlayer: useExoPlayer, hardwareDecoding: enableHardwareDecoding);
+      // The guide's preview, still playing, when it handed itself over: its
+      // player is taken on as it is (Plebz). It was opened the way this screen
+      // opens a channel (`GuidePreviewPlayer`), so the writes below that only
+      // decide a file's route at open, or would reset a running picture's
+      // decoder or audio output, are left out for it.
+      final handedOver = _takeHandedOverPicture(useExoPlayer: useExoPlayer);
+      initPhase = handedOver == null ? 'creating player' : 'taking over the guide preview';
+      final currentPlayer =
+          handedOver?.player ?? Player(useExoPlayer: useExoPlayer, hardwareDecoding: enableHardwareDecoding);
       attemptPlayer = currentPlayer;
       if (!mounted || generation != _playerInitializationGeneration) return;
       if (Platform.isAndroid) {
@@ -1830,7 +1868,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       initPhase = 'configuring player';
       await currentPlayer.configureSubtitleFonts();
       await currentPlayer.setProperty('sub-ass', 'yes'); // Enable libass
-      if (Platform.isAndroid && useExoPlayer) {
+      if (Platform.isAndroid && useExoPlayer && handedOver == null) {
         // Two settings, because they are two workloads: the master switch, and
         // whether it reaches live TV as well. A live stream gains little from
         // tunneling and can lose a lot — see [SettingsService.tunneledPlaybackLiveTv].
@@ -1847,7 +1885,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       // the fork's hevc_mediacodec options along the same decision tree
       // ExoPlayer's DoviBridge walks. Withholding it from mpv left the switch
       // in the settings doing nothing there — and, for a while, not shown.
-      if (Platform.isAndroid || Platform.isIOS || Platform.isMacOS) {
+      if ((Platform.isAndroid || Platform.isIOS || Platform.isMacOS) && handedOver == null) {
         // One wire value carries both questions. `off` means no Dolby Vision
         // output at all, which also settles what profile 7 does — so the
         // profile-7 choice below only speaks when Dolby Vision is still on.
@@ -1857,7 +1895,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       }
       // Before the first file, so its opening route is already decided: a
       // later write would start it on one renderer and move it to the other.
-      if (Platform.isAndroid && !useExoPlayer) {
+      if (Platform.isAndroid && !useExoPlayer && handedOver == null) {
         final hdrSdrConversion = settingsService.read(SettingsService.hdrSdrConversion);
         await currentPlayer.setProperty('hdr-sdr-conversion', hdrSdrConversion.nativeValue);
       }
@@ -1877,13 +1915,17 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       if (!Platform.isAndroid) {
         await currentPlayer.setLogLevel(debugLoggingEnabled ? 'v' : 'warn');
       }
-      await currentPlayer.setProperty('hwdec', mpvHwdecValue(enableHardwareDecoding));
+      if (handedOver == null) {
+        await currentPlayer.setProperty('hwdec', mpvHwdecValue(enableHardwareDecoding));
+      }
 
       // Deinterlacing (#2149) is mpv-only by design — ExoPlayer has no filter
       // chain. `auto` deinterlaces only content flagged interlaced. Wrapped:
       // a preference must never abort player initialization (an older core
       // that rejects `auto` just keeps its default).
-      if (!(Platform.isAndroid && useExoPlayer) && settingsService.read(SettingsService.deinterlace)) {
+      if (!(Platform.isAndroid && useExoPlayer) &&
+          handedOver == null &&
+          settingsService.read(SettingsService.deinterlace)) {
         try {
           await currentPlayer.setProperty('deinterlace', 'auto');
         } catch (e) {
@@ -1988,7 +2030,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       // Audio passthrough (Windows/Linux, Android TV, and Apple TV, where the
       // native sample-buffer renderer handles AC3/EAC3, including JOC metadata;
       // never macOS — see PlatformDetector.supportsAudioPassthrough).
-      if (PlatformDetector.supportsAudioPassthrough()) {
+      if (PlatformDetector.supportsAudioPassthrough() && handedOver == null) {
         await currentPlayer.setAudioPassthrough(settingsService.read(SettingsService.audioPassthrough));
       }
 
@@ -2080,7 +2122,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
 
       await PlayerSyncOffsets.of(currentPlayer).applyFor(_currentMetadata);
 
-      if (settingsService.read(SettingsService.audioNormalization)) {
+      if (settingsService.read(SettingsService.audioNormalization) && handedOver == null) {
         await currentPlayer.setAudioNormalization(true);
       }
 
@@ -2088,7 +2130,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       // (mpv clears audio-spdif, ExoPlayer force-decodes encoded audio). The
       // 5.1 limit only shapes decoded PCM and leaves passthrough alone.
       final audioChannelLimit = settingsService.read(SettingsService.audioChannelLimit);
-      if (audioChannelLimit != AudioChannelLimit.original) {
+      if (audioChannelLimit != AudioChannelLimit.original && handedOver == null) {
         await currentPlayer.setAudioChannelLimit(
           audioChannelLimit,
           centerBoostDb: settingsService.read(SettingsService.downmixCenterBoost),
@@ -2373,6 +2415,10 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
 
       // Default behavior for hosts or non-session users
       if (!mounted) return;
+      if (!navigateHome && _canHandPictureBack) {
+        await _handPictureBackToGuide();
+        return;
+      }
       await _exitPlayerRoute(navigateHome: navigateHome);
     } finally {
       if (mounted && _routeExitOperation == null) _isHandlingBack = false;
@@ -2580,6 +2626,13 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       }
       _displayModeService!.restoreAll();
     }
+
+    // The guide's preview owns a player given back to it, and a handed-over
+    // picture no initialization took on is this screen's to release (Plebz).
+    if (_pictureHandedBack) player = null;
+    final untakenPicture = _handedOverPicture;
+    _handedOverPicture = null;
+    if (untakenPicture != null) unawaited(untakenPicture.release());
 
     // Clear frame rate matching and abandon audio focus before disposing player (Android only)
     if (Platform.isAndroid && player != null) {
@@ -3002,7 +3055,8 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       try {
         await Future.wait<void>([
           stoppedReport,
-          if (currentPlayer != null)
+          // A picture given back to the guide plays on in its preview.
+          if (currentPlayer != null && !_pictureHandedBack)
             pauseForRouteExit ? _pauseAndHidePlayerForRouteExit(currentPlayer) : currentPlayer.stop(),
           ...cancellations,
         ]);
@@ -3145,7 +3199,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
             if (initializationError != null) {
               return _buildPlaybackFailure(initializationError, onRetry: _retryPlayerInitialization);
             }
-            return _buildLoadingSpinner();
+            return _buildHandedOverPicture() ?? _buildLoadingSpinner();
           },
         ),
       ),

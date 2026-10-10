@@ -1094,6 +1094,27 @@ class SettingsService extends BaseSharedPreferencesService {
   /// now and is travelled with the D-pad alone.
   static const liveTvGuideTimeNavigation = BoolPref('live_tv_guide_time_navigation', defaultValue: true);
 
+  /// Whether the guide's playing preview grows into the full-screen player —
+  /// and back into its box on Back — as the very same picture, instead of
+  /// being stopped and opened again (Plebz). IPTV on Android only; see
+  /// `LivePictureHandover`.
+  ///
+  /// Off by default. What would switch the display under the picture goes
+  /// off for live TV with it: turning this on turns off
+  /// [matchContentFrameRateLiveTv] and [tunneledPlaybackLiveTv] (turning
+  /// either back on turns this off), and live TV skips
+  /// [matchDisplayResolution] while it is on.
+  static const liveTvSeamlessFullscreen = BoolPref('live_tv_seamless_fullscreen');
+
+  /// Whether that picture, once grown to full screen, moves from the app's
+  /// own canvas (a Flutter texture) onto the television's video surface
+  /// (Plebz). On: the hardware plane, HDR and the subtitle plane, at the cost
+  /// of moving the running decoder, which some boxes do not take — on the
+  /// user's Homatics it froze now and then, or put the sound out of step.
+  /// Off (the default): the picture stays where it plays in the preview, no
+  /// move at all, and the box draws every frame through the app.
+  static const liveTvSeamlessWindowSurface = BoolPref('live_tv_seamless_window_surface');
+
   /// How many days a stored IPTV playlist and guide stay good for.
   ///
   /// Neither changes by the hour, and both are expensive: a playlist runs to
@@ -2053,6 +2074,8 @@ class SettingsService extends BaseSharedPreferencesService {
     musicQualityPreset,
     liveTvDefaultFavorites,
     liveTvGuideTimeNavigation,
+    liveTvSeamlessFullscreen,
+    liveTvSeamlessWindowSurface,
     iptvRefreshIntervalDays,
     iptvMergeDuplicateChannels,
     iptvHideGroupCountryPrefix,

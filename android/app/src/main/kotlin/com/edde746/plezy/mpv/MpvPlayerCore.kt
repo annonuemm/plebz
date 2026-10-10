@@ -97,6 +97,19 @@ class MpvPlayerCore private constructor(
      */
     private const val SURFACE_HANDOFF_TIMEOUT_MS = 2_000L
 
+    /** How long a move between texture and window surface may take to land; see [moveOutputToWindow]. */
+    private const val OUTPUT_MOVE_DEADLINE_MS = 3_000L
+
+    /** From the repoint to "done": a few frames, so the new surface already shows the picture. */
+    private const val OUTPUT_MOVE_SETTLE_MS = 80L
+
+    /** Log prefix of the move's steps, which the player screen keeps (Plebz). */
+    private const val MOVE_LOG = "picture-move"
+
+    // The refresh reasons of a move: held refreshes let these through.
+    private const val MOVE_TO_WINDOW = "moveOutputToWindow"
+    private const val MOVE_TO_TEXTURE = "moveOutputToTexture"
+
     /**
      * How long an admitted write may go unanswered before the core is declared
      * gone. A bound on a core that never returns, not on latency - see
@@ -919,37 +932,7 @@ class MpvPlayerCore private constructor(
         videoOutputEpoch += 1L
         Log.i(TAG, "Rendering into a Flutter texture; no window surface attached")
       } else if (!audioOnly) {
-        frameRateManager = FrameRateManager(
-          activity = activity,
-          handler = handler,
-          log = { emitLog("info", "framerate", it) }
-        )
-        emitLog(
-          "info",
-          "display",
-          "hdr=$displayHdrSupported dv=$displayDvSupported ${frameRateManager!!.describeDisplay()}"
-        )
-
-        surfaceContainer = PlayerSurfaceHost.createContainer(activity)
-        surfaceView = PlayerSurfaceHost.createVideoSurface(activity, this@MpvPlayerCore)
-        surfaceContainer!!.addView(surfaceView)
-        if (usesMediaCodecVo) {
-          osdSurfaceView = PlayerSurfaceHost.createOsdSurface(activity, osdSurfaceCallback, osdRenderScale)
-          surfaceContainer!!.addView(osdSurfaceView)
-        }
-
-        val contentView = PlayerSurfaceHost.attachToContent(activity, surfaceContainer!!)
-        flutterOverlayApplied = PlayerSurfaceHost.ensureFlutterOverlayOnTop(contentView, surfaceContainer)
-        ensureFlutterOverlayOnTop()
-        overlayLayoutListener = ViewTreeObserver.OnGlobalLayoutListener {
-          ensureFlutterOverlayOnTop()
-          val sv = surfaceView
-          if (sv != null) applySurfaceSize(sv.width, sv.height)
-          applyVideoRectLayout()
-        }
-        contentView.viewTreeObserver.addOnGlobalLayoutListener(overlayLayoutListener)
-
-        PlayerDebugLog.d(TAG) { "SurfaceView added to content view" }
+        buildWindowScaffold()
       }
 
       scope.launch {
@@ -1350,6 +1333,15 @@ class MpvPlayerCore private constructor(
     if (disposing) return
 
     val surface = holder.surface
+    if (holdingForWindow) {
+      // A move from the texture: the picture stays there until the whole
+      // window exists (startWindowMoveWhenReady).
+      outputMove?.windowSurface = surface.takeIf { it.isValid }
+      videoSurfaceGeneration += 1L
+      rememberCurrentSurfaceSize()
+      startWindowMoveWhenReady()
+      return
+    }
     pendingSurface = surface.takeIf { it.isValid }
     videoSurfaceGeneration += 1L
     videoOutputEpoch += 1L
@@ -1387,6 +1379,10 @@ class MpvPlayerCore private constructor(
       pendingOsdSurface = holder.surface.takeIf { it.isValid }
       osdSurfaceGeneration += 1L
       PlayerDebugLog.d(TAG) { "OSD surface created" }
+      if (holdingForWindow) {
+        startWindowMoveWhenReady()
+        return
+      }
       videoOutputEpoch += 1L
       if (player != null && currentCandidateSurface() != null) {
         refreshVideoOutput("osdSurfaceCreated")
@@ -2033,6 +2029,248 @@ class MpvPlayerCore private constructor(
     applySurfaceSize(width, height)
   }
 
+  /** Whether the picture goes into a Flutter texture right now. */
+  val rendersToTexture: Boolean
+    get() = renderToTexture
+
+  /**
+   * The window surface a full-screen session draws into, composited behind
+   * the Flutter view: a container with the video surface and, on the plane,
+   * the OSD surface above it. Built at [initialize] for an ordinary session,
+   * and by [moveOutputToWindow] for one that started in a texture.
+   */
+  private fun buildWindowScaffold() {
+    frameRateManager = FrameRateManager(
+      activity = activity,
+      handler = handler,
+      log = { emitLog("info", "framerate", it) }
+    )
+    emitLog(
+      "info",
+      "display",
+      "hdr=$displayHdrSupported dv=$displayDvSupported ${frameRateManager!!.describeDisplay()}"
+    )
+
+    surfaceContainer = PlayerSurfaceHost.createContainer(activity)
+    surfaceView = PlayerSurfaceHost.createVideoSurface(activity, this@MpvPlayerCore)
+    surfaceContainer!!.addView(surfaceView)
+    if (usesMediaCodecVo) {
+      osdSurfaceView = PlayerSurfaceHost.createOsdSurface(activity, osdSurfaceCallback, osdRenderScale)
+      surfaceContainer!!.addView(osdSurfaceView)
+    }
+
+    val contentView = PlayerSurfaceHost.attachToContent(activity, surfaceContainer!!)
+    flutterOverlayApplied = PlayerSurfaceHost.ensureFlutterOverlayOnTop(contentView, surfaceContainer)
+    ensureFlutterOverlayOnTop()
+    overlayLayoutListener = ViewTreeObserver.OnGlobalLayoutListener {
+      ensureFlutterOverlayOnTop()
+      val sv = surfaceView
+      if (sv != null) applySurfaceSize(sv.width, sv.height)
+      applyVideoRectLayout()
+    }
+    contentView.viewTreeObserver.addOnGlobalLayoutListener(overlayLayoutListener)
+
+    PlayerDebugLog.d(TAG) { "SurfaceView added to content view" }
+  }
+
+  /**
+   * A move of the picture between its Flutter texture and the window surface
+   * (Plebz), in flight. Main thread only, except for the reads that gate
+   * [refreshVideoOutput] and the event loop.
+   */
+  private class OutputMove(val toWindow: Boolean, val onDone: (Boolean) -> Unit) {
+    /** The window surface, once Android made it (moves to the window). */
+    @Volatile var windowSurface: Surface? = null
+
+    /** The handoff is issued; until then the window is still being built. */
+    @Volatile var started = false
+  }
+
+  @Volatile private var outputMove: OutputMove? = null
+
+  private val outputMoveDeadline = Runnable { onOutputMoveDeadline() }
+
+  /** A move to the window still waiting for the whole window to exist. */
+  private val holdingForWindow: Boolean
+    get() = outputMove?.let { it.toWindow && !it.started } == true
+
+  /**
+   * Moves a playing session out of its Flutter texture onto a window surface
+   * of its own, without closing the stream — the guide's preview growing into
+   * the full-screen player (Plebz).
+   *
+   * Builds the scaffold a window session is born with, and waits until all of
+   * it exists (the video surface and, on the plane, the OSD surface above
+   * it), then one handoff to the finished window: the running decoder is
+   * repointed in place (see [settleOutputMoves]). [onDone] answers on the
+   * main thread — true once the picture is on the window surface, false when
+   * nothing moved (the session is not in a texture, is going away, or no
+   * window surface ever came).
+   */
+  fun moveOutputToWindow(onDone: (Boolean) -> Unit) {
+    runOnMain {
+      if (audioOnly || disposing || !renderToTexture || player == null || outputMove != null) {
+        onDone(false)
+        return@runOnMain
+      }
+      textureOutputSurface = null
+      outputMove = OutputMove(toWindow = true, onDone = onDone)
+      handler.postDelayed(outputMoveDeadline, OUTPUT_MOVE_DEADLINE_MS)
+      Log.i(TAG, "Moving the picture from the texture to a window surface")
+      emitLog("info", MOVE_LOG, "to window: building the window")
+      buildWindowScaffold()
+      surfaceContainer?.visibility = View.VISIBLE
+    }
+  }
+
+  /**
+   * The way back: moves a session on its window surface into [texture], the
+   * full-screen player shrinking back into the guide's preview (Plebz).
+   *
+   * The window surfaces stay up, frozen on their last frame, until
+   * [releaseWindowOutput]: the caller takes them down once Flutter shows the
+   * texture, so there is no frame without a picture. Their callbacks go
+   * first — the views' destruction would otherwise hand mpv to the
+   * placeholder and pause it.
+   */
+  fun moveOutputToTexture(texture: Surface, onDone: (Boolean) -> Unit) {
+    runOnMain {
+      if (audioOnly || disposing || renderToTexture || player == null || surfaceContainer == null ||
+        !texture.isValid || outputMove != null
+      ) {
+        onDone(false)
+        return@runOnMain
+      }
+      surfaceView?.holder?.removeCallback(this@MpvPlayerCore)
+      osdSurfaceView?.holder?.removeCallback(osdSurfaceCallback)
+      textureOutputSurface = texture
+      outputMove = OutputMove(toWindow = false, onDone = onDone).apply { started = true }
+      handler.postDelayed(outputMoveDeadline, OUTPUT_MOVE_DEADLINE_MS)
+      // A texture has no OSD plane: the handoff below detaches it with the
+      // video surface.
+      pendingOsdSurface = null
+      pendingSurface = texture
+      videoSurfaceGeneration += 1L
+      videoOutputEpoch += 1L
+      Log.i(TAG, "Moving the picture from the window surface to a texture")
+      emitLog("info", MOVE_LOG, "to texture: handing off")
+      refreshVideoOutput(MOVE_TO_TEXTURE)
+    }
+  }
+
+  /**
+   * Takes the window scaffold down after [moveOutputToTexture], once the
+   * texture is on screen. Nothing of it is in use by then; the frame-rate
+   * manager goes with it, as it would at [dispose].
+   */
+  fun releaseWindowOutput() {
+    runOnMain {
+      if (audioOnly || disposing || !renderToTexture || outputMove != null) return@runOnMain
+      takeDownWindowScaffold()
+      PlayerDebugLog.d(TAG) { "Window surface released; the picture stays in the texture" }
+    }
+  }
+
+  private fun takeDownWindowScaffold() {
+    val container = surfaceContainer ?: return
+    val contentView = activity.findViewById<ViewGroup>(android.R.id.content)
+    overlayLayoutListener?.let { contentView?.viewTreeObserver?.removeOnGlobalLayoutListener(it) }
+    overlayLayoutListener = null
+    frameRateManager?.clearVideoFrameRate(hdrActive = hdrDisplayActive)
+    frameRateManager = null
+    surfaceContainer = null
+    surfaceView = null
+    osdSurfaceView = null
+    pendingVideoRectUpdate.set(null)
+    if (container.parent != null) contentView?.removeView(container)
+  }
+
+  /**
+   * A window surface (or OSD surface) arrived while a move to the window holds:
+   * once both planes it needs exist, the handoff goes out, a layout pass
+   * later — by then the video surface has the picture's size.
+   */
+  private fun startWindowMoveWhenReady() {
+    val move = outputMove ?: return
+    if (!move.toWindow || move.started) return
+    val window = move.windowSurface?.takeIf { it.isValid } ?: return
+    val needsOsd = usesMediaCodecVo && appliedGpuVoTarget == null && osdSurfaceView != null
+    if (needsOsd && pendingOsdSurface?.isValid != true) return
+    move.started = true
+    emitLog("info", MOVE_LOG, "to window: window ready (osd=${pendingOsdSurface != null}), handing off")
+    val start = Runnable {
+      if (disposing || outputMove !== move) return@Runnable
+      pendingSurface = window
+      videoOutputEpoch += 1L
+      rememberCurrentSurfaceSize()
+      refreshVideoOutput(MOVE_TO_WINDOW)
+    }
+    surfaceContainer?.post(start) ?: start.run()
+  }
+
+  /**
+   * After a move's refresh attached its new surface: the running decoder was
+   * repointed in place and draws there from its next frame. A few frames on,
+   * the picture is surely there, and the move is done.
+   *
+   * The repoint, not a rebuilt decoder, on purpose: 717–720 parked the video
+   * track and took it back, and on a live stream (which refuses the seek that
+   * would rebuild the picture from the cache) that left the screen black until
+   * the next keyframe and the sound out of step afterwards, on the user's box.
+   */
+  private fun settleOutputMoves(surface: Surface) {
+    val move = outputMove ?: return
+    if (!move.started) return
+    runOnMain {
+      if (outputMove !== move) return@runOnMain
+      val arrived = if (move.toWindow) surface === surfaceView?.holder?.surface else surface === textureOutputSurface
+      if (!arrived) return@runOnMain
+      handler.postDelayed({ if (outputMove === move) finishOutputMove("attached") }, OUTPUT_MOVE_SETTLE_MS)
+    }
+  }
+
+  private fun onOutputMoveDeadline() {
+    val move = outputMove ?: return
+    if (move.toWindow && !move.started) {
+      val window = move.windowSurface?.takeIf { it.isValid }
+      if (window == null) {
+        abandonWindowMove(move)
+        return
+      }
+      // The OSD plane never came: the picture goes without it.
+      move.started = true
+      pendingSurface = window
+      videoOutputEpoch += 1L
+      refreshVideoOutput(MOVE_TO_WINDOW)
+    }
+    // Committed by now (the surface is chosen and queued with mpv); only its
+    // first frame is late.
+    finishOutputMove("deadline")
+  }
+
+  /** No window surface ever came: the picture stays in its texture, the scaffold goes. */
+  private fun abandonWindowMove(move: OutputMove) {
+    emitLog("warn", MOVE_LOG, "to window: no window surface arrived, staying in the texture")
+    outputMove = null
+    handler.removeCallbacks(outputMoveDeadline)
+    textureOutputSurface = pendingSurface
+    surfaceView?.holder?.removeCallback(this@MpvPlayerCore)
+    osdSurfaceView?.holder?.removeCallback(osdSurfaceCallback)
+    pendingOsdSurface = null
+    takeDownWindowScaffold()
+    Log.w(TAG, "No window surface arrived; the picture stays in the texture")
+    move.onDone(false)
+  }
+
+  private fun finishOutputMove(how: String) {
+    val move = outputMove ?: return
+    outputMove = null
+    handler.removeCallbacks(outputMoveDeadline)
+    Log.i(TAG, "Picture ${if (move.toWindow) "on the window surface" else "in the texture"} ($how)")
+    emitLog("info", MOVE_LOG, "${if (move.toWindow) "to window" else "to texture"}: done ($how)")
+    move.onDone(true)
+  }
+
   // Only callbacks publish usable surfaces. SurfaceHolder.isValid can still
   // be true inside surfaceDestroyed, after we have revoked that surface.
   // A texture session has no callback at all and parks its surface in
@@ -2063,6 +2301,15 @@ class MpvPlayerCore private constructor(
 
   private fun refreshVideoOutput(reason: String) {
     if (audioOnly || disposing || videoOutputFailure != null) return
+    // While a move is under way only its own handoff touches the output: a
+    // refresh from a surface callback in between would repoint the running
+    // decoder (or hang the OSD plane on the texture), which is what the move
+    // exists to avoid. Its own refresh applies the surface size as well.
+    if (outputMove != null && reason != MOVE_TO_WINDOW && reason != MOVE_TO_TEXTURE) {
+      PlayerDebugLog.d(TAG) { "refreshVideoOutput($reason): held for the output move" }
+      emitLog("info", MOVE_LOG, "refresh held: $reason")
+      return
+    }
 
     rememberCurrentSurfaceSize()
     val p = player
@@ -2106,6 +2353,13 @@ class MpvPlayerCore private constructor(
           val wasAttachedToPlaceholder = attachedToPlaceholder
           val wasPausedForSurfaceLoss = pausedForSurfaceLoss
           if (needsAttach) {
+            if (reason == MOVE_TO_WINDOW || reason == MOVE_TO_TEXTURE) {
+              emitLog(
+                "info",
+                MOVE_LOG,
+                "handoff in place: hwdec=${p.getString("hwdec-current")} osd=${osd != null} gpuVo=$appliedGpuVoTarget"
+              )
+            }
             handOffSurfaces(p, surface, osd)
             attachedOsdSurface = osd
             attachedSurface = surface
@@ -2137,6 +2391,7 @@ class MpvPlayerCore private constructor(
             PlayerDebugLog.d(TAG) { "Restored MPV real surface after placeholder ($reason)" }
           }
           PlayerDebugLog.d(TAG) { "Video output ready after $reason" }
+          settleOutputMoves(surface)
         }
       } catch (e: CancellationException) {
         PlayerDebugLog.d(TAG) { "Canceled pending MPV video output refresh ($reason, epoch=$refreshEpoch)" }
@@ -2242,6 +2497,7 @@ class MpvPlayerCore private constructor(
           // Pause, sizing and resume must not keep its main-thread caller waiting.
           completed.countDown()
           if (pauseAfterRetirement) {
+            emitLog("info", MOVE_LOG, "surface lost ($reason): parked on the placeholder, pausing")
             publicPauseWriteMutex.withLock {
               if (!(p.getFlag("pause") ?: cachedPaused)) {
                 p.setProperty("pause", true)
@@ -2337,6 +2593,7 @@ class MpvPlayerCore private constructor(
       PlayerDebugLog.d(TAG) { "Skipping audio-focus pause because playback is already desirably paused" }
       return
     }
+    emitLog("info", MOVE_LOG, "audio focus lost: pausing")
 
     launchMpvWrite("audio focus pause") {
       try {
@@ -3141,6 +3398,12 @@ class MpvPlayerCore private constructor(
     // Hiding a SurfaceView destroys its surface. Keep the views visible until
     // native teardown retires both consumers; Flutter's overlay stays above.
 
+    // A move still waiting will not land now; its caller must not wait out
+    // the deadline this clears.
+    outputMove?.let { move ->
+      outputMove = null
+      move.onDone(false)
+    }
     handler.removeCallbacksAndMessages(null)
 
     // Clean up frame rate and audio focus. The display-mode restore is owned

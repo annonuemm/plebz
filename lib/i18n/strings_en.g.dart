@@ -1848,6 +1848,18 @@ class Translations$settings$en {
 	/// en: 'Shows the day and time strip above the guide grid.'
 	String get liveTvGuideTimeNavigationDescription => 'Shows the day and time strip above the guide grid.';
 
+	/// en: 'Preview to full screen without a break (Beta)'
+	String get liveTvSeamlessFullscreen => 'Preview to full screen without a break (Beta)';
+
+	/// en: 'In the guide, the playing preview grows into the full-screen player on OK and shrinks back into its box on Back, without loading again. IPTV channels only. Turning this on turns off "Match frame rate for live TV" and "Tunnelled playback for live TV", and live TV no longer switches the "Automatic resolution": each of these switches would interrupt the picture. Films and shows keep their settings. A shader in the mpv player can make the move stutter briefly.'
+	String get liveTvSeamlessFullscreenDescription => 'In the guide, the playing preview grows into the full-screen player on OK and shrinks back into its box on Back, without loading again. IPTV channels only. Turning this on turns off "Match frame rate for live TV" and "Tunnelled playback for live TV", and live TV no longer switches the "Automatic resolution": each of these switches would interrupt the picture. Films and shows keep their settings. A shader in the mpv player can make the move stutter briefly.';
+
+	/// en: 'Full screen on the video surface'
+	String get liveTvSeamlessWindowSurface => 'Full screen on the video surface';
+
+	/// en: 'Off: the picture stays on the app's own canvas in full screen too. Nothing has to move, so nothing freezes and the sound stays in step; the box draws every frame itself, and there is no HDR and no subtitle display. On: once grown, the picture moves onto the TV's video surface, with full quality and HDR. Some boxes do not handle that move reliably: the picture can stall briefly, freeze or lose sync with the sound.'
+	String get liveTvSeamlessWindowSurfaceDescription => 'Off: the picture stays on the app\'s own canvas in full screen too. Nothing has to move, so nothing freezes and the sound stays in step; the box draws every frame itself, and there is no HDR and no subtitle display. On: once grown, the picture moves onto the TV\'s video surface, with full quality and HDR. Some boxes do not handle that move reliably: the picture can stall briefly, freeze or lose sync with the sound.';
+
 	/// en: 'Full filmography for actors'
 	String get showActorFilmography => 'Full filmography for actors';
 
@@ -9878,6 +9890,10 @@ extension on Translations {
 			'settings.layoutModePhoneDescription' => 'Compact touch interface with bottom navigation',
 			'settings.liveTvGuideTimeNavigation' => 'Guide time picker',
 			'settings.liveTvGuideTimeNavigationDescription' => 'Shows the day and time strip above the guide grid.',
+			'settings.liveTvSeamlessFullscreen' => 'Preview to full screen without a break (Beta)',
+			'settings.liveTvSeamlessFullscreenDescription' => 'In the guide, the playing preview grows into the full-screen player on OK and shrinks back into its box on Back, without loading again. IPTV channels only. Turning this on turns off "Match frame rate for live TV" and "Tunnelled playback for live TV", and live TV no longer switches the "Automatic resolution": each of these switches would interrupt the picture. Films and shows keep their settings. A shader in the mpv player can make the move stutter briefly.',
+			'settings.liveTvSeamlessWindowSurface' => 'Full screen on the video surface',
+			'settings.liveTvSeamlessWindowSurfaceDescription' => 'Off: the picture stays on the app\'s own canvas in full screen too. Nothing has to move, so nothing freezes and the sound stays in step; the box draws every frame itself, and there is no HDR and no subtitle display. On: once grown, the picture moves onto the TV\'s video surface, with full quality and HDR. Some boxes do not handle that move reliably: the picture can stall briefly, freeze or lose sync with the sound.',
 			'settings.showActorFilmography' => 'Full filmography for actors',
 			'settings.showActorFilmographyDescription' => 'On an actor\'s page, also list the films and series you do not have, greyed out. Uses your TMDB key.',
 			'settings.backupPickTitle' => 'Choose a backup',
@@ -10285,12 +10301,12 @@ extension on Translations {
 			'subtitlingStyling.backgroundOpacity' => 'Background Opacity',
 			'subtitlingStyling.backgroundColor' => 'Background Color',
 			'subtitlingStyling.position' => 'Position',
+			_ => null,
+		} ?? switch (path) {
 			'subtitlingStyling.assOverride' => 'ASS Override',
 			'subtitlingStyling.overrideScale' => 'Scale',
 			'subtitlingStyling.overrideForce' => 'Force',
 			'subtitlingStyling.overrideStrip' => 'Remove styling',
-			_ => null,
-		} ?? switch (path) {
 			'subtitlingStyling.positionTop' => 'Top',
 			'subtitlingStyling.positionBottom' => 'Bottom',
 			'subtitlingStyling.useMargins' => 'Use margins',
@@ -10799,12 +10815,12 @@ extension on Translations {
 			'explore.relation.parentStory' => 'Parent story',
 			'explore.relation.adaptation' => 'Adaptation',
 			'explore.relation.other' => 'Related',
+			_ => null,
+		} ?? switch (path) {
 			'explore.broadcast' => ({required Object day, required Object time}) => 'Airs ${day} at ${time}',
 			'explore.broadcastWithZone' => ({required Object day, required Object time, required Object timezone}) => 'Airs ${day} at ${time} ${timezone}',
 			'explore.detail.originalTitle' => 'Original title',
 			'explore.detail.alsoKnownAs' => 'Also known as',
-			_ => null,
-		} ?? switch (path) {
 			'explore.detail.studios' => 'Studios',
 			'explore.detail.country' => 'Country',
 			'explore.detail.language' => 'Language',
@@ -11313,12 +11329,12 @@ extension on Translations {
 			'companionRemote.remote.tabRemote' => 'Remote',
 			'companionRemote.remote.tabPlay' => 'Play',
 			'companionRemote.remote.tabMore' => 'More',
+			_ => null,
+		} ?? switch (path) {
 			'companionRemote.remote.menu' => 'Menu',
 			'companionRemote.remote.tabNavigation' => 'Tab Navigation',
 			'companionRemote.remote.tabDiscover' => 'Discover',
 			'companionRemote.remote.tabLibraries' => 'Libraries',
-			_ => null,
-		} ?? switch (path) {
 			'companionRemote.remote.tabSearch' => 'Search',
 			'companionRemote.remote.tabDownloads' => 'Downloads',
 			'companionRemote.remote.tabSettings' => 'Settings',
@@ -11827,12 +11843,12 @@ extension on Translations {
 			'sport.notInGuide' => 'This match is not in the guide.',
 			'sport.leagueChannels' => ({required Object league}) => 'Channels for the ${league}',
 			'sport.conference' => 'Conference',
+			_ => null,
+		} ?? switch (path) {
 			'sport.ownGoal' => 'own goal',
 			'sport.penalty' => 'penalty',
 			'sport.spectators' => ({required Object n}) => '${n} spectators',
 			'sport.place' => ({required Object n}) => 'Position ${n}',
-			_ => null,
-		} ?? switch (path) {
 			'sport.notStarted' => 'Not kicked off yet',
 			'sport.loadFailed' => 'The fixtures could not be loaded.',
 			'sport.noMatches' => 'No fixtures for this matchday.',

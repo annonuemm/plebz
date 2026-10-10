@@ -29,112 +29,120 @@ extension _VideoPlayerPlaybackStartMethods on VideoPlayerScreenState {
       final replacement = _live.beginReplacement();
       var committed = false;
       try {
-        _firstFrame.resetUiForOpen();
+        // The guide's preview, taken over as it plays (Plebz): its session and
+        // stream are adopted, nothing is tuned or opened, and the picture never
+        // leaves the screen — so no spinner either.
+        final takenOver = _pictureForLiveStart(currentPlayer);
+        if (takenOver == null) _firstFrame.resetUiForOpen();
         await currentPlayer.requestAudioFocus();
         await _setLiveStreamOptions(currentPlayer);
         if (!attempt.isCurrent) return;
 
-        // Start the session inside the player for both backends (loading
-        // spinner covers Plex's tune / Jellyfin's stream negotiation).
-        final channel = widget.live!.channel;
-        final session = await _startLiveSession(channel);
-        if (session == null) {
-          throw PlaybackException(t.liveTv.failedToStartChannel, reason: PlaybackFailureReason.serverUnavailable);
-        }
-        if (!mounted || !attempt.isCurrent) {
-          _abandonLiveSession(session);
-          return;
-        }
-        _live.adoptSession(session);
-
-        // Show "Watch from Start" dialog when an existing capture session has >60s of history.
-        // On a fresh tune (no active recording), the buffer is empty so this won't trigger.
-        int? offsetSeconds;
-        final captureBuffer = session.captureBuffer;
-        final programBeginsAt = session.program.beginsAt;
-        // A programme picked out of the archive names its own start, so there
-        // is nothing to ask about: the choice was already made in the guide.
-        final requestedStart = widget.live?.startAtEpoch;
-        if (requestedStart != null && captureBuffer != null) {
-          offsetSeconds = (requestedStart - captureBuffer.startedAt.round()).clamp(
-            captureBuffer.seekStartSeconds.round(),
-            captureBuffer.seekEndSeconds.round(),
-          );
-        } else if (captureBuffer != null && programBeginsAt != null && session.promptsWatchFromStart) {
-          final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-          final offsetProgramStart = programBeginsAt - captureBuffer.startedAt.round();
-          // If a session recording started after current program start, offset of program start at will be negative.
-          // If a session recording started before current program start, offset of program start will be positive.
-          // If guide data is not available, program start will be equal to current time.
-          final useProgramStart = offsetProgramStart > 0 && nowEpoch - programBeginsAt > 60;
-          final effectiveStart = useProgramStart ? programBeginsAt : captureBuffer.seekableStartEpoch;
-          final elapsed = nowEpoch - effectiveStart;
-          appLogger.d(
-            'Time-shift: buffer=${captureBuffer.seekableDurationSeconds}s, '
-            'beginsAt=$programBeginsAt, elapsed=${elapsed}s (need >60 for dialog)',
-          );
-          if (elapsed > 60) {
-            // A launcher/automation deep link may pre-answer the prompt.
-            final bool? watchFromStart;
-            switch (widget.live!.startPosition) {
-              case LiveTvStartPosition.beginning:
-                watchFromStart = true;
-              case LiveTvStartPosition.live:
-                watchFromStart = false;
-              case LiveTvStartPosition.ask:
-                widget.launchObserver?.mark('blocked', blocker: 'confirmationRequired');
-                watchFromStart = await _showWatchFromStartDialog(effectiveStart, nowEpoch);
-                widget.launchObserver?.mark('opening');
-                if (!mounted || !attempt.isCurrent) return;
-            }
-            if (watchFromStart == true) {
-              offsetSeconds = useProgramStart ? offsetProgramStart : captureBuffer.seekStartSeconds.round();
-            }
-          }
-        }
-
-        // Why a requested start did or did not become an offset. Without this
-        // the two failures — no seekable window at all, and a window that
-        // does not reach back far enough — look identical from the outside:
-        // the channel simply plays live.
-        if (requestedStart != null) {
-          appLogger.d(
-            'Live TV: archive start requested at $requestedStart — '
-            '${captureBuffer == null ? 'no seekable window, playing live' : 'window '
-                      '${captureBuffer.startedAt.round()}..'
-                      '${captureBuffer.startedAt.round() + captureBuffer.seekEndSeconds.round()}, '
-                      'offset ${offsetSeconds}s'}',
-          );
-        }
-
-        // Build the stream URL (with optional offset for time-shift)
-        final streamUrl = await session.streamUrlAt(offsetSeconds: offsetSeconds);
-        if (!attempt.isCurrent) return;
-        if (streamUrl == null || !mounted) {
-          throw PlaybackException(t.liveTv.failedToBuildStreamUrl, reason: PlaybackFailureReason.noPlayableSource);
-        }
-
-        // Track the requested epoch separately from MPV's source-local clock.
-        int? targetEpoch;
-        if (offsetSeconds != null) {
-          targetEpoch = (captureBuffer!.startedAt + offsetSeconds).round();
-          if (currentPlayer is! PlayerNative) {
-            _live.streamStartEpoch = captureBuffer.startedAt + offsetSeconds;
-          }
-          _live.atLiveEdge = false;
-          _live.playbackStartTime = DateTime.now();
+        if (takenOver != null) {
+          _startFromTakenOverPicture(currentPlayer, takenOver, attempt);
         } else {
-          _live.markStreamRestartedAtLiveEdge(captureBuffer);
-          targetEpoch = captureBuffer == null ? null : _live.streamStartEpoch.round();
-        }
+          // Start the session inside the player for both backends (loading
+          // spinner covers Plex's tune / Jellyfin's stream negotiation).
+          final channel = widget.live!.channel;
+          final session = await _startLiveSession(channel);
+          if (session == null) {
+            throw PlaybackException(t.liveTv.failedToStartChannel, reason: PlaybackFailureReason.serverUnavailable);
+          }
+          if (!mounted || !attempt.isCurrent) {
+            _abandonLiveSession(session);
+            return;
+          }
+          _live.adoptSession(session);
 
-        await _openLiveStream(
-          currentPlayer,
-          streamUrl,
-          targetEpoch: targetEpoch,
-          play: !PlatformDetector.isAutomotive(),
-          timeShifted: offsetSeconds != null,
-        );
+          // Show "Watch from Start" dialog when an existing capture session has >60s of history.
+          // On a fresh tune (no active recording), the buffer is empty so this won't trigger.
+          int? offsetSeconds;
+          final captureBuffer = session.captureBuffer;
+          final programBeginsAt = session.program.beginsAt;
+          // A programme picked out of the archive names its own start, so there
+          // is nothing to ask about: the choice was already made in the guide.
+          final requestedStart = widget.live?.startAtEpoch;
+          if (requestedStart != null && captureBuffer != null) {
+            offsetSeconds = (requestedStart - captureBuffer.startedAt.round()).clamp(
+              captureBuffer.seekStartSeconds.round(),
+              captureBuffer.seekEndSeconds.round(),
+            );
+          } else if (captureBuffer != null && programBeginsAt != null && session.promptsWatchFromStart) {
+            final nowEpoch = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+            final offsetProgramStart = programBeginsAt - captureBuffer.startedAt.round();
+            // If a session recording started after current program start, offset of program start at will be negative.
+            // If a session recording started before current program start, offset of program start will be positive.
+            // If guide data is not available, program start will be equal to current time.
+            final useProgramStart = offsetProgramStart > 0 && nowEpoch - programBeginsAt > 60;
+            final effectiveStart = useProgramStart ? programBeginsAt : captureBuffer.seekableStartEpoch;
+            final elapsed = nowEpoch - effectiveStart;
+            appLogger.d(
+              'Time-shift: buffer=${captureBuffer.seekableDurationSeconds}s, '
+              'beginsAt=$programBeginsAt, elapsed=${elapsed}s (need >60 for dialog)',
+            );
+            if (elapsed > 60) {
+              // A launcher/automation deep link may pre-answer the prompt.
+              final bool? watchFromStart;
+              switch (widget.live!.startPosition) {
+                case LiveTvStartPosition.beginning:
+                  watchFromStart = true;
+                case LiveTvStartPosition.live:
+                  watchFromStart = false;
+                case LiveTvStartPosition.ask:
+                  widget.launchObserver?.mark('blocked', blocker: 'confirmationRequired');
+                  watchFromStart = await _showWatchFromStartDialog(effectiveStart, nowEpoch);
+                  widget.launchObserver?.mark('opening');
+                  if (!mounted || !attempt.isCurrent) return;
+              }
+              if (watchFromStart == true) {
+                offsetSeconds = useProgramStart ? offsetProgramStart : captureBuffer.seekStartSeconds.round();
+              }
+            }
+          }
+
+          // Why a requested start did or did not become an offset. Without this
+          // the two failures — no seekable window at all, and a window that
+          // does not reach back far enough — look identical from the outside:
+          // the channel simply plays live.
+          if (requestedStart != null) {
+            appLogger.d(
+              'Live TV: archive start requested at $requestedStart — '
+              '${captureBuffer == null ? 'no seekable window, playing live' : 'window '
+                        '${captureBuffer.startedAt.round()}..'
+                        '${captureBuffer.startedAt.round() + captureBuffer.seekEndSeconds.round()}, '
+                        'offset ${offsetSeconds}s'}',
+            );
+          }
+
+          // Build the stream URL (with optional offset for time-shift)
+          final streamUrl = await session.streamUrlAt(offsetSeconds: offsetSeconds);
+          if (!attempt.isCurrent) return;
+          if (streamUrl == null || !mounted) {
+            throw PlaybackException(t.liveTv.failedToBuildStreamUrl, reason: PlaybackFailureReason.noPlayableSource);
+          }
+
+          // Track the requested epoch separately from MPV's source-local clock.
+          int? targetEpoch;
+          if (offsetSeconds != null) {
+            targetEpoch = (captureBuffer!.startedAt + offsetSeconds).round();
+            if (currentPlayer is! PlayerNative) {
+              _live.streamStartEpoch = captureBuffer.startedAt + offsetSeconds;
+            }
+            _live.atLiveEdge = false;
+            _live.playbackStartTime = DateTime.now();
+          } else {
+            _live.markStreamRestartedAtLiveEdge(captureBuffer);
+            targetEpoch = captureBuffer == null ? null : _live.streamStartEpoch.round();
+          }
+
+          await _openLiveStream(
+            currentPlayer,
+            streamUrl,
+            targetEpoch: targetEpoch,
+            play: !PlatformDetector.isAutomotive(),
+            timeShifted: offsetSeconds != null,
+          );
+        }
         if (!attempt.isCurrent) return;
 
         // Guide for the header and the channel strip. Fire-and-forget: what

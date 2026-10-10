@@ -26,6 +26,7 @@ import 'add_connection_screen.dart';
 import 'appearance_settings_screen.dart';
 import 'general_settings_screen.dart';
 import 'iptv_settings_screen.dart';
+import 'live_picture_setting.dart';
 import 'playback_settings_screen.dart';
 import 'services_settings_screen.dart';
 import 'settings_screen.dart';
@@ -201,6 +202,8 @@ List<Widget> plebzSettingsRows(BuildContext context, {required FocusNode Functio
           title: t.settings.liveTvDefaultFavorites,
           subtitle: t.settings.liveTvDefaultFavoritesDescription,
         ),
+        ?livePictureHandoverSettingTile(),
+        ?livePictureWindowSurfaceSettingTile(),
       ],
     ),
     SettingsGroup(

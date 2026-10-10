@@ -41,13 +41,33 @@ const String kVideoPlayerRouteName = '/video_player';
 /// Commit through [push], not Navigator.push: a covered player still owns the
 /// native channel and must leave before another playback can take ownership.
 class VideoPlayerRoute extends PageRouteBuilder<bool> {
-  VideoPlayerRoute({required WidgetBuilder builder, this.watchTogetherLease})
+  /// [pictureFrom] is where a live picture handed over by the guide's preview
+  /// sits, in the navigator's coordinates: the player grows out of it instead
+  /// of appearing at once (Plebz), and can shrink back into it on the way out
+  /// ([shrinkIntoPictureOnPop]).
+  VideoPlayerRoute({required WidgetBuilder builder, this.watchTogetherLease, Rect? pictureFrom})
     : super(
         settings: const RouteSettings(name: kVideoPlayerRouteName),
         pageBuilder: (context, _, _) => builder(context),
-        transitionDuration: Duration.zero,
+        transitionDuration: pictureFrom == null ? Duration.zero : _pictureMoveDuration,
         reverseTransitionDuration: Duration.zero,
+        transitionsBuilder: pictureFrom == null
+            ? _appearAtOnce
+            : (context, animation, _, child) =>
+                  _LivePictureTransition(from: pictureFrom, animation: animation, child: child),
       );
+
+  static const Duration _pictureMoveDuration = Duration(milliseconds: 300);
+
+  static Widget _appearAtOnce(BuildContext context, Animation<double> _, Animation<double> _, Widget child) => child;
+
+  /// The picture went back to the guide's preview: the pop shrinks the player
+  /// into the box it grew out of, where it otherwise vanishes at once. Only
+  /// for a route built with a picture to grow from.
+  void shrinkIntoPictureOnPop() {
+    if (transitionDuration == Duration.zero) return;
+    controller?.reverseDuration = _pictureMoveDuration;
+  }
 
   // Reserve at route commit, not screen initState: another launch can arrive
   // before the first frame. Navigator identity also isolates profile sessions.
@@ -650,4 +670,41 @@ Future<bool> navigateToWatchTogetherPlayback(
   onBeforeNavigate?.call();
   unawaited(navigateToVideoPlayer(context, metadata: metadata, watchTogetherLease: lease));
   return true;
+}
+
+/// The player growing out of the guide's preview box, and shrinking back into
+/// it: the whole page scaled into the box's rectangle, its corners rounded the
+/// way the box rounds them. The tree keeps one shape from start to finish —
+/// an identity transform at rest — so the player's state is never rebuilt.
+class _LivePictureTransition extends StatelessWidget {
+  const _LivePictureTransition({required this.from, required this.animation, required this.child});
+
+  final Rect from;
+  final Animation<double> animation;
+  final Widget child;
+
+  static const double _boxRadius = 8;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        final size = MediaQuery.sizeOf(context);
+        final t = Curves.easeInOutCubic.transform(animation.value.clamp(0.0, 1.0));
+        final rect = Rect.lerp(from, Offset.zero & size, t)!;
+        final scaleX = size.width > 0 ? rect.width / size.width : 1.0;
+        final scaleY = size.height > 0 ? rect.height / size.height : 1.0;
+        final scale = (scaleX + scaleY) / 2;
+        final radius = scale > 0 ? (1 - t) * _boxRadius / scale : 0.0;
+        return Transform(
+          transform: Matrix4.translationValues(rect.left, rect.top, 0)..scaleByDouble(scaleX, scaleY, 1, 1),
+          child: ClipRRect(borderRadius: BorderRadius.circular(radius), child: child),
+        );
+      },
+      // Its own layer: each frame of the growth only moves it, the page under
+      // the transform is not painted again.
+      child: RepaintBoundary(child: child),
+    );
+  }
 }

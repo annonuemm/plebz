@@ -39,6 +39,29 @@ abstract interface class VideoTextureTarget {
   ValueListenable<int?> get videoTextureId;
 }
 
+/// A player whose picture can move between a Flutter texture and a surface of
+/// its own while it plays: the guide's live preview growing into the
+/// full-screen player and shrinking back, with the stream never stopping
+/// (Plebz). Android only, on both backends.
+abstract interface class VideoOutputHandover {
+  /// Whether the picture is in a Flutter texture right now.
+  bool get rendersToTexture;
+
+  /// Moves the picture out of its texture onto the window surface. True once
+  /// it is there; [VideoTextureTarget.videoTextureId] is null by then, and the
+  /// texture is released a frame later. False when nothing moved.
+  Future<bool> moveOutputToWindow();
+
+  /// Moves the picture back into a new texture of [width] by [height]
+  /// physical pixels, published on [VideoTextureTarget.videoTextureId]. The
+  /// window surface stays up behind it until [releaseWindowOutput], so the
+  /// picture never shows a gap while Flutter puts the texture on screen.
+  Future<bool> moveOutputToTexture({required int width, required int height});
+
+  /// Takes the window surface down after [moveOutputToTexture].
+  Future<void> releaseWindowOutput();
+}
+
 /// The desktop implementation. The request is the same on every such platform
 /// — a Windows child HWND and a Wayland subsurface take identical geometry —
 /// so the mixin carries the call instead of each platform repeating it.

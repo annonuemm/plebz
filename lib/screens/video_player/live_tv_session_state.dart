@@ -431,4 +431,12 @@ class LiveTvSessionState {
     streamStartEpoch = buffer == null ? now.millisecondsSinceEpoch / 1000.0 : buffer.startedAt + buffer.seekEndSeconds;
     atLiveEdge = true;
   }
+
+  /// A stream taken over at the live edge after it had already played for
+  /// [position] — the guide's preview handed to the full-screen player
+  /// (Plebz). Position zero lies that far before the edge, not at it.
+  void markStreamTakenOverAtLiveEdge(CaptureBuffer? buffer, Duration position) {
+    markStreamRestartedAtLiveEdge(buffer);
+    streamStartEpoch -= position.inMilliseconds / 1000.0;
+  }
 }

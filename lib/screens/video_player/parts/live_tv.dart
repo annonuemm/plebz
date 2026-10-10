@@ -453,7 +453,12 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
   /// Configure MPV options for live streaming.
   /// The official Plex Media Player does not set client-side reconnect options —
   /// reconnection is handled by the server's transcoder on the input side.
-  Future<void> _setLiveStreamOptions(Player player) => player.setProperty('force-seekable', 'no');
+  /// [session] is the one the next open belongs to, where the screen has not
+  /// adopted it yet (a zap adopts after the open).
+  Future<void> _setLiveStreamOptions(Player player, {LiveTvPlaybackSession? session}) async {
+    await player.setProperty('force-seekable', 'no');
+    await applyLiveStreamProbing(player, session ?? _live.session);
+  }
 
   /// Re-opens the current session's live stream at [streamUrl].
   ///
@@ -471,13 +476,14 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     bool applyOptions = true,
     bool timeShifted = false,
     void Function()? onOpenStarted,
+    LiveTvPlaybackSession? session,
   }) async {
     if (_shuttingDown || !_launchCurrent) return false;
     _live.streamGeneration++;
     final media = Media(streamUrl, headers: _liveMediaHeaders(_live.session));
     final playNow = play ?? automotivePlaybackAllowedNow();
     if (targetEpoch == null || player is! PlayerNative) {
-      if (applyOptions) await _setLiveStreamOptions(player);
+      if (applyOptions) await _setLiveStreamOptions(player, session: session);
       if (_shuttingDown || !_launchCurrent) return false;
       onOpenStarted?.call();
       await player.open(media, play: playNow, isLive: true);
@@ -488,7 +494,7 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     final clockResult = _live.clockOpenResult(clockGeneration);
     final int? sourceId;
     try {
-      if (applyOptions) await _setLiveStreamOptions(player);
+      if (applyOptions) await _setLiveStreamOptions(player, session: session);
       if (_shuttingDown || !_launchCurrent) return false;
       onOpenStarted?.call();
       sourceId = await player.open(media, play: playNow, isLive: true, startLivePlaylistFromBeginning: timeShifted);
@@ -818,6 +824,7 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
         currentPlayer,
         streamUrl,
         targetEpoch: targetEpoch,
+        session: session,
         onOpenStarted: () {
           replacementOpenStarted = true;
           // The native state belongs to the replacement from this point,

@@ -420,8 +420,10 @@ extension _VideoPlayerBuildMethods on VideoPlayerScreenState {
                 ),
               // Watch Together overlays (isolated from video surface repaints)
               const VideoPlayerWatchTogetherOverlays(),
-              // Black overlay during exit (no spinner - just covers transparency)
-              VideoPlayerExitOverlay(isExiting: _isExiting),
+              // Black overlay during exit (no spinner - just covers transparency).
+              // Not when the picture goes back to the guide's preview: it shrinks
+              // into the box still playing (Plebz).
+              if (!_pictureHandedBack) VideoPlayerExitOverlay(isExiting: _isExiting),
             ],
           ),
         ),

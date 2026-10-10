@@ -1393,6 +1393,92 @@ class MpvPlayerPluginTest {
   }
 
   /**
+   * The guide's preview growing into the full-screen player (Plebz) moves a
+   * picture out of its texture; a session that is not in one has nothing to
+   * move, and says so rather than building a second window scaffold.
+   */
+  @Config(instrumentedPackages = ["com.edde746.plezy.libmpv"])
+  @Test
+  fun aMoveToTheWindowIsRefusedOutsideATexture() {
+    val core = testVideoCore { _, _ -> }
+    setCoreField(core, "player", fakeNativePlayer())
+    installVideoRectViews(core)
+    val answer = AtomicReference<Boolean?>()
+
+    core.moveOutputToWindow { answer.set(it) }
+    shadowOf(Looper.getMainLooper()).idle()
+
+    assertEquals(false, answer.get())
+    core.dispose()
+  }
+
+  /** The way back needs a window surface to come from. */
+  @Config(instrumentedPackages = ["com.edde746.plezy.libmpv"])
+  @Test
+  fun aMoveToTheTextureIsRefusedWithoutAWindow() {
+    val core = testVideoCore { _, _ -> }
+    setCoreField(core, "player", fakeNativePlayer())
+    setCoreField(core, "textureOutputSurface", Surface(SurfaceTexture(0)))
+    val answer = AtomicReference<Boolean?>()
+
+    core.moveOutputToTexture(Surface(SurfaceTexture(1))) { answer.set(it) }
+    shadowOf(Looper.getMainLooper()).idle()
+
+    assertEquals(false, answer.get())
+    assertTrue(core.rendersToTexture)
+    core.dispose()
+  }
+
+  /**
+   * A move to the window builds the scaffold a window session has and waits
+   * for its surface. A core going away before it arrives answers the waiting
+   * caller at once: Dart awaits that answer, and dispose clears the deadline
+   * that would otherwise give it.
+   */
+  @Config(instrumentedPackages = ["com.edde746.plezy.libmpv"])
+  @Test
+  fun aMoveToTheWindowBuildsTheScaffoldAndIsAnsweredWhenTheCoreGoes() {
+    val core = testVideoCore { _, _ -> }
+    setCoreField(core, "player", fakeNativePlayer())
+    setCoreField(core, "textureOutputSurface", Surface(SurfaceTexture(0)))
+    val answer = AtomicReference<Boolean?>()
+
+    core.moveOutputToWindow { answer.set(it) }
+    shadowOf(Looper.getMainLooper()).idle()
+
+    assertFalse(core.rendersToTexture)
+    val container = getCoreField(core, "surfaceContainer") as FrameLayout
+    assertNotNull(container.parent)
+    assertEquals(View.VISIBLE, container.visibility)
+    assertNull("no answer before the window surface carries the picture", answer.get())
+
+    core.dispose()
+    assertEquals(false, answer.get())
+  }
+
+  /**
+   * Once Flutter shows the texture the picture went back into, the window
+   * scaffold comes down: nothing of it is in use any more.
+   */
+  @Test
+  fun releasingTheWindowTakesTheScaffoldDownOnceThePictureIsInATexture() {
+    val core = testVideoCore { _, _ -> }
+    val container = installVideoRectViews(core)
+    val activity = getCoreField(core, "context") as Activity
+    activity.findViewById<ViewGroup>(android.R.id.content).addView(container)
+    setCoreField(core, "textureOutputSurface", Surface(SurfaceTexture(0)))
+
+    core.releaseWindowOutput()
+    shadowOf(Looper.getMainLooper()).idle()
+
+    assertNull(container.parent)
+    assertNull(getCoreField(core, "surfaceContainer"))
+    assertNull(getCoreField(core, "surfaceView"))
+    assertNull(getCoreField(core, "osdSurfaceView"))
+    core.dispose()
+  }
+
+  /**
    * An adopted native session, without libmpv: Robolectric no-ops
    * `System.loadLibrary`, and pre-closing the wrapper makes [MpvPlayer.close]
    * return before its JNI call, so the core's lifecycle paths that require a

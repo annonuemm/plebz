@@ -57,6 +57,8 @@ import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.FilteringMediaSource
+import androidx.media3.exoplayer.source.LoadEventInfo
+import androidx.media3.exoplayer.source.MediaLoadData
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
@@ -142,6 +144,9 @@ class ExoPlayerCore(private val activity: Activity) :
     private const val MIN_PLAYBACK_SPEED = 0.25f
     private const val MAX_PLAYBACK_SPEED = 8f
     private const val FPS_SAMPLE_COUNT = 8
+
+    /** How long a move between texture and window surface may take to show; see [moveOutputToWindow]. */
+    private const val OUTPUT_MOVE_DEADLINE_MS = 1500L
     private const val AUDIO_BOUNCE_TIMEOUT_MS = 1000L
 
     /** Fallback for stacks that only stringify the status instead of raising
@@ -652,6 +657,130 @@ class ExoPlayerCore(private val activity: Activity) :
     PlayerSurfaceHost.ensureFlutterOverlayOnTop(contentView, surfaceContainer)
   }
 
+  /** Whether the picture goes into a Flutter texture right now. */
+  val rendersToTexture: Boolean
+    get() = renderToTexture
+
+  // Plebz, faster zapping: whether an IPTV provider sends its live streams on
+  // to another server, and in what shape — the question before remembering
+  // where it sends them would save a round trip. Only the shape is logged:
+  // hosts, paths and queries carry the account and its tokens.
+  private val reportedRedirects = mutableSetOf<String>()
+
+  private fun reportRedirect(info: LoadEventInfo) {
+    val from = info.dataSpec.uri
+    val to = info.uri
+    if (from == to || from.host.isNullOrEmpty() || to.host.isNullOrEmpty()) return
+    val shape = "host changed=${from.host != to.host}, port changed=${from.port != to.port}, " +
+      "scheme ${from.scheme}->${to.scheme}, path kept=${from.path == to.path}, query=${!to.query.isNullOrEmpty()}"
+    if (!reportedRedirects.add(shape)) return
+    emitLog("info", "redirect", "live stream redirected: $shape")
+  }
+
+  // A move of the picture between the texture and the window surface, waiting
+  // for its first frame in the new place. Main thread only.
+  private var pendingOutputMove: ((Boolean) -> Unit)? = null
+
+  // The window surface was asked for before Android had made it.
+  private var awaitingWindowSurface = false
+
+  // Past the deadline the move is reported done anyway: the output was
+  // switched, and only the confirming frame is late (a paused picture never
+  // sends one).
+  private val outputMoveDeadline = Runnable { finishOutputMove("deadline") }
+
+  /**
+   * Moves a playing session out of its Flutter texture onto the window surface
+   * a full-screen session uses, without stopping it — the guide's preview
+   * growing into the full-screen player (Plebz).
+   *
+   * A texture session keeps its whole scaffold, only unattached; attaching it
+   * brings the surface up, and the player switches to it once it is valid, a
+   * plain output change for the running codec. Tunnelling stays off: it is
+   * decided when the player is built. [onDone] answers on the main thread,
+   * true once the first frame landed there, false when nothing was moved.
+   */
+  fun moveOutputToWindow(onDone: (Boolean) -> Unit) {
+    activity.runOnUiThread {
+      val view = surfaceView
+      if (disposing || !renderToTexture || exoPlayer == null || view == null || surfaceContainer == null ||
+        pendingOutputMove != null
+      ) {
+        onDone(false)
+        return@runOnUiThread
+      }
+      renderToTexture = false
+      pendingOutputMove = onDone
+      handler.postDelayed(outputMoveDeadline, OUTPUT_MOVE_DEADLINE_MS)
+      attachSurfaceContainer()
+      activity.findViewById<ViewGroup>(android.R.id.content)
+        ?.viewTreeObserver
+        ?.addOnGlobalLayoutListener(overlayLayoutListener)
+      currentVisible = true
+      surfaceContainer?.visibility = View.VISIBLE
+      Log.i(TAG, "Moving the picture from the texture to the window surface")
+      emitLog("info", "picture-move", "to window: attaching the window surface")
+      if (view.holder.surface?.isValid == true) switchToWindowSurface() else awaitingWindowSurface = true
+    }
+  }
+
+  private fun switchToWindowSurface() {
+    awaitingWindowSurface = false
+    val view = surfaceView ?: return
+    exoPlayer?.setVideoSurfaceView(view)
+    lastVideoSize?.let { size -> updateSurfaceViewSize(size.width, size.height, size.pixelWidthHeightRatio) }
+  }
+
+  /**
+   * The way back: moves a session on its window surface into [texture], the
+   * full-screen player shrinking back into the guide's preview (Plebz). The
+   * window surface stays attached, frozen on its last frame, until
+   * [releaseWindowOutput] — the caller takes it down once Flutter shows the
+   * texture.
+   */
+  fun moveOutputToTexture(texture: android.view.Surface, onDone: (Boolean) -> Unit) {
+    activity.runOnUiThread {
+      val player = exoPlayer
+      if (disposing || renderToTexture || player == null || !texture.isValid || pendingOutputMove != null) {
+        onDone(false)
+        return@runOnUiThread
+      }
+      renderToTexture = true
+      awaitingWindowSurface = false
+      pendingOutputMove = onDone
+      handler.postDelayed(outputMoveDeadline, OUTPUT_MOVE_DEADLINE_MS)
+      Log.i(TAG, "Moving the picture from the window surface to a texture")
+      emitLog("info", "picture-move", "to texture: switching the output")
+      // Also lets go of the SurfaceView's holder callbacks the player installed.
+      player.setVideoSurface(texture)
+    }
+  }
+
+  /**
+   * Takes the window surface down after [moveOutputToTexture], once the texture
+   * is on screen. The scaffold is kept, unattached, as a texture session has
+   * it from the start.
+   */
+  fun releaseWindowOutput() {
+    activity.runOnUiThread {
+      if (disposing || !renderToTexture || pendingOutputMove != null) return@runOnUiThread
+      val container = surfaceContainer ?: return@runOnUiThread
+      val contentView = activity.findViewById<ViewGroup>(android.R.id.content)
+      overlayLayoutListener?.let { contentView?.viewTreeObserver?.removeOnGlobalLayoutListener(it) }
+      if (container.parent != null) contentView?.removeView(container)
+      Log.d(TAG, "Window surface released; the picture stays in the texture")
+    }
+  }
+
+  private fun finishOutputMove(how: String) {
+    val done = pendingOutputMove ?: return
+    pendingOutputMove = null
+    handler.removeCallbacks(outputMoveDeadline)
+    Log.i(TAG, "Picture moved ($how), now in ${if (renderToTexture) "the texture" else "the window surface"}")
+    emitLog("info", "picture-move", "${if (renderToTexture) "to texture" else "to window"}: done ($how)")
+    done(true)
+  }
+
   fun initialize(
     tunnelingEnabled: Boolean = true,
     audioPassthroughEnabled: Boolean = false,
@@ -1107,6 +1236,7 @@ class ExoPlayerCore(private val activity: Activity) :
       if (disposing) return
       emitLog("debug", "surface", "Created")
       ensureFlutterOverlayOnTop()
+      if (awaitingWindowSurface && !renderToTexture) switchToWindowSurface()
     }
 
     override fun surfaceChanged(holder: android.view.SurfaceHolder, format: Int, width: Int, height: Int) {
@@ -3142,11 +3272,32 @@ class ExoPlayerCore(private val activity: Activity) :
       emitLog("debug", "audio", "Volume changed: $volume")
     }
 
+    override fun onLoadCompleted(
+      eventTime: AnalyticsListener.EventTime,
+      loadEventInfo: LoadEventInfo,
+      mediaLoadData: MediaLoadData
+    ) {
+      reportRedirect(loadEventInfo)
+    }
+
+    // A live stream's load never completes: it is cancelled when the channel
+    // changes or playback stops, and that is when its redirect is known.
+    override fun onLoadCanceled(
+      eventTime: AnalyticsListener.EventTime,
+      loadEventInfo: LoadEventInfo,
+      mediaLoadData: MediaLoadData
+    ) {
+      reportRedirect(loadEventInfo)
+    }
+
     override fun onRenderedFirstFrame(
       eventTime: AnalyticsListener.EventTime,
       output: Any,
       renderTimeMs: Long
     ) {
+      // The first frame after an output change, too: a move between texture
+      // and window surface is done once the picture is in its new place.
+      if (pendingOutputMove != null) handler.post { finishOutputMove("first frame") }
       val mediaGeneration = mediaGenerationAt(eventTime) ?: return
       if (mediaGeneration != currentMediaGeneration) return
       hasRenderedVideoFrameForMedia = true
@@ -4497,6 +4648,13 @@ class ExoPlayerCore(private val activity: Activity) :
     cancelResumeStallWatchdog()
     cancelBufferingStallWatchdog()
     stopPositionUpdates()
+    // A move still waiting will not land now; its caller must not wait out the
+    // deadline this clears.
+    pendingOutputMove?.let { done ->
+      pendingOutputMove = null
+      done(false)
+    }
+    awaitingWindowSurface = false
     handler.removeCallbacksAndMessages(null)
     // releasePending (not clearVideoFrameRate): on the ExoPlayer→MPV fallback
     // path, dispose runs after the rate switch has been applied — clearing

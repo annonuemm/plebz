@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.15.0 (Build 723)
+
+- Live-TV (Beta): Die laufende Vorschau im Programmführer wird mit OK zum Vollbild und mit Zurück wieder zur Vorschau, ohne neu zu laden. Einschalten unter Einstellungen → Live-TV → „Vorschau nahtlos ins Vollbild (Beta)“. 4K-Sender können im Vollbild ruckeln. Für volle Qualität mit HDR gibt es darunter den Schalter „Vollbild auf der Videofläche“. Mit ExoPlayer klappt das meist gut, mit mpv kann das Bild je nach Box kurz hängen.
+- Live-TV: IPTV-Sender können mit mpv schneller starten, vor allem solche, die eine leere Ton- oder Datenspur mitschicken.
+
 ## 1.14.1 (Build 715)
 
 - Flach: Uhr und Sync-Knopf auf der Startseite bleiben auch über hellen Hintergrundbildern gut lesbar.

@@ -239,6 +239,13 @@ open class MpvPlayerPlugin(
       "setVisible" -> handleSetVisible(call, result)
       "createTextureOutput" -> handleCreateTextureOutput(result)
       "setVideoRect" -> handleSetVideoRect(call, result)
+      "moveOutputToWindow" -> handleMoveOutputToWindow(result)
+      "moveOutputToTexture" -> handleMoveOutputToTexture(call, result)
+      "releaseWindowOutput" -> {
+        playerCore?.releaseWindowOutput()
+        result.success(null)
+      }
+      "releaseTextureOutput" -> handleReleaseTextureOutput(result)
       "updateFrame" -> handleUpdateFrame(result)
       "setVideoFrameRate" -> handleSetVideoFrameRate(call, result)
       "clearVideoFrameRate" -> handleClearVideoFrameRate(result)
@@ -322,6 +329,62 @@ open class MpvPlayerPlugin(
       playerCore?.setTextureSurfaceSize(width, height)
     }
     result.success("texture(${width}x$height)")
+  }
+
+  /**
+   * The guide's preview growing into the full-screen player (Plebz): the
+   * playing session leaves its texture for a window surface. The texture stays
+   * registered until Dart has taken it off screen and asks for
+   * `releaseTextureOutput`.
+   */
+  private fun handleMoveOutputToWindow(result: MethodChannel.Result) {
+    val core = playerCore
+    if (audioOnly || core == null) {
+      result.success(false)
+      return
+    }
+    core.moveOutputToWindow { moved -> result.success(moved) }
+  }
+
+  /**
+   * The way back: a new texture for the playing session, sized like the
+   * window it leaves, answered with its id once mpv draws into it. Null when
+   * nothing moved.
+   */
+  private fun handleMoveOutputToTexture(call: MethodCall, result: MethodChannel.Result) {
+    val core = playerCore
+    val registry = channels.textureRegistry
+    if (audioOnly || core == null || registry == null || core.rendersToTexture) {
+      result.success(null)
+      return
+    }
+    releaseTextureOutput()
+    val entry = registry.createSurfaceTexture()
+    val width = call.argument<Number>("width")?.toInt() ?: 0
+    val height = call.argument<Number>("height")?.toInt() ?: 0
+    if (width > 0 && height > 0) entry.surfaceTexture().setDefaultBufferSize(width, height)
+    val surface = android.view.Surface(entry.surfaceTexture())
+    textureEntry = entry
+    textureSurface = surface
+    Log.i(tag, "Created texture output ${entry.id()} for a move from the window")
+    core.moveOutputToTexture(surface) { moved ->
+      if (moved) {
+        result.success(entry.id())
+      } else {
+        if (textureEntry === entry) releaseTextureOutput()
+        result.success(null)
+      }
+    }
+  }
+
+  /** The texture a move to the window left behind, once Flutter no longer draws it. */
+  private fun handleReleaseTextureOutput(result: MethodChannel.Result) {
+    if (playerCore?.rendersToTexture == true) {
+      result.success(false)
+      return
+    }
+    releaseTextureOutput()
+    result.success(true)
   }
 
   private fun releaseTextureOutput() {

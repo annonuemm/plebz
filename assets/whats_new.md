@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.18.2 (Build 745)
+
+- Player: Nach dem Ändern von Qualität oder Version lässt sich die Bedienleiste sofort weiter bedienen, ohne sie erst zu schließen.
+
 ## 1.18.1 (Build 743)
 
 - Sport: Ergebnisse sind nach dem Aktualisieren sofort aktuell. Vorher konnten sie bis zu einigen Stunden hinterherhängen.

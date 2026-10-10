@@ -11,9 +11,26 @@ extension _PlexVideoControlsVisibilityMethods on _PlexVideoControlsState {
         _loadPlaybackExtras(forceRefresh: true);
       }
       _syncCurrentMarkerForCurrentPosition();
+      _reclaimFocusAfterRebuiltBar();
     } else {
       _clearCurrentMarker();
     }
+  }
+
+  /// The bottom bar is built anew once the first frame is back (Plebz): a
+  /// quality or version switch reloads in place and takes it down meanwhile,
+  /// together with the control that held the remote. Focus is then left on a
+  /// bare scope that answers nothing but Back, so it goes to Play/Pause — or
+  /// to the player surface where the chrome takes no focus. A control that
+  /// still holds it, or an open sheet, is left alone.
+  void _reclaimFocusAfterRebuiltBar() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_showControls || _sheetIsOpen()) return;
+      if (ModalRoute.of(context)?.isCurrent != true) return;
+      final focus = FocusManager.instance.primaryFocus;
+      if (focus != null && focus is! FocusScopeNode) return;
+      if (!_focusPlayPauseIfKeyboardMode()) _claimPlayerSurfaceFocus();
+    });
   }
 
   /// Focus Play/Pause when the viewer is already driving with keyboard/D-pad

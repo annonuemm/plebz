@@ -568,6 +568,37 @@ void main() {
     });
   });
 
+  // A quality or version switch reloads in place: the first frame goes, the
+  // bottom bar with it, and comes back built anew. The control that held the
+  // remote is gone by then; with the chrome held up on a TV, nothing but Back
+  // answered until the chrome was closed and opened again (a user's report).
+  group('a source switch on Android TV', () {
+    setUp(() async {
+      TvDetectionService.debugSetAppleTVOverride(null);
+      await TvDetectionService.getInstance(forceTv: true);
+      TvDetectionService.setForceTVSync(true);
+      PlatformDetector.debugSetIsDesktopOSOverride(false);
+      await setNavigationEnabled(true);
+    });
+
+    playerTest('hands the remote to Play/Pause once the bottom bar is back', (tester) async {
+      await press(tester, LogicalKeyboardKey.select);
+      expect(focusLabel(), 'PlayPause');
+      await press(tester, LogicalKeyboardKey.arrowRight);
+      expect(focusLabel(), isNot('PlayPause'), reason: 'precondition: another control holds the remote');
+
+      hasFirstFrame.value = false;
+      await tester.pumpAndSettle();
+      hasFirstFrame.value = true;
+      await tester.pumpAndSettle();
+
+      expect(chrome.controlsVisible, isTrue);
+      expect(focusLabel(), 'PlayPause');
+      await press(tester, LogicalKeyboardKey.arrowRight);
+      expect(focusLabel(), isNot(anyOf('PlayPause', 'PlayerSurface', null)), reason: 'the remote walks the bar again');
+    });
+  });
+
   // Android TV is the platform the report came from, and it is materially
   // different: the marker autofocuses the button, so the key is dispatched
   // from the button's node upward rather than from the surface. The forced-TV

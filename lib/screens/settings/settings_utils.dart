@@ -16,6 +16,7 @@ import '../../widgets/app_icon.dart';
 import '../../widgets/dialog_action_button.dart';
 import '../../widgets/focusable_list_tile.dart';
 import '../../widgets/scroll_ink_boundary.dart';
+import '../../widgets/setting_tile.dart' show settingSubtitle;
 import '../../widgets/tv_color_picker.dart';
 import '../../widgets/tv_number_spinner.dart';
 import '../../redesign/ocker_skin.dart';
@@ -229,7 +230,7 @@ Future<DialogOption<T>?> showSelectionDialog<T>({
                   color: selected ? Theme.of(dialogContext).colorScheme.primary : null,
                 ),
                 title: Text(option.title),
-                subtitle: option.subtitle != null ? Text(option.subtitle!) : null,
+                subtitle: settingSubtitle(option.subtitle),
                 trailing: option.trailing,
                 selected: selected,
                 autofocus: focusFirstItem && selected,
@@ -280,7 +281,7 @@ void showChecklistDialog<T>({
                         }
                       }),
                 title: Text(option.title),
-                subtitle: option.subtitle != null ? Text(option.subtitle!) : null,
+                subtitle: settingSubtitle(option.subtitle),
                 autofocus: focusFirstItem && option.value == firstEditable,
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,

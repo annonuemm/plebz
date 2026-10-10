@@ -18,7 +18,7 @@ MaterialPageRoute<void> buildSettingsRoute() {
   return MaterialPageRoute<void>(
     settings: const RouteSettings(name: kSettingsRouteName),
     // A list with nothing behind it: its choosers stay filled under glass.
-    builder: (_) => const OverlaySheetNoGlass(child: SettingsScreen(curated: true)),
+    builder: (_) => const OverlaySheetNoGlass(child: SettingsScreen()),
   );
 }
 

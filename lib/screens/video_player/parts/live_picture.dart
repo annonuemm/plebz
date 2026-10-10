@@ -34,16 +34,12 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
 
   /// What the screen shows until the player is initialized when it grew out
   /// of the guide's preview: the picture itself, so the growth starts from a
-  /// playing channel rather than from a spinner. Null otherwise. On the plane,
-  /// the picture is behind the app, and this is the hole it shows through.
+  /// playing channel rather than from a spinner. Null otherwise. The picture
+  /// is on the plane behind the app, and this is the hole it shows through.
   Widget? _buildHandedOverPicture() {
     final picture = _takenOverPicture ?? _handedOverPicture;
-    if (picture == null || !picture.isAlive) return null;
-    if (LivePictureHandover.isOnPlane(picture.player)) return const VideoSurfaceHole();
-    return ColoredBox(
-      color: Colors.black,
-      child: Video(player: picture.player),
-    );
+    if (picture == null || !picture.isAlive || !LivePictureHandover.isOnPlane(picture.player)) return null;
+    return const VideoSurfaceHole();
   }
 
   /// The taken-over picture, for the live start to adopt rather than tune.
@@ -64,88 +60,12 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
     _live.adoptSession(session);
     _live.markStreamTakenOverAtLiveEdge(session.captureBuffer, currentPlayer.state.position);
     _live.streamGeneration++;
-    // The move's native steps, kept in the in-app log while the freeze after
-    // the move on the user's box is open.
-    _playerStreamSubscriptions.add(
-      currentPlayer.streams.log
-          .where((log) => log.prefix == 'picture-move')
-          .listen((log) => appLogger.i('Live picture (native): ${log.text}')),
-    );
     attempt.outcome.adoptPlayingFile();
     _firstFrame.markReady();
     _http503Watchdog.disarm();
     unawaited(_visualEffects.onFirstFrame());
-    // On the plane already (the test alternative), nothing moves. Otherwise
-    // the picture stays in the texture unless the viewer asked for the window
-    // surface: moving a running decoder froze or desynced it now and then on
-    // the user's box (see SettingsService.liveTvSeamlessWindowSurface).
-    if (LivePictureHandover.isOnPlane(currentPlayer)) {
-      appLogger.i('Live picture: on the video surface from the guide on');
-    } else if (SettingsService.instanceOrNull?.read(SettingsService.liveTvSeamlessWindowSurface) ?? false) {
-      unawaited(_moveTakenOverPictureToWindow(currentPlayer));
-    } else {
-      appLogger.i('Live picture: stays in the texture for full screen');
-    }
-  }
-
-  /// Once the player has grown out of the box, the picture leaves the texture
-  /// it played in there for the window surface a full-screen picture belongs
-  /// on: the hardware plane, HDR, no copy through Flutter. The texture stays
-  /// on screen until the window surface has the picture.
-  Future<void> _moveTakenOverPictureToWindow(Player currentPlayer) async {
-    if (currentPlayer case final VideoOutputHandover output) {
-      if (!await _untilPictureHasGrown()) return;
-      if (!mounted || _shuttingDown || _handingPictureBack || player != currentPlayer || !output.rendersToTexture) {
-        return;
-      }
-      final moved = await output.moveOutputToWindow();
-      appLogger.i('Live picture: ${moved ? 'moved to the window surface' : 'stays in the texture'}');
-      if (moved) unawaited(_checkPictureAfterMove(currentPlayer));
-    }
-  }
-
-  /// What mpv reports a moment after the picture moved, at info so the in-app
-  /// log keeps it — the picture froze after the move on the user's box, cause
-  /// unknown. And the one cure that costs nothing: a player the move left
-  /// paused plays on.
-  Future<void> _checkPictureAfterMove(Player currentPlayer) async {
-    for (final wait in const [Duration(seconds: 2), Duration(seconds: 3)]) {
-      await Future<void>.delayed(wait);
-      if (!mounted || _shuttingDown || player != currentPlayer) return;
-      final report = <String>[];
-      String? paused;
-      for (final name in const [
-        'pause',
-        'paused-for-cache',
-        'core-idle',
-        'time-pos',
-        'vid',
-        'hwdec-current',
-        'estimated-vf-fps',
-        'vo-configured',
-        'avsync',
-        'frame-drop-count',
-        'decoder-frame-drop-count',
-      ]) {
-        String? value;
-        try {
-          value = await currentPlayer.getProperty(name);
-        } catch (_) {
-          value = '?';
-        }
-        if (name == 'pause') paused = value;
-        report.add('$name=$value');
-      }
-      if (!mounted || player != currentPlayer) return;
-      appLogger.i('Live picture after the move: ${report.join(' ')}');
-      // mpv only: its `pause` is the pause flag, where ExoPlayer answers "not
-      // playing" while it buffers too — and a play() then arms its own
-      // resume-stall rescue, which seeks a live stream (seen in BlueStacks).
-      if (paused == 'yes' && currentPlayer is PlayerNative && _playbackIntentShouldPlay && !_shuttingDown) {
-        appLogger.w('Live picture: paused after the move, playing on');
-        await currentPlayer.play();
-      }
-    }
+    // On the plane from the guide on: nothing moves.
+    appLogger.i('Live picture: on the video surface from the guide on');
   }
 
   /// Completes once the route has grown out of the guide's box: true when it
@@ -225,6 +145,7 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
     if (!widget.isLive || !_grewOutOfGuidePicture || _handingPictureBack) return false;
     final currentPlayer = player;
     if (currentPlayer == null || !LivePictureHandover.canMove(currentPlayer, _live.session)) return false;
+    if (!LivePictureHandover.isOnPlane(currentPlayer)) return false;
     if (_currentLiveChannel == null || !currentPlayer.state.isActive) return false;
     if (!_firstFrame.rendered || _hasFatalPlaybackError || _playbackFailureMessage != null) return false;
     if (!_live.atLiveEdge || _live.retrying || _transitionGate.transition != PlaybackTransition.idle) return false;
@@ -233,11 +154,10 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
     return settings != null && LivePictureHandover.enabledIn(settings);
   }
 
-  /// Back, with the picture going home to the guide's preview: it moves into
-  /// a texture, the window surface goes once Flutter shows that texture, and
-  /// the player shrinks into the box while the guide takes the picture up
-  /// ([LivePictureReturn]). Anything that goes wrong on the way leaves the
-  /// ordinary way out.
+  /// Back, with the picture going home to the guide's preview: it stays on
+  /// the plane and shrinks into the box with the page while the guide takes
+  /// it up ([LivePictureReturn]). Anything that goes wrong on the way leaves
+  /// the ordinary way out.
   Future<void> _handPictureBackToGuide() async {
     final currentPlayer = player;
     final session = _live.session;
@@ -245,7 +165,7 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
     final navigator = Navigator.of(context);
     final route = ModalRoute.of(context);
     if (currentPlayer == null ||
-        currentPlayer is! VideoOutputHandover ||
+        !LivePictureHandover.isOnPlane(currentPlayer) ||
         session == null ||
         channel == null ||
         route == null ||
@@ -253,32 +173,13 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
         !navigator.canPop()) {
       return _exitPlayerRoute(navigateHome: false);
     }
-    final output = currentPlayer as VideoOutputHandover;
     _handingPictureBack = true;
     _chromeController.hide(ignoreHolds: true);
-
-    // A picture on the plane in a box stays where it is and only shrinks with
-    // the page; one on the window surface goes back into a texture first.
-    final onPlane = LivePictureHandover.isOnPlane(currentPlayer);
-    var inPlace = output.rendersToTexture || onPlane;
-    if (!inPlace) {
-      final size = View.of(context).physicalSize;
-      inPlace = await output.moveOutputToTexture(width: size.width.round(), height: size.height.round());
-      if (inPlace && mounted) {
-        await SchedulerBinding.instance.endOfFrame;
-        unawaited(output.releaseWindowOutput());
-      }
-    }
-    if (!mounted) return;
-    if (!inPlace || _shuttingDown || player != currentPlayer || !route.isCurrent || !navigator.canPop()) {
-      _handingPictureBack = false;
-      return _exitPlayerRoute(navigateHome: false);
-    }
 
     appLogger.d('Live picture: giving ${channel.displayName} back to the guide');
     _setPlayerState(() => _pictureHandedBack = true);
     if (route is VideoPlayerRoute) route.shrinkIntoPictureOnPop();
-    if (onPlane) _movePlaneWithRoute(currentPlayer, growing: false);
+    _movePlaneWithRoute(currentPlayer, growing: false);
     LivePictureReturn.instance.leave(LivePictureHandover(player: currentPlayer, session: session, channel: channel));
     await _exitPlayerRoute(navigateHome: false);
   }

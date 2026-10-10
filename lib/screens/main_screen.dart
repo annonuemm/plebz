@@ -1362,7 +1362,7 @@ class _MainScreenState extends State<MainScreen>
       NavigationTabId.search => SearchScreen(key: _screenKeys[tab]),
       NavigationTabId.downloads => DownloadsScreen(key: _screenKeys[tab]),
       // A list with nothing behind it: its choosers stay filled under glass.
-      NavigationTabId.settings => OverlaySheetNoGlass(child: SettingsScreen(key: _screenKeys[tab], curated: true)),
+      NavigationTabId.settings => OverlaySheetNoGlass(child: SettingsScreen(key: _screenKeys[tab])),
     };
   }
 

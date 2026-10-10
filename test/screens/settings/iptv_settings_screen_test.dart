@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:plezy/i18n/strings.g.dart';
+import 'package:plezy/providers/iptv_sources_provider.dart';
 import 'package:plezy/screens/settings/iptv_settings_screen.dart';
 import 'package:plezy/services/iptv/iptv_source.dart';
 import 'package:plezy/services/settings_service.dart';
+import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/utils/platform_detector.dart';
 
 import 'package:plezy/widgets/focusable_list_tile.dart';
@@ -198,5 +201,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(t.iptv.fieldRequired), findsOneWidget);
+  });
+
+  testWidgets("Live TV's own settings sit on the IPTV page", (tester) async {
+    tester.view.physicalSize = const Size(1920, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final provider = IptvSourcesProvider(profileId: 'p', buildSource: (_) => throw UnimplementedError());
+    addTearDown(provider.dispose);
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: ChangeNotifierProvider<IptvSourcesProvider>.value(
+          value: provider,
+          child: MaterialApp(theme: monoTheme(dark: true), home: const IptvSettingsScreen()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(t.settings.liveTv), findsOneWidget);
+    expect(find.text(t.settings.liveTvDefaultFavorites), findsOneWidget);
+    final before = SettingsService.instance.read(SettingsService.liveTvGuideTimeNavigation);
+    await tester.tap(find.text(t.settings.liveTvGuideTimeNavigation));
+    await tester.pumpAndSettle();
+    expect(SettingsService.instance.read(SettingsService.liveTvGuideTimeNavigation), !before);
   });
 }

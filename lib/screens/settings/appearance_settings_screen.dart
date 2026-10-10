@@ -189,12 +189,15 @@ class AppearanceSettingsScreen extends StatelessWidget {
                 title: t.settings.focusGlow,
                 subtitle: t.settings.focusGlowDescription,
               ),
-            SettingSwitchTile(
-              pref: SettingsService.showHomeTitleLogos,
-              icon: Symbols.title_rounded,
-              title: t.settings.homeTitleLogos,
-              subtitle: t.settings.homeTitleLogosDescription,
-            ),
+            // Only the television's spotlight reads it; the phone's banner
+            // draws its logo either way (Plebz).
+            if (PlatformDetector.isTV())
+              SettingSwitchTile(
+                pref: SettingsService.showHomeTitleLogos,
+                icon: Symbols.title_rounded,
+                title: t.settings.homeTitleLogos,
+                subtitle: t.settings.homeTitleLogosDescription,
+              ),
             if (hasSeerr)
               SettingSwitchTile(
                 pref: SettingsService.seerrCardEpisodeFacts,
@@ -396,23 +399,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
           ],
         ),
 
-        SettingsGroup(
-          title: t.settings.liveTv,
-          children: [
-            SettingSwitchTile(
-              pref: SettingsService.liveTvDefaultFavorites,
-              icon: Symbols.star_rounded,
-              title: t.settings.liveTvDefaultFavorites,
-              subtitle: t.settings.liveTvDefaultFavoritesDescription,
-            ),
-            SettingSwitchTile(
-              pref: SettingsService.liveTvGuideTimeNavigation,
-              icon: Symbols.schedule_rounded,
-              title: t.settings.liveTvGuideTimeNavigation,
-              subtitle: t.settings.liveTvGuideTimeNavigationDescription,
-            ),
-          ],
-        ),
+        // Live TV's rows live with IPTV (Plebz).
         const SizedBox(height: 24),
       ],
     );

@@ -74,14 +74,26 @@ void main() {
   });
 
   group('enabledIn', () {
-    test('is off until the switch is turned on', () {
+    test('is on by default, with the live frame-rate match off', () async {
+      expect(settings.read(SettingsService.liveTvSeamlessFullscreen), isTrue);
+      expect(settings.read(SettingsService.matchContentFrameRateLiveTv), isFalse);
+      expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isTrue);
+
+      await settings.write(SettingsService.liveTvSeamlessFullscreen, false);
       expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isFalse);
     });
 
-    test('the picture stays in the texture in full screen unless asked for the video surface', () {
-      // Moving the running decoder froze or desynced it now and then on the
-      // user's box, so staying put is the default.
-      expect(settings.read(SettingsService.liveTvSeamlessWindowSurface), isFalse);
+    test('reads off for a viewer who turned the live frame-rate match or live tunnelling on', () async {
+      await settings.write(SettingsService.matchContentFrameRateLiveTv, true);
+      expect(settings.read(SettingsService.liveTvSeamlessFullscreen), isFalse);
+
+      await settings.write(SettingsService.matchContentFrameRateLiveTv, false);
+      await settings.write(SettingsService.tunneledPlaybackLiveTv, true);
+      expect(settings.read(SettingsService.liveTvSeamlessFullscreen), isFalse);
+
+      // Their own choice stands.
+      await settings.write(SettingsService.liveTvSeamlessFullscreen, true);
+      expect(settings.read(SettingsService.liveTvSeamlessFullscreen), isTrue);
     });
 
     test('on Android with nothing that switches the display, it is on', () async {
@@ -94,8 +106,8 @@ void main() {
     test('a live frame-rate match stops it, until the switch turns that off', () async {
       await settings.write(SettingsService.liveTvSeamlessFullscreen, true);
       await settings.write(SettingsService.matchContentFrameRate, true);
+      await settings.write(SettingsService.matchContentFrameRateLiveTv, true);
 
-      // The live variant is on by default, so the match reaches live TV.
       expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isFalse);
 
       await LivePictureHandover.turnOffWhatInterrupts(settings);
@@ -146,16 +158,7 @@ void main() {
     });
   });
 
-  group('the test alternative on the video plane', () {
-    test('needs the seamless switch and its own', () async {
-      await settings.write(SettingsService.liveTvSeamlessPlanePreview, true);
-      expect(LivePictureHandover.planePreviewIn(settings, isAndroid: true), isFalse);
-
-      await settings.write(SettingsService.liveTvSeamlessFullscreen, true);
-      expect(LivePictureHandover.planePreviewIn(settings, isAndroid: true), isTrue);
-      expect(LivePictureHandover.planePreviewIn(settings, isAndroid: false), isFalse);
-    });
-
+  group('the video plane', () {
     test('a player is on the plane only when it follows the video rect', () {
       expect(LivePictureHandover.isOnPlane(_MovablePlayer()), isFalse);
       expect(LivePictureHandover.isOnPlane(_PlanePlayer()), isTrue);

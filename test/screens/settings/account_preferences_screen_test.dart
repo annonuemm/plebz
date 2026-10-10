@@ -143,9 +143,9 @@ void main() {
     await pumpSection(tester, repository: repository, targets: const [jellyfinTarget]);
 
     expect(find.text('Library'), findsOneWidget);
-    expect(find.text('Show missing episodes'), findsOneWidget);
-    expect(find.text('Hide watched items in Latest'), findsOneWidget);
-    expect(find.text('Show the Collections view'), findsOneWidget);
+    expect(find.text('Missing episodes'), findsOneWidget);
+    expect(find.text('Hide watched in Latest'), findsOneWidget);
+    expect(find.text('Collections view'), findsOneWidget);
 
     expect(find.text('SDH subtitles'), findsNothing);
     expect(find.text('Forced subtitles'), findsNothing);
@@ -167,8 +167,8 @@ void main() {
     expect(find.text('Ratings & reviews'), findsOneWidget);
 
     expect(find.text('Library'), findsNothing);
-    expect(find.text('Show missing episodes'), findsNothing);
-    expect(find.text('Hide watched items in Latest'), findsNothing);
+    expect(find.text('Missing episodes'), findsNothing);
+    expect(find.text('Hide watched in Latest'), findsNothing);
   });
 
   testWidgets('current values are read from the account', (tester) async {
@@ -189,7 +189,7 @@ void main() {
     expect(find.text('German'), findsOneWidget);
     expect(find.text('Only forced subtitles'), findsOneWidget);
     expect(find.text('No preference'), findsOneWidget);
-    expect(switchValueFor(tester, 'Hide watched items in Latest'), isTrue);
+    expect(switchValueFor(tester, 'Hide watched in Latest'), isTrue);
   });
 
   testWidgets('a rejected write shows the new value, then reverts and reports', (tester) async {
@@ -203,21 +203,21 @@ void main() {
     final repository = repositoryOf({jellyfinRef: source});
 
     await pumpSection(tester, repository: repository, targets: const [jellyfinTarget]);
-    expect(switchValueFor(tester, 'Hide watched items in Latest'), isTrue);
+    expect(switchValueFor(tester, 'Hide watched in Latest'), isTrue);
 
-    await tester.tap(find.text('Hide watched items in Latest'));
+    await tester.tap(find.text('Hide watched in Latest'));
     await tester.pump();
     expect(
-      switchValueFor(tester, 'Hide watched items in Latest'),
+      switchValueFor(tester, 'Hide watched in Latest'),
       isFalse,
       reason: 'the picked value must appear before the server has answered',
     );
 
     // A second toggle while the first write is outstanding must not queue a
     // conflicting value.
-    await tester.tap(find.text('Hide watched items in Latest'));
+    await tester.tap(find.text('Hide watched in Latest'));
     await tester.pump();
-    expect(switchValueFor(tester, 'Hide watched items in Latest'), isFalse);
+    expect(switchValueFor(tester, 'Hide watched in Latest'), isFalse);
 
     gate.complete();
     await tester.pumpAndSettle();
@@ -225,7 +225,7 @@ void main() {
     expect(source.writes, hasLength(1));
     expect(source.writes.single.boolAt(AccountPreferenceKey.hidePlayedInLatest), isFalse);
     expect(
-      switchValueFor(tester, 'Hide watched items in Latest'),
+      switchValueFor(tester, 'Hide watched in Latest'),
       isTrue,
       reason: 'a rejected write must leave the account value on screen',
     );
@@ -241,11 +241,11 @@ void main() {
 
     await pumpSection(tester, repository: repository, targets: const [jellyfinTarget]);
 
-    await tester.tap(find.text('Hide watched items in Latest'));
+    await tester.tap(find.text('Hide watched in Latest'));
     await tester.pumpAndSettle();
 
     expect(source.writes, hasLength(1));
-    expect(switchValueFor(tester, 'Hide watched items in Latest'), isFalse);
+    expect(switchValueFor(tester, 'Hide watched in Latest'), isFalse);
     expect(repository.cached(jellyfinRef)?.hidePlayedInLatest, isFalse);
     expect(find.text('Could not save changes. Try again.'), findsNothing);
   });
@@ -266,13 +266,13 @@ void main() {
     };
     final repository = repositoryOf(sources);
     await pumpSection(tester, repository: repository, targets: const [jellyfinTarget]);
-    await tester.tap(find.text('Hide watched items in Latest'));
+    await tester.tap(find.text('Hide watched in Latest'));
     await tester.pump();
     sources.remove(jellyfinRef);
     repository.clear();
     await pumpSection(tester, repository: repository, targets: const [plexTarget]);
     expect(find.text('French'), findsOneWidget);
-    expect(find.text('Hide watched items in Latest'), findsNothing);
+    expect(find.text('Hide watched in Latest'), findsNothing);
 
     gate.complete();
     await tester.pumpAndSettle();

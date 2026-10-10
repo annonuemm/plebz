@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../widgets/focused_scroll_scaffold.dart';
 import '../../widgets/focusable_list_tile.dart';
+import '../../widgets/setting_tile.dart' show settingSubtitle;
 import '../../widgets/settings_section.dart';
 import '../../i18n/strings.g.dart';
 import '../../theme/mono_tokens.dart';
@@ -84,7 +85,7 @@ class AboutScreen extends StatelessWidget {
                       FocusableListTile(
                         leading: const AppIcon(Symbols.description_rounded, fill: 1),
                         title: Text(t.about.openSourceLicenses),
-                        subtitle: Text(t.about.viewLicensesDescription),
+                        subtitle: settingSubtitle(t.about.viewLicensesDescription),
                         trailing: const AppIcon(Symbols.chevron_right_rounded, fill: 1),
                         onTap: () {
                           Navigator.push(context, MaterialPageRoute(builder: (context) => const LicensesScreen()));

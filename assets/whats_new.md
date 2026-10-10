@@ -13,6 +13,15 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.18.0 (Build 741)
+
+- Einstellungen neu aufgebaut: Links stehen alle Bereiche in drei Gruppen, rechts öffnet sich der gewählte Bereich. Schon beim Durchgehen der Liste siehst du, was drin ist.
+- Die Einstellungen passen jetzt zum gewählten Design. Bei Flach und Glas sieht die Auswahl aus wie im Hauptmenü.
+- Kürzere Beschreibungen (höchstens ein Satz) und verständlichere Namen für viele Einstellungen.
+- Alles zu Live-TV findest du jetzt unter „IPTV und Live-TV“, Updates und „Was ist neu“ unter „Über und Updates“.
+- Auf Handy und Tablet fehlen ein paar Einstellungen, die dort nichts bewirkt haben.
+- Live-TV: Die Vorschau im Programmführer läuft immer direkt auf der Videofläche und geht ohne Unterbrechung ins Vollbild. Das ist jetzt Standard, die Testvarianten sind weg. Die Bildratenanpassung bei Live-TV ist dafür standardmäßig aus.
+
 ## 1.17.3 (Build 739)
 
 - Flach: Auf der Sport-Seite bleibt der LIVE-Kasten beim Fokus rot, Spielstand und „aktuell“ werden dunkel statt türkis.

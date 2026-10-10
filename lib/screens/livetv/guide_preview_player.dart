@@ -154,12 +154,9 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     final channel = widget.channel;
     if (player == null || session == null || channel == null || _starting || _failed) return null;
     if (!LivePictureHandover.canMove(player, session)) return null;
-    // A picture in a texture, or one on the plane in a box; nothing else is
-    // where the growing player expects it.
-    if (player case final VideoOutputHandover output
-        when !output.rendersToTexture && !LivePictureHandover.isOnPlane(player)) {
-      return null;
-    }
+    // Only a picture on the plane in its box is where the growing player
+    // expects it.
+    if (!LivePictureHandover.isOnPlane(player)) return null;
     _generation++;
     _player = null;
     _session = null;
@@ -296,9 +293,10 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       // A preview the full-screen player may take over as it plays (Plebz)
       // opens the way that player opens a channel; see [_applyOpeningRoute].
       final mayHandOver = LivePictureHandover.enabledIn(settings);
-      // The test alternative: the picture on the video plane behind a hole in
-      // the guide, so the box deinterlaces it and the growth moves nothing.
-      final onPlane = session is IptvPlaybackSession && LivePictureHandover.planePreviewIn(settings);
+      // A preview that may be handed over plays on the video plane behind a
+      // hole in the guide, so the box deinterlaces it and the growth moves
+      // nothing.
+      final onPlane = session is IptvPlaybackSession && mayHandOver;
       final player = Player(
         // IPTV may have a player of its own; the full-screen player resolves
         // the same way, so a hand-over always finds the backend it expects.

@@ -423,14 +423,14 @@ class Translations$settings$en {
 	/// en: 'Video Playback'
 	String get videoPlayback => 'Video Playback';
 
-	/// en: 'Configure playback behavior'
-	String get videoPlaybackDescription => 'Configure playback behavior';
+	/// en: ''
+	String get videoPlaybackDescription => '';
 
 	/// en: 'Advanced'
 	String get advanced => 'Advanced';
 
-	/// en: 'Episode Poster Style'
-	String get episodePosterMode => 'Episode Poster Style';
+	/// en: 'Episode image'
+	String get episodePosterMode => 'Episode image';
 
 	/// en: 'Series Poster'
 	String get seriesPoster => 'Series Poster';
@@ -441,8 +441,8 @@ class Translations$settings$en {
 	/// en: 'Thumbnail'
 	String get episodeThumbnail => 'Thumbnail';
 
-	/// en: 'Display featured content carousel on home screen'
-	String get showHeroSectionDescription => 'Display featured content carousel on home screen';
+	/// en: ''
+	String get showHeroSectionDescription => '';
 
 	/// en: 'Seconds'
 	String get secondsLabel => 'Seconds';
@@ -495,11 +495,11 @@ class Translations$settings$en {
 	/// en: 'Spacious'
 	String get gridSpacingSpacious => 'Spacious';
 
-	/// en: 'Corner Spotlight Backdrop'
-	String get tvCornerSpotlightBackdrop => 'Corner Spotlight Backdrop';
+	/// en: 'Backdrop in the corner'
+	String get tvCornerSpotlightBackdrop => 'Backdrop in the corner';
 
-	/// en: 'Show spotlight artwork in the top-right corner instead of filling the screen'
-	String get tvCornerSpotlightBackdropDescription => 'Show spotlight artwork in the top-right corner instead of filling the screen';
+	/// en: 'Top right instead of full screen'
+	String get tvCornerSpotlightBackdropDescription => 'Top right instead of full screen';
 
 	/// en: 'View Mode'
 	String get viewMode => 'View Mode';
@@ -510,8 +510,8 @@ class Translations$settings$en {
 	/// en: 'List'
 	String get listView => 'List';
 
-	/// en: 'Show Hero Section'
-	String get showHeroSection => 'Show Hero Section';
+	/// en: 'Featured banner'
+	String get showHeroSection => 'Featured banner';
 
 	/// en: 'Continue Watching Action'
 	String get continueWatchingAction => 'Continue Watching Action';
@@ -522,8 +522,8 @@ class Translations$settings$en {
 	/// en: 'Open Details'
 	String get continueWatchingDetails => 'Open Details';
 
-	/// en: 'Episode Action'
-	String get episodeAction => 'Episode Action';
+	/// en: 'Episode action'
+	String get episodeAction => 'Episode action';
 
 	/// en: 'Play'
 	String get episodePlay => 'Play';
@@ -531,53 +531,53 @@ class Translations$settings$en {
 	/// en: 'Open Details'
 	String get episodeDetails => 'Open Details';
 
-	/// en: 'Use Home Layout'
-	String get useGlobalHubs => 'Use Home Layout';
+	/// en: 'Unified home rows'
+	String get useGlobalHubs => 'Unified home rows';
 
-	/// en: 'Show unified home hubs. Otherwise use library recommendations.'
-	String get useGlobalHubsDescription => 'Show unified home hubs. Otherwise use library recommendations.';
+	/// en: 'Otherwise recommendations per library'
+	String get useGlobalHubsDescription => 'Otherwise recommendations per library';
 
-	/// en: 'Show Server Name on Hubs'
-	String get showServerNameOnHubs => 'Show Server Name on Hubs';
+	/// en: 'Server name on rows'
+	String get showServerNameOnHubs => 'Server name on rows';
 
-	/// en: 'Always show server names in hub titles.'
-	String get showServerNameOnHubsDescription => 'Always show server names in hub titles.';
+	/// en: ''
+	String get showServerNameOnHubsDescription => '';
 
-	/// en: 'Group Libraries by Server'
-	String get groupLibrariesByServer => 'Group Libraries by Server';
+	/// en: 'Libraries by server'
+	String get groupLibrariesByServer => 'Libraries by server';
 
-	/// en: 'Group sidebar libraries under each media server.'
-	String get groupLibrariesByServerDescription => 'Group sidebar libraries under each media server.';
+	/// en: ''
+	String get groupLibrariesByServerDescription => '';
 
-	/// en: 'Always Keep Sidebar Open'
-	String get alwaysKeepSidebarOpen => 'Always Keep Sidebar Open';
+	/// en: 'Sidebar always open'
+	String get alwaysKeepSidebarOpen => 'Sidebar always open';
 
 	/// en: 'Sidebar stays expanded and content area adjusts to fit'
 	String get alwaysKeepSidebarOpenDescription => 'Sidebar stays expanded and content area adjusts to fit';
 
-	/// en: 'Show Unwatched Count'
-	String get showUnwatchedCount => 'Show Unwatched Count';
+	/// en: 'Unwatched episode count'
+	String get showUnwatchedCount => 'Unwatched episode count';
 
-	/// en: 'Display unwatched episode count on shows and seasons'
-	String get showUnwatchedCountDescription => 'Display unwatched episode count on shows and seasons';
+	/// en: ''
+	String get showUnwatchedCountDescription => '';
 
-	/// en: 'Show Watched Indicators'
-	String get showWatchedIndicators => 'Show Watched Indicators';
+	/// en: 'Watched checkmarks'
+	String get showWatchedIndicators => 'Watched checkmarks';
 
-	/// en: 'Display a checkmark on watched movies, shows, and episodes'
-	String get showWatchedIndicatorsDescription => 'Display a checkmark on watched movies, shows, and episodes';
+	/// en: ''
+	String get showWatchedIndicatorsDescription => '';
 
-	/// en: 'Show Episode Number on Cards'
-	String get showEpisodeNumberOnCards => 'Show Episode Number on Cards';
+	/// en: 'Episode number on cards'
+	String get showEpisodeNumberOnCards => 'Episode number on cards';
 
-	/// en: 'Show season and episode number on episode cards'
-	String get showEpisodeNumberOnCardsDescription => 'Show season and episode number on episode cards';
+	/// en: ''
+	String get showEpisodeNumberOnCardsDescription => '';
 
-	/// en: 'Show Season Posters on Tabs'
-	String get showSeasonPostersOnTabs => 'Show Season Posters on Tabs';
+	/// en: 'Season posters above tabs'
+	String get showSeasonPostersOnTabs => 'Season posters above tabs';
 
-	/// en: 'Show each season's poster above its tab'
-	String get showSeasonPostersOnTabsDescription => 'Show each season\'s poster above its tab';
+	/// en: ''
+	String get showSeasonPostersOnTabsDescription => '';
 
 	/// en: 'Full TV Cards'
 	String get tvFullCardLayout => 'Full TV Cards';
@@ -588,8 +588,8 @@ class Translations$settings$en {
 	/// en: 'Focus Glow'
 	String get focusGlow => 'Focus Glow';
 
-	/// en: 'Draw a soft glow around the focused card'
-	String get focusGlowDescription => 'Draw a soft glow around the focused card';
+	/// en: ''
+	String get focusGlowDescription => '';
 
 	/// en: 'Visual Effects'
 	String get visualEffects => 'Visual Effects';
@@ -597,8 +597,8 @@ class Translations$settings$en {
 	/// en: 'Auto'
 	String get visualEffectsAuto => 'Auto';
 
-	/// en: 'Reduce effects automatically on low-power devices'
-	String get visualEffectsAutoDescription => 'Reduce effects automatically on low-power devices';
+	/// en: 'Reduced on low-power devices'
+	String get visualEffectsAutoDescription => 'Reduced on low-power devices';
 
 	/// en: 'Full'
 	String get visualEffectsFull => 'Full';
@@ -606,17 +606,17 @@ class Translations$settings$en {
 	/// en: 'Reduced'
 	String get visualEffectsReduced => 'Reduced';
 
-	/// en: 'Fewer animations and lower-resolution artwork'
-	String get visualEffectsReducedDescription => 'Fewer animations and lower-resolution artwork';
+	/// en: 'Fewer animations, simpler artwork'
+	String get visualEffectsReducedDescription => 'Fewer animations, simpler artwork';
 
-	/// en: 'Hide Spoilers for Unwatched Episodes'
-	String get hideSpoilers => 'Hide Spoilers for Unwatched Episodes';
+	/// en: 'Spoiler protection'
+	String get hideSpoilers => 'Spoiler protection';
 
-	/// en: 'Blur thumbnails and descriptions for unwatched episodes'
-	String get hideSpoilersDescription => 'Blur thumbnails and descriptions for unwatched episodes';
+	/// en: 'Blur images and text of unwatched episodes'
+	String get hideSpoilersDescription => 'Blur images and text of unwatched episodes';
 
-	/// en: 'Player Backend'
-	String get playerBackend => 'Player Backend';
+	/// en: 'Player'
+	String get playerBackend => 'Player';
 
 	/// en: 'ExoPlayer'
 	String get exoPlayer => 'ExoPlayer';
@@ -630,14 +630,14 @@ class Translations$settings$en {
 	/// en: 'Same as films and shows'
 	String get iptvPlayerSameAsFilms => 'Same as films and shows';
 
-	/// en: 'For IPTV channels in the guide preview and full screen. The player above stays for everything else.'
-	String get iptvPlayerBackendDescription => 'For IPTV channels in the guide preview and full screen. The player above stays for everything else.';
+	/// en: 'Everything else uses the Video Playback player'
+	String get iptvPlayerBackendDescription => 'Everything else uses the Video Playback player';
 
 	/// en: 'Hardware Decoding'
 	String get hardwareDecoding => 'Hardware Decoding';
 
-	/// en: 'Use hardware acceleration when available'
-	String get hardwareDecodingDescription => 'Use hardware acceleration when available';
+	/// en: ''
+	String get hardwareDecodingDescription => '';
 
 	/// en: 'Playback Buffer'
 	String get playbackBuffer => 'Playback Buffer';
@@ -651,47 +651,47 @@ class Translations$settings$en {
 	/// en: 'Extra Large'
 	String get playbackBufferExtraLarge => 'Extra Large';
 
-	/// en: 'Buffer more against unstable connections.'
-	String get playbackBufferDescription => 'Buffer more against unstable connections.';
+	/// en: 'Bigger helps on unstable networks'
+	String get playbackBufferDescription => 'Bigger helps on unstable networks';
 
 	/// en: 'Default Quality'
 	String get defaultQualityTitle => 'Default Quality';
 
-	/// en: 'Default Quality on Cellular'
-	String get cellularQualityTitle => 'Default Quality on Cellular';
+	/// en: 'Quality on cellular'
+	String get cellularQualityTitle => 'Quality on cellular';
 
 	/// en: 'Same as Default Quality'
 	String get cellularQualitySameAsDefault => 'Same as Default Quality';
 
-	/// en: 'Play Smaller Videos at Original Quality'
-	String get directPlayCoveredQuality => 'Play Smaller Videos at Original Quality';
+	/// en: 'Play smaller videos as-is'
+	String get directPlayCoveredQuality => 'Play smaller videos as-is';
 
-	/// en: 'Direct play videos already within the quality limit instead of transcoding them'
-	String get directPlayCoveredQualityDescription => 'Direct play videos already within the quality limit instead of transcoding them';
+	/// en: 'When they're within the quality limit'
+	String get directPlayCoveredQualityDescription => 'When they\'re within the quality limit';
 
 	/// en: 'Copy on Explore pages'
 	String get bestCopy => 'Copy on Explore pages';
 
-	/// en: 'Which copy from your libraries is listed first and opened by the button beside the poster'
-	String get bestCopyDescription => 'Which copy from your libraries is listed first and opened by the button beside the poster';
+	/// en: 'Listed first and opened by the poster button'
+	String get bestCopyDescription => 'Listed first and opened by the poster button';
 
 	/// en: 'Best quality'
 	String get bestCopyBest => 'Best quality';
 
-	/// en: 'Picture, then sound, then bitrate. For series, quality comes before the number of episodes'
-	String get bestCopyBestDescription => 'Picture, then sound, then bitrate. For series, quality comes before the number of episodes';
+	/// en: 'Best picture and sound, even if episodes are missing'
+	String get bestCopyBestDescription => 'Best picture and sound, even if episodes are missing';
 
 	/// en: 'Best complete copy'
 	String get bestCopyComplete => 'Best complete copy';
 
-	/// en: 'For series, the copy with the most episodes, the best of those. Films as with “Best quality”'
-	String get bestCopyCompleteDescription => 'For series, the copy with the most episodes, the best of those. Films as with “Best quality”';
+	/// en: 'For series, the copy with the most episodes'
+	String get bestCopyCompleteDescription => 'For series, the copy with the most episodes';
 
 	/// en: 'Prefer Full HD'
 	String get bestCopyFullHd => 'Prefer Full HD';
 
-	/// en: 'Copies up to 1080p first, the best of those. 4K only when there is nothing else'
-	String get bestCopyFullHdDescription => 'Copies up to 1080p first, the best of those. 4K only when there is nothing else';
+	/// en: 'Up to 1080p first, 4K only if nothing else'
+	String get bestCopyFullHdDescription => 'Up to 1080p first, 4K only if nothing else';
 
 	/// en: 'Video Codecs'
 	String get videoCodecs => 'Video Codecs';
@@ -708,17 +708,17 @@ class Translations$settings$en {
 	/// en: 'Subtitle Styling'
 	String get subtitleStyling => 'Subtitle Styling';
 
-	/// en: 'Customize subtitle appearance'
-	String get subtitleStylingDescription => 'Customize subtitle appearance';
+	/// en: ''
+	String get subtitleStylingDescription => '';
 
-	/// en: 'Small Skip Duration'
-	String get smallSkipDuration => 'Small Skip Duration';
+	/// en: 'Short skip'
+	String get smallSkipDuration => 'Short skip';
 
-	/// en: 'Large Skip Duration'
-	String get largeSkipDuration => 'Large Skip Duration';
+	/// en: 'Long skip'
+	String get largeSkipDuration => 'Long skip';
 
-	/// en: 'Rewind on Resume'
-	String get rewindOnResume => 'Rewind on Resume';
+	/// en: 'Rewind on resume'
+	String get rewindOnResume => 'Rewind on resume';
 
 	/// en: '${seconds} seconds'
 	String secondsUnit({required Object seconds}) => '${seconds} seconds';
@@ -729,38 +729,38 @@ class Translations$settings$en {
 	/// en: '${minutes} minutes'
 	String minutesUnit({required Object minutes}) => '${minutes} minutes';
 
-	/// en: 'Remember track selections per show/movie'
-	String get rememberTrackSelections => 'Remember track selections per show/movie';
+	/// en: 'Remember tracks per title'
+	String get rememberTrackSelections => 'Remember tracks per title';
 
-	/// en: 'Remember audio and subtitle choices per title'
-	String get rememberTrackSelectionsDescription => 'Remember audio and subtitle choices per title';
+	/// en: ''
+	String get rememberTrackSelectionsDescription => '';
 
-	/// en: 'Plex saves each choice on the server per file; Jellyfin also turns on the account's Remember selections; Emby is not supported'
-	String get rememberTrackSelectionsBackendRule => 'Plex saves each choice on the server per file; Jellyfin also turns on the account\'s Remember selections; Emby is not supported';
+	/// en: 'Saved on the server; not on Emby'
+	String get rememberTrackSelectionsBackendRule => 'Saved on the server; not on Emby';
 
-	/// en: 'Use server's per-episode track selections'
-	String get followServerTrackSelections => 'Use server\'s per-episode track selections';
+	/// en: 'Server's track choice per episode'
+	String get followServerTrackSelections => 'Server\'s track choice per episode';
 
-	/// en: 'On episode change, apply the audio and subtitles selected on the server instead of carrying over the current choice'
-	String get followServerTrackSelectionsDescription => 'On episode change, apply the audio and subtitles selected on the server instead of carrying over the current choice';
+	/// en: 'Instead of carrying over the current choice'
+	String get followServerTrackSelectionsDescription => 'Instead of carrying over the current choice';
 
 	/// en: 'Remember music session'
 	String get resumeMusicOnLaunch => 'Remember music session';
 
-	/// en: 'Reopen the last song paused where it left off when the app starts'
-	String get resumeMusicOnLaunchDescription => 'Reopen the last song paused where it left off when the app starts';
+	/// en: 'Reopen the last song paused at launch'
+	String get resumeMusicOnLaunchDescription => 'Reopen the last song paused at launch';
 
-	/// en: 'Show chapter markers on seek bar'
-	String get showChapterMarkersOnTimeline => 'Show chapter markers on seek bar';
+	/// en: 'Chapters on the seek bar'
+	String get showChapterMarkersOnTimeline => 'Chapters on the seek bar';
 
-	/// en: 'Segment the seek bar at chapter boundaries'
-	String get showChapterMarkersOnTimelineDescription => 'Segment the seek bar at chapter boundaries';
+	/// en: ''
+	String get showChapterMarkersOnTimelineDescription => '';
 
-	/// en: 'Specials in episode order'
-	String get specialsOrdering => 'Specials in episode order';
+	/// en: 'Specials position'
+	String get specialsOrdering => 'Specials position';
 
-	/// en: 'Where specials play in a show's watch order'
-	String get specialsOrderingDescription => 'Where specials play in a show\'s watch order';
+	/// en: ''
+	String get specialsOrderingDescription => '';
 
 	/// en: 'Follow server order'
 	String get specialsOrderingServer => 'Follow server order';
@@ -771,32 +771,32 @@ class Translations$settings$en {
 	/// en: 'After regular seasons'
 	String get specialsOrderingLast => 'After regular seasons';
 
-	/// en: 'Click on video to toggle play/pause'
-	String get clickVideoTogglesPlayback => 'Click on video to toggle play/pause';
+	/// en: 'Click video to pause'
+	String get clickVideoTogglesPlayback => 'Click video to pause';
 
-	/// en: 'Click video to play/pause instead of showing controls.'
-	String get clickVideoTogglesPlaybackDescription => 'Click video to play/pause instead of showing controls.';
+	/// en: 'Instead of showing the controls'
+	String get clickVideoTogglesPlaybackDescription => 'Instead of showing the controls';
 
-	/// en: 'Video Player Controls'
-	String get videoPlayerControls => 'Video Player Controls';
+	/// en: 'Player keyboard shortcuts'
+	String get videoPlayerControls => 'Player keyboard shortcuts';
 
 	/// en: 'Keyboard Shortcuts'
 	String get keyboardShortcuts => 'Keyboard Shortcuts';
 
-	/// en: 'Customize keyboard shortcuts'
-	String get keyboardShortcutsDescription => 'Customize keyboard shortcuts';
+	/// en: ''
+	String get keyboardShortcutsDescription => '';
 
-	/// en: 'Video Player Navigation'
-	String get videoPlayerNavigation => 'Video Player Navigation';
+	/// en: 'Arrow keys in the player'
+	String get videoPlayerNavigation => 'Arrow keys in the player';
 
-	/// en: 'Use arrow keys to navigate video player controls'
-	String get videoPlayerNavigationDescription => 'Use arrow keys to navigate video player controls';
+	/// en: ''
+	String get videoPlayerNavigationDescription => '';
 
 	/// en: 'Watch Together Relay'
 	String get watchTogetherRelay => 'Watch Together Relay';
 
-	/// en: 'Set a custom relay. Everyone must use the same server.'
-	String get watchTogetherRelayDescription => 'Set a custom relay. Everyone must use the same server.';
+	/// en: 'Everyone must use the same relay'
+	String get watchTogetherRelayDescription => 'Everyone must use the same relay';
 
 	/// en: 'https://my-relay.example.com'
 	String get watchTogetherRelayHint => 'https://my-relay.example.com';
@@ -810,23 +810,23 @@ class Translations$settings$en {
 	/// en: 'Send crash reports to help improve the app'
 	String get crashReportingDescription => 'Send crash reports to help improve the app';
 
-	/// en: 'Debug Logging'
-	String get debugLogging => 'Debug Logging';
+	/// en: 'Detailed logs'
+	String get debugLogging => 'Detailed logs';
 
-	/// en: 'Enable detailed logging for troubleshooting'
-	String get debugLoggingDescription => 'Enable detailed logging for troubleshooting';
+	/// en: 'For troubleshooting'
+	String get debugLoggingDescription => 'For troubleshooting';
 
 	/// en: 'View Logs'
 	String get viewLogs => 'View Logs';
 
-	/// en: 'View application logs'
-	String get viewLogsDescription => 'View application logs';
+	/// en: ''
+	String get viewLogsDescription => '';
 
 	/// en: 'Clear Image Cache'
 	String get clearImageCache => 'Clear Image Cache';
 
-	/// en: 'Clear cached artwork and thumbnails. Images may load slower until downloaded again.'
-	String get clearImageCacheDescription => 'Clear cached artwork and thumbnails. Images may load slower until downloaded again.';
+	/// en: 'Images load slower for a while'
+	String get clearImageCacheDescription => 'Images load slower for a while';
 
 	/// en: 'Image cache cleared successfully'
 	String get clearImageCacheSuccess => 'Image cache cleared successfully';
@@ -834,8 +834,8 @@ class Translations$settings$en {
 	/// en: 'Reset Settings'
 	String get resetSettings => 'Reset Settings';
 
-	/// en: 'Restore default settings. This can't be undone.'
-	String get resetSettingsDescription => 'Restore default settings. This can\'t be undone.';
+	/// en: 'This can't be undone'
+	String get resetSettingsDescription => 'This can\'t be undone';
 
 	/// en: 'Settings reset successfully'
 	String get resetSettingsSuccess => 'Settings reset successfully';
@@ -846,8 +846,8 @@ class Translations$settings$en {
 	/// en: 'Export Settings'
 	String get exportSettings => 'Export Settings';
 
-	/// en: 'Save your preferences to a file'
-	String get exportSettingsDescription => 'Save your preferences to a file';
+	/// en: 'Settings only, without logins'
+	String get exportSettingsDescription => 'Settings only, without logins';
 
 	/// en: 'Settings exported'
 	String get exportSettingsSuccess => 'Settings exported';
@@ -855,8 +855,8 @@ class Translations$settings$en {
 	/// en: 'Import Settings'
 	String get importSettings => 'Import Settings';
 
-	/// en: 'Restore preferences from a file'
-	String get importSettingsDescription => 'Restore preferences from a file';
+	/// en: 'Full backups too'
+	String get importSettingsDescription => 'Full backups too';
 
 	/// en: 'This will replace your current settings. Continue?'
 	String get importSettingsConfirm => 'This will replace your current settings. Continue?';
@@ -915,20 +915,20 @@ class Translations$settings$en {
 	/// en: 'Auto-Play & Skip'
 	String get autoPlayAndSkip => 'Auto-Play & Skip';
 
-	/// en: 'Auto-Play Next Episode'
-	String get autoPlayNextEpisode => 'Auto-Play Next Episode';
+	/// en: 'Next episode automatically'
+	String get autoPlayNextEpisode => 'Next episode automatically';
 
-	/// en: 'Start the next episode automatically when one ends'
-	String get autoPlayNextEpisodeDescription => 'Start the next episode automatically when one ends';
+	/// en: ''
+	String get autoPlayNextEpisodeDescription => '';
 
-	/// en: 'Shuffle Starts at Beginning'
-	String get shuffleStartsFromBeginning => 'Shuffle Starts at Beginning';
+	/// en: 'Shuffle from the start'
+	String get shuffleStartsFromBeginning => 'Shuffle from the start';
 
-	/// en: 'Start each episode at the beginning when shuffling instead of resuming'
-	String get shuffleStartsFromBeginningDescription => 'Start each episode at the beginning when shuffling instead of resuming';
+	/// en: 'Each episode from the start, no resuming'
+	String get shuffleStartsFromBeginningDescription => 'Each episode from the start, no resuming';
 
-	/// en: 'Play Next Countdown'
-	String get playNextCountdown => 'Play Next Countdown';
+	/// en: 'Next episode countdown'
+	String get playNextCountdown => 'Next episode countdown';
 
 	/// en: 'Play immediately'
 	String get playNextCountdownImmediate => 'Play immediately';
@@ -936,26 +936,26 @@ class Translations$settings$en {
 	/// en: 'Skip Intro'
 	String get skipIntroMode => 'Skip Intro';
 
-	/// en: 'Play intros normally without a skip button'
-	String get skipIntroModeOffDescription => 'Play intros normally without a skip button';
+	/// en: ''
+	String get skipIntroModeOffDescription => '';
 
-	/// en: 'Show a skip button when an intro starts'
-	String get skipIntroModeButtonDescription => 'Show a skip button when an intro starts';
+	/// en: ''
+	String get skipIntroModeButtonDescription => '';
 
-	/// en: 'Skip intros automatically after the delay below'
-	String get skipIntroModeAutoDescription => 'Skip intros automatically after the delay below';
+	/// en: ''
+	String get skipIntroModeAutoDescription => '';
 
 	/// en: 'Skip Credits'
 	String get skipCreditsMode => 'Skip Credits';
 
-	/// en: 'Play credits normally without a skip button'
-	String get skipCreditsModeOffDescription => 'Play credits normally without a skip button';
+	/// en: ''
+	String get skipCreditsModeOffDescription => '';
 
-	/// en: 'Show a skip button when credits start'
-	String get skipCreditsModeButtonDescription => 'Show a skip button when credits start';
+	/// en: ''
+	String get skipCreditsModeButtonDescription => '';
 
-	/// en: 'Skip credits automatically and play the next episode'
-	String get skipCreditsModeAutoDescription => 'Skip credits automatically and play the next episode';
+	/// en: ''
+	String get skipCreditsModeAutoDescription => '';
 
 	/// en: 'Off'
 	String get skipMarkerModeOff => 'Off';
@@ -966,29 +966,29 @@ class Translations$settings$en {
 	/// en: 'Automatic'
 	String get skipMarkerModeAuto => 'Automatic';
 
-	/// en: 'Force Fallback Markers'
-	String get forceSkipMarkerFallback => 'Force Fallback Markers';
+	/// en: 'Always use chapter patterns'
+	String get forceSkipMarkerFallback => 'Always use chapter patterns';
 
-	/// en: 'Use chapter title patterns even when Plex has markers'
-	String get forceSkipMarkerFallbackDescription => 'Use chapter title patterns even when Plex has markers';
+	/// en: 'Even when Plex has its own markers'
+	String get forceSkipMarkerFallbackDescription => 'Even when Plex has its own markers';
 
-	/// en: 'Auto Skip Delay'
-	String get autoSkipDelay => 'Auto Skip Delay';
+	/// en: 'Delay before skipping'
+	String get autoSkipDelay => 'Delay before skipping';
 
-	/// en: 'Wait ${seconds} seconds before auto-skipping'
-	String autoSkipDelayDescription({required Object seconds}) => 'Wait ${seconds} seconds before auto-skipping';
+	/// en: '${seconds} seconds'
+	String autoSkipDelayDescription({required Object seconds}) => '${seconds} seconds';
 
-	/// en: 'Intro Marker Pattern'
-	String get introPattern => 'Intro Marker Pattern';
+	/// en: 'Intro chapter pattern'
+	String get introPattern => 'Intro chapter pattern';
 
-	/// en: 'Regex pattern to match intro markers in chapter titles'
-	String get introPatternDescription => 'Regex pattern to match intro markers in chapter titles';
+	/// en: 'Regular expression for chapter titles'
+	String get introPatternDescription => 'Regular expression for chapter titles';
 
-	/// en: 'Credits Marker Pattern'
-	String get creditsPattern => 'Credits Marker Pattern';
+	/// en: 'Credits chapter pattern'
+	String get creditsPattern => 'Credits chapter pattern';
 
-	/// en: 'Regex pattern to match credits markers in chapter titles'
-	String get creditsPatternDescription => 'Regex pattern to match credits markers in chapter titles';
+	/// en: 'Regular expression for chapter titles'
+	String get creditsPatternDescription => 'Regular expression for chapter titles';
 
 	/// en: 'Invalid regular expression'
 	String get invalidRegex => 'Invalid regular expression';
@@ -1035,14 +1035,14 @@ class Translations$settings$en {
 	/// en: 'Download on Wi-Fi only'
 	String get downloadOnWifiOnly => 'Download on Wi-Fi only';
 
-	/// en: 'Prevent downloads when on cellular data'
-	String get downloadOnWifiOnlyDescription => 'Prevent downloads when on cellular data';
+	/// en: ''
+	String get downloadOnWifiOnlyDescription => '';
 
-	/// en: 'Auto-remove watched downloads'
-	String get autoRemoveWatchedDownloads => 'Auto-remove watched downloads';
+	/// en: 'Delete watched downloads'
+	String get autoRemoveWatchedDownloads => 'Delete watched downloads';
 
-	/// en: 'Delete watched downloads automatically'
-	String get autoRemoveWatchedDownloadsDescription => 'Delete watched downloads automatically';
+	/// en: ''
+	String get autoRemoveWatchedDownloadsDescription => '';
 
 	/// en: 'Downloads are blocked on cellular. Use Wi-Fi or change the setting.'
 	String get cellularDownloadBlocked => 'Downloads are blocked on cellular. Use Wi-Fi or change the setting.';
@@ -1071,11 +1071,11 @@ class Translations$settings$en {
 	/// en: 'Reorder and hide libraries'
 	String get manageLibrariesDescription => 'Reorder and hide libraries';
 
-	/// en: 'Companion Remote Server'
-	String get companionRemoteServer => 'Companion Remote Server';
+	/// en: 'Remote control from a phone'
+	String get companionRemoteServer => 'Remote control from a phone';
 
-	/// en: 'Allow mobile devices on your network to control this app'
-	String get companionRemoteServerDescription => 'Allow mobile devices on your network to control this app';
+	/// en: ''
+	String get companionRemoteServerDescription => '';
 
 	/// en: 'Couldn't start the companion server'
 	String get companionRemoteServerStartFailed => 'Couldn\'t start the companion server';
@@ -1083,17 +1083,17 @@ class Translations$settings$en {
 	/// en: 'Couldn't stop the companion server'
 	String get companionRemoteServerStopFailed => 'Couldn\'t stop the companion server';
 
-	/// en: 'Auto Picture-in-Picture'
-	String get autoPip => 'Auto Picture-in-Picture';
+	/// en: 'Picture-in-picture on leaving'
+	String get autoPip => 'Picture-in-picture on leaving';
 
-	/// en: 'Automatically enter picture-in-picture when you leave the app during playback'
-	String get autoPipDescription => 'Automatically enter picture-in-picture when you leave the app during playback';
+	/// en: ''
+	String get autoPipDescription => '';
 
-	/// en: 'Match Content Frame Rate'
-	String get matchContentFrameRate => 'Match Content Frame Rate';
+	/// en: 'Match the video's frame rate'
+	String get matchContentFrameRate => 'Match the video\'s frame rate';
 
-	/// en: 'Match display refresh rate to video content'
-	String get matchContentFrameRateDescription => 'Match display refresh rate to video content';
+	/// en: ''
+	String get matchContentFrameRateDescription => '';
 
 	/// en: 'Match Content Resolution'
 	String get matchContentResolution => 'Match Content Resolution';
@@ -1104,14 +1104,14 @@ class Translations$settings$en {
 	/// en: 'Match Refresh Rate'
 	String get matchRefreshRate => 'Match Refresh Rate';
 
-	/// en: 'Match display refresh rate in fullscreen'
-	String get matchRefreshRateDescription => 'Match display refresh rate in fullscreen';
+	/// en: 'Only in full screen'
+	String get matchRefreshRateDescription => 'Only in full screen';
 
-	/// en: 'Match Dynamic Range'
-	String get matchDynamicRange => 'Match Dynamic Range';
+	/// en: 'Switch HDR automatically'
+	String get matchDynamicRange => 'Switch HDR automatically';
 
-	/// en: 'Switch HDR on for HDR content, then back to SDR'
-	String get matchDynamicRangeDescription => 'Switch HDR on for HDR content, then back to SDR';
+	/// en: ''
+	String get matchDynamicRangeDescription => '';
 
 	/// en: 'Display Switch Delay'
 	String get displaySwitchDelay => 'Display Switch Delay';
@@ -1119,17 +1119,17 @@ class Translations$settings$en {
 	/// en: 'Tunneled Playback'
 	String get tunneledPlayback => 'Tunneled Playback';
 
-	/// en: 'Use video tunneling. Disable if HDR playback shows black video or motion stutters.'
-	String get tunneledPlaybackDescription => 'Use video tunneling. Disable if HDR playback shows black video or motion stutters.';
+	/// en: 'Off if HDR stays black or stutters'
+	String get tunneledPlaybackDescription => 'Off if HDR stays black or stutters';
 
 	/// en: 'Audio Passthrough'
 	String get audioPassthrough => 'Audio Passthrough';
 
-	/// en: 'Send Dolby/DTS audio to your receiver or TV without re-encoding, preserving surround sound. Turn off if you have no sound.'
-	String get audioPassthroughDescription => 'Send Dolby/DTS audio to your receiver or TV without re-encoding, preserving surround sound. Turn off if you have no sound.';
+	/// en: 'Dolby/DTS straight to the receiver or TV – off if there's no sound'
+	String get audioPassthroughDescription => 'Dolby/DTS straight to the receiver or TV – off if there\'s no sound';
 
-	/// en: 'Use Apple's native Dolby decoder for Dolby Digital Plus, including Atmos. DTS and TrueHD still play as multichannel PCM. Turn off if you have no sound.'
-	String get audioPassthroughDescriptionAppleTv => 'Use Apple\'s native Dolby decoder for Dolby Digital Plus, including Atmos. DTS and TrueHD still play as multichannel PCM. Turn off if you have no sound.';
+	/// en: 'Dolby Digital Plus and Atmos via Apple's decoder – off if there's no sound'
+	String get audioPassthroughDescriptionAppleTv => 'Dolby Digital Plus and Atmos via Apple\'s decoder – off if there\'s no sound';
 
 	/// en: 'Off while loudness normalization is on'
 	String get audioPassthroughOverriddenByNormalization => 'Off while loudness normalization is on';
@@ -1158,8 +1158,8 @@ class Translations$settings$en {
 	/// en: 'Mix down to two channels for stereo speakers or headphones. Turns passthrough off.'
 	String get audioChannelLimitStereoDescription => 'Mix down to two channels for stereo speakers or headphones. Turns passthrough off.';
 
-	/// en: 'Center Channel Boost'
-	String get downmixCenterBoost => 'Center Channel Boost';
+	/// en: 'Center channel boost'
+	String get downmixCenterBoost => 'Center channel boost';
 
 	/// en: '${db} dB'
 	String downmixCenterBoostValue({required Object db}) => '${db} dB';
@@ -1170,17 +1170,17 @@ class Translations$settings$en {
 	/// en: 'dB'
 	String get downmixCenterBoostShort => 'dB';
 
-	/// en: 'Normalize Volume on Downmix'
-	String get audioDownmixNormalize => 'Normalize Volume on Downmix';
+	/// en: 'Normalize downmix volume'
+	String get audioDownmixNormalize => 'Normalize downmix volume';
 
-	/// en: 'Lower the mix to prevent clipping. Turn off to keep the original volume (may distort loud scenes).'
-	String get audioDownmixNormalizeDescription => 'Lower the mix to prevent clipping. Turn off to keep the original volume (may distort loud scenes).';
+	/// en: 'Prevents distortion but plays quieter'
+	String get audioDownmixNormalizeDescription => 'Prevents distortion but plays quieter';
 
 	/// en: 'Dolby Vision Conversion'
 	String get dvConversionMode => 'Dolby Vision Conversion';
 
-	/// en: 'Choose how Dolby Vision Profile 7 files are handled.'
-	String get dvConversionModeDescription => 'Choose how Dolby Vision Profile 7 files are handled.';
+	/// en: 'For Profile 7 files'
+	String get dvConversionModeDescription => 'For Profile 7 files';
 
 	/// en: 'Auto'
 	String get dvConversionAuto => 'Auto';
@@ -1206,11 +1206,11 @@ class Translations$settings$en {
 	/// en: 'Strip Dolby Vision RPU/EL layers and present plain HEVC'
 	String get dvConversionHevcStripDescription => 'Strip Dolby Vision RPU/EL layers and present plain HEVC';
 
-	/// en: 'HDR to SDR Conversion'
-	String get hdrSdrConversion => 'HDR to SDR Conversion';
+	/// en: 'HDR to SDR conversion'
+	String get hdrSdrConversion => 'HDR to SDR conversion';
 
-	/// en: 'Choose what converts HDR video when the display can't show HDR.'
-	String get hdrSdrConversionDescription => 'Choose what converts HDR video when the display can\'t show HDR.';
+	/// en: 'For screens without HDR'
+	String get hdrSdrConversionDescription => 'For screens without HDR';
 
 	/// en: 'Auto'
 	String get hdrSdrConversionAuto => 'Auto';
@@ -1221,20 +1221,20 @@ class Translations$settings$en {
 	/// en: 'Device'
 	String get hdrSdrConversionDevice => 'Device';
 
-	/// en: 'Your device's video hardware converts it. Fastest, but colors depend on the device'
-	String get hdrSdrConversionDeviceDescription => 'Your device\'s video hardware converts it. Fastest, but colors depend on the device';
+	/// en: 'Fastest, but colors depend on the device'
+	String get hdrSdrConversionDeviceDescription => 'Fastest, but colors depend on the device';
 
 	/// en: 'Player'
 	String get hdrSdrConversionPlayer => 'Player';
 
-	/// en: 'The player converts it. Consistent colors, but 4K may stutter on low-end TV boxes'
-	String get hdrSdrConversionPlayerDescription => 'The player converts it. Consistent colors, but 4K may stutter on low-end TV boxes';
+	/// en: 'Consistent colors, but 4K may stutter on weak boxes'
+	String get hdrSdrConversionPlayerDescription => 'Consistent colors, but 4K may stutter on weak boxes';
 
 	/// en: 'Deinterlacing'
 	String get deinterlace => 'Deinterlacing';
 
-	/// en: 'Remove combing artifacts from interlaced video (mpv player only)'
-	String get deinterlaceDescription => 'Remove combing artifacts from interlaced video (mpv player only)';
+	/// en: 'Removes combing, mpv only'
+	String get deinterlaceDescription => 'Removes combing, mpv only';
 
 	/// en: 'Ask for profile on app open'
 	String get requireProfileSelectionOnOpen => 'Ask for profile on app open';
@@ -1242,50 +1242,50 @@ class Translations$settings$en {
 	/// en: 'Show profile selection every time the app is opened'
 	String get requireProfileSelectionOnOpenDescription => 'Show profile selection every time the app is opened';
 
-	/// en: 'Start in fullscreen'
-	String get startInFullscreen => 'Start in fullscreen';
+	/// en: 'Start in full screen'
+	String get startInFullscreen => 'Start in full screen';
 
-	/// en: 'Open Plebz in fullscreen mode at launch'
-	String get startInFullscreenDescription => 'Open Plebz in fullscreen mode at launch';
+	/// en: ''
+	String get startInFullscreenDescription => '';
 
-	/// en: 'Exit fullscreen on player close'
-	String get exitFullscreenOnPlayerClose => 'Exit fullscreen on player close';
+	/// en: 'Leave full screen with the player'
+	String get exitFullscreenOnPlayerClose => 'Leave full screen with the player';
 
-	/// en: 'Automatically exit fullscreen when closing the video player'
-	String get exitFullscreenOnPlayerCloseDescription => 'Automatically exit fullscreen when closing the video player';
+	/// en: ''
+	String get exitFullscreenOnPlayerCloseDescription => '';
 
-	/// en: 'Auto-Hide Performance Overlay'
-	String get autoHidePerformanceOverlay => 'Auto-Hide Performance Overlay';
+	/// en: 'Hide performance overlay'
+	String get autoHidePerformanceOverlay => 'Hide performance overlay';
 
-	/// en: 'Fade the performance overlay with the playback controls'
-	String get autoHidePerformanceOverlayDescription => 'Fade the performance overlay with the playback controls';
+	/// en: 'Together with the player controls'
+	String get autoHidePerformanceOverlayDescription => 'Together with the player controls';
 
-	/// en: 'Show Navigation Bar Labels'
-	String get showNavBarLabels => 'Show Navigation Bar Labels';
+	/// en: 'Labels under icons'
+	String get showNavBarLabels => 'Labels under icons';
 
-	/// en: 'Display text labels under navigation bar icons'
-	String get showNavBarLabelsDescription => 'Display text labels under navigation bar icons';
+	/// en: ''
+	String get showNavBarLabelsDescription => '';
 
-	/// en: 'Startup Section'
-	String get startupSection => 'Startup Section';
+	/// en: 'Open at start'
+	String get startupSection => 'Open at start';
 
-	/// en: 'Show Explore Tab'
-	String get showExploreTab => 'Show Explore Tab';
+	/// en: 'Explore'
+	String get showExploreTab => 'Explore';
 
-	/// en: 'Display the Explore tab with content from Plex Discover and connected trackers'
-	String get showExploreTabDescription => 'Display the Explore tab with content from Plex Discover and connected trackers';
+	/// en: 'Content from Plex Discover'
+	String get showExploreTabDescription => 'Content from Plex Discover';
 
 	/// en: 'Sport'
 	String get showSportTab => 'Sport';
 
-	/// en: 'A destination for the Bundesliga, 2. Bundesliga and 3. Liga: matchdays, results and the table. The fixtures come from OpenLigaDB and the club crests from Wikimedia — only league, season and matchday are ever sent.'
-	String get showSportTabDescription => 'A destination for the Bundesliga, 2. Bundesliga and 3. Liga: matchdays, results and the table. The fixtures come from OpenLigaDB and the club crests from Wikimedia — only league, season and matchday are ever sent.';
+	/// en: 'Bundesliga, 2. Bundesliga and 3. Liga: games and table'
+	String get showSportTabDescription => 'Bundesliga, 2. Bundesliga and 3. Liga: games and table';
 
-	/// en: 'Default to Favorite Channels'
-	String get liveTvDefaultFavorites => 'Default to Favorite Channels';
+	/// en: 'Favorites only on open'
+	String get liveTvDefaultFavorites => 'Favorites only on open';
 
-	/// en: 'Show only favorite channels when opening Live TV'
-	String get liveTvDefaultFavoritesDescription => 'Show only favorite channels when opening Live TV';
+	/// en: ''
+	String get liveTvDefaultFavoritesDescription => '';
 
 	/// en: 'General'
 	String get general => 'General';
@@ -1344,26 +1344,26 @@ class Translations$settings$en {
 	/// en: 'Brightness Swipe'
 	String get gestureBrightnessSwipe => 'Brightness Swipe';
 
-	/// en: 'Swipe up or down on the left edge to adjust brightness'
-	String get gestureBrightnessSwipeDescription => 'Swipe up or down on the left edge to adjust brightness';
+	/// en: 'Swipe up and down on the left edge'
+	String get gestureBrightnessSwipeDescription => 'Swipe up and down on the left edge';
 
 	/// en: 'Volume Swipe'
 	String get gestureVolumeSwipe => 'Volume Swipe';
 
-	/// en: 'Swipe up or down on the right edge to adjust volume'
-	String get gestureVolumeSwipeDescription => 'Swipe up or down on the right edge to adjust volume';
+	/// en: 'Swipe up and down on the right edge'
+	String get gestureVolumeSwipeDescription => 'Swipe up and down on the right edge';
 
-	/// en: 'Pinch to Zoom'
-	String get gesturePinchToZoom => 'Pinch to Zoom';
+	/// en: 'Pinch to zoom'
+	String get gesturePinchToZoom => 'Pinch to zoom';
 
-	/// en: 'Pinch on the video to zoom in or out'
-	String get gesturePinchToZoomDescription => 'Pinch on the video to zoom in or out';
+	/// en: ''
+	String get gesturePinchToZoomDescription => '';
 
-	/// en: 'Remember Brightness Level'
-	String get rememberBrightnessLevel => 'Remember Brightness Level';
+	/// en: 'Remember brightness'
+	String get rememberBrightnessLevel => 'Remember brightness';
 
-	/// en: 'Start playback at the brightness set by the last swipe'
-	String get rememberBrightnessLevelDescription => 'Start playback at the brightness set by the last swipe';
+	/// en: ''
+	String get rememberBrightnessLevelDescription => '';
 
 	/// en: 'Controls'
 	String get controls => 'Controls';
@@ -1371,8 +1371,8 @@ class Translations$settings$en {
 	/// en: 'Remember Player Changes'
 	String get rememberPlayerChanges => 'Remember Player Changes';
 
-	/// en: 'Where a change made during playback is saved and reapplied from'
-	String get rememberPlayerChangesDescription => 'Where a change made during playback is saved and reapplied from';
+	/// en: ''
+	String get rememberPlayerChangesDescription => '';
 
 	/// en: 'Playback Speed'
 	String get scopePlaybackSpeed => 'Playback Speed';
@@ -1383,8 +1383,8 @@ class Translations$settings$en {
 	/// en: 'Aspect Ratio'
 	String get scopeAspectRatio => 'Aspect Ratio';
 
-	/// en: 'Audio & Subtitle Sync'
-	String get scopeSyncOffsets => 'Audio & Subtitle Sync';
+	/// en: 'Audio and subtitle sync'
+	String get scopeSyncOffsets => 'Audio and subtitle sync';
 
 	/// en: 'Don't save'
 	String get playerScopeOff => 'Don\'t save';
@@ -1401,23 +1401,23 @@ class Translations$settings$en {
 	/// en: 'Export Plebz settings'
 	String get exportDialogTitle => 'Export Plebz settings';
 
-	/// en: 'Use the device's keyboard'
-	String get useSystemTvKeyboard => 'Use the device\'s keyboard';
+	/// en: 'Device keyboard'
+	String get useSystemTvKeyboard => 'Device keyboard';
 
-	/// en: 'Type with the on-screen keyboard your TV or box provides. Turn it off to use Plebz's own keyboard instead, for a device whose keyboard does not appear.'
-	String get useSystemTvKeyboardDescription => 'Type with the on-screen keyboard your TV or box provides. Turn it off to use Plebz\'s own keyboard instead, for a device whose keyboard does not appear.';
+	/// en: 'Turn off if it doesn't appear'
+	String get useSystemTvKeyboardDescription => 'Turn off if it doesn\'t appear';
 
 	/// en: 'Recommendation row'
 	String get showRecommendationsRow => 'Recommendation row';
 
-	/// en: 'Show a "Because you watched" row under Continue Watching, built from titles you marked or watched. Only suggests what is on your servers.'
-	String get showRecommendationsRowDescription => 'Show a "Because you watched" row under Continue Watching, built from titles you marked or watched. Only suggests what is on your servers.';
+	/// en: 'Only titles from your servers'
+	String get showRecommendationsRowDescription => 'Only titles from your servers';
 
 	/// en: 'Reset recommendations'
 	String get resetRecommendations => 'Reset recommendations';
 
-	/// en: 'Forgets every "More like this" and "Less like this" from the recommendation row.'
-	String get resetRecommendationsDescription => 'Forgets every "More like this" and "Less like this" from the recommendation row.';
+	/// en: 'Forget every "More like this" and "Less like this"'
+	String get resetRecommendationsDescription => 'Forget every "More like this" and "Less like this"';
 
 	/// en: 'Reset'
 	String get resetRecommendationsConfirm => 'Reset';
@@ -1428,8 +1428,8 @@ class Translations$settings$en {
 	/// en: '"Live now" row'
 	String get showLiveNowRow => '"Live now" row';
 
-	/// en: 'Under Continue Watching, your favourite channels with what is on them — and, with Sport switched on, today's games.'
-	String get showLiveNowRowDescription => 'Under Continue Watching, your favourite channels with what is on them — and, with Sport switched on, today\'s games.';
+	/// en: 'Favourite channels and, with Sport, today's games'
+	String get showLiveNowRowDescription => 'Favourite channels and, with Sport, today\'s games';
 
 	/// en: 'Detail pages'
 	String get detailPages => 'Detail pages';
@@ -1458,38 +1458,38 @@ class Translations$settings$en {
 	/// en: 'Original'
 	String get appThemeVariantStandard => 'Original';
 
-	/// en: 'The look the app has always had: solid symbols and the typeface your device uses.'
-	String get appThemeVariantStandardDescription => 'The look the app has always had: solid symbols and the typeface your device uses.';
+	/// en: ''
+	String get appThemeVariantStandardDescription => '';
 
-	/// en: 'Playlists tab in libraries'
-	String get showLibraryPlaylistsTab => 'Playlists tab in libraries';
+	/// en: 'Playlists tab'
+	String get showLibraryPlaylistsTab => 'Playlists tab';
 
-	/// en: 'Off, the tab goes entirely rather than standing empty. Playlists stay reachable everywhere else.'
-	String get showLibraryPlaylistsTabDescription => 'Off, the tab goes entirely rather than standing empty. Playlists stay reachable everywhere else.';
+	/// en: 'Playlists stay reachable anyway'
+	String get showLibraryPlaylistsTabDescription => 'Playlists stay reachable anyway';
 
-	/// en: 'Audio and subtitles on the detail page'
-	String get showPlaybackTracksStatus => 'Audio and subtitles on the detail page';
+	/// en: 'Audio and subtitles'
+	String get showPlaybackTracksStatus => 'Audio and subtitles';
 
-	/// en: 'Names the audio track and subtitles Play would start with, in the corner. Off, the line goes; nothing about playback changes.'
-	String get showPlaybackTracksStatusDescription => 'Names the audio track and subtitles Play would start with, in the corner. Off, the line goes; nothing about playback changes.';
+	/// en: 'Shows which tracks Play would pick'
+	String get showPlaybackTracksStatusDescription => 'Shows which tracks Play would pick';
 
 	/// en: 'Redesign – Glass'
 	String get appThemeVariantGlas => 'Redesign – Glass';
 
-	/// en: 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones, tablets and the Mac keep their familiar layout. You pick the accent colour.'
-	String get appThemeVariantGlasDescription => 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones, tablets and the Mac keep their familiar layout. You pick the accent colour.';
+	/// en: 'Translucent menus over the picture, rearranged on TV'
+	String get appThemeVariantGlasDescription => 'Translucent menus over the picture, rearranged on TV';
 
 	/// en: 'Redesign – Flat'
 	String get appThemeVariantFlach => 'Redesign – Flat';
 
-	/// en: 'Laid out like Glass, but flat and calm: no glass panes, no sheen, no shadows. What holds focus turns into a white fill with dark type, posters get a white frame. On a television it rearranges the screens like Glass. You pick the accent colour freely.'
-	String get appThemeVariantFlachDescription => 'Laid out like Glass, but flat and calm: no glass panes, no sheen, no shadows. What holds focus turns into a white fill with dark type, posters get a white frame. On a television it rearranges the screens like Glass. You pick the accent colour freely.';
+	/// en: 'Like Glass, but flat, with a white focus'
+	String get appThemeVariantFlachDescription => 'Like Glass, but flat, with a white focus';
 
 	/// en: 'Accent colour'
 	String get flachAccent => 'Accent colour';
 
-	/// en: 'Any colour you like — for progress, the page on show and the chosen filter.'
-	String get flachAccentDescription => 'Any colour you like — for progress, the page on show and the chosen filter.';
+	/// en: 'For progress, the current page and the filter'
+	String get flachAccentDescription => 'For progress, the current page and the filter';
 
 	/// en: 'Colour profile'
 	String get flachPreset => 'Colour profile';
@@ -1533,26 +1533,26 @@ class Translations$settings$en {
 	/// en: 'The design's own'
 	String get glasGroundAccent => 'The design\'s own';
 
-	/// en: 'The design's dark ground with a faint glow of the accent colour.'
-	String get glasGroundAccentDescription => 'The design\'s dark ground with a faint glow of the accent colour.';
+	/// en: 'Dark with a faint glow of the accent colour'
+	String get glasGroundAccentDescription => 'Dark with a faint glow of the accent colour';
 
 	/// en: 'Off-black'
 	String get glasGroundOffBlack => 'Off-black';
 
-	/// en: 'A very dark grey (#121212) – softer than pure black.'
-	String get glasGroundOffBlackDescription => 'A very dark grey (#121212) – softer than pure black.';
+	/// en: 'A very dark grey, softer than pure black'
+	String get glasGroundOffBlackDescription => 'A very dark grey, softer than pure black';
 
 	/// en: 'Your own colour'
 	String get glasGroundCustom => 'Your own colour';
 
-	/// en: 'Any colour you like. Colours that are too light are darkened so the text stays readable.'
-	String get glasGroundCustomDescription => 'Any colour you like. Colours that are too light are darkened so the text stays readable.';
+	/// en: 'Any colour; too-light ones are darkened'
+	String get glasGroundCustomDescription => 'Any colour; too-light ones are darkened';
 
 	/// en: 'OLED'
 	String get glasGroundOled => 'OLED';
 
-	/// en: 'Completely black — for OLED screens.'
-	String get glasGroundOledDescription => 'Completely black — for OLED screens.';
+	/// en: 'Pure black'
+	String get glasGroundOledDescription => 'Pure black';
 
 	/// en: 'Accent colour'
 	String get glasAccent => 'Accent colour';
@@ -1560,128 +1560,128 @@ class Translations$settings$en {
 	/// en: 'Ice blue'
 	String get glasAccentEisblau => 'Ice blue';
 
-	/// en: 'A blue-black ground with ice-white type.'
-	String get glasAccentEisblauDescription => 'A blue-black ground with ice-white type.';
+	/// en: 'A blue-black ground with ice-white type'
+	String get glasAccentEisblauDescription => 'A blue-black ground with ice-white type';
 
 	/// en: 'Mint'
 	String get glasAccentMint => 'Mint';
 
-	/// en: 'A petrol-black ground with sage-white type.'
-	String get glasAccentMintDescription => 'A petrol-black ground with sage-white type.';
+	/// en: 'A petrol-black ground with sage-white type'
+	String get glasAccentMintDescription => 'A petrol-black ground with sage-white type';
 
 	/// en: 'Lilac'
 	String get glasAccentFlieder => 'Lilac';
 
-	/// en: 'A plum-black ground with lavender-white type.'
-	String get glasAccentFliederDescription => 'A plum-black ground with lavender-white type.';
+	/// en: 'A plum-black ground with lavender-white type'
+	String get glasAccentFliederDescription => 'A plum-black ground with lavender-white type';
 
 	/// en: 'Grey'
 	String get glasAccentGrau => 'Grey';
 
-	/// en: 'A neutral near-black with no tint, white type and grey as the accent — the nearest to Apple.'
-	String get glasAccentGrauDescription => 'A neutral near-black with no tint, white type and grey as the accent — the nearest to Apple.';
+	/// en: 'A neutral near-black, grey as the accent – like Apple'
+	String get glasAccentGrauDescription => 'A neutral near-black, grey as the accent – like Apple';
 
 	/// en: 'Red'
 	String get glasAccentRot => 'Red';
 
-	/// en: 'A black ground, white type and a strong red as the accent — after Netflix.'
-	String get glasAccentRotDescription => 'A black ground, white type and a strong red as the accent — after Netflix.';
+	/// en: 'A black ground and a strong red – like Netflix'
+	String get glasAccentRotDescription => 'A black ground and a strong red – like Netflix';
 
 	/// en: 'Plebz'
 	String get glasAccentPlebz => 'Plebz';
 
-	/// en: 'A near-black, violet as the accent, and the play button in the logo's gradient.'
-	String get glasAccentPlebzDescription => 'A near-black, violet as the accent, and the play button in the logo\'s gradient.';
+	/// en: 'Near-black, violet, the play button in the logo's gradient'
+	String get glasAccentPlebzDescription => 'Near-black, violet, the play button in the logo\'s gradient';
 
 	/// en: 'Smooth focus'
 	String get glasSmoothFocus => 'Smooth focus';
 
-	/// en: 'The focus capsule glides from entry to entry and the type fades gently — even when visual effects are reduced.'
-	String get glasSmoothFocusDescription => 'The focus capsule glides from entry to entry and the type fades gently — even when visual effects are reduced.';
+	/// en: 'Glides smoothly, even with reduced effects'
+	String get glasSmoothFocusDescription => 'Glides smoothly, even with reduced effects';
 
 	/// en: 'Background in the poster's colours'
 	String get glasUltraBlur => 'Background in the poster\'s colours';
 
-	/// en: 'On Home and Explore the background takes the colours of the title in focus.'
-	String get glasUltraBlurDescription => 'On Home and Explore the background takes the colours of the title in focus.';
+	/// en: 'On Home and Explore'
+	String get glasUltraBlurDescription => 'On Home and Explore';
 
 	/// en: 'Description beside the posters'
 	String get glasDetailPanel => 'Description beside the posters';
 
-	/// en: 'Libraries and the watchlist show the selected title's description on the right. Off, more posters fit in a row.'
-	String get glasDetailPanelDescription => 'Libraries and the watchlist show the selected title\'s description on the right. Off, more posters fit in a row.';
+	/// en: 'Without it, more posters fit in a row'
+	String get glasDetailPanelDescription => 'Without it, more posters fit in a row';
 
 	/// en: 'Seasons as tabs'
 	String get redesignSeasonTabs => 'Seasons as tabs';
 
-	/// en: 'A show's seasons stand as tabs over one row of episodes. Off, every season has a row of its own.'
-	String get redesignSeasonTabsDescription => 'A show\'s seasons stand as tabs over one row of episodes. Off, every season has a row of its own.';
+	/// en: 'Otherwise each season gets its own row'
+	String get redesignSeasonTabsDescription => 'Otherwise each season gets its own row';
 
 	/// en: 'Turning focus edge'
 	String get glasSpinningFocus => 'Turning focus edge';
 
-	/// en: 'The glint on the focus edge travels slowly round it and holds still while you move. Costs a little performance.'
-	String get glasSpinningFocusDescription => 'The glint on the focus edge travels slowly round it and holds still while you move. Costs a little performance.';
+	/// en: 'Costs a little performance'
+	String get glasSpinningFocusDescription => 'Costs a little performance';
 
 	/// en: 'Logos on Home and Explore'
 	String get homeTitleLogos => 'Logos on Home and Explore';
 
-	/// en: 'Shows the title logos of films and shows in the spotlight. Off, the title is set as text there; detail pages keep their logos.'
-	String get homeTitleLogosDescription => 'Shows the title logos of films and shows in the spotlight. Off, the title is set as text there; detail pages keep their logos.';
+	/// en: 'Title logos instead of text in the spotlight'
+	String get homeTitleLogosDescription => 'Title logos instead of text in the spotlight';
 
 	/// en: 'Episode facts on Seerr posters'
 	String get seerrCardEpisodeFacts => 'Episode facts on Seerr posters';
 
-	/// en: 'Shows the episode count and the next air date on Seerr show posters. Off by default: Seerr does not send either with a row, so each show costs one extra request to your instance.'
-	String get seerrCardEpisodeFactsDescription => 'Shows the episode count and the next air date on Seerr show posters. Off by default: Seerr does not send either with a row, so each show costs one extra request to your instance.';
+	/// en: 'Episode count and next air date; one extra request per show'
+	String get seerrCardEpisodeFactsDescription => 'Episode count and next air date; one extra request per show';
 
-	/// en: 'Show detail facts'
-	String get showCatalogDetailFacts => 'Show detail facts';
+	/// en: 'Detail facts'
+	String get showCatalogDetailFacts => 'Detail facts';
 
-	/// en: 'Original title, alternative titles, country, studios and budget on Explore detail pages'
-	String get showCatalogDetailFactsDescription => 'Original title, alternative titles, country, studios and budget on Explore detail pages';
+	/// en: 'Original title, country, studios and budget on Explore pages'
+	String get showCatalogDetailFactsDescription => 'Original title, country, studios and budget on Explore pages';
 
-	/// en: 'Show crew'
-	String get showCatalogDetailCrew => 'Show crew';
+	/// en: 'Crew'
+	String get showCatalogDetailCrew => 'Crew';
 
-	/// en: 'Director, writer and producer on Explore detail pages'
-	String get showCatalogDetailCrewDescription => 'Director, writer and producer on Explore detail pages';
+	/// en: 'Director, writer and producer on Explore pages'
+	String get showCatalogDetailCrewDescription => 'Director, writer and producer on Explore pages';
 
 	/// en: 'Combine ratings'
 	String get averageRatings => 'Combine ratings';
 
-	/// en: 'Show one average score instead of a badge per source (IMDb, TMDB, Rotten Tomatoes)'
-	String get averageRatingsDescription => 'Show one average score instead of a badge per source (IMDb, TMDB, Rotten Tomatoes)';
+	/// en: 'One average instead of a score per source'
+	String get averageRatingsDescription => 'One average instead of a score per source';
 
-	/// en: 'Show Watch Together'
-	String get showWatchTogetherAction => 'Show Watch Together';
+	/// en: 'Watch Together button'
+	String get showWatchTogetherAction => 'Watch Together button';
 
-	/// en: 'Keep the Watch Together button in the Home toolbar'
-	String get showWatchTogetherActionDescription => 'Keep the Watch Together button in the Home toolbar';
+	/// en: ''
+	String get showWatchTogetherActionDescription => '';
 
-	/// en: 'Show remote control'
-	String get showCompanionRemoteAction => 'Show remote control';
+	/// en: 'Remote button'
+	String get showCompanionRemoteAction => 'Remote button';
 
-	/// en: 'Keep the companion remote button in the Home toolbar'
-	String get showCompanionRemoteActionDescription => 'Keep the companion remote button in the Home toolbar';
+	/// en: ''
+	String get showCompanionRemoteActionDescription => '';
 
-	/// en: 'Show server activity'
-	String get showServerActivitiesAction => 'Show server activity';
+	/// en: 'Server activity button'
+	String get showServerActivitiesAction => 'Server activity button';
 
-	/// en: 'Keep the server activity button in the Home toolbar'
-	String get showServerActivitiesActionDescription => 'Keep the server activity button in the Home toolbar';
+	/// en: ''
+	String get showServerActivitiesActionDescription => '';
 
-	/// en: 'Hide the home toolbar until focused'
-	String get hideHomeActionsUntilFocus => 'Hide the home toolbar until focused';
+	/// en: 'Toolbar only on focus'
+	String get hideHomeActionsUntilFocus => 'Toolbar only on focus';
 
-	/// en: 'Refresh, profile and the rest stay invisible while you are in the content, and appear when the remote goes up to them. Touch is unaffected.'
-	String get hideHomeActionsUntilFocusDescription => 'Refresh, profile and the rest stay invisible while you are in the content, and appear when the remote goes up to them. Touch is unaffected.';
+	/// en: ''
+	String get hideHomeActionsUntilFocusDescription => '';
 
 	/// en: 'Download button'
 	String get showDownloadAction => 'Download button';
 
-	/// en: 'Show the download button on movie and episode pages. Downloads stay available from the ⋮ menu.'
-	String get showDownloadActionDescription => 'Show the download button on movie and episode pages. Downloads stay available from the ⋮ menu.';
+	/// en: 'On movie and episode pages; otherwise in the ⋮ menu'
+	String get showDownloadActionDescription => 'On movie and episode pages; otherwise in the ⋮ menu';
 
 	/// en: 'Hardware test'
 	String get hardwareTest => 'Hardware test';
@@ -1722,8 +1722,8 @@ class Translations$settings$en {
 	/// en: 'Beyond the libraries too'
 	String get yearFilterBeyondLibraries => 'Beyond the libraries too';
 
-	/// en: 'Also applies to Home and Explore. In the libraries the range always applies. Search is left alone — what you ask for by name, you should find.'
-	String get yearFilterBeyondLibrariesDescription => 'Also applies to Home and Explore. In the libraries the range always applies. Search is left alone — what you ask for by name, you should find.';
+	/// en: 'Home and Explore too, not search'
+	String get yearFilterBeyondLibrariesDescription => 'Home and Explore too, not search';
 
 	/// en: 'Enter a year between 1900 and ${max}'
 	String yearFilterInvalid({required Object max}) => 'Enter a year between 1900 and ${max}';
@@ -1731,8 +1731,8 @@ class Translations$settings$en {
 	/// en: 'Full backup'
 	String get exportBackup => 'Full backup';
 
-	/// en: 'Settings, servers, IPTV, Seerr and TMDB key in a password-protected file'
-	String get exportBackupDescription => 'Settings, servers, IPTV, Seerr and TMDB key in a password-protected file';
+	/// en: 'With servers, IPTV and keys, password-protected'
+	String get exportBackupDescription => 'With servers, IPTV and keys, password-protected';
 
 	/// en: 'Save Plebz backup'
 	String get exportBackupDialogTitle => 'Save Plebz backup';
@@ -1782,41 +1782,41 @@ class Translations$settings$en {
 	/// en: 'Backup restored: ${n} servers'
 	String importBackupSuccess({required Object n}) => 'Backup restored: ${n} servers';
 
-	/// en: 'Show "up next" panel'
-	String get showUpNextPanel => 'Show "up next" panel';
+	/// en: '"Up next" panel'
+	String get showUpNextPanel => '"Up next" panel';
 
-	/// en: 'Towards the end of an episode, show what follows with the option to start it. When the episode ends, the countdown to the next one runs here too. Uses the credits marker where there is one. Off: the original countdown prompt.'
-	String get showUpNextPanelDescription => 'Towards the end of an episode, show what follows with the option to start it. When the episode ends, the countdown to the next one runs here too. Uses the credits marker where there is one. Off: the original countdown prompt.';
+	/// en: 'Near the end of an episode, with a countdown'
+	String get showUpNextPanelDescription => 'Near the end of an episode, with a countdown';
 
-	/// en: 'Sync watched state across servers'
-	String get mirrorWatchedAcrossServers => 'Sync watched state across servers';
+	/// en: 'Sync watched state'
+	String get mirrorWatchedAcrossServers => 'Sync watched state';
 
-	/// en: 'What you mark as watched is marked on every other copy too — in another library and on your other servers. Covers films, whole series and single seasons, not individual episodes. Matched by IMDb/TMDB id, never by title alone.'
-	String get mirrorWatchedAcrossServersDescription => 'What you mark as watched is marked on every other copy too — in another library and on your other servers. Covers films, whole series and single seasons, not individual episodes. Matched by IMDb/TMDB id, never by title alone.';
+	/// en: 'On every copy, except single episodes'
+	String get mirrorWatchedAcrossServersDescription => 'On every copy, except single episodes';
 
-	/// en: 'Match frame rate for live TV'
-	String get matchContentFrameRateLiveTv => 'Match frame rate for live TV';
+	/// en: 'Frame rate for live TV too'
+	String get matchContentFrameRateLiveTv => 'Frame rate for live TV too';
 
-	/// en: 'Off means films and shows still switch the display to their frame rate, while channels do not. Worth turning off for IPTV: the switch costs a black screen at every zap, and providers declare their rates loosely.'
-	String get matchContentFrameRateLiveTvDescription => 'Off means films and shows still switch the display to their frame rate, while channels do not. Worth turning off for IPTV: the switch costs a black screen at every zap, and providers declare their rates loosely.';
+	/// en: 'Best off for IPTV: every zap shows a black screen'
+	String get matchContentFrameRateLiveTvDescription => 'Best off for IPTV: every zap shows a black screen';
 
-	/// en: 'Automatic resolution'
-	String get matchDisplayResolution => 'Automatic resolution';
+	/// en: 'Match the video's resolution'
+	String get matchDisplayResolution => 'Match the video\'s resolution';
 
-	/// en: 'Switches the HDMI output to the video's own resolution on start, so the television scales instead of the box. Only does anything on devices that publish more than one display mode.'
-	String get matchDisplayResolutionDescription => 'Switches the HDMI output to the video\'s own resolution on start, so the television scales instead of the box. Only does anything on devices that publish more than one display mode.';
+	/// en: 'The TV scales instead of the box'
+	String get matchDisplayResolutionDescription => 'The TV scales instead of the box';
 
 	/// en: 'Tunnelled playback for live TV'
 	String get tunneledPlaybackLiveTv => 'Tunnelled playback for live TV';
 
-	/// en: 'Keep tunnelling on for live channels too. Off is usually the better trade: live streams gain little from it, and a provider stream with irregular timestamps can freeze a tunnelled picture.'
-	String get tunneledPlaybackLiveTvDescription => 'Keep tunnelling on for live channels too. Off is usually the better trade: live streams gain little from it, and a provider stream with irregular timestamps can freeze a tunnelled picture.';
+	/// en: 'Usually better off; the picture can freeze otherwise'
+	String get tunneledPlaybackLiveTvDescription => 'Usually better off; the picture can freeze otherwise';
 
 	/// en: 'Turn Dolby Vision off'
 	String get disableDolbyVision => 'Turn Dolby Vision off';
 
-	/// en: 'Plays the HDR10 base layer instead of Dolby Vision, for a television that cannot show it. Only needed when the set claims Dolby Vision support: without that claim the base layer is already used. Files carrying Dolby Vision alone (Profile 5) have no base layer and are unaffected.'
-	String get disableDolbyVisionDescription => 'Plays the HDR10 base layer instead of Dolby Vision, for a television that cannot show it. Only needed when the set claims Dolby Vision support: without that claim the base layer is already used. Files carrying Dolby Vision alone (Profile 5) have no base layer and are unaffected.';
+	/// en: 'Plays HDR10, for TVs without Dolby Vision'
+	String get disableDolbyVisionDescription => 'Plays HDR10, for TVs without Dolby Vision';
 
 	/// en: 'Layout'
 	String get layoutMode => 'Layout';
@@ -1824,8 +1824,8 @@ class Translations$settings$en {
 	/// en: 'Automatic'
 	String get layoutModeAuto => 'Automatic';
 
-	/// en: 'Detect the layout from the device'
-	String get layoutModeAutoDescription => 'Detect the layout from the device';
+	/// en: ''
+	String get layoutModeAutoDescription => '';
 
 	/// en: 'TV'
 	String get layoutModeTv => 'TV';
@@ -1854,32 +1854,20 @@ class Translations$settings$en {
 	/// en: 'Guide time picker'
 	String get liveTvGuideTimeNavigation => 'Guide time picker';
 
-	/// en: 'Shows the day and time strip above the guide grid.'
-	String get liveTvGuideTimeNavigationDescription => 'Shows the day and time strip above the guide grid.';
+	/// en: ''
+	String get liveTvGuideTimeNavigationDescription => '';
 
-	/// en: 'Preview to full screen without a break (Beta)'
-	String get liveTvSeamlessFullscreen => 'Preview to full screen without a break (Beta)';
+	/// en: 'Seamless preview to full screen'
+	String get liveTvSeamlessFullscreen => 'Seamless preview to full screen';
 
-	/// en: 'In the guide, the playing preview grows into the full-screen player on OK and shrinks back into its box on Back, without loading again. IPTV channels only. Turning this on turns off "Match frame rate for live TV" and "Tunnelled playback for live TV", and live TV no longer switches the "Automatic resolution": each of these switches would interrupt the picture. Films and shows keep their settings. A shader in the mpv player can make the move stutter briefly.'
-	String get liveTvSeamlessFullscreenDescription => 'In the guide, the playing preview grows into the full-screen player on OK and shrinks back into its box on Back, without loading again. IPTV channels only. Turning this on turns off "Match frame rate for live TV" and "Tunnelled playback for live TV", and live TV no longer switches the "Automatic resolution": each of these switches would interrupt the picture. Films and shows keep their settings. A shader in the mpv player can make the move stutter briefly.';
-
-	/// en: 'Full screen on the video surface'
-	String get liveTvSeamlessWindowSurface => 'Full screen on the video surface';
-
-	/// en: 'Off: the picture stays on the app's own canvas in full screen too. Nothing has to move, so nothing freezes and the sound stays in step; the box draws every frame itself, and there is no HDR and no subtitle display. On: once grown, the picture moves onto the TV's video surface, with full quality and HDR. Some boxes do not handle that move reliably: the picture can stall briefly, freeze or lose sync with the sound.'
-	String get liveTvSeamlessWindowSurfaceDescription => 'Off: the picture stays on the app\'s own canvas in full screen too. Nothing has to move, so nothing freezes and the sound stays in step; the box draws every frame itself, and there is no HDR and no subtitle display. On: once grown, the picture moves onto the TV\'s video surface, with full quality and HDR. Some boxes do not handle that move reliably: the picture can stall briefly, freeze or lose sync with the sound.';
-
-	/// en: 'Preview on the video surface (test)'
-	String get liveTvSeamlessPlanePreview => 'Preview on the video surface (test)';
-
-	/// en: 'Instead of the app's canvas, the preview plays straight on the box's video surface, and the app leaves a hole for it where the box is. That way the box deinterlaces interlaced channels such as the RAW copies in the preview too, and growing into full screen needs no move. While the picture grows or shrinks, a thin edge can show for a moment.'
-	String get liveTvSeamlessPlanePreviewDescription => 'Instead of the app\'s canvas, the preview plays straight on the box\'s video surface, and the app leaves a hole for it where the box is. That way the box deinterlaces interlaced channels such as the RAW copies in the preview too, and growing into full screen needs no move. While the picture grows or shrinks, a thin edge can show for a moment.';
+	/// en: 'IPTV only; turns off frame rate and tunnelling for live TV'
+	String get liveTvSeamlessFullscreenDescription => 'IPTV only; turns off frame rate and tunnelling for live TV';
 
 	/// en: 'Full filmography for actors'
 	String get showActorFilmography => 'Full filmography for actors';
 
-	/// en: 'On an actor's page, also list the films and series you do not have, greyed out. Uses your TMDB key.'
-	String get showActorFilmographyDescription => 'On an actor\'s page, also list the films and series you do not have, greyed out. Uses your TMDB key.';
+	/// en: 'Also titles you don't have (needs TMDB)'
+	String get showActorFilmographyDescription => 'Also titles you don\'t have (needs TMDB)';
 
 	/// en: 'Choose a backup'
 	String get backupPickTitle => 'Choose a backup';
@@ -3103,8 +3091,8 @@ class Translations$subtitlingStyling$en {
 	/// en: 'Border Color'
 	String get borderColor => 'Border Color';
 
-	/// en: 'Background Opacity'
-	String get backgroundOpacity => 'Background Opacity';
+	/// en: 'Background opacity'
+	String get backgroundOpacity => 'Background opacity';
 
 	/// en: 'Background Color'
 	String get backgroundColor => 'Background Color';
@@ -3130,17 +3118,17 @@ class Translations$subtitlingStyling$en {
 	/// en: 'Bottom'
 	String get positionBottom => 'Bottom';
 
-	/// en: 'Use margins'
-	String get useMargins => 'Use margins';
+	/// en: 'Outside the picture too'
+	String get useMargins => 'Outside the picture too';
 
-	/// en: 'Allow text subtitles in the space outside the video. Styled subtitles may keep their original placement.'
-	String get useMarginsDescription => 'Allow text subtitles in the space outside the video. Styled subtitles may keep their original placement.';
+	/// en: ''
+	String get useMarginsDescription => '';
 
-	/// en: 'Anchor to Screen'
-	String get anchorToScreen => 'Anchor to Screen';
+	/// en: 'In the black bar below'
+	String get anchorToScreen => 'In the black bar below';
 
-	/// en: 'Show text subtitles in the black bars below widescreen video'
-	String get anchorToScreenDescription => 'Show text subtitles in the black bars below widescreen video';
+	/// en: ''
+	String get anchorToScreenDescription => '';
 
 	/// en: 'Bold'
 	String get bold => 'Bold';
@@ -3217,8 +3205,8 @@ class Translations$mpvConfig$en {
 	/// en: 'Remove line'
 	String get removeLine => 'Remove line';
 
-	/// en: 'vo, gpu-context and gpu-api are ignored on Linux: embedded video always renders through vo=libmpv on the video plane, and gpu-next (which compute shaders like ArtCNN need) cannot run embedded.'
-	String get embeddedVoHint => 'vo, gpu-context and gpu-api are ignored on Linux: embedded video always renders through vo=libmpv on the video plane, and gpu-next (which compute shaders like ArtCNN need) cannot run embedded.';
+	/// en: 'vo, gpu-context and gpu-api are ignored on Linux'
+	String get embeddedVoHint => 'vo, gpu-context and gpu-api are ignored on Linux';
 }
 
 // Path: dialog
@@ -3505,8 +3493,8 @@ class Translations$accountPreferences$en {
 	/// en: 'No accounts to configure'
 	String get noAccounts => 'No accounts to configure';
 
-	/// en: 'Sign in to Plex, or connect a Jellyfin or Emby server, and the preferences stored on that account show up here.'
-	String get noAccountsHint => 'Sign in to Plex, or connect a Jellyfin or Emby server, and the preferences stored on that account show up here.';
+	/// en: 'Sign in to Plex or connect Jellyfin or Emby'
+	String get noAccountsHint => 'Sign in to Plex or connect Jellyfin or Emby';
 
 	/// en: 'Can't reach this account'
 	String get unavailable => 'Can\'t reach this account';
@@ -3525,11 +3513,11 @@ class Translations$accountPreferences$en {
 	/// en: 'Preferred audio language'
 	String get preferredAudioLanguage => 'Preferred audio language';
 
-	/// en: 'Choose audio by language'
-	String get autoSelectAudio => 'Choose audio by language';
+	/// en: 'Audio track by language'
+	String get autoSelectAudio => 'Audio track by language';
 
-	/// en: 'Off keeps whatever audio track the file marks as default.'
-	String get autoSelectAudioDescription => 'Off keeps whatever audio track the file marks as default.';
+	/// en: ''
+	String get autoSelectAudioDescription => '';
 
 	/// en: 'Preferred subtitle language'
 	String get preferredSubtitleLanguage => 'Preferred subtitle language';
@@ -3549,29 +3537,29 @@ class Translations$accountPreferences$en {
 
 	late final Translations$accountPreferences$forcedSubtitleOptions$en forcedSubtitleOptions = Translations$accountPreferences$forcedSubtitleOptions$en.internal(_root);
 
-	/// en: 'Show missing episodes'
-	String get displayMissingEpisodes => 'Show missing episodes';
+	/// en: 'Missing episodes'
+	String get displayMissingEpisodes => 'Missing episodes';
 
-	/// en: 'List episodes the server knows about but has no file for.'
-	String get displayMissingEpisodesDescription => 'List episodes the server knows about but has no file for.';
+	/// en: 'Episodes that have no file'
+	String get displayMissingEpisodesDescription => 'Episodes that have no file';
 
-	/// en: 'Hide watched items in Latest'
-	String get hidePlayedInLatest => 'Hide watched items in Latest';
+	/// en: 'Hide watched in Latest'
+	String get hidePlayedInLatest => 'Hide watched in Latest';
 
-	/// en: 'Leave items you have already watched out of the server's Latest rows.'
-	String get hidePlayedInLatestDescription => 'Leave items you have already watched out of the server\'s Latest rows.';
+	/// en: ''
+	String get hidePlayedInLatestDescription => '';
 
-	/// en: 'Show the Collections view'
-	String get displayCollectionsView => 'Show the Collections view';
+	/// en: 'Collections view'
+	String get displayCollectionsView => 'Collections view';
 
-	/// en: 'Offer the server's Collections view alongside your libraries.'
-	String get displayCollectionsViewDescription => 'Offer the server\'s Collections view alongside your libraries.';
+	/// en: ''
+	String get displayCollectionsViewDescription => '';
 
-	/// en: 'Keep rewatched shows in Next Up'
-	String get rewatchingInNextUp => 'Keep rewatched shows in Next Up';
+	/// en: 'Rewatching in Next Up'
+	String get rewatchingInNextUp => 'Rewatching in Next Up';
 
-	/// en: 'Once you finish a show, start it again and Next Up follows the rewatch instead of dropping the show.'
-	String get rewatchingInNextUpDescription => 'Once you finish a show, start it again and Next Up follows the rewatch instead of dropping the show.';
+	/// en: ''
+	String get rewatchingInNextUpDescription => '';
 
 	/// en: 'Watched indicators'
 	String get watchedIndicator => 'Watched indicators';
@@ -3925,8 +3913,8 @@ class Translations$about$en {
 	/// en: 'A beautiful Plex, Jellyfin, and Emby client for Flutter'
 	String get appDescription => 'A beautiful Plex, Jellyfin, and Emby client for Flutter';
 
-	/// en: 'View licenses of third-party libraries'
-	String get viewLicensesDescription => 'View licenses of third-party libraries';
+	/// en: ''
+	String get viewLicensesDescription => '';
 
 	/// en: 'License: GNU GPL v3'
 	String get appLicense => 'License: GNU GPL v3';
@@ -5762,8 +5750,8 @@ class Translations$externalPlayer$en {
 	/// en: 'System Default'
 	String get systemDefault => 'System Default';
 
-	/// en: 'Add Custom Player'
-	String get addCustomPlayer => 'Add Custom Player';
+	/// en: 'Add your own player'
+	String get addCustomPlayer => 'Add your own player';
 
 	/// en: 'Player Name'
 	String get playerName => 'Player Name';
@@ -6113,17 +6101,17 @@ class Translations$trakt$en {
 	/// en: 'Plebz will stop sending events to Trakt. You can reconnect any time.'
 	String get disconnectConfirmBody => 'Plebz will stop sending events to Trakt. You can reconnect any time.';
 
-	/// en: 'Real-time scrobbling'
-	String get scrobble => 'Real-time scrobbling';
+	/// en: 'Report playback to Trakt live'
+	String get scrobble => 'Report playback to Trakt live';
 
-	/// en: 'Send play, pause, and stop events to Trakt during playback.'
-	String get scrobbleDescription => 'Send play, pause, and stop events to Trakt during playback.';
+	/// en: ''
+	String get scrobbleDescription => '';
 
-	/// en: 'Sync watched status'
-	String get watchedSync => 'Sync watched status';
+	/// en: 'Watched marks to Trakt'
+	String get watchedSync => 'Watched marks to Trakt';
 
-	/// en: 'When you mark items as watched in Plebz, they are also marked as watched on Trakt.'
-	String get watchedSyncDescription => 'When you mark items as watched in Plebz, they are also marked as watched on Trakt.';
+	/// en: ''
+	String get watchedSyncDescription => '';
 }
 
 // Path: seerr
@@ -6350,17 +6338,17 @@ class Translations$services$en {
 	/// en: 'Track progress automatically'
 	String get scrobble => 'Track progress automatically';
 
-	/// en: 'Update your list when you finish an episode or movie.'
-	String get scrobbleDescription => 'Update your list when you finish an episode or movie.';
+	/// en: 'Update your list after every film and episode'
+	String get scrobbleDescription => 'Update your list after every film and episode';
 
 	/// en: 'Own progress via Simkl'
 	String get ownProgress => 'Own progress via Simkl';
 
-	/// en: 'This profile takes watched marks, Continue Watching and resume points from Simkl instead of the server. Every profile keeps its own state, even when several share one server account.'
-	String get ownProgressDescription => 'This profile takes watched marks, Continue Watching and resume points from Simkl instead of the server. Every profile keeps its own state, even when several share one server account.';
+	/// en: 'Watched marks and progress come from Simkl, not the server'
+	String get ownProgressDescription => 'Watched marks and progress come from Simkl, not the server';
 
-	/// en: 'Good to know: playback is still reported to the server, so transcodes keep running and the admin sees who is watching. Past about 90 %, Plex then marks the item watched on the account itself. That only matters when another profile uses the same account without Simkl.'
-	String get ownProgressNote => 'Good to know: playback is still reported to the server, so transcodes keep running and the admin sees who is watching. Past about 90 %, Plex then marks the item watched on the account itself. That only matters when another profile uses the same account without Simkl.';
+	/// en: 'Plex still marks watched at about 90 % – only matters for profiles without Simkl'
+	String get ownProgressNote => 'Plex still marks watched at about 90 % – only matters for profiles without Simkl';
 
 	/// en: 'Sync with Simkl'
 	String get syncStatusTitle => 'Sync with Simkl';
@@ -6380,8 +6368,8 @@ class Translations$services$en {
 	/// en: 'Sync now'
 	String get syncNow => 'Sync now';
 
-	/// en: 'Fetches the whole state from Simkl again right away. Useful when watched marks, resume points or Continue Watching look wrong, or after watching on another device.'
-	String get syncNowDescription => 'Fetches the whole state from Simkl again right away. Useful when watched marks, resume points or Continue Watching look wrong, or after watching on another device.';
+	/// en: 'Helps when watched marks or progress look wrong'
+	String get syncNowDescription => 'Helps when watched marks or progress look wrong';
 
 	/// en: 'Synced with Simkl'
 	String get syncNowDone => 'Synced with Simkl';
@@ -6477,26 +6465,26 @@ class Translations$addServer$en {
 	/// en: 'Sign in with Plex'
 	String get signInWithPlexCard => 'Sign in with Plex';
 
-	/// en: 'Authorize this device. Shared servers are added.'
-	String get signInWithPlexCardSubtitle => 'Authorize this device. Shared servers are added.';
+	/// en: 'Shared servers are added too'
+	String get signInWithPlexCardSubtitle => 'Shared servers are added too';
 
-	/// en: 'Authorize a Plex account. Home users become profiles.'
-	String get signInWithPlexCardSubtitleScoped => 'Authorize a Plex account. Home users become profiles.';
+	/// en: 'Home users become profiles'
+	String get signInWithPlexCardSubtitleScoped => 'Home users become profiles';
 
 	/// en: 'Connect to ${product}'
 	String connectToMediaBrowserCard({required Object product}) => 'Connect to ${product}';
 
-	/// en: 'Enter your server URL, username, and password.'
-	String get connectToMediaBrowserCardSubtitle => 'Enter your server URL, username, and password.';
+	/// en: 'Server URL, username and password'
+	String get connectToMediaBrowserCardSubtitle => 'Server URL, username and password';
 
-	/// en: 'Sign in to your ${product} server. Binds to ${name}.'
-	String connectToMediaBrowserCardSubtitleScoped({required Object product, required Object name}) => 'Sign in to your ${product} server. Binds to ${name}.';
+	/// en: 'Sign in to ${product}, linked to ${name}'
+	String connectToMediaBrowserCardSubtitleScoped({required Object product, required Object name}) => 'Sign in to ${product}, linked to ${name}';
 
-	/// en: 'Borrow from another profile'
-	String get borrowFromAnotherProfile => 'Borrow from another profile';
+	/// en: 'Reuse from another profile'
+	String get borrowFromAnotherProfile => 'Reuse from another profile';
 
-	/// en: 'Reuse another profile's connection. PIN-protected profiles require a PIN.'
-	String get borrowFromAnotherProfileSubtitle => 'Reuse another profile\'s connection. PIN-protected profiles require a PIN.';
+	/// en: 'PIN-protected profiles ask for their PIN'
+	String get borrowFromAnotherProfileSubtitle => 'PIN-protected profiles ask for their PIN';
 
 	/// en: 'Invalid username or password'
 	String get invalidCredentials => 'Invalid username or password';
@@ -6576,8 +6564,8 @@ class Translations$iptv$en {
 	/// en: 'IPTV'
 	String get title => 'IPTV';
 
-	/// en: 'Playlists and Xtream panels appear in Live TV alongside your servers. They cannot record — that needs a server doing the recording.'
-	String get hubSubtitle => 'Playlists and Xtream panels appear in Live TV alongside your servers. They cannot record — that needs a server doing the recording.';
+	/// en: 'Playlists and Xtream panels for Live TV – no recording'
+	String get hubSubtitle => 'Playlists and Xtream panels for Live TV – no recording';
 
 	/// en: 'Add M3U playlist'
 	String get addPlaylist => 'Add M3U playlist';
@@ -6627,38 +6615,38 @@ class Translations$iptv$en {
 	/// en: 'Merge repeated channels'
 	String get mergeDuplicatesLabel => 'Merge repeated channels';
 
-	/// en: 'A station a playlist carries more than once appears once. If the first copy does not start, the next is tried.'
-	String get mergeDuplicatesDescription => 'A station a playlist carries more than once appears once. If the first copy does not start, the next is tried.';
+	/// en: 'If one copy fails, the next is tried'
+	String get mergeDuplicatesDescription => 'If one copy fails, the next is tried';
 
-	/// en: 'Hide country codes in group names'
-	String get hideGroupCountryPrefixLabel => 'Hide country codes in group names';
+	/// en: 'Hide country codes'
+	String get hideGroupCountryPrefixLabel => 'Hide country codes';
 
-	/// en: 'Shows "DE • Doku" as "Doku". Display only — which channels belong to which group is unchanged.'
-	String get hideGroupCountryPrefixDescription => 'Shows "DE • Doku" as "Doku". Display only — which channels belong to which group is unchanged.';
+	/// en: 'Shows "DE • Doku" as "Doku"'
+	String get hideGroupCountryPrefixDescription => 'Shows "DE • Doku" as "Doku"';
 
-	/// en: 'Missing logos from a public collection'
-	String get publicLogoFallbackLabel => 'Missing logos from a public collection';
+	/// en: 'Missing logos from GitHub'
+	String get publicLogoFallbackLabel => 'Missing logos from GitHub';
 
-	/// en: 'Where neither the playlist’s logo nor the guide’s loads, Plebz looks the channel up in the “tv-logos” collection on GitHub — by exact name only. GitHub sees which logos are asked for.'
-	String get publicLogoFallbackDescription => 'Where neither the playlist’s logo nor the guide’s loads, Plebz looks the channel up in the “tv-logos” collection on GitHub — by exact name only. GitHub sees which logos are asked for.';
+	/// en: 'GitHub sees which logos are requested'
+	String get publicLogoFallbackDescription => 'GitHub sees which logos are requested';
 
 	/// en: 'Brighten dark channel logos'
 	String get brightenDarkLogosLabel => 'Brighten dark channel logos';
 
-	/// en: 'Black or very dark logos that barely show on the dark channel tiles are drawn light. Logos with light parts of their own stay as they are.'
-	String get brightenDarkLogosDescription => 'Black or very dark logos that barely show on the dark channel tiles are drawn light. Logos with light parts of their own stay as they are.';
+	/// en: ''
+	String get brightenDarkLogosDescription => '';
 
 	/// en: 'Refresh now'
 	String get refreshNowLabel => 'Refresh now';
 
-	/// en: 'Throws away the stored playlist and guide; the next visit to Live TV fetches them again.'
-	String get refreshNowDescription => 'Throws away the stored playlist and guide; the next visit to Live TV fetches them again.';
+	/// en: ''
+	String get refreshNowDescription => '';
 
 	/// en: 'Playlist and guide will be fetched again'
 	String get refreshNowDone => 'Playlist and guide will be fetched again';
 
-	/// en: 'Refresh interval'
-	String get refreshIntervalLabel => 'Refresh interval';
+	/// en: 'Reload automatically'
+	String get refreshIntervalLabel => 'Reload automatically';
 
 	/// en: 'How long the channel list and guide are kept before they are fetched again. A manual refresh reloads at once.'
 	String get refreshIntervalDescription => 'How long the channel list and guide are kept before they are fetched again. A manual refresh reloads at once.';
@@ -6678,14 +6666,14 @@ class Translations$iptv$en {
 	/// en: 'HLS'
 	String get streamFormatHls => 'HLS';
 
-	/// en: 'MPEG-TS is what most panels serve reliably. HLS is segmented and travels better through some proxies.'
-	String get streamFormatDescription => 'MPEG-TS is what most panels serve reliably. HLS is segmented and travels better through some proxies.';
+	/// en: 'MPEG-TS works almost everywhere; HLS gets through some proxies better'
+	String get streamFormatDescription => 'MPEG-TS works almost everywhere; HLS gets through some proxies better';
 
-	/// en: 'Catch-up'
-	String get catchupLabel => 'Catch-up';
+	/// en: 'Archive'
+	String get catchupLabel => 'Archive';
 
-	/// en: 'How this provider addresses its archive. Leave on automatic unless the archive stays empty — then pick the form your provider uses.'
-	String get catchupDescription => 'How this provider addresses its archive. Leave on automatic unless the archive stays empty — then pick the form your provider uses.';
+	/// en: 'Leave on automatic unless the archive stays empty'
+	String get catchupDescription => 'Leave on automatic unless the archive stays empty';
 
 	/// en: 'Automatic (as declared)'
 	String get catchupAutomatic => 'Automatic (as declared)';
@@ -6747,8 +6735,8 @@ class Translations$iptv$en {
 	/// en: 'Groups'
 	String get groupsLabel => 'Groups';
 
-	/// en: 'Only the chosen groups are loaded at all – keeping a big list slim and fast. New groups from the provider are added only once you choose them here.'
-	String get groupsDescription => 'Only the chosen groups are loaded at all – keeping a big list slim and fast. New groups from the provider are added only once you choose them here.';
+	/// en: 'Only chosen groups load; new ones are not added by themselves'
+	String get groupsDescription => 'Only chosen groups load; new ones are not added by themselves';
 
 	/// en: 'All groups are loaded'
 	String get groupsAllLoaded => 'All groups are loaded';
@@ -6996,35 +6984,29 @@ class Translations$plebz$en {
 
 	// Translations
 
-	/// en: 'App & updates'
-	String get appAndUpdates => 'App & updates';
+	/// en: 'Look and playback'
+	String get settingsGroupLook => 'Look and playback';
 
-	/// en: 'Sources & accounts'
-	String get sourcesAndAccounts => 'Sources & accounts';
+	/// en: 'Content'
+	String get settingsGroupContent => 'Content';
+
+	/// en: 'App'
+	String get settingsGroupApp => 'App';
+
+	/// en: 'Servers and profiles'
+	String get serversAndProfiles => 'Servers and profiles';
+
+	/// en: 'IPTV and Live TV'
+	String get iptvAndLiveTv => 'IPTV and Live TV';
+
+	/// en: 'Libraries'
+	String get librariesSection => 'Libraries';
+
+	/// en: 'About and updates'
+	String get aboutAndUpdates => 'About and updates';
 
 	/// en: 'Plex, Jellyfin or Emby'
 	String get addConnectionDescription => 'Plex, Jellyfin or Emby';
-
-	/// en: 'Start & navigation'
-	String get startAndNavigation => 'Start & navigation';
-
-	/// en: 'More appearance settings'
-	String get moreAppearance => 'More appearance settings';
-
-	/// en: 'Cards, home screen, navigation and more'
-	String get moreAppearanceDescription => 'Cards, home screen, navigation and more';
-
-	/// en: 'More playback settings'
-	String get morePlayback => 'More playback settings';
-
-	/// en: 'Player, picture, sound, quality and more'
-	String get morePlaybackDescription => 'Player, picture, sound, quality and more';
-
-	/// en: 'All settings'
-	String get allSettings => 'All settings';
-
-	/// en: 'Every setting, including the advanced ones'
-	String get allSettingsDescription => 'Every setting, including the advanced ones';
 
 	/// en: 'Welcome to Plebz'
 	String get welcomeTitle => 'Welcome to Plebz';
@@ -7065,8 +7047,8 @@ class Translations$plebz$en {
 	/// en: 'More than one viewer?'
 	String get profilesGroup => 'More than one viewer?';
 
-	/// en: 'Plebz can hold several profiles, even when everyone shares one Plex account. So that each person keeps their own progress, watched marks and watchlist, connect every profile to its own Simkl account and turn on “Own progress via Simkl” there. Add more profiles under Settings → Profiles → “Add Plebz profile”.'
-	String get profilesHint => 'Plebz can hold several profiles, even when everyone shares one Plex account. So that each person keeps their own progress, watched marks and watchlist, connect every profile to its own Simkl account and turn on “Own progress via Simkl” there. Add more profiles under Settings → Profiles → “Add Plebz profile”.';
+	/// en: 'With its own Simkl account, each profile keeps its own progress'
+	String get profilesHint => 'With its own Simkl account, each profile keeps its own progress';
 
 	/// en: 'Connect Simkl for this profile under Services below first.'
 	String get profilesHintConnectFirst => 'Connect Simkl for this profile under Services below first.';
@@ -7113,14 +7095,14 @@ class Translations$plebz$en {
 	/// en: 'Check for updates'
 	String get checkForUpdates => 'Check for updates';
 
-	/// en: 'Look for a newer Plebz on GitHub'
-	String get checkForUpdatesDescription => 'Look for a newer Plebz on GitHub';
+	/// en: ''
+	String get checkForUpdatesDescription => '';
 
 	/// en: 'Check for updates at start'
 	String get checkOnStartup => 'Check for updates at start';
 
-	/// en: 'Asks GitHub for a newer version at every start. GitHub sees your IP address when it does.'
-	String get checkOnStartupDescription => 'Asks GitHub for a newer version at every start. GitHub sees your IP address when it does.';
+	/// en: 'GitHub sees your IP address'
+	String get checkOnStartupDescription => 'GitHub sees your IP address';
 
 	/// en: 'Downloading the update…'
 	String get downloading => 'Downloading the update…';
@@ -7143,8 +7125,8 @@ class Translations$plebz$en {
 	/// en: 'What's new'
 	String get whatsNew => 'What\'s new';
 
-	/// en: 'What changed with each version'
-	String get whatsNewDescription => 'What changed with each version';
+	/// en: ''
+	String get whatsNewDescription => '';
 
 	/// en: 'There are no notes for this version yet.'
 	String get whatsNewEmpty => 'There are no notes for this version yet.';
@@ -7260,14 +7242,14 @@ class Translations$remoteKeys$en {
 	/// en: 'Universal remote with a receiver'
 	String get receiverGroup => 'Universal remote with a receiver';
 
-	/// en: 'Such as a Logitech Harmony with Flirc: these receivers send media keys or keyboard keys. The player understands both.'
-	String get receiverIntro => 'Such as a Logitech Harmony with Flirc: these receivers send media keys or keyboard keys. The player understands both.';
+	/// en: 'Such as a Logitech Harmony with Flirc – media and keyboard keys both work'
+	String get receiverIntro => 'Such as a Logitech Harmony with Flirc – media and keyboard keys both work';
 
 	/// en: 'OK'
 	String get keyOk => 'OK';
 
-	/// en: 'Show the controls and pause or resume; on live TV only the controls. During an intro, OK skips it'
-	String get doOk => 'Show the controls and pause or resume; on live TV only the controls. During an intro, OK skips it';
+	/// en: 'Controls and pause (live TV: controls only); skips a running intro'
+	String get doOk => 'Controls and pause (live TV: controls only); skips a running intro';
 
 	/// en: 'Play/Pause, Play, Pause'
 	String get keyPlayPause => 'Play/Pause, Play, Pause';
@@ -7757,32 +7739,32 @@ class Translations$accountPreferences$subtitleModes$en {
 	/// en: 'Manually selected'
 	String get none => 'Manually selected';
 
-	/// en: 'Never turn subtitles on by itself.'
-	String get noneDescription => 'Never turn subtitles on by itself.';
+	/// en: 'Never turn subtitles on by itself'
+	String get noneDescription => 'Never turn subtitles on by itself';
 
 	/// en: 'Follow the track flags'
 	String get defaultMode => 'Follow the track flags';
 
-	/// en: 'Use the default and forced flags stored on each subtitle track.'
-	String get defaultModeDescription => 'Use the default and forced flags stored on each subtitle track.';
+	/// en: 'Use each track's default and forced flags'
+	String get defaultModeDescription => 'Use each track\'s default and forced flags';
 
 	/// en: 'Always enabled'
 	String get always => 'Always enabled';
 
-	/// en: 'Turn on a subtitle track in the preferred language whenever one exists.'
-	String get alwaysDescription => 'Turn on a subtitle track in the preferred language whenever one exists.';
+	/// en: 'In the preferred language, when there is one'
+	String get alwaysDescription => 'In the preferred language, when there is one';
 
 	/// en: 'Only forced subtitles'
 	String get onlyForced => 'Only forced subtitles';
 
-	/// en: 'Load only the tracks marked as forced.'
-	String get onlyForcedDescription => 'Load only the tracks marked as forced.';
+	/// en: ''
+	String get onlyForcedDescription => '';
 
 	/// en: 'Shown with foreign audio'
 	String get smart => 'Shown with foreign audio';
 
-	/// en: 'Turn subtitles on only when the audio is in another language.'
-	String get smartDescription => 'Turn subtitles on only when the audio is in another language.';
+	/// en: ''
+	String get smartDescription => '';
 }
 
 // Path: accountPreferences.subtitleAccessibilityOptions
@@ -9203,11 +9185,11 @@ class Translations$services$tmdb$en {
 	/// en: 'Fills in logos and descriptions'
 	String get hubSubtitle => 'Fills in logos and descriptions';
 
-	/// en: 'Fill in missing logos and descriptions'
-	String get enabled => 'Fill in missing logos and descriptions';
+	/// en: 'Fill in gaps from TMDB'
+	String get enabled => 'Fill in gaps from TMDB';
 
-	/// en: 'For titles your server left without a logo or a description, look one up on TMDB. Both come from the same request, and every answer is cached — a title is fetched once rather than each time it is shown.'
-	String get enabledDescription => 'For titles your server left without a logo or a description, look one up on TMDB. Both come from the same request, and every answer is cached — a title is fetched once rather than each time it is shown.';
+	/// en: 'Logos and descriptions your server lacks'
+	String get enabledDescription => 'Logos and descriptions your server lacks';
 
 	/// en: 'API key'
 	String get apiKey => 'API key';
@@ -9233,11 +9215,11 @@ class Translations$services$tmdb$en {
 	/// en: 'TMDB rejected the key.'
 	String get verifyInvalid => 'TMDB rejected the key.';
 
-	/// en: 'Discard what was looked up'
-	String get clearCache => 'Discard what was looked up';
+	/// en: 'Discard TMDB data'
+	String get clearCache => 'Discard TMDB data';
 
-	/// en: 'Forget every logo and description found so far and look them up again as titles come up.'
-	String get clearCacheDescription => 'Forget every logo and description found so far and look them up again as titles come up.';
+	/// en: 'Look up logos and descriptions again'
+	String get clearCacheDescription => 'Look up logos and descriptions again';
 
 	/// en: 'Looked-up data discarded'
 	String get cacheCleared => 'Looked-up data discarded';
@@ -9405,13 +9387,13 @@ extension on Translations {
 			'settings.theme' => 'Light or dark',
 			'settings.appearance' => 'Appearance',
 			'settings.videoPlayback' => 'Video Playback',
-			'settings.videoPlaybackDescription' => 'Configure playback behavior',
+			'settings.videoPlaybackDescription' => '',
 			'settings.advanced' => 'Advanced',
-			'settings.episodePosterMode' => 'Episode Poster Style',
+			'settings.episodePosterMode' => 'Episode image',
 			'settings.seriesPoster' => 'Series Poster',
 			'settings.seasonPoster' => 'Season Poster',
 			'settings.episodeThumbnail' => 'Thumbnail',
-			'settings.showHeroSectionDescription' => 'Display featured content carousel on home screen',
+			'settings.showHeroSectionDescription' => '',
 			'settings.secondsLabel' => 'Seconds',
 			'settings.minutesLabel' => 'Minutes',
 			'settings.secondsShort' => 's',
@@ -9429,127 +9411,127 @@ extension on Translations {
 			'settings.gridSpacingTight' => 'Tight',
 			'settings.gridSpacingNormal' => 'Normal',
 			'settings.gridSpacingSpacious' => 'Spacious',
-			'settings.tvCornerSpotlightBackdrop' => 'Corner Spotlight Backdrop',
-			'settings.tvCornerSpotlightBackdropDescription' => 'Show spotlight artwork in the top-right corner instead of filling the screen',
+			'settings.tvCornerSpotlightBackdrop' => 'Backdrop in the corner',
+			'settings.tvCornerSpotlightBackdropDescription' => 'Top right instead of full screen',
 			'settings.viewMode' => 'View Mode',
 			'settings.gridView' => 'Grid',
 			'settings.listView' => 'List',
-			'settings.showHeroSection' => 'Show Hero Section',
+			'settings.showHeroSection' => 'Featured banner',
 			'settings.continueWatchingAction' => 'Continue Watching Action',
 			'settings.continueWatchingPlay' => 'Play',
 			'settings.continueWatchingDetails' => 'Open Details',
-			'settings.episodeAction' => 'Episode Action',
+			'settings.episodeAction' => 'Episode action',
 			'settings.episodePlay' => 'Play',
 			'settings.episodeDetails' => 'Open Details',
-			'settings.useGlobalHubs' => 'Use Home Layout',
-			'settings.useGlobalHubsDescription' => 'Show unified home hubs. Otherwise use library recommendations.',
-			'settings.showServerNameOnHubs' => 'Show Server Name on Hubs',
-			'settings.showServerNameOnHubsDescription' => 'Always show server names in hub titles.',
-			'settings.groupLibrariesByServer' => 'Group Libraries by Server',
-			'settings.groupLibrariesByServerDescription' => 'Group sidebar libraries under each media server.',
-			'settings.alwaysKeepSidebarOpen' => 'Always Keep Sidebar Open',
+			'settings.useGlobalHubs' => 'Unified home rows',
+			'settings.useGlobalHubsDescription' => 'Otherwise recommendations per library',
+			'settings.showServerNameOnHubs' => 'Server name on rows',
+			'settings.showServerNameOnHubsDescription' => '',
+			'settings.groupLibrariesByServer' => 'Libraries by server',
+			'settings.groupLibrariesByServerDescription' => '',
+			'settings.alwaysKeepSidebarOpen' => 'Sidebar always open',
 			'settings.alwaysKeepSidebarOpenDescription' => 'Sidebar stays expanded and content area adjusts to fit',
-			'settings.showUnwatchedCount' => 'Show Unwatched Count',
-			'settings.showUnwatchedCountDescription' => 'Display unwatched episode count on shows and seasons',
-			'settings.showWatchedIndicators' => 'Show Watched Indicators',
-			'settings.showWatchedIndicatorsDescription' => 'Display a checkmark on watched movies, shows, and episodes',
-			'settings.showEpisodeNumberOnCards' => 'Show Episode Number on Cards',
-			'settings.showEpisodeNumberOnCardsDescription' => 'Show season and episode number on episode cards',
-			'settings.showSeasonPostersOnTabs' => 'Show Season Posters on Tabs',
-			'settings.showSeasonPostersOnTabsDescription' => 'Show each season\'s poster above its tab',
+			'settings.showUnwatchedCount' => 'Unwatched episode count',
+			'settings.showUnwatchedCountDescription' => '',
+			'settings.showWatchedIndicators' => 'Watched checkmarks',
+			'settings.showWatchedIndicatorsDescription' => '',
+			'settings.showEpisodeNumberOnCards' => 'Episode number on cards',
+			'settings.showEpisodeNumberOnCardsDescription' => '',
+			'settings.showSeasonPostersOnTabs' => 'Season posters above tabs',
+			'settings.showSeasonPostersOnTabsDescription' => '',
 			'settings.tvFullCardLayout' => 'Full TV Cards',
 			'settings.tvFullCardLayoutDescription' => 'Use image-only TV cards with actor names overlaid',
 			'settings.focusGlow' => 'Focus Glow',
-			'settings.focusGlowDescription' => 'Draw a soft glow around the focused card',
+			'settings.focusGlowDescription' => '',
 			'settings.visualEffects' => 'Visual Effects',
 			'settings.visualEffectsAuto' => 'Auto',
-			'settings.visualEffectsAutoDescription' => 'Reduce effects automatically on low-power devices',
+			'settings.visualEffectsAutoDescription' => 'Reduced on low-power devices',
 			'settings.visualEffectsFull' => 'Full',
 			'settings.visualEffectsReduced' => 'Reduced',
-			'settings.visualEffectsReducedDescription' => 'Fewer animations and lower-resolution artwork',
-			'settings.hideSpoilers' => 'Hide Spoilers for Unwatched Episodes',
-			'settings.hideSpoilersDescription' => 'Blur thumbnails and descriptions for unwatched episodes',
-			'settings.playerBackend' => 'Player Backend',
+			'settings.visualEffectsReducedDescription' => 'Fewer animations, simpler artwork',
+			'settings.hideSpoilers' => 'Spoiler protection',
+			'settings.hideSpoilersDescription' => 'Blur images and text of unwatched episodes',
+			'settings.playerBackend' => 'Player',
 			'settings.exoPlayer' => 'ExoPlayer',
 			'settings.mpv' => 'mpv',
 			'settings.iptvPlayerBackend' => 'Player for IPTV',
 			'settings.iptvPlayerSameAsFilms' => 'Same as films and shows',
-			'settings.iptvPlayerBackendDescription' => 'For IPTV channels in the guide preview and full screen. The player above stays for everything else.',
+			'settings.iptvPlayerBackendDescription' => 'Everything else uses the Video Playback player',
 			'settings.hardwareDecoding' => 'Hardware Decoding',
-			'settings.hardwareDecodingDescription' => 'Use hardware acceleration when available',
+			'settings.hardwareDecodingDescription' => '',
 			'settings.playbackBuffer' => 'Playback Buffer',
 			'settings.playbackBufferAuto' => 'Auto (Recommended)',
 			'settings.playbackBufferLarge' => 'Large',
 			'settings.playbackBufferExtraLarge' => 'Extra Large',
-			'settings.playbackBufferDescription' => 'Buffer more against unstable connections.',
+			'settings.playbackBufferDescription' => 'Bigger helps on unstable networks',
 			'settings.defaultQualityTitle' => 'Default Quality',
-			'settings.cellularQualityTitle' => 'Default Quality on Cellular',
+			'settings.cellularQualityTitle' => 'Quality on cellular',
 			'settings.cellularQualitySameAsDefault' => 'Same as Default Quality',
-			'settings.directPlayCoveredQuality' => 'Play Smaller Videos at Original Quality',
-			'settings.directPlayCoveredQualityDescription' => 'Direct play videos already within the quality limit instead of transcoding them',
+			'settings.directPlayCoveredQuality' => 'Play smaller videos as-is',
+			'settings.directPlayCoveredQualityDescription' => 'When they\'re within the quality limit',
 			'settings.bestCopy' => 'Copy on Explore pages',
-			'settings.bestCopyDescription' => 'Which copy from your libraries is listed first and opened by the button beside the poster',
+			'settings.bestCopyDescription' => 'Listed first and opened by the poster button',
 			'settings.bestCopyBest' => 'Best quality',
-			'settings.bestCopyBestDescription' => 'Picture, then sound, then bitrate. For series, quality comes before the number of episodes',
+			'settings.bestCopyBestDescription' => 'Best picture and sound, even if episodes are missing',
 			'settings.bestCopyComplete' => 'Best complete copy',
-			'settings.bestCopyCompleteDescription' => 'For series, the copy with the most episodes, the best of those. Films as with “Best quality”',
+			'settings.bestCopyCompleteDescription' => 'For series, the copy with the most episodes',
 			'settings.bestCopyFullHd' => 'Prefer Full HD',
-			'settings.bestCopyFullHdDescription' => 'Copies up to 1080p first, the best of those. 4K only when there is nothing else',
+			'settings.bestCopyFullHdDescription' => 'Up to 1080p first, 4K only if nothing else',
 			'settings.videoCodecs' => 'Video Codecs',
 			'settings.videoCodecsDescription' => 'Unchecked codecs are transcoded by the server',
 			'settings.videoCodecsAlwaysAccepted' => 'Always accepted',
 			'settings.musicQualityTitle' => 'Music Quality',
 			'settings.subtitleStyling' => 'Subtitle Styling',
-			'settings.subtitleStylingDescription' => 'Customize subtitle appearance',
-			'settings.smallSkipDuration' => 'Small Skip Duration',
-			'settings.largeSkipDuration' => 'Large Skip Duration',
-			'settings.rewindOnResume' => 'Rewind on Resume',
+			'settings.subtitleStylingDescription' => '',
+			'settings.smallSkipDuration' => 'Short skip',
+			'settings.largeSkipDuration' => 'Long skip',
+			'settings.rewindOnResume' => 'Rewind on resume',
 			'settings.secondsUnit' => ({required Object seconds}) => '${seconds} seconds',
 			'settings.defaultSleepTimer' => 'Default Sleep Timer',
 			'settings.minutesUnit' => ({required Object minutes}) => '${minutes} minutes',
-			'settings.rememberTrackSelections' => 'Remember track selections per show/movie',
-			'settings.rememberTrackSelectionsDescription' => 'Remember audio and subtitle choices per title',
-			'settings.rememberTrackSelectionsBackendRule' => 'Plex saves each choice on the server per file; Jellyfin also turns on the account\'s Remember selections; Emby is not supported',
-			'settings.followServerTrackSelections' => 'Use server\'s per-episode track selections',
-			'settings.followServerTrackSelectionsDescription' => 'On episode change, apply the audio and subtitles selected on the server instead of carrying over the current choice',
+			'settings.rememberTrackSelections' => 'Remember tracks per title',
+			'settings.rememberTrackSelectionsDescription' => '',
+			'settings.rememberTrackSelectionsBackendRule' => 'Saved on the server; not on Emby',
+			'settings.followServerTrackSelections' => 'Server\'s track choice per episode',
+			'settings.followServerTrackSelectionsDescription' => 'Instead of carrying over the current choice',
 			'settings.resumeMusicOnLaunch' => 'Remember music session',
-			'settings.resumeMusicOnLaunchDescription' => 'Reopen the last song paused where it left off when the app starts',
-			'settings.showChapterMarkersOnTimeline' => 'Show chapter markers on seek bar',
-			'settings.showChapterMarkersOnTimelineDescription' => 'Segment the seek bar at chapter boundaries',
-			'settings.specialsOrdering' => 'Specials in episode order',
-			'settings.specialsOrderingDescription' => 'Where specials play in a show\'s watch order',
+			'settings.resumeMusicOnLaunchDescription' => 'Reopen the last song paused at launch',
+			'settings.showChapterMarkersOnTimeline' => 'Chapters on the seek bar',
+			'settings.showChapterMarkersOnTimelineDescription' => '',
+			'settings.specialsOrdering' => 'Specials position',
+			'settings.specialsOrderingDescription' => '',
 			'settings.specialsOrderingServer' => 'Follow server order',
 			'settings.specialsOrderingAirDate' => 'Interleave by air date',
 			'settings.specialsOrderingLast' => 'After regular seasons',
-			'settings.clickVideoTogglesPlayback' => 'Click on video to toggle play/pause',
-			'settings.clickVideoTogglesPlaybackDescription' => 'Click video to play/pause instead of showing controls.',
-			'settings.videoPlayerControls' => 'Video Player Controls',
+			'settings.clickVideoTogglesPlayback' => 'Click video to pause',
+			'settings.clickVideoTogglesPlaybackDescription' => 'Instead of showing the controls',
+			'settings.videoPlayerControls' => 'Player keyboard shortcuts',
 			'settings.keyboardShortcuts' => 'Keyboard Shortcuts',
-			'settings.keyboardShortcutsDescription' => 'Customize keyboard shortcuts',
-			'settings.videoPlayerNavigation' => 'Video Player Navigation',
-			'settings.videoPlayerNavigationDescription' => 'Use arrow keys to navigate video player controls',
+			'settings.keyboardShortcutsDescription' => '',
+			'settings.videoPlayerNavigation' => 'Arrow keys in the player',
+			'settings.videoPlayerNavigationDescription' => '',
 			'settings.watchTogetherRelay' => 'Watch Together Relay',
-			'settings.watchTogetherRelayDescription' => 'Set a custom relay. Everyone must use the same server.',
+			'settings.watchTogetherRelayDescription' => 'Everyone must use the same relay',
 			'settings.watchTogetherRelayHint' => 'https://my-relay.example.com',
 			'settings.watchTogetherRelayInvalid' => 'Enter a valid HTTP or HTTPS relay base URL.',
 			'settings.crashReporting' => 'Crash Reporting',
 			'settings.crashReportingDescription' => 'Send crash reports to help improve the app',
-			'settings.debugLogging' => 'Debug Logging',
-			'settings.debugLoggingDescription' => 'Enable detailed logging for troubleshooting',
+			'settings.debugLogging' => 'Detailed logs',
+			'settings.debugLoggingDescription' => 'For troubleshooting',
 			'settings.viewLogs' => 'View Logs',
-			'settings.viewLogsDescription' => 'View application logs',
+			'settings.viewLogsDescription' => '',
 			'settings.clearImageCache' => 'Clear Image Cache',
-			'settings.clearImageCacheDescription' => 'Clear cached artwork and thumbnails. Images may load slower until downloaded again.',
+			'settings.clearImageCacheDescription' => 'Images load slower for a while',
 			'settings.clearImageCacheSuccess' => 'Image cache cleared successfully',
 			'settings.resetSettings' => 'Reset Settings',
-			'settings.resetSettingsDescription' => 'Restore default settings. This can\'t be undone.',
+			'settings.resetSettingsDescription' => 'This can\'t be undone',
 			'settings.resetSettingsSuccess' => 'Settings reset successfully',
 			'settings.backup' => 'Backup',
 			'settings.exportSettings' => 'Export Settings',
-			'settings.exportSettingsDescription' => 'Save your preferences to a file',
+			'settings.exportSettingsDescription' => 'Settings only, without logins',
 			'settings.exportSettingsSuccess' => 'Settings exported',
 			'settings.importSettings' => 'Import Settings',
-			'settings.importSettingsDescription' => 'Restore preferences from a file',
+			'settings.importSettingsDescription' => 'Full backups too',
 			'settings.importSettingsConfirm' => 'This will replace your current settings. Continue?',
 			'settings.importSettingsSuccess' => 'Settings imported',
 			'settings.importSettingsInvalidFile' => 'This file isn\'t a valid Plebz settings export',
@@ -9569,31 +9551,31 @@ extension on Translations {
 			'settings.shortcutUpdated' => ({required Object action}) => 'Shortcut updated for ${action}',
 			'settings.saveFailed' => 'Could not save changes. Try again.',
 			'settings.autoPlayAndSkip' => 'Auto-Play & Skip',
-			'settings.autoPlayNextEpisode' => 'Auto-Play Next Episode',
-			'settings.autoPlayNextEpisodeDescription' => 'Start the next episode automatically when one ends',
-			'settings.shuffleStartsFromBeginning' => 'Shuffle Starts at Beginning',
-			'settings.shuffleStartsFromBeginningDescription' => 'Start each episode at the beginning when shuffling instead of resuming',
-			'settings.playNextCountdown' => 'Play Next Countdown',
+			'settings.autoPlayNextEpisode' => 'Next episode automatically',
+			'settings.autoPlayNextEpisodeDescription' => '',
+			'settings.shuffleStartsFromBeginning' => 'Shuffle from the start',
+			'settings.shuffleStartsFromBeginningDescription' => 'Each episode from the start, no resuming',
+			'settings.playNextCountdown' => 'Next episode countdown',
 			'settings.playNextCountdownImmediate' => 'Play immediately',
 			'settings.skipIntroMode' => 'Skip Intro',
-			'settings.skipIntroModeOffDescription' => 'Play intros normally without a skip button',
-			'settings.skipIntroModeButtonDescription' => 'Show a skip button when an intro starts',
-			'settings.skipIntroModeAutoDescription' => 'Skip intros automatically after the delay below',
+			'settings.skipIntroModeOffDescription' => '',
+			'settings.skipIntroModeButtonDescription' => '',
+			'settings.skipIntroModeAutoDescription' => '',
 			'settings.skipCreditsMode' => 'Skip Credits',
-			'settings.skipCreditsModeOffDescription' => 'Play credits normally without a skip button',
-			'settings.skipCreditsModeButtonDescription' => 'Show a skip button when credits start',
-			'settings.skipCreditsModeAutoDescription' => 'Skip credits automatically and play the next episode',
+			'settings.skipCreditsModeOffDescription' => '',
+			'settings.skipCreditsModeButtonDescription' => '',
+			'settings.skipCreditsModeAutoDescription' => '',
 			'settings.skipMarkerModeOff' => 'Off',
 			'settings.skipMarkerModeButton' => 'Show button',
 			'settings.skipMarkerModeAuto' => 'Automatic',
-			'settings.forceSkipMarkerFallback' => 'Force Fallback Markers',
-			'settings.forceSkipMarkerFallbackDescription' => 'Use chapter title patterns even when Plex has markers',
-			'settings.autoSkipDelay' => 'Auto Skip Delay',
-			'settings.autoSkipDelayDescription' => ({required Object seconds}) => 'Wait ${seconds} seconds before auto-skipping',
-			'settings.introPattern' => 'Intro Marker Pattern',
-			'settings.introPatternDescription' => 'Regex pattern to match intro markers in chapter titles',
-			'settings.creditsPattern' => 'Credits Marker Pattern',
-			'settings.creditsPatternDescription' => 'Regex pattern to match credits markers in chapter titles',
+			'settings.forceSkipMarkerFallback' => 'Always use chapter patterns',
+			'settings.forceSkipMarkerFallbackDescription' => 'Even when Plex has its own markers',
+			'settings.autoSkipDelay' => 'Delay before skipping',
+			'settings.autoSkipDelayDescription' => ({required Object seconds}) => '${seconds} seconds',
+			'settings.introPattern' => 'Intro chapter pattern',
+			'settings.introPatternDescription' => 'Regular expression for chapter titles',
+			'settings.creditsPattern' => 'Credits chapter pattern',
+			'settings.creditsPatternDescription' => 'Regular expression for chapter titles',
 			'settings.invalidRegex' => 'Invalid regular expression',
 			'settings.regex' => 'Regular expression',
 			'settings.downloads' => 'Downloads',
@@ -9609,9 +9591,9 @@ extension on Translations {
 			'settings.downloadLocationInvalid' => 'Selected folder is not writable',
 			'settings.downloadLocationPickerUnavailable' => 'Folder selection is not available on this device',
 			'settings.downloadOnWifiOnly' => 'Download on Wi-Fi only',
-			'settings.downloadOnWifiOnlyDescription' => 'Prevent downloads when on cellular data',
-			'settings.autoRemoveWatchedDownloads' => 'Auto-remove watched downloads',
-			'settings.autoRemoveWatchedDownloadsDescription' => 'Delete watched downloads automatically',
+			'settings.downloadOnWifiOnlyDescription' => '',
+			'settings.autoRemoveWatchedDownloads' => 'Delete watched downloads',
+			'settings.autoRemoveWatchedDownloadsDescription' => '',
 			'settings.cellularDownloadBlocked' => 'Downloads are blocked on cellular. Use Wi-Fi or change the setting.',
 			'settings.maxVolume' => 'Maximum Volume',
 			'settings.maxVolumeDescription' => 'Allow volume boost above 100% for quiet media',
@@ -9621,26 +9603,26 @@ extension on Translations {
 			'settings.services' => 'Services',
 			'settings.servicesDescription' => 'Connect Seerr and TMDB',
 			'settings.manageLibrariesDescription' => 'Reorder and hide libraries',
-			'settings.companionRemoteServer' => 'Companion Remote Server',
-			'settings.companionRemoteServerDescription' => 'Allow mobile devices on your network to control this app',
+			'settings.companionRemoteServer' => 'Remote control from a phone',
+			'settings.companionRemoteServerDescription' => '',
 			'settings.companionRemoteServerStartFailed' => 'Couldn\'t start the companion server',
 			'settings.companionRemoteServerStopFailed' => 'Couldn\'t stop the companion server',
-			'settings.autoPip' => 'Auto Picture-in-Picture',
-			'settings.autoPipDescription' => 'Automatically enter picture-in-picture when you leave the app during playback',
-			'settings.matchContentFrameRate' => 'Match Content Frame Rate',
-			'settings.matchContentFrameRateDescription' => 'Match display refresh rate to video content',
+			'settings.autoPip' => 'Picture-in-picture on leaving',
+			'settings.autoPipDescription' => '',
+			'settings.matchContentFrameRate' => 'Match the video\'s frame rate',
+			'settings.matchContentFrameRateDescription' => '',
 			'settings.matchContentResolution' => 'Match Content Resolution',
 			'settings.matchContentResolutionDescription' => 'Switch the display to the video\'s native resolution so your TV handles upscaling. Menus and subtitles are upscaled too during playback',
 			'settings.matchRefreshRate' => 'Match Refresh Rate',
-			'settings.matchRefreshRateDescription' => 'Match display refresh rate in fullscreen',
-			'settings.matchDynamicRange' => 'Match Dynamic Range',
-			'settings.matchDynamicRangeDescription' => 'Switch HDR on for HDR content, then back to SDR',
+			'settings.matchRefreshRateDescription' => 'Only in full screen',
+			'settings.matchDynamicRange' => 'Switch HDR automatically',
+			'settings.matchDynamicRangeDescription' => '',
 			'settings.displaySwitchDelay' => 'Display Switch Delay',
 			'settings.tunneledPlayback' => 'Tunneled Playback',
-			'settings.tunneledPlaybackDescription' => 'Use video tunneling. Disable if HDR playback shows black video or motion stutters.',
+			'settings.tunneledPlaybackDescription' => 'Off if HDR stays black or stutters',
 			'settings.audioPassthrough' => 'Audio Passthrough',
-			'settings.audioPassthroughDescription' => 'Send Dolby/DTS audio to your receiver or TV without re-encoding, preserving surround sound. Turn off if you have no sound.',
-			'settings.audioPassthroughDescriptionAppleTv' => 'Use Apple\'s native Dolby decoder for Dolby Digital Plus, including Atmos. DTS and TrueHD still play as multichannel PCM. Turn off if you have no sound.',
+			'settings.audioPassthroughDescription' => 'Dolby/DTS straight to the receiver or TV – off if there\'s no sound',
+			'settings.audioPassthroughDescriptionAppleTv' => 'Dolby Digital Plus and Atmos via Apple\'s decoder – off if there\'s no sound',
 			'settings.audioPassthroughOverriddenByNormalization' => 'Off while loudness normalization is on',
 			'settings.audioChannelLimit' => 'Audio Channels',
 			'settings.audioChannelLimitDescription' => 'Mix decoded audio down for speakers, headphones, or HDMI setups that cannot play every channel',
@@ -9650,14 +9632,14 @@ extension on Translations {
 			'settings.audioChannelLimitSurround51Description' => 'Mix 7.1 down to 5.1 for TVs and receivers that only take 5.1 PCM. Passthrough is unaffected.',
 			'settings.audioChannelLimitStereo' => 'Stereo',
 			'settings.audioChannelLimitStereoDescription' => 'Mix down to two channels for stereo speakers or headphones. Turns passthrough off.',
-			'settings.downmixCenterBoost' => 'Center Channel Boost',
+			'settings.downmixCenterBoost' => 'Center channel boost',
 			'settings.downmixCenterBoostValue' => ({required Object db}) => '${db} dB',
 			'settings.downmixCenterBoostLabel' => 'Boost (dB)',
 			'settings.downmixCenterBoostShort' => 'dB',
-			'settings.audioDownmixNormalize' => 'Normalize Volume on Downmix',
-			'settings.audioDownmixNormalizeDescription' => 'Lower the mix to prevent clipping. Turn off to keep the original volume (may distort loud scenes).',
+			'settings.audioDownmixNormalize' => 'Normalize downmix volume',
+			'settings.audioDownmixNormalizeDescription' => 'Prevents distortion but plays quieter',
 			'settings.dvConversionMode' => 'Dolby Vision Conversion',
-			'settings.dvConversionModeDescription' => 'Choose how Dolby Vision Profile 7 files are handled.',
+			'settings.dvConversionModeDescription' => 'For Profile 7 files',
 			'settings.dvConversionAuto' => 'Auto',
 			'settings.dvConversionNative' => 'Native / Disabled',
 			'settings.dvConversionDv81' => 'P7 → P8.1',
@@ -9666,33 +9648,33 @@ extension on Translations {
 			'settings.dvConversionNativeDescription' => 'Force native DV7 and suppress DV conversion retry',
 			'settings.dvConversionDv81Description' => 'Force inline RPU conversion to Dolby Vision profile 8.1',
 			'settings.dvConversionHevcStripDescription' => 'Strip Dolby Vision RPU/EL layers and present plain HEVC',
-			'settings.hdrSdrConversion' => 'HDR to SDR Conversion',
-			'settings.hdrSdrConversionDescription' => 'Choose what converts HDR video when the display can\'t show HDR.',
+			'settings.hdrSdrConversion' => 'HDR to SDR conversion',
+			'settings.hdrSdrConversionDescription' => 'For screens without HDR',
 			'settings.hdrSdrConversionAuto' => 'Auto',
 			'settings.hdrSdrConversionAutoDescription' => 'Device on Android 9 and later, player on older versions',
 			'settings.hdrSdrConversionDevice' => 'Device',
-			'settings.hdrSdrConversionDeviceDescription' => 'Your device\'s video hardware converts it. Fastest, but colors depend on the device',
+			'settings.hdrSdrConversionDeviceDescription' => 'Fastest, but colors depend on the device',
 			'settings.hdrSdrConversionPlayer' => 'Player',
-			'settings.hdrSdrConversionPlayerDescription' => 'The player converts it. Consistent colors, but 4K may stutter on low-end TV boxes',
+			'settings.hdrSdrConversionPlayerDescription' => 'Consistent colors, but 4K may stutter on weak boxes',
 			'settings.deinterlace' => 'Deinterlacing',
-			'settings.deinterlaceDescription' => 'Remove combing artifacts from interlaced video (mpv player only)',
+			'settings.deinterlaceDescription' => 'Removes combing, mpv only',
 			'settings.requireProfileSelectionOnOpen' => 'Ask for profile on app open',
 			'settings.requireProfileSelectionOnOpenDescription' => 'Show profile selection every time the app is opened',
-			'settings.startInFullscreen' => 'Start in fullscreen',
-			'settings.startInFullscreenDescription' => 'Open Plebz in fullscreen mode at launch',
-			'settings.exitFullscreenOnPlayerClose' => 'Exit fullscreen on player close',
-			'settings.exitFullscreenOnPlayerCloseDescription' => 'Automatically exit fullscreen when closing the video player',
-			'settings.autoHidePerformanceOverlay' => 'Auto-Hide Performance Overlay',
-			'settings.autoHidePerformanceOverlayDescription' => 'Fade the performance overlay with the playback controls',
-			'settings.showNavBarLabels' => 'Show Navigation Bar Labels',
-			'settings.showNavBarLabelsDescription' => 'Display text labels under navigation bar icons',
-			'settings.startupSection' => 'Startup Section',
-			'settings.showExploreTab' => 'Show Explore Tab',
-			'settings.showExploreTabDescription' => 'Display the Explore tab with content from Plex Discover and connected trackers',
+			'settings.startInFullscreen' => 'Start in full screen',
+			'settings.startInFullscreenDescription' => '',
+			'settings.exitFullscreenOnPlayerClose' => 'Leave full screen with the player',
+			'settings.exitFullscreenOnPlayerCloseDescription' => '',
+			'settings.autoHidePerformanceOverlay' => 'Hide performance overlay',
+			'settings.autoHidePerformanceOverlayDescription' => 'Together with the player controls',
+			'settings.showNavBarLabels' => 'Labels under icons',
+			'settings.showNavBarLabelsDescription' => '',
+			'settings.startupSection' => 'Open at start',
+			'settings.showExploreTab' => 'Explore',
+			'settings.showExploreTabDescription' => 'Content from Plex Discover',
 			'settings.showSportTab' => 'Sport',
-			'settings.showSportTabDescription' => 'A destination for the Bundesliga, 2. Bundesliga and 3. Liga: matchdays, results and the table. The fixtures come from OpenLigaDB and the club crests from Wikimedia — only league, season and matchday are ever sent.',
-			'settings.liveTvDefaultFavorites' => 'Default to Favorite Channels',
-			'settings.liveTvDefaultFavoritesDescription' => 'Show only favorite channels when opening Live TV',
+			'settings.showSportTabDescription' => 'Bundesliga, 2. Bundesliga and 3. Liga: games and table',
+			'settings.liveTvDefaultFavorites' => 'Favorites only on open',
+			'settings.liveTvDefaultFavoritesDescription' => '',
 			'settings.general' => 'General',
 			'settings.generalDescription' => 'Language, startup, and window behavior',
 			'settings.languageAndRegion' => 'Language & Region',
@@ -9712,35 +9694,35 @@ extension on Translations {
 			'settings.behavior' => 'Behavior',
 			'settings.gestures' => 'Gestures',
 			'settings.gestureBrightnessSwipe' => 'Brightness Swipe',
-			'settings.gestureBrightnessSwipeDescription' => 'Swipe up or down on the left edge to adjust brightness',
+			'settings.gestureBrightnessSwipeDescription' => 'Swipe up and down on the left edge',
 			'settings.gestureVolumeSwipe' => 'Volume Swipe',
-			'settings.gestureVolumeSwipeDescription' => 'Swipe up or down on the right edge to adjust volume',
-			'settings.gesturePinchToZoom' => 'Pinch to Zoom',
-			'settings.gesturePinchToZoomDescription' => 'Pinch on the video to zoom in or out',
-			'settings.rememberBrightnessLevel' => 'Remember Brightness Level',
-			'settings.rememberBrightnessLevelDescription' => 'Start playback at the brightness set by the last swipe',
+			'settings.gestureVolumeSwipeDescription' => 'Swipe up and down on the right edge',
+			'settings.gesturePinchToZoom' => 'Pinch to zoom',
+			'settings.gesturePinchToZoomDescription' => '',
+			'settings.rememberBrightnessLevel' => 'Remember brightness',
+			'settings.rememberBrightnessLevelDescription' => '',
 			'settings.controls' => 'Controls',
 			'settings.rememberPlayerChanges' => 'Remember Player Changes',
-			'settings.rememberPlayerChangesDescription' => 'Where a change made during playback is saved and reapplied from',
+			'settings.rememberPlayerChangesDescription' => '',
 			'settings.scopePlaybackSpeed' => 'Playback Speed',
 			'settings.scopeShaderPreset' => 'Shader Preset',
 			'settings.scopeAspectRatio' => 'Aspect Ratio',
-			'settings.scopeSyncOffsets' => 'Audio & Subtitle Sync',
+			'settings.scopeSyncOffsets' => 'Audio and subtitle sync',
 			'settings.playerScopeOff' => 'Don\'t save',
 			'settings.playerScopeGlobal' => 'Everywhere',
 			'settings.playerScopeLibrary' => 'Per library',
 			'settings.playerScopeTitle' => 'Per show or movie',
 			'settings.exportDialogTitle' => 'Export Plebz settings',
-			'settings.useSystemTvKeyboard' => 'Use the device\'s keyboard',
-			'settings.useSystemTvKeyboardDescription' => 'Type with the on-screen keyboard your TV or box provides. Turn it off to use Plebz\'s own keyboard instead, for a device whose keyboard does not appear.',
+			'settings.useSystemTvKeyboard' => 'Device keyboard',
+			'settings.useSystemTvKeyboardDescription' => 'Turn off if it doesn\'t appear',
 			'settings.showRecommendationsRow' => 'Recommendation row',
-			'settings.showRecommendationsRowDescription' => 'Show a "Because you watched" row under Continue Watching, built from titles you marked or watched. Only suggests what is on your servers.',
+			'settings.showRecommendationsRowDescription' => 'Only titles from your servers',
 			'settings.resetRecommendations' => 'Reset recommendations',
-			'settings.resetRecommendationsDescription' => 'Forgets every "More like this" and "Less like this" from the recommendation row.',
+			'settings.resetRecommendationsDescription' => 'Forget every "More like this" and "Less like this"',
 			'settings.resetRecommendationsConfirm' => 'Reset',
 			'settings.resetRecommendationsDone' => 'Recommendations reset',
 			'settings.showLiveNowRow' => '"Live now" row',
-			'settings.showLiveNowRowDescription' => 'Under Continue Watching, your favourite channels with what is on them — and, with Sport switched on, today\'s games.',
+			'settings.showLiveNowRowDescription' => 'Favourite channels and, with Sport, today\'s games',
 			'settings.detailPages' => 'Detail pages',
 			'settings.input' => 'Input',
 			'settings.recommendationsSource' => 'Recommendations from',
@@ -9750,17 +9732,17 @@ extension on Translations {
 			'settings.recommendationsSourceEmby' => 'Emby only',
 			'settings.appThemeVariant' => 'Design',
 			'settings.appThemeVariantStandard' => 'Original',
-			'settings.appThemeVariantStandardDescription' => 'The look the app has always had: solid symbols and the typeface your device uses.',
-			'settings.showLibraryPlaylistsTab' => 'Playlists tab in libraries',
-			'settings.showLibraryPlaylistsTabDescription' => 'Off, the tab goes entirely rather than standing empty. Playlists stay reachable everywhere else.',
-			'settings.showPlaybackTracksStatus' => 'Audio and subtitles on the detail page',
-			'settings.showPlaybackTracksStatusDescription' => 'Names the audio track and subtitles Play would start with, in the corner. Off, the line goes; nothing about playback changes.',
+			'settings.appThemeVariantStandardDescription' => '',
+			'settings.showLibraryPlaylistsTab' => 'Playlists tab',
+			'settings.showLibraryPlaylistsTabDescription' => 'Playlists stay reachable anyway',
+			'settings.showPlaybackTracksStatus' => 'Audio and subtitles',
+			'settings.showPlaybackTracksStatusDescription' => 'Shows which tracks Play would pick',
 			'settings.appThemeVariantGlas' => 'Redesign – Glass',
-			'settings.appThemeVariantGlasDescription' => 'The redesign: menus, info panels, "Up next" and the player bar float over the picture as glass — translucent, with a sheen and a lit edge, and a firmer ground behind the words so they stay legible over pale posters. On a television it also rearranges the screens; phones, tablets and the Mac keep their familiar layout. You pick the accent colour.',
+			'settings.appThemeVariantGlasDescription' => 'Translucent menus over the picture, rearranged on TV',
 			'settings.appThemeVariantFlach' => 'Redesign – Flat',
-			'settings.appThemeVariantFlachDescription' => 'Laid out like Glass, but flat and calm: no glass panes, no sheen, no shadows. What holds focus turns into a white fill with dark type, posters get a white frame. On a television it rearranges the screens like Glass. You pick the accent colour freely.',
+			'settings.appThemeVariantFlachDescription' => 'Like Glass, but flat, with a white focus',
 			'settings.flachAccent' => 'Accent colour',
-			'settings.flachAccentDescription' => 'Any colour you like — for progress, the page on show and the chosen filter.',
+			'settings.flachAccentDescription' => 'For progress, the current page and the filter',
 			'settings.flachPreset' => 'Colour profile',
 			'settings.flachPresetCustom' => 'Custom',
 			'settings.flachPresetGround' => 'From the colour profile',
@@ -9775,58 +9757,58 @@ extension on Translations {
 			'settings.flachPresetKino' => 'Cinema',
 			'settings.glasGround' => 'Background',
 			'settings.glasGroundAccent' => 'The design\'s own',
-			'settings.glasGroundAccentDescription' => 'The design\'s dark ground with a faint glow of the accent colour.',
+			'settings.glasGroundAccentDescription' => 'Dark with a faint glow of the accent colour',
 			'settings.glasGroundOffBlack' => 'Off-black',
-			'settings.glasGroundOffBlackDescription' => 'A very dark grey (#121212) – softer than pure black.',
+			'settings.glasGroundOffBlackDescription' => 'A very dark grey, softer than pure black',
 			'settings.glasGroundCustom' => 'Your own colour',
-			'settings.glasGroundCustomDescription' => 'Any colour you like. Colours that are too light are darkened so the text stays readable.',
+			'settings.glasGroundCustomDescription' => 'Any colour; too-light ones are darkened',
 			'settings.glasGroundOled' => 'OLED',
-			'settings.glasGroundOledDescription' => 'Completely black — for OLED screens.',
+			'settings.glasGroundOledDescription' => 'Pure black',
 			'settings.glasAccent' => 'Accent colour',
 			'settings.glasAccentEisblau' => 'Ice blue',
-			'settings.glasAccentEisblauDescription' => 'A blue-black ground with ice-white type.',
+			'settings.glasAccentEisblauDescription' => 'A blue-black ground with ice-white type',
 			'settings.glasAccentMint' => 'Mint',
-			'settings.glasAccentMintDescription' => 'A petrol-black ground with sage-white type.',
+			'settings.glasAccentMintDescription' => 'A petrol-black ground with sage-white type',
 			'settings.glasAccentFlieder' => 'Lilac',
-			'settings.glasAccentFliederDescription' => 'A plum-black ground with lavender-white type.',
+			'settings.glasAccentFliederDescription' => 'A plum-black ground with lavender-white type',
 			'settings.glasAccentGrau' => 'Grey',
-			'settings.glasAccentGrauDescription' => 'A neutral near-black with no tint, white type and grey as the accent — the nearest to Apple.',
+			'settings.glasAccentGrauDescription' => 'A neutral near-black, grey as the accent – like Apple',
 			'settings.glasAccentRot' => 'Red',
-			'settings.glasAccentRotDescription' => 'A black ground, white type and a strong red as the accent — after Netflix.',
+			'settings.glasAccentRotDescription' => 'A black ground and a strong red – like Netflix',
 			'settings.glasAccentPlebz' => 'Plebz',
-			'settings.glasAccentPlebzDescription' => 'A near-black, violet as the accent, and the play button in the logo\'s gradient.',
+			'settings.glasAccentPlebzDescription' => 'Near-black, violet, the play button in the logo\'s gradient',
 			'settings.glasSmoothFocus' => 'Smooth focus',
-			'settings.glasSmoothFocusDescription' => 'The focus capsule glides from entry to entry and the type fades gently — even when visual effects are reduced.',
+			'settings.glasSmoothFocusDescription' => 'Glides smoothly, even with reduced effects',
 			'settings.glasUltraBlur' => 'Background in the poster\'s colours',
-			'settings.glasUltraBlurDescription' => 'On Home and Explore the background takes the colours of the title in focus.',
+			'settings.glasUltraBlurDescription' => 'On Home and Explore',
 			'settings.glasDetailPanel' => 'Description beside the posters',
-			'settings.glasDetailPanelDescription' => 'Libraries and the watchlist show the selected title\'s description on the right. Off, more posters fit in a row.',
+			'settings.glasDetailPanelDescription' => 'Without it, more posters fit in a row',
 			'settings.redesignSeasonTabs' => 'Seasons as tabs',
-			'settings.redesignSeasonTabsDescription' => 'A show\'s seasons stand as tabs over one row of episodes. Off, every season has a row of its own.',
+			'settings.redesignSeasonTabsDescription' => 'Otherwise each season gets its own row',
 			'settings.glasSpinningFocus' => 'Turning focus edge',
-			'settings.glasSpinningFocusDescription' => 'The glint on the focus edge travels slowly round it and holds still while you move. Costs a little performance.',
+			'settings.glasSpinningFocusDescription' => 'Costs a little performance',
 			_ => null,
 		} ?? switch (path) {
 			'settings.homeTitleLogos' => 'Logos on Home and Explore',
-			'settings.homeTitleLogosDescription' => 'Shows the title logos of films and shows in the spotlight. Off, the title is set as text there; detail pages keep their logos.',
+			'settings.homeTitleLogosDescription' => 'Title logos instead of text in the spotlight',
 			'settings.seerrCardEpisodeFacts' => 'Episode facts on Seerr posters',
-			'settings.seerrCardEpisodeFactsDescription' => 'Shows the episode count and the next air date on Seerr show posters. Off by default: Seerr does not send either with a row, so each show costs one extra request to your instance.',
-			'settings.showCatalogDetailFacts' => 'Show detail facts',
-			'settings.showCatalogDetailFactsDescription' => 'Original title, alternative titles, country, studios and budget on Explore detail pages',
-			'settings.showCatalogDetailCrew' => 'Show crew',
-			'settings.showCatalogDetailCrewDescription' => 'Director, writer and producer on Explore detail pages',
+			'settings.seerrCardEpisodeFactsDescription' => 'Episode count and next air date; one extra request per show',
+			'settings.showCatalogDetailFacts' => 'Detail facts',
+			'settings.showCatalogDetailFactsDescription' => 'Original title, country, studios and budget on Explore pages',
+			'settings.showCatalogDetailCrew' => 'Crew',
+			'settings.showCatalogDetailCrewDescription' => 'Director, writer and producer on Explore pages',
 			'settings.averageRatings' => 'Combine ratings',
-			'settings.averageRatingsDescription' => 'Show one average score instead of a badge per source (IMDb, TMDB, Rotten Tomatoes)',
-			'settings.showWatchTogetherAction' => 'Show Watch Together',
-			'settings.showWatchTogetherActionDescription' => 'Keep the Watch Together button in the Home toolbar',
-			'settings.showCompanionRemoteAction' => 'Show remote control',
-			'settings.showCompanionRemoteActionDescription' => 'Keep the companion remote button in the Home toolbar',
-			'settings.showServerActivitiesAction' => 'Show server activity',
-			'settings.showServerActivitiesActionDescription' => 'Keep the server activity button in the Home toolbar',
-			'settings.hideHomeActionsUntilFocus' => 'Hide the home toolbar until focused',
-			'settings.hideHomeActionsUntilFocusDescription' => 'Refresh, profile and the rest stay invisible while you are in the content, and appear when the remote goes up to them. Touch is unaffected.',
+			'settings.averageRatingsDescription' => 'One average instead of a score per source',
+			'settings.showWatchTogetherAction' => 'Watch Together button',
+			'settings.showWatchTogetherActionDescription' => '',
+			'settings.showCompanionRemoteAction' => 'Remote button',
+			'settings.showCompanionRemoteActionDescription' => '',
+			'settings.showServerActivitiesAction' => 'Server activity button',
+			'settings.showServerActivitiesActionDescription' => '',
+			'settings.hideHomeActionsUntilFocus' => 'Toolbar only on focus',
+			'settings.hideHomeActionsUntilFocusDescription' => '',
 			'settings.showDownloadAction' => 'Download button',
-			'settings.showDownloadActionDescription' => 'Show the download button on movie and episode pages. Downloads stay available from the ⋮ menu.',
+			'settings.showDownloadActionDescription' => 'On movie and episode pages; otherwise in the ⋮ menu',
 			'settings.hardwareTest' => 'Hardware test',
 			'settings.hardwareTestDescription' => 'What this device supports: resolutions, HDR, audio and decoders',
 			'settings.hardwareTestUnavailable' => 'Not available on this platform',
@@ -9866,10 +9848,10 @@ extension on Translations {
 			'settings.yearFilterAnyYear' => 'any',
 			'settings.yearFilterRangeLabel' => ({required Object from, required Object to}) => '${from} to ${to}',
 			'settings.yearFilterBeyondLibraries' => 'Beyond the libraries too',
-			'settings.yearFilterBeyondLibrariesDescription' => 'Also applies to Home and Explore. In the libraries the range always applies. Search is left alone — what you ask for by name, you should find.',
+			'settings.yearFilterBeyondLibrariesDescription' => 'Home and Explore too, not search',
 			'settings.yearFilterInvalid' => ({required Object max}) => 'Enter a year between 1900 and ${max}',
 			'settings.exportBackup' => 'Full backup',
-			'settings.exportBackupDescription' => 'Settings, servers, IPTV, Seerr and TMDB key in a password-protected file',
+			'settings.exportBackupDescription' => 'With servers, IPTV and keys, password-protected',
 			'settings.exportBackupDialogTitle' => 'Save Plebz backup',
 			'settings.exportBackupSuccess' => 'Backup saved',
 			'settings.backupPasswordTitle' => 'Password for the backup',
@@ -9886,21 +9868,21 @@ extension on Translations {
 			'settings.backupNoFilesTitle' => 'No backup found',
 			'settings.backupNoFilesMessage' => ({required Object paths}) => 'Put the backup file into one of these folders and try again:\n\n${paths}',
 			'settings.importBackupSuccess' => ({required Object n}) => 'Backup restored: ${n} servers',
-			'settings.showUpNextPanel' => 'Show "up next" panel',
-			'settings.showUpNextPanelDescription' => 'Towards the end of an episode, show what follows with the option to start it. When the episode ends, the countdown to the next one runs here too. Uses the credits marker where there is one. Off: the original countdown prompt.',
-			'settings.mirrorWatchedAcrossServers' => 'Sync watched state across servers',
-			'settings.mirrorWatchedAcrossServersDescription' => 'What you mark as watched is marked on every other copy too — in another library and on your other servers. Covers films, whole series and single seasons, not individual episodes. Matched by IMDb/TMDB id, never by title alone.',
-			'settings.matchContentFrameRateLiveTv' => 'Match frame rate for live TV',
-			'settings.matchContentFrameRateLiveTvDescription' => 'Off means films and shows still switch the display to their frame rate, while channels do not. Worth turning off for IPTV: the switch costs a black screen at every zap, and providers declare their rates loosely.',
-			'settings.matchDisplayResolution' => 'Automatic resolution',
-			'settings.matchDisplayResolutionDescription' => 'Switches the HDMI output to the video\'s own resolution on start, so the television scales instead of the box. Only does anything on devices that publish more than one display mode.',
+			'settings.showUpNextPanel' => '"Up next" panel',
+			'settings.showUpNextPanelDescription' => 'Near the end of an episode, with a countdown',
+			'settings.mirrorWatchedAcrossServers' => 'Sync watched state',
+			'settings.mirrorWatchedAcrossServersDescription' => 'On every copy, except single episodes',
+			'settings.matchContentFrameRateLiveTv' => 'Frame rate for live TV too',
+			'settings.matchContentFrameRateLiveTvDescription' => 'Best off for IPTV: every zap shows a black screen',
+			'settings.matchDisplayResolution' => 'Match the video\'s resolution',
+			'settings.matchDisplayResolutionDescription' => 'The TV scales instead of the box',
 			'settings.tunneledPlaybackLiveTv' => 'Tunnelled playback for live TV',
-			'settings.tunneledPlaybackLiveTvDescription' => 'Keep tunnelling on for live channels too. Off is usually the better trade: live streams gain little from it, and a provider stream with irregular timestamps can freeze a tunnelled picture.',
+			'settings.tunneledPlaybackLiveTvDescription' => 'Usually better off; the picture can freeze otherwise',
 			'settings.disableDolbyVision' => 'Turn Dolby Vision off',
-			'settings.disableDolbyVisionDescription' => 'Plays the HDR10 base layer instead of Dolby Vision, for a television that cannot show it. Only needed when the set claims Dolby Vision support: without that claim the base layer is already used. Files carrying Dolby Vision alone (Profile 5) have no base layer and are unaffected.',
+			'settings.disableDolbyVisionDescription' => 'Plays HDR10, for TVs without Dolby Vision',
 			'settings.layoutMode' => 'Layout',
 			'settings.layoutModeAuto' => 'Automatic',
-			'settings.layoutModeAutoDescription' => 'Detect the layout from the device',
+			'settings.layoutModeAutoDescription' => '',
 			'settings.layoutModeTv' => 'TV',
 			'settings.layoutModeTvDescription' => 'Leanback interface for D-pad and remote control',
 			'settings.layoutModeDesktop' => 'Desktop',
@@ -9910,15 +9892,11 @@ extension on Translations {
 			'settings.layoutModePhone' => 'Phone',
 			'settings.layoutModePhoneDescription' => 'Compact touch interface with bottom navigation',
 			'settings.liveTvGuideTimeNavigation' => 'Guide time picker',
-			'settings.liveTvGuideTimeNavigationDescription' => 'Shows the day and time strip above the guide grid.',
-			'settings.liveTvSeamlessFullscreen' => 'Preview to full screen without a break (Beta)',
-			'settings.liveTvSeamlessFullscreenDescription' => 'In the guide, the playing preview grows into the full-screen player on OK and shrinks back into its box on Back, without loading again. IPTV channels only. Turning this on turns off "Match frame rate for live TV" and "Tunnelled playback for live TV", and live TV no longer switches the "Automatic resolution": each of these switches would interrupt the picture. Films and shows keep their settings. A shader in the mpv player can make the move stutter briefly.',
-			'settings.liveTvSeamlessWindowSurface' => 'Full screen on the video surface',
-			'settings.liveTvSeamlessWindowSurfaceDescription' => 'Off: the picture stays on the app\'s own canvas in full screen too. Nothing has to move, so nothing freezes and the sound stays in step; the box draws every frame itself, and there is no HDR and no subtitle display. On: once grown, the picture moves onto the TV\'s video surface, with full quality and HDR. Some boxes do not handle that move reliably: the picture can stall briefly, freeze or lose sync with the sound.',
-			'settings.liveTvSeamlessPlanePreview' => 'Preview on the video surface (test)',
-			'settings.liveTvSeamlessPlanePreviewDescription' => 'Instead of the app\'s canvas, the preview plays straight on the box\'s video surface, and the app leaves a hole for it where the box is. That way the box deinterlaces interlaced channels such as the RAW copies in the preview too, and growing into full screen needs no move. While the picture grows or shrinks, a thin edge can show for a moment.',
+			'settings.liveTvGuideTimeNavigationDescription' => '',
+			'settings.liveTvSeamlessFullscreen' => 'Seamless preview to full screen',
+			'settings.liveTvSeamlessFullscreenDescription' => 'IPTV only; turns off frame rate and tunnelling for live TV',
 			'settings.showActorFilmography' => 'Full filmography for actors',
-			'settings.showActorFilmographyDescription' => 'On an actor\'s page, also list the films and series you do not have, greyed out. Uses your TMDB key.',
+			'settings.showActorFilmographyDescription' => 'Also titles you don\'t have (needs TMDB)',
 			'settings.backupPickTitle' => 'Choose a backup',
 			'search.hint' => 'Search movies, shows, music...',
 			'search.notInYourLibraries' => 'Not in your libraries',
@@ -10319,12 +10297,12 @@ extension on Translations {
 			'subtitlingStyling.background' => 'Background',
 			'subtitlingStyling.fontSize' => 'Font Size',
 			'subtitlingStyling.textColor' => 'Text Color',
-			_ => null,
-		} ?? switch (path) {
 			'subtitlingStyling.borderSize' => 'Border Size',
 			'subtitlingStyling.borderColor' => 'Border Color',
-			'subtitlingStyling.backgroundOpacity' => 'Background Opacity',
+			'subtitlingStyling.backgroundOpacity' => 'Background opacity',
 			'subtitlingStyling.backgroundColor' => 'Background Color',
+			_ => null,
+		} ?? switch (path) {
 			'subtitlingStyling.position' => 'Position',
 			'subtitlingStyling.assOverride' => 'ASS Override',
 			'subtitlingStyling.overrideScale' => 'Scale',
@@ -10332,10 +10310,10 @@ extension on Translations {
 			'subtitlingStyling.overrideStrip' => 'Remove styling',
 			'subtitlingStyling.positionTop' => 'Top',
 			'subtitlingStyling.positionBottom' => 'Bottom',
-			'subtitlingStyling.useMargins' => 'Use margins',
-			'subtitlingStyling.useMarginsDescription' => 'Allow text subtitles in the space outside the video. Styled subtitles may keep their original placement.',
-			'subtitlingStyling.anchorToScreen' => 'Anchor to Screen',
-			'subtitlingStyling.anchorToScreenDescription' => 'Show text subtitles in the black bars below widescreen video',
+			'subtitlingStyling.useMargins' => 'Outside the picture too',
+			'subtitlingStyling.useMarginsDescription' => '',
+			'subtitlingStyling.anchorToScreen' => 'In the black bar below',
+			'subtitlingStyling.anchorToScreenDescription' => '',
 			'subtitlingStyling.bold' => 'Bold',
 			'subtitlingStyling.italic' => 'Italic',
 			'subtitlingStyling.renderResolution' => 'Render Resolution',
@@ -10358,7 +10336,7 @@ extension on Translations {
 			'mpvConfig.lineHint' => 'option=value',
 			'mpvConfig.addLine' => 'Add line',
 			'mpvConfig.removeLine' => 'Remove line',
-			'mpvConfig.embeddedVoHint' => 'vo, gpu-context and gpu-api are ignored on Linux: embedded video always renders through vo=libmpv on the video plane, and gpu-next (which compute shaders like ArtCNN need) cannot run embedded.',
+			'mpvConfig.embeddedVoHint' => 'vo, gpu-context and gpu-api are ignored on Linux',
 			'dialog.confirmAction' => 'Confirm Action',
 			'profiles.addPlezyProfile' => 'Add Plebz profile',
 			'profiles.switchingProfile' => 'Switching profile…',
@@ -10442,7 +10420,7 @@ extension on Translations {
 			'accountPreferences.pickAccount' => 'Every account stores its own preferences. Pick the one to edit.',
 			'accountPreferences.storedOnAccount' => 'These options are saved on the account itself, so every app signed in to it uses them — including Plebz on your other devices.',
 			'accountPreferences.noAccounts' => 'No accounts to configure',
-			'accountPreferences.noAccountsHint' => 'Sign in to Plex, or connect a Jellyfin or Emby server, and the preferences stored on that account show up here.',
+			'accountPreferences.noAccountsHint' => 'Sign in to Plex or connect Jellyfin or Emby',
 			'accountPreferences.unavailable' => 'Can\'t reach this account',
 			'accountPreferences.loadFailed' => 'Couldn\'t load these preferences',
 			'accountPreferences.noPreference' => 'No preference',
@@ -10451,20 +10429,20 @@ extension on Translations {
 			'accountPreferences.groups.libraryDisplay' => 'Library',
 			'accountPreferences.groups.personalMedia' => 'Personal media',
 			'accountPreferences.preferredAudioLanguage' => 'Preferred audio language',
-			'accountPreferences.autoSelectAudio' => 'Choose audio by language',
-			'accountPreferences.autoSelectAudioDescription' => 'Off keeps whatever audio track the file marks as default.',
+			'accountPreferences.autoSelectAudio' => 'Audio track by language',
+			'accountPreferences.autoSelectAudioDescription' => '',
 			'accountPreferences.preferredSubtitleLanguage' => 'Preferred subtitle language',
 			'accountPreferences.subtitleMode' => 'Turn subtitles on',
 			'accountPreferences.subtitleModes.none' => 'Manually selected',
-			'accountPreferences.subtitleModes.noneDescription' => 'Never turn subtitles on by itself.',
+			'accountPreferences.subtitleModes.noneDescription' => 'Never turn subtitles on by itself',
 			'accountPreferences.subtitleModes.defaultMode' => 'Follow the track flags',
-			'accountPreferences.subtitleModes.defaultModeDescription' => 'Use the default and forced flags stored on each subtitle track.',
+			'accountPreferences.subtitleModes.defaultModeDescription' => 'Use each track\'s default and forced flags',
 			'accountPreferences.subtitleModes.always' => 'Always enabled',
-			'accountPreferences.subtitleModes.alwaysDescription' => 'Turn on a subtitle track in the preferred language whenever one exists.',
+			'accountPreferences.subtitleModes.alwaysDescription' => 'In the preferred language, when there is one',
 			'accountPreferences.subtitleModes.onlyForced' => 'Only forced subtitles',
-			'accountPreferences.subtitleModes.onlyForcedDescription' => 'Load only the tracks marked as forced.',
+			'accountPreferences.subtitleModes.onlyForcedDescription' => '',
 			'accountPreferences.subtitleModes.smart' => 'Shown with foreign audio',
-			'accountPreferences.subtitleModes.smartDescription' => 'Turn subtitles on only when the audio is in another language.',
+			'accountPreferences.subtitleModes.smartDescription' => '',
 			'accountPreferences.subtitleAccessibility' => 'SDH subtitles',
 			'accountPreferences.subtitleAccessibilityOptions.preferNonSdh' => 'Prefer non-SDH subtitles',
 			'accountPreferences.subtitleAccessibilityOptions.preferSdh' => 'Prefer SDH subtitles',
@@ -10475,14 +10453,14 @@ extension on Translations {
 			'accountPreferences.forcedSubtitleOptions.preferForced' => 'Prefer forced subtitles',
 			'accountPreferences.forcedSubtitleOptions.onlyForced' => 'Only forced subtitles',
 			'accountPreferences.forcedSubtitleOptions.onlyNonForced' => 'Only non-forced subtitles',
-			'accountPreferences.displayMissingEpisodes' => 'Show missing episodes',
-			'accountPreferences.displayMissingEpisodesDescription' => 'List episodes the server knows about but has no file for.',
-			'accountPreferences.hidePlayedInLatest' => 'Hide watched items in Latest',
-			'accountPreferences.hidePlayedInLatestDescription' => 'Leave items you have already watched out of the server\'s Latest rows.',
-			'accountPreferences.displayCollectionsView' => 'Show the Collections view',
-			'accountPreferences.displayCollectionsViewDescription' => 'Offer the server\'s Collections view alongside your libraries.',
-			'accountPreferences.rewatchingInNextUp' => 'Keep rewatched shows in Next Up',
-			'accountPreferences.rewatchingInNextUpDescription' => 'Once you finish a show, start it again and Next Up follows the rewatch instead of dropping the show.',
+			'accountPreferences.displayMissingEpisodes' => 'Missing episodes',
+			'accountPreferences.displayMissingEpisodesDescription' => 'Episodes that have no file',
+			'accountPreferences.hidePlayedInLatest' => 'Hide watched in Latest',
+			'accountPreferences.hidePlayedInLatestDescription' => '',
+			'accountPreferences.displayCollectionsView' => 'Collections view',
+			'accountPreferences.displayCollectionsViewDescription' => '',
+			'accountPreferences.rewatchingInNextUp' => 'Rewatching in Next Up',
+			'accountPreferences.rewatchingInNextUpDescription' => '',
 			'accountPreferences.watchedIndicator' => 'Watched indicators',
 			'accountPreferences.watchedIndicatorOptions.none' => 'Never',
 			'accountPreferences.watchedIndicatorOptions.moviesAndShows' => 'Movies and TV shows',
@@ -10663,7 +10641,7 @@ extension on Translations {
 			'about.versionLabel' => ({required Object version}) => 'Version ${version}',
 			'about.basedOnUpstream' => ({required Object version}) => 'Based on Plezy ${version}',
 			'about.appDescription' => 'A beautiful Plex, Jellyfin, and Emby client for Flutter',
-			'about.viewLicensesDescription' => 'View licenses of third-party libraries',
+			'about.viewLicensesDescription' => '',
 			'about.appLicense' => 'License: GNU GPL v3',
 			'about.appLicenseNotice' => ({required Object app}) => '${app} is a modified version of Plezy. Copyright © the Plezy contributors (edde746 and others); changes © the ${app} contributors. ${app} is free software: you may pass it on and change it under the terms of the GNU General Public License, version 3. It comes with ABSOLUTELY NO WARRANTY. Select to read the license.',
 			'serverSelection.noServersFoundForAccount' => ({required Object username, required Object email}) => 'No servers found for ${username} (${email})',
@@ -10833,12 +10811,12 @@ extension on Translations {
 			'explore.relation.sequel' => 'Sequel',
 			'explore.relation.sideStory' => 'Side story',
 			'explore.relation.spinOff' => 'Spin-off',
-			_ => null,
-		} ?? switch (path) {
 			'explore.relation.alternativeVersion' => 'Alternative version',
 			'explore.relation.summary' => 'Summary',
 			'explore.relation.parentStory' => 'Parent story',
 			'explore.relation.adaptation' => 'Adaptation',
+			_ => null,
+		} ?? switch (path) {
 			'explore.relation.other' => 'Related',
 			'explore.broadcast' => ({required Object day, required Object time}) => 'Airs ${day} at ${time}',
 			'explore.broadcastWithZone' => ({required Object day, required Object time, required Object timezone}) => 'Airs ${day} at ${time} ${timezone}',
@@ -11347,12 +11325,12 @@ extension on Translations {
 			'companionRemote.pairing.unpaired' => ({required Object name}) => '${name} is no longer paired',
 			'companionRemote.remote.disconnectConfirm' => 'Do you want to disconnect from the remote session?',
 			'companionRemote.remote.reconnecting' => 'Reconnecting...',
-			_ => null,
-		} ?? switch (path) {
 			'companionRemote.remote.attemptOf' => ({required Object current}) => 'Attempt ${current} of 5',
 			'companionRemote.remote.retryNow' => 'Retry Now',
 			'companionRemote.remote.tabRemote' => 'Remote',
 			'companionRemote.remote.tabPlay' => 'Play',
+			_ => null,
+		} ?? switch (path) {
 			'companionRemote.remote.tabMore' => 'More',
 			'companionRemote.remote.menu' => 'Menu',
 			'companionRemote.remote.tabNavigation' => 'Tab Navigation',
@@ -11460,7 +11438,7 @@ extension on Translations {
 			'externalPlayer.selectPlayer' => 'Select Player',
 			'externalPlayer.customPlayers' => 'Custom Players',
 			'externalPlayer.systemDefault' => 'System Default',
-			'externalPlayer.addCustomPlayer' => 'Add Custom Player',
+			'externalPlayer.addCustomPlayer' => 'Add your own player',
 			'externalPlayer.playerName' => 'Player Name',
 			'externalPlayer.playerNameHint' => 'My Player',
 			'externalPlayer.playerCommand' => 'Command',
@@ -11565,10 +11543,10 @@ extension on Translations {
 			'trakt.connectedAs' => ({required Object username}) => 'Connected as @${username}',
 			'trakt.disconnectConfirm' => 'Disconnect Trakt account?',
 			'trakt.disconnectConfirmBody' => 'Plebz will stop sending events to Trakt. You can reconnect any time.',
-			'trakt.scrobble' => 'Real-time scrobbling',
-			'trakt.scrobbleDescription' => 'Send play, pause, and stop events to Trakt during playback.',
-			'trakt.watchedSync' => 'Sync watched status',
-			'trakt.watchedSyncDescription' => 'When you mark items as watched in Plebz, they are also marked as watched on Trakt.',
+			'trakt.scrobble' => 'Report playback to Trakt live',
+			'trakt.scrobbleDescription' => '',
+			'trakt.watchedSync' => 'Watched marks to Trakt',
+			'trakt.watchedSyncDescription' => '',
 			'seerr.title' => 'Seerr',
 			'seerr.connectTitle' => 'Connect Seerr',
 			'seerr.serverUrl' => 'Server URL',
@@ -11638,17 +11616,17 @@ extension on Translations {
 			'services.notConnected' => 'Not connected',
 			'services.connectedAs' => ({required Object username}) => 'Connected as @${username}',
 			'services.scrobble' => 'Track progress automatically',
-			'services.scrobbleDescription' => 'Update your list when you finish an episode or movie.',
+			'services.scrobbleDescription' => 'Update your list after every film and episode',
 			'services.ownProgress' => 'Own progress via Simkl',
-			'services.ownProgressDescription' => 'This profile takes watched marks, Continue Watching and resume points from Simkl instead of the server. Every profile keeps its own state, even when several share one server account.',
-			'services.ownProgressNote' => 'Good to know: playback is still reported to the server, so transcodes keep running and the admin sees who is watching. Past about 90 %, Plex then marks the item watched on the account itself. That only matters when another profile uses the same account without Simkl.',
+			'services.ownProgressDescription' => 'Watched marks and progress come from Simkl, not the server',
+			'services.ownProgressNote' => 'Plex still marks watched at about 90 % – only matters for profiles without Simkl',
 			'services.syncStatusTitle' => 'Sync with Simkl',
 			'services.syncStatusOk' => ({required Object time, required Object shows, required Object movies}) => 'Last synced at ${time} · ${shows} series, ${movies} films',
 			'services.syncStatusNever' => 'Not synced yet',
 			'services.syncStatusRunning' => 'Syncing …',
 			'services.syncStatusFailed' => 'Last sync failed – Plebz will try again shortly by itself',
 			'services.syncNow' => 'Sync now',
-			'services.syncNowDescription' => 'Fetches the whole state from Simkl again right away. Useful when watched marks, resume points or Continue Watching look wrong, or after watching on another device.',
+			'services.syncNowDescription' => 'Helps when watched marks or progress look wrong',
 			'services.syncNowDone' => 'Synced with Simkl',
 			'services.syncNowFailed' => 'Simkl did not answer. Plebz will try again shortly.',
 			'services.disconnectConfirm' => ({required Object service}) => 'Disconnect ${service}?',
@@ -11685,8 +11663,8 @@ extension on Translations {
 			'services.libraryFilter.noLibraries' => 'No libraries available',
 			'services.tmdb.title' => 'TMDB',
 			'services.tmdb.hubSubtitle' => 'Fills in logos and descriptions',
-			'services.tmdb.enabled' => 'Fill in missing logos and descriptions',
-			'services.tmdb.enabledDescription' => 'For titles your server left without a logo or a description, look one up on TMDB. Both come from the same request, and every answer is cached — a title is fetched once rather than each time it is shown.',
+			'services.tmdb.enabled' => 'Fill in gaps from TMDB',
+			'services.tmdb.enabledDescription' => 'Logos and descriptions your server lacks',
 			'services.tmdb.apiKey' => 'API key',
 			'services.tmdb.apiKeySet' => 'Stored',
 			'services.tmdb.apiKeyMissing' => 'Not stored',
@@ -11695,8 +11673,8 @@ extension on Translations {
 			'services.tmdb.verify' => 'Check key',
 			'services.tmdb.verifyValid' => 'TMDB accepted the key.',
 			'services.tmdb.verifyInvalid' => 'TMDB rejected the key.',
-			'services.tmdb.clearCache' => 'Discard what was looked up',
-			'services.tmdb.clearCacheDescription' => 'Forget every logo and description found so far and look them up again as titles come up.',
+			'services.tmdb.clearCache' => 'Discard TMDB data',
+			'services.tmdb.clearCacheDescription' => 'Look up logos and descriptions again',
 			'services.tmdb.cacheCleared' => 'Looked-up data discarded',
 			'addServer.addMediaBrowserTitle' => ({required Object product}) => 'Add ${product} server',
 			'addServer.serverUrls' => 'Server URLs',
@@ -11719,13 +11697,13 @@ extension on Translations {
 			'addServer.addConnectionTitle' => 'Add connection',
 			'addServer.addConnectionTitleScoped' => ({required Object name}) => 'Add to ${name}',
 			'addServer.signInWithPlexCard' => 'Sign in with Plex',
-			'addServer.signInWithPlexCardSubtitle' => 'Authorize this device. Shared servers are added.',
-			'addServer.signInWithPlexCardSubtitleScoped' => 'Authorize a Plex account. Home users become profiles.',
+			'addServer.signInWithPlexCardSubtitle' => 'Shared servers are added too',
+			'addServer.signInWithPlexCardSubtitleScoped' => 'Home users become profiles',
 			'addServer.connectToMediaBrowserCard' => ({required Object product}) => 'Connect to ${product}',
-			'addServer.connectToMediaBrowserCardSubtitle' => 'Enter your server URL, username, and password.',
-			'addServer.connectToMediaBrowserCardSubtitleScoped' => ({required Object product, required Object name}) => 'Sign in to your ${product} server. Binds to ${name}.',
-			'addServer.borrowFromAnotherProfile' => 'Borrow from another profile',
-			'addServer.borrowFromAnotherProfileSubtitle' => 'Reuse another profile\'s connection. PIN-protected profiles require a PIN.',
+			'addServer.connectToMediaBrowserCardSubtitle' => 'Server URL, username and password',
+			'addServer.connectToMediaBrowserCardSubtitleScoped' => ({required Object product, required Object name}) => 'Sign in to ${product}, linked to ${name}',
+			'addServer.borrowFromAnotherProfile' => 'Reuse from another profile',
+			'addServer.borrowFromAnotherProfileSubtitle' => 'PIN-protected profiles ask for their PIN',
 			'addServer.invalidCredentials' => 'Invalid username or password',
 			'addServer.authResponseNotJson' => 'The authentication response was not valid JSON',
 			'addServer.authResponseIncomplete' => 'The sign-in response from the server was incomplete',
@@ -11749,7 +11727,7 @@ extension on Translations {
 			'addServer.plainHttpMessage' => ({required Object host}) => '${host} is only reachable over unencrypted HTTP and is not in your home network. Your password and access token would cross the internet readable. HTTPS is better, for example through a reverse proxy.',
 			'addServer.plainHttpContinue' => 'Connect anyway',
 			'iptv.title' => 'IPTV',
-			'iptv.hubSubtitle' => 'Playlists and Xtream panels appear in Live TV alongside your servers. They cannot record — that needs a server doing the recording.',
+			'iptv.hubSubtitle' => 'Playlists and Xtream panels for Live TV – no recording',
 			'iptv.addPlaylist' => 'Add M3U playlist',
 			'iptv.addPlaylistDescription' => 'A playlist URL, optionally with an XMLTV guide',
 			'iptv.addXtream' => 'Add Xtream account',
@@ -11766,26 +11744,26 @@ extension on Translations {
 			'iptv.serverLabel' => 'Server address',
 			'iptv.usernameLabel' => 'Username',
 			'iptv.mergeDuplicatesLabel' => 'Merge repeated channels',
-			'iptv.mergeDuplicatesDescription' => 'A station a playlist carries more than once appears once. If the first copy does not start, the next is tried.',
-			'iptv.hideGroupCountryPrefixLabel' => 'Hide country codes in group names',
-			'iptv.hideGroupCountryPrefixDescription' => 'Shows "DE • Doku" as "Doku". Display only — which channels belong to which group is unchanged.',
-			'iptv.publicLogoFallbackLabel' => 'Missing logos from a public collection',
-			'iptv.publicLogoFallbackDescription' => 'Where neither the playlist’s logo nor the guide’s loads, Plebz looks the channel up in the “tv-logos” collection on GitHub — by exact name only. GitHub sees which logos are asked for.',
+			'iptv.mergeDuplicatesDescription' => 'If one copy fails, the next is tried',
+			'iptv.hideGroupCountryPrefixLabel' => 'Hide country codes',
+			'iptv.hideGroupCountryPrefixDescription' => 'Shows "DE • Doku" as "Doku"',
+			'iptv.publicLogoFallbackLabel' => 'Missing logos from GitHub',
+			'iptv.publicLogoFallbackDescription' => 'GitHub sees which logos are requested',
 			'iptv.brightenDarkLogosLabel' => 'Brighten dark channel logos',
-			'iptv.brightenDarkLogosDescription' => 'Black or very dark logos that barely show on the dark channel tiles are drawn light. Logos with light parts of their own stay as they are.',
+			'iptv.brightenDarkLogosDescription' => '',
 			'iptv.refreshNowLabel' => 'Refresh now',
-			'iptv.refreshNowDescription' => 'Throws away the stored playlist and guide; the next visit to Live TV fetches them again.',
+			'iptv.refreshNowDescription' => '',
 			'iptv.refreshNowDone' => 'Playlist and guide will be fetched again',
-			'iptv.refreshIntervalLabel' => 'Refresh interval',
+			'iptv.refreshIntervalLabel' => 'Reload automatically',
 			'iptv.refreshIntervalDescription' => 'How long the channel list and guide are kept before they are fetched again. A manual refresh reloads at once.',
 			'iptv.refreshIntervalDaily' => 'Daily',
 			'iptv.refreshIntervalDays' => ({required Object days}) => 'Every ${days} days',
 			'iptv.streamFormatLabel' => 'Stream format',
 			'iptv.streamFormatMpegTs' => 'MPEG-TS',
 			'iptv.streamFormatHls' => 'HLS',
-			'iptv.streamFormatDescription' => 'MPEG-TS is what most panels serve reliably. HLS is segmented and travels better through some proxies.',
-			'iptv.catchupLabel' => 'Catch-up',
-			'iptv.catchupDescription' => 'How this provider addresses its archive. Leave on automatic unless the archive stays empty — then pick the form your provider uses.',
+			'iptv.streamFormatDescription' => 'MPEG-TS works almost everywhere; HLS gets through some proxies better',
+			'iptv.catchupLabel' => 'Archive',
+			'iptv.catchupDescription' => 'Leave on automatic unless the archive stays empty',
 			'iptv.catchupAutomatic' => 'Automatic (as declared)',
 			'iptv.catchupOff' => 'Off',
 			'iptv.catchupXtream' => 'Xtream timeshift',
@@ -11806,7 +11784,7 @@ extension on Translations {
 			'iptv.localPlaylist' => ({required Object name}) => 'Local file: ${name}. Choose it again after changing the file.',
 			'iptv.playlistFileFailed' => 'The file could not be taken over.',
 			'iptv.groupsLabel' => 'Groups',
-			'iptv.groupsDescription' => 'Only the chosen groups are loaded at all – keeping a big list slim and fast. New groups from the provider are added only once you choose them here.',
+			'iptv.groupsDescription' => 'Only chosen groups load; new ones are not added by themselves',
 			'iptv.groupsAllLoaded' => 'All groups are loaded',
 			'iptv.groupsSummary' => ({required Object count}) => '${count} chosen',
 			'iptv.groupsLoading' => 'Loading groups …',
@@ -11861,12 +11839,12 @@ extension on Translations {
 			'sport.live' => 'LIVE',
 			'sport.versus' => 'vs.',
 			'sport.goals' => 'Goals',
-			_ => null,
-		} ?? switch (path) {
 			'sport.noGoals' => 'No goals yet',
 			'sport.broadcast' => 'Broadcast',
 			'sport.searchingGuide' => 'Searching the guide …',
 			'sport.notInGuide' => 'This match is not in the guide.',
+			_ => null,
+		} ?? switch (path) {
 			'sport.leagueChannels' => ({required Object league}) => 'Channels for the ${league}',
 			'sport.conference' => 'Conference',
 			'sport.ownGoal' => 'own goal',
@@ -11879,16 +11857,14 @@ extension on Translations {
 			'sport.today' => 'Today',
 			'sport.tomorrow' => 'Tomorrow',
 			'sport.yesterday' => 'Yesterday',
-			'plebz.appAndUpdates' => 'App & updates',
-			'plebz.sourcesAndAccounts' => 'Sources & accounts',
+			'plebz.settingsGroupLook' => 'Look and playback',
+			'plebz.settingsGroupContent' => 'Content',
+			'plebz.settingsGroupApp' => 'App',
+			'plebz.serversAndProfiles' => 'Servers and profiles',
+			'plebz.iptvAndLiveTv' => 'IPTV and Live TV',
+			'plebz.librariesSection' => 'Libraries',
+			'plebz.aboutAndUpdates' => 'About and updates',
 			'plebz.addConnectionDescription' => 'Plex, Jellyfin or Emby',
-			'plebz.startAndNavigation' => 'Start & navigation',
-			'plebz.moreAppearance' => 'More appearance settings',
-			'plebz.moreAppearanceDescription' => 'Cards, home screen, navigation and more',
-			'plebz.morePlayback' => 'More playback settings',
-			'plebz.morePlaybackDescription' => 'Player, picture, sound, quality and more',
-			'plebz.allSettings' => 'All settings',
-			'plebz.allSettingsDescription' => 'Every setting, including the advanced ones',
 			'plebz.welcomeTitle' => 'Welcome to Plebz',
 			'plebz.welcomeBody' => 'Set up in a few steps: how it looks, where your films, series and channels come from, and which services join in. Everything can be changed later in the settings.',
 			'plebz.getStarted' => 'Let\'s go',
@@ -11902,7 +11878,7 @@ extension on Translations {
 			'plebz.sourcesGroup' => 'Sources',
 			'plebz.extrasGroup' => 'Extras',
 			'plebz.profilesGroup' => 'More than one viewer?',
-			'plebz.profilesHint' => 'Plebz can hold several profiles, even when everyone shares one Plex account. So that each person keeps their own progress, watched marks and watchlist, connect every profile to its own Simkl account and turn on “Own progress via Simkl” there. Add more profiles under Settings → Profiles → “Add Plebz profile”.',
+			'plebz.profilesHint' => 'With its own Simkl account, each profile keeps its own progress',
 			'plebz.profilesHintConnectFirst' => 'Connect Simkl for this profile under Services below first.',
 			'plebz.addSourceFirst' => 'Add a source first: a server, or an IPTV playlist.',
 			'plebz.finish' => 'Done',
@@ -11918,9 +11894,9 @@ extension on Translations {
 			'plebz.updatedTitle' => 'Plebz was updated',
 			'plebz.updatedBody' => ({required Object version, required Object build}) => 'You are now on Plebz ${version} (Build ${build}).',
 			'plebz.checkForUpdates' => 'Check for updates',
-			'plebz.checkForUpdatesDescription' => 'Look for a newer Plebz on GitHub',
+			'plebz.checkForUpdatesDescription' => '',
 			'plebz.checkOnStartup' => 'Check for updates at start',
-			'plebz.checkOnStartupDescription' => 'Asks GitHub for a newer version at every start. GitHub sees your IP address when it does.',
+			'plebz.checkOnStartupDescription' => 'GitHub sees your IP address',
 			'plebz.downloading' => 'Downloading the update…',
 			'plebz.installPermissionTitle' => 'Allow installing',
 			'plebz.installPermissionBody' => 'To install updates, Plebz needs to be allowed once under "Install unknown apps". Then check for the update again.',
@@ -11928,7 +11904,7 @@ extension on Translations {
 			'plebz.updateFailed' => 'The update could not be downloaded or installed.',
 			'plebz.noMatchingDownload' => 'This release has no file for this device.',
 			'plebz.whatsNew' => 'What\'s new',
-			'plebz.whatsNewDescription' => 'What changed with each version',
+			'plebz.whatsNewDescription' => '',
 			'plebz.whatsNewEmpty' => 'There are no notes for this version yet.',
 			'localFiles.wrongTypeTitle' => 'Wrong file type',
 			'localFiles.wrongTypeMessage' => ({required Object types}) => 'Choose a file of type ${types}.',
@@ -11958,9 +11934,9 @@ extension on Translations {
 			'remoteKeys.colourGroup' => 'Colour keys',
 			'remoteKeys.colourGroupDescription' => 'Yours to assign: pick a key and choose what it does in the player.',
 			'remoteKeys.receiverGroup' => 'Universal remote with a receiver',
-			'remoteKeys.receiverIntro' => 'Such as a Logitech Harmony with Flirc: these receivers send media keys or keyboard keys. The player understands both.',
+			'remoteKeys.receiverIntro' => 'Such as a Logitech Harmony with Flirc – media and keyboard keys both work',
 			'remoteKeys.keyOk' => 'OK',
-			'remoteKeys.doOk' => 'Show the controls and pause or resume; on live TV only the controls. During an intro, OK skips it',
+			'remoteKeys.doOk' => 'Controls and pause (live TV: controls only); skips a running intro',
 			'remoteKeys.keyPlayPause' => 'Play/Pause, Play, Pause',
 			'remoteKeys.doPlayPause' => 'Play and pause',
 			'remoteKeys.keyStop' => 'Stop',

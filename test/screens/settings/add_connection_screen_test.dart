@@ -82,8 +82,8 @@ void main() {
     await tester.pumpWidget(app(AddConnectionScreen(targetProfile: target)));
     await tester.pumpAndSettle();
 
-    expect(find.text('Sign in to your Emby server. Binds to Living Room.'), findsOneWidget);
-    expect(find.text('Sign in to your Jellyfin server. Binds to Living Room.'), findsOneWidget);
+    expect(find.text('Sign in to Emby, linked to Living Room'), findsOneWidget);
+    expect(find.text('Sign in to Jellyfin, linked to Living Room'), findsOneWidget);
 
     final screen = await tapCard(tester, 'Connect to Emby');
     expect(screen.dialect, MediaBrowserDialect.emby);

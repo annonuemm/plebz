@@ -15,10 +15,11 @@ import 'settings_service.dart';
 /// A live channel that is playing, passed between the guide's preview and the
 /// full-screen player so the picture never stops (Plebz).
 ///
-/// The preview hands its player over on the second press instead of stopping
-/// it; the player screen takes that very player on, grows the picture out of
-/// the box and moves it onto its window surface ([VideoOutputHandover]). Back
-/// does the reverse through [LivePictureReturn]. Whoever holds one owns its
+/// The preview plays on the television's video surface, behind a hole in the
+/// guide, and hands its player over on the second press instead of stopping
+/// it; the player screen takes that very player on and grows the surface out
+/// of the box with the page. Back does the reverse through
+/// [LivePictureReturn]. Whoever holds one owns its
 /// player and session: it plays them on or [release]s them.
 class LivePictureHandover {
   LivePictureHandover({required this.player, required this.session, required this.channel});
@@ -71,23 +72,19 @@ class LivePictureHandover {
     return !matchesFrameRate && !tunnels;
   }
 
-  /// Whether a preview that may be handed over plays on the video plane, behind
-  /// a hole in the guide, rather than in a texture (the test alternative).
-  static bool planePreviewIn(SettingsService settings, {bool? isAndroid}) =>
-      enabledIn(settings, isAndroid: isAndroid) && settings.read(SettingsService.liveTvSeamlessPlanePreview);
-
-  /// Whether [player] plays on the video plane in a box (see [planePreviewIn]).
+  /// Whether [player] plays on the video plane in a box — the preview a
+  /// picture is handed over from.
   static bool isOnPlane(Player player) => switch (player) {
     final VideoViewportTarget target => target.followsVideoRect,
     _ => false,
   };
 
-  /// Whether this picture can move between texture and window while it plays.
+  /// Whether this picture can be handed between the guide and the player.
   ///
   /// IPTV only: a playlist stream is just opened, while a server's live
   /// session (a Plex tune, a Jellyfin stream) carries reporting the hand-over
-  /// would have to keep alive across two screens. ExoPlayer's mpv fallback
-  /// never drew into the texture, so there is nothing to move there.
+  /// would have to keep alive across two screens. Not ExoPlayer's mpv
+  /// fallback, which the preview never placed in its box.
   static bool canMove(Player player, LiveTvPlaybackSession? session) {
     if (session is! IptvPlaybackSession) return false;
     if (player is! VideoOutputHandover || player.disposed) return false;

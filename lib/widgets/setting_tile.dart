@@ -35,6 +35,10 @@ Future<void> _writeAndNotify<T>(
 /// Shared scaffold for the tiles that render a tappable settings row: same
 /// leading icon, title style and row density everywhere. [trailing] defaults
 /// to the chevron used by every row that opens a dialog.
+/// A row's description, or none where it is empty — a description that only
+/// repeated its title is left out as an empty text (Plebz).
+Widget? settingSubtitle(String? text) => text == null || text.isEmpty ? null : Text(text);
+
 class _SettingRow extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -94,7 +98,7 @@ class SettingSwitchTile extends StatelessWidget {
         focusNode: focusNode,
         secondary: AppIcon(icon, fill: 1),
         title: Text(title),
-        subtitle: subtitle != null ? Text(subtitle!) : null,
+        subtitle: settingSubtitle(subtitle),
         value: value,
         onChanged: enabled ? (v) => _writeAndNotify(context, pref, v, onAfterWrite) : null,
       ),
@@ -129,7 +133,7 @@ class SettingNavigationTile extends StatelessWidget {
       focusNode: focusNode,
       icon: icon,
       title: title,
-      subtitle: subtitle != null ? Text(subtitle!) : null,
+      subtitle: settingSubtitle(subtitle),
       trailing: AppIcon(trailingIcon, fill: 1),
       onTap: onTap ?? () => Navigator.push(context, MaterialPageRoute(builder: destinationBuilder!)),
     );
@@ -261,7 +265,12 @@ class SettingChecklistTile extends StatelessWidget {
         return _SettingRow(
           icon: icon,
           title: title,
-          subtitle: Text('${checked.map((option) => option.title).join(', ')} · $description'),
+          subtitle: settingSubtitle(
+            [
+              checked.map((option) => option.title).join(', '),
+              description,
+            ].where((part) => part.isNotEmpty).join(' · '),
+          ),
           onTap: () => showChecklistDialog<String>(
             context: context,
             title: title,
@@ -305,7 +314,7 @@ class SettingRegexTile extends StatelessWidget {
       builder: (_, value, _) => _SettingRow(
         icon: icon,
         title: title,
-        subtitle: Text(subtitle),
+        subtitle: settingSubtitle(subtitle),
         onTap: () => showRegexInputDialog(
           context: context,
           title: title,
@@ -375,7 +384,7 @@ class SettingColorTile extends StatelessWidget {
       builder: (_, hex, _) => _SettingRow(
         icon: icon,
         title: title,
-        subtitle: subtitle != null ? Text(subtitle!) : null,
+        subtitle: settingSubtitle(subtitle),
         trailing: Container(
           width: 28,
           height: 28,

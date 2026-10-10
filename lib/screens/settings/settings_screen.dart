@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:plezy/widgets/app_icon.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
@@ -44,15 +43,13 @@ import '../../utils/dialogs.dart';
 import '../../utils/snackbar_helper.dart';
 import '../../utils/platform_detector.dart';
 import '../../utils/update_dialog.dart';
-import '../../widgets/desktop_app_bar.dart';
 import '../../widgets/dialog_action_button.dart';
 import '../../widgets/focusable_list_tile.dart';
 import '../../widgets/library_management_sheet.dart';
 import '../../widgets/overlay_sheet.dart';
 import '../../widgets/setting_tile.dart';
-import '../../widgets/settings_builder.dart';
+import '../../widgets/settings_page.dart';
 import '../../widgets/settings_section.dart';
-import '../../widgets/system_bottom_inset.dart';
 import '../../profiles/active_profile_provider.dart';
 import '../../profiles/profile.dart';
 import '../../watch_together/services/watch_together_relay_endpoint.dart';
@@ -73,8 +70,11 @@ import 'year_filter_screen.dart';
 import 'tracker_service_info.dart';
 import '../../widgets/loading_indicator_box.dart';
 import '../../utils/fork_identity.dart';
-import 'plebz_settings_rows.dart';
-import '../../redesign/ocker_skin.dart' show isOckerLayout;
+import 'plebz_settings_rows.dart' show RedesignGround, redesignGroundLabel, storedRedesignGround;
+import 'plebz_settings_shell.dart';
+import 'plebz_updates.dart';
+import '../setup_wizard/setup_wizard.dart';
+import '../../redesign/ocker_skin.dart' show OckerOnGlass;
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
@@ -83,18 +83,7 @@ class SettingsScreen extends StatefulWidget {
     this.settingsExporter,
     this.settingsImporter,
     this.backgroundWorkDiagnosticsService,
-    this.curated = false,
-    this.focusOnOpen = false,
   });
-
-  /// Plebz: the short, grouped page the settings tab opens on
-  /// (`plebz_settings_rows.dart`) instead of this full list, which it reaches
-  /// through "All settings".
-  final bool curated;
-
-  /// Plebz: put focus on the first row once the page is up — for the full list
-  /// pushed from the curated page, which no tab switch focuses.
-  final bool focusOnOpen;
 
   @visibleForTesting
   final Future<bool> Function(Directory directory)? downloadDirectoryWritableChecker;
@@ -118,12 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
 
   // Focus tracking keys
   static const _kDonate = 'donate';
-  static const _kGeneral = 'general';
-  static const _kAppearance = 'appearance';
-  static const _kPlayback = 'playback';
   static const _kManageLibraries = 'manage_libraries';
-  static const _kServices = 'services';
-  static const _kIptv = 'iptv';
   static const _kDownloadLocation = 'download_location';
   static const _kDownloadOnWifiOnly = 'download_on_wifi_only';
   static const _kAutoRemoveWatchedDownloads = 'auto_remove_watched_downloads';
@@ -139,6 +123,8 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
   static const _kCheckForUpdates = 'check_for_updates';
   static const _kAutoCheckUpdatesOnStartup = 'auto_check_updates_on_startup';
   static const _kAbout = 'about';
+  final _shellKey = GlobalKey<PlebzSettingsShellState>();
+  static const _kSetupAgain = 'setup_again';
   static const _kWatchTogetherRelay = 'watch_together_relay';
   static const _kMirrorWatched = 'mirror_watched_across_servers';
   static const _kExportSettings = 'export_settings';
@@ -159,7 +145,6 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
   void initState() {
     super.initState();
     _focusTracker = FocusMemoryTracker(debugLabelPrefix: 'settings');
-    if (widget.focusOnOpen) WidgetsBinding.instance.addPostFrameCallback((_) => _focusOnceOpened());
     if (_keyboardShortcutsSupported) {
       KeyboardShortcutsService.getInstance().then((s) {
         setStateIfMounted(() => _keyboardService = s);
@@ -173,48 +158,13 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
     super.dispose();
   }
 
-  /// Plebz: the route takes focus for its own scope as it arrives, so the
-  /// first row is focused only once the transition has finished.
-  void _focusOnceOpened() {
-    if (!mounted) return;
-    final animation = ModalRoute.of(context)?.animation;
-    void focus() => WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) focusActiveTabIfReady();
-    });
-    if (animation == null || animation.isCompleted) {
-      focus();
-      return;
-    }
-    void listener(AnimationStatus status) {
-      if (status != AnimationStatus.completed) return;
-      animation.removeStatusListener(listener);
-      focus();
-    }
-
-    animation.addStatusListener(listener);
-  }
-
   @override
   void focusActiveTabIfReady() {
-    if (InputModeTracker.isKeyboardMode(context, listen: false)) {
-      _focusTracker.restoreFocus(
-        fallbackKey: widget.curated ? plebzSettingsFirstKey : (DonationService.isEnabled ? _kDonate : _kGeneral),
-      );
-    }
+    if (InputModeTracker.isKeyboardMode(context, listen: false)) _shellKey.currentState?.focusColumn();
   }
 
   void _navigateToSidebar() {
     MainScreenFocusScope.focusSidebarOf(context);
-  }
-
-  KeyEventResult _handleKeyEvent(FocusNode _, KeyEvent event) {
-    // The full list pushed from the curated page covers the navigation; LEFT
-    // there has no sidebar to reach.
-    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowLeft && !widget.focusOnOpen) {
-      _navigateToSidebar();
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
   }
 
   settings.SettingsService get _settingsService => settings.SettingsService.instance;
@@ -237,85 +187,198 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
     );
   }
 
+  /// Plebz: the topics in a column, the chosen one's page beside it
+  /// ([PlebzSettingsShell]); on a phone the column is the page. Rows under the
+  /// redesign mark focus as its menus do ([OckerOnGlass]).
   Widget _buildContent(BuildContext sheetContext, {required bool hasLibraries}) {
     return Scaffold(
-      body: Focus(
-        onKeyEvent: _handleKeyEvent,
-        child: CustomScrollView(
-          primary: false,
-          slivers: [
-            ExcludeFocus(
-              child: CustomAppBar(
-                title: Text(widget.focusOnOpen ? t.plebz.allSettings : t.settings.title),
-                pinned: true,
-              ),
-            ),
-            SliverList(
-              delegate: SliverChildListDelegate(
-                widget.curated
-                    ? plebzSettingsRows(sheetContext, focusNode: _focusTracker.get)
-                    : [
-                        const SizedBox(height: 8),
-                        SettingsGroup(
-                          children: [
-                            if (DonationService.isEnabled) _buildDonateTile(),
-                            _buildGeneralTile(),
-                            _buildAppearanceTile(),
-                            _buildPlaybackTile(),
-                            if (hasLibraries) _buildManageLibrariesTile(sheetContext),
-                            _buildYearFilterTile(),
-                            _buildServicesTile(),
-                            _buildIptvTile(),
-                          ],
-                        ),
-
-                        _buildConnectionsSection(sheetContext),
-
-                        if (!PlatformDetector.isAppleTV()) _buildDownloadsSection(),
-
-                        if (_keyboardShortcutsSupported || PlatformDetector.shouldActAsRemoteHost(sheetContext))
-                          _buildControlsSection(sheetContext),
-
-                        _buildAdvancedSection(),
-
-                        if (UpdateService.isUpdateCheckAvailable) ...[_buildUpdateSection()],
-
-                        // Shown everywhere. A television has no document picker, so
-                        // there the file is written to a folder reachable from
-                        // outside the app and chosen from a list on the way back in.
-                        _buildBackupSection(),
-
-                        const SizedBox(height: 24),
-                        SettingsGroup(
-                          children: [
-                            SettingNavigationTile(
-                              focusNode: _focusTracker.get(_kAbout),
-                              icon: Symbols.info_rounded,
-                              title: t.settings.about,
-                              subtitle: t.settings.aboutDescription,
-                              destinationBuilder: (context) => const AboutScreen(),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                      ],
-              ),
-            ),
-            const SliverSystemBottomInset(),
-          ],
+      body: OckerOnGlass(
+        child: PlebzSettingsShell(
+          key: _shellKey,
+          title: t.settings.title,
+          sections: _sections(sheetContext, hasLibraries: hasLibraries),
+          onExitLeft: _navigateToSidebar,
         ),
       ),
     );
   }
 
-  Widget _buildGeneralTile() {
-    return SettingNavigationTile(
-      focusNode: _focusTracker.get(_kGeneral),
-      icon: Symbols.settings_rounded,
-      title: t.settings.general,
-      subtitle: t.settings.generalDescription,
-      destinationBuilder: (context) => const GeneralSettingsScreen(),
-    );
+  List<PlebzSettingsSection> _sections(BuildContext context, {required bool hasLibraries}) {
+    final look = t.plebz.settingsGroupLook;
+    final content = t.plebz.settingsGroupContent;
+    final app = t.plebz.settingsGroupApp;
+    // Keyboard platforms show nothing under Controls until the shortcuts
+    // service has loaded; an empty topic is left out.
+    final hasControls = _keyboardService != null || PlatformDetector.shouldActAsRemoteHost(context);
+    return [
+      PlebzSettingsSection(
+        id: 'appearance',
+        group: look,
+        icon: Symbols.palette_rounded,
+        title: t.settings.appearance,
+        subtitle: _appearanceSummary(context),
+        page: (_) => const AppearanceSettingsScreen(),
+      ),
+      PlebzSettingsSection(
+        id: 'playback',
+        group: look,
+        icon: Symbols.play_circle_rounded,
+        title: t.settings.videoPlayback,
+        subtitle: t.settings.videoPlaybackDescription,
+        page: (_) => const PlaybackSettingsScreen(),
+      ),
+      if (hasControls)
+        PlebzSettingsSection(
+          id: 'controls',
+          group: look,
+          icon: Symbols.gamepad_rounded,
+          title: t.settings.controls,
+          page: (context) => _rowsPage(t.settings.controls, [_buildControlsSection(context)]),
+        ),
+      PlebzSettingsSection(
+        id: 'connections',
+        group: content,
+        icon: Symbols.dns_rounded,
+        title: t.plebz.serversAndProfiles,
+        subtitle: _profilesSummary(context),
+        page: (context) => _rowsPage(t.plebz.serversAndProfiles, [_buildConnectionsSection(context)]),
+      ),
+      PlebzSettingsSection(
+        id: 'iptv',
+        group: content,
+        icon: Symbols.live_tv_rounded,
+        title: t.plebz.iptvAndLiveTv,
+        subtitle: _iptvSummary(context),
+        page: (_) => const IptvSettingsScreen(),
+      ),
+      PlebzSettingsSection(
+        id: 'services',
+        group: content,
+        icon: Symbols.sync_rounded,
+        title: t.settings.services,
+        subtitle: _servicesSummary(context),
+        page: (_) => const ServicesSettingsScreen(),
+      ),
+      PlebzSettingsSection(
+        id: 'libraries',
+        group: content,
+        icon: Symbols.video_library_rounded,
+        title: t.plebz.librariesSection,
+        page: (context) => _rowsPage(t.plebz.librariesSection, [
+          SettingsGroup(
+            children: [if (hasLibraries) _buildManageLibrariesTile(context), _buildYearFilterTile(context)],
+          ),
+        ]),
+      ),
+      if (!PlatformDetector.isAppleTV())
+        PlebzSettingsSection(
+          id: 'downloads',
+          group: content,
+          icon: Symbols.download_rounded,
+          title: t.settings.downloads,
+          page: (_) => _rowsPage(t.settings.downloads, [_buildDownloadsSection()]),
+        ),
+      PlebzSettingsSection(
+        id: 'general',
+        group: app,
+        icon: Symbols.settings_rounded,
+        title: t.settings.general,
+        subtitle: t.settings.generalDescription,
+        page: (_) => const GeneralSettingsScreen(),
+      ),
+      // Shown everywhere. A television has no document picker, so there the
+      // file is written to a folder reachable from outside the app and chosen
+      // from a list on the way back in.
+      PlebzSettingsSection(
+        id: 'backup',
+        group: app,
+        icon: Symbols.lock_rounded,
+        title: t.settings.backup,
+        page: (_) => _rowsPage(t.settings.backup, [_buildBackupSection()]),
+      ),
+      PlebzSettingsSection(
+        id: 'advanced',
+        group: app,
+        icon: Symbols.tune_rounded,
+        title: t.settings.advanced,
+        page: (context) => _rowsPage(t.settings.advanced, [_buildAdvancedSection()]),
+      ),
+      PlebzSettingsSection(
+        id: 'about',
+        group: app,
+        icon: Symbols.info_rounded,
+        title: t.plebz.aboutAndUpdates,
+        page: (context) => _rowsPage(t.plebz.aboutAndUpdates, [
+          SettingsGroup(
+            children: [
+              ...plebzUpdateRows(context),
+              SettingNavigationTile(
+                focusNode: _focusTracker.get(_kSetupAgain),
+                icon: Symbols.auto_fix_high_rounded,
+                title: t.plebz.setupAgain,
+                subtitle: t.plebz.setupAgainDescription,
+                // The setup is a screen of its own, not a page beside the
+                // column.
+                onTap: () => Navigator.of(
+                  this.context,
+                ).push(MaterialPageRoute<void>(builder: (_) => const SetupLookScreen(firstRun: false))),
+              ),
+              SettingNavigationTile(
+                focusNode: _focusTracker.get(_kAbout),
+                icon: Symbols.info_rounded,
+                title: t.settings.about,
+                subtitle: t.settings.aboutDescription,
+                destinationBuilder: (context) => const AboutScreen(),
+              ),
+              if (DonationService.isEnabled) _buildDonateTile(),
+            ],
+          ),
+          if (UpdateService.isUpdateCheckAvailable) _buildUpdateSection(),
+        ]),
+      ),
+    ];
+  }
+
+  /// A topic's page made of rows from this screen.
+  Widget _rowsPage(String title, List<Widget> body) =>
+      SettingsPage(title: Text(title), children: [const SizedBox(height: 8), ...body, const SizedBox(height: 24)]);
+
+  /// The look in a few words, for the phone's list: the redesign and its
+  /// ground, or light or dark.
+  String _appearanceSummary(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final redesignName = switch (themeProvider.variant) {
+      settings.AppThemeVariant.glas => t.settings.appThemeVariantGlas,
+      settings.AppThemeVariant.flach => t.settings.appThemeVariantFlach,
+      settings.AppThemeVariant.standard => null,
+    };
+    if (redesignName == null) return themeModeLabel(themeProvider.themeMode);
+    final ground = storedRedesignGround(settings.SettingsService.instance);
+    return ground == RedesignGround.design ? redesignName : '$redesignName · ${redesignGroundLabel(ground)}';
+  }
+
+  String? _iptvSummary(BuildContext context) {
+    final count = context.watch<IptvSourcesProvider?>()?.sources.length ?? 0;
+    return count == 0 ? null : t.iptv.sourceCount(n: count);
+  }
+
+  String _servicesSummary(BuildContext context) {
+    final seerr = context.watch<SeerrAccountProvider>();
+    final connectedNames = <String>[
+      for (final info in TrackerServiceInfo.all)
+        if (info.isConnected(context)) info.displayName,
+      if (seerr.isConnected) t.services.names.seerr,
+    ];
+    return connectedNames.isEmpty ? t.settings.servicesDescription : connectedNames.join(' · ');
+  }
+
+  String _profilesSummary(BuildContext context) {
+    final count = context.select<ActiveProfileProvider, int>((p) => p.profiles.length);
+    final activeName = context.select<ActiveProfileProvider, String?>((p) => p.active?.displayName);
+    if (count <= 1) return t.profiles.summarySingle;
+    return activeName != null
+        ? t.profiles.summaryMultipleWithActive(count: count, activeName: activeName)
+        : t.profiles.summaryMultiple(count: count);
   }
 
   Widget _buildDonateTile() {
@@ -334,47 +397,6 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
     );
   }
 
-  Widget _buildAppearanceTile() {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, _) => SettingValueBuilder<int>(
-        pref: settings.SettingsService.libraryDensity,
-        builder: (context, libraryDensity, _) {
-          // The redesign has no light or dark to name: its design, and OLED
-          // where its ground is black.
-          final mode = themeProvider.themeMode;
-          final redesignName = switch (themeProvider.variant) {
-            settings.AppThemeVariant.glas => t.settings.appThemeVariantGlas,
-            settings.AppThemeVariant.flach => t.settings.appThemeVariantFlach,
-            settings.AppThemeVariant.standard => null,
-          };
-          final ground = storedRedesignGround(settings.SettingsService.instance);
-          final look = redesignName != null
-              ? (ground == RedesignGround.design ? redesignName : '$redesignName · ${redesignGroundLabel(ground)}')
-              : themeModeLabel(mode);
-          // The redesign on a television sizes its grids itself (Plebz).
-          final summary = isOckerLayout(context) ? look : '$look · ${t.settings.libraryDensity} $libraryDensity';
-          return SettingNavigationTile(
-            focusNode: _focusTracker.get(_kAppearance),
-            icon: Symbols.palette_rounded,
-            title: t.settings.appearance,
-            subtitle: summary,
-            destinationBuilder: (context) => const AppearanceSettingsScreen(),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildPlaybackTile() {
-    return SettingNavigationTile(
-      focusNode: _focusTracker.get(_kPlayback),
-      icon: Symbols.play_circle_rounded,
-      title: t.settings.videoPlayback,
-      subtitle: t.settings.videoPlaybackDescription,
-      destinationBuilder: (context) => const PlaybackSettingsScreen(),
-    );
-  }
-
   Widget _buildManageLibrariesTile(BuildContext context) {
     return SettingNavigationTile(
       focusNode: _focusTracker.get(_kManageLibraries),
@@ -387,7 +409,7 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
 
   /// The release-year ranges. Their summary is the subtitle, so the setting
   /// says what it is doing without being opened.
-  Widget _buildYearFilterTile() {
+  Widget _buildYearFilterTile(BuildContext context) {
     final service = settings.SettingsService.instanceOrNull;
     final movies = service?.movieYearRange ?? YearRange.none;
     final shows = service?.showYearRange ?? YearRange.none;
@@ -412,39 +434,6 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
     );
   }
 
-  /// IPTV playlists and Xtream panels — Live TV without a media server.
-  Widget _buildIptvTile() {
-    final count = context.watch<IptvSourcesProvider?>()?.sources.length ?? 0;
-    return SettingNavigationTile(
-      focusNode: _focusTracker.get(_kIptv),
-      icon: Symbols.live_tv_rounded,
-      title: t.iptv.title,
-      subtitle: count == 0 ? t.iptv.addPlaylistDescription : t.iptv.sourceCount(n: count),
-      destinationBuilder: (_) => const IptvSettingsScreen(),
-    );
-  }
-
-  Widget _buildServicesTile() {
-    // The tracker account providers are watched through [TrackerServiceInfo].
-    return Consumer<SeerrAccountProvider>(
-      builder: (context, seerr, _) {
-        final connectedNames = <String>[
-          for (final info in TrackerServiceInfo.all)
-            if (info.isConnected(context)) info.displayName,
-          if (seerr.isConnected) t.services.names.seerr,
-        ];
-        final subtitle = connectedNames.isEmpty ? t.settings.servicesDescription : connectedNames.join(' · ');
-        return SettingNavigationTile(
-          focusNode: _focusTracker.get(_kServices),
-          icon: Symbols.sync_rounded,
-          title: t.settings.services,
-          subtitle: subtitle,
-          destinationBuilder: (_) => const ServicesSettingsScreen(),
-        );
-      },
-    );
-  }
-
   Widget _buildConnectionsSection(BuildContext context) {
     final active = context.select<ActiveProfileProvider, Profile?>((p) => p.active);
     final subtitle = active == null
@@ -452,7 +441,6 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
         : t.connections.addConnectionSubtitleScoped(displayName: active.displayName);
 
     return SettingsGroup(
-      title: t.connections.sectionTitle,
       children: [
         // Connections are managed per-profile (via the Profiles section
         // and each profile's detail screen). The shortcut here just opens
@@ -529,7 +517,6 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
     final isCustom = storageService.isUsingCustomPath();
 
     return SettingsGroup(
-      title: t.settings.downloads,
       children: [
         if (!Platform.isIOS)
           FutureBuilder<String>(
@@ -656,12 +643,11 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
     // Keyboard platforms render nothing until the shortcuts service loads; an
     // empty SettingsGroup would paint a bare section title.
     if (children.isEmpty) return const SizedBox.shrink();
-    return SettingsGroup(title: t.settings.controls, children: children);
+    return SettingsGroup(children: children);
   }
 
   Widget _buildAdvancedSection() {
     return SettingsGroup(
-      title: t.settings.advanced,
       children: [
         if (watchTogetherAvailable)
           SettingNavigationTile(
@@ -690,9 +676,7 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
           icon: Symbols.monitor_heart_rounded,
           title: t.settings.hardwareTest,
           subtitle: t.settings.hardwareTestDescription,
-          onTap: () => unawaited(
-            Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const HardwareTestScreen())),
-          ),
+          destinationBuilder: (_) => const HardwareTestScreen(),
         ),
         SettingNavigationTile(
           focusNode: _focusTracker.get(_kViewLogs),
@@ -741,7 +725,6 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
 
   Widget _buildBackupSection() {
     return SettingsGroup(
-      title: t.settings.backup,
       children: [
         SettingNavigationTile(
           focusNode: _focusTracker.get(_kExportSettings),

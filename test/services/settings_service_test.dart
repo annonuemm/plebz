@@ -615,14 +615,14 @@ void main() {
       expect(SettingsService.matchContentFrameRateFor(isLive: true, enabled: false, enabledForLiveTv: true), isFalse);
     });
 
-    test('live TV keeps it by default, so nobody is surprised', () async {
-      // Unlike tunnelling, which live TV gives up by default: this one only
-      // changes for someone who goes looking for it.
+    test('live TV leaves it off by default, as the seamless preview needs (Plebz)', () async {
+      // A switch at every zap costs a black screen, and it would stop the
+      // guide's preview growing into full screen, which is on by default.
       resetSharedPreferencesForTest();
       SettingsService.resetForTesting();
       final settings = await SettingsService.getInstance();
 
-      expect(settings.read(SettingsService.matchContentFrameRateLiveTv), isTrue);
+      expect(settings.read(SettingsService.matchContentFrameRateLiveTv), isFalse);
     });
   });
 }

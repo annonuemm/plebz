@@ -10,7 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plezy/connection/connection_registry.dart';
 import 'package:plezy/database/app_database.dart';
-import 'package:plezy/focus/input_mode_tracker.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/media/media_backend.dart';
 import 'package:plezy/media/media_kind.dart';
@@ -26,6 +25,7 @@ import 'package:plezy/providers/download_provider.dart';
 import 'package:plezy/providers/seerr_account_provider.dart';
 import 'package:plezy/providers/theme_provider.dart';
 import 'package:plezy/providers/trackers_provider.dart';
+import 'package:plezy/screens/settings/plebz_settings_shell.dart';
 import 'package:plezy/screens/settings/settings_screen.dart';
 import 'package:plezy/services/background_work_diagnostics_service.dart';
 import 'package:plezy/services/donation_service.dart';
@@ -86,124 +86,59 @@ void main() {
     }
   });
 
-  group('the curated page Plebz opens on', () {
-    testWidgets('shows the grouped essentials and keeps the rest one row away', (tester) async {
-      final harness = await _pumpSettingsScreen(tester, curated: true);
+  group('the settings Plebz opens on', () {
+    testWidgets('list every topic in the column, the first one open beside it', (tester) async {
+      final harness = await _pumpSettingsScreen(tester);
       addTearDown(() => harness.dispose(tester));
 
-      for (final title in [
-        t.plebz.sourcesAndAccounts,
-        t.connections.addConnection,
-        t.iptv.title,
-        t.settings.services,
-        t.settings.appThemeVariant,
-        t.settings.theme,
-        t.plebz.startAndNavigation,
-        t.settings.showSportTab,
-        t.settings.skipIntroMode,
-        t.plebz.appAndUpdates,
-        t.plebz.allSettings,
+      for (final id in [
+        'appearance',
+        'playback',
+        'connections',
+        'iptv',
+        'services',
+        'libraries',
+        'downloads',
+        'general',
+        'backup',
+        'advanced',
+        'about',
       ]) {
-        expect(find.text(title), findsWidgets, reason: title);
+        expect(find.byKey(PlebzSettingsShell.rowKey(id)), findsOneWidget, reason: id);
       }
-      // Upstream's long list is not on this page.
-      expect(find.text(t.settings.clearImageCache), findsNothing);
-      expect(find.text(t.settings.debugLogging), findsNothing);
+      for (final heading in [t.plebz.settingsGroupLook, t.plebz.settingsGroupContent, t.plebz.settingsGroupApp]) {
+        expect(find.text(heading), findsOneWidget, reason: heading);
+      }
+      // Appearance's own page stands beside the column.
+      expect(find.text(t.settings.display), findsOneWidget);
     });
 
-    testWidgets('"All settings" opens the full list under its own title', (tester) async {
-      final harness = await _pumpSettingsScreen(tester, curated: true);
+    testWidgets('a topic opens its page beside the column', (tester) async {
+      final harness = await _pumpSettingsScreen(tester, section: 'advanced');
       addTearDown(() => harness.dispose(tester));
-
-      await tester.tap(find.text(t.plebz.allSettings));
-      await _pumpUi(tester);
 
       expect(find.text(t.settings.clearImageCache), findsOneWidget);
-      expect(find.text(t.plebz.allSettings), findsWidgets);
+      expect(find.text(t.settings.display), findsNothing);
+      expect(find.byKey(PlebzSettingsShell.rowKey('appearance')), findsOneWidget, reason: 'the column stays');
     });
 
-    testWidgets('a switch here writes the same setting as its twin further in', (tester) async {
-      final harness = await _pumpSettingsScreen(tester, curated: true);
-      addTearDown(() => harness.dispose(tester));
-      expect(SettingsService.instance.read(SettingsService.showSportTab), isFalse);
-
-      await tester.tap(find.text(t.settings.showSportTab));
-      await _pumpUi(tester);
-
-      expect(SettingsService.instance.read(SettingsService.showSportTab), isTrue);
-    });
-
-    testWidgets('the mpv shader can be chosen here, without starting a video', (tester) async {
-      final harness = await _pumpSettingsScreen(tester, curated: true);
-      addTearDown(() => harness.dispose(tester));
-      expect(SettingsService.instance.read(SettingsService.globalShaderPreset), 'none');
-
-      await tester.tap(find.text(t.shaders.title));
-      await _pumpUi(tester);
-      await tester.tap(find.text('NVScaler').last);
-      await _pumpUi(tester);
-
-      expect(SettingsService.instance.read(SettingsService.globalShaderPreset), 'nvscaler');
-    });
-
-    testWidgets('the "Live now" row is on until switched off here', (tester) async {
-      final harness = await _pumpSettingsScreen(tester, curated: true);
-      addTearDown(() => harness.dispose(tester));
-      expect(SettingsService.instance.read(SettingsService.showLiveNowRow), isTrue);
-
-      await tester.tap(find.text(t.settings.showLiveNowRow));
-      await _pumpUi(tester);
-
-      expect(SettingsService.instance.read(SettingsService.showLiveNowRow), isFalse);
-    });
-
-    testWidgets('with a remote, the full list opens with focus on its first row', (tester) async {
-      await TvDetectionService.getInstance(forceTv: true);
-      TvDetectionService.setForceTVSync(true);
-      addTearDown(() => TvDetectionService.setForceTVSync(false));
-      final harness = await _pumpSettingsScreen(tester, curated: true, withInputModeTracker: true);
+    testWidgets("ends on Plebz's own updates, the setup again and About", (tester) async {
+      final harness = await _pumpSettingsScreen(tester, section: 'about');
       addTearDown(() => harness.dispose(tester));
 
-      // A remote announces itself with its first arrow key.
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-      await tester.pump();
-      tester.widget<FocusableListTile>(_focusableTileFor(t.plebz.allSettings)).focusNode!.requestFocus();
-      await tester.pump();
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      // Focus moves in once the page transition has finished.
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-      await tester.pump();
-
-      expect(find.text(t.settings.clearImageCache), findsOneWidget);
-      expect(FocusManager.instance.primaryFocus?.debugLabel, 'settings_general');
-
-      // BACK (the system back an Android remote sends) leaves the full list
-      // for the curated page again.
-      await tester.binding.handlePopRoute();
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text(t.settings.clearImageCache), findsNothing);
-      expect(find.text(t.plebz.sourcesAndAccounts), findsOneWidget);
-    });
-
-    testWidgets("the redesign's own rows appear only while it is on", (tester) async {
-      debugRedesignOfferedHere = true;
-      addTearDown(() => debugRedesignOfferedHere = null);
-      final harness = await _pumpSettingsScreen(tester, curated: true);
-      addTearDown(() => harness.dispose(tester));
-      expect(find.text(t.settings.glasAccent), findsNothing);
-
-      await SettingsService.instance.write(SettingsService.appThemeVariant, AppThemeVariant.glas);
-      await _pumpUi(tester);
-
-      expect(find.text(t.settings.glasAccent), findsOneWidget);
+      for (final title in [t.plebz.whatsNew, t.plebz.setupAgain, t.settings.about]) {
+        expect(find.text(title), findsOneWidget, reason: title);
+      }
+      final top = tester.getTopLeft(find.text(t.plebz.whatsNew)).dy;
+      expect(tester.getTopLeft(find.text(t.plebz.setupAgain)).dy, greaterThan(top));
+      expect(tester.getTopLeft(find.text(t.settings.about)).dy, greaterThan(top));
     });
   });
 
   testWidgets('system back closes Manage Libraries without popping pushed settings', (tester) async {
     final harness = await _pumpSettingsScreen(
       tester,
+      section: 'libraries',
       pushSettingsRoute: true,
       initialLibraries: const [
         MediaLibrary(
@@ -245,31 +180,36 @@ void main() {
     final rows = <_MigratedRow>[
       _MigratedRow(
         title: t.settings.supportDeveloper,
+        section: 'about',
         focusLabel: 'settings_donate',
         isVisible: DonationService.isEnabled,
       ),
       _MigratedRow(
         title: t.settings.watchTogetherRelay,
+        section: 'advanced',
         focusLabel: 'settings_watch_together_relay',
         isVisible: watchTogetherAvailable,
       ),
-      _MigratedRow(title: t.settings.clearImageCache, focusLabel: 'settings_clear_image_cache'),
-      _MigratedRow(title: t.settings.resetSettings, focusLabel: 'settings_reset_settings'),
-      const _MigratedRow(title: 'Test Sentry', isVisible: kDebugMode),
-      const _MigratedRow(title: 'Test ANR', isVisible: kDebugMode),
-      _MigratedRow(title: t.settings.exportSettings, focusLabel: 'settings_export_settings'),
-      _MigratedRow(title: t.settings.importSettings, focusLabel: 'settings_import_settings'),
+      _MigratedRow(title: t.settings.clearImageCache, section: 'advanced', focusLabel: 'settings_clear_image_cache'),
+      _MigratedRow(title: t.settings.resetSettings, section: 'advanced', focusLabel: 'settings_reset_settings'),
+      const _MigratedRow(title: 'Test Sentry', section: 'advanced', isVisible: kDebugMode),
+      const _MigratedRow(title: 'Test ANR', section: 'advanced', isVisible: kDebugMode),
+      _MigratedRow(title: t.settings.exportSettings, section: 'backup', focusLabel: 'settings_export_settings'),
+      _MigratedRow(title: t.settings.importSettings, section: 'backup', focusLabel: 'settings_import_settings'),
       _MigratedRow(
         title: t.settings.checkForUpdates,
+        section: 'about',
         focusLabel: 'settings_check_for_updates',
         isVisible: UpdateService.isUpdateCheckAvailable && UpdateService.useNativeUpdater,
         hasSubtitle: false,
       ),
     ];
 
-    final referenceHeight = tester.getSize(_focusableTileFor(t.settings.viewLogs)).height;
+    await _openSection(tester, 'advanced');
+    final referenceHeight = tester.getSize(_focusableTileFor(t.settings.hardwareTest)).height;
 
     for (final row in rows) {
+      await _openSection(tester, row.section);
       final navigationTile = _navigationTileFor(row.title);
       if (!row.isVisible) {
         expect(navigationTile, findsNothing, reason: '${row.title} must honor its production gate');
@@ -312,6 +252,7 @@ void main() {
 
     // Exercise both input paths against real callbacks rather than merely
     // checking that callbacks are non-null.
+    await _openSection(tester, 'advanced');
     final relayMaterialTile = tester.widget<ListTile>(
       find.descendant(of: _focusableTileFor(t.settings.watchTogetherRelay), matching: find.byType(ListTile)),
     );
@@ -332,7 +273,7 @@ void main() {
   });
 
   testWidgets('special download and generic update rows keep rich content on the shared compact row', (tester) async {
-    final harness = await _pumpSettingsScreen(tester);
+    final harness = await _pumpSettingsScreen(tester, section: 'downloads');
     addTearDown(() => harness.dispose(tester));
 
     if (Platform.isIOS) {
@@ -364,6 +305,7 @@ void main() {
       await _pumpUi(tester);
     }
 
+    await _openSection(tester, 'about');
     if (!UpdateService.isUpdateCheckAvailable) {
       expect(find.text(t.settings.checkForUpdates), findsNothing);
       return;
@@ -409,7 +351,11 @@ void main() {
     });
     final diagnostics = BackgroundWorkDiagnosticsService.forTesting(channel: channel);
     await diagnostics.refresh();
-    final harness = await _pumpSettingsScreen(tester, backgroundWorkDiagnosticsService: diagnostics);
+    final harness = await _pumpSettingsScreen(
+      tester,
+      section: 'downloads',
+      backgroundWorkDiagnosticsService: diagnostics,
+    );
     addTearDown(() async {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
       await harness.dispose(tester);
@@ -427,7 +373,11 @@ void main() {
 
   testWidgets('unprobed background diagnostics stay unknown instead of claiming success', (tester) async {
     final diagnostics = BackgroundWorkDiagnosticsService.forTesting();
-    final harness = await _pumpSettingsScreen(tester, backgroundWorkDiagnosticsService: diagnostics);
+    final harness = await _pumpSettingsScreen(
+      tester,
+      section: 'downloads',
+      backgroundWorkDiagnosticsService: diagnostics,
+    );
     addTearDown(() async {
       await harness.dispose(tester);
       diagnostics.dispose();
@@ -439,7 +389,11 @@ void main() {
 
   testWidgets('background downloads tile is absent when diagnostics are unsupported', (tester) async {
     final diagnostics = BackgroundWorkDiagnosticsService.forTesting(supported: false);
-    final harness = await _pumpSettingsScreen(tester, backgroundWorkDiagnosticsService: diagnostics);
+    final harness = await _pumpSettingsScreen(
+      tester,
+      section: 'downloads',
+      backgroundWorkDiagnosticsService: diagnostics,
+    );
     addTearDown(() async {
       await harness.dispose(tester);
       diagnostics.dispose();
@@ -452,7 +406,7 @@ void main() {
     // The relay tile only shows while Watch Together is on, which this fork keeps off.
     debugPlezyHostedServicesAvailable = true;
     addTearDown(() => debugPlezyHostedServicesAvailable = false);
-    final harness = await _pumpSettingsScreen(tester);
+    final harness = await _pumpSettingsScreen(tester, section: 'advanced');
     addTearDown(() => harness.dispose(tester));
 
     await tester.tap(find.text(t.settings.watchTogetherRelay));
@@ -470,7 +424,7 @@ void main() {
     // The relay tile only shows while Watch Together is on, which this fork keeps off.
     debugPlezyHostedServicesAvailable = true;
     addTearDown(() => debugPlezyHostedServicesAvailable = false);
-    final harness = await _pumpSettingsScreen(tester);
+    final harness = await _pumpSettingsScreen(tester, section: 'advanced');
     addTearDown(() => harness.dispose(tester));
 
     await tester.tap(find.text(t.settings.watchTogetherRelay));
@@ -490,7 +444,7 @@ void main() {
   testWidgets('selected download folder becomes the persisted location', (tester) async {
     final selectedDirectory = Directory('${temporaryDirectory.path}/selected-downloads');
     directoryPicker.directoryPath = selectedDirectory.path;
-    final harness = await _pumpSettingsScreen(tester);
+    final harness = await _pumpSettingsScreen(tester, section: 'downloads');
     addTearDown(() => harness.dispose(tester));
 
     await tester.tap(find.text(t.settings.downloadLocation));
@@ -505,6 +459,7 @@ void main() {
     final requirements = <RequireWiFi>[];
     final harness = await _pumpSettingsScreen(
       tester,
+      section: 'downloads',
       requireWiFiOverride: (requirement) async {
         requirements.add(requirement);
         return true;
@@ -526,6 +481,7 @@ void main() {
     final requirements = <RequireWiFi>[];
     final harness = await _pumpSettingsScreen(
       tester,
+      section: 'backup',
       requireWiFiOverride: (requirement) async {
         requirements.add(requirement);
         return true;
@@ -552,7 +508,7 @@ void main() {
       '${temporaryDirectory.path}/old-downloads',
     );
     await SettingsService.instance.write(SettingsService.customDownloadPathType, 'file');
-    final harness = await _pumpSettingsScreen(tester);
+    final harness = await _pumpSettingsScreen(tester, section: 'downloads');
     addTearDown(() => harness.dispose(tester));
 
     await tester.tap(find.text(t.settings.downloadLocation));
@@ -570,7 +526,7 @@ void main() {
       '${temporaryDirectory.path}/old-downloads',
     );
     await SettingsService.instance.write(SettingsService.customDownloadPathType, 'file');
-    final harness = await _pumpSettingsScreen(tester);
+    final harness = await _pumpSettingsScreen(tester, section: 'advanced');
     addTearDown(() => harness.dispose(tester));
 
     await tester.tap(find.text(t.settings.resetSettings));
@@ -584,7 +540,7 @@ void main() {
   });
 
   testWidgets('cancelled directory picker remains silent and leaves the dialog retryable', (tester) async {
-    final harness = await _pumpSettingsScreen(tester);
+    final harness = await _pumpSettingsScreen(tester, section: 'downloads');
     addTearDown(() => harness.dispose(tester));
 
     await tester.tap(find.text(t.settings.downloadLocation));
@@ -600,7 +556,7 @@ void main() {
 
   testWidgets('directory picker platform failure uses shared settings feedback', (tester) async {
     directoryPicker.directoryError = PlatformException(code: 'picker_failed');
-    final harness = await _pumpSettingsScreen(tester);
+    final harness = await _pumpSettingsScreen(tester, section: 'downloads');
     addTearDown(() => harness.dispose(tester));
 
     await tester.tap(find.text(t.settings.downloadLocation));
@@ -617,6 +573,7 @@ void main() {
     directoryPicker.directoryPath = '${temporaryDirectory.path}/selected-downloads';
     final harness = await _pumpSettingsScreen(
       tester,
+      section: 'downloads',
       writableChecker: (_) async => throw const FileSystemException('writable check failed'),
     );
     addTearDown(() => harness.dispose(tester));
@@ -633,7 +590,7 @@ void main() {
 
   testWidgets('late directory picker completion does not use a disposed context', (tester) async {
     directoryPicker.directoryGate = Completer<String?>();
-    final harness = await _pumpSettingsScreen(tester);
+    final harness = await _pumpSettingsScreen(tester, section: 'downloads');
 
     await tester.tap(find.text(t.settings.downloadLocation));
     await _pumpUi(tester);
@@ -650,7 +607,7 @@ void main() {
 
   testWidgets('late directory picker failure does not use a disposed context', (tester) async {
     directoryPicker.directoryGate = Completer<String?>();
-    final harness = await _pumpSettingsScreen(tester);
+    final harness = await _pumpSettingsScreen(tester, section: 'downloads');
 
     await tester.tap(find.text(t.settings.downloadLocation));
     await _pumpUi(tester);
@@ -667,7 +624,7 @@ void main() {
 
   testWidgets('late settings export failure does not use a disposed context', (tester) async {
     final exportGate = Completer<String?>();
-    final harness = await _pumpSettingsScreen(tester, settingsExporter: () => exportGate.future);
+    final harness = await _pumpSettingsScreen(tester, section: 'backup', settingsExporter: () => exportGate.future);
 
     await tester.tap(find.text(t.settings.exportSettings));
     await tester.pump();
@@ -681,7 +638,7 @@ void main() {
 
   testWidgets('late settings import failure does not use a disposed context', (tester) async {
     final importGate = Completer<ImportResult?>();
-    final harness = await _pumpSettingsScreen(tester, settingsImporter: () => importGate.future);
+    final harness = await _pumpSettingsScreen(tester, section: 'backup', settingsImporter: () => importGate.future);
 
     await tester.tap(find.text(t.settings.importSettings));
     await _pumpUi(tester);
@@ -698,6 +655,7 @@ void main() {
   testWidgets('settings export platform failure uses shared settings feedback', (tester) async {
     final harness = await _pumpSettingsScreen(
       tester,
+      section: 'backup',
       settingsExporter: () async => throw PlatformException(code: 'save_failed'),
     );
     addTearDown(() => harness.dispose(tester));
@@ -712,6 +670,7 @@ void main() {
   testWidgets('settings import platform failure uses shared settings feedback', (tester) async {
     final harness = await _pumpSettingsScreen(
       tester,
+      section: 'backup',
       settingsImporter: () async => throw PlatformException(code: 'pick_failed'),
     );
     addTearDown(() => harness.dispose(tester));
@@ -729,8 +688,13 @@ void main() {
 Finder _navigationTileFor(String title) =>
     find.ancestor(of: find.text(title), matching: find.byType(SettingNavigationTile));
 
+/// Shows a topic's page beside the column, as a click on its row does.
+Future<void> _openSection(WidgetTester tester, String id) async {
+  await tester.tap(find.byKey(PlebzSettingsShell.rowKey(id)));
+  await _pumpUi(tester);
+}
+
 Finder _focusableTileFor(String title) => find.ancestor(of: find.text(title), matching: find.byType(FocusableListTile));
-Widget _maybeWithInputModeTracker(bool wrap, Widget app) => wrap ? InputModeTracker(child: app) : app;
 
 Future<void> _pumpUi(WidgetTester tester) async {
   await tester.pump();
@@ -741,9 +705,18 @@ Finder _focusableTileWithin(Finder navigationTile) =>
     find.descendant(of: navigationTile, matching: find.byType(FocusableListTile));
 
 class _MigratedRow {
-  const _MigratedRow({required this.title, this.focusLabel, this.isVisible = true, this.hasSubtitle = true});
+  const _MigratedRow({
+    required this.title,
+    required this.section,
+    this.focusLabel,
+    this.isVisible = true,
+    this.hasSubtitle = true,
+  });
 
   final String title;
+
+  /// The topic whose page holds the row.
+  final String section;
   final String? focusLabel;
   final bool isVisible;
   final bool hasSubtitle;
@@ -810,8 +783,7 @@ Future<_SettingsHarness> _pumpSettingsScreen(
   BackgroundWorkDiagnosticsService? backgroundWorkDiagnosticsService,
   bool pushSettingsRoute = false,
   List<MediaLibrary> initialLibraries = const [],
-  bool curated = false,
-  bool withInputModeTracker = false,
+  String? section,
   Future<bool> Function(RequireWiFi requirement)? requireWiFiOverride,
 }) async {
   tester.view.physicalSize = const Size(1800, 3200);
@@ -907,38 +879,34 @@ Future<_SettingsHarness> _pumpSettingsScreen(
           ChangeNotifierProvider<DownloadProvider>.value(value: downloadProvider),
           ChangeNotifierProvider<AccountPreferencesController>.value(value: accountPreferences),
         ],
-        child: _maybeWithInputModeTracker(
-          withInputModeTracker,
-          MaterialApp(
-            theme: monoTheme(dark: true).copyWith(platform: TargetPlatform.android),
-            home: pushSettingsRoute
-                ? Builder(
-                    builder: (context) => Scaffold(
-                      body: Center(
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => SettingsScreen(
-                                downloadDirectoryWritableChecker: writableChecker ?? (_) async => true,
-                                settingsExporter: settingsExporter,
-                                settingsImporter: settingsImporter,
-                                backgroundWorkDiagnosticsService: backgroundWorkDiagnosticsService,
-                              ),
+        child: MaterialApp(
+          theme: monoTheme(dark: true).copyWith(platform: TargetPlatform.android),
+          home: pushSettingsRoute
+              ? Builder(
+                  builder: (context) => Scaffold(
+                    body: Center(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => SettingsScreen(
+                              downloadDirectoryWritableChecker: writableChecker ?? (_) async => true,
+                              settingsExporter: settingsExporter,
+                              settingsImporter: settingsImporter,
+                              backgroundWorkDiagnosticsService: backgroundWorkDiagnosticsService,
                             ),
                           ),
-                          child: const Text('Settings launcher'),
                         ),
+                        child: const Text('Settings launcher'),
                       ),
                     ),
-                  )
-                : SettingsScreen(
-                    downloadDirectoryWritableChecker: writableChecker ?? (_) async => true,
-                    settingsExporter: settingsExporter,
-                    settingsImporter: settingsImporter,
-                    backgroundWorkDiagnosticsService: backgroundWorkDiagnosticsService,
-                    curated: curated,
                   ),
-          ),
+                )
+              : SettingsScreen(
+                  downloadDirectoryWritableChecker: writableChecker ?? (_) async => true,
+                  settingsExporter: settingsExporter,
+                  settingsImporter: settingsImporter,
+                  backgroundWorkDiagnosticsService: backgroundWorkDiagnosticsService,
+                ),
         ),
       ),
     ),
@@ -949,6 +917,7 @@ Future<_SettingsHarness> _pumpSettingsScreen(
     await tester.tap(find.text('Settings launcher'));
     await _pumpUi(tester);
   }
+  if (section != null) await _openSection(tester, section);
   return harness;
 }
 

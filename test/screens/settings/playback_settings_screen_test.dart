@@ -82,7 +82,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(theme: monoTheme(dark: true), home: const PlaybackSettingsScreen()));
     await tester.pumpAndSettle();
 
-    final title = find.text('Play Next Countdown');
+    final title = find.text('Next episode countdown');
     await tester.scrollUntilVisible(title, 500, scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(title);
     await tester.pumpAndSettle();
@@ -95,7 +95,7 @@ void main() {
 
     final settings = SettingsService.instance;
     expect(settings.read(SettingsService.playNextCountdown), 0);
-    final tile = find.widgetWithText(ListTile, 'Play Next Countdown');
+    final tile = find.widgetWithText(ListTile, 'Next episode countdown');
     expect(find.descendant(of: tile, matching: find.text('Play immediately')), findsOneWidget);
   });
 
@@ -189,8 +189,8 @@ void main() {
     await tester.scrollUntilVisible(title, 500, scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(title);
     await tester.pumpAndSettle();
-    expect(find.text('Center Channel Boost'), findsNothing);
-    expect(find.text('Normalize Volume on Downmix'), findsNothing);
+    expect(find.text('Center channel boost'), findsNothing);
+    expect(find.text('Normalize downmix volume'), findsNothing);
 
     await tester.tap(title);
     await tester.pumpAndSettle();
@@ -200,13 +200,13 @@ void main() {
     final settings = SettingsService.instance;
     expect(settings.read(SettingsService.audioChannelLimit), AudioChannelLimit.surround51);
     // A 5.1 fold keeps the center channel, so only normalization applies.
-    expect(find.text('Center Channel Boost'), findsNothing);
-    expect(find.text('Normalize Volume on Downmix'), findsOneWidget);
+    expect(find.text('Center channel boost'), findsNothing);
+    expect(find.text('Normalize downmix volume'), findsOneWidget);
 
     await settings.write(SettingsService.audioChannelLimit, AudioChannelLimit.stereo);
     await tester.pumpAndSettle();
-    expect(find.text('Center Channel Boost'), findsOneWidget);
-    expect(find.text('Normalize Volume on Downmix'), findsOneWidget);
+    expect(find.text('Center channel boost'), findsOneWidget);
+    expect(find.text('Normalize downmix volume'), findsOneWidget);
   });
 
   testWidgets('turns the covered-source direct play off from the quality group (#2193)', (tester) async {
@@ -218,7 +218,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(theme: monoTheme(dark: true), home: const PlaybackSettingsScreen()));
     await tester.pumpAndSettle();
 
-    final title = find.text('Play Smaller Videos at Original Quality');
+    final title = find.text('Play smaller videos as-is');
     await tester.scrollUntilVisible(title, 500, scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(title);
     await tester.pumpAndSettle();
@@ -266,7 +266,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(theme: monoTheme(dark: true), home: const PlaybackSettingsScreen()));
     await tester.pumpAndSettle();
 
-    final title = find.text('Shuffle Starts at Beginning');
+    final title = find.text('Shuffle from the start');
     await tester.scrollUntilVisible(title, 500, scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(title);
     await tester.pumpAndSettle();

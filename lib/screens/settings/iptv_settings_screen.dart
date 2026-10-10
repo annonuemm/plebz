@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -14,12 +15,15 @@ import '../../services/iptv/iptv_local_files.dart';
 import '../../services/local_file_access.dart';
 import '../../utils/app_logger.dart';
 import '../../services/iptv/iptv_source.dart';
+import '../../utils/platform_detector.dart';
 import '../../utils/snackbar_helper.dart';
 import '../../widgets/app_icon.dart';
 import '../../widgets/focusable_list_tile.dart';
 import '../../widgets/focused_scroll_scaffold.dart';
 import '../../widgets/setting_tile.dart';
+import '../../widgets/settings_builder.dart';
 import 'iptv_group_picker_screen.dart';
+import 'live_picture_setting.dart';
 import 'settings_utils.dart';
 import '../../widgets/settings_section.dart';
 
@@ -37,7 +41,7 @@ class IptvSettingsScreen extends StatelessWidget {
     final sources = provider.sources;
 
     return FocusedScrollScaffold(
-      title: Text(t.iptv.title),
+      title: Text(t.plebz.iptvAndLiveTv),
       slivers: [
         SliverList(
           delegate: SliverChildListDelegate([
@@ -112,7 +116,7 @@ class IptvSettingsScreen extends StatelessWidget {
                   FocusableListTile(
                     leading: const AppIcon(Symbols.refresh_rounded, fill: 1),
                     title: Text(t.iptv.refreshNowLabel),
-                    subtitle: Text(t.iptv.refreshNowDescription),
+                    subtitle: settingSubtitle(t.iptv.refreshNowDescription),
                     onTap: () {
                       provider.refreshAll();
                       showSuccessSnackBar(context, t.iptv.refreshNowDone);
@@ -122,6 +126,8 @@ class IptvSettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
             ],
+            _LiveTvSettings(hasSources: sources.isNotEmpty),
+            const SizedBox(height: 16),
             SettingsGroup(
               children: [
                 FocusableListTile(
@@ -171,6 +177,100 @@ class IptvSettingsScreen extends StatelessWidget {
     }
     await provider.save(result.source);
   }
+}
+
+/// Live TV's own rows (Plebz), gathered here from Appearance and Playback: the
+/// guide, then how channels play — IPTV's player, the seamless preview, and the
+/// live variants of frame-rate matching and tunnelling, each offered only while
+/// its main switch on the Playback page is on.
+class _LiveTvSettings extends StatelessWidget {
+  const _LiveTvSettings({required this.hasSources});
+
+  final bool hasSources;
+
+  @override
+  Widget build(BuildContext context) {
+    return SettingsBuilder(
+      prefs: const [
+        ...livePictureSettingPrefs,
+        SettingsService.useExoPlayer,
+        SettingsService.iptvPlayerBackend,
+        SettingsService.matchContentFrameRate,
+        SettingsService.tunneledPlayback,
+      ],
+      builder: (context) {
+        final svc = SettingsService.instance;
+        final hasIptv = Platform.isAndroid && hasSources;
+        final exoInUse =
+            Platform.isAndroid &&
+            (svc.read(SettingsService.useExoPlayer) || (hasIptv && svc.useExoPlayerFor(iptv: true)));
+        // Display switching is for a television on HDMI (see the Playback page).
+        final androidTv = Platform.isAndroid && PlatformDetector.isTvDevice();
+        // Built as plain rows: a hidden row as an empty child would bend the
+        // group's corners.
+        final playback = <Widget>[
+          if (hasIptv)
+            SettingSelectionTile<IptvPlayerChoice>(
+              pref: SettingsService.iptvPlayerBackend,
+              icon: Symbols.live_tv_rounded,
+              title: t.settings.iptvPlayerBackend,
+              subtitleBuilder: (choice) => '${_playerChoiceLabel(choice)} · ${t.settings.iptvPlayerBackendDescription}',
+              options: [
+                for (final choice in IptvPlayerChoice.values)
+                  DialogOption(value: choice, title: _playerChoiceLabel(choice)),
+              ],
+            ),
+          ...livePictureSettingTiles(),
+          if (androidTv && svc.read(SettingsService.matchContentFrameRate))
+            SettingSwitchTile(
+              pref: SettingsService.matchContentFrameRateLiveTv,
+              icon: Symbols.display_settings_rounded,
+              title: t.settings.matchContentFrameRateLiveTv,
+              subtitle: t.settings.matchContentFrameRateLiveTvDescription,
+              onAfterWrite: turnOffSeamlessFullscreenIf,
+            ),
+          if (exoInUse && !PlatformDetector.isMobile(context) && svc.read(SettingsService.tunneledPlayback))
+            SettingSwitchTile(
+              pref: SettingsService.tunneledPlaybackLiveTv,
+              icon: Symbols.tv_options_input_settings_rounded,
+              title: t.settings.tunneledPlaybackLiveTv,
+              subtitle: t.settings.tunneledPlaybackLiveTvDescription,
+              onAfterWrite: turnOffSeamlessFullscreenIf,
+            ),
+        ];
+        return Column(
+          mainAxisSize: .min,
+          crossAxisAlignment: .stretch,
+          children: [
+            SettingsGroup(
+              title: t.settings.liveTv,
+              children: [
+                SettingSwitchTile(
+                  pref: SettingsService.liveTvDefaultFavorites,
+                  icon: Symbols.star_rounded,
+                  title: t.settings.liveTvDefaultFavorites,
+                  subtitle: t.settings.liveTvDefaultFavoritesDescription,
+                ),
+                SettingSwitchTile(
+                  pref: SettingsService.liveTvGuideTimeNavigation,
+                  icon: Symbols.schedule_rounded,
+                  title: t.settings.liveTvGuideTimeNavigation,
+                  subtitle: t.settings.liveTvGuideTimeNavigationDescription,
+                ),
+              ],
+            ),
+            if (playback.isNotEmpty) SettingsGroup(title: t.settings.player, children: playback),
+          ],
+        );
+      },
+    );
+  }
+
+  static String _playerChoiceLabel(IptvPlayerChoice choice) => switch (choice) {
+    IptvPlayerChoice.sameAsFilms => t.settings.iptvPlayerSameAsFilms,
+    IptvPlayerChoice.exoPlayer => t.settings.exoPlayer,
+    IptvPlayerChoice.mpv => t.settings.mpv,
+  };
 }
 
 /// What the edit screen hands back: the edited source, or a request to delete

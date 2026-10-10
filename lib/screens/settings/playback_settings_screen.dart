@@ -25,7 +25,6 @@ import 'external_player_screen.dart';
 import 'mpv_config_screen.dart';
 import 'remote_keys_screen.dart';
 import 'settings_utils.dart';
-import 'live_picture_setting.dart';
 import 'shader_preset_setting.dart';
 import 'subtitle_styling_screen.dart';
 
@@ -43,13 +42,11 @@ class PlaybackSettingsScreen extends StatelessWidget {
       prefs: const [
         SettingsService.useExoPlayer,
         SettingsService.iptvPlayerBackend,
-        ...livePictureSettingPrefs,
         SettingsService.matchRefreshRate,
         SettingsService.matchDynamicRange,
         SettingsService.matchContentFrameRate,
         SettingsService.matchDisplayResolution,
         SettingsService.audioChannelLimit,
-        SettingsService.tunneledPlayback,
         SettingsService.disableDolbyVision,
       ],
       builder: (context) {
@@ -74,8 +71,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
         // (and shows) as Original there.
         final storedChannelLimit = svc.read(SettingsService.audioChannelLimit);
         final channelLimit = exoActive ? storedChannelLimit.onExoPlayer : storedChannelLimit;
-        final tunnelingOn = svc.read(SettingsService.tunneledPlayback);
-        final frameRateMatchingOn = svc.read(SettingsService.matchContentFrameRate);
         final dolbyVisionOff = svc.read(SettingsService.disableDolbyVision);
         final showDisplaySwitchDelay =
             PlatformDetector.isAppleTV() ||
@@ -91,18 +86,19 @@ class PlaybackSettingsScreen extends StatelessWidget {
               title: t.settings.player,
               children: [
                 if (Platform.isAndroid) _playerBackendSelector(),
-                if (hasIptv) _iptvPlayerBackendTile(),
                 if (PlatformDetector.supportsExternalPlayers()) _externalPlayerTile(),
                 if (mpvInUse) _mpvConfigTile(),
                 // mpv's shaders, choosable without starting a video (Plebz).
                 if (!exoActive) ?shaderPresetSettingTile(context),
                 _hardwareDecodingTile(),
                 if (exoInUse) _playbackBufferTile(),
-                if (exoInUse) _tunneledPlaybackTile(),
-                if (exoInUse && tunnelingOn) _tunneledPlaybackLiveTvTile(),
+                // A TV box's decoder tunnels; a phone's or tablet's hardly
+                // ever does (Plebz).
+                if (exoInUse && !isMobile) _tunneledPlaybackTile(),
                 if (PlatformDetector.supportsPictureInPicture()) _autoPipTile(),
-                // The guide's preview growing into the player as it plays (Plebz).
-                ...livePictureSettingTiles(),
+                // IPTV's player, the guide's seamless preview and the live
+                // variants of frame-rate matching and tunnelling sit with IPTV
+                // (Plebz).
               ],
             ),
 
@@ -110,7 +106,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
               title: t.settings.videoAndDisplay,
               children: [
                 if (androidTv) _matchContentFrameRateTile(),
-                if (androidTv && frameRateMatchingOn) _matchContentFrameRateLiveTvTile(),
                 if (androidTv) _matchDisplayResolutionTile(),
                 if (Platform.isWindows) _matchRefreshRateTile(),
                 if (Platform.isWindows) _matchDynamicRangeTile(),
@@ -172,7 +167,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
               ],
             ),
 
-            _seekAndTimingGroup(),
+            _seekAndTimingGroup(isMobile),
             _autoPlayAndSkipGroup(),
             _behaviorGroup(context, isMobile),
             if (isMobile) _gesturesGroup(),
@@ -184,7 +179,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _seekAndTimingGroup() => SettingsGroup(
+  Widget _seekAndTimingGroup(bool isMobile) => SettingsGroup(
     title: t.settings.seekAndTiming,
     children: [
       SettingNumberTile(
@@ -195,14 +190,17 @@ class PlaybackSettingsScreen extends StatelessWidget {
         labelText: t.settings.secondsLabel,
         suffixText: t.settings.secondsShort,
       ),
-      SettingNumberTile(
-        pref: SettingsService.seekTimeLarge,
-        icon: Symbols.replay_30_rounded,
-        title: t.settings.largeSkipDuration,
-        subtitleBuilder: (v) => t.settings.secondsUnit(seconds: v.toString()),
-        labelText: t.settings.secondsLabel,
-        suffixText: t.settings.secondsShort,
-      ),
+      // Only the keyboard's Shift+arrows use it; touch, the lock screen and
+      // the companion remote step by the small one (Plebz).
+      if (!isMobile)
+        SettingNumberTile(
+          pref: SettingsService.seekTimeLarge,
+          icon: Symbols.replay_30_rounded,
+          title: t.settings.largeSkipDuration,
+          subtitleBuilder: (v) => t.settings.secondsUnit(seconds: v.toString()),
+          labelText: t.settings.secondsLabel,
+          suffixText: t.settings.secondsShort,
+        ),
       SettingNumberTile(
         pref: SettingsService.rewindOnResume,
         icon: Symbols.replay_rounded,
@@ -256,7 +254,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
     pref: pref,
     icon: icon,
     title: title,
-    subtitleBuilder: (scope) => '${_playerScopeLabel(scope)} · ${t.settings.rememberPlayerChangesDescription}',
+    subtitleBuilder: _playerScopeLabel,
     options: PlayerSettingScope.values.map((s) => DialogOption(value: s, title: _playerScopeLabel(s))).toList(),
   );
 
@@ -274,7 +272,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
         pref: SettingsService.rememberTrackSelections,
         icon: Symbols.bookmark_rounded,
         title: t.settings.rememberTrackSelections,
-        subtitle: '${t.settings.rememberTrackSelectionsDescription} · ${t.settings.rememberTrackSelectionsBackendRule}',
+        subtitle: t.settings.rememberTrackSelectionsBackendRule,
       ),
       SettingSwitchTile(
         pref: SettingsService.followServerTrackSelections,
@@ -306,7 +304,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
         pref: SettingsService.specialsOrdering,
         icon: Symbols.low_priority_rounded,
         title: t.settings.specialsOrdering,
-        subtitleBuilder: (mode) => '${_specialsOrderingLabel(mode)} · ${t.settings.specialsOrderingDescription}',
+        subtitleBuilder: _specialsOrderingLabel,
         options: SpecialsOrdering.values.map((m) => DialogOption(value: m, title: _specialsOrderingLabel(m))).toList(),
       ),
       // A pointer setting: neither a touch screen nor a remote has a click.
@@ -365,14 +363,14 @@ class PlaybackSettingsScreen extends StatelessWidget {
         pref: SettingsService.skipIntroMode,
         icon: Symbols.fast_forward_rounded,
         title: t.settings.skipIntroMode,
-        subtitleBuilder: (mode) => '${_skipMarkerModeLabel(mode)} · ${_skipIntroModeDescription(mode)}',
+        subtitleBuilder: _skipMarkerModeLabel,
         options: SkipMarkerMode.values.map((m) => DialogOption(value: m, title: _skipMarkerModeLabel(m))).toList(),
       ),
       SettingSelectionTile<SkipMarkerMode>(
         pref: SettingsService.skipCreditsMode,
         icon: Symbols.skip_next_rounded,
         title: t.settings.skipCreditsMode,
-        subtitleBuilder: (mode) => '${_skipMarkerModeLabel(mode)} · ${_skipCreditsModeDescription(mode)}',
+        subtitleBuilder: _skipMarkerModeLabel,
         options: SkipMarkerMode.values.map((m) => DialogOption(value: m, title: _skipMarkerModeLabel(m))).toList(),
       ),
       // Also offered in the player's own settings, where it sits beside
@@ -424,18 +422,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
     SkipMarkerMode.auto => t.settings.skipMarkerModeAuto,
   };
 
-  String _skipIntroModeDescription(SkipMarkerMode mode) => switch (mode) {
-    SkipMarkerMode.off => t.settings.skipIntroModeOffDescription,
-    SkipMarkerMode.button => t.settings.skipIntroModeButtonDescription,
-    SkipMarkerMode.auto => t.settings.skipIntroModeAutoDescription,
-  };
-
-  String _skipCreditsModeDescription(SkipMarkerMode mode) => switch (mode) {
-    SkipMarkerMode.off => t.settings.skipCreditsModeOffDescription,
-    SkipMarkerMode.button => t.settings.skipCreditsModeButtonDescription,
-    SkipMarkerMode.auto => t.settings.skipCreditsModeAutoDescription,
-  };
-
   /// Optional touch gestures on the player surface (#1810); the group only
   /// renders on mobile, matching where the gestures exist.
   Widget _gesturesGroup() => SettingsGroup(
@@ -479,24 +465,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
     ],
   );
 
-  /// The player for IPTV channels (Plebz), under the main choice, which then
-  /// keeps films, shows and a server's live TV.
-  Widget _iptvPlayerBackendTile() => SettingSelectionTile<IptvPlayerChoice>(
-    pref: SettingsService.iptvPlayerBackend,
-    icon: Symbols.live_tv_rounded,
-    title: t.settings.iptvPlayerBackend,
-    subtitleBuilder: (choice) => '${_iptvPlayerChoiceLabel(choice)} · ${t.settings.iptvPlayerBackendDescription}',
-    options: IptvPlayerChoice.values
-        .map((choice) => DialogOption(value: choice, title: _iptvPlayerChoiceLabel(choice)))
-        .toList(),
-  );
-
-  String _iptvPlayerChoiceLabel(IptvPlayerChoice choice) => switch (choice) {
-    IptvPlayerChoice.sameAsFilms => t.settings.iptvPlayerSameAsFilms,
-    IptvPlayerChoice.exoPlayer => t.settings.exoPlayer,
-    IptvPlayerChoice.mpv => t.settings.mpv,
-  };
-
   Widget _externalPlayerTile() => SettingsBuilder(
     prefs: [SettingsService.useExternalPlayer, SettingsService.selectedExternalPlayer],
     builder: (context) {
@@ -528,15 +496,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
     icon: Symbols.picture_in_picture_alt_rounded,
     title: t.settings.autoPip,
     subtitle: t.settings.autoPipDescription,
-  );
-
-  /// Only meaningful while the master switch is on, so it is only offered then.
-  Widget _matchContentFrameRateLiveTvTile() => SettingSwitchTile(
-    pref: SettingsService.matchContentFrameRateLiveTv,
-    icon: Symbols.live_tv_rounded,
-    title: t.settings.matchContentFrameRateLiveTv,
-    subtitle: t.settings.matchContentFrameRateLiveTvDescription,
-    onAfterWrite: turnOffSeamlessFullscreenIf,
   );
 
   Widget _matchContentFrameRateTile() => SettingSwitchTile(
@@ -651,15 +610,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
     icon: Symbols.tv_options_input_settings_rounded,
     title: t.settings.tunneledPlayback,
     subtitle: t.settings.tunneledPlaybackDescription,
-  );
-
-  /// Only meaningful while the master switch is on, so it is only offered then.
-  Widget _tunneledPlaybackLiveTvTile() => SettingSwitchTile(
-    pref: SettingsService.tunneledPlaybackLiveTv,
-    icon: Symbols.live_tv_rounded,
-    title: t.settings.tunneledPlaybackLiveTv,
-    subtitle: t.settings.tunneledPlaybackLiveTvDescription,
-    onAfterWrite: turnOffSeamlessFullscreenIf,
   );
 
   Widget _disableDolbyVisionTile() => SettingSwitchTile(

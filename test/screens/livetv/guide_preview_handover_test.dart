@@ -104,8 +104,18 @@ void main() {
     expect(player.disposed, isFalse);
   });
 
-  testWidgets('the box hands its picture over without stopping it, and keeps drawing it until covered', (tester) async {
+  testWidgets('a picture in a texture is not handed over: only one on the plane grows', (tester) async {
     final player = _PicturePlayer();
+    await pumpPreview(tester, null);
+    previewKey.currentState!.adopt(_picture(player));
+    await pumpPreview(tester, _channel);
+
+    expect(previewKey.currentState!.releaseForHandover(), isNull);
+    expect(previewKey.currentState!.isHoldingStream, isTrue);
+  });
+
+  testWidgets('the box hands its picture over without stopping it, and keeps drawing it until covered', (tester) async {
+    final player = _PlanePicturePlayer();
     await pumpPreview(tester, null);
     previewKey.currentState!.adopt(_picture(player));
     await pumpPreview(tester, _channel);

@@ -320,6 +320,21 @@ class _AutomotiveUiScalePref extends Pref<double> {
       svc.writeDouble(key, value.clamp(AutomotiveUiScale.min, AutomotiveUiScale.max).toDouble());
 }
 
+/// [SettingsService.liveTvSeamlessFullscreen] (Plebz): on unless the viewer
+/// turned the live frame-rate match or live tunnelling on — either stops the
+/// picture carrying on, and the settings never claim both.
+class _SeamlessLivePicturePref extends BoolPref {
+  const _SeamlessLivePicturePref() : super('live_tv_seamless_fullscreen', defaultValue: true);
+
+  @override
+  bool readFrom(BaseSharedPreferencesService svc) {
+    if (svc.prefs.containsKey(key)) return super.readFrom(svc);
+    final framesOn = svc.readNullableBool('match_content_frame_rate_live_tv') ?? false;
+    final tunnelsOn = svc.readNullableBool('tunneled_playback_live_tv') ?? false;
+    return !framesOn && !tunnelsOn;
+  }
+}
+
 /// Migrates from the legacy `use_season_poster` boolean key.
 class _EpisodePosterModePref extends EnumPref<EpisodePosterMode> {
   const _EpisodePosterModePref()
@@ -733,15 +748,16 @@ class SettingsService extends BaseSharedPreferencesService {
 
   /// Whether [matchContentFrameRate] also applies to live TV.
   ///
-  /// On by default, so nothing changes for anyone who does not go looking.
-  /// Turning it off is for IPTV: switching the panel's mode costs a black
-  /// screen of a second or two, which on a film happens once and on a channel
-  /// happens at every zap. Providers also declare frame rates loosely, so the
-  /// rate the app switches to is not always the one that arrives.
+  /// Off by default (Plebz): switching the panel's mode costs a black screen
+  /// of a second or two, which on a film happens once and on a channel
+  /// happens at every zap, and it would stop the guide's preview growing into
+  /// full screen ([liveTvSeamlessFullscreen], on by default). Providers also
+  /// declare frame rates loosely, so the rate the app switches to is not
+  /// always the one that arrives.
   ///
   /// Ignored while [matchContentFrameRate] is off, which turns it off
   /// everywhere.
-  static const matchContentFrameRateLiveTv = BoolPref('match_content_frame_rate_live_tv', defaultValue: true);
+  static const matchContentFrameRateLiveTv = BoolPref('match_content_frame_rate_live_tv');
 
   /// Whether this route should negotiate the display's frame rate.
   ///
@@ -1131,29 +1147,17 @@ class SettingsService extends BaseSharedPreferencesService {
   /// being stopped and opened again (Plebz). IPTV on Android only; see
   /// `LivePictureHandover`.
   ///
-  /// Off by default. What would switch the display under the picture goes
+  /// The preview plays on the television's video surface, behind a hole the
+  /// guide leaves for it, and the growth moves that surface with the page —
+  /// nothing moves between surfaces, and the box's own deinterlacer serves
+  /// interlaced channels in the preview too.
+  ///
+  /// On by default. What would switch the display under the picture goes
   /// off for live TV with it: turning this on turns off
   /// [matchContentFrameRateLiveTv] and [tunneledPlaybackLiveTv] (turning
   /// either back on turns this off), and live TV skips
   /// [matchDisplayResolution] while it is on.
-  static const liveTvSeamlessFullscreen = BoolPref('live_tv_seamless_fullscreen');
-
-  /// Whether that picture, once grown to full screen, moves from the app's
-  /// own canvas (a Flutter texture) onto the television's video surface
-  /// (Plebz). On: the hardware plane, HDR and the subtitle plane, at the cost
-  /// of moving the running decoder, which some boxes do not take — on the
-  /// user's Homatics it froze now and then, or put the sound out of step.
-  /// Off (the default): the picture stays where it plays in the preview, no
-  /// move at all, and the box draws every frame through the app.
-  static const liveTvSeamlessWindowSurface = BoolPref('live_tv_seamless_window_surface');
-
-  /// The alternative to the canvas (Plebz, a test beside it): the preview plays
-  /// on the television's video surface from the start, in a box behind a
-  /// hole the guide leaves for it, and the growth moves the surface with the
-  /// page — no move between surfaces at all, and the box's own deinterlacer
-  /// for interlaced channels (an IPTV "RAW" copy) in the preview too. Off by
-  /// default; [liveTvSeamlessWindowSurface] only counts while it is off.
-  static const liveTvSeamlessPlanePreview = BoolPref('live_tv_seamless_plane_preview');
+  static const liveTvSeamlessFullscreen = _SeamlessLivePicturePref();
 
   /// How many days a stored IPTV playlist and guide stay good for.
   ///
@@ -2116,8 +2120,6 @@ class SettingsService extends BaseSharedPreferencesService {
     liveTvDefaultFavorites,
     liveTvGuideTimeNavigation,
     liveTvSeamlessFullscreen,
-    liveTvSeamlessWindowSurface,
-    liveTvSeamlessPlanePreview,
     iptvRefreshIntervalDays,
     iptvMergeDuplicateChannels,
     iptvHideGroupCountryPrefix,

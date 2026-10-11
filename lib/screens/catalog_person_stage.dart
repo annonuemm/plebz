@@ -83,6 +83,10 @@ void _focusWithoutScrolling(
 class CatalogPersonStageState extends State<CatalogPersonStage> {
   final _biographyBarKey = GlobalKey<FocusableActionBarState>();
   final _homeFocusNode = FocusNode(debugLabel: 'person_home');
+  final _gridScope = FocusScopeNode(
+    debugLabel: 'person_grids',
+    directionalTraversalEdgeBehavior: TraversalEdgeBehavior.stop,
+  );
   bool _raised = false;
 
   @override
@@ -96,6 +100,7 @@ class CatalogPersonStageState extends State<CatalogPersonStage> {
   @override
   void dispose() {
     _homeFocusNode.dispose();
+    _gridScope.dispose();
     super.dispose();
   }
 
@@ -385,16 +390,24 @@ class CatalogPersonStageState extends State<CatalogPersonStage> {
             // The posters scroll themselves into view, gently; the framework's
             // own jump on a D-pad move ran first and made the focus flicker
             // back and forth between two rows.
-            child: FocusTraversalGroup(
-              policy: ReadingOrderTraversalPolicy(requestFocusCallback: _focusWithoutScrolling),
-              child: CustomScrollView(
-                controller: widget.scrollController,
-                slivers: [
-                  // Room for a focused poster of the first row to grow.
-                  SliverToBoxAdapter(child: SizedBox(height: 20 * s)),
-                  ...widget.grids,
-                  SliverToBoxAdapter(child: SizedBox(height: 48 * s)),
-                ],
+            //
+            // A scope of their own: at a row's ends LEFT and RIGHT stop there.
+            // Searched across the page, LEFT from the first column found the
+            // home button, the stage came back and the grids scrolled to the
+            // top. UP from the first row leaves on purpose, to the filters.
+            child: FocusScope(
+              node: _gridScope,
+              child: FocusTraversalGroup(
+                policy: ReadingOrderTraversalPolicy(requestFocusCallback: _focusWithoutScrolling),
+                child: CustomScrollView(
+                  controller: widget.scrollController,
+                  slivers: [
+                    // Room for a focused poster of the first row to grow.
+                    SliverToBoxAdapter(child: SizedBox(height: 20 * s)),
+                    ...widget.grids,
+                    SliverToBoxAdapter(child: SizedBox(height: 48 * s)),
+                  ],
+                ),
               ),
             ),
           );

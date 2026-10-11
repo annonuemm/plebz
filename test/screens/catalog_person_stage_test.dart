@@ -274,6 +274,41 @@ void main() {
     expect(position.pixels, greaterThan(0));
   });
 
+  testWidgets('LEFT and RIGHT at the edge of a grid row stay in the grid', (tester) async {
+    TvDetectionService.debugSetAppleTVOverride(true);
+    debugOckerLayoutOnThisHost = true;
+    addTearDown(() {
+      debugOckerLayoutOnThisHost = null;
+      TvDetectionService.debugSetAppleTVOverride(null);
+    });
+    await pumpPage(tester, extraCredits: 30, tall: false);
+    final position = tester.state<ScrollableState>(find.byType(Scrollable).last).position;
+
+    // Into the grids and down two rows, at the left edge.
+    await press(tester, LogicalKeyboardKey.arrowDown);
+    await press(tester, LogicalKeyboardKey.arrowDown);
+    await press(tester, LogicalKeyboardKey.arrowDown);
+    final edge = focused();
+    final scrolled = position.pixels;
+    expect(edge, isNot(startsWith('person_')));
+    expect(scrolled, greaterThan(0));
+
+    // LEFT here once reached the home button: the stage came back and the
+    // grids scrolled to the top.
+    await press(tester, LogicalKeyboardKey.arrowLeft);
+    expect(focused(), edge);
+    expect(position.pixels, scrolled);
+
+    // Along to the row's right end, and once more.
+    for (var i = 0; i < 5; i++) {
+      await press(tester, LogicalKeyboardKey.arrowRight);
+    }
+    final right = focused();
+    await press(tester, LogicalKeyboardKey.arrowRight);
+    expect(focused(), right);
+    expect(focused(), isNot(startsWith('person_')));
+  });
+
   testWidgets('elsewhere the scrolling page carries the same filters', (tester) async {
     await pumpPage(tester);
 

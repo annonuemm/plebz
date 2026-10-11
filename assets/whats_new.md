@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.19.1 (Build 753)
+
+- Darsteller-Seite: Am Rand des Poster-Rasters bleibt der Fokus jetzt im Raster. Vorher sprang die Seite beim Drücken nach links zurück nach oben.
+
 ## 1.19.0 (Build 751)
 
 - Neue Seite für Schauspieler: Ein Klick auf einen Darsteller, in Erkunden oder auf der Seite eines Films oder einer Serie, zeigt Foto, Lebensdaten, Biografie und alles, worin die Person mitgespielt hat. Was in deinen Mediatheken liegt, steht zuerst. Dafür braucht es ein verbundenes Plex-Konto.

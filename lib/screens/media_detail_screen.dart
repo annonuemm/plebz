@@ -3688,12 +3688,22 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [
-                            theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
-                            theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
-                            theme.scaffoldBackgroundColor.withValues(alpha: 0),
-                          ],
-                          stops: const [0.0, 0.3, 1.0],
+                          // Plebz, the redesign: the ground itself behind the
+                          // status bar and the two buttons, fading only below
+                          // them — at 80 % and down, the overview read
+                          // through the clock and around the buttons.
+                          colors: isOcker(context)
+                              ? [
+                                  theme.scaffoldBackgroundColor.withValues(alpha: 1),
+                                  theme.scaffoldBackgroundColor.withValues(alpha: 0.96),
+                                  theme.scaffoldBackgroundColor.withValues(alpha: 0),
+                                ]
+                              : [
+                                  theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
+                                  theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
+                                  theme.scaffoldBackgroundColor.withValues(alpha: 0),
+                                ],
+                          stops: isOcker(context) ? const [0.0, 0.78, 1.0] : const [0.0, 0.3, 1.0],
                         ),
                       ),
                     ),
@@ -5035,7 +5045,11 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                         end: Alignment.bottomCenter,
                         colors: [
                           for (final a in scrimAlphas) bgColor.withValues(alpha: a),
-                          bgColor,
+                          // Opaque, not the colour as it stands: under the redesign
+                          // the page colour is the ground's with no opacity at all,
+                          // and the ramp faded back out in its last stretch — a hard
+                          // edge where the artwork ended, the season tabs on it (Plebz).
+                          bgColor.withValues(alpha: 1),
                         ],
                         stops: [for (final x in scrimXs) solidStop * x, 1.0],
                       ),

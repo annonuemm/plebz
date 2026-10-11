@@ -333,7 +333,7 @@ extension _VideoPlayerBuildMethods on VideoPlayerScreenState {
                         onRateRequested: _setPlaybackRate,
                         onPlayPauseRequested: _handleControlsTransport,
                         onBack: _handleBackButton,
-                        onCreditsStart: (start) => _creditsStart = start,
+                        onCreditsStart: _onCreditsStart,
                         onReachedEnd: ({skipAutoPlayCountdown = false}) =>
                             _onVideoCompleted(true, skipAutoPlayCountdown: skipAutoPlayCountdown),
                         canControl: authority.canControlPlayback,

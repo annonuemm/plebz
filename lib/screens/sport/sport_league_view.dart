@@ -27,6 +27,7 @@ import '../../widgets/optimized_media_image.dart';
 import '../../widgets/settings_builder.dart';
 import '../../utils/live_tv_matching.dart';
 import '../../utils/live_tv_player_navigation.dart';
+import '../../utils/platform_detector.dart';
 import 'club_colour_ground.dart';
 import 'sport_broadcast_finder.dart';
 import 'sport_look.dart';
@@ -294,9 +295,18 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     _settlePendingFirstMatch();
   }
 
+  /// Whether anyone can see the scores: another destination in front keeps
+  /// this one mounted with its tickers off, and an app in the background is
+  /// seen by nobody. Not inactive — a desktop window that lost focus still is.
+  bool get _onScreen {
+    if (!TickerMode.getValuesNotifier(context).value.enabled) return false;
+    final state = WidgetsBinding.instance.lifecycleState;
+    return state != AppLifecycleState.hidden && state != AppLifecycleState.paused;
+  }
+
   /// A running match changes by the minute; nothing else here does.
   Future<void> _refreshIfLive() async {
-    if (!mounted || !widget.isActive) return;
+    if (!mounted || !widget.isActive || !_onScreen) return;
     final now = clock.now();
     if (!_matches.any((match) => match.isLive(now))) return;
     final season = _season;
@@ -369,18 +379,23 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
       pref: PlebzPrefs.sportFavouriteClub,
       builder: (context, _, _) => LayoutBuilder(
         builder: (context, constraints) {
-          final bar = _buildMatchdayBar(look);
           // Side by side wherever there is a table's width to spare; on a phone
           // the table goes under the fixtures instead of crushing both into
-          // columns too narrow for a club's name.
-          final wide = constraints.maxWidth >= 720;
+          // columns too narrow for a club's name. Plebz: a handheld needs the
+          // height for it too — a phone on its side squeezed the table's rows
+          // to slivers beside the fixtures.
+          final wide =
+              constraints.maxWidth >= 720 &&
+              (look.ocker || !PlatformDetector.isMobile(context) || constraints.maxHeight >= 480);
           if (!wide) {
+            final bar = _buildMatchdayBar(look, compact: _isCompactBar(look, constraints.maxWidth));
             return Column(
               children: [
                 bar,
                 SizedBox(height: look.gap),
                 Expanded(
                   child: ListView(
+                    padding: _listPadding(context),
                     children: [
                       if (_dayLoading || _matches.isEmpty)
                         SizedBox(height: look.matchRowHeight * 3, child: _buildFixturesPlaceholder(look))
@@ -399,6 +414,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
           // from the screen's edge — the page's own margin, both sides alike.
           final columnGap = look.ocker ? OckerLayout.safeMargin * look.scale : look.gap * 2;
           final fixturesWidth = constraints.maxWidth - tableWidth - columnGap;
+          final bar = _buildMatchdayBar(look, compact: _isCompactBar(look, fixturesWidth));
           // The bar belongs to the fixtures — it says which ones these are — so
           // it stands over their column, centred on it, and the table beside
           // them keeps the full height.
@@ -413,14 +429,20 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
                     Expanded(
                       child: _dayLoading || _matches.isEmpty
                           ? _buildFixturesPlaceholder(look)
-                          : ListView(children: _matchItems(look, compact: _isCompact(look, fixturesWidth))),
+                          : ListView(
+                              padding: _listPadding(context),
+                              children: _matchItems(look, compact: _isCompact(look, fixturesWidth)),
+                            ),
                     ),
                   ],
                 ),
               ),
               SizedBox(width: columnGap),
-              SizedBox(
+              Container(
                 width: tableWidth,
+                // Plebz: clear of a tablet's navigation bar, which cut the
+                // zones' key off the panel's foot.
+                padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
                 child: _SportTable(
                   rows: _table,
                   look: look,
@@ -498,9 +520,20 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     return first == last ? format.format(first) : '${format.format(first)} – ${format.format(last)}';
   }
 
-  Widget _buildMatchdayBar(SportLook look) {
+  /// Plebz: a list left to pad itself takes the status bar's height again at
+  /// its top — the page above it has already stepped below it — and on a
+  /// phone that gap showed the rows scrolling through it between the bar and
+  /// the first day. Only the navigation bar at the foot is kept clear.
+  EdgeInsets _listPadding(BuildContext context) => EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom);
+
+  /// Whether the bar over the fixtures is a phone's (Plebz): the title smaller,
+  /// its dates on a line under it, the arrows smaller — at the television's
+  /// size the three were wider than a phone and ran off its edge.
+  bool _isCompactBar(SportLook look, double width) => !look.ocker && width < 600;
+
+  Widget _buildMatchdayBar(SportLook look, {bool compact = false}) {
     final (previous, next) = _neighbours;
-    if (look.flat) return _buildFlatMatchdayBar(look, previous, next);
+    if (look.flat) return _buildFlatMatchdayBar(look, previous, next, compact: compact);
     final bar = SizedBox(
       height: (look.ocker ? 76 : 60) * look.scale,
       child: Row(
@@ -544,16 +577,23 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
   /// dates and "aktuell" quietly beside it — and the two arrows as round
   /// buttons at the right of the fixtures. Pressing the title still opens the
   /// season.
-  Widget _buildFlatMatchdayBar(SportLook look, int? previous, int? next) {
-    return SizedBox(
-      height: 64 * look.scale,
+  Widget _buildFlatMatchdayBar(SportLook look, int? previous, int? next, {required bool compact}) {
+    return ConstrainedBox(
+      // Grows with the viewer's text size where the title takes two lines.
+      constraints: compact
+          ? BoxConstraints(minHeight: 64 * look.scale)
+          : BoxConstraints.tightFor(height: 64 * look.scale),
       child: Row(
         children: [
           Expanded(
-            child: Align(alignment: Alignment.centerLeft, child: _buildMatchdayButton(look)),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _buildMatchdayButton(look, compact: compact),
+            ),
           ),
           _buildArrow(
             look,
+            compact: compact,
             node: _previousNode,
             icon: Symbols.chevron_left_rounded,
             target: previous,
@@ -561,9 +601,10 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
             onNavigateLeft: _matchdayNode.requestFocus,
             onNavigateRight: _nextNode.requestFocus,
           ),
-          SizedBox(width: 10 * look.scale),
+          SizedBox(width: (compact ? 8 : 10) * look.scale),
           _buildArrow(
             look,
+            compact: compact,
             node: _nextNode,
             icon: Symbols.chevron_right_rounded,
             target: next,
@@ -581,6 +622,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
   /// and the bar keeps its shape.
   Widget _buildArrow(
     SportLook look, {
+    bool compact = false,
     required FocusNode node,
     required IconData icon,
     required int? target,
@@ -588,7 +630,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     required VoidCallback onNavigateLeft,
     required VoidCallback onNavigateRight,
   }) {
-    final size = (look.flat ? 54 : (look.ocker ? 64 : 48)) * look.scale;
+    final size = (compact ? 44 : (look.flat ? 54 : (look.ocker ? 64 : 48))) * look.scale;
     void step() {
       if (target != null) unawaited(_selectMatchday(target));
     }
@@ -622,7 +664,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
 
   /// "Spieltag 5 ⌄" over the dates it is played on. The chevron is the one
   /// the header draws beside a destination that opens a list.
-  Widget _buildMatchdayButton(SportLook look) {
+  Widget _buildMatchdayButton(SportLook look, {bool compact = false}) {
     final selected = _selected;
     final label = selected == null ? '' : t.sport.matchday(n: selected);
     final style = look.matchdayChip(current: true).copyWith(color: look.ink(1));
@@ -630,7 +672,50 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     final isCurrent = selected != null && selected == _currentMatchday;
     final detail = look.time.copyWith(color: look.ink(0.6));
     final Widget face;
-    if (look.flat) {
+    if (look.flat && compact) {
+      // A phone's (Plebz): the title, and under it the dates and "aktuell" in
+      // one quiet line that gives way before the arrows do.
+      final quiet = look.leagueLabel.copyWith(color: look.ink(0.55), fontSize: 14 * look.scale, height: 1.2);
+      face = Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4 * look.scale, vertical: 6 * look.scale),
+        child: Column(
+          mainAxisSize: .min,
+          crossAxisAlignment: .start,
+          children: [
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: look.matchdayTitle.copyWith(color: look.ink(1), fontSize: 26 * look.scale),
+            ),
+            if (dates != null || isCurrent) ...[
+              SizedBox(height: 4 * look.scale),
+              Builder(
+                builder: (context) => Text.rich(
+                  TextSpan(
+                    children: [
+                      if (dates != null) TextSpan(text: dates),
+                      if (dates != null && isCurrent) const TextSpan(text: ' · '),
+                      if (isCurrent)
+                        TextSpan(
+                          text: t.sport.current,
+                          style: TextStyle(
+                            color: OckerFlatFocusInk.invertingAt(context) ? look.ink(1) : look.live,
+                            fontWeight: .w600,
+                          ),
+                        ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: quiet,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    } else if (look.flat) {
       final quiet = look.leagueLabel.copyWith(color: look.ink(0.55));
       face = Padding(
         padding: EdgeInsets.symmetric(horizontal: 12 * look.scale, vertical: 8 * look.scale),
@@ -829,6 +914,10 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     final board = look.flat;
     final homeWon = score != null && match.isFinished && score.home > score.away;
     final awayWon = score != null && match.isFinished && score.away > score.home;
+    // A phone's line under the redesigns (Plebz, the viewer's pick): the two
+    // clubs one above the other, each with its colour, crest, full name and
+    // goals — side by side a phone left their names a few letters each.
+    final stacked = board && compact;
 
     return Padding(
       padding: EdgeInsets.only(bottom: 4 * look.scale),
@@ -868,11 +957,16 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
         child: SportTap(
           onTap: () => _openMatch(match),
           child: Container(
-            height: look.matchRowHeight,
+            height: stacked ? null : look.matchRowHeight,
+            // Two lines grow with the viewer's text size.
+            constraints: stacked ? BoxConstraints(minHeight: look.matchRowHeight) : null,
             // Room inside the row, so the time does not stand on the edge of
             // the plate that marks the row holding focus — wherever that plate
             // is glass, a phone wearing the look included.
-            padding: EdgeInsets.symmetric(horizontal: ockerGlass(context) ? 16 * look.scale : 0),
+            padding: EdgeInsets.symmetric(
+              horizontal: ockerGlass(context) ? (stacked ? 12 : 16) * look.scale : 0,
+              vertical: stacked ? 8 * look.scale : 0,
+            ),
             decoration: board && live && !_matchNode(match.id).hasFocus
                 ? BoxDecoration(
                     color: look.live.withValues(alpha: 0.1),
@@ -880,49 +974,65 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
                     borderRadius: BorderRadius.circular(look.tk.radiusSm),
                   )
                 : null,
-            child: Row(
-              children: [
-                if (board) ...[_ClubEdge(team: match.home, look: look), SizedBox(width: 12 * look.scale)],
-                SizedBox(
-                  width: (look.ocker ? 88 : (compact ? 50 : 64)) * look.scale,
-                  child: live
-                      ? _LiveBadge(look: look)
-                      : Text(
-                          DateFormat.Hm(locale).format(match.kickoff),
-                          style: look.time.copyWith(color: look.ink(match.isFinished ? 0.45 : 0.7)),
-                        ),
-                ),
-                Expanded(
-                  child: _TeamCell(team: match.home, look: look, alignEnd: true, strong: homeWon, short: compact),
-                ),
-                SizedBox(
-                  width: (look.ocker ? 104 : (compact ? 58 : 76)) * look.scale,
-                  child: Center(
-                    // On Flach's white focus fill what stands on it is
-                    // inverted, and the accent came out as its complement. In
-                    // ink there, the score turns dark like the names beside it.
-                    child: board
-                        ? _ScoreBoard(score: score, live: live, look: look)
-                        : Builder(
-                            builder: (context) => Text(
-                              score == null ? '–:–' : '${score.home} : ${score.away}',
-                              style: look
-                                  .score(strong: score != null)
-                                  .copyWith(
-                                    color: live && !OckerFlatFocusInk.invertingAt(context)
-                                        ? look.live
-                                        : look.ink(score == null ? 0.4 : 1),
+            child: stacked
+                ? _StackedMatchLines(
+                    match: match,
+                    score: score,
+                    live: live,
+                    homeWon: homeWon,
+                    awayWon: awayWon,
+                    look: look,
+                    locale: locale,
+                  )
+                : Row(
+                    children: [
+                      if (board) ...[_ClubEdge(team: match.home, look: look), SizedBox(width: 12 * look.scale)],
+                      SizedBox(
+                        width: (look.ocker ? 88 : (compact ? 50 : 64)) * look.scale,
+                        child: live
+                            ? _LiveBadge(look: look)
+                            : Text(
+                                DateFormat.Hm(locale).format(match.kickoff),
+                                style: look.time.copyWith(color: look.ink(match.isFinished ? 0.45 : 0.7)),
+                              ),
+                      ),
+                      Expanded(
+                        child: _TeamCell(team: match.home, look: look, alignEnd: true, strong: homeWon, short: compact),
+                      ),
+                      SizedBox(
+                        width: (look.ocker ? 104 : (compact ? 58 : 76)) * look.scale,
+                        child: Center(
+                          // On Flach's white focus fill what stands on it is
+                          // inverted, and the accent came out as its complement. In
+                          // ink there, the score turns dark like the names beside it.
+                          child: board
+                              ? _ScoreBoard(score: score, live: live, look: look)
+                              : Builder(
+                                  builder: (context) => Text(
+                                    score == null ? '–:–' : '${score.home} : ${score.away}',
+                                    style: look
+                                        .score(strong: score != null)
+                                        .copyWith(
+                                          color: live && !OckerFlatFocusInk.invertingAt(context)
+                                              ? look.live
+                                              : look.ink(score == null ? 0.4 : 1),
+                                        ),
                                   ),
-                            ),
-                          ),
+                                ),
+                        ),
+                      ),
+                      Expanded(
+                        child: _TeamCell(
+                          team: match.away,
+                          look: look,
+                          alignEnd: false,
+                          strong: awayWon,
+                          short: compact,
+                        ),
+                      ),
+                      if (board) ...[SizedBox(width: 12 * look.scale), _ClubEdge(team: match.away, look: look)],
+                    ],
                   ),
-                ),
-                Expanded(
-                  child: _TeamCell(team: match.away, look: look, alignEnd: false, strong: awayWon, short: compact),
-                ),
-                if (board) ...[SizedBox(width: 12 * look.scale), _ClubEdge(team: match.away, look: look)],
-              ],
-            ),
           ),
         ),
       ),
@@ -1041,13 +1151,139 @@ class _FavouriteStage extends StatelessWidget {
   }
 }
 
+/// A fixture as a phone shows it under the redesigns (Plebz): the kickoff, or
+/// LIVE, at the left; beside it the two clubs one above the other, each with
+/// its colour, crest, full name and goals. The winner's line in full ink, the
+/// loser's goals faint, a running game's goals in the live colour.
+class _StackedMatchLines extends StatelessWidget {
+  const _StackedMatchLines({
+    required this.match,
+    required this.score,
+    required this.live,
+    required this.homeWon,
+    required this.awayWon,
+    required this.look,
+    required this.locale,
+  });
+
+  final SportMatch match;
+  final SportScore? score;
+  final bool live;
+  final bool homeWon;
+  final bool awayWon;
+  final SportLook look;
+  final String locale;
+
+  @override
+  Widget build(BuildContext context) {
+    final score = this.score;
+    return Row(
+      children: [
+        SizedBox(
+          width: 52 * look.scale,
+          child: live
+              ? Align(
+                  alignment: Alignment.centerLeft,
+                  child: _LiveBadge(look: look),
+                )
+              : Text(
+                  DateFormat.Hm(locale).format(match.kickoff),
+                  style: look.time.copyWith(color: look.ink(match.isFinished ? 0.45 : 0.7)),
+                ),
+        ),
+        Expanded(
+          child: Column(
+            mainAxisSize: .min,
+            children: [
+              _StackedTeamLine(
+                team: match.home,
+                goals: score?.home,
+                won: homeWon,
+                lost: awayWon,
+                live: live,
+                look: look,
+              ),
+              SizedBox(height: 6 * look.scale),
+              _StackedTeamLine(
+                team: match.away,
+                goals: score?.away,
+                won: awayWon,
+                lost: homeWon,
+                live: live,
+                look: look,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StackedTeamLine extends StatelessWidget {
+  const _StackedTeamLine({
+    required this.team,
+    required this.goals,
+    required this.won,
+    required this.lost,
+    required this.live,
+    required this.look,
+  });
+
+  final SportTeam team;
+  final int? goals;
+  final bool won;
+  final bool lost;
+  final bool live;
+  final SportLook look;
+
+  @override
+  Widget build(BuildContext context) {
+    final goals = this.goals;
+    final s = look.scale;
+    return Row(
+      children: [
+        _ClubEdge(team: team, look: look, height: 18 * s),
+        SizedBox(width: 10 * s),
+        SportCrest(team: team, size: 22 * s),
+        SizedBox(width: 10 * s),
+        Expanded(
+          child: Text(
+            team.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: look.teamName(strong: won).copyWith(color: look.ink(won ? 1 : 0.88)),
+          ),
+        ),
+        if (goals != null) ...[
+          SizedBox(width: 12 * s),
+          // In ink on Flach's white focus fill, which turns it dark: the live
+          // colour, inverted with the row, came out as its complement.
+          Text(
+            '$goals',
+            style: look
+                .score(strong: !lost)
+                .copyWith(
+                  fontSize: 18 * s,
+                  color: live && !OckerFlatFocusInk.invertingAt(context) ? look.live : look.ink(lost ? 0.5 : 1),
+                ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 /// A club's colour as an edge of its line (Plebz): the clubs of a game told
 /// apart before their names are read. Grey for a club in black and white.
 class _ClubEdge extends StatelessWidget {
-  const _ClubEdge({required this.team, required this.look});
+  const _ClubEdge({required this.team, required this.look, this.height});
 
   final SportTeam team;
   final SportLook look;
+
+  /// The line's own height by default; a phone's two lines take one each.
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
@@ -1055,8 +1291,8 @@ class _ClubEdge extends StatelessWidget {
     // In their own colours on Flach's white focus fill too.
     return OckerKeepColours(
       child: Container(
-        width: 4 * look.scale,
-        height: look.matchRowHeight * 0.56,
+        width: (height == null ? 4 : 3) * look.scale,
+        height: height ?? look.matchRowHeight * 0.56,
         decoration: BoxDecoration(
           color: colour == null ? Colors.white.withValues(alpha: 0.22) : clubMarkColour(colour),
           borderRadius: BorderRadius.circular(2 * look.scale),

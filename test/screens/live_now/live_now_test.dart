@@ -133,11 +133,16 @@ void main() {
       WidgetTester tester,
       LiveNowSnapshot snapshot, {
       AppThemeVariant variant = AppThemeVariant.glas,
+      double textScale = 1,
     }) async {
       final hub = liveNowHub(snapshot);
       await tester.pumpWidget(
         MaterialApp(
           theme: monoTheme(dark: true, variant: variant),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
           home: Scaffold(
             body: LiveNowScope(
               snapshot: snapshot,
@@ -180,6 +185,21 @@ void main() {
         expect(find.text('Bayern – Dortmund'), findsOneWidget);
         expect(find.text('${t.sport.bundesliga1} · 15:30'), findsOneWidget);
         expect(find.text(t.sport.bundesliga1), findsNothing, reason: 'the card is a picture, as a poster is');
+      });
+    });
+
+    testWidgets('larger system text does not overflow the two-line caption (Plebz)', (tester) async {
+      await withClock(Clock.fixed(_now), () async {
+        await pumpTile(
+          tester,
+          LiveNowSnapshot(
+            entries: [LiveNowGame(match: liveGame(), league: SportLeague.bundesliga1)],
+          ),
+          textScale: 1.4,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.text('Bayern – Dortmund'), findsOneWidget);
       });
     });
 

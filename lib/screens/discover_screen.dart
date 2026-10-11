@@ -304,12 +304,24 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     }
   }
 
+  /// Whether anyone can see the row: its tab in front and the app not in the
+  /// background. Off screen the minute's refresh only spends battery and data.
+  bool _appInForeground = true;
+
   void _resumeLiveNow() {
     if (_liveNowLoader == null || _liveNowTimer != null || !_liveNowWanted) return;
+    if (!_isTabVisible || !_appInForeground) return;
     unawaited(_refreshLiveNow());
     // A live score moves by the minute; the loader asks each source only as
     // often as that source can have changed.
     _liveNowTimer = Timer.periodic(const Duration(minutes: 1), (_) => unawaited(_refreshLiveNow()));
+  }
+
+  /// Stops the minute's refresh but keeps what the row shows; [_resumeLiveNow]
+  /// brings it up to date at once when it is on screen again.
+  void _pauseLiveNow() {
+    _liveNowTimer?.cancel();
+    _liveNowTimer = null;
   }
 
   Future<void> _refreshLiveNow() async {
@@ -696,6 +708,14 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Not on inactive: a desktop window that lost focus is still on screen.
+    if (state == AppLifecycleState.hidden || state == AppLifecycleState.paused) {
+      _appInForeground = false;
+      _pauseLiveNow();
+    } else if (state == AppLifecycleState.resumed && !_appInForeground) {
+      _appInForeground = true;
+      _resumeLiveNow();
+    }
     if (state == AppLifecycleState.resumed) {
       // Restart auto-scroll only if discover tab is visible
       if (_isTabVisible && !_isAutoScrollPaused) _startAutoScroll();
@@ -789,6 +809,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     _autoScrollTimer?.cancel();
     _stopIndicatorProgress();
     _discover.watchRecommendationsRotation(false);
+    _pauseLiveNow();
   }
 
   @override
@@ -800,6 +821,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     _discover.refreshRecommendationsIfStale();
     // And while this screen is the one on show, the row turns over on its own.
     _discover.watchRecommendationsRotation(true);
+    _resumeLiveNow();
     if (!_isAutoScrollPaused) {
       _startAutoScroll();
     }
@@ -984,7 +1006,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   Widget _buildOverlaidAppBar() {
     final colorScheme = Theme.of(context).colorScheme;
     final foregroundColor = colorScheme.onSurface;
-    return ToolbarScrim(
+    final bar = ToolbarScrim(
       child: Row(
         children: [
           if (!PlatformDetector.isTV())
@@ -1008,6 +1030,29 @@ class _DiscoverScreenState extends State<DiscoverScreen>
           ],
         ],
       ),
+    );
+    if (PlatformDetector.isTV() || !isOcker(context)) return bar;
+    // Plebz, the redesign on a phone or tablet: the bar floats over the hero's
+    // picture, and scrolled, the hero's words and its button slid under the
+    // title. The ground fades in behind the bar over the first stretch of the
+    // scroll, so at the top the picture still runs up under it.
+    final ground = tokens(context).bg.withValues(alpha: 1);
+    return AnimatedBuilder(
+      animation: _scrollController,
+      builder: (context, child) {
+        final offset = _scrollController.hasClients ? _scrollController.offset : 0.0;
+        final cover = (offset / 120).clamp(0.0, 1.0);
+        return Stack(
+          children: [
+            if (cover > 0)
+              Positioned.fill(
+                child: ColoredBox(color: ground.withValues(alpha: cover)),
+              ),
+            child!,
+          ],
+        );
+      },
+      child: bar,
     );
   }
 
@@ -1637,7 +1682,16 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                             // Reach full bg before the bottom edge so the hero
                             // blends seamlessly into the content below and the
                             // page dots sit on a solid band.
-                            colors: [Colors.transparent, bgColor.withValues(alpha: 0.9), bgColor, bgColor],
+                            // Opaque at the foot, not the colour as it stands:
+                            // under the redesign the page colour has no opacity,
+                            // and the hero ended in a hard edge on the first row
+                            // (Plebz).
+                            colors: [
+                              Colors.transparent,
+                              bgColor.withValues(alpha: 0.9),
+                              bgColor.withValues(alpha: 1),
+                              bgColor.withValues(alpha: 1),
+                            ],
                             stops: isTv ? const [0.25, 0.78, 0.94, 1.0] : const [0.5, 0.85, 0.94, 1.0],
                           ),
                         ),

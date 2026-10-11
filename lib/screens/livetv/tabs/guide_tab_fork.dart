@@ -87,12 +87,79 @@ extension _GuideTabFork on GuideTabState {
   /// So a desktop window gets it too, once it is big enough to keep a guide
   /// under it: below roughly this height the seven-tenths left over is the
   /// eight rows at their floor, and a shorter window would be trading the
-  /// schedule for the picture. A phone or tablet keeps the bare grid.
+  /// schedule for the picture. A phone or tablet: see [_handheldShowsPreview].
   bool get _showsPreview {
     if (PlatformDetector.isTV()) return true;
-    if (!PlatformDetector.isDesktopOS()) return false;
+    if (PlatformDetector.isDesktopOS()) {
+      final size = MediaQuery.sizeOf(context);
+      return size.height >= 600 && size.width >= 900;
+    }
+    return _handheldShowsPreview;
+  }
+
+  /// Plebz: a phone held upright and a tablet either way up have the band too
+  /// (the user's call, 2026-10-11): a tap puts a channel in it, a second tap,
+  /// a tap on the picture or its button puts it on the whole screen. A phone on
+  /// its side keeps the bare grid, whose tap goes straight to the whole screen —
+  /// except while a channel plays in the band: turning the phone is then the
+  /// way to the whole screen ([_followDeviceRotation]), and the band has to be
+  /// there to hand the picture over.
+  bool get _handheldShowsPreview {
+    if (GuideTabState.debugHandheldPreview == false) return false;
+    if (!GuidePreviewPlayerState.canPlayInline || !PlatformDetector.isMobile(context)) return false;
     final size = MediaQuery.sizeOf(context);
-    return size.height >= 600 && size.width >= 900;
+    if (size.shortestSide >= 600) return true;
+    return size.height >= size.width || _previewChannel != null;
+  }
+
+  /// A phone held upright: the band is the picture across the whole width
+  /// ([GuidePreviewBand]) rather than a picture beside its words.
+  bool get _isPhoneBand {
+    if (PlatformDetector.isTV() || !PlatformDetector.isMobile(context)) return false;
+    final size = MediaQuery.sizeOf(context);
+    return size.shortestSide < 600 && size.height >= size.width;
+  }
+
+  /// What is on the channel in the band.
+  LiveTvProgram? get _previewProgram {
+    final key = _previewChannel?.key;
+    if (key == null) return null;
+    final index = widget.channels.indexWhere((channel) => channel.key == key);
+    return index < 0 ? null : _findCurrentProgram(index);
+  }
+
+  /// The band's button, or a tap on its picture: the second press.
+  void _openPreviewFullScreen() {
+    final channel = _previewChannel;
+    if (channel != null) unawaited(_tuneOrPreview(channel));
+  }
+
+  /// Plebz: a phone turned on its side with a channel in the band takes it to
+  /// the whole screen, and the player then follows the phone
+  /// ([OrientationHelper.followDeviceRotation]); turned upright again, it
+  /// gives the picture back to the band. Only on a turn, never on a state: a
+  /// guide come back to on its side stays as it is.
+  void _followDeviceRotation() {
+    if (PlatformDetector.isTV() || !PlatformDetector.isMobile(context)) return;
+    final size = MediaQuery.sizeOf(context);
+    final orientation = size.width > size.height ? Orientation.landscape : Orientation.portrait;
+    final previous = _lastOrientation;
+    _lastOrientation = orientation;
+    if (previous == null || previous == orientation || size.shortestSide >= 600) return;
+    final onTop = ModalRoute.of(context)?.isCurrent ?? true;
+    if (orientation == Orientation.landscape) {
+      final channel = _previewChannel;
+      // A hidden tab keeps its guide mounted with its tickers off.
+      if (channel == null || !onTop || !TickerMode.valuesOf(context).enabled) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _previewChannel?.key != channel.key) return;
+        unawaited(_tuneOrPreview(channel, followDeviceRotation: true));
+      });
+    } else if (OrientationHelper.followDeviceRotation && !onTop) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && OrientationHelper.followDeviceRotation) unawaited(Navigator.of(context).maybePop());
+      });
+    }
   }
 
   /// The guide is also built by hosts that have not loaded settings yet, and
@@ -166,8 +233,10 @@ extension _GuideTabFork on GuideTabState {
   /// which is a native change out of proportion to a preview window.
   /// Unless the playing picture itself can be handed over
   /// ([_handPictureToFullScreen]).
-  Future<void> _tuneOrPreview(LiveTvChannel channel) async {
-    final play = widget.onPlayChannel ?? tuneChannel;
+  Future<void> _tuneOrPreview(LiveTvChannel channel, {bool followDeviceRotation = false}) async {
+    final play =
+        widget.onPlayChannel ??
+        (LiveTvChannel channel) => tuneChannel(channel, followDeviceRotation: followDeviceRotation);
     if (!_showsPreview) {
       await play(channel);
       return;
@@ -176,7 +245,7 @@ extension _GuideTabFork on GuideTabState {
       _setPreviewChannel(channel);
       return;
     }
-    if (await _handPictureToFullScreen(channel)) return;
+    if (await _handPictureToFullScreen(channel, followDeviceRotation: followDeviceRotation)) return;
     await _previewKey.currentState?.stopForHandover();
     if (!mounted) return;
     _setPreviewChannel(null);
@@ -193,7 +262,7 @@ extension _GuideTabFork on GuideTabState {
   /// so the channel never stops (Plebz, "Vorschau nahtlos ins Vollbild").
   /// False when it cannot — the switch is off, or the picture is not one that
   /// can move — and the ordinary way runs instead.
-  Future<bool> _handPictureToFullScreen(LiveTvChannel channel) async {
+  Future<bool> _handPictureToFullScreen(LiveTvChannel channel, {bool followDeviceRotation = false}) async {
     if (widget.onPlayChannel != null) return false;
     final settings = SettingsService.instanceOrNull;
     if (settings == null || !LivePictureHandover.enabledIn(settings)) return false;
@@ -202,7 +271,12 @@ extension _GuideTabFork on GuideTabState {
     if (preview == null || from == null) return false;
     final picture = preview.releaseForHandover();
     if (picture == null) return false;
-    final opened = await tuneChannel(channel, handover: picture, pictureFrom: from);
+    final opened = await tuneChannel(
+      channel,
+      handover: picture,
+      pictureFrom: from,
+      followDeviceRotation: followDeviceRotation,
+    );
     if (!opened) {
       // Nothing took it on: the box plays on.
       final stillHere = mounted ? _previewKey.currentState : null;
@@ -555,18 +629,29 @@ extension _GuideTabFork on GuideTabState {
         ? LayoutBuilder(
             builder: (context, constraints) => Column(
               children: [
-                SizedBox(
-                  height: constraints.maxHeight * GuidePreviewPanel.heightFraction,
-                  child: ValueListenableBuilder<_GuideFocusSnapshot>(
-                    valueListenable: _focusSnapshot,
-                    builder: (context, focus, _) => GuidePreviewPanel(
+                if (_isPhoneBand)
+                  SizedBox(
+                    height: constraints.maxWidth * 9 / 16,
+                    child: GuidePreviewBand(
                       playerKey: _previewKey,
                       previewChannel: _previewChannel,
-                      focusedChannel: _channelAt(focus.channelIndex),
-                      focusedProgram: focus.program ?? _findCurrentProgram(focus.channelIndex),
+                      program: _previewProgram,
+                      onFullScreen: _openPreviewFullScreen,
+                    ),
+                  )
+                else
+                  SizedBox(
+                    height: constraints.maxHeight * GuidePreviewPanel.heightFraction,
+                    child: ValueListenableBuilder<_GuideFocusSnapshot>(
+                      valueListenable: _focusSnapshot,
+                      builder: (context, focus, _) => GuidePreviewPanel(
+                        playerKey: _previewKey,
+                        previewChannel: _previewChannel,
+                        focusedChannel: _channelAt(focus.channelIndex),
+                        focusedProgram: focus.program ?? _findCurrentProgram(focus.channelIndex),
+                      ),
                     ),
                   ),
-                ),
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {

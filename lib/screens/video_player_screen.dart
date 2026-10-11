@@ -730,11 +730,25 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
   /// The "up next" panel, shown while the episode still runs.
   bool _showUpNext = false;
 
-  /// Back dismissed it: it does not come back for this episode.
-  bool _upNextDismissed = false;
+  /// Back dismissed it: it does not come back for this episode — the one
+  /// named here. The next episode plays in this same player, and offers its
+  /// own successor again.
+  String? _upNextDismissedFor;
 
-  /// Where this episode's credits begin, as the controls reported it.
+  bool get _upNextDismissed => _upNextDismissedFor == _currentMetadata.globalKey;
+
+  /// Where this episode's credits begin, as the controls reported it, and for
+  /// which episode: one whose markers never arrive (a download without them)
+  /// must not raise the panel at the minute the one before's credits began.
   Duration? _creditsStart;
+  String? _creditsStartFor;
+
+  Duration? get _creditsStartOfThisEpisode => _creditsStartFor == _currentMetadata.globalKey ? _creditsStart : null;
+
+  void _onCreditsStart(Duration? start) {
+    _creditsStart = start;
+    _creditsStartFor = _currentMetadata.globalKey;
+  }
 
   /// The next episode's full row, once the prefetch has it — the adjacency
   /// row itself carries no summary.
@@ -2375,7 +2389,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
   void dismissUpNext() {
     setStateIfMounted(() {
       _showUpNext = false;
-      _upNextDismissed = true;
+      _upNextDismissedFor = _currentMetadata.globalKey;
     });
   }
 
@@ -2484,6 +2498,9 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
   /// requests, and the route guard is what refuses to start at all once
   /// another player owns the screen.
   Future<void> _restoreSystemUiAndOrientation() {
+    // Plebz: a picture turned on to the whole screen by the phone's rotation
+    // is over; the next player pins landscape again.
+    OrientationHelper.followDeviceRotation = false;
     // Before the overlays are shown below: the re-show callback that follows
     // must find no owner, or it would hide them again.
     ImmersiveModeGuard.release(this);

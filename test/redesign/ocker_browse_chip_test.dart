@@ -1,3 +1,4 @@
+import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/widgets/catalog_tile_cards.dart';
 import 'package:plezy/widgets/tv_browse_rail.dart';
@@ -15,6 +16,13 @@ void main() {
       expect(TvBrowseRailLayout.chipTextStyle(1).fontSize, 15);
       expect(TvBrowseRailLayout.chipHeightFor(1), 52);
       expect(chipTileWidth('Krimi', 1), TvBrowseRailLayout.chipWidthFor('Krimi', 1));
+    });
+
+    test('a phone set to larger text gets a chip as wide as the word it draws (Plebz)', () {
+      final plain = chipTileWidth('Dokumentation', 1);
+      final larger = chipTileWidth('Dokumentation', 1, textScaler: const TextScaler.linear(1.3));
+
+      expect(larger, greaterThan(plain));
     });
   });
 }

@@ -13,7 +13,10 @@ class OrientationHelper {
   /// 180° display rotation — every app that leaves orientation alone has that
   /// rotation filtered out by `config_allowAllRotations`. On a TV box that does
   /// not pin rotation itself, the app alone then renders upside down (#2401).
-  static bool get _platformOwnsOrientation => PlatformDetector.isAutomotive() || PlatformDetector.isTV();
+  ///
+  /// Plebz: the hardware decides, not the layout picked in the settings — a TV
+  /// box set to the phone layout is still a TV that must not be asked.
+  static bool get _platformOwnsOrientation => PlatformDetector.isAutomotive() || PlatformDetector.isTvDevice();
 
   /// Restores the app's default orientation preferences: every orientation
   /// on every handheld. Phones rotate into the landscape shell (leading
@@ -26,10 +29,20 @@ class OrientationHelper {
     await SystemChrome.setPreferredOrientations(DeviceOrientation.values);
   }
 
+  /// Plebz: set while a live picture is on the whole screen because the phone
+  /// was turned on its side. The player then follows the phone instead of
+  /// pinning landscape, so turning it upright again hands the picture back to
+  /// the guide's band. Cleared when the player restores the orientation.
+  static bool followDeviceRotation = false;
+
   /// Pins playback to landscape without touching system UI, for the player's
   /// rotation-lock toggle.
   static Future<void> lockLandscapeOrientation() async {
     if (_platformOwnsOrientation) return;
+    if (followDeviceRotation) {
+      await SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+      return;
+    }
     await SystemChrome.setPreferredOrientations(const [
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,

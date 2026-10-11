@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -123,6 +124,55 @@ void main() {
       expect(progress.last, 1.0);
     });
 
+    /// Bodies that never finish on their own; closed after each test.
+    final openBodies = <StreamController<List<int>>>[];
+    tearDown(() async {
+      for (final body in openBodies) {
+        await body.close();
+      }
+      openBodies.clear();
+    });
+
+    /// A server that sends one chunk and then nothing, as a phone's dropped
+    /// connection looks from here.
+    PlebzUpdateService stalling({Duration idleTimeout = PlebzUpdateService.downloadIdleTimeout}) => PlebzUpdateService(
+      client: MockClient.streaming((request, _) async {
+        final body = StreamController<List<int>>();
+        openBodies.add(body);
+        body.add(utf8.encode('ap'));
+        return http.StreamedResponse(body.stream, 200, contentLength: 4);
+      }),
+      downloadDirectory: () async => temp,
+      idleTimeout: idleTimeout,
+    );
+
+    final asset = PlebzReleaseAsset(name: 'Plebz.apk', url: Uri.parse('https://example.test/p.apk'), size: 4);
+
+    test('a download that stops arriving fails instead of waiting for ever, and leaves no file (Plebz)', () async {
+      await expectLater(
+        stalling(idleTimeout: const Duration(milliseconds: 100)).download(asset),
+        throwsA(isA<TimeoutException>()),
+      );
+      expect(File('${temp.path}/updates/Plebz.apk').existsSync(), isFalse);
+    });
+
+    test('a download the viewer cancels stops at once, also while no byte comes (Plebz)', () async {
+      final cancel = Completer<void>();
+      final progress = <double>[];
+      final download = stalling().download(
+        asset,
+        cancelled: cancel.future,
+        onProgress: (value) {
+          progress.add(value);
+          if (!cancel.isCompleted) cancel.complete();
+        },
+      );
+
+      await expectLater(download.timeout(const Duration(seconds: 5)), throwsA(isA<PlebzUpdateCancelled>()));
+      expect(progress, [0.5]);
+      expect(File('${temp.path}/updates/Plebz.apk').existsSync(), isFalse);
+    });
+
     test('refuses and deletes a file that does not match', () async {
       final asset = PlebzReleaseAsset(
         name: 'Plebz.apk',
@@ -244,6 +294,15 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(calls, ['canInstall', 'install']);
+    });
+
+    testWidgets('says how big the download is before the yes (Plebz)', (tester) async {
+      final temp = Directory.systemTemp.createTempSync('plebz_update_ui_');
+      addTearDown(() => temp.deleteSync(recursive: true));
+      await run(tester, installedBuild: 550, temp: temp);
+
+      expect(find.textContaining(t.plebz.updateSize(size: '4 B')), findsOneWidget);
+      expect(find.textContaining(t.plebz.updateOnMobileData), findsNothing, reason: 'no link type is known here');
     });
 
     testWidgets('without permission to install, it asks for it first', (tester) async {

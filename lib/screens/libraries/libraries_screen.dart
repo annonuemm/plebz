@@ -36,6 +36,7 @@ import 'tabs/library_playlists_tab.dart';
 import 'tabs/base_library_tab.dart';
 import '../../redesign/ocker_browse_grid.dart';
 import '../../redesign/ocker_skin.dart';
+import '../../redesign/ocker_status_bar_ground.dart';
 import '../../navigation/main_screen_scope.dart';
 import '../../redesign/ocker_filter_glyph.dart';
 import '../../redesign/ocker_filter_slot.dart';
@@ -1012,7 +1013,7 @@ class _LibrariesScreenState extends State<LibrariesScreen>
             pinned: !floating,
             floating: floating,
             snap: floating,
-            backgroundColor: useTvRecommendedBackdrop ? Colors.transparent : Theme.of(context).scaffoldBackgroundColor,
+            backgroundColor: useTvRecommendedBackdrop ? Colors.transparent : pageBarColor(context),
             surfaceTintColor: Colors.transparent,
             shadowColor: Colors.transparent,
             scrolledUnderElevation: 0,
@@ -1219,6 +1220,8 @@ class _LibrariesScreenState extends State<LibrariesScreen>
       );
     }
 
-    return Scaffold(body: scrollBody);
+    // Plebz: the bar floats away as the page scrolls; under the redesign the
+    // status bar then gets a strip of ground ([OckerStatusBarGround]).
+    return Scaffold(body: OckerStatusBarGround(child: scrollBody));
   }
 }

@@ -111,6 +111,8 @@ class _ManagementScaffold extends StatelessWidget {
     required this.listFocusNode,
     required this.onKeyEvent,
     required this.child,
+    this.onBack,
+    this.onClose,
   });
 
   final bool isDialog;
@@ -119,6 +121,11 @@ class _ManagementScaffold extends StatelessWidget {
   final FocusNode listFocusNode;
   final KeyEventResult Function(FocusNode, KeyEvent) onKeyEvent;
   final Widget child;
+
+  /// Plebz: a group's channels, opened from the groups, lead back to them
+  /// with an arrow of their own; their close closes the whole of it.
+  final VoidCallback? onBack;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -139,17 +146,24 @@ class _ManagementScaffold extends StatelessWidget {
           child: Scaffold(
             appBar: AppBar(
               automaticallyImplyLeading: false,
+              leading: onBack == null
+                  ? null
+                  : IconButton(
+                      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                      icon: const AppIcon(Symbols.arrow_back_rounded, fill: 1),
+                      onPressed: onBack,
+                    ),
               title: Row(
                 children: [
-                  AppIcon(icon, fill: 1),
-                  const SizedBox(width: 12),
+                  if (onBack == null) ...[AppIcon(icon, fill: 1), const SizedBox(width: 12)],
                   Expanded(child: Text(title)),
                 ],
               ),
               actions: [
                 IconButton(
+                  tooltip: t.common.close,
                   icon: const AppIcon(Symbols.close_rounded, fill: 1),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: onClose ?? () => Navigator.pop(context),
                 ),
               ],
             ),
@@ -162,7 +176,7 @@ class _ManagementScaffold extends StatelessWidget {
     return Column(
       mainAxisSize: .min,
       children: [
-        BottomSheetHeader(title: title, icon: icon),
+        BottomSheetHeader(title: title, icon: onBack == null ? icon : null, onBack: onBack, onClose: onClose),
         Flexible(child: body),
       ],
     );
@@ -205,7 +219,7 @@ class _GroupManagementListState extends State<_GroupManagementList>
     if (column == 1) {
       _toggleHidden(_groups[index]);
     } else if (column == 2) {
-      _openChannels(_groups[index]);
+      unawaited(_openChannels(_groups[index]));
     }
   }
 
@@ -239,21 +253,30 @@ class _GroupManagementListState extends State<_GroupManagementList>
     unawaited(provider.setGroupHidden(group.key, !provider.layout.isGroupHidden(group.key)));
   }
 
-  void _openChannels(ChannelGroupEntry group) {
+  /// A group's channels, over the groups. Back (its arrow, BACK, the gesture)
+  /// returns here; its close answers true and closes these too.
+  Future<void> _openChannels(ChannelGroupEntry group) async {
     final channels = widget.channels;
+    final bool? closeAll;
     if (widget.isDialog) {
-      unawaited(
-        showScopedDialog<void>(
-          context: context,
-          builder: (context) => _ChannelManagementList(isDialog: true, channels: channels, groupKey: group.key),
-        ),
+      closeAll = await showScopedDialog<bool>(
+        context: context,
+        builder: (context) =>
+            _ChannelManagementList(isDialog: true, channels: channels, groupKey: group.key, nested: true),
       );
-      return;
+    } else {
+      closeAll = await OverlaySheetController.pushAdaptive<bool>(
+        context,
+        builder: (context) =>
+            _ChannelManagementList(isDialog: false, channels: channels, groupKey: group.key, nested: true),
+      );
     }
-    OverlaySheetController.pushAdaptive<void>(
-      context,
-      builder: (context) => _ChannelManagementList(isDialog: false, channels: channels, groupKey: group.key),
-    );
+    if (closeAll != true || !mounted) return;
+    if (widget.isDialog) {
+      Navigator.pop(context);
+    } else {
+      OverlaySheetController.closeAdaptive(context);
+    }
   }
 
   @override
@@ -290,7 +313,7 @@ class _GroupManagementListState extends State<_GroupManagementList>
             isMoving: index == movingIndex,
             focusedColumn: isFocused ? focusedColumn : null,
             onToggleHidden: () => _toggleHidden(group),
-            onOpen: () => _openChannels(group),
+            onOpen: () => unawaited(_openChannels(group)),
           );
         },
       ),
@@ -299,11 +322,19 @@ class _GroupManagementListState extends State<_GroupManagementList>
 }
 
 class _ChannelManagementList extends StatefulWidget {
-  const _ChannelManagementList({required this.isDialog, required this.channels, required this.groupKey});
+  const _ChannelManagementList({
+    required this.isDialog,
+    required this.channels,
+    required this.groupKey,
+    this.nested = false,
+  });
 
   final bool isDialog;
   final List<LiveTvChannel> channels;
   final String groupKey;
+
+  /// Opened from the groups, which it leads back to.
+  final bool nested;
 
   @override
   State<_ChannelManagementList> createState() => _ChannelManagementListState();
@@ -391,6 +422,8 @@ class _ChannelManagementListState extends State<_ChannelManagementList>
       icon: Symbols.tune_rounded,
       listFocusNode: _listFocusNode,
       onKeyEvent: handleReorderKeyEvent,
+      onBack: widget.nested ? () => OverlaySheetController.popAdaptive(context) : null,
+      onClose: widget.nested ? () => OverlaySheetController.popAdaptive(context, true) : null,
       child: ReorderableListView.builder(
         scrollController: _scrollController,
         shrinkWrap: !widget.isDialog,
@@ -467,15 +500,26 @@ class _ManagementTile extends StatelessWidget {
           leading: Row(
             mainAxisSize: .min,
             children: [
+              // The grip's box takes in the gap after it and the row's height, so a
+              // finger has more than the glyph to land on; nothing moves on screen.
               ReorderableDragStartListener(
                 index: index,
-                child: AppIcon(
-                  isMoving ? Symbols.swap_vert_rounded : Symbols.drag_indicator_rounded,
-                  fill: 1,
-                  color: isMoving ? colorScheme.primary : IconTheme.of(context).color?.withValues(alpha: 0.5),
+                child: ColoredBox(
+                  color: Colors.transparent,
+                  child: SizedBox(
+                    width: 32,
+                    height: 48,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: AppIcon(
+                        isMoving ? Symbols.swap_vert_rounded : Symbols.drag_indicator_rounded,
+                        fill: 1,
+                        color: isMoving ? colorScheme.primary : IconTheme.of(context).color?.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
               AppIcon(leadingIcon, fill: 1),
             ],
           ),

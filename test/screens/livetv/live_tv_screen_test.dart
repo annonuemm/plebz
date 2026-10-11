@@ -266,6 +266,111 @@ void main() {
     expect(_guideChannels(tester).map((channel) => channel.key), ['channel-a', 'channel-b', 'channel-c']);
   });
 
+  group('a touch screen chooses its group from a chip (Plebz)', () {
+    setUp(() => PlatformDetector.debugSetIsDesktopOSOverride(false));
+    tearDown(() => PlatformDetector.debugSetIsDesktopOSOverride(null));
+
+    testWidgets('the chip names the group in force and opens the list from below', (tester) async {
+      final harness = await _pumpLiveTvScreen(
+        tester,
+        channelKeys: const ['channel-a', 'channel-b', 'channel-c'],
+        channelGroups: _channelGroups(),
+      );
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        harness.dispose();
+      });
+
+      await tester.tap(find.text(t.liveTv.allChannels).last);
+      await tester.pumpAndSettle();
+      expect(find.text(t.liveTv.channelGroups), findsOneWidget, reason: 'the sheet with its heading');
+
+      await tester.tap(find.text('News').last);
+      await tester.pumpAndSettle();
+      expect(_guideChannels(tester).map((channel) => channel.key), ['channel-a', 'channel-b']);
+      expect(find.text(t.liveTv.channelGroups), findsNothing, reason: 'choosing closes the sheet');
+      expect(find.text('News'), findsWidgets, reason: 'the chip now says which group is on');
+
+      await tester.tap(find.text('News').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(t.liveTv.allChannels).last);
+      await tester.pumpAndSettle();
+      expect(_guideChannels(tester).map((channel) => channel.key), ['channel-a', 'channel-b', 'channel-c']);
+    });
+
+    testWidgets('the chip stands where the title was, saving the guide a line', (tester) async {
+      final harness = await _pumpLiveTvScreen(
+        tester,
+        channelKeys: const ['channel-a', 'channel-b', 'channel-c'],
+        channelGroups: _channelGroups(),
+      );
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        harness.dispose();
+      });
+
+      expect(find.text(t.liveTv.title), findsNothing);
+      final chip = find.ancestor(of: find.text(t.liveTv.allChannels).last, matching: find.byType(AppBar));
+      expect(chip, findsOneWidget, reason: 'in the app bar');
+    });
+
+    testWidgets('a long press on a group in the list opens its menu', (tester) async {
+      final harness = await _pumpLiveTvScreen(
+        tester,
+        channelKeys: const ['channel-a', 'channel-b', 'channel-c'],
+        channelGroups: _channelGroups(),
+      );
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        harness.dispose();
+      });
+
+      await tester.tap(find.text(t.liveTv.allChannels).last);
+      await tester.pumpAndSettle();
+      await tester.longPress(find.text('Sport').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text(t.liveTv.renameGroup), findsOneWidget);
+    });
+  });
+
+  group('channel management from the screen (Plebz)', () {
+    for (final tv in [false]) {
+      testWidgets('${tv ? 'a television' : 'a phone'}: back from a group\'s channels returns to the groups', (
+        tester,
+      ) async {
+        TvDetectionService.debugSetAppleTVOverride(tv);
+        addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+        final harness = await _pumpLiveTvScreen(
+          tester,
+          channelKeys: const ['channel-a', 'channel-b', 'channel-c'],
+          channelGroups: _channelGroups(),
+        );
+        addTearDown(() async {
+          await tester.pumpWidget(const SizedBox.shrink());
+          harness.dispose();
+        });
+
+        await tester.tap(find.byTooltip(t.liveTv.manageChannels));
+        await tester.pumpAndSettle();
+        expect(find.text('Sport'), findsWidgets);
+
+        expect(find.byType(ReorderableListView), findsOneWidget, reason: 'the groups');
+        await tester.tap(find.text('News').last);
+        await tester.pumpAndSettle();
+        expect(find.byType(ReorderableListView), findsNWidgets(2), reason: 'the group\'s channels over the groups');
+
+        if (tv) {
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        } else {
+          await tester.binding.handlePopRoute();
+        }
+        await tester.pumpAndSettle();
+        expect(find.byType(ReorderableListView), findsOneWidget, reason: 'back among the groups');
+      });
+    }
+  });
+
   group('a channel handed over from the home screen', () {
     setUp(LiveTvLastSelection.instance.resetForTest);
     tearDown(LiveTvLastSelection.instance.resetForTest);

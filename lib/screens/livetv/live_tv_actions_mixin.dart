@@ -55,6 +55,7 @@ mixin LiveTvActionsMixin<T extends StatefulWidget> on State<T> {
     int? startAtEpoch,
     LivePictureHandover? handover,
     Rect? pictureFrom,
+    bool followDeviceRotation = false,
   }) {
     final multiServer = context.read<MultiServerProvider>();
     return navigateToLiveTv(
@@ -66,6 +67,7 @@ mixin LiveTvActionsMixin<T extends StatefulWidget> on State<T> {
       group: liveTvPlayerGroup,
       handover: handover,
       pictureFrom: pictureFrom,
+      followDeviceRotation: followDeviceRotation,
     );
   }
 

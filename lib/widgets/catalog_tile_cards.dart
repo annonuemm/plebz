@@ -45,13 +45,17 @@ double _chipPadding(double scale, double size) => 20 * (size / 15) * scale;
 /// A chip is as wide as its word, within reason: a row of pills all the width
 /// of "Dokumentation" is a row of boxes, and one clipped to "Doku" is a
 /// riddle.
-double chipTileWidth(String label, double scale, {double size = 15}) {
+///
+/// Measured at the viewer's text size ([textScaler]): measured without it, a
+/// phone set to larger text drew the word wider than its chip and cut it.
+double chipTileWidth(String label, double scale, {double size = 15, TextScaler textScaler = TextScaler.noScaling}) {
   final painter = TextPainter(
     text: TextSpan(
       text: label,
       style: chipTileTextStyle(scale, size: size),
     ),
     textDirection: TextDirection.ltr,
+    textScaler: textScaler,
     maxLines: 1,
   )..layout();
   // The air around the word, and the two guards, are proportions of the type

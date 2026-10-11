@@ -288,7 +288,7 @@ extension _VideoPlayerPlaybackServiceMethods on VideoPlayerScreenState {
         hasNextEpisode: true,
         dismissed: _upNextDismissed,
         enabled: SettingsService.instanceOrNull?.read(PlebzPrefs.showUpNextPanel) ?? true,
-        creditsStart: _creditsStart,
+        creditsStart: _creditsStartOfThisEpisode,
       );
       if (due != _showUpNext) {
         setStateIfMounted(() => _showUpNext = due);

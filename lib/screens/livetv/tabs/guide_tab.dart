@@ -35,6 +35,7 @@ import '../../../services/settings_service.dart';
 import '../../../services/live_picture_handover.dart';
 import '../../../services/live_tv_last_selection.dart';
 import '../../../services/program_reminders.dart';
+import '../../../utils/orientation_helper.dart';
 import '../../../utils/platform_detector.dart';
 import '../../../utils/tone_mapped_logo_image.dart';
 import '../guide_preview_panel.dart';
@@ -209,7 +210,20 @@ class GuideTabState extends State<GuideTab>
   double get _rowHeight {
     final available = _gridHeight;
     if (available == null) return _ockerLayout ? 62.0 : 48.0;
-    return (available / _visibleRows).clamp(40.0, 80.0);
+    final share = (available / _visibleRows).clamp(40.0, 80.0);
+    return share < _minRowHeight ? _minRowHeight : share;
+  }
+
+  /// Plebz: on a television an eighth of the grid always holds a block's
+  /// lines; on a phone it does not — a portrait grid of about 340 gave rows of
+  /// 42, which cut the time line off every episode, and landscape sat on the
+  /// floor of 40 and cut the second line too. On a phone or tablet a row is at
+  /// least as tall as the block's three lines at the viewer's text size, with
+  /// the block's padding and the gap below it.
+  double get _minRowHeight {
+    if (PlatformDetector.isTV() || PlatformDetector.isDesktopOS()) return 40.0;
+    final scaler = MediaQuery.maybeTextScalerOf(context) ?? TextScaler.noScaling;
+    return 3 * scaler.scale(16) + 16;
   }
 
   /// How many channel rows the guide aims to show at once.
@@ -283,6 +297,15 @@ class GuideTabState extends State<GuideTab>
   /// The channel the preview window is playing, which is not the channel the
   /// cursor stands on: the picture stays put while the guide is browsed.
   LiveTvChannel? _previewChannel;
+
+  /// Test-only: false keeps a phone's or tablet's guide without the band, as
+  /// the tests written before it was there expect (Plebz).
+  @visibleForTesting
+  static bool? debugHandheldPreview;
+
+  /// Plebz: which way up a phone was at the last look — a turn on its side
+  /// takes the band's picture to the whole screen ([_followDeviceRotation]).
+  Orientation? _lastOrientation;
 
   /// What the preview is receiving, written by [GuidePreviewPlayer] and shown
   /// by the redesign's band.
@@ -1297,6 +1320,7 @@ class GuideTabState extends State<GuideTab>
     // inside layout, where a theme lookup on every call would be wasted.
     _ocker = isOcker(context);
     _ockerLayout = isOckerLayout(context);
+    _followDeviceRotation();
   }
 
   @override
@@ -1849,8 +1873,15 @@ class GuideTabState extends State<GuideTab>
           child: Material(
             color: Color.alphaBlend(tk.surface.withValues(alpha: 0.5), tk.bg),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(tk.radiusXs)),
-            child: Center(
-              child: Text(t.liveTv.noPrograms, style: theme.textTheme.bodySmall?.copyWith(color: tk.textMuted)),
+            // Plebz: at the start of the row, not in its middle — the row runs
+            // the whole day, so its middle lay hours off to the right and the
+            // words came out cut at the edge of the screen.
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Padding(
+                padding: const EdgeInsetsDirectional.only(start: 12),
+                child: Text(t.liveTv.noPrograms, style: theme.textTheme.bodySmall?.copyWith(color: tk.textMuted)),
+              ),
             ),
           ),
         ),

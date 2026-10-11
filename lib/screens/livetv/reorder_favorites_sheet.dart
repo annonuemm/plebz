@@ -165,15 +165,26 @@ class _ReorderFavoritesSheetState extends State<ReorderFavoritesSheet>
         leading: Row(
           mainAxisSize: .min,
           children: [
+            // The grip's box takes in the gap after it and the row's height, so a
+            // finger has more than the glyph to land on; nothing moves on screen.
             ReorderableDragStartListener(
               index: index,
-              child: AppIcon(
-                isMoving ? Symbols.swap_vert_rounded : Symbols.drag_indicator_rounded,
-                fill: 1,
-                color: isMoving ? colorScheme.primary : IconTheme.of(context).color?.withValues(alpha: 0.5),
+              child: ColoredBox(
+                color: Colors.transparent,
+                child: SizedBox(
+                  width: 32,
+                  height: 48,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: AppIcon(
+                      isMoving ? Symbols.swap_vert_rounded : Symbols.drag_indicator_rounded,
+                      fill: 1,
+                      color: isMoving ? colorScheme.primary : IconTheme.of(context).color?.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(width: 8),
             SizedBox(
               width: 40,
               height: 40,

@@ -1409,10 +1409,12 @@ class MpvPlayerPluginTest {
 
     assertEquals(0f, container.pivotX)
     assertEquals(0f, container.pivotY)
+    // The same both ways, so the picture keeps its shape; the wider of the two
+    // covers the box, centred on it.
     assertEquals(500f / 1001f, container.scaleX, 0.0001f)
-    assertEquals(281f / 701f, container.scaleY, 0.0001f)
-    assertEquals(100f, container.translationX)
-    assertEquals(50f, container.translationY)
+    assertEquals(500f / 1001f, container.scaleY, 0.0001f)
+    assertEquals(100f, container.translationX, 0.01f)
+    assertEquals(50f + 281f / 2 - 701f * (500f / 1001f) / 2, container.translationY, 0.01f)
 
     core.setViewport(0, 0, 1001, 701)
     shadowOf(Looper.getMainLooper()).idle()
@@ -1421,6 +1423,28 @@ class MpvPlayerPluginTest {
     assertEquals(1f, container.scaleY)
     assertEquals(0f, container.translationX)
     assertEquals(0f, container.translationY)
+    core.dispose()
+  }
+
+  /**
+   * Turning a phone lays the full-screen container out anew after the box was reported (Plebz):
+   * the transform follows the container's new shape instead of keeping the old one's.
+   */
+  @Test
+  fun aContainerLaidOutAnewKeepsItsPictureOnTheBox() {
+    val core = testVideoCore { _, _ -> }
+    core.followsVideoRect = true
+    val container = installVideoRectViews(core)
+
+    core.setViewport(0, 300, 1001, 863)
+    shadowOf(Looper.getMainLooper()).idle()
+    val before = container.scaleX
+
+    container.layout(0, 0, 701, 1001)
+    shadowOf(Looper.getMainLooper()).idle()
+
+    assertEquals(maxOf(1001f / 701f, 563f / 1001f), container.scaleX, 0.0001f)
+    assertTrue("the scale was worked out again", container.scaleX != before)
     core.dispose()
   }
 

@@ -49,6 +49,10 @@ const Map<String, dynamic> _scheduledGrabJson = {
 };
 
 void main() {
+  // Written for the guide without the band a phone or tablet now has (Plebz).
+  setUp(() => GuideTabState.debugHandheldPreview = false);
+  tearDown(() => GuideTabState.debugHandheldPreview = null);
+
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() => initializeDateFormatting('en'));
   setUp(() {

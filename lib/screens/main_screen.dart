@@ -23,6 +23,7 @@ import '../utils/app_logger.dart';
 import '../widgets/program_reminder_host.dart';
 import '../widgets/auth_error_banner.dart';
 import '../widgets/app_icon.dart';
+import '../widgets/app_menu.dart';
 import '../utils/platform_detector.dart';
 import '../utils/snackbar_helper.dart';
 import '../utils/update_dialog.dart';
@@ -273,6 +274,21 @@ List<NavigationTab> mainScreenBottomNavigationTabs({
     if (tab.id != NavigationTabId.settings) return true;
     return isOffline || currentTab == NavigationTabId.settings;
   }).toList();
+}
+
+/// How many places a phone's bottom bar holds before "Mehr" takes the last.
+const mainScreenBottomBarMaxSlots = 6;
+
+/// Plebz: a phone's bottom bar at most [mainScreenBottomBarMaxSlots] wide.
+/// Past that the first five destinations stay — in their usual order, so with
+/// everything set up Start, Merkliste, Mediatheken, Erkunden and Live-TV — and
+/// the rest (Sport, Suche, Downloads) go under a sixth place, "Mehr" (the
+/// user's call, 2026-10-11). Eight in a row left each label a few letters.
+@visibleForTesting
+({List<NavigationTab> bar, List<NavigationTab> more}) splitBottomNavigationTabs(List<NavigationTab> tabs) {
+  if (tabs.length <= mainScreenBottomBarMaxSlots) return (bar: tabs, more: const <NavigationTab>[]);
+  const kept = mainScreenBottomBarMaxSlots - 1;
+  return (bar: tabs.sublist(0, kept), more: tabs.sublist(kept));
 }
 
 @visibleForTesting
@@ -2159,22 +2175,60 @@ class _MainScreenState extends State<MainScreen>
 
   static const _contentTabs = [NavigationTabId.discover, NavigationTabId.libraries, NavigationTabId.search];
 
+  /// The destinations under "Mehr", as the app's menu: a sheet from below on
+  /// a phone, the one on show ticked.
+  Future<void> _showMoreDestinations(BuildContext context, List<NavigationTab> more) async {
+    final chosen = await showAdaptiveAppMenu<NavigationTabId>(
+      context,
+      title: t.plebz.more,
+      entries: [
+        for (final tab in more)
+          AppMenuItem<NavigationTabId>(
+            value: tab.id,
+            icon: tab.icon,
+            label: tab.getLabel(),
+            selected: tab.id == _currentTab,
+          ),
+      ],
+    );
+    if (chosen != null && mounted) _selectTab(chosen);
+  }
+
   Widget _buildBottomNavigationBar(BuildContext context, {required bool hideLabels}) {
-    final tabs = _getBottomNavigationTabs(context);
+    final (:bar, :more) = splitBottomNavigationTabs(_getBottomNavigationTabs(context));
+    final tabs = bar;
     final selectedIndex = tabs.indexWhere((tab) => tab.id == _currentTab);
+    final showsMore = more.isNotEmpty;
+    // A destination under "Mehr" lights "Mehr" itself.
+    final moreSelected = showsMore && more.any((tab) => tab.id == _currentTab);
+    const moreGlyph = AppIcon(Symbols.more_horiz_rounded, fill: navIconFill, weight: navIconWeight);
     final navigationBar = NavigationBar(
-      selectedIndex: selectedIndex >= 0 ? selectedIndex : 0,
+      selectedIndex: moreSelected ? tabs.length : (selectedIndex >= 0 ? selectedIndex : 0),
       onDestinationSelected: (i) {
-        if (i >= 0 && i < tabs.length) _selectTab(tabs[i].id);
+        if (i >= 0 && i < tabs.length) {
+          _selectTab(tabs[i].id);
+        } else if (showsMore) {
+          unawaited(_showMoreDestinations(context, more));
+        }
       },
       labelBehavior: hideLabels
           ? NavigationDestinationLabelBehavior.alwaysHide
           : NavigationDestinationLabelBehavior.alwaysShow,
-      destinations: tabs.map((tab) => tab.toDestination()).toList(),
+      destinations: [
+        ...tabs.map((tab) => tab.toDestination()),
+        if (showsMore)
+          DefaultTextStyle.merge(
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            child: NavigationDestination(icon: moreGlyph, selectedIcon: moreGlyph, label: t.plebz.more),
+          ),
+      ],
     );
 
     final librariesIndex = tabs.indexWhere((tab) => tab.id == NavigationTabId.libraries);
     if (tabs.isEmpty) return navigationBar;
+    final slots = tabs.length + (showsMore ? 1 : 0);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -2182,11 +2236,11 @@ class _MainScreenState extends State<MainScreen>
 
         // A destination gets an equal share of the bar and spends all of it on
         // the label, so that share is what the labels have to fit into.
-        final itemWidth = constraints.maxWidth / tabs.length;
+        final itemWidth = constraints.maxWidth / slots;
         final bar = hideLabels
             ? navigationBar
             : NavigationLabelScale(
-                labels: [for (final tab in tabs) tab.getLabel()],
+                labels: [for (final tab in tabs) tab.getLabel(), if (showsMore) t.plebz.more],
                 labelWidth: itemWidth,
                 style: navigationBarLabelStyle(context),
                 child: navigationBar,

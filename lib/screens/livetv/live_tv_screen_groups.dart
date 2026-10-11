@@ -66,9 +66,10 @@ extension _LiveTvScreenFork on _LiveTvScreenState {
   /// remote has no way to point at something parked at the edge. A Mac has
   /// both: a window wide enough to keep the list in view, and a pointer for
   /// which a panel that folds away the moment focus leaves it is a panel that
-  /// keeps disappearing mid-click. So on macOS the column stands
-  /// open, not as a drawer.
-  bool get _groupColumnPinned => _groupColumnEnabled && Platform.isMacOS;
+  /// keeps disappearing mid-click. So on a desktop the column stands
+  /// open, not as a drawer. A phone or tablet opens the list from its chip
+  /// instead ([_showsGroupChip]).
+  bool get _groupColumnPinned => _groupColumnEnabled && PlatformDetector.isDesktopOS();
 
   /// Whether that column is showing. It takes its width from the layout rather
   /// than floating over it, so opening it pushes the guide, the picture and
@@ -367,6 +368,65 @@ extension _LiveTvScreenFork on _LiveTvScreenState {
 
   void _showChannelManagement() {
     unawaited(showChannelManagementSheet(context, channels: _loadedChannels));
+  }
+
+  /// Plebz: a phone or tablet chooses its group with a finger — the column
+  /// only ever opened on a remote's LEFT, which left a touch screen no way to
+  /// a group, nor back to all channels once a game or a reminder had handed
+  /// one over. The chip says which group is on, and opens the list from below.
+  bool get _showsGroupChip => _groupColumnEnabled && !_groupColumnPinned && PlatformDetector.isMobile(context);
+
+  /// Plebz: where the app bar has a title, the chip takes its place (the
+  /// user's call, 2026-10-11) — the word said what the navigation already
+  /// says, and the chip's own row was a line taken from the guide.
+  bool _groupChipInTitle(bool useSideNav) => _showsGroupChip && !useSideNav;
+
+  Widget _buildGroupChipTitle() {
+    final group = _selectedGroup;
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: _LiveTvGroupChip(
+        label: group == null ? t.liveTv.allChannels : _groupLabel(group),
+        onTap: () => unawaited(_showGroupSheet()),
+      ),
+    );
+  }
+
+  Widget _buildGroupChip() {
+    final group = _selectedGroup;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: _LiveTvGroupChip(
+          label: group == null ? t.liveTv.allChannels : _groupLabel(group),
+          onTap: () => unawaited(_showGroupSheet()),
+        ),
+      ),
+    );
+  }
+
+  /// The groups as the column lists them — names, counts, the one in force
+  /// marked — and a long press on one for its menu, as the column has it.
+  Future<void> _showGroupSheet() async {
+    final options = _channelGroupOptions;
+    await OverlaySheetController.showAdaptive<void>(
+      context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => _LiveTvGroupSheet(
+        options: options,
+        selected: _selectedGroup,
+        onSelect: (key) {
+          OverlaySheetController.closeAdaptive(sheetContext);
+          _selectGroup(key);
+        },
+        onMenu: (key) {
+          OverlaySheetController.closeAdaptive(sheetContext);
+          unawaited(_showGroupMenu(key));
+        },
+      ),
+    );
   }
 
   void _selectGroup(String? group) {
@@ -793,6 +853,150 @@ class _GroupColumnRowState extends State<_GroupColumnRow> {
         // under the fill, where the fill would hide it.
         child: Material(type: MaterialType.transparency, child: keyed),
       ),
+    );
+  }
+}
+
+/// The group in force as a chip under the Live TV header (Plebz), for a touch
+/// screen: the word and a chevron, set like the screen's other chips.
+class _LiveTvGroupChip extends StatefulWidget {
+  const _LiveTvGroupChip({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  State<_LiveTvGroupChip> createState() => _LiveTvGroupChipState();
+}
+
+class _LiveTvGroupChipState extends State<_LiveTvGroupChip> {
+  final _focusNode = FocusNode(debugLabel: 'live_tv_group_chip');
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_onFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChanged);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final showFocus = _focusNode.hasFocus && InputModeTracker.isKeyboardMode(context);
+    final redesign = isOcker(context);
+    final tk = redesign ? tokens(context) : null;
+    final background = showFocus
+        ? colorScheme.primary
+        : tk != null
+        ? tk.ink(0.1)
+        : colorScheme.surfaceContainerHighest;
+    final foreground = showFocus
+        ? colorScheme.onPrimary
+        : tk != null
+        ? tk.ink(0.92)
+        : colorScheme.onSurfaceVariant;
+    return FocusBuilders.buildFocusableChip(
+      context: context,
+      focusNode: _focusNode,
+      onKeyEvent: dpadKeyHandler(onSelect: widget.onTap),
+      onTap: widget.onTap,
+      semanticLabel: '${t.liveTv.channelGroups}: ${widget.label}',
+      padding: const EdgeInsets.fromLTRB(16, 8, 10, 8),
+      backgroundColor: background,
+      child: Row(
+        mainAxisSize: .min,
+        children: [
+          Flexible(
+            child: Text(
+              widget.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(color: foreground),
+            ),
+          ),
+          const SizedBox(width: 4),
+          AppIcon(Symbols.keyboard_arrow_down_rounded, size: 18, color: foreground),
+        ],
+      ),
+    );
+  }
+}
+
+/// The groups as a sheet from below (Plebz): the column's own rows, so they
+/// read and mark the group in force as it does.
+class _LiveTvGroupSheet extends StatefulWidget {
+  const _LiveTvGroupSheet({
+    required this.options,
+    required this.selected,
+    required this.onSelect,
+    required this.onMenu,
+  });
+
+  final List<ChannelGroupOption> options;
+  final String? selected;
+  final ValueChanged<String?> onSelect;
+  final ValueChanged<String> onMenu;
+
+  @override
+  State<_LiveTvGroupSheet> createState() => _LiveTvGroupSheetState();
+}
+
+class _LiveTvGroupSheetState extends State<_LiveTvGroupSheet> {
+  late final List<FocusNode> _nodes = [
+    for (final option in widget.options) FocusNode(debugLabel: 'live_tv_group_sheet_${option.key ?? 'all'}'),
+  ];
+
+  @override
+  void dispose() {
+    for (final node in _nodes) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final options = widget.options;
+    return Column(
+      mainAxisSize: .min,
+      crossAxisAlignment: .stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          child: Text(t.liveTv.channelGroups, style: Theme.of(context).textTheme.titleMedium),
+        ),
+        Flexible(
+          child: Material(
+            type: MaterialType.transparency,
+            child: ListView.builder(
+              shrinkWrap: true,
+              padding: const EdgeInsets.only(bottom: 8),
+              itemCount: options.length,
+              itemBuilder: (context, i) => _GroupColumnRow(
+                focusNode: _nodes[i],
+                selected: options[i].key == widget.selected,
+                label: options[i].label,
+                count: options[i].count,
+                onTap: () => widget.onSelect(options[i].key),
+                onLongPress: switch (options[i].key) {
+                  final group? => () => widget.onMenu(group),
+                  null => null,
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

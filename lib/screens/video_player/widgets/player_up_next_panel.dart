@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -7,14 +9,19 @@ import '../../../focus/input_mode_tracker.dart';
 import '../../../i18n/strings.g.dart';
 import '../../../media/ids.dart';
 import '../../../media/media_item.dart';
+import '../../../media/media_item_types.dart';
 import '../../../redesign/ocker_skin.dart';
 import '../../../redesign/ocker_type.dart';
+import '../../../services/download_artwork_service.dart';
+import '../../../services/download_storage_service.dart';
 import '../../../services/pip_service.dart';
+import '../../../services/settings_service.dart';
 import '../../../theme/mono_tokens.dart';
-import '../../../utils/media_image_helper.dart';
+import '../../../utils/platform_detector.dart';
 import '../../../utils/provider_extensions.dart';
 import '../../../widgets/app_icon.dart';
 import '../../../widgets/optimized_media_image.dart';
+import '../../../widgets/settings_builder.dart';
 import '../../../widgets/video_controls/player_chrome_controller.dart';
 
 /// "Up next" while the episode is still running: what follows, and what to do
@@ -57,6 +64,9 @@ class PlayerUpNextPanel extends StatefulWidget {
     this.countdown,
   });
 
+  /// Below this height a phone gets the small card (Plebz).
+  static const compactBelowHeight = 520.0;
+
   @override
   State<PlayerUpNextPanel> createState() => _PlayerUpNextPanelState();
 }
@@ -91,7 +101,11 @@ class _PlayerUpNextPanelState extends State<PlayerUpNextPanel> {
   }
 
   void _syncHold() {
-    if (widget.visible) {
+    // Plebz: for a remote or a keyboard only — the hold keeps the controls
+    // from hiding behind the cursor in the panel. Under a finger it kept the
+    // controls a tap had raised over the picture for the whole of the credits,
+    // with no tap to take them away again.
+    if (widget.visible && InputModeTracker.currentMode == InputMode.keyboard) {
       // Without raising the chrome: the offer is the panel, and the episode
       // is still running behind it.
       widget.chromeController.hold(PlayerChromeHold.promptInteraction, reveal: false);
@@ -118,23 +132,45 @@ class _PlayerUpNextPanelState extends State<PlayerUpNextPanel> {
       valueListenable: PipService().isPipActive,
       builder: (context, isInPip, _) {
         if (isInPip || !widget.visible) return const SizedBox.shrink();
-        return Align(
-          alignment: Alignment.centerRight,
-          child: LayoutBuilder(
-            builder: (context, constraints) => SizedBox(
-              // A share of the screen rather than a fixed width: the same
-              // panel serves a phone in landscape and a television.
-              width: (constraints.maxWidth * 0.34).clamp(280.0, 460.0),
-              child: _UpNextCard(
-                episode: episode,
-                countdown: widget.countdown,
-                playFocusNode: widget.playFocusNode,
-                closeFocusNode: widget.closeFocusNode,
-                onPlay: widget.onPlay,
-                onClose: widget.onClose,
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            Widget card({required bool compact}) => _UpNextCard(
+              episode: episode,
+              countdown: widget.countdown,
+              playFocusNode: widget.playFocusNode,
+              closeFocusNode: widget.closeFocusNode,
+              onPlay: widget.onPlay,
+              onClose: widget.onClose,
+              compact: compact,
+            );
+            // Plebz: a phone on its side is too low for the full card — its
+            // buttons fell below the screen's edge, out of a finger's reach. It
+            // gets a small card in the corner instead, above the controls'
+            // bottom bar and clear of a cutout.
+            if (PlatformDetector.isMobile(context) && constraints.maxHeight < PlayerUpNextPanel.compactBelowHeight) {
+              return SafeArea(
+                child: Align(
+                  alignment: AlignmentDirectional.bottomEnd,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 16, bottom: 88),
+                    child: SizedBox(
+                      width: (constraints.maxWidth * 0.46).clamp(280.0, 380.0),
+                      child: card(compact: true),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return Align(
+              alignment: Alignment.centerRight,
+              child: SizedBox(
+                // A share of the screen rather than a fixed width: the same
+                // panel serves a phone in landscape and a television.
+                width: (constraints.maxWidth * 0.34).clamp(280.0, 460.0),
+                child: card(compact: false),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -152,6 +188,10 @@ class _UpNextCard extends StatelessWidget {
   final VoidCallback onPlay;
   final VoidCallback onClose;
 
+  /// The small card a phone on its side gets (Plebz): the still, the name and
+  /// the two buttons side by side, no description.
+  final bool compact;
+
   const _UpNextCard({
     required this.episode,
     required this.countdown,
@@ -159,7 +199,34 @@ class _UpNextCard extends StatelessWidget {
     required this.closeFocusNode,
     required this.onPlay,
     required this.onClose,
+    this.compact = false,
   });
+
+  /// Plebz, as the end-of-episode prompt it stands in for: the still of a
+  /// downloaded episode from its saved artwork when no server answers, and
+  /// blurred when spoilers are hidden.
+  Widget _still(BuildContext context, String thumb) {
+    final serverId = serverIdOrNull(episode.serverId);
+    final image = OptimizedMediaImage.thumb(
+      client: context.tryGetMediaClientForServer(serverId),
+      imagePath: thumb,
+      localFilePath: serverId == null
+          ? null
+          : DownloadArtworkService.localPathSync(DownloadStorageService.instance, serverId, thumb),
+      fit: BoxFit.cover,
+      errorWidget: (context, _, _) => const SizedBox.shrink(),
+    );
+    if (SettingsService.instanceOrNull == null) return image;
+    return SettingValueBuilder<bool>(
+      pref: SettingsService.hideSpoilers,
+      builder: (context, hideSpoilers, _) {
+        if (!hideSpoilers || !episode.shouldHideSpoiler) return image;
+        return ClipRect(
+          child: ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 12, sigmaY: 12), child: image),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -168,6 +235,8 @@ class _UpNextCard extends StatelessWidget {
     final ocker = isOcker(context);
     final series = episode.grandparentTitle;
     final summary = episode.summary;
+    final spoilersHidden =
+        (SettingsService.instanceOrNull?.read(SettingsService.hideSpoilers) ?? false) && episode.shouldHideSpoiler;
 
     // Over the picture in every theme. Standard keeps the player's own
     // white on black; the redesign sets it in its warm pair, the ground and
@@ -178,6 +247,79 @@ class _UpNextCard extends StatelessWidget {
     final heading = ocker
         ? OckerType.of(context).eyebrow.copyWith(color: muted)
         : theme.textTheme.labelLarge?.copyWith(color: muted, letterSpacing: 1.2);
+
+    if (compact) {
+      final title = episode.title ?? episode.displayTitle;
+      return _UpNextSurface(
+        ground: ground,
+        corner: BorderRadius.all(Radius.circular(tk.radiusMd)),
+        compact: true,
+        child: Row(
+          children: [
+            if (episode.thumbPath case final thumb?) ...[
+              SizedBox(
+                width: 96,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.all(Radius.circular(artworkRadius(context))),
+                  child: AspectRatio(aspectRatio: 16 / 9, child: _still(context, thumb)),
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t.videoControls.upNext, style: heading, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(
+                    series != null && series.isNotEmpty ? '$series · $title' : title,
+                    style: theme.textTheme.bodyMedium?.copyWith(color: ink),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: ValueListenableBuilder<int>(
+                          valueListenable: countdown ?? _noCountdown,
+                          builder: (context, left, _) => _UpNextButton(
+                            focusNode: playFocusNode,
+                            onPressed: onPlay,
+                            icon: Symbols.play_arrow_rounded,
+                            label: left > 0 ? t.videoControls.upNextStartsIn(seconds: left) : t.common.play,
+                            offered: true,
+                            compact: true,
+                            onNavigateUp: () {},
+                            onNavigateDown: () {},
+                            onNavigateRight: () => closeFocusNode.requestFocus(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _UpNextButton(
+                        focusNode: closeFocusNode,
+                        onPressed: onClose,
+                        icon: Symbols.close_rounded,
+                        label: null,
+                        tooltip: t.videoControls.closeUpNext,
+                        offered: false,
+                        compact: true,
+                        onNavigateUp: () {},
+                        onNavigateDown: () {},
+                        onNavigateLeft: () => playFocusNode.requestFocus(),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return _UpNextSurface(
       ground: ground,
@@ -213,18 +355,13 @@ class _UpNextCard extends StatelessWidget {
                 // The episode still, in the shape it was made in. A missing
                 // one leaves the panel to its text rather than a grey box.
                 aspectRatio: 16 / 9,
-                child: OptimizedMediaImage(
-                  client: context.tryGetMediaClientForServer(serverIdOrNull(episode.serverId)),
-                  imagePath: thumb,
-                  imageType: ImageType.thumb,
-                  fit: BoxFit.cover,
-                  fallbackIcon: null,
-                  errorWidget: (context, _, _) => const SizedBox.shrink(),
-                ),
+                child: _still(context, thumb),
               ),
             ),
           ],
-          if (summary != null && summary.trim().isNotEmpty) ...[
+          // The next episode is unwatched by definition: with spoilers hidden
+          // its synopsis is left out, as on its episode card.
+          if (!spoilersHidden && summary != null && summary.trim().isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
               summary,
@@ -282,10 +419,16 @@ class _UpNextButton extends StatefulWidget {
   final FocusNode focusNode;
   final VoidCallback onPressed;
   final IconData icon;
-  final String label;
+
+  /// Null for the small card's close button, which is its glyph alone.
+  final String? label;
+  final String? tooltip;
   final bool offered;
+  final bool compact;
   final VoidCallback onNavigateUp;
   final VoidCallback onNavigateDown;
+  final VoidCallback? onNavigateLeft;
+  final VoidCallback? onNavigateRight;
 
   const _UpNextButton({
     required this.focusNode,
@@ -295,6 +438,10 @@ class _UpNextButton extends StatefulWidget {
     required this.offered,
     required this.onNavigateUp,
     required this.onNavigateDown,
+    this.tooltip,
+    this.compact = false,
+    this.onNavigateLeft,
+    this.onNavigateRight,
   });
 
   @override
@@ -328,25 +475,41 @@ class _UpNextButtonState extends State<_UpNextButton> {
       descendantsAreFocusable: false,
       onNavigateUp: widget.onNavigateUp,
       onNavigateDown: widget.onNavigateDown,
-      onNavigateLeft: () {},
-      onNavigateRight: () {},
-      child: FilledButton.icon(
-        onPressed: widget.onPressed,
-        icon: AppIcon(widget.icon, fill: 1, size: 20),
-        label: Text(widget.label),
-        style: ButtonStyle(
-          minimumSize: const WidgetStatePropertyAll(Size.fromHeight(44)),
-          padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 18, vertical: 10)),
-          elevation: const WidgetStatePropertyAll(0),
-          backgroundColor: WidgetStatePropertyAll(fill),
-          foregroundColor: WidgetStatePropertyAll(ink),
-          // Material's own focus wash would dim the fill that says "focused".
-          overlayColor: WidgetStateProperty.resolveWith(
-            (states) => states.contains(WidgetState.focused) ? Colors.transparent : null,
-          ),
-          shape: WidgetStatePropertyAll(shape),
-        ),
+      onNavigateLeft: widget.onNavigateLeft ?? () {},
+      onNavigateRight: widget.onNavigateRight ?? () {},
+      child: _button(fill, ink, shape),
+    );
+  }
+
+  Widget _button(Color fill, Color ink, OutlinedBorder shape) {
+    final label = widget.label;
+    final compact = widget.compact;
+    final style = ButtonStyle(
+      minimumSize: WidgetStatePropertyAll(compact ? const Size(44, 40) : const Size.fromHeight(44)),
+      padding: WidgetStatePropertyAll(
+        compact
+            ? EdgeInsets.symmetric(horizontal: label == null ? 10 : 14, vertical: 8)
+            : const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       ),
+      elevation: const WidgetStatePropertyAll(0),
+      backgroundColor: WidgetStatePropertyAll(fill),
+      foregroundColor: WidgetStatePropertyAll(ink),
+      // Material's own focus wash would dim the fill that says "focused".
+      overlayColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.focused) ? Colors.transparent : null,
+      ),
+      shape: WidgetStatePropertyAll(shape),
+    );
+    final icon = AppIcon(widget.icon, fill: 1, size: 20);
+    if (label == null) {
+      final button = FilledButton(onPressed: widget.onPressed, style: style, child: icon);
+      return widget.tooltip == null ? button : Tooltip(message: widget.tooltip!, child: button);
+    }
+    return FilledButton.icon(
+      onPressed: widget.onPressed,
+      icon: icon,
+      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      style: style,
     );
   }
 }
@@ -355,31 +518,37 @@ class _UpNextButtonState extends State<_UpNextButton> {
 /// the picture keeps playing through, its words on the glass's firmer inner
 /// ground and inset so they land where they did.
 class _UpNextSurface extends StatelessWidget {
-  const _UpNextSurface({required this.ground, required this.corner, required this.child});
+  const _UpNextSurface({required this.ground, required this.corner, required this.child, this.compact = false});
 
   final Color ground;
   final BorderRadius corner;
   final Widget child;
 
+  /// The small card's: placed by its caller, so no margin, and less air.
+  final bool compact;
+
   static const _margin = EdgeInsets.all(24);
   static const _padding = 20.0;
+  static const _compactPadding = 12.0;
   static const _glassRim = 8.0;
 
   @override
   Widget build(BuildContext context) {
+    final margin = compact ? EdgeInsets.zero : _margin;
+    final padding = compact ? _compactPadding : _padding;
     if (ockerGlass(context)) {
       return Padding(
-        padding: _margin,
+        padding: margin,
         child: OckerGlass(
           borderRadius: corner,
           scrimInset: _glassRim,
-          child: Padding(padding: const EdgeInsets.all(_padding - _glassRim), child: child),
+          child: Padding(padding: EdgeInsets.all(padding - (compact ? 4 : _glassRim)), child: child),
         ),
       );
     }
     return Container(
-      margin: _margin,
-      padding: const EdgeInsets.all(_padding),
+      margin: margin,
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(color: ground, borderRadius: corner),
       child: child,
     );

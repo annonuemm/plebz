@@ -6,13 +6,17 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../i18n/strings.g.dart';
+import '../../services/connectivity_probe.dart';
 import '../../services/plebz_update_service.dart';
 import '../../services/plebz_whats_new.dart';
 import '../../services/settings_service.dart';
 import '../../utils/app_logger.dart';
+import '../../utils/connectivity_link_type.dart';
 import '../../utils/dialogs.dart';
 import '../../utils/fork_identity.dart';
+import '../../utils/formatters.dart';
 import '../../utils/snackbar_helper.dart';
+import '../../widgets/dialog_action_button.dart';
 import '../../widgets/setting_tile.dart';
 
 /// At start, once after an update: which Plebz is now installed. The update
@@ -130,12 +134,21 @@ Future<void> checkForPlebzUpdate(
       if (userInitiated) showErrorSnackBar(context, t.plebz.noMatchingDownload);
       return;
     }
+    // On a phone the download may be paid for by the megabyte: how big it is,
+    // and whether it would come over mobile data, is said before the yes.
+    final cellular = (await ConnectivityProbe.check()).isCellularOnly;
+    if (!context.mounted) return;
+    final lead = [
+      t.plebz.updateAvailableBody(release: release.title),
+      if (asset.size > 0) t.plebz.updateSize(size: ByteFormatter.formatBytes(asset.size, decimals: 0)),
+      if (cellular) t.plebz.updateOnMobileData,
+    ].join(' ');
     // What the release brings, as written for it — the text that ships in
     // the new build's own notes.
     final wanted = await showFullTextConfirmDialog(
       context,
       title: t.plebz.updateAvailableTitle,
-      span: plebzNotesSpan(release.notes, lead: t.plebz.updateAvailableBody(release: release.title)),
+      span: plebzNotesSpan(release.notes, lead: lead),
       confirmText: t.plebz.updateNow,
       cancelText: t.plebz.later,
     );
@@ -172,18 +185,29 @@ Future<int> _installedBuild() async =>
 
 Future<List<String>> _supportedAbis() async => (await DeviceInfoPlugin().androidInfo).supportedAbis;
 
-/// A dialog that cannot be dismissed while the file comes in; null when the
-/// download failed (the error is shown).
+/// A dialog that stays while the file comes in, unless the viewer cancels it
+/// (its button, or BACK); a tap beside it does not. Null when the download
+/// failed (the error is shown) or was cancelled (nothing is).
 Future<dynamic> _downloadWithProgress(BuildContext context, PlebzUpdateService updates, PlebzReleaseAsset asset) {
   final progress = ValueNotifier<double?>(null);
   final done = Completer<dynamic>();
+  final cancel = Completer<void>();
+  var cancelled = false;
+  void stop() {
+    if (cancel.isCompleted) return;
+    cancelled = true;
+    cancel.complete();
+  }
+
   unawaited(
     updates
-        .download(asset, onProgress: (value) => progress.value = value)
+        .download(asset, onProgress: (value) => progress.value = value, cancelled: cancel.future)
         .then(
           done.complete,
           onError: (Object error, StackTrace stack) {
-            appLogger.w('Plebz update download failed', error: error, stackTrace: stack);
+            if (error is! PlebzUpdateCancelled) {
+              appLogger.w('Plebz update download failed', error: error, stackTrace: stack);
+            }
             done.complete(null);
           },
         ),
@@ -200,12 +224,16 @@ Future<dynamic> _downloadWithProgress(BuildContext context, PlebzUpdateService u
         );
         return PopScope(
           canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) stop();
+          },
           child: AlertDialog(
             title: Text(t.plebz.downloading),
             content: ValueListenableBuilder<double?>(
               valueListenable: progress,
               builder: (_, value, _) => LinearProgressIndicator(value: value),
             ),
+            actions: [DialogActionButton(onPressed: stop, onBack: stop, label: t.common.cancel, autofocus: true)],
           ),
         );
       },
@@ -213,7 +241,7 @@ Future<dynamic> _downloadWithProgress(BuildContext context, PlebzUpdateService u
   );
   return done.future.then((file) {
     progress.dispose();
-    if (file == null && context.mounted) showErrorSnackBar(context, t.plebz.updateFailed);
+    if (file == null && !cancelled && context.mounted) showErrorSnackBar(context, t.plebz.updateFailed);
     return file;
   });
 }

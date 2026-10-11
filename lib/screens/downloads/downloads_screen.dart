@@ -9,6 +9,7 @@ import '../../media/media_item.dart';
 import '../../providers/download_provider.dart';
 import '../../providers/multi_server_provider.dart';
 import '../../services/music/music_playback_service.dart';
+import '../../redesign/ocker_skin.dart';
 import '../../theme/mono_tokens.dart';
 import '../../utils/music_navigation.dart';
 import '../../models/download_models.dart';
@@ -156,7 +157,7 @@ class DownloadsScreenState extends State<DownloadsScreen>
             title: _buildAppBarTitle(),
             floating: true,
             pinned: true,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            backgroundColor: pageBarColor(context),
             surfaceTintColor: Colors.transparent,
             shadowColor: Colors.transparent,
             scrolledUnderElevation: 0,

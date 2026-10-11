@@ -369,7 +369,8 @@ class _CollectionDetailScreenState extends BaseMediaListDetailScreen<CollectionD
         end: Alignment.bottomCenter,
         colors: [
           for (final a in easedAlphas) bg.withValues(alpha: topAlpha + a * (1 - topAlpha)),
-          bg,
+          // Opaque: under the redesign the page colour has none (Plebz).
+          bg.withValues(alpha: 1),
         ],
         stops: [for (final x in xs) solidStop * x, 1.0],
       ),

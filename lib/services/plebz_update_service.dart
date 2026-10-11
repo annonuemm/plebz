@@ -21,6 +21,14 @@ class PlebzUpdateCheckException implements Exception {
 }
 
 /// One downloadable file of a Plebz release on GitHub.
+/// The viewer stopped the update download.
+class PlebzUpdateCancelled implements Exception {
+  const PlebzUpdateCancelled();
+
+  @override
+  String toString() => 'PlebzUpdateCancelled';
+}
+
 class PlebzReleaseAsset {
   const PlebzReleaseAsset({required this.name, required this.url, required this.size, this.sha256});
 
@@ -65,6 +73,7 @@ class PlebzUpdateService {
     MethodChannel? channel,
     Future<Directory> Function()? downloadDirectory,
     this.repository = plebzReleaseRepository,
+    this.idleTimeout = downloadIdleTimeout,
   }) : _client = client ?? http.Client(),
        _channel = channel ?? const MethodChannel('com.plebz/update_installer'),
        _downloadDirectory = downloadDirectory ?? getTemporaryDirectory;
@@ -75,6 +84,9 @@ class PlebzUpdateService {
 
   /// "owner/repository" on GitHub; [plebzReleaseRepository] unless a test says otherwise.
   final String repository;
+
+  /// [downloadIdleTimeout] unless a test says otherwise.
+  final Duration idleTimeout;
 
   void dispose() => _client.close();
 
@@ -163,16 +175,27 @@ class PlebzUpdateService {
     return null;
   }
 
+  /// How long the download may go without a byte before it counts as failed.
+  /// A phone that drops off the network mid-download otherwise waited on a
+  /// response that never came, behind a dialog it could not leave.
+  static const downloadIdleTimeout = Duration(seconds: 30);
+
   /// Downloads [asset] into the app's cache and checks it against the digest
-  /// GitHub published. Throws on a failed download or a mismatch.
-  Future<File> download(PlebzReleaseAsset asset, {void Function(double progress)? onProgress}) async {
+  /// GitHub published. Throws on a failed or stalled download or a mismatch,
+  /// and [PlebzUpdateCancelled] once [cancelled] completes; a file that did
+  /// not finish is removed.
+  Future<File> download(
+    PlebzReleaseAsset asset, {
+    void Function(double progress)? onProgress,
+    Future<void>? cancelled,
+  }) async {
     final directory = Directory(p.join((await _downloadDirectory()).path, 'updates'));
     if (directory.existsSync()) directory.deleteSync(recursive: true);
     directory.createSync(recursive: true);
     final file = File(p.join(directory.path, p.basename(asset.name)));
 
     final request = http.Request('GET', asset.url)..headers['User-Agent'] = 'Plebz';
-    final response = await _client.send(request);
+    final response = await _sendOrCancel(request, cancelled);
     if (response.statusCode != 200) {
       throw HttpException('Update download failed (${response.statusCode})', uri: asset.url);
     }
@@ -181,16 +204,19 @@ class PlebzUpdateService {
     final hashInput = _DigestSink();
     final hasher = sha256.startChunkedConversion(hashInput);
     var received = 0;
+    var complete = false;
     try {
-      await for (final chunk in response.stream) {
+      await for (final chunk in _untilCancelled(response.stream.timeout(idleTimeout), cancelled)) {
         sink.add(chunk);
         hasher.add(chunk);
         received += chunk.length;
         if (total > 0) onProgress?.call(received / total);
       }
+      complete = true;
     } finally {
       await sink.close();
       hasher.close();
+      if (!complete && file.existsSync()) file.deleteSync();
     }
     final expected = asset.sha256;
     if (expected != null && hashInput.value.toString() != expected) {
@@ -198,6 +224,51 @@ class PlebzUpdateService {
       throw const FormatException('The downloaded update does not match the published checksum');
     }
     return file;
+  }
+
+  Future<http.StreamedResponse> _sendOrCancel(http.Request request, Future<void>? cancelled) {
+    final sent = _client.send(request).timeout(idleTimeout);
+    if (cancelled == null) return sent;
+    var gaveUp = false;
+    // A response that arrives after the viewer gave up is let go unread.
+    unawaited(
+      sent.then((response) {
+        if (gaveUp) unawaited(response.stream.listen(null).cancel());
+      }, onError: (Object _) {}),
+    );
+    return Future.any([
+      sent,
+      cancelled.then<http.StreamedResponse>((_) {
+        gaveUp = true;
+        throw const PlebzUpdateCancelled();
+      }),
+    ]);
+  }
+
+  /// [source] until [cancelled] completes, which ends it with
+  /// [PlebzUpdateCancelled] and lets go of [source] — also while it is waiting
+  /// on a byte that is not coming.
+  static Stream<List<int>> _untilCancelled(Stream<List<int>> source, Future<void>? cancelled) {
+    if (cancelled == null) return source;
+    late final StreamController<List<int>> controller;
+    StreamSubscription<List<int>>? subscription;
+    controller = StreamController<List<int>>(
+      onListen: () {
+        subscription = source.listen(controller.add, onError: controller.addError, onDone: controller.close);
+        unawaited(
+          cancelled.then((_) async {
+            if (controller.isClosed) return;
+            await subscription?.cancel();
+            controller.addError(const PlebzUpdateCancelled());
+            unawaited(controller.close());
+          }),
+        );
+      },
+      onPause: () => subscription?.pause(),
+      onResume: () => subscription?.resume(),
+      onCancel: () => subscription?.cancel(),
+    );
+    return controller.stream;
   }
 
   Future<bool> canInstall() async => await _channel.invokeMethod<bool>('canInstall') ?? false;

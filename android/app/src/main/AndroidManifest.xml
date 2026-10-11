@@ -33,6 +33,10 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Plebz: guide reminders to the minute on phones and tablets. Android 13+ grants
+         USE_EXACT_ALARM with the install; 12 and 12L grant SCHEDULE_EXACT_ALARM by default. -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32"/>
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <uses-feature android:name="android.hardware.type.automotive" android:required="false" />
@@ -108,6 +112,14 @@
             android:authorities="app.plebz.systemshelf.artwork"
             android:exported="false"
             android:grantUriPermissions="true" />
+        <receiver
+            android:name=".ProgramReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <receiver
             android:name=".watchnext.SystemShelfUpdateReceiver"
             android:exported="false">

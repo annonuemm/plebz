@@ -11,7 +11,7 @@ import '../services/settings_service.dart';
 import '../media/media_item.dart';
 import '../media/media_server_client.dart';
 
-import '../theme/mono_theme.dart' show glasPalette, ockerDisplayFontFamily, plebzGradient;
+import '../theme/mono_theme.dart' show glasPalette, ockerDisplayFontFamily, plebzGradient, redesignBarColor;
 import '../theme/mono_tokens.dart';
 import '../utils/layout_constants.dart';
 import '../utils/platform_detector.dart';
@@ -51,6 +51,12 @@ double ockerFlushLeftInset(BuildContext context) =>
 /// finds every place the redesign hooks in.
 bool isOcker(BuildContext context) =>
     Theme.of(context).extension<MonoTokens>()?.displayFontFamily == ockerDisplayFontFamily;
+
+/// The colour a page's own bar takes (Plebz): the page colour as it always
+/// was, and under the redesign a bar that is clear while nothing is under it
+/// and the ground once content scrolls under it ([redesignBarColor]).
+Color pageBarColor(BuildContext context) =>
+    isOcker(context) ? redesignBarColor(tokens(context).bg) : Theme.of(context).scaffoldBackgroundColor;
 
 /// Whether the screens are also rearranged — navigation in the redesign's own
 /// rail, the detail panel beside the grids, the rebuilt guide.

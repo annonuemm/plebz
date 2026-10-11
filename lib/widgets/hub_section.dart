@@ -681,7 +681,7 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                     final cardWidth = isPlatformHub
                         ? baseCardWidth * catalogPlatformTileScale
                         : isChipHub
-                        ? _chipRowWidth(widget.hub)
+                        ? _chipRowWidth(widget.hub, MediaQuery.textScalerOf(context))
                         : baseCardWidth;
                     final posterWidth = isPlatformHub || isChipHub ? cardWidth : cardWidth - 6;
                     final posterHeight = isChipHub
@@ -708,7 +708,13 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                     // name — so the row keeps no height for one.
                     // "Jetzt live" under the redesigns: two lines, the league or the
                     // channel under the pairing or the programme.
-                    final captionHeight = isLiveHub && ockerGlass(context) ? (isTv ? 56 : 42) : (isTv ? 48 : 33);
+                    final baseCaptionHeight = isLiveHub && ockerGlass(context) ? (isTv ? 56 : 42) : (isTv ? 48 : 33);
+                    // Plebz: the "Jetzt live" caption sets its words as shares
+                    // of its box, so the box grows with the viewer's text size
+                    // instead — a phone set to larger text overflowed it.
+                    final captionHeight = isLiveHub
+                        ? baseCaptionHeight * (MediaQuery.textScalerOf(context).scale(15) / 15).clamp(1.0, 1.6)
+                        : baseCaptionHeight.toDouble();
                     final containerHeight = posterHeight + (isPlatformHub || isChipHub ? 0 : captionHeight);
                     final focusBorderWidth = FocusTheme.focusBorderWidth;
                     final focusExtra = focusBorderWidth * 2; // border on both sides
@@ -937,13 +943,13 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
   /// The stacked list gives each item the same extent, so a row of chips is
   /// sized to the longest word it has to hold rather than measured per tile
   /// the way the television rail can afford to.
-  static double _chipRowWidth(MediaHub hub) {
+  static double _chipRowWidth(MediaHub hub, TextScaler textScaler) {
     var width = 0.0;
     for (final item in hub.items) {
-      final candidate = chipTileWidth(item.displayTitle, 1);
+      final candidate = chipTileWidth(item.displayTitle, 1, textScaler: textScaler);
       if (candidate > width) width = candidate;
     }
-    return width == 0 ? chipTileWidth('', 1) : width;
+    return width == 0 ? chipTileWidth('', 1, textScaler: textScaler) : width;
   }
 
   void _onItemTapped(int index) {

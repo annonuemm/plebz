@@ -15,9 +15,11 @@ import 'package:plezy/widgets/optimized_media_image.dart';
 import 'package:provider/provider.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/theme/mono_tokens.dart';
+import 'package:plezy/utils/platform_detector.dart';
 import 'package:plezy/widgets/video_controls/player_chrome_controller.dart';
 
 import '../../test_helpers/media_items.dart';
+import '../../test_helpers/prefs.dart';
 import '../../test_helpers/multi_server_fixtures.dart';
 
 void main() {
@@ -161,10 +163,12 @@ void main() {
     expect(play.hasFocus, isTrue, reason: 'the offer is only an offer if the cursor is on it');
   });
 
-  testWidgets('the panel stops the auto-hide without turning the controls on', (tester) async {
+  testWidgets('with a remote, the panel stops the auto-hide without turning the controls on', (tester) async {
     // The auto-hide would otherwise take the controls away after a few
     // seconds of stillness — and the focus with them, leaving an overlay on
     // screen that can no longer be reached.
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
     final play = FocusNode(debugLabel: 'play');
     final close = FocusNode(debugLabel: 'close');
     final chrome = PlayerChromeController(initiallyVisible: false);
@@ -209,6 +213,90 @@ void main() {
     // Releasing hands the auto-hide back to the chrome, which arms its timer;
     // the test owns the controller, so it stops it here.
     chrome.cancelAutoHide();
+  });
+
+  testWidgets('under a finger the panel holds nothing: a tap still takes the controls away (Plebz)', (tester) async {
+    final play = FocusNode(debugLabel: 'play');
+    final close = FocusNode(debugLabel: 'close');
+    final chrome = PlayerChromeController(initiallyVisible: false);
+    addTearDown(play.dispose);
+    addTearDown(close.dispose);
+    addTearDown(chrome.dispose);
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: MaterialApp(
+          theme: monoTheme(dark: true),
+          home: Scaffold(
+            body: PlayerUpNextPanel(
+              visible: true,
+              nextEpisode: testMediaItem(
+                id: 'ep-2',
+                backend: MediaBackend.plex,
+                kind: MediaKind.episode,
+                title: 'Next',
+              ),
+              playFocusNode: play,
+              closeFocusNode: close,
+              onPlay: () {},
+              onClose: () {},
+              chromeController: chrome,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(chrome.isHeld(PlayerChromeHold.promptInteraction), isFalse);
+  });
+
+  testWidgets('with spoilers hidden it leaves out the synopsis and blurs the still (Plebz)', (tester) async {
+    resetSharedPreferencesForTest();
+    SettingsService.resetForTesting();
+    final settings = await SettingsService.getInstance();
+    await settings.write(SettingsService.hideSpoilers, true);
+    addTearDown(SettingsService.resetForTesting);
+
+    await pumpPanel(tester, thumbPath: '/library/metadata/2/thumb/1');
+
+    expect(find.text('Walt and Jesse deal with the aftermath.'), findsNothing);
+    expect(find.byType(ImageFiltered), findsOneWidget);
+    expect(find.text('Cat in the Bag'), findsOneWidget, reason: 'the episode is still named');
+  });
+
+  group('a phone on its side (Plebz)', () {
+    Future<void> landscapePhone(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(915, 412);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+    }
+
+    testWidgets('gets the small card, both buttons inside the screen and tappable', (tester) async {
+      await landscapePhone(tester);
+      await pumpPanel(tester, thumbPath: '/library/metadata/2/thumb/1');
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text('Walt and Jesse deal with the aftermath.'),
+        findsNothing,
+        reason: 'no description on the small card',
+      );
+      expect(find.textContaining('Cat in the Bag'), findsOneWidget);
+      const screen = Rect.fromLTWH(0, 0, 915, 412);
+      final play = tester.getRect(find.text(t.common.play));
+      final close = tester.getRect(find.byTooltip(t.videoControls.closeUpNext));
+      expect(screen.intersect(play), play, reason: 'the play button wholly on screen');
+      expect(screen.intersect(close), close, reason: 'the close button wholly on screen');
+    });
+
+    testWidgets('keeps clear of the controls\' bottom bar', (tester) async {
+      await landscapePhone(tester);
+      await pumpPanel(tester);
+
+      final close = tester.getRect(find.byTooltip(t.videoControls.closeUpNext));
+      expect(close.bottom, lessThanOrEqualTo(412 - 88));
+    });
   });
 
   testWidgets('the cursor cannot walk out of the panel', (tester) async {

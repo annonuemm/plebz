@@ -436,7 +436,7 @@ ThemeData _buildMonoTheme({
     scaffoldBackgroundColor: redesign ? c.bg.withValues(alpha: 0) : c.bg,
     pageTransitionsTheme: redesign ? glassPageTransitionsTheme : null,
     appBarTheme: AppBarTheme(
-      backgroundColor: redesign ? c.bg.withValues(alpha: 0) : c.bg,
+      backgroundColor: redesign ? redesignBarColor(c.bg) : c.bg,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
@@ -659,3 +659,12 @@ InputDecorationTheme _inputDecorationTheme(Color text, Color textMuted, double r
     hintStyle: TextStyle(color: textMuted),
   );
 }
+
+/// Plebz: a bar under the redesign — clear while nothing is under it, so the
+/// page's ground shows through as everywhere else, and the ground itself once
+/// content scrolls under it. Clear for good, a pinned or floating bar let the
+/// rows beneath show through its title and buttons (phones and tablets, which
+/// keep the app's own layouts under the look).
+Color redesignBarColor(Color ground) => WidgetStateColor.resolveWith(
+  (states) => states.contains(WidgetState.scrolledUnder) ? ground.withValues(alpha: 1) : ground.withValues(alpha: 0),
+);

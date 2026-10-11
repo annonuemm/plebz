@@ -1837,6 +1837,8 @@
     "failedToBuildStreamUrl": "Could not build the stream URL",
     "channelGroups": "Channel groups",
     "allChannels": "All channels",
+    "previewHint": "Tap a channel",
+    "until": "until ${time}",
     "channelCount": "${count} channels",
     "manageChannels": "Manage channels",
     "ungrouped": "Ungrouped",
@@ -2875,11 +2877,14 @@
     "checkOnStartup": "Check for updates at start",
     "checkOnStartupDescription": "GitHub sees your IP address",
     "downloading": "Downloading the update…",
+    "updateSize": "The download is ${size}.",
+    "updateOnMobileData": "You're on mobile data right now.",
     "installPermissionTitle": "Allow installing",
     "installPermissionBody": "To install updates, Plebz needs to be allowed once under \"Install unknown apps\". Then check for the update again.",
     "openSettings": "Open settings",
     "updateFailed": "The update could not be downloaded or installed.",
     "noMatchingDownload": "This release has no file for this device.",
+    "more": "More",
     "whatsNew": "What's new",
     "whatsNewDescription": "",
     "whatsNewEmpty": "There are no notes for this version yet."
@@ -2906,6 +2911,7 @@
     "soonTitle": "Starting soon",
     "runningTitle": "On now",
     "tune": "Switch over",
+    "notificationChannel": "Programme reminders",
     "channelGone": "The channel ${channel} is no longer in the channel list."
   },
   "remoteKeys": {

@@ -79,6 +79,7 @@ import com.edde746.plezy.shared.DeviceQuirks
 import com.edde746.plezy.shared.FlutterOverlayHelper
 import com.edde746.plezy.shared.FrameRateManager
 import com.edde746.plezy.shared.MediaCodecQuery
+import com.edde746.plezy.shared.PlaneViewport
 import com.edde746.plezy.shared.PlayerSurfaceHost
 import com.edde746.plezy.shared.SurfacePlayerCore
 import java.util.concurrent.Executors
@@ -679,16 +680,8 @@ class ExoPlayerCore(private val activity: Activity) :
   private fun applyViewport() {
     if (!followsVideoRect) return
     val container = surfaceContainer ?: return
-    val box = viewport ?: return
-    val width = container.width
-    val height = container.height
-    if (width <= 0 || height <= 0) return
-    container.pivotX = 0f
-    container.pivotY = 0f
-    container.scaleX = (box[2] - box[0]).toFloat() / width
-    container.scaleY = (box[3] - box[1]).toFloat() / height
-    container.translationX = (box[0] - container.left).toFloat()
-    container.translationY = (box[1] - container.top).toFloat()
+    if (viewport == null) return
+    PlaneViewport.follow(container) { viewport }
   }
 
   // Plebz, faster zapping: whether an IPTV provider sends its live streams on

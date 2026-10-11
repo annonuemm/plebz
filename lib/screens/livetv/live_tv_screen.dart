@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 import '../../media/ids.dart';
 
 import 'package:flutter/foundation.dart';
@@ -55,7 +54,9 @@ import '../../services/device_performance.dart';
 import '../../theme/mono_tokens.dart';
 import '../../widgets/focusable_list_tile.dart';
 import '../../redesign/ocker_skin.dart';
+import '../../widgets/app_icon.dart';
 import '../../widgets/app_menu.dart';
+import '../../widgets/focus_builders.dart';
 import '../../redesign/ocker_submenu.dart';
 
 part 'live_tv_screen_groups.dart';
@@ -1091,7 +1092,9 @@ class _LiveTvScreenState extends State<LiveTvScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: useSideNav && _showTabChips ? TabChipStrip(children: _buildTabChipItems()) : Text(t.liveTv.title),
+        title: useSideNav && _showTabChips
+            ? TabChipStrip(children: _buildTabChipItems())
+            : (_groupChipInTitle(useSideNav) ? _buildGroupChipTitle() : Text(t.liveTv.title)),
         actions: DesktopAppBarHelper.buildAdjustedActions([
           FocusableActionBar(
             key: _actionBarKey,
@@ -1217,6 +1220,7 @@ class _LiveTvScreenState extends State<LiveTvScreen>
             alignment: .centerLeft,
             child: TabChipStrip(children: _buildTabChipItems()),
           ),
+        if (_showsGroupChip && !_groupChipInTitle(useSideNav)) _buildGroupChip(),
         Expanded(
           child: TabBarView(
             controller: tabController,

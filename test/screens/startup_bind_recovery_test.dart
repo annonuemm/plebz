@@ -115,6 +115,39 @@ void main() {
     });
   });
 
+  group('a phone\'s bottom bar past six places (Plebz)', () {
+    List<NavigationTab> without(Set<NavigationTabId> ids) =>
+        allNavigationTabs.where((tab) => tab.id != NavigationTabId.settings && !ids.contains(tab.id)).toList();
+
+    test('everything set up: five stay, Sport, Search and Downloads go under "Mehr"', () {
+      final (:bar, :more) = splitBottomNavigationTabs(without({}));
+
+      expect(_ids(bar), [
+        NavigationTabId.discover,
+        NavigationTabId.watchlist,
+        NavigationTabId.libraries,
+        NavigationTabId.explore,
+        NavigationTabId.liveTv,
+      ]);
+      expect(_ids(more), [NavigationTabId.sport, NavigationTabId.search, NavigationTabId.downloads]);
+    });
+
+    test('six or fewer stay in the bar as they are', () {
+      final six = without({NavigationTabId.liveTv, NavigationTabId.downloads});
+      final (:bar, :more) = splitBottomNavigationTabs(six);
+
+      expect(_ids(bar), _ids(six));
+      expect(more, isEmpty);
+    });
+
+    test('a missing destination lets the next one move up', () {
+      final (:bar, :more) = splitBottomNavigationTabs(without({NavigationTabId.watchlist}));
+
+      expect(_ids(bar).last, NavigationTabId.sport);
+      expect(_ids(more), [NavigationTabId.search, NavigationTabId.downloads]);
+    });
+  });
+
   group('main screen bottom navigation tabs', () {
     test('mobile online hides Settings when another tab is active', () {
       final tabs = mainScreenBottomNavigationTabs(

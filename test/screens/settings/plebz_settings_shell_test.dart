@@ -7,6 +7,7 @@ import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/screens/settings/plebz_settings_shell.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/widgets/app_bar_back_button.dart';
 import 'package:plezy/widgets/focusable_list_tile.dart';
 import 'package:plezy/widgets/setting_tile.dart';
 import 'package:plezy/widgets/settings_page.dart';
@@ -215,6 +216,90 @@ void main() {
     await tester.tap(find.text('Deeper in c'));
     await tester.pumpAndSettle();
     expect(find.text('Sub-page of c'), findsOneWidget);
+  });
+
+  /// The settings as a phone or tablet shows them: a page pushed over the app.
+  Future<void> pumpPushedShell(WidgetTester tester, Size size) async {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: InputModeTracker(
+          child: MaterialApp(
+            theme: monoTheme(dark: true),
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => Scaffold(
+                          body: PlebzSettingsShell(title: 'Settings', sections: _sections, onExitLeft: () {}),
+                        ),
+                      ),
+                    ),
+                    child: const Text('Open settings'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open settings'));
+    await tester.pumpAndSettle();
+  }
+
+  group('a tablet (Plebz)', () {
+    testWidgets('the system back closes the sub-page beside the column, not the settings', (tester) async {
+      await pumpPushedShell(tester, const Size(1280, 800));
+      await tester.tap(find.text('Topic c'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Deeper in c'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sub-page of c'), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sub-page of c'), findsNothing);
+      expect(find.text('Page c'), findsOneWidget);
+      expect(find.text('Topic a'), findsOneWidget, reason: 'the settings are still open');
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Open settings'), findsOneWidget, reason: 'with nothing open beside it, back leaves');
+    });
+
+    testWidgets('the column has a back arrow, since the page beside it has none', (tester) async {
+      await pumpPushedShell(tester, const Size(1280, 800));
+      final arrow = find.byType(AppBarBackButton);
+      expect(arrow, findsOneWidget);
+
+      await tester.tap(arrow);
+      await tester.pumpAndSettle();
+      expect(find.text('Open settings'), findsOneWidget);
+    });
+
+    testWidgets('the column title sits below the status bar, on the line of the page beside it', (tester) async {
+      tester.view.padding = const FakeViewPadding(top: 24);
+      addTearDown(tester.view.resetPadding);
+      await pumpPushedShell(tester, const Size(1280, 800));
+
+      final column = tester.getTopLeft(find.text('Settings'));
+      final page = tester.getTopLeft(find.text('Page a'));
+      expect(column.dy, moreOrLessEquals(page.dy, epsilon: 4));
+    });
+  });
+
+  testWidgets('a phone on its side keeps the one-pane list, so turning it loses nothing (Plebz)', (tester) async {
+    await pumpShell(tester, size: const Size(900, 400));
+
+    expect(find.text('Group one'), findsOneWidget);
+    expect(find.text('Page a'), findsNothing);
   });
 
   testWidgets('too narrow for two columns, the column is the page and a topic opens on its own', (tester) async {

@@ -48,6 +48,7 @@ import 'trailer_stage/trailer_stage_setup_screen.dart';
 import 'seerr_shelf_screen.dart';
 import 'libraries/state_messages.dart';
 import '../redesign/ocker_skin.dart';
+import '../redesign/ocker_status_bar_ground.dart';
 import '../theme/mono_tokens.dart';
 import '../redesign/ocker_submenu.dart';
 import 'package:collection/collection.dart';
@@ -516,7 +517,7 @@ class ExploreScreenState extends State<ExploreScreen>
       pinned: false,
       floating: true,
       snap: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: pageBarColor(context),
       surfaceTintColor: Colors.transparent,
       shadowColor: Colors.transparent,
       scrolledUnderElevation: 0,
@@ -602,7 +603,11 @@ class ExploreScreenState extends State<ExploreScreen>
     }
 
     return Scaffold(
-      body: RefreshIndicator(onRefresh: _handleRefresh, child: content),
+      // Plebz: the bar floats away as the page scrolls; under the redesign the
+      // status bar then gets a strip of ground ([OckerStatusBarGround]).
+      body: OckerStatusBarGround(
+        child: RefreshIndicator(onRefresh: _handleRefresh, child: content),
+      ),
     );
   }
 

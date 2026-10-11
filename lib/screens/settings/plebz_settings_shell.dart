@@ -8,6 +8,8 @@ import '../../focus/key_event_utils.dart';
 import '../../redesign/ocker_skin.dart';
 import '../../redesign/ocker_type.dart';
 import '../../theme/mono_tokens.dart';
+import '../../utils/platform_detector.dart';
+import '../../widgets/app_bar_back_button.dart';
 import '../../widgets/app_icon.dart';
 import '../../widgets/desktop_app_bar.dart';
 import '../../widgets/focusable_list_tile.dart';
@@ -260,10 +262,21 @@ class PlebzSettingsShellState extends State<PlebzSettingsShell> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        _twoPane = constraints.maxWidth >= PlebzSettingsShell.twoPaneMinWidth;
+        _twoPane = _wantsTwoPane(context, constraints.maxWidth);
         return _twoPane ? _buildTwoPane(context, constraints.maxWidth) : _buildList(context);
       },
     );
+  }
+
+  /// Plebz: a phone or tablet decides by its short side, so that turning it
+  /// never swaps one layout for the other — the swap threw away whatever was
+  /// open beside the column, a source half typed in included. A phone on its
+  /// side is too low for two panes anyway; a ten-inch tablet has room for them
+  /// either way up.
+  bool _wantsTwoPane(BuildContext context, double width) {
+    if (width < PlebzSettingsShell.twoPaneMinWidth) return false;
+    if (!PlatformDetector.isMobile(context)) return true;
+    return MediaQuery.sizeOf(context).shortestSide >= PlebzSettingsShell.twoPaneMinWidth;
   }
 
   // ---------------------------------------------------------------------------
@@ -287,15 +300,23 @@ class PlebzSettingsShellState extends State<PlebzSettingsShell> {
               child: FocusScope(
                 node: _paneScope,
                 child: ClipRect(
-                  child: Navigator(
-                    key: _paneNavigator,
-                    pages: [
-                      _PanePage(
-                        key: ValueKey(section.id),
-                        child: Builder(builder: section.page),
-                      ),
-                    ],
-                    onDidRemovePage: (_) {},
+                  // The system's back — a gesture, a phone's button — goes to
+                  // the route the settings stand in, not to this navigator, and
+                  // closed the whole of the settings from a sub-page. A page
+                  // open beside the column is closed first, as BACK from a
+                  // remote does in [_onPaneKey].
+                  child: NavigatorPopHandler<Object?>(
+                    onPopWithResult: (_) => _paneNavigator.currentState?.maybePop(),
+                    child: Navigator(
+                      key: _paneNavigator,
+                      pages: [
+                        _PanePage(
+                          key: ValueKey(section.id),
+                          child: Builder(builder: section.page),
+                        ),
+                      ],
+                      onDidRemovePage: (_) {},
+                    ),
                   ),
                 ),
               ),
@@ -330,7 +351,9 @@ class PlebzSettingsShellState extends State<PlebzSettingsShell> {
           onKeyEvent: _onColumnKey,
           child: SingleChildScrollView(
             controller: _columnScroll,
-            padding: const EdgeInsets.only(bottom: 16),
+            // The last row clear of a phone's navigation bar, as the page
+            // beside it keeps its own.
+            padding: EdgeInsets.only(bottom: 16 + MediaQuery.paddingOf(context).bottom),
             child: Column(crossAxisAlignment: .stretch, children: rows),
           ),
         ),
@@ -437,15 +460,31 @@ class _ColumnTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     // Set as an app bar sets its title, so the two read as one line.
     final style = Theme.of(context).appBarTheme.titleTextStyle ?? Theme.of(context).textTheme.titleLarge!;
-    return SizedBox(
-      height: kToolbarHeight,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 22),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: DefaultTextStyle(
-            style: style,
-            child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+    // Plebz: on a tablet the settings are a page pushed over the app, with the
+    // status bar over its top — the page beside the column moves its title
+    // below it, and so does this line. Pushed, they also need a way out you
+    // can see: the page beside has no back arrow of its own here, it is the
+    // first thing in its navigator.
+    final canPop = !PlatformDetector.isTV() && (ModalRoute.of(context)?.canPop ?? false);
+    return Padding(
+      padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top),
+      child: SizedBox(
+        height: kToolbarHeight,
+        child: Padding(
+          padding: EdgeInsets.only(left: canPop ? 4 : 22, right: 22),
+          child: Row(
+            children: [
+              if (canPop) ...[
+                AppBarBackButton(style: BackButtonStyle.plain, onPressed: () => Navigator.of(context).maybePop()),
+                const SizedBox(width: 4),
+              ],
+              Expanded(
+                child: DefaultTextStyle(
+                  style: style,
+                  child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
+              ),
+            ],
           ),
         ),
       ),

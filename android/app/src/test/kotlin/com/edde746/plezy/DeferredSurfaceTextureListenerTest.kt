@@ -21,13 +21,17 @@ class DeferredSurfaceTextureListenerTest {
   private lateinit var delegate: RecordingListener
   private lateinit var listener: DeferredSurfaceTextureListener
   private var currentSurface: SurfaceTexture? = null
+  private var resizedCount = 0
 
   @Before
   fun setUp() {
     surface = SurfaceTexture(0)
     currentSurface = surface
     delegate = RecordingListener()
-    listener = DeferredSurfaceTextureListener(delegate) { candidate -> candidate === currentSurface }
+    resizedCount = 0
+    listener = DeferredSurfaceTextureListener(delegate, onSurfaceResized = { resizedCount++ }) { candidate ->
+      candidate === currentSurface
+    }
   }
 
   @After
@@ -76,6 +80,62 @@ class DeferredSurfaceTextureListenerTest {
 
     assertEquals(emptyList<Pair<Int, Int>>(), delegate.sizes)
     assertEquals(1, delegate.destroyedCount)
+  }
+
+  @Test
+  fun forwardsRotationOnNextLoopTurn() {
+    listener.onSurfaceTextureAvailable(surface, 2400, 1080)
+    listener.onSurfaceTextureSizeChanged(surface, 1080, 2400)
+
+    assertEquals(emptyList<Pair<Int, Int>>(), delegate.sizes)
+    shadowOf(Looper.getMainLooper()).idle()
+
+    assertEquals(listOf(1080 to 2400), delegate.sizes)
+  }
+
+  @Test
+  fun keepsDelayForSameOrientationResize() {
+    listener.onSurfaceTextureAvailable(surface, 2400, 1080)
+    listener.onSurfaceTextureSizeChanged(surface, 2200, 1080)
+    shadowOf(Looper.getMainLooper()).idle()
+
+    assertEquals(emptyList<Pair<Int, Int>>(), delegate.sizes)
+    idlePastResizeDelay()
+    assertEquals(listOf(2200 to 1080), delegate.sizes)
+  }
+
+  @Test
+  fun comparesRotationAgainstLastForwardedSize() {
+    listener.onSurfaceTextureAvailable(surface, 2400, 1080)
+    listener.onSurfaceTextureSizeChanged(surface, 1080, 2400)
+    shadowOf(Looper.getMainLooper()).idle()
+    listener.onSurfaceTextureSizeChanged(surface, 2400, 1080)
+    shadowOf(Looper.getMainLooper()).idle()
+
+    assertEquals(listOf(1080 to 2400, 2400 to 1080), delegate.sizes)
+  }
+
+  @Test
+  fun reportsEachForwardedResize() {
+    listener.onSurfaceTextureSizeChanged(surface, 1280, 720)
+    listener.onSurfaceTextureSizeChanged(surface, 1920, 1080)
+    idlePastResizeDelay()
+
+    assertEquals(1, resizedCount)
+  }
+
+  @Test
+  fun skipsResizeReportForObsoleteSurface() {
+    val replacement = SurfaceTexture(0)
+    try {
+      listener.onSurfaceTextureSizeChanged(surface, 1920, 1080)
+      currentSurface = replacement
+      idlePastResizeDelay()
+
+      assertEquals(0, resizedCount)
+    } finally {
+      replacement.release()
+    }
   }
 
   private fun idlePastResizeDelay() {

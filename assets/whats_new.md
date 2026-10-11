@@ -13,6 +13,24 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.21.0 (Build 771)
+
+### Handy und Tablet
+- Live-TV mit Vorschau: Hochkant läuft der angetippte Sender oben im Bild, darunter das Programm. Ein zweiter Tipp, ein Tipp aufs Bild oder der Knopf im Bild öffnet das Vollbild ohne Unterbrechung. Handy quer drehen geht auch – und wieder hochkant zurück ins Programm. Auf dem Tablet steht die Vorschau neben der Beschreibung, wie am Fernseher.
+- Live-TV: Die Sendergruppe wählst du oben über den Knopf, wo bisher „Live-TV“ stand. Er zeigt auch, welche Gruppe gerade aktiv ist.
+- Erinnerungen kommen als Benachrichtigung, auch wenn Plebz geschlossen ist. Ein Tipp darauf schaltet um. Beim ersten Mal fragt Android, ob Plebz Benachrichtigungen zeigen darf.
+- Sportseite: Jedes Spiel steht auf zwei Zeilen mit den vollen Vereinsnamen, und die Spieltag-Leiste passt aufs Handy.
+- Untere Leiste: Bei mehr als sechs Bereichen liegen Sport, Suche und Downloads unter „Mehr“.
+- „Als Nächstes“ im Querformat ist eine kleine Karte unten rechts, die Knöpfe sind erreichbar.
+- Glas und Flach: Titelbilder laufen weich aus, und beim Scrollen scheint nichts mehr durch die Kopfzeilen oder unter der Uhrzeit durch.
+- Drehen vom Quer- ins Hochformat zeigt kein gequetschtes Bild mehr.
+- Außerdem: Einstellungen auf dem Tablet, Programmzeilen und große Systemschrift passen besser; im Hintergrund fragt Plebz nicht mehr ständig neue Daten ab.
+
+### Überall
+- Sender verwalten: Aus einer Gruppe führt der Pfeil zurück zur Gruppenübersicht, das X schließt alles.
+- „Als Nächstes“ kommt bei jeder Folge wieder, auch wenn du es einmal geschlossen hast, und verrät bei „Spoiler verbergen“ nichts über die nächste Folge.
+- Updates zeigen vorher die Größe, warnen bei mobilen Daten und lassen sich abbrechen.
+
 ## 1.20.0 (Build 762)
 
 - Jetzt live: Die Spiel-Kacheln passen jetzt zu Glas und Flach und stehen in den Farben der beiden Vereine. Bei laufenden Spielen siehst du wieder den aktuellen Stand, unter der Kachel Liga und Anstoßzeit.

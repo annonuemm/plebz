@@ -12,10 +12,12 @@ import '../navigation/navigation_tabs.dart';
 import '../providers/multi_server_provider.dart';
 import '../screens/sport/sport_broadcast_finder.dart';
 import '../services/live_tv_last_selection.dart';
+import '../services/program_reminder_notifications.dart';
 import '../services/program_reminders.dart';
 import '../utils/formatters.dart';
 import '../utils/live_tv_matching.dart';
 import '../utils/live_tv_player_navigation.dart';
+import '../utils/notification_permission.dart';
 import '../utils/snackbar_helper.dart';
 import 'dialog_action_button.dart';
 
@@ -25,6 +27,13 @@ import 'dialog_action_button.dart';
 ///
 /// A timer waits for the next one only; it is set again whenever the
 /// reminders change. A reminder that has been shown is gone.
+///
+/// Plebz: on a phone or tablet the reminders also go to Android as
+/// notifications ([ProgramReminderNotifications]), which come when the app is
+/// closed. Away from the screen the app shows nothing itself — a window
+/// opened behind the viewer's back used to take the reminder with it unseen —
+/// and on coming back it drops what Android has already shown and switches
+/// over to a reminder whose notification was tapped.
 class ProgramReminderHost extends StatefulWidget {
   const ProgramReminderHost({super.key, required this.child});
 
@@ -37,29 +46,98 @@ class ProgramReminderHost extends StatefulWidget {
   State<ProgramReminderHost> createState() => _ProgramReminderHostState();
 }
 
-class _ProgramReminderHostState extends State<ProgramReminderHost> {
+class _ProgramReminderHostState extends State<ProgramReminderHost> with WidgetsBindingObserver {
   final ProgramReminders _reminders = ProgramReminders.instance;
+  final ProgramReminderNotifications _notifications = ProgramReminderNotifications.instance;
   Timer? _timer;
   Route<void>? _shown;
 
   @override
   void initState() {
     super.initState();
-    _reminders.addListener(_schedule);
+    WidgetsBinding.instance.addObserver(this);
+    _reminders.addListener(_onRemindersChanged);
+    _notifications.listen(() => unawaited(_catchUp()));
     if (_reminders.isLoaded) {
-      _schedule();
+      _onRemindersChanged();
+      unawaited(_catchUp());
     } else {
-      unawaited(_reminders.ensureLoaded().then((_) => _schedule()));
+      unawaited(
+        _reminders.ensureLoaded().then((_) {
+          _onRemindersChanged();
+          return _catchUp();
+        }),
+      );
     }
   }
 
   @override
   void dispose() {
-    _reminders.removeListener(_schedule);
+    WidgetsBinding.instance.removeObserver(this);
+    _notifications.stopListening();
+    _reminders.removeListener(_onRemindersChanged);
     _timer?.cancel();
     final shown = _shown;
     if (shown != null && shown.isActive) shown.navigator?.removeRoute(shown);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) unawaited(_catchUp());
+  }
+
+  /// Whether the viewer can see a window opened now. Not merely inactive: a
+  /// desktop window that lost focus is still on screen.
+  bool get _onScreen {
+    final state = WidgetsBinding.instance.lifecycleState;
+    return state != AppLifecycleState.hidden && state != AppLifecycleState.paused;
+  }
+
+  void _onRemindersChanged() {
+    _schedule();
+    // Once initState is through — the notification's words read the context's
+    // clock format — but not after a frame: none is drawn in the background.
+    scheduleMicrotask(_syncNotifications);
+  }
+
+  void _syncNotifications() {
+    if (!mounted || !_notifications.supported) return;
+    final is24Hour = MediaQuery.maybeAlwaysUse24HourFormatOf(context) ?? false;
+    final notices = [
+      for (final reminder in _reminders.entries)
+        ProgramReminderNotice(
+          id: reminder.key,
+          at: reminder.startsAt.subtract(ProgramReminders.lead),
+          endsAt: reminder.endsAtTime,
+          title: reminder.title,
+          text: [
+            t.reminders.soonTitle,
+            reminder.channelTitle,
+            formatClockTime(reminder.startsAt, is24Hour: is24Hour),
+          ].where((part) => part.isNotEmpty).join(' · '),
+          action: t.reminders.tune,
+        ),
+    ];
+    unawaited(_notifications.replaceAll(notices, channelName: t.reminders.notificationChannel));
+    // Android 13 asks once, with the first reminder there is.
+    if (notices.isNotEmpty) unawaited(NotificationPermission.ensure());
+  }
+
+  /// Back on screen, or opened from a notification: what Android has already
+  /// shown is not shown again, a tapped one switches over, and anything still
+  /// due comes up now.
+  Future<void> _catchUp() async {
+    if (_notifications.supported) {
+      final opened = await _notifications.takeOpened();
+      final fired = await _notifications.takeFired();
+      final reminder = opened == null ? null : _reminders.entries.firstWhereOrNull((entry) => entry.key == opened);
+      for (final key in {...fired, ?opened}) {
+        await _reminders.remove(key);
+      }
+      if (reminder != null && mounted) await _tune(reminder);
+    }
+    if (mounted) _schedule();
   }
 
   void _schedule() {
@@ -76,6 +154,8 @@ class _ProgramReminderHostState extends State<ProgramReminderHost> {
     if (!mounted) return;
     // One at a time; the next waits for this one to be answered.
     if (_shown != null) return;
+    // Nobody to see it: kept for the return (see [_catchUp]).
+    if (!_onScreen) return;
     final reminder = _reminders.due().firstOrNull;
     if (reminder == null) {
       _schedule();

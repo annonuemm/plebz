@@ -52,6 +52,7 @@ void main() {
       );
       TvDetectionService.debugSetAppleTVOverride(null);
       TvDetectionService.debugSetAutomotiveOverride(null);
+      PlatformDetector.setLayoutMode(LayoutMode.auto);
     });
 
     List<MethodCall> orientationCalls() =>
@@ -90,6 +91,27 @@ void main() {
       expect(orientationCalls(), isEmpty);
       expect(calls.single.method, 'SystemChrome.setEnabledSystemUIMode');
       expect(calls.single.arguments, 'SystemUiMode.immersiveSticky');
+    });
+
+    test('a TV set to the phone layout is still never sent an orientation', () async {
+      TvDetectionService.debugSetAppleTVOverride(true);
+      PlatformDetector.setLayoutMode(LayoutMode.phone);
+
+      await OrientationHelper.restoreDefaultOrientations();
+      await OrientationHelper.lockLandscapeOrientation();
+
+      expect(orientationCalls(), isEmpty);
+    });
+
+    test('a picture turned full screen by the phone follows the phone instead of pinning landscape (Plebz)', () async {
+      TvDetectionService.debugSetAppleTVOverride(false);
+      TvDetectionService.debugSetAutomotiveOverride(false);
+      OrientationHelper.followDeviceRotation = true;
+      addTearDown(() => OrientationHelper.followDeviceRotation = false);
+
+      await OrientationHelper.lockLandscapeOrientation();
+
+      expect(orientationCalls().single.arguments, hasLength(4));
     });
 
     test('a car is never sent an orientation', () async {

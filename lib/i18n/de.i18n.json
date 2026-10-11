@@ -1837,6 +1837,8 @@
     "failedToBuildStreamUrl": "Die Stream-URL konnte nicht erstellt werden",
     "channelGroups": "Sendergruppen",
     "allChannels": "Alle Sender",
+    "previewHint": "Tippe auf einen Sender",
+    "until": "bis ${time}",
     "channelCount": "${count} Sender",
     "manageChannels": "Sender verwalten",
     "ungrouped": "Ohne Gruppe",
@@ -2875,11 +2877,14 @@
     "checkOnStartup": "Beim Start nach Updates suchen",
     "checkOnStartupDescription": "GitHub sieht dabei deine IP-Adresse",
     "downloading": "Update wird geladen …",
+    "updateSize": "Der Download ist ${size} groß.",
+    "updateOnMobileData": "Du bist gerade über mobile Daten verbunden.",
     "installPermissionTitle": "Installieren erlauben",
     "installPermissionBody": "Damit Plebz Updates installieren kann, erlaube es einmal unter „Unbekannte Apps installieren“. Suche danach erneut nach dem Update.",
     "openSettings": "Einstellungen öffnen",
     "updateFailed": "Das Update konnte nicht geladen oder installiert werden.",
     "noMatchingDownload": "Dieses Release hat keine Datei für dieses Gerät.",
+    "more": "Mehr",
     "whatsNew": "Was ist neu",
     "whatsNewDescription": "",
     "whatsNewEmpty": "Zu dieser Version gibt es noch keine Notizen."
@@ -2906,6 +2911,7 @@
     "soonTitle": "Gleich geht’s los",
     "runningTitle": "Läuft gerade",
     "tune": "Umschalten",
+    "notificationChannel": "Erinnerungen an Sendungen",
     "channelGone": "Der Sender ${channel} ist nicht mehr in der Senderliste."
   },
   "remoteKeys": {

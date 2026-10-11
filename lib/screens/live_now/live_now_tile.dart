@@ -169,52 +169,57 @@ class LiveNowTileCard extends StatelessWidget {
             card?.call(body) ?? body,
             SizedBox(
               height: captionHeight,
-              child: second == null
-                  ? Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        item.displayTitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: tk.ink(0.9),
-                          fontSize: captionHeight * 0.5,
-                          fontWeight: FontWeight.w600,
+              // The words are shares of the box, and the box already grew
+              // with the viewer's text size (see HubSection): scaled again
+              // here they would outgrow it.
+              child: MediaQuery.withNoTextScaling(
+                child: second == null
+                    ? Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          item.displayTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: tk.ink(0.9),
+                            fontSize: captionHeight * 0.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : Padding(
+                        padding: EdgeInsets.only(top: captionHeight * 0.12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.displayTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: tk.ink(0.92),
+                                fontSize: captionHeight * 0.36,
+                                height: 1.2,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: captionHeight * 0.06),
+                            Text(
+                              second,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: tk.ink(0.55),
+                                fontSize: captionHeight * 0.28,
+                                height: 1.2,
+                                fontWeight: FontWeight.w500,
+                                fontFeatures: const [FontFeature.tabularFigures()],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    )
-                  : Padding(
-                      padding: EdgeInsets.only(top: captionHeight * 0.12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.displayTitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: tk.ink(0.92),
-                              fontSize: captionHeight * 0.36,
-                              height: 1.2,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: captionHeight * 0.06),
-                          Text(
-                            second,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: tk.ink(0.55),
-                              fontSize: captionHeight * 0.28,
-                              height: 1.2,
-                              fontWeight: FontWeight.w500,
-                              fontFeatures: const [FontFeature.tabularFigures()],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+              ),
             ),
           ],
         ),

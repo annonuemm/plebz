@@ -31,6 +31,7 @@ import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/utils/dialogs.dart';
+import 'package:plezy/utils/orientation_helper.dart';
 import 'package:plezy/utils/platform_detector.dart';
 import 'package:plezy/widgets/app_icon.dart';
 import 'package:provider/provider.dart';
@@ -59,6 +60,10 @@ LiveTvProgram _program({String ratingKey = 'program/42', int beginsAt = 1_800_00
     );
 
 void main() {
+  // Written for the guide without the band a phone or tablet now has (Plebz).
+  setUp(() => GuideTabState.debugHandheldPreview = false);
+  tearDown(() => GuideTabState.debugHandheldPreview = null);
+
   TestWidgetsFlutterBinding.ensureInitialized();
   setUpAll(() => initializeDateFormatting('en'));
   setUp(() {
@@ -544,6 +549,64 @@ http://provider/stream/ard
     await tester.pump(const Duration(milliseconds: 300));
   }
 
+  group('a phone keeps rows tall enough for a block\'s three lines (Plebz)', () {
+    Future<double> rowHeightOnPhone(WidgetTester tester, Size size, {double textScale = 1}) async {
+      resetSharedPreferencesForTest();
+      SettingsService.resetForTesting();
+      await SettingsService.getInstance();
+      TvDetectionService.debugSetAppleTVOverride(false);
+      PlatformDetector.debugSetIsDesktopOSOverride(false);
+      addTearDown(() => PlatformDetector.debugSetIsDesktopOSOverride(null));
+
+      final multiServer = testMultiServerProvider(MultiServerManager());
+      addTearDown(multiServer.dispose);
+
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
+      addTearDown(() {
+        tester.view.resetDevicePixelRatio();
+        tester.view.resetPhysicalSize();
+      });
+
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: MultiProvider(
+            providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
+            child: MaterialApp(
+              theme: monoTheme(dark: true),
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: child!,
+              ),
+              home: Scaffold(body: GuideTab(channels: [_channel()])),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      final row = find.ancestor(
+        of: find.text(t.liveTv.noPrograms),
+        matching: find.byWidgetPredicate((w) => w is SizedBox && w.height != null),
+      );
+      return tester.getSize(row.first).height;
+    }
+
+    testWidgets('in portrait', (tester) async {
+      // About what a portrait phone leaves the guide under the page's header
+      // and above the bottom bar.
+      expect(await rowHeightOnPhone(tester, const Size(390, 420)), greaterThanOrEqualTo(64));
+    });
+
+    testWidgets('in landscape, where an eighth of the grid is far less', (tester) async {
+      expect(await rowHeightOnPhone(tester, const Size(844, 390)), greaterThanOrEqualTo(64));
+    });
+
+    testWidgets('with a larger system text size', (tester) async {
+      expect(await rowHeightOnPhone(tester, const Size(390, 420), textScale: 1.3), greaterThanOrEqualTo(78));
+    });
+  });
+
   testWidgets('a desktop window with room for it gets the band', (tester) async {
     await pumpDesktopGuide(tester, const Size(1280, 720));
 
@@ -1021,6 +1084,116 @@ http://provider/stream/ard
       },
     );
   }
+
+  group('a phone\'s preview band (Plebz)', () {
+    late MultiServerProvider multiServer;
+    final channel = LiveTvChannel(key: 'channel/1', identifier: 'station-1', title: 'Sender 1', serverId: 'server-a');
+
+    setUp(() async {
+      GuideTabState.debugHandheldPreview = null;
+      resetSharedPreferencesForTest();
+      SettingsService.resetForTesting();
+      await SettingsService.getInstance();
+      TvDetectionService.debugSetAppleTVOverride(false);
+      PlatformDetector.debugSetIsDesktopOSOverride(false);
+      GuidePreviewPlayerState.debugSuppressPlayback = true;
+      multiServer = testMultiServerProvider(MultiServerManager());
+    });
+
+    tearDown(() {
+      PlatformDetector.debugSetIsDesktopOSOverride(null);
+      GuidePreviewPlayerState.debugSuppressPlayback = false;
+      multiServer.dispose();
+    });
+
+    Future<List<String>> pumpPhone(WidgetTester tester, Size size) async {
+      final fullScreen = <String>[];
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: MultiProvider(
+            providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
+            child: MaterialApp(
+              theme: monoTheme(dark: true),
+              home: Scaffold(
+                body: GuideTab(channels: [channel], onPlayChannel: (played) async => fullScreen.add(played.key)),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      return fullScreen;
+    }
+
+    GuidePreviewBand band(WidgetTester tester) => tester.widget<GuidePreviewBand>(find.byType(GuidePreviewBand));
+
+    testWidgets('upright: the picture across the width, quiet until a channel is tapped', (tester) async {
+      await pumpPhone(tester, const Size(390, 844));
+
+      expect(find.text(t.liveTv.previewHint), findsOneWidget);
+      expect(band(tester).previewChannel, isNull);
+      expect(tester.getSize(find.byType(GuidePreviewBand)).width, 390);
+    });
+
+    testWidgets('a tap puts the channel in the band, its button on the whole screen', (tester) async {
+      final fullScreen = await pumpPhone(tester, const Size(390, 844));
+
+      await tester.tap(find.text('Sender 1').first);
+      await tester.pump();
+      expect(band(tester).previewChannel?.key, channel.key);
+      expect(find.text(t.liveTv.previewHint), findsNothing);
+      expect(fullScreen, isEmpty, reason: 'the first tap only previews');
+
+      await tester.tap(find.byTooltip(t.common.fullscreen));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(fullScreen, [channel.key]);
+    });
+
+    testWidgets('turned on its side with a channel in the band, it goes to the whole screen', (tester) async {
+      final fullScreen = await pumpPhone(tester, const Size(390, 844));
+      await tester.tap(find.text('Sender 1').first);
+      await tester.pump();
+
+      tester.view.physicalSize = const Size(844, 390);
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(fullScreen, [channel.key]);
+    });
+
+    testWidgets('on its side with nothing in the band, the guide is the bare grid', (tester) async {
+      await pumpPhone(tester, const Size(844, 390));
+
+      expect(find.byType(GuidePreviewBand), findsNothing);
+      expect(find.byType(GuidePreviewPanel), findsNothing);
+    });
+
+    testWidgets('a picture gone full screen by turning comes back when the phone is upright again', (tester) async {
+      await pumpPhone(tester, const Size(844, 390));
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
+      unawaited(navigator.push(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('full screen')))));
+      await tester.pumpAndSettle();
+      OrientationHelper.followDeviceRotation = true;
+      addTearDown(() => OrientationHelper.followDeviceRotation = false);
+
+      tester.view.physicalSize = const Size(390, 844);
+      await tester.pump();
+      await tester.pumpAndSettle();
+      expect(find.text('full screen'), findsNothing);
+    });
+
+    testWidgets('a tablet keeps the band either way up, picture beside its words', (tester) async {
+      await pumpPhone(tester, const Size(1280, 800));
+
+      expect(find.byType(GuidePreviewPanel), findsOneWidget);
+      expect(find.byType(GuidePreviewBand), findsNothing);
+    });
+  });
 
   testWidgets('six channels fit under the preview on a TV-sized guide', (tester) async {
     // What a guide is judged by: how much of the list you can compare at

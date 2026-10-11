@@ -4567,6 +4567,12 @@ class Translations$liveTv$en {
 	/// en: 'All channels'
 	String get allChannels => 'All channels';
 
+	/// en: 'Tap a channel'
+	String get previewHint => 'Tap a channel';
+
+	/// en: 'until ${time}'
+	String until({required Object time}) => 'until ${time}';
+
 	/// en: '${count} channels'
 	String channelCount({required Object count}) => '${count} channels';
 
@@ -7173,6 +7179,12 @@ class Translations$plebz$en {
 	/// en: 'Downloading the update…'
 	String get downloading => 'Downloading the update…';
 
+	/// en: 'The download is ${size}.'
+	String updateSize({required Object size}) => 'The download is ${size}.';
+
+	/// en: 'You're on mobile data right now.'
+	String get updateOnMobileData => 'You\'re on mobile data right now.';
+
 	/// en: 'Allow installing'
 	String get installPermissionTitle => 'Allow installing';
 
@@ -7187,6 +7199,9 @@ class Translations$plebz$en {
 
 	/// en: 'This release has no file for this device.'
 	String get noMatchingDownload => 'This release has no file for this device.';
+
+	/// en: 'More'
+	String get more => 'More';
 
 	/// en: 'What's new'
 	String get whatsNew => 'What\'s new';
@@ -7271,6 +7286,9 @@ class Translations$reminders$en {
 
 	/// en: 'Switch over'
 	String get tune => 'Switch over';
+
+	/// en: 'Programme reminders'
+	String get notificationChannel => 'Programme reminders';
 
 	/// en: 'The channel ${channel} is no longer in the channel list.'
 	String channelGone({required Object channel}) => 'The channel ${channel} is no longer in the channel list.';
@@ -11068,6 +11086,8 @@ extension on Translations {
 			'liveTv.failedToBuildStreamUrl' => 'Could not build the stream URL',
 			'liveTv.channelGroups' => 'Channel groups',
 			'liveTv.allChannels' => 'All channels',
+			'liveTv.previewHint' => 'Tap a channel',
+			'liveTv.until' => ({required Object time}) => 'until ${time}',
 			'liveTv.channelCount' => ({required Object count}) => '${count} channels',
 			'liveTv.manageChannels' => 'Manage channels',
 			'liveTv.ungrouped' => 'Ungrouped',
@@ -11432,10 +11452,10 @@ extension on Translations {
 			'companionRemote.pairing.noPairedDevices' => 'No device paired yet. A code appears here on the first connection.',
 			'companionRemote.pairing.unpair' => 'Remove',
 			'companionRemote.pairing.unpaired' => ({required Object name}) => '${name} is no longer paired',
-			'companionRemote.remote.disconnectConfirm' => 'Do you want to disconnect from the remote session?',
-			'companionRemote.remote.reconnecting' => 'Reconnecting...',
 			_ => null,
 		} ?? switch (path) {
+			'companionRemote.remote.disconnectConfirm' => 'Do you want to disconnect from the remote session?',
+			'companionRemote.remote.reconnecting' => 'Reconnecting...',
 			'companionRemote.remote.attemptOf' => ({required Object current}) => 'Attempt ${current} of 5',
 			'companionRemote.remote.retryNow' => 'Retry Now',
 			'companionRemote.remote.tabRemote' => 'Remote',
@@ -11946,10 +11966,10 @@ extension on Translations {
 			'actor.departments.acting' => 'Acting',
 			'actor.departments.directing' => 'Directing',
 			'actor.departments.production' => 'Production',
-			'actor.departments.writing' => 'Writing',
-			'actor.availability.all' => 'Everything',
 			_ => null,
 		} ?? switch (path) {
+			'actor.departments.writing' => 'Writing',
+			'actor.availability.all' => 'Everything',
 			'actor.availability.available' => 'Available',
 			'actor.availability.missing' => 'Not available',
 			'sport.bundesliga1' => 'Bundesliga',
@@ -12031,11 +12051,14 @@ extension on Translations {
 			'plebz.checkOnStartup' => 'Check for updates at start',
 			'plebz.checkOnStartupDescription' => 'GitHub sees your IP address',
 			'plebz.downloading' => 'Downloading the update…',
+			'plebz.updateSize' => ({required Object size}) => 'The download is ${size}.',
+			'plebz.updateOnMobileData' => 'You\'re on mobile data right now.',
 			'plebz.installPermissionTitle' => 'Allow installing',
 			'plebz.installPermissionBody' => 'To install updates, Plebz needs to be allowed once under "Install unknown apps". Then check for the update again.',
 			'plebz.openSettings' => 'Open settings',
 			'plebz.updateFailed' => 'The update could not be downloaded or installed.',
 			'plebz.noMatchingDownload' => 'This release has no file for this device.',
+			'plebz.more' => 'More',
 			'plebz.whatsNew' => 'What\'s new',
 			'plebz.whatsNewDescription' => '',
 			'plebz.whatsNewEmpty' => 'There are no notes for this version yet.',
@@ -12058,6 +12081,7 @@ extension on Translations {
 			'reminders.soonTitle' => 'Starting soon',
 			'reminders.runningTitle' => 'On now',
 			'reminders.tune' => 'Switch over',
+			'reminders.notificationChannel' => 'Programme reminders',
 			'reminders.channelGone' => ({required Object channel}) => 'The channel ${channel} is no longer in the channel list.',
 			'remoteKeys.title' => 'Remote control',
 			'remoteKeys.entryDescription' => 'What each button does in the player',

@@ -216,6 +216,58 @@ void main() {
     expect(find.text('Kein EPG'), findsOneWidget);
   });
 
+  group('the zap banner on a phone (Plebz)', () {
+    testWidgets('a long name ends in an ellipsis inside the screen', (tester) async {
+      PipService().isPipActive.value = false;
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final visible = ValueNotifier<bool>(true);
+      addTearDown(visible.dispose);
+
+      await tester.pumpWidget(
+        _wrapPrompt(
+          VideoPlayerZapBanner(
+            visible: visible,
+            channelName: 'Ein sehr langer Sendername, der nicht auf ein Telefon passt HD',
+            programTitle: 'Tagesschau',
+          ),
+        ),
+      );
+
+      expect(tester.getRect(find.textContaining('Ein sehr langer')).right, lessThanOrEqualTo(390 - 32));
+    });
+
+    testWidgets('stays clear of a cutout at the side', (tester) async {
+      PipService().isPipActive.value = false;
+      tester.view.physicalSize = const Size(844, 390);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(left: 40);
+      addTearDown(tester.view.reset);
+      final visible = ValueNotifier<bool>(true);
+      addTearDown(visible.dispose);
+
+      await tester.pumpWidget(
+        _wrapPrompt(VideoPlayerZapBanner(visible: visible, channelName: 'Das Erste HD', programTitle: null)),
+      );
+
+      expect(tester.getTopLeft(find.text('Das Erste HD')).dx, greaterThanOrEqualTo(72));
+    });
+
+    testWidgets('is not drawn in the picture-in-picture window', (tester) async {
+      PipService().isPipActive.value = true;
+      addTearDown(() => PipService().isPipActive.value = false);
+      final visible = ValueNotifier<bool>(true);
+      addTearDown(visible.dispose);
+
+      await tester.pumpWidget(
+        _wrapPrompt(VideoPlayerZapBanner(visible: visible, channelName: 'Das Erste HD', programTitle: null)),
+      );
+
+      expect(find.text('Das Erste HD'), findsNothing);
+    });
+  });
+
   testWidgets('the buffering spinner announces loading until the first frame renders', (tester) async {
     PipService().isPipActive.value = false;
     final isBuffering = ValueNotifier<bool>(false);

@@ -125,6 +125,7 @@ class MainActivity : FlutterActivity() {
   private val externalPlayerChannel = ExternalPlayerChannel(this)
   private val userCertificateChannel = UserCertificateChannel()
   private val updateInstallerChannel = UpdateInstallerChannel(this)
+  private val programReminderChannel by lazy { ProgramReminderChannel(applicationContext) }
   private val vaultKeyChannel = VaultKeyChannel()
   private val storageAccessChannel by lazy { StorageAccessChannel(this) }
   private val exitDiagnosticsRequested = AtomicBoolean(false)
@@ -583,6 +584,7 @@ class MainActivity : FlutterActivity() {
     val launchedFromHistory = (intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
     if (savedInstanceState == null && !launchedFromHistory) {
       handleWatchNextIntent(intent)
+      programReminderChannel.handleIntent(intent)
     }
   }
 
@@ -590,6 +592,7 @@ class MainActivity : FlutterActivity() {
     super.onNewIntent(intent)
     // Handle Watch Next deep link when app is already running
     handleWatchNextIntent(intent)
+    programReminderChannel.handleIntent(intent)
   }
 
   override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -727,14 +730,24 @@ class MainActivity : FlutterActivity() {
     flutterTextureView.surfaceTextureListener =
       DeferredSurfaceTextureListener(
         delegate = original,
-        onSurfaceAvailable = ::tryReconnectFlutterSurface
+        onSurfaceAvailable = ::tryReconnectFlutterSurface,
+        onSurfaceResized = ::redrawAfterSurfaceResize
       ) { surface ->
         flutterTextureView.isAvailable && flutterTextureView.surfaceTexture === surface
       }
   }
 
+  // Flutter's surfaceChanged resizes the render target without drawing, so the
+  // frame drawn for the old size (on a phone rotation: squeezed into one half
+  // of the screen) stayed up until the next unrelated frame. Re-dispatching
+  // insets makes FlutterView resend its metrics, which forces a fresh frame.
+  private fun redrawAfterSurfaceResize() {
+    flutterView()?.requestApplyInsets()
+  }
+
   override fun onStop() {
     activityStarted = false
+    ProgramReminderAlarms.appInForeground = false
     if (isAndroidTvDevice()) flutterSurfaceReconnectPending = true
     super.onStop()
   }
@@ -742,6 +755,7 @@ class MainActivity : FlutterActivity() {
   override fun onStart() {
     super.onStart()
     activityStarted = true
+    ProgramReminderAlarms.appInForeground = true
     tryReconnectFlutterSurface()
   }
 
@@ -961,6 +975,7 @@ class MainActivity : FlutterActivity() {
     externalPlayerChannel.attach(flutterEngine.dartExecutor.binaryMessenger)
     userCertificateChannel.attach(flutterEngine.dartExecutor.binaryMessenger)
     updateInstallerChannel.attach(flutterEngine.dartExecutor.binaryMessenger)
+    programReminderChannel.attach(flutterEngine.dartExecutor.binaryMessenger)
     vaultKeyChannel.attach(flutterEngine.dartExecutor.binaryMessenger)
     storageAccessChannel.attach(flutterEngine.dartExecutor.binaryMessenger)
 

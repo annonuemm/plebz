@@ -16,6 +16,7 @@ import '../providers/multi_server_provider.dart';
 import '../screens/video_player/live_tv_session_args.dart';
 import '../screens/video_player_screen.dart';
 import '../utils/app_logger.dart';
+import '../utils/orientation_helper.dart';
 import '../utils/snackbar_helper.dart';
 import '../utils/video_player_navigation.dart';
 import '../services/live_picture_handover.dart';
@@ -52,6 +53,10 @@ Future<bool> navigateToLiveTv(
   LiveTvStartPosition startPosition = LiveTvStartPosition.ask,
   LivePictureHandover? handover,
   Rect? pictureFrom,
+
+  /// Plebz: opened because the phone was turned on its side — the player
+  /// follows the phone's rotation (see [OrientationHelper.followDeviceRotation]).
+  bool followDeviceRotation = false,
 }) async {
   if (!(isLaunchCurrent?.call() ?? true) || !(launchObserver?.isCurrent ?? true)) return false;
   // An IPTV channel belongs to a playlist, not to a media server: it has no
@@ -116,6 +121,7 @@ Future<bool> navigateToLiveTv(
     ),
   );
 
+  OrientationHelper.followDeviceRotation = followDeviceRotation;
   unawaited(route.push(navigator));
   launchObserver?.mark('opening');
   return true;

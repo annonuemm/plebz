@@ -242,33 +242,63 @@ class VideoPlayerZapBanner extends StatelessWidget {
       ],
     );
 
+    // Plebz: clear of a phone's cutout and navigation bar, and no wider than
+    // the screen leaves it — given no right edge, a long name ran off the
+    // side instead of ending in an ellipsis.
+    final insets = MediaQuery.paddingOf(context);
+    final maxWidth = MediaQuery.sizeOf(context).width - 64 - insets.left - insets.right;
+    return ValueListenableBuilder<bool>(
+      // Not in the picture-in-picture window: a zap from its controls covered
+      // most of it for the banner's seconds.
+      valueListenable: PipService().isPipActive,
+      builder: (context, isInPip, child) => isInPip
+          ? const SizedBox.shrink()
+          : Positioned(
+              left: 32 + insets.left,
+              bottom: 48 + insets.bottom,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth > 0 ? maxWidth : 0),
+                child: child,
+              ),
+            ),
+      child: _BannerBody(visible: visible, tk: tk, lines: lines),
+    );
+  }
+}
+
+class _BannerBody extends StatelessWidget {
+  const _BannerBody({required this.visible, required this.tk, required this.lines});
+
+  final ValueListenable<bool> visible;
+  final MonoTokens? tk;
+  final Widget lines;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = this.tk;
     return ValueListenableBuilder<bool>(
       valueListenable: visible,
       builder: (context, isVisible, child) {
-        return Positioned(
-          left: 32,
-          bottom: 48,
-          child: IgnorePointer(
-            child: AnimatedOpacity(
-              opacity: isVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 200),
-              child: tk != null
-                  // The words land where they did on the black box: the
-                  // pane's inset plus a little more at the sides.
-                  ? OckerGlass(
-                      borderRadius: BorderRadius.all(Radius.circular(tk.radiusMd)),
-                      scrimInset: 12,
-                      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: lines),
-                    )
-                  : Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.72),
-                        borderRadius: BorderRadius.circular(flatRadius(context, 12)),
-                      ),
-                      child: lines,
+        return IgnorePointer(
+          child: AnimatedOpacity(
+            opacity: isVisible ? 1 : 0,
+            duration: const Duration(milliseconds: 200),
+            child: tk != null
+                // The words land where they did on the black box: the
+                // pane's inset plus a little more at the sides.
+                ? OckerGlass(
+                    borderRadius: BorderRadius.all(Radius.circular(tk.radiusMd)),
+                    scrimInset: 12,
+                    child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: lines),
+                  )
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.72),
+                      borderRadius: BorderRadius.circular(flatRadius(context, 12)),
                     ),
-            ),
+                    child: lines,
+                  ),
           ),
         );
       },

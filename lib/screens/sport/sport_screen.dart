@@ -237,7 +237,7 @@ class SportScreenState extends State<SportScreen>
             title: sideNav ? TabChipStrip(children: _chips()) : Text(t.navigation.sport),
             floating: true,
             pinned: true,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            backgroundColor: pageBarColor(context),
             surfaceTintColor: Colors.transparent,
             shadowColor: Colors.transparent,
             scrolledUnderElevation: 0,

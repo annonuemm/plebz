@@ -35,6 +35,7 @@ class SportRepository {
   final Map<String, Future<Object?>> _inFlight = {};
 
   static const _currentTtl = Duration(minutes: 1);
+  static const _quietCurrentTtl = Duration(minutes: 15);
   static const _tableTtl = Duration(minutes: 2);
   static const _matchdaysTtl = Duration(hours: 12);
   static const _liveMatchdayTtl = Duration(minutes: 1);
@@ -54,7 +55,7 @@ class SportRepository {
   /// what is wanted by midweek is what comes next. See [movesOnAt].
   Future<SportLeagueNow?> current(SportLeague league) => _cached<SportLeagueNow>(
     'now:${league.shortcut}',
-    ttl: (_) => _currentTtl,
+    ttl: (now) => _currentTtlFor(now.matches),
     fetch: () async {
       final currentAnswer = await _client.fetchCurrentMatchday(league);
       if (currentAnswer == null || currentAnswer.isEmpty) return null;
@@ -170,7 +171,28 @@ class SportRepository {
     final now = clock.now();
     if (matches.every((match) => match.isFinished)) return _finishedMatchdayTtl;
     if (matches.any((match) => match.isLive(now))) return _liveMatchdayTtl;
-    return _upcomingMatchdayTtl;
+    return _untilNextKickoff(matches, now, cap: _upcomingMatchdayTtl);
+  }
+
+  /// The current matchday is asked for every minute by the home row, all week.
+  /// While a game is on its score moves by the minute; otherwise nothing about
+  /// it changes before the next kickoff, so the answer is kept until then.
+  static Duration _currentTtlFor(List<SportMatch> matches) {
+    final now = clock.now();
+    if (matches.any((match) => match.isLive(now))) return _currentTtl;
+    return _untilNextKickoff(matches, now, cap: _quietCurrentTtl);
+  }
+
+  /// [cap], or less when a game kicks off sooner — an answer kept past a
+  /// kickoff would show the game as still to come. Never under a minute.
+  static Duration _untilNextKickoff(List<SportMatch> matches, DateTime now, {required Duration cap}) {
+    var ttl = cap;
+    for (final match in matches) {
+      if (match.isFinished || !match.kickoff.isAfter(now)) continue;
+      final until = match.kickoff.difference(now);
+      if (until < ttl) ttl = until;
+    }
+    return ttl < _currentTtl ? _currentTtl : ttl;
   }
 
   Future<T?> _cached<T extends Object>(

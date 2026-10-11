@@ -1763,6 +1763,8 @@ class _Translations$liveTv$de extends Translations$liveTv$en {
 	@override String get failedToBuildStreamUrl => 'Die Stream-URL konnte nicht erstellt werden';
 	@override String get channelGroups => 'Sendergruppen';
 	@override String get allChannels => 'Alle Sender';
+	@override String get previewHint => 'Tippe auf einen Sender';
+	@override String until({required Object time}) => 'bis ${time}';
 	@override String channelCount({required Object count}) => '${count} Sender';
 	@override String get manageChannels => 'Sender verwalten';
 	@override String get ungrouped => 'Ohne Gruppe';
@@ -2769,11 +2771,14 @@ class _Translations$plebz$de extends Translations$plebz$en {
 	@override String get checkOnStartup => 'Beim Start nach Updates suchen';
 	@override String get checkOnStartupDescription => 'GitHub sieht dabei deine IP-Adresse';
 	@override String get downloading => 'Update wird geladen …';
+	@override String updateSize({required Object size}) => 'Der Download ist ${size} groß.';
+	@override String get updateOnMobileData => 'Du bist gerade über mobile Daten verbunden.';
 	@override String get installPermissionTitle => 'Installieren erlauben';
 	@override String get installPermissionBody => 'Damit Plebz Updates installieren kann, erlaube es einmal unter „Unbekannte Apps installieren“. Suche danach erneut nach dem Update.';
 	@override String get openSettings => 'Einstellungen öffnen';
 	@override String get updateFailed => 'Das Update konnte nicht geladen oder installiert werden.';
 	@override String get noMatchingDownload => 'Dieses Release hat keine Datei für dieses Gerät.';
+	@override String get more => 'Mehr';
 	@override String get whatsNew => 'Was ist neu';
 	@override String get whatsNewEmpty => 'Zu dieser Version gibt es noch keine Notizen.';
 }
@@ -2813,6 +2818,7 @@ class _Translations$reminders$de extends Translations$reminders$en {
 	@override String get soonTitle => 'Gleich geht’s los';
 	@override String get runningTitle => 'Läuft gerade';
 	@override String get tune => 'Umschalten';
+	@override String get notificationChannel => 'Erinnerungen an Sendungen';
 	@override String channelGone({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.';
 }
 
@@ -5359,6 +5365,8 @@ extension on TranslationsDe {
 			'liveTv.failedToBuildStreamUrl' => 'Die Stream-URL konnte nicht erstellt werden',
 			'liveTv.channelGroups' => 'Sendergruppen',
 			'liveTv.allChannels' => 'Alle Sender',
+			'liveTv.previewHint' => 'Tippe auf einen Sender',
+			'liveTv.until' => ({required Object time}) => 'bis ${time}',
 			'liveTv.channelCount' => ({required Object count}) => '${count} Sender',
 			'liveTv.manageChannels' => 'Sender verwalten',
 			'liveTv.ungrouped' => 'Ohne Gruppe',
@@ -5816,10 +5824,10 @@ extension on TranslationsDe {
 			'performanceOverlay.maxFall' => 'MaxFALL',
 			'performanceOverlay.cacheUsed' => 'Cache genutzt',
 			'performanceOverlay.cacheLimit' => 'Cache-Limit',
-			'performanceOverlay.speed' => 'Geschwindigkeit',
-			'performanceOverlay.player' => 'Player',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.speed' => 'Geschwindigkeit',
+			'performanceOverlay.player' => 'Player',
 			'performanceOverlay.memory' => 'Speicher',
 			'performanceOverlay.uiFps' => 'UI-FPS',
 			'performanceOverlay.fps' => 'FPS',
@@ -6315,11 +6323,14 @@ extension on TranslationsDe {
 			'plebz.checkOnStartup' => 'Beim Start nach Updates suchen',
 			'plebz.checkOnStartupDescription' => 'GitHub sieht dabei deine IP-Adresse',
 			'plebz.downloading' => 'Update wird geladen …',
+			'plebz.updateSize' => ({required Object size}) => 'Der Download ist ${size} groß.',
+			'plebz.updateOnMobileData' => 'Du bist gerade über mobile Daten verbunden.',
 			'plebz.installPermissionTitle' => 'Installieren erlauben',
 			'plebz.installPermissionBody' => 'Damit Plebz Updates installieren kann, erlaube es einmal unter „Unbekannte Apps installieren“. Suche danach erneut nach dem Update.',
 			'plebz.openSettings' => 'Einstellungen öffnen',
 			'plebz.updateFailed' => 'Das Update konnte nicht geladen oder installiert werden.',
 			'plebz.noMatchingDownload' => 'Dieses Release hat keine Datei für dieses Gerät.',
+			'plebz.more' => 'Mehr',
 			'plebz.whatsNew' => 'Was ist neu',
 			'plebz.whatsNewEmpty' => 'Zu dieser Version gibt es noch keine Notizen.',
 			'localFiles.wrongTypeTitle' => 'Falscher Dateityp',
@@ -6327,13 +6338,13 @@ extension on TranslationsDe {
 			'localFiles.accessTitle' => 'Zugriff auf Dateien',
 			'localFiles.accessMessage' => 'Diese Box hat keine eigene Dateiauswahl. Damit Plebz Ordner und USB-Sticks durchsuchen kann, braucht die App einmalig den „Zugriff auf alle Dateien“. Auf der nächsten Seite schaltest du ihn für Plebz ein und kommst dann mit Zurück wieder hierher.',
 			'localFiles.accessConfirm' => 'Weiter',
+			_ => null,
+		} ?? switch (path) {
 			'localFiles.accessUnavailable' => 'Diese Box bietet keine Einstellung für den Dateizugriff an. Er lässt sich nur über einen PC freischalten:\nadb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow',
 			'localFiles.accessDenied' => 'Ohne den Zugriff auf alle Dateien kann Plebz hier keine Ordner durchsuchen.',
 			'localFiles.volumes' => 'Speicherorte',
 			'localFiles.up' => 'Eine Ebene höher',
 			'localFiles.noVolumes' => 'Kein Speicher gefunden.',
-			_ => null,
-		} ?? switch (path) {
 			'localFiles.unreadable' => 'Dieser Ordner lässt sich nicht lesen.',
 			'localFiles.nothingHere' => ({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.',
 			'reminders.add' => 'Erinnern',
@@ -6343,6 +6354,7 @@ extension on TranslationsDe {
 			'reminders.soonTitle' => 'Gleich geht’s los',
 			'reminders.runningTitle' => 'Läuft gerade',
 			'reminders.tune' => 'Umschalten',
+			'reminders.notificationChannel' => 'Erinnerungen an Sendungen',
 			'reminders.channelGone' => ({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.',
 			'remoteKeys.title' => 'Fernbedienung',
 			'remoteKeys.entryDescription' => 'Welche Taste im Player was tut',

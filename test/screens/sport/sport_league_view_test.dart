@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -145,6 +146,52 @@ void main() {
     await tester.pump();
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_matchday');
   }
+
+  testWidgets('a running game is not asked for again while another destination is in front', (tester) async {
+    final api = provider();
+    var now = DateTime.now();
+    await withClock(Clock(() => now), () async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      // The main screen keeps a hidden destination mounted with its tickers off.
+      final inFront = ValueNotifier(true);
+      addTearDown(inFront.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: monoTheme(dark: true),
+          home: Scaffold(
+            body: ValueListenableBuilder<bool>(
+              valueListenable: inFront,
+              builder: (context, enabled, child) => TickerMode(enabled: enabled, child: child!),
+              child: SportLeagueView(
+                league: SportLeague.bundesliga1,
+                isActive: true,
+                onExitUp: () {},
+                repository: api.repository(),
+              ),
+            ),
+          ),
+        ),
+      );
+      await pumpUntil(tester, () => find.text(t.sport.matchday(n: 4)).evaluate().isNotEmpty);
+      final asked = api.countOf('/getmatchdata/bl1/2026/4');
+
+      inFront.value = false;
+      await tester.pump();
+      now = now.add(const Duration(seconds: 61));
+      await tester.pump(const Duration(seconds: 61));
+      await tester.pump();
+      expect(api.countOf('/getmatchdata/bl1/2026/4'), asked);
+
+      inFront.value = true;
+      await tester.pump();
+      now = now.add(const Duration(seconds: 61));
+      await tester.pump(const Duration(seconds: 61));
+      await tester.pump();
+      expect(api.countOf('/getmatchdata/bl1/2026/4'), asked + 1);
+    });
+  });
 
   testWidgets('entered from the navigation, the top match of the matchday takes focus', (tester) async {
     final key = GlobalKey<SportLeagueViewState>();
@@ -685,6 +732,66 @@ void main() {
       final fixture = tester.getRect(find.text('Freiburg'));
       final tableRow = tester.getRect(find.text('Bremen').last);
       expect(tableRow.top, greaterThan(fixture.bottom));
+    });
+
+    group('under the redesigns a phone (Plebz)', () {
+      for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+        testWidgets('${variant.name}: sets each game on two lines, the clubs by their full names', (tester) async {
+          await pumpLeague(tester, provider(), size: const Size(400, 860), variant: variant);
+          await tester.pump(const Duration(seconds: 1));
+
+          expect(tester.takeException(), isNull);
+          final home = tester.getRect(find.text('Borussia Dortmund'));
+          final away = tester.getRect(find.text('RB Leipzig'));
+          expect(away.top, greaterThan(home.bottom), reason: 'the away club on the line under the home club');
+          expect(home.left, moreOrLessEquals(away.left, epsilon: 1), reason: 'both names start where the crests end');
+          expect(home.right, lessThanOrEqualTo(400));
+        });
+
+        testWidgets('${variant.name}: the matchday bar stays inside the screen', (tester) async {
+          await pumpLeague(tester, provider(), size: const Size(400, 860), variant: variant);
+          await tester.pump(const Duration(seconds: 1));
+
+          expect(tester.takeException(), isNull);
+          final previous = tester.getRect(part('sport_matchday_previous'));
+          final next = tester.getRect(part('sport_matchday_next'));
+          final current = tester.getRect(find.textContaining(t.sport.current).first);
+          expect(next.right, lessThanOrEqualTo(400));
+          expect(current.right, lessThanOrEqualTo(previous.left), reason: '"current" no longer runs under the arrow');
+          expect(next.width, greaterThanOrEqualTo(44), reason: 'a finger-sized target');
+        });
+      }
+
+      testWidgets('on its side keeps the table under the fixtures, not squeezed beside them', (tester) async {
+        await pumpLeague(tester, provider(), size: const Size(860, 400), variant: AppThemeVariant.glas);
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(tester.takeException(), isNull);
+        // The table's "Bremen" (the fixtures name the club in full here): beside
+        // the fixtures it would stand in a column at the right.
+        await tester.scrollUntilVisible(find.text('Bremen'), 200, scrollable: find.byType(Scrollable).last);
+        expect(tester.getRect(find.text('Bremen').first).left, lessThan(300));
+      });
+
+      testWidgets('the fixtures start right under the bar, with no status bar\'s gap between', (tester) async {
+        tester.view.padding = const FakeViewPadding(top: 80);
+        addTearDown(tester.view.resetPadding);
+        await pumpLeague(tester, provider(), size: const Size(400, 860), variant: AppThemeVariant.glas);
+        await tester.pump(const Duration(seconds: 1));
+
+        final bar = tester.getRect(part('sport_matchday_next'));
+        final firstDay = tester.getRect(find.textContaining(t.sport.yesterday).first).top;
+        expect(firstDay - bar.bottom, lessThan(40));
+      });
+
+      testWidgets('a game still opens with a tap', (tester) async {
+        await pumpLeague(tester, provider(), size: const Size(400, 860), variant: AppThemeVariant.glas);
+        await tester.pump(const Duration(seconds: 1));
+
+        await tester.tap(find.text('SC Freiburg'));
+        await tester.pumpAndSettle();
+        expect(find.byType(SportMatchDetail), findsOneWidget);
+      });
     });
 
     testWidgets('a phone names the clubs short, so no name is cut off', (tester) async {

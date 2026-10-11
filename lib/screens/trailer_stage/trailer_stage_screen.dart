@@ -499,19 +499,26 @@ FocusableAction _stageAction({
     final tokens = Theme.of(context).extension<MonoTokens>();
     final background = state.showFocus ? Colors.white : Colors.white.withValues(alpha: 0.14);
     final foreground = state.showFocus ? Colors.black : Colors.white.withValues(alpha: enabled ? 0.92 : 0.4);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(tokens?.radiusMd ?? 12)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 22, color: foreground),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(color: foreground, fontWeight: FontWeight.w600),
-          ),
-        ],
+    // The action bar hands a builder's face only focus and a cursor; a click
+    // or a tap is the face's own to answer (as every other builder's button
+    // does) — the pill answered neither.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(tokens?.radiusMd ?? 12)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 22, color: foreground),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(color: foreground, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   },

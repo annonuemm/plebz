@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../i18n/strings.g.dart';
 import '../../models/livetv_channel.dart';
@@ -6,6 +7,7 @@ import '../../models/livetv_program.dart';
 import '../../theme/mono_tokens.dart';
 import '../../widgets/fitted_metadata_line.dart';
 import '../../utils/formatters.dart';
+import '../../widgets/app_icon.dart';
 import 'guide_preview_player.dart';
 
 /// The band above the guide grid: a live picture on the left, what is on the
@@ -81,6 +83,110 @@ class GuidePreviewPanel extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Plebz: the band as a phone held upright shows it — the picture across the
+/// whole width, the channel and what is on written over its foot, and a way
+/// to the whole screen: the button, or a tap on the picture. Until a channel
+/// is tapped it plays nothing and says how to start one — no sound, and no
+/// stream on mobile data, that the viewer did not ask for.
+class GuidePreviewBand extends StatelessWidget {
+  const GuidePreviewBand({
+    super.key,
+    required this.previewChannel,
+    required this.program,
+    required this.onFullScreen,
+    this.playerKey,
+  });
+
+  final LiveTvChannel? previewChannel;
+
+  /// What is on the channel playing.
+  final LiveTvProgram? program;
+  final VoidCallback onFullScreen;
+  final GlobalKey<GuidePreviewPlayerState>? playerKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final channel = previewChannel;
+    final program = this.program;
+    final is24Hour = MediaQuery.alwaysUse24HourFormatOf(context);
+    final end = program?.endTime;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        GuidePreviewPlayer(key: playerKey, channel: channel),
+        if (channel == null)
+          Align(
+            alignment: const Alignment(0, 0.5),
+            child: Text(
+              t.liveTv.previewHint,
+              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.75)),
+            ),
+          )
+        else ...[
+          Positioned.fill(
+            child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: onFullScreen),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Color(0xB3000000), Color(0x00000000)],
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 28, 60, 10),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        channel.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+                      ),
+                      if (program != null)
+                        Text(
+                          end == null
+                              ? program.title
+                              : '${program.title} · ${t.liveTv.until(time: formatClockTime(end, is24Hour: is24Hour))}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.8)),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 8,
+            bottom: 8,
+            child: Material(
+              color: Colors.black.withValues(alpha: 0.55),
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: IconButton(
+                tooltip: t.common.fullscreen,
+                onPressed: onFullScreen,
+                icon: const AppIcon(Symbols.fullscreen_rounded, fill: 1, color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

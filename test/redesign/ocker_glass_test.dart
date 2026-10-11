@@ -780,6 +780,41 @@ void main() {
       }
     });
 
+    testWidgets('a bar is clear over the ground and takes the ground once content is under it (Plebz)', (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+        // A page of its own each time: a bar remembers being scrolled under.
+        await tester.pumpWidget(const SizedBox.shrink());
+        final theme = monoTheme(dark: true, variant: variant);
+        final controller = ScrollController();
+        addTearDown(controller.dispose);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme,
+            home: Scaffold(
+              body: CustomScrollView(
+                controller: controller,
+                slivers: [
+                  const SliverAppBar(title: Text('Bar'), pinned: true),
+                  SliverList.builder(itemCount: 60, itemBuilder: (_, i) => SizedBox(height: 60, child: Text('row $i'))),
+                ],
+              ),
+            ),
+          ),
+        );
+        Color barColour() => tester
+            .widget<Material>(find.descendant(of: find.byType(AppBar), matching: find.byType(Material)).first)
+            .color!;
+
+        expect(barColour().a, 0, reason: '${variant.name}: nothing under it');
+        controller.jumpTo(300);
+        await tester.pump();
+        expect(barColour(), tokensOf(theme).bg.withValues(alpha: 1), reason: '${variant.name}: rows under it');
+      }
+    });
+
     testWidgets('grey stands on Apple TV\'s own ground; the others on their accent\'s', (tester) async {
       Future<Gradient?> groundOf(GlasAccent accent) async {
         await tester.pumpWidget(

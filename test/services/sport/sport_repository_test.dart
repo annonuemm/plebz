@@ -82,6 +82,44 @@ void main() {
     expect(api.countOf('/getmatchdata/bl1/2026/3'), 1);
   });
 
+  test('keeps the current matchday while nothing is played, at most a quarter of an hour', () async {
+    final api = provider();
+    final repo = api.repository();
+
+    await atNow(() => repo.current(SportLeague.bundesliga1));
+    now = now.add(const Duration(minutes: 10));
+    await atNow(() => repo.current(SportLeague.bundesliga1));
+    expect(api.countOf('/getmatchdata/bl1'), 1, reason: 'the home row asks every minute, all week');
+
+    now = now.add(const Duration(minutes: 6));
+    await atNow(() => repo.current(SportLeague.bundesliga1));
+    expect(api.countOf('/getmatchdata/bl1'), 2);
+  });
+
+  test('asks for the current matchday again once a game has kicked off', () async {
+    final api = provider();
+    final repo = api.repository();
+
+    now = kickoff.subtract(const Duration(minutes: 5));
+    await atNow(() => repo.current(SportLeague.bundesliga1));
+    now = kickoff.add(const Duration(minutes: 1));
+    await atNow(() => repo.current(SportLeague.bundesliga1));
+
+    expect(api.countOf('/getmatchdata/bl1'), 2, reason: 'kept past kickoff, the game would still read as to come');
+  });
+
+  test('asks for the current matchday every minute while a game is on', () async {
+    final api = provider();
+    final repo = api.repository();
+
+    now = kickoff.add(const Duration(minutes: 20));
+    await atNow(() => repo.current(SportLeague.bundesliga1));
+    now = now.add(const Duration(minutes: 2));
+    await atNow(() => repo.current(SportLeague.bundesliga1));
+
+    expect(api.countOf('/getmatchdata/bl1'), 2);
+  });
+
   test('two asks at once share one request', () async {
     final api = provider();
     final repo = api.repository();

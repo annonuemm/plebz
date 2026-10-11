@@ -1158,7 +1158,13 @@ class PlexMappers {
 
   /// Map a parsed [PlexRoleDto] into a [MediaRole].
   static MediaRole role(PlexRoleDto dto) {
-    return MediaRole(id: dto.id?.toString(), tag: dto.tag, role: dto.role, thumbPath: dto.thumb);
+    return MediaRole(
+      id: dto.id?.toString(),
+      tag: dto.tag,
+      role: dto.role,
+      thumbPath: dto.thumb,
+      discoverId: dto.tagKey?.trim().isEmpty ?? true ? null : dto.tagKey!.trim(),
+    );
   }
 
   /// Map one `Directory` row of a `/library/search?searchTypes=people`

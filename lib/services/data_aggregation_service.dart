@@ -858,6 +858,57 @@ class DataAggregationService {
     );
   }
 
+  /// Pages of a person's titles read per server, at most: a filmography page
+  /// only needs to know what is there, and a prolific actor's 600 titles on
+  /// one server already say it.
+  static const int _personTitlesPageSize = 200;
+  static const int _personTitlesMaxPages = 3;
+
+  /// Every title on the visible online servers that the person called [name]
+  /// appears in, for a person reached from outside the libraries — a cast
+  /// member on an Explore page (Plebz). Servers know people by name only
+  /// here, so each is asked for exactly that name; a server that fails adds
+  /// nothing. Titles in hidden libraries stay out.
+  Future<List<MediaItem>> findPersonTitlesAcrossServers(
+    String name, {
+    Set<String>? hiddenLibraryKeys,
+    AbortController? abort,
+  }) async {
+    final wanted = name.trim().toLowerCase();
+    if (wanted.isEmpty) return const [];
+    final clients = _serverManager.visibleOnlineClients;
+    if (clients.isEmpty) return const [];
+
+    final fetched = await _fanOut<MediaItem>(
+      clients,
+      failureMessage: (serverId) => 'Person titles failed on $serverId',
+      fetch: (serverId, client) async {
+        final excluded = _hiddenLibraryIdsOn(serverId, hiddenLibraryKeys);
+        final people = await client.searchPeople(name, abort: abort, excludedLibraryIds: excluded);
+        final items = <MediaItem>[];
+        for (final person in people.where((person) => person.name.trim().toLowerCase() == wanted)) {
+          for (var page = 0; page < _personTitlesMaxPages; page++) {
+            final result = await client.fetchPersonMediaPage(
+              person.id,
+              start: page * _personTitlesPageSize,
+              size: _personTitlesPageSize,
+              abort: abort,
+            );
+            items.addAll(result.items.where((item) => !excluded.contains(item.libraryId)));
+            if (result.items.length < _personTitlesPageSize ||
+                (page + 1) * _personTitlesPageSize >= result.totalCount) {
+              break;
+            }
+          }
+        }
+        return items;
+      },
+    );
+    abort?.throwIfAborted();
+    appLogger.d('Person titles for "$name": ${fetched.items.length} from ${fetched.succeededServerIds.length} servers');
+    return fetched.items;
+  }
+
   static const SearchAggregationResult _emptySearchResult = (
     hits: <SearchHit>[],
     candidates: <MediaItem>[],

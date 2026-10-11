@@ -2652,9 +2652,23 @@ class _Translations$actor$de extends Translations$actor$en {
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override String get inLibraries => 'In deinen Mediatheken';
 	@override String get notInLibraries => 'Nicht in deinen Mediatheken';
 	@override String get noDiscoverSource => 'Verbinde ein Plex-Konto, um Titel zu öffnen, die du nicht hast.';
 	@override String notOnDiscover({required Object title}) => 'Plex Discover kennt keine Seite zu „${title}“.';
+	@override String get appearances => 'Auftritte';
+	@override String get biography => 'Biografie';
+	@override String get born => 'Geboren';
+	@override String get birthPlace => 'Geburtsort';
+	@override String get knownFor => 'Bekannt für';
+	@override String get titlesOnPlex => 'Titel bei Plex';
+	@override String get otherTitles => 'Weitere Titel bei Plex';
+	@override String bornIn({required Object date, required Object place}) => '* ${date} in ${place}';
+	@override String bornOn({required Object date}) => '* ${date}';
+	@override String asRoleIn({required Object role, required Object title}) => 'als ${role} in „${title}“';
+	@override String asRole({required Object role}) => 'als ${role}';
+	@override late final _Translations$actor$departments$de departments = _Translations$actor$departments$de._(_root);
+	@override late final _Translations$actor$availability$de availability = _Translations$actor$availability$de._(_root);
 }
 
 // Path: sport
@@ -3686,6 +3700,31 @@ class _Translations$services$tmdb$de extends Translations$services$tmdb$en {
 	@override String get clearCache => 'TMDB-Daten verwerfen';
 	@override String get clearCacheDescription => 'Logos und Beschreibungen neu nachschlagen';
 	@override String get cacheCleared => 'Nachgeschlagene Daten verworfen';
+}
+
+// Path: actor.departments
+class _Translations$actor$departments$de extends Translations$actor$departments$en {
+	_Translations$actor$departments$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get acting => 'Schauspiel';
+	@override String get directing => 'Regie';
+	@override String get production => 'Produktion';
+	@override String get writing => 'Drehbuch';
+}
+
+// Path: actor.availability
+class _Translations$actor$availability$de extends Translations$actor$availability$en {
+	_Translations$actor$availability$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get all => 'Alles';
+	@override String get available => 'Verfügbar';
+	@override String get missing => 'Nicht vorhanden';
 }
 
 // Path: remoteKeys.functions
@@ -6163,9 +6202,28 @@ extension on TranslationsDe {
 			'trailerStage.noTrailers' => 'Kein Trailer gefunden',
 			'trailerStage.allSeen' => 'Das war der letzte Trailer',
 			'trailerStage.report' => ({required Object examined, required Object found}) => '${examined} Titel geprüft, ${found} davon mit Trailer.',
+			'actor.inLibraries' => 'In deinen Mediatheken',
 			'actor.notInLibraries' => 'Nicht in deinen Mediatheken',
 			'actor.noDiscoverSource' => 'Verbinde ein Plex-Konto, um Titel zu öffnen, die du nicht hast.',
 			'actor.notOnDiscover' => ({required Object title}) => 'Plex Discover kennt keine Seite zu „${title}“.',
+			'actor.appearances' => 'Auftritte',
+			'actor.biography' => 'Biografie',
+			'actor.born' => 'Geboren',
+			'actor.birthPlace' => 'Geburtsort',
+			'actor.knownFor' => 'Bekannt für',
+			'actor.titlesOnPlex' => 'Titel bei Plex',
+			'actor.otherTitles' => 'Weitere Titel bei Plex',
+			'actor.bornIn' => ({required Object date, required Object place}) => '* ${date} in ${place}',
+			'actor.bornOn' => ({required Object date}) => '* ${date}',
+			'actor.asRoleIn' => ({required Object role, required Object title}) => 'als ${role} in „${title}“',
+			'actor.asRole' => ({required Object role}) => 'als ${role}',
+			'actor.departments.acting' => 'Schauspiel',
+			'actor.departments.directing' => 'Regie',
+			'actor.departments.production' => 'Produktion',
+			'actor.departments.writing' => 'Drehbuch',
+			'actor.availability.all' => 'Alles',
+			'actor.availability.available' => 'Verfügbar',
+			'actor.availability.missing' => 'Nicht vorhanden',
 			'sport.bundesliga1' => '1. Bundesliga',
 			'sport.bundesliga2' => '2. Bundesliga',
 			'sport.liga3' => '3. Liga',
@@ -6265,6 +6323,8 @@ extension on TranslationsDe {
 			'reminders.soonTitle' => 'Gleich geht’s los',
 			'reminders.runningTitle' => 'Läuft gerade',
 			'reminders.tune' => 'Umschalten',
+			_ => null,
+		} ?? switch (path) {
 			'reminders.channelGone' => ({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.',
 			'remoteKeys.title' => 'Fernbedienung',
 			'remoteKeys.entryDescription' => 'Welche Taste im Player was tut',
@@ -6284,8 +6344,6 @@ extension on TranslationsDe {
 			'remoteKeys.keySeek' => 'Vorspulen, Zurückspulen',
 			'remoteKeys.doSeek' => 'Zum nächsten oder vorigen Kapitel, ohne Kapitel um die eingestellte Zeit',
 			'remoteKeys.keyTrack' => 'Weiter, Zurück (⏭ ⏮)',
-			_ => null,
-		} ?? switch (path) {
 			'remoteKeys.doTrack' => 'Wie Vor- und Zurückspulen',
 			'remoteKeys.keyLeftRight' => 'Links, Rechts',
 			'remoteKeys.doLeftRight' => 'Spulen, ohne die Bedienleiste einzublenden',

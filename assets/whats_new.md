@@ -13,6 +13,12 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.19.0 (Build 751)
+
+- Neue Seite für Schauspieler: Ein Klick auf einen Darsteller, in Erkunden oder auf der Seite eines Films oder einer Serie, zeigt Foto, Lebensdaten, Biografie und alles, worin die Person mitgespielt hat. Was in deinen Mediatheken liegt, steht zuerst. Dafür braucht es ein verbundenes Plex-Konto.
+- Die Titel lassen sich nach Filmen, Serien und Auftritten filtern und danach, ob sie bei dir verfügbar sind. Unter jedem Poster steht die Rolle.
+- Auf dem Fernseher passt die Seite zu Glas und Flach: oben die Person, darunter die Poster als Raster. Mit einem Druck nach unten bist du direkt bei den Titeln.
+
 ## 1.18.2 (Build 745)
 
 - Player: Nach dem Ändern von Qualität oder Version lässt sich die Bedienleiste sofort weiter bedienen, ohne sie erst zu schließen.

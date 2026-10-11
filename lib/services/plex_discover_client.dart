@@ -499,6 +499,56 @@ class PlexDiscoverClient {
     ];
   }
 
+  /// People whose name matches [name], best match first: the `Directory` rows
+  /// of a people search, each carrying `metadataId`, `title` and `thumb`.
+  Future<List<Map<String, dynamic>>> searchPeople(String name, {int limit = 5}) async {
+    final data = await _request(
+      'GET',
+      '/library/search',
+      query: {'query': name, 'limit': limit.clamp(1, 20), 'searchTypes': 'people', 'searchProviders': 'discover'},
+    );
+    final container = _mediaContainer(data!);
+    return [
+      for (final group in flexibleMapList(container['SearchResults']))
+        for (final result in flexibleMapList(group['SearchResult']))
+          if (firstFlexibleMap(result['Directory']) case final Map<String, dynamic> person)
+            if (person['type'] == null || person['type'] == 'person') person,
+    ];
+  }
+
+  /// One person's record — `summary`, `bornAt`, `diedAt`, `birthPlace`,
+  /// `thumb` — or null when Discover does not know [personId].
+  ///
+  /// [personId] is the hex id a cast entry carries (`Role.id`), never a
+  /// server's numeric tag id. [language] behaves as in [getMetadata].
+  Future<Map<String, dynamic>?> getPerson(String personId, {String? language}) async {
+    final data = await _request(
+      'GET',
+      '/library/people/${Uri.encodeComponent(personId)}',
+      allowNotFound: true,
+      language: language,
+    );
+    if (data == null) return null;
+    final container = _mediaContainer(data);
+    return firstFlexibleMap(container['Metadata']) ?? firstFlexibleMap(container['Directory']);
+  }
+
+  /// A person's filmography as Discover groups it — "Actor", "Producer",
+  /// "Appearances" — each group `{type, title, Credit: [{role, Metadata}]}`
+  /// with one Discover item per credit. An unknown person answers an empty
+  /// list; a body without groups throws, since that is not an empty career.
+  Future<List<Map<String, dynamic>>> getPersonCredits(String personId) async {
+    final data = await _request('GET', '/library/people/${Uri.encodeComponent(personId)}/credits', allowNotFound: true);
+    if (data == null) return const [];
+    final container = _mediaContainer(data);
+    final groups = container['CreditGroup'];
+    if (groups == null) {
+      if (flexibleInt(container['size']) == 0 || flexibleInt(container['totalSize']) == 0) return const [];
+      throw const PlexDiscoverException(200, 'Person credits carried no CreditGroup');
+    }
+    return flexibleMapList(groups);
+  }
+
   Future<void> setWatchlisted(String ratingKey, {required bool add}) async {
     await _request(
       'PUT',

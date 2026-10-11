@@ -2762,9 +2762,32 @@
     "report": "${examined} Titel geprüft, ${found} davon mit Trailer."
   },
   "actor": {
+    "inLibraries": "In deinen Mediatheken",
     "notInLibraries": "Nicht in deinen Mediatheken",
     "noDiscoverSource": "Verbinde ein Plex-Konto, um Titel zu öffnen, die du nicht hast.",
-    "notOnDiscover": "Plex Discover kennt keine Seite zu „${title}“."
+    "notOnDiscover": "Plex Discover kennt keine Seite zu „${title}“.",
+    "appearances": "Auftritte",
+    "biography": "Biografie",
+    "born": "Geboren",
+    "birthPlace": "Geburtsort",
+    "knownFor": "Bekannt für",
+    "titlesOnPlex": "Titel bei Plex",
+    "otherTitles": "Weitere Titel bei Plex",
+    "bornIn": "* ${date} in ${place}",
+    "bornOn": "* ${date}",
+    "asRoleIn": "als ${role} in „${title}“",
+    "asRole": "als ${role}",
+    "departments": {
+      "acting": "Schauspiel",
+      "directing": "Regie",
+      "production": "Produktion",
+      "writing": "Drehbuch"
+    },
+    "availability": {
+      "all": "Alles",
+      "available": "Verfügbar",
+      "missing": "Nicht vorhanden"
+    }
   },
   "sport": {
     "bundesliga1": "1. Bundesliga",

@@ -13,7 +13,12 @@ class MediaRole {
   final String? role;
   final String? thumbPath;
 
-  const MediaRole({this.id, required this.tag, this.role, this.thumbPath});
+  /// Plex Discover's id for the person — a Plex server's `tagKey` — where the
+  /// server names one; it opens their Plex filmography without a name search
+  /// (Plebz).
+  final String? discoverId;
+
+  const MediaRole({this.id, required this.tag, this.role, this.thumbPath, this.discoverId});
 
   factory MediaRole.fromJson(Map<String, dynamic> json) => _$MediaRoleFromJson(json);
 

@@ -9,12 +9,17 @@ class CatalogCastMember {
   /// Absolute https headshot/portrait URL.
   final String? imageUrl;
 
-  const CatalogCastMember({required this.name, this.secondary, this.imageUrl});
+  /// Plex Discover's id for this person, where the source is Plex; it opens
+  /// their filmography without a name search (Plebz).
+  final String? personId;
+
+  const CatalogCastMember({required this.name, this.secondary, this.imageUrl, this.personId});
 
   Map<String, Object?> toJson() => {
     'name': name,
     if (secondary != null) 'secondary': secondary,
     if (imageUrl != null) 'imageUrl': imageUrl,
+    if (personId != null) 'personId': personId,
   };
 
   static CatalogCastMember? fromJson(Map<String, Object?> json) {
@@ -24,6 +29,7 @@ class CatalogCastMember {
       name: name,
       secondary: json['secondary'] as String?,
       imageUrl: json['imageUrl'] as String?,
+      personId: json['personId'] as String?,
     );
   }
 }

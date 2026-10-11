@@ -3,6 +3,7 @@ import '../../media/media_kind.dart';
 import '../../models/catalog/catalog_cast_member.dart';
 import '../../models/catalog/catalog_item.dart';
 import '../../models/catalog/catalog_metadata.dart';
+import '../../models/catalog/catalog_person.dart';
 import '../../utils/external_ids.dart';
 import '../../i18n/strings.g.dart';
 import '../../utils/app_logger.dart';
@@ -333,10 +334,79 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
                     name: name,
                     secondary: _nonEmptyString(role['role']),
                     imageUrl: _nonEmptyString(role['thumb']),
+                    personId: _nonEmptyString(role['id']),
                   ),
             ],
       related: _fromMetadata(relatedMetadata).take(safeRelatedLimit).toList(),
     );
+  }
+
+  /// Discover's id for the person called [name], or null when its people
+  /// search names nobody by exactly that name. Only for cast that came without
+  /// an id: a name alone can mean two people, so the first exact hit is taken.
+  Future<String?> findPersonId(String name) async {
+    final wanted = _personNameKey(name);
+    if (wanted.isEmpty) return null;
+    final people = await _client.searchPeople(name);
+    for (final person in people) {
+      final id = _nonEmptyString(person['metadataId'] ?? person['ratingKey']);
+      if (id != null && _personNameKey(person['title'] ?? person['tag']) == wanted) return id;
+    }
+    return null;
+  }
+
+  static String _personNameKey(Object? name) => (name?.toString() ?? '').trim().toLowerCase();
+
+  /// The person [personId], with their biography in the app's language where
+  /// Discover has one — the localized record answers an empty summary rather
+  /// than the English one, so the plain record stays the fallback.
+  Future<CatalogPerson?> fetchPerson(String personId, {required String fallbackName}) async {
+    final plain = await _client.getPerson(personId);
+    if (plain == null) return null;
+    var summary = _nonEmptyString(plain['summary']);
+    final language = LocaleSettings.currentLocale.languageCode;
+    if (language != 'en') {
+      try {
+        final localized = await _client.getPerson(personId, language: language);
+        summary = _nonEmptyString(localized?['summary']) ?? summary;
+      } catch (error) {
+        appLogger.d('Plex: localized biography failed', error: error);
+      }
+    }
+    return CatalogPerson(
+      id: personId,
+      name: _nonEmptyString(plain['title'] ?? plain['tag']) ?? fallbackName,
+      thumbUrl: _nonEmptyString(plain['thumb']),
+      summary: summary,
+      bornAt: _date(plain['bornAt']),
+      diedAt: _date(plain['diedAt']),
+      birthPlace: _nonEmptyString(plain['birthPlace']),
+      departments: [
+        for (final type in flexibleMapList(plain['CreditType']))
+          if (_nonEmptyString(type['type']) case final String department) department,
+      ],
+      knownFor: _nonEmptyString(plain['knownFor']),
+    );
+  }
+
+  /// Everything [personId] is credited in that Discover can open, one entry
+  /// per title: the first group to name a title keeps it, and Discover sends
+  /// the person's main work first.
+  Future<List<CatalogPersonCredit>> fetchPersonCredits(String personId) async {
+    final groups = await _client.getPersonCredits(personId);
+    final credits = <CatalogPersonCredit>[];
+    final seen = <String>{};
+    for (final group in groups) {
+      final type = _nonEmptyString(group['type']) ?? 'other';
+      for (final credit in flexibleMapList(group['Credit'])) {
+        final metadata = firstFlexibleMap(credit['Metadata']);
+        final item = metadata == null ? null : _toCatalogItem(metadata);
+        if (item == null || !seen.add(item.identityKey)) continue;
+        credits.add(CatalogPersonCredit(item: item, role: _nonEmptyString(credit['role']), group: type));
+      }
+    }
+    appLogger.d('Plex: person $personId has ${credits.length} credits in ${groups.length} groups');
+    return credits;
   }
 
   Future<Map<String, dynamic>?> _loadDetailMetadata(String ratingKey) async {

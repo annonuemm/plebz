@@ -30,6 +30,7 @@ import 'package:plezy/providers/catalog_sources_provider.dart';
 import 'package:plezy/providers/multi_server_provider.dart';
 import 'package:plezy/providers/seerr_account_provider.dart';
 import 'package:plezy/screens/catalog_item_detail_screen.dart';
+import 'package:plezy/screens/catalog_person_screen.dart';
 import 'package:plezy/redesign/ocker_skin.dart' show debugOckerLayoutOnThisHost;
 import 'package:plezy/widgets/tv_browse_rail.dart';
 import 'package:plezy/widgets/detail_home_button.dart';
@@ -488,6 +489,23 @@ void main() {
         expect(tester.widget<Offstage>(buttons).offstage, isFalse);
       });
     }
+
+    testWidgets('a member of the cast row opens their person page (Plebz)', (tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      await _pumpDetail(tester, _FakeCatalogSource(), variant: AppThemeVariant.glas);
+      await tester.pump(const Duration(seconds: 1));
+
+      final rail = tester.widget<TvBrowseRail>(find.byType(TvBrowseRail));
+      final cast = rail.hubs.firstWhere((hub) => hub.id == 'catalog_stage_cast');
+      expect(await rail.onActivateItem!(cast, cast.items[1]), isTrue);
+      await tester.pumpAndSettle();
+
+      final page = tester.widget<CatalogPersonScreen>(find.byType(CatalogPersonScreen));
+      expect(page.name, 'Second Actor');
+      expect(page.characterName, 'Support');
+    });
 
     testWidgets('a note under the buttons pushes the info box up rather than under it', (tester) async {
       tester.view.physicalSize = const Size(1920, 1080);
@@ -2159,6 +2177,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'catalog_watchlist');
     expect(tester.widget<SingleChildScrollView>(find.byKey(const Key('catalog_detail_scroll'))).controller!.offset, 0);
+  });
+
+  testWidgets('a cast member opens their person page (Plebz)', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 720);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await _pumpDetail(tester, _FakeCatalogSource());
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'catalog_cast_row');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    final page = tester.widget<CatalogPersonScreen>(find.byType(CatalogPersonScreen));
+    expect(page.name, 'First Actor');
+    expect(page.characterName, 'Lead');
+    // No Plex account and no servers here: the page says there is nothing.
+    expect(find.text(t.discover.noContentAvailable), findsOneWidget);
   });
 
   testWidgets('D-pad includes every library match between actions and cast', (tester) async {

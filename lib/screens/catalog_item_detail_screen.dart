@@ -52,6 +52,7 @@ import '../utils/platform_detector.dart';
 import '../utils/rating_utils.dart';
 import '../utils/snackbar_helper.dart';
 import '../widgets/app_bar_back_button.dart';
+import 'catalog_person_screen.dart';
 import '../widgets/detail_home_button.dart';
 import '../widgets/app_icon.dart';
 import '../widgets/cast_member_strip.dart';
@@ -1490,6 +1491,7 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
               ? _focusSectionAboveCast
               : null,
           onNavigateDown: _hasSectionsBelowCast ? _focusSectionBelowCast : null,
+          onMemberTap: _castIsPeople ? (index) => _openCastMember(cast[index]) : null,
           debugLabel: 'catalog_cast_row',
         ),
       ],
@@ -1835,16 +1837,39 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
     _ => Symbols.recommend_rounded,
   };
 
-  /// A copy opens on its own server, as its row on the scrolling page does; a
-  /// member of the cast opens nothing there either. Catalog titles are left
-  /// to the rail, which opens their own page.
+  /// A copy opens on its own server and a member of the cast their page, as
+  /// their rows on the scrolling page do. Catalog titles are left to the rail,
+  /// which opens their own page.
   Future<bool> _activateStageItem(MediaHub hub, MediaItem item) async {
     if (hub.id == _stageCopiesHubId) {
       final original = _matches?.firstWhereOrNull((copy) => copy.globalKey == item.globalKey);
       if (original != null) _openCopy(original);
       return true;
     }
-    return hub.id == _stageCastHubId;
+    if (hub.id != _stageCastHubId) return false;
+    final index = int.tryParse(item.id.substring(item.id.lastIndexOf('_') + 1));
+    final cast = _cast;
+    if (_castIsPeople && cast != null && index != null && index < cast.length) _openCastMember(cast[index]);
+    return true;
+  }
+
+  /// MAL and AniList list characters, not the people who play them; their
+  /// cards open nothing (Plebz).
+  bool get _castIsPeople => !const {CatalogSourceId.mal, CatalogSourceId.anilist}.contains(_item.source);
+
+  /// The person's page: their Plex filmography and which of it is in the
+  /// libraries (Plebz).
+  void _openCastMember(CatalogCastMember member) {
+    unawaited(
+      navigateToCatalogPerson(
+        context,
+        name: member.name,
+        personId: member.personId,
+        thumbUrl: member.imageUrl,
+        characterName: member.secondary,
+        sourceTitle: _item.title,
+      ),
+    );
   }
 
   /// Over the buttons while there is no copy to name: still looking, none

@@ -1406,7 +1406,12 @@ void main() {
                   {'type': 'default', 'tag': 'A complete and much longer summary from detail metadata.'},
                 ],
                 'Role': [
-                  {'tag': 'Ken Watanabe', 'role': 'Saito', 'thumb': 'https://images.plex.tv/ken.jpg'},
+                  {
+                    'id': '5d7768277228e5001f1dd0aa',
+                    'tag': 'Ken Watanabe',
+                    'role': 'Saito',
+                    'thumb': 'https://images.plex.tv/ken.jpg',
+                  },
                 ],
                 'Director': [
                   {'tag': 'Christopher Nolan'},
@@ -1508,6 +1513,7 @@ void main() {
       );
       expect(detail.cast.single.name, 'Ken Watanabe');
       expect(detail.cast.single.secondary, 'Saito');
+      expect(detail.cast.single.personId, '5d7768277228e5001f1dd0aa');
       expect(detail.related.single.title, 'Interstellar');
       expect(requests.where((request) => request.url.path == '/library/metadata/plex-movie-1'), hasLength(1));
       expect(requests.where((request) => request.url.path == '/library/metadata/plex-movie-1/related'), hasLength(1));
@@ -1649,6 +1655,161 @@ void main() {
 
         expect(detail.item.overview, 'A dream within a dream.');
         expect(languages, ['']);
+      });
+    });
+
+    group('person pages (Plebz)', () {
+      PlexCatalogSource sourceAnswering(Map<String, Object?> Function(http.Request request) answer) {
+        return PlexCatalogSource(
+          PlexDiscoverClient(_session, httpClient: MockClient((request) async => jsonResponse(answer(request)))),
+        );
+      }
+
+      Map<String, Object?> credit(String ratingKey, String title, {int? year, String type = 'movie', String? role}) => {
+        'role': ?role,
+        'Metadata': {
+          'ratingKey': ratingKey,
+          'key': '/library/metadata/$ratingKey',
+          'type': type,
+          'title': title,
+          'year': ?year,
+          'thumb': 'https://image.tmdb.org/t/p/original/$ratingKey.jpg',
+        },
+      };
+
+      test('credits come from the CreditGroup body, one entry per title', () async {
+        late http.Request captured;
+        final source = sourceAnswering((request) {
+          captured = request;
+          return {
+            'MediaContainer': {
+              'CreditGroup': [
+                {
+                  'type': 'actor',
+                  'title': 'Actor',
+                  'Credit': [
+                    credit('bb', 'Breaking Bad', year: 2008, type: 'show', role: 'Walter White'),
+                    credit('mid', 'Malcolm in the Middle', year: 2000, type: 'show', role: 'Hal'),
+                    {'role': 'No item'},
+                  ],
+                },
+                {
+                  'type': 'producer',
+                  'title': 'Producer',
+                  'Credit': [credit('bb', 'Breaking Bad', year: 2008, type: 'show')],
+                },
+                {
+                  'type': 'appeared',
+                  'title': 'Appearances',
+                  'Credit': [credit('snl', 'Saturday Night Live', year: 1975, type: 'show', role: 'Self')],
+                },
+              ],
+            },
+          };
+        });
+        addTearDown(source.dispose);
+
+        final credits = await source.fetchPersonCredits('5d776828961905001eb916ef');
+
+        expect(captured.url.path, '/library/people/5d776828961905001eb916ef/credits');
+        expect(captured.headers['X-Plex-Token'], 'profile-token');
+        expect(
+          [for (final c in credits) c.item.title],
+          ['Breaking Bad', 'Malcolm in the Middle', 'Saturday Night Live'],
+        );
+        expect(credits.first.role, 'Walter White');
+        expect(credits.first.group, 'actor');
+        expect(credits.first.item.ids.plex, 'bb');
+        expect(credits.first.item.kind, MediaKind.show);
+        expect(credits.last.isAppearance, isTrue);
+      });
+
+      test('an unknown person has no credits; a body without groups is a failure', () async {
+        final empty = sourceAnswering(
+          (_) => {
+            'MediaContainer': {'size': 0},
+          },
+        );
+        addTearDown(empty.dispose);
+        expect(await empty.fetchPersonCredits('nobody'), isEmpty);
+
+        final drifted = sourceAnswering(
+          (_) => {
+            'MediaContainer': {'size': 3, 'Metadata': []},
+          },
+        );
+        addTearDown(drifted.dispose);
+        await expectLater(drifted.fetchPersonCredits('someone'), throwsA(isA<PlexDiscoverException>()));
+      });
+
+      test('the biography is the localized one, the plain one where it is empty', () async {
+        LocaleSettings.setLocaleSync(AppLocale.de);
+        addTearDown(() => LocaleSettings.setLocaleSync(AppLocale.en));
+        Map<String, Object?> record(String summary) => {
+          'MediaContainer': {
+            'Metadata': [
+              {
+                'title': 'Bryan Cranston',
+                'summary': summary,
+                'bornAt': '1956-03-07',
+                'birthPlace': 'Hollywood, California, USA',
+                'thumb': 'https://metadata-static.plex.tv/bryan.jpg',
+                'knownFor': 'Acting',
+                'CreditType': [
+                  {'type': 'actor', 'title': 'Actor'},
+                  {'type': 'director', 'title': 'Director'},
+                ],
+              },
+            ],
+          },
+        };
+
+        final german = sourceAnswering(
+          (request) => record(request.headers['X-Plex-Language'] == 'de' ? 'Deutsche Biografie.' : 'English bio.'),
+        );
+        addTearDown(german.dispose);
+        final person = await german.fetchPerson('p1', fallbackName: 'B. C.');
+        expect(person!.summary, 'Deutsche Biografie.');
+        expect(person.name, 'Bryan Cranston');
+        expect(person.bornAt, DateTime(1956, 3, 7));
+        expect(person.birthPlace, 'Hollywood, California, USA');
+        expect(person.departments, ['actor', 'director']);
+        expect(person.knownFor, 'Acting');
+
+        final untranslated = sourceAnswering(
+          (request) => record(request.headers['X-Plex-Language'] == 'de' ? '' : 'English bio.'),
+        );
+        addTearDown(untranslated.dispose);
+        expect((await untranslated.fetchPerson('p1', fallbackName: 'B. C.'))!.summary, 'English bio.');
+      });
+
+      test('a name finds the person only by an exact match', () async {
+        late http.Request captured;
+        final source = sourceAnswering((request) {
+          captured = request;
+          return {
+            'MediaContainer': {
+              'SearchResults': [
+                {
+                  'id': 'people',
+                  'SearchResult': [
+                    {
+                      'Directory': {'metadataId': 'other', 'title': 'Bryan Cranston Jr.', 'type': 'person'},
+                    },
+                    {
+                      'Directory': {'metadataId': 'bryan', 'title': 'Bryan Cranston', 'type': 'person'},
+                    },
+                  ],
+                },
+              ],
+            },
+          };
+        });
+        addTearDown(source.dispose);
+
+        expect(await source.findPersonId('bryan cranston '), 'bryan');
+        expect(captured.url.queryParameters['searchTypes'], 'people');
+        expect(await source.findPersonId('Aaron Paul'), isNull);
       });
     });
 

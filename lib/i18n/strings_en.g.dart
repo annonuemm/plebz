@@ -6858,6 +6858,9 @@ class Translations$actor$en {
 
 	// Translations
 
+	/// en: 'In your libraries'
+	String get inLibraries => 'In your libraries';
+
 	/// en: 'Not in your libraries'
 	String get notInLibraries => 'Not in your libraries';
 
@@ -6866,6 +6869,42 @@ class Translations$actor$en {
 
 	/// en: 'Plex Discover has no page for “${title}”.'
 	String notOnDiscover({required Object title}) => 'Plex Discover has no page for “${title}”.';
+
+	/// en: 'Appearances'
+	String get appearances => 'Appearances';
+
+	/// en: 'Biography'
+	String get biography => 'Biography';
+
+	/// en: 'Born'
+	String get born => 'Born';
+
+	/// en: 'Birthplace'
+	String get birthPlace => 'Birthplace';
+
+	/// en: 'Known for'
+	String get knownFor => 'Known for';
+
+	/// en: 'Titles on Plex'
+	String get titlesOnPlex => 'Titles on Plex';
+
+	/// en: 'More titles on Plex'
+	String get otherTitles => 'More titles on Plex';
+
+	/// en: '* ${date} in ${place}'
+	String bornIn({required Object date, required Object place}) => '* ${date} in ${place}';
+
+	/// en: '* ${date}'
+	String bornOn({required Object date}) => '* ${date}';
+
+	/// en: 'as ${role} in “${title}”'
+	String asRoleIn({required Object role, required Object title}) => 'as ${role} in “${title}”';
+
+	/// en: 'as ${role}'
+	String asRole({required Object role}) => 'as ${role}';
+
+	late final Translations$actor$departments$en departments = Translations$actor$departments$en.internal(_root);
+	late final Translations$actor$availability$en availability = Translations$actor$availability$en.internal(_root);
 }
 
 // Path: sport
@@ -9223,6 +9262,45 @@ class Translations$services$tmdb$en {
 
 	/// en: 'Looked-up data discarded'
 	String get cacheCleared => 'Looked-up data discarded';
+}
+
+// Path: actor.departments
+class Translations$actor$departments$en {
+	Translations$actor$departments$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Acting'
+	String get acting => 'Acting';
+
+	/// en: 'Directing'
+	String get directing => 'Directing';
+
+	/// en: 'Production'
+	String get production => 'Production';
+
+	/// en: 'Writing'
+	String get writing => 'Writing';
+}
+
+// Path: actor.availability
+class Translations$actor$availability$en {
+	Translations$actor$availability$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Everything'
+	String get all => 'Everything';
+
+	/// en: 'Available'
+	String get available => 'Available';
+
+	/// en: 'Not available'
+	String get missing => 'Not available';
 }
 
 // Path: remoteKeys.functions
@@ -11819,11 +11897,32 @@ extension on Translations {
 			'trailerStage.noTrailers' => 'No trailer found',
 			'trailerStage.allSeen' => 'That was the last trailer',
 			'trailerStage.report' => ({required Object examined, required Object found}) => '${examined} titles examined, ${found} of them with a trailer.',
+			'actor.inLibraries' => 'In your libraries',
 			'actor.notInLibraries' => 'Not in your libraries',
 			'actor.noDiscoverSource' => 'Connect a Plex account to open titles you do not have.',
 			'actor.notOnDiscover' => ({required Object title}) => 'Plex Discover has no page for “${title}”.',
+			'actor.appearances' => 'Appearances',
+			'actor.biography' => 'Biography',
+			'actor.born' => 'Born',
+			'actor.birthPlace' => 'Birthplace',
+			'actor.knownFor' => 'Known for',
+			'actor.titlesOnPlex' => 'Titles on Plex',
+			'actor.otherTitles' => 'More titles on Plex',
+			'actor.bornIn' => ({required Object date, required Object place}) => '* ${date} in ${place}',
+			'actor.bornOn' => ({required Object date}) => '* ${date}',
+			'actor.asRoleIn' => ({required Object role, required Object title}) => 'as ${role} in “${title}”',
+			'actor.asRole' => ({required Object role}) => 'as ${role}',
+			'actor.departments.acting' => 'Acting',
+			'actor.departments.directing' => 'Directing',
+			'actor.departments.production' => 'Production',
+			'actor.departments.writing' => 'Writing',
+			'actor.availability.all' => 'Everything',
+			'actor.availability.available' => 'Available',
+			'actor.availability.missing' => 'Not available',
 			'sport.bundesliga1' => 'Bundesliga',
 			'sport.bundesliga2' => '2. Bundesliga',
+			_ => null,
+		} ?? switch (path) {
 			'sport.liga3' => '3. Liga',
 			'sport.matchday' => ({required Object n}) => 'Matchday ${n}',
 			'sport.chooseMatchday' => 'Choose matchday',
@@ -11843,8 +11942,6 @@ extension on Translations {
 			'sport.broadcast' => 'Broadcast',
 			'sport.searchingGuide' => 'Searching the guide …',
 			'sport.notInGuide' => 'This match is not in the guide.',
-			_ => null,
-		} ?? switch (path) {
 			'sport.leagueChannels' => ({required Object league}) => 'Channels for the ${league}',
 			'sport.conference' => 'Conference',
 			'sport.ownGoal' => 'own goal',

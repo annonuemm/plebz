@@ -2762,9 +2762,32 @@
     "report": "${examined} titles examined, ${found} of them with a trailer."
   },
   "actor": {
+    "inLibraries": "In your libraries",
     "notInLibraries": "Not in your libraries",
     "noDiscoverSource": "Connect a Plex account to open titles you do not have.",
-    "notOnDiscover": "Plex Discover has no page for “${title}”."
+    "notOnDiscover": "Plex Discover has no page for “${title}”.",
+    "appearances": "Appearances",
+    "biography": "Biography",
+    "born": "Born",
+    "birthPlace": "Birthplace",
+    "knownFor": "Known for",
+    "titlesOnPlex": "Titles on Plex",
+    "otherTitles": "More titles on Plex",
+    "bornIn": "* ${date} in ${place}",
+    "bornOn": "* ${date}",
+    "asRoleIn": "as ${role} in “${title}”",
+    "asRole": "as ${role}",
+    "departments": {
+      "acting": "Acting",
+      "directing": "Directing",
+      "production": "Production",
+      "writing": "Writing"
+    },
+    "availability": {
+      "all": "Everything",
+      "available": "Available",
+      "missing": "Not available"
+    }
   },
   "sport": {
     "bundesliga1": "Bundesliga",

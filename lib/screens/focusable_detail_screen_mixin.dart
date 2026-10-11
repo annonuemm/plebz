@@ -194,6 +194,8 @@ mixin FocusableDetailScreenMixin<T extends StatefulWidget> on State<T>, GridFocu
     VoidCallback? onListRefresh,
     CardShape? shape,
     int indexOffset = 0,
+    bool? fullCardLayout,
+    int? columnCount,
   }) {
     return buildSparseFocusableGrid(
       totalItems: items.length,
@@ -203,6 +205,8 @@ mixin FocusableDetailScreenMixin<T extends StatefulWidget> on State<T>, GridFocu
       onListRefresh: onListRefresh,
       shape: shape,
       indexOffset: indexOffset,
+      fullCardLayout: fullCardLayout,
+      columnCount: columnCount,
     );
   }
 
@@ -227,6 +231,8 @@ mixin FocusableDetailScreenMixin<T extends StatefulWidget> on State<T>, GridFocu
     VoidCallback? onListRefresh,
     CardShape? shape,
     int indexOffset = 0,
+    bool? fullCardLayout,
+    int? columnCount,
   }) {
     return SettingsBuilder(
       prefs: const [SettingsService.viewMode, SettingsService.libraryDensity, SettingsService.tvFullCardLayout],
@@ -234,8 +240,10 @@ mixin FocusableDetailScreenMixin<T extends StatefulWidget> on State<T>, GridFocu
         final svc = SettingsService.instance;
         final viewMode = svc.read(SettingsService.viewMode);
         final libraryDensity = svc.read(SettingsService.libraryDensity);
-        final fullCardLayout = PlatformDetector.isTV() && svc.read(SettingsService.tvFullCardLayout);
-        final useFullCardLayout = fullCardLayout && shape != CardShape.square;
+        // [fullCardLayout] overrides the viewer's card style where a grid's
+        // labels are its point — a person's roles (Plebz).
+        final labelFree = fullCardLayout ?? (PlatformDetector.isTV() && svc.read(SettingsService.tvFullCardLayout));
+        final useFullCardLayout = labelFree && shape != CardShape.square;
 
         Widget buildTile(MediaCardSliverPosition position) {
           final index = position.index;
@@ -273,6 +281,7 @@ mixin FocusableDetailScreenMixin<T extends StatefulWidget> on State<T>, GridFocu
           padding: const EdgeInsets.all(8),
           fullBleedImage: useFullCardLayout,
           shape: shape,
+          columnCountOverride: columnCount,
           itemBuilder: (context, position) => buildTile(position),
         );
       },

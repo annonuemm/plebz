@@ -72,6 +72,7 @@ import '../services/settings_service.dart';
 import '../services/watch_actions.dart';
 import '../widgets/settings_builder.dart';
 import '../utils/layout_constants.dart';
+import '../models/catalog/catalog_item.dart';
 import '../providers/catalog_sources_provider.dart';
 import '../providers/download_provider.dart';
 import '../providers/multi_server_provider.dart';
@@ -116,6 +117,7 @@ import '../providers/account_preferences_controller.dart';
 import '../services/playback_track_preview.dart';
 import '../utils/error_message_utils.dart';
 
+import 'catalog_person_screen.dart';
 import 'media_detail/trailer_extras.dart';
 import 'media_detail/tv_detail_header_layout.dart';
 import '../services/watch_progress/tracker_progress_controller.dart';
@@ -152,6 +154,7 @@ const String _tvDetailExtrasHubId = 'detail_extras';
 const String _tvDetailActorsHubId = 'detail_actors';
 const String _tvDetailOtherCopiesHubId = 'detail_other_copies';
 const String _tvDetailActorPersonIdRawKey = 'tvDetailActorPersonId';
+const String _tvDetailActorDiscoverIdRawKey = 'tvDetailActorDiscoverId';
 
 enum _SyncRuleAction { edit, remove, delete }
 
@@ -1547,6 +1550,26 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
   }
 
   void _navigateToActorMedia(MediaRole actor) {
+    // With a Plex account the person opens on the page Explore's cast opens:
+    // Plex's whole filmography, the titles on every server first (Plebz).
+    // Without one the server's own list stays, which needs no account.
+    final hasDiscover = context.read<CatalogSourcesProvider>().connectedSources.any(
+      (source) => source.id == CatalogSourceId.plex,
+    );
+    if (hasDiscover && actor.tag.trim().isNotEmpty) {
+      unawaited(
+        navigateToCatalogPerson(
+          context,
+          name: actor.tag,
+          personId: actor.discoverId,
+          thumbUrl: actor.thumbPath,
+          characterName: actor.role,
+          sourceTitle: _metadata.displayTitle,
+        ),
+      );
+      return;
+    }
+
     final personId = actor.id;
     if (personId == null || _metadata.serverId == null) return;
 
@@ -5061,7 +5084,10 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       thumbPath: actor.thumbPath,
       serverId: metadata.serverId,
       serverName: metadata.serverName,
-      raw: {if (personId != null && personId.isNotEmpty) _tvDetailActorPersonIdRawKey: personId},
+      raw: {
+        if (personId != null && personId.isNotEmpty) _tvDetailActorPersonIdRawKey: personId,
+        _tvDetailActorDiscoverIdRawKey: ?actor.discoverId,
+      },
     );
   }
 
@@ -5091,11 +5117,16 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     }
     if (hub.id != _tvDetailActorsHubId) return false;
     final personId = item.raw?[_tvDetailActorPersonIdRawKey];
-    if (personId is String && personId.isNotEmpty) {
-      _navigateToActorMedia(
-        MediaRole(id: personId, tag: item.displayTitle, role: item.parentTitle, thumbPath: item.thumbPath),
-      );
-    }
+    final discoverId = item.raw?[_tvDetailActorDiscoverIdRawKey];
+    _navigateToActorMedia(
+      MediaRole(
+        id: personId is String && personId.isNotEmpty ? personId : null,
+        tag: item.displayTitle,
+        role: item.parentTitle,
+        thumbPath: item.thumbPath,
+        discoverId: discoverId is String ? discoverId : null,
+      ),
+    );
     return true;
   }
 

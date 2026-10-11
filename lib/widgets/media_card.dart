@@ -1244,7 +1244,9 @@ class _MediaCardHelpers {
     required String catalogMetadata,
     required bool showTitleImplied,
   }) {
-    if (catalogMetadata.isNotEmpty) return catalogMetadata;
+    // A catalog title given a second line of its own — a person's role on
+    // their page (Plebz) — shows that instead.
+    if (catalogMetadata.isNotEmpty && mi.parentTitle == null) return catalogMetadata;
 
     if (mi.kind == MediaKind.collection) {
       final count = mi.childCount ?? mi.leafCount;

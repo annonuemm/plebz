@@ -210,7 +210,7 @@ extension _MediaDetailPlaybackTracksStatus on _MediaDetailScreenState {
     // read once, so the corner appears and disappears with the switch instead
     // of at the next screen.
     return SettingValueBuilder<bool>(
-      pref: SettingsService.showPlaybackTracksStatus,
+      pref: PlebzPrefs.showPlaybackTracksStatus,
       builder: (context, show, _) {
         if (!show) return const SizedBox.shrink();
         return ValueListenableBuilder<int>(

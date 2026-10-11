@@ -26,7 +26,7 @@ class TmdbSettingsScreen extends StatefulWidget {
 class _TmdbSettingsScreenState extends State<TmdbSettingsScreen> {
   bool _isVerifying = false;
 
-  bool get _hasKey => (SettingsService.instance.read(SettingsService.tmdbApiKey) ?? '').trim().isNotEmpty;
+  bool get _hasKey => (SettingsService.instance.read(PlebzPrefs.tmdbApiKey) ?? '').trim().isNotEmpty;
 
   Future<void> _editKey() async {
     final saved = await showDialog<bool>(context: context, builder: (_) => const _TmdbKeyDialog());
@@ -66,7 +66,7 @@ class _TmdbSettingsScreenState extends State<TmdbSettingsScreen> {
         SettingsGroup(
           children: [
             SettingSwitchTile(
-              pref: SettingsService.tmdbLogosEnabled,
+              pref: PlebzPrefs.tmdbLogosEnabled,
               icon: Symbols.imagesmode_rounded,
               title: t.services.tmdb.enabled,
               subtitle: t.services.tmdb.enabledDescription,
@@ -112,7 +112,7 @@ class _TmdbKeyDialog extends StatefulWidget {
 
 class _TmdbKeyDialogState extends State<_TmdbKeyDialog> {
   late final TextEditingController _controller = TextEditingController(
-    text: SettingsService.instance.read(SettingsService.tmdbApiKey) ?? '',
+    text: SettingsService.instance.read(PlebzPrefs.tmdbApiKey) ?? '',
   );
   final _saveFocusNode = FocusNode(debugLabel: 'TmdbKeySave');
 
@@ -125,7 +125,7 @@ class _TmdbKeyDialogState extends State<_TmdbKeyDialog> {
 
   Future<void> _save() async {
     final value = _controller.text.trim();
-    await SettingsService.instance.write(SettingsService.tmdbApiKey, value.isEmpty ? null : value);
+    await SettingsService.instance.write(PlebzPrefs.tmdbApiKey, value.isEmpty ? null : value);
     if (mounted) Navigator.pop(context, true);
   }
 

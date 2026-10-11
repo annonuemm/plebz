@@ -88,13 +88,13 @@ class TmdbFillInService {
   /// the switch is turned on, and reporting "TMDB rejected the key" for a
   /// switch that is merely off would be a lie.
   String? get credential {
-    final key = SettingsService.instanceOrNull?.read(SettingsService.tmdbApiKey)?.trim();
+    final key = SettingsService.instanceOrNull?.read(PlebzPrefs.tmdbApiKey)?.trim();
     return key == null || key.isEmpty ? null : key;
   }
 
   /// Whether lookups may actually happen: a key *and* the switch.
   bool get isEnabled =>
-      credential != null && (SettingsService.instanceOrNull?.read(SettingsService.tmdbLogosEnabled) ?? false);
+      credential != null && (SettingsService.instanceOrNull?.read(PlebzPrefs.tmdbLogosEnabled) ?? false);
 
   /// A client for the stored key, rebuilt when the key changes.
   TmdbClient? get _currentClient {

@@ -192,7 +192,7 @@ double ockerTileWidthFor(BuildContext context, double contentWidth, {int columns
 
 /// How many posters a grid column [contentWidth] wide takes: five beside the
 /// detail panel, and as many more as fit at the same size where the panel is
-/// switched off ([SettingsService.glasDetailPanel]) and the column has its
+/// switched off ([PlebzPrefs.glasDetailPanel]) and the column has its
 /// room. Worked out from the width alone, so every grid comes to the same
 /// answer without being told whether a panel stands beside it.
 int ockerGridColumnsFor(BuildContext context, double contentWidth) {
@@ -972,10 +972,9 @@ Duration ockerInkFade(BuildContext context) => ockerGlass(context) && !ockerFlat
 
 /// [full] for the glass focus's own motion — the capsule's glide and the ink
 /// fading with it: on the full tier, or wherever the viewer switched them on
-/// on their own ([SettingsService.glasSmoothFocus]); nothing on a reduced tier
+/// on their own ([PlebzPrefs.glasSmoothFocus]); nothing on a reduced tier
 /// otherwise.
-Duration ockerGlassMotion(Duration full) =>
-    SettingsService.instanceOrNull?.read(SettingsService.glasSmoothFocus) ?? false
+Duration ockerGlassMotion(Duration full) => SettingsService.instanceOrNull?.read(PlebzPrefs.glasSmoothFocus) ?? false
     ? full
     : DevicePerformance.reducedDuration(full);
 

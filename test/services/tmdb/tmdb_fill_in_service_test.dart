@@ -109,8 +109,8 @@ MediaItem _episode({required String seriesId, required String episodeId}) => tes
 
 Future<void> _enable({String key = 'test-key'}) async {
   final settings = await SettingsService.getInstance();
-  await settings.write(SettingsService.tmdbLogosEnabled, true);
-  await settings.write(SettingsService.tmdbApiKey, key);
+  await settings.write(PlebzPrefs.tmdbLogosEnabled, true);
+  await settings.write(PlebzPrefs.tmdbApiKey, key);
 }
 
 void main() {
@@ -138,7 +138,7 @@ void main() {
     expect((await service.resolve(_catalogMovie(tmdb: 603))).logoUrl, isNull);
 
     // A key alone is not consent; the switch is what turns the feature on.
-    await (await SettingsService.getInstance()).write(SettingsService.tmdbApiKey, 'test-key');
+    await (await SettingsService.getInstance()).write(PlebzPrefs.tmdbApiKey, 'test-key');
     expect(service.isEnabled, isFalse);
     expect((await service.resolve(_catalogMovie(tmdb: 603))).logoUrl, isNull);
     expect(tmdb.requests, 0);

@@ -56,18 +56,18 @@ class LivePictureHandover {
   /// for live TV while the switch is on (the player screen's rule).
   static bool enabledIn(SettingsService settings, {bool? isAndroid}) {
     if (!(isAndroid ?? Platform.isAndroid)) return false;
-    if (!settings.read(SettingsService.liveTvSeamlessFullscreen)) return false;
-    final matchesFrameRate = SettingsService.matchContentFrameRateFor(
+    if (!settings.read(PlebzPrefs.liveTvSeamlessFullscreen)) return false;
+    final matchesFrameRate = PlebzPrefs.matchContentFrameRateFor(
       isLive: true,
       enabled: settings.read(SettingsService.matchContentFrameRate),
-      enabledForLiveTv: settings.read(SettingsService.matchContentFrameRateLiveTv),
+      enabledForLiveTv: settings.read(PlebzPrefs.matchContentFrameRateLiveTv),
     );
     final tunnels =
         settings.useExoPlayerFor(iptv: true) &&
-        SettingsService.tunneledPlaybackFor(
+        PlebzPrefs.tunneledPlaybackFor(
           isLive: true,
           enabled: settings.read(SettingsService.tunneledPlayback),
-          enabledForLiveTv: settings.read(SettingsService.tunneledPlaybackLiveTv),
+          enabledForLiveTv: settings.read(PlebzPrefs.tunneledPlaybackLiveTv),
         );
     return !matchesFrameRate && !tunnels;
   }
@@ -87,7 +87,7 @@ class LivePictureHandover {
   /// fallback, which the preview never placed in its box.
   static bool canMove(Player player, LiveTvPlaybackSession? session) {
     if (session is! IptvPlaybackSession) return false;
-    if (player is! VideoOutputHandover || player.disposed) return false;
+    if (player is! VideoViewportTarget || player.disposed) return false;
     if (player is PlayerAndroid && player.usingMpvFallback) return false;
     return true;
   }
@@ -96,8 +96,8 @@ class LivePictureHandover {
   /// frame-rate match and tunnelling, for live TV only — films and shows keep
   /// theirs.
   static Future<void> turnOffWhatInterrupts(SettingsService settings) async {
-    await settings.write(SettingsService.matchContentFrameRateLiveTv, false);
-    await settings.write(SettingsService.tunneledPlaybackLiveTv, false);
+    await settings.write(PlebzPrefs.matchContentFrameRateLiveTv, false);
+    await settings.write(PlebzPrefs.tunneledPlaybackLiveTv, false);
   }
 }
 

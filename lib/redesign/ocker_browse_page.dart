@@ -176,7 +176,7 @@ class OckerBrowsePageState extends State<OckerBrowsePage> {
   @override
   Widget build(BuildContext context) {
     // The viewer may give the panel's width to the posters instead.
-    final panelWanted = SettingsService.instanceOrNull?.listenable(SettingsService.glasDetailPanel);
+    final panelWanted = SettingsService.instanceOrNull?.listenable(PlebzPrefs.glasDetailPanel);
     if (panelWanted == null) return _build(context, showPanel: true);
     return ValueListenableBuilder<bool>(
       valueListenable: panelWanted,

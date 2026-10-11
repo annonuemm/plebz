@@ -867,7 +867,7 @@ class _VideoSettingsSheetState extends State<VideoSettingsSheet> {
         ),
 
         _SettingsToggleItem(
-          pref: SettingsService.showUpNextPanel,
+          pref: PlebzPrefs.showUpNextPanel,
           icon: Symbols.featured_video_rounded,
           title: t.videoControls.showUpNextPanel,
         ),

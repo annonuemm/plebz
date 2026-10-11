@@ -96,8 +96,8 @@ class _YearFilterScreenState extends State<YearFilterScreen> {
         title: t.settings.yearFilterMovies,
         children: _rangeTiles(
           icon: Symbols.movie_rounded,
-          from: SettingsService.yearFilterMovieFrom,
-          to: SettingsService.yearFilterMovieTo,
+          from: PlebzPrefs.yearFilterMovieFrom,
+          to: PlebzPrefs.yearFilterMovieTo,
           range: _settings.movieYearRange,
         ),
       ),
@@ -105,15 +105,15 @@ class _YearFilterScreenState extends State<YearFilterScreen> {
         title: t.settings.yearFilterShows,
         children: _rangeTiles(
           icon: Symbols.live_tv_rounded,
-          from: SettingsService.yearFilterShowFrom,
-          to: SettingsService.yearFilterShowTo,
+          from: PlebzPrefs.yearFilterShowFrom,
+          to: PlebzPrefs.yearFilterShowTo,
           range: _settings.showYearRange,
         ),
       ),
       SettingsGroup(
         children: [
           SettingSwitchTile(
-            pref: SettingsService.yearFilterBeyondLibraries,
+            pref: PlebzPrefs.yearFilterBeyondLibraries,
             icon: Symbols.travel_explore_rounded,
             title: t.settings.yearFilterBeyondLibraries,
             subtitle: t.settings.yearFilterBeyondLibrariesDescription,

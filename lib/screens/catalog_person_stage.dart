@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../focus/focusable_action_bar.dart';
 import '../focus/key_event_utils.dart';
+import '../redesign/ocker_fact_card.dart';
 import '../redesign/ocker_skin.dart';
 import '../redesign/ocker_type.dart';
 import '../theme/mono_theme.dart';
@@ -242,38 +243,15 @@ class CatalogPersonStageState extends State<CatalogPersonStage> {
 
   Widget? _factCard(double s, MonoTokens tk) {
     if (widget.facts.isEmpty) return null;
-    final type = OckerType.of(context);
-    final label = type.spotlightFacts.copyWith(fontSize: 20 * s, height: 1.3, color: tk.ink(0.58));
-    final value = label.copyWith(color: tk.ink(1), fontWeight: .w500);
-    return OckerGlass(
-      borderRadius: BorderRadius.circular(tk.radiusSm + 8),
-      scrimInset: 18 * s,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 34 * s, vertical: 30 * s),
-        child: Column(
-          mainAxisSize: .min,
-          crossAxisAlignment: .start,
-          children: [
-            for (var index = 0; index < widget.facts.length; index++)
-              Padding(
-                padding: EdgeInsets.only(top: index == 0 ? 0 : 16 * s),
-                child: Row(
-                  crossAxisAlignment: .baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    SizedBox(
-                      width: 250 * s,
-                      child: Text(widget.facts[index].label, maxLines: 1, overflow: .ellipsis, style: label),
-                    ),
-                    Expanded(
-                      child: Text(widget.facts[index].value, maxLines: 2, overflow: .ellipsis, style: value),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
+    final label = OckerType.of(context).spotlightFacts.copyWith(fontSize: 20 * s, height: 1.3, color: tk.ink(0.58));
+    return OckerFactCard(
+      facts: widget.facts,
+      labelWidth: 250 * s,
+      labelStyle: label,
+      valueStyle: label.copyWith(color: tk.ink(1), fontWeight: .w500),
+      rowGap: 16 * s,
+      valueMaxLines: 2,
+      padding: EdgeInsets.symmetric(horizontal: 34 * s, vertical: 30 * s),
     );
   }
 

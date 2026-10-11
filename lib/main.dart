@@ -2022,7 +2022,7 @@ class _SetupScreenState extends State<SetupScreen> with MountedSetStateMixin {
       await activeProfiles.reloadFromStorage();
       if (!mounted) return;
       final route = routeForEmptyStart(
-        onboardingCompleted: setupSettings.read(SettingsService.onboardingCompleted),
+        onboardingCompleted: setupSettings.read(PlebzPrefs.onboardingCompleted),
         activeProfileHasIptv: profileHasIptvSources(activeProfiles.active?.id),
       );
       if (route != EmptyStartRoute.iptvSession) {
@@ -2030,9 +2030,9 @@ class _SetupScreenState extends State<SetupScreen> with MountedSetStateMixin {
         unawaited(Navigator.pushReplacement(context, fadeRoute(next)));
         return;
       }
-    } else if (!setupSettings.read(SettingsService.onboardingCompleted)) {
+    } else if (!setupSettings.read(PlebzPrefs.onboardingCompleted)) {
       // Plebz: an install that already has servers never needs the setup.
-      await setupSettings.write(SettingsService.onboardingCompleted, true);
+      await setupSettings.write(PlebzPrefs.onboardingCompleted, true);
     }
 
     if (!mounted) return;

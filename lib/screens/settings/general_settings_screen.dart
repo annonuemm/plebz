@@ -52,7 +52,7 @@ class GeneralSettingsScreen extends StatelessWidget {
             title: t.settings.input,
             children: [
               SettingSwitchTile(
-                pref: SettingsService.useSystemTvKeyboard,
+                pref: PlebzPrefs.useSystemTvKeyboard,
                 icon: Symbols.keyboard_rounded,
                 title: t.settings.useSystemTvKeyboard,
                 subtitle: t.settings.useSystemTvKeyboardDescription,

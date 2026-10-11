@@ -24,7 +24,7 @@ class SimklProgressTile extends StatelessWidget {
     final profileId = context.watch<ActiveProfileProvider?>()?.activeId;
     final settings = SettingsService.instance;
     return ValueListenableBuilder<List<String>>(
-      valueListenable: settings.listenable(SettingsService.simklLedProfiles),
+      valueListenable: settings.listenable(PlebzPrefs.simklLedProfiles),
       builder: (context, profiles, _) {
         final on = profileId != null && profiles.contains(profileId);
         return Column(
@@ -51,7 +51,7 @@ class SimklProgressTile extends StatelessWidget {
 
   static Future<void> _set(String profileId, bool on, List<String> profiles) async {
     final settings = SettingsService.instance;
-    await settings.write(SettingsService.simklLedProfiles, [
+    await settings.write(PlebzPrefs.simklLedProfiles, [
       for (final id in profiles)
         if (id != profileId) id,
       if (on) profileId,

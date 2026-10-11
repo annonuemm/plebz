@@ -205,7 +205,7 @@ class _AlbumDetailScreenState extends BaseMediaListDetailScreen<AlbumDetailScree
     if (PlatformDetector.isAppleTV()) return null;
     // Follows the same switch as the video detail pages: hiding downloads
     // hides every way to start one.
-    if (!context.settingsRead(SettingsService.showDownloadAction)) return null;
+    if (!context.settingsRead(PlebzPrefs.showDownloadAction)) return null;
     if (widget.album.serverId == null || context.read<DownloadProvider?>() == null) return null;
 
     return FocusableAction(

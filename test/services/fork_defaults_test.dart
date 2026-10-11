@@ -24,21 +24,21 @@ void main() {
     await TvDetectionService.getInstance(forceTv: true);
     TvDetectionService.setForceTVSync(true);
 
-    expect(SettingsService.instance.read(SettingsService.appThemeVariant), AppThemeVariant.glas);
+    expect(SettingsService.instance.read(PlebzPrefs.appThemeVariant), AppThemeVariant.glas);
   });
 
   test('a phone, tablet or desktop starts in Original', () {
     TvDetectionService.setForceTVSync(false);
 
-    expect(SettingsService.instance.read(SettingsService.appThemeVariant), AppThemeVariant.standard);
+    expect(SettingsService.instance.read(PlebzPrefs.appThemeVariant), AppThemeVariant.standard);
     expect(t.settings.appThemeVariantStandard, 'Original');
   });
 
   test('a stored choice wins over the default', () async {
     await TvDetectionService.getInstance(forceTv: true);
     TvDetectionService.setForceTVSync(true);
-    await SettingsService.instance.write(SettingsService.appThemeVariant, AppThemeVariant.standard);
+    await SettingsService.instance.write(PlebzPrefs.appThemeVariant, AppThemeVariant.standard);
 
-    expect(SettingsService.instance.read(SettingsService.appThemeVariant), AppThemeVariant.standard);
+    expect(SettingsService.instance.read(PlebzPrefs.appThemeVariant), AppThemeVariant.standard);
   });
 }

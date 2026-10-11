@@ -23,7 +23,7 @@ import '../test_helpers/prefs.dart';
 Future<void> _pumpSpotlight(WidgetTester tester, MediaItem item, {AppThemeVariant? variant}) async {
   await SettingsService.getInstance();
   // Per-source scores: averaging is on by default in this fork.
-  await SettingsService.instance.write(SettingsService.averageRatings, false);
+  await SettingsService.instance.write(PlebzPrefs.averageRatings, false);
   tester.view.physicalSize = const Size(1920, 1080);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -118,7 +118,7 @@ void main() {
     await _pumpSpotlight(tester, item);
     expect(tester.widget<ClearLogoImage>(find.byType(ClearLogoImage)).logoPath, isNotNull, reason: 'on by default');
 
-    await SettingsService.instance.write(SettingsService.showHomeTitleLogos, false);
+    await SettingsService.instance.write(PlebzPrefs.showHomeTitleLogos, false);
     await tester.pump();
     final off = tester.widget<ClearLogoImage>(find.byType(ClearLogoImage));
     expect(off.logoPath, isNull, reason: 'no logo shown');

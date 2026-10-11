@@ -6,6 +6,8 @@ import 'package:plezy/models/livetv_channel.dart';
 import 'package:plezy/models/livetv_program.dart';
 import 'package:plezy/screens/live_now/live_now_loader.dart';
 import 'package:plezy/screens/live_now/live_now_tile.dart';
+import 'package:plezy/redesign/ocker_skin.dart';
+import 'package:plezy/services/sport/club_colours.dart';
 import 'package:plezy/services/sport/sport_models.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/focus/locked_hub_controller.dart';
@@ -127,18 +129,22 @@ void main() {
   });
 
   group('the tile', () {
-    Future<void> pumpTile(WidgetTester tester, LiveNowSnapshot snapshot) async {
+    Future<void> pumpTile(
+      WidgetTester tester,
+      LiveNowSnapshot snapshot, {
+      AppThemeVariant variant = AppThemeVariant.glas,
+    }) async {
       final hub = liveNowHub(snapshot);
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          theme: monoTheme(dark: true, variant: variant),
           home: Scaffold(
             body: LiveNowScope(
               snapshot: snapshot,
               child: Row(
                 children: [
                   for (final item in hub.items)
-                    LiveNowTileCard(item: item, width: 240, cardHeight: 135, captionHeight: 32),
+                    LiveNowTileCard(item: item, width: 240, cardHeight: 135, captionHeight: 50),
                 ],
               ),
             ),
@@ -147,15 +153,39 @@ void main() {
       );
     }
 
-    testWidgets('a game on now says so, with its pairing and no score that would stand still', (tester) async {
+    SportMatch liveGame({int homeId = 10, int awayId = 11}) => SportMatch(
+      id: 1,
+      season: 2026,
+      matchday: const SportMatchday(order: 7, name: '7. Spieltag'),
+      kickoff: DateTime(2026, 10, 3, 15, 30),
+      home: _team(homeId, 'Bayern'),
+      away: _team(awayId, 'Dortmund'),
+      isFinished: false,
+      goals: [const SportGoal(score: SportScore(1, 0), minute: 4, scorer: 'X')],
+    );
+
+    testWidgets('a game on now shows its score, and the league and kickoff under the pairing', (tester) async {
       await withClock(Clock.fixed(_now), () async {
-        final match = _match(
-          1,
-          kickoff: DateTime(2026, 10, 3, 15, 30),
-          home: 'Bayern',
-          away: 'Dortmund',
-          goals: [const SportGoal(score: SportScore(1, 0), minute: 4, scorer: 'X')],
+        await pumpTile(
+          tester,
+          LiveNowSnapshot(
+            entries: [LiveNowGame(match: liveGame(), league: SportLeague.bundesliga1)],
+          ),
         );
+
+        expect(find.text(t.sport.live), findsOneWidget);
+        // The matchday asked for by number keeps the goals current.
+        expect(find.text('1 : 0'), findsOneWidget);
+        expect(find.text(t.sport.versus), findsNothing);
+        expect(find.text('Bayern – Dortmund'), findsOneWidget);
+        expect(find.text('${t.sport.bundesliga1} · 15:30'), findsOneWidget);
+        expect(find.text(t.sport.bundesliga1), findsNothing, reason: 'the card is a picture, as a poster is');
+      });
+    });
+
+    testWidgets('a game still to come is the pairing, without a LIVE mark', (tester) async {
+      await withClock(Clock.fixed(_now), () async {
+        final match = _match(1, kickoff: DateTime(2026, 10, 3, 20, 30), home: 'Bayern', away: 'Dortmund');
         await pumpTile(
           tester,
           LiveNowSnapshot(
@@ -163,13 +193,60 @@ void main() {
           ),
         );
 
-        expect(find.text(t.sport.live), findsOneWidget);
-        // OpenLigaDB does not keep the goals current while a game is on.
-        expect(find.text('1:0'), findsNothing);
+        expect(find.text(t.sport.live), findsNothing);
         expect(find.text(t.sport.versus), findsOneWidget);
-        expect(find.text('Bayern – Dortmund'), findsOneWidget);
-        expect(find.text(t.sport.bundesliga1), findsOneWidget);
+        expect(find.text('${t.sport.bundesliga1} · 20:30'), findsOneWidget);
       });
+    });
+
+    testWidgets('the original look keeps the league on the card and shows the score too', (tester) async {
+      await withClock(Clock.fixed(_now), () async {
+        await pumpTile(
+          tester,
+          LiveNowSnapshot(
+            entries: [LiveNowGame(match: liveGame(), league: SportLeague.bundesliga1)],
+          ),
+          variant: AppThemeVariant.standard,
+        );
+
+        expect(find.text(t.sport.bundesliga1), findsOneWidget);
+        expect(find.text('1 : 0'), findsOneWidget);
+        expect(find.text('Bayern – Dortmund'), findsOneWidget);
+      });
+    });
+
+    testWidgets('a game stands on its clubs\' colours: glass under Glas, a gradient under Flach', (tester) async {
+      await withClock(Clock.fixed(_now), () async {
+        // St. Pauli and Karlsruhe by their OpenLigaDB ids.
+        final snapshot = LiveNowSnapshot(
+          entries: [LiveNowGame(match: liveGame(homeId: 98, awayId: 105), league: SportLeague.bundesliga2)],
+        );
+        // The clubs' colours run into each other.
+        Finder slant() => find.byWidgetPredicate(
+          (widget) =>
+              widget is DecoratedBox &&
+              widget.decoration is BoxDecoration &&
+              (widget.decoration as BoxDecoration).gradient is LinearGradient &&
+              // Home's colour held, then into away's — not the glass's sheen.
+              ((widget.decoration as BoxDecoration).gradient! as LinearGradient).colors.length == 4,
+        );
+
+        await pumpTile(tester, snapshot);
+        expect(find.byType(OckerGlass), findsOneWidget);
+        expect(slant(), findsNothing);
+
+        await pumpTile(tester, snapshot, variant: AppThemeVariant.flach);
+        // The app's theme change is animated; let it arrive.
+        await tester.pump(const Duration(seconds: 1));
+        expect(slant(), findsOneWidget);
+      });
+    });
+
+    test('club colours are the ones viewers know, not the crest\'s', () {
+      expect(clubColourFor(_team(98, 'St. Pauli')), const Color(0xFF5C3C2C), reason: 'brown, though the crest is red');
+      expect(clubColourFor(_team(7, 'Dortmund')), const Color(0xFFFDE100));
+      expect(clubColourFor(_team(114, 'Verl')), isNull, reason: 'black and white keeps the plain ground');
+      expect(clubColourFor(_team(999999, 'Unknown')), isNull);
     });
 
     testWidgets('a channel is captioned with what is on it', (tester) async {
@@ -287,6 +364,11 @@ void main() {
       await tester.pump();
 
       expect(tapped, [live.entries.single.id]);
+      expect(
+        find.descendant(of: find.byType(LiveNowTileCard), matching: find.byType(CardFocusBorder)),
+        findsOneWidget,
+        reason: 'a keyboard\'s focus shows round the card here too',
+      );
     });
   });
 }

@@ -21,14 +21,14 @@ void main() {
       resetSharedPreferencesForTest();
       final service = await SettingsService.getInstance();
       for (final old in ['ocker', 'schwarz']) {
-        await service.writeString(SettingsService.appThemeVariant.key, old);
-        expect(service.read(SettingsService.appThemeVariant), AppThemeVariant.glas, reason: old);
+        await service.writeString(PlebzPrefs.appThemeVariant.key, old);
+        expect(service.read(PlebzPrefs.appThemeVariant), AppThemeVariant.glas, reason: old);
       }
     });
 
     test('and out of an old backup', () {
-      expect(SettingsService.appThemeVariant.fromJson('ocker'), AppThemeVariant.glas);
-      expect(SettingsService.appThemeVariant.fromJson('schwarz'), AppThemeVariant.glas);
+      expect(PlebzPrefs.appThemeVariant.fromJson('ocker'), AppThemeVariant.glas);
+      expect(PlebzPrefs.appThemeVariant.fromJson('schwarz'), AppThemeVariant.glas);
     });
   });
 
@@ -38,13 +38,13 @@ void main() {
     testWidgets('reads back as Standard where it was stored', (tester) async {
       resetSharedPreferencesForTest();
       final service = await SettingsService.getInstance();
-      await service.writeString(SettingsService.appThemeVariant.key, 'klar');
+      await service.writeString(PlebzPrefs.appThemeVariant.key, 'klar');
 
-      expect(service.read(SettingsService.appThemeVariant), AppThemeVariant.standard);
+      expect(service.read(PlebzPrefs.appThemeVariant), AppThemeVariant.standard);
     });
 
     test('and out of an old backup', () {
-      expect(SettingsService.appThemeVariant.fromJson('klar'), AppThemeVariant.standard);
+      expect(PlebzPrefs.appThemeVariant.fromJson('klar'), AppThemeVariant.standard);
     });
 
     test('is not a variant any more', () {

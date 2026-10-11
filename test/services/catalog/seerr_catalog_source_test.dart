@@ -843,7 +843,7 @@ void main() {
 
     Future<void> enableEpisodeFacts() async {
       await SettingsService.getInstance();
-      await SettingsService.instance.write(SettingsService.seerrCardEpisodeFacts, true);
+      await SettingsService.instance.write(PlebzPrefs.seerrCardEpisodeFacts, true);
     }
 
     test('asks for nothing while the setting is off', () async {

@@ -460,10 +460,10 @@ class TvSpotlightBackground extends StatelessWidget {
   /// [ClearLogoImage.fallbackWidthFor] of the info block's [availableWidth]
   /// at the slot's height (#1796).
   /// The logo, or the title set as type where the viewer switched logos off
-  /// here ([SettingsService.showHomeTitleLogos]).
+  /// here ([PlebzPrefs.showHomeTitleLogos]).
   Widget _buildLogoOrTitle(BuildContext context, MediaItem media, String title, double availableWidth) {
     return SettingValueBuilder<bool>(
-      pref: SettingsService.showHomeTitleLogos,
+      pref: PlebzPrefs.showHomeTitleLogos,
       builder: (context, logos, _) => _buildLogoOrTitleWith(context, media, title, availableWidth, logos: logos),
     );
   }
@@ -805,7 +805,7 @@ class SpotlightSummaryState extends State<SpotlightSummary> {
   @override
   void initState() {
     super.initState();
-    _enabledListenable = SettingsService.instanceOrNull?.listenable(SettingsService.tmdbLogosEnabled);
+    _enabledListenable = SettingsService.instanceOrNull?.listenable(PlebzPrefs.tmdbLogosEnabled);
     _enabledListenable?.addListener(_onEnabledChanged);
     _resolveIfNeeded();
   }

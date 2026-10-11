@@ -23,22 +23,20 @@ class _FakePlayer implements Player {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-/// A player whose picture can leave its texture, as both Android backends' can.
-class _MovablePlayer extends _FakePlayer implements VideoOutputHandover {
+/// A player on one of the Android backends, both of which can place their
+/// picture on the video plane; this one draws into a texture.
+class _MovablePlayer extends _FakePlayer implements VideoViewportTarget {
   @override
-  bool get rendersToTexture => true;
-}
-
-/// A player whose window surface sits in a box behind the app.
-class _PlanePlayer extends _FakePlayer implements VideoOutputHandover, VideoViewportTarget {
-  @override
-  bool get rendersToTexture => false;
-
-  @override
-  bool get followsVideoRect => true;
+  bool get followsVideoRect => false;
 
   @override
   set videoRectDriven(bool value) {}
+}
+
+/// A player whose window surface sits in a box behind the app.
+class _PlanePlayer extends _MovablePlayer {
+  @override
+  bool get followsVideoRect => true;
 }
 
 class _ServerSession implements LiveTvPlaybackSession {
@@ -75,51 +73,51 @@ void main() {
 
   group('enabledIn', () {
     test('is on by default, with the live frame-rate match off', () async {
-      expect(settings.read(SettingsService.liveTvSeamlessFullscreen), isTrue);
-      expect(settings.read(SettingsService.matchContentFrameRateLiveTv), isFalse);
+      expect(settings.read(PlebzPrefs.liveTvSeamlessFullscreen), isTrue);
+      expect(settings.read(PlebzPrefs.matchContentFrameRateLiveTv), isFalse);
       expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isTrue);
 
-      await settings.write(SettingsService.liveTvSeamlessFullscreen, false);
+      await settings.write(PlebzPrefs.liveTvSeamlessFullscreen, false);
       expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isFalse);
     });
 
     test('reads off for a viewer who turned the live frame-rate match or live tunnelling on', () async {
-      await settings.write(SettingsService.matchContentFrameRateLiveTv, true);
-      expect(settings.read(SettingsService.liveTvSeamlessFullscreen), isFalse);
+      await settings.write(PlebzPrefs.matchContentFrameRateLiveTv, true);
+      expect(settings.read(PlebzPrefs.liveTvSeamlessFullscreen), isFalse);
 
-      await settings.write(SettingsService.matchContentFrameRateLiveTv, false);
-      await settings.write(SettingsService.tunneledPlaybackLiveTv, true);
-      expect(settings.read(SettingsService.liveTvSeamlessFullscreen), isFalse);
+      await settings.write(PlebzPrefs.matchContentFrameRateLiveTv, false);
+      await settings.write(PlebzPrefs.tunneledPlaybackLiveTv, true);
+      expect(settings.read(PlebzPrefs.liveTvSeamlessFullscreen), isFalse);
 
       // Their own choice stands.
-      await settings.write(SettingsService.liveTvSeamlessFullscreen, true);
-      expect(settings.read(SettingsService.liveTvSeamlessFullscreen), isTrue);
+      await settings.write(PlebzPrefs.liveTvSeamlessFullscreen, true);
+      expect(settings.read(PlebzPrefs.liveTvSeamlessFullscreen), isTrue);
     });
 
     test('on Android with nothing that switches the display, it is on', () async {
-      await settings.write(SettingsService.liveTvSeamlessFullscreen, true);
+      await settings.write(PlebzPrefs.liveTvSeamlessFullscreen, true);
 
       expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isTrue);
       expect(LivePictureHandover.enabledIn(settings, isAndroid: false), isFalse);
     });
 
     test('a live frame-rate match stops it, until the switch turns that off', () async {
-      await settings.write(SettingsService.liveTvSeamlessFullscreen, true);
+      await settings.write(PlebzPrefs.liveTvSeamlessFullscreen, true);
       await settings.write(SettingsService.matchContentFrameRate, true);
-      await settings.write(SettingsService.matchContentFrameRateLiveTv, true);
+      await settings.write(PlebzPrefs.matchContentFrameRateLiveTv, true);
 
       expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isFalse);
 
       await LivePictureHandover.turnOffWhatInterrupts(settings);
 
-      expect(settings.read(SettingsService.matchContentFrameRateLiveTv), isFalse);
+      expect(settings.read(PlebzPrefs.matchContentFrameRateLiveTv), isFalse);
       expect(settings.read(SettingsService.matchContentFrameRate), isTrue, reason: 'films keep theirs');
       expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isTrue);
     });
 
     test('live tunnelling stops it on ExoPlayer only', () async {
-      await settings.write(SettingsService.liveTvSeamlessFullscreen, true);
-      await settings.write(SettingsService.tunneledPlaybackLiveTv, true);
+      await settings.write(PlebzPrefs.liveTvSeamlessFullscreen, true);
+      await settings.write(PlebzPrefs.tunneledPlaybackLiveTv, true);
 
       expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isTrue, reason: 'mpv does not tunnel');
 
@@ -139,20 +137,20 @@ void main() {
       expect(settings.useExoPlayerFor(iptv: true), isTrue);
       expect(settings.useExoPlayerFor(iptv: false), isTrue);
 
-      await settings.write(SettingsService.iptvPlayerBackend, IptvPlayerChoice.mpv);
+      await settings.write(PlebzPrefs.iptvPlayerBackend, IptvPlayerChoice.mpv);
       expect(settings.useExoPlayerFor(iptv: true), isFalse);
       expect(settings.useExoPlayerFor(iptv: false), isTrue, reason: 'films and shows keep the main choice');
 
       await settings.write(SettingsService.useExoPlayer, false);
-      await settings.write(SettingsService.iptvPlayerBackend, IptvPlayerChoice.exoPlayer);
+      await settings.write(PlebzPrefs.iptvPlayerBackend, IptvPlayerChoice.exoPlayer);
       expect(settings.useExoPlayerFor(iptv: true), isTrue);
       expect(settings.useExoPlayerFor(iptv: false), isFalse);
     });
 
     test("live tunnelling stops the hand-over when IPTV plays on ExoPlayer, whatever films use", () async {
-      await settings.write(SettingsService.liveTvSeamlessFullscreen, true);
-      await settings.write(SettingsService.tunneledPlaybackLiveTv, true);
-      await settings.write(SettingsService.iptvPlayerBackend, IptvPlayerChoice.exoPlayer);
+      await settings.write(PlebzPrefs.liveTvSeamlessFullscreen, true);
+      await settings.write(PlebzPrefs.tunneledPlaybackLiveTv, true);
+      await settings.write(PlebzPrefs.iptvPlayerBackend, IptvPlayerChoice.exoPlayer);
 
       expect(LivePictureHandover.enabledIn(settings, isAndroid: true), isFalse);
     });

@@ -14,7 +14,7 @@ import '../../utils/app_logger.dart';
 /// guide's both fail to load — providers' logo hosts come and go, and when
 /// one lapses every channel that pointed there loses its picture at once.
 ///
-/// Opt in only ([SettingsService.iptvPublicLogoFallback]): asking a stranger's
+/// Opt in only ([PlebzPrefs.iptvPublicLogoFallback]): asking a stranger's
 /// server for a logo tells it which one was wanted. The collection's file list
 /// is read at most once a week and kept on disk, and only when a channel has
 /// reached the point of needing it; a logo is then one plain file from

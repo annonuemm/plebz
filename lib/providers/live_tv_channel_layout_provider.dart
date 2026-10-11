@@ -36,7 +36,7 @@ class LiveTvChannelLayoutProvider extends ChangeNotifier with DisposableChangeNo
   /// way the other per-profile stores do.
   NullableStringPref get _pref => profileId.trim().isEmpty
       ? const NullableStringPref(liveTvChannelLayoutBaseKey)
-      : SettingsService.liveTvChannelLayoutForProfile(profileId);
+      : PlebzPrefs.liveTvChannelLayoutForProfile(profileId);
 
   Future<void> _load() async {
     try {

@@ -412,6 +412,10 @@
     "showExploreTabDescription": "Content from Plex Discover",
     "showSportTab": "Sport",
     "showSportTabDescription": "Bundesliga, 2. Bundesliga and 3. Liga: games and table",
+    "sportFavouriteClub": "Favourite club",
+    "sportFavouriteClubDescription": "Its game stands at the top of its league's page.",
+    "sportFavouriteClubNone": "None",
+    "sportFavouriteClubLoadFailed": "The clubs could not be loaded.",
     "liveTvDefaultFavorites": "Favorites only on open",
     "liveTvDefaultFavoritesDescription": "",
     "general": "General",
@@ -2822,7 +2826,12 @@
     "noMatches": "No fixtures for this matchday.",
     "today": "Today",
     "tomorrow": "Tomorrow",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "zoneChampionsLeague": "Champions League",
+    "zoneEurope": "Europe",
+    "zonePromotion": "Promotion",
+    "zonePlayoff": "Play-off",
+    "zoneRelegation": "Relegation"
   },
   "plebz": {
     "settingsGroupLook": "Look and playback",

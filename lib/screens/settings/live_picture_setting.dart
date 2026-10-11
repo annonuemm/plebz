@@ -15,7 +15,7 @@ import '../../widgets/setting_tile.dart';
 Widget? livePictureHandoverSettingTile() {
   if (!Platform.isAndroid || !PlatformDetector.isTV()) return null;
   return SettingSwitchTile(
-    pref: SettingsService.liveTvSeamlessFullscreen,
+    pref: PlebzPrefs.liveTvSeamlessFullscreen,
     icon: Symbols.open_in_full_rounded,
     title: t.settings.liveTvSeamlessFullscreen,
     subtitle: t.settings.liveTvSeamlessFullscreenDescription,
@@ -26,7 +26,7 @@ Widget? livePictureHandoverSettingTile() {
 }
 
 /// The prefs [livePictureSettingTiles] reads, for the builder it sits in.
-const livePictureSettingPrefs = [SettingsService.liveTvSeamlessFullscreen];
+const livePictureSettingPrefs = [PlebzPrefs.liveTvSeamlessFullscreen];
 
 /// The seamless switch, where there is a preview to grow; built as plain rows
 /// (a hidden row as an empty child would bend a settings group's corners).
@@ -36,5 +36,5 @@ List<Widget> livePictureSettingTiles() => [?livePictureHandoverSettingTile()];
 /// turns off: turning either back on turns the switch off, so the settings
 /// never claim both.
 Future<void> turnOffSeamlessFullscreenIf(bool on) async {
-  if (on) await SettingsService.instance.write(SettingsService.liveTvSeamlessFullscreen, false);
+  if (on) await SettingsService.instance.write(PlebzPrefs.liveTvSeamlessFullscreen, false);
 }

@@ -210,7 +210,7 @@ class TvDetectionService {
   static void setForceTVSync(bool value) => _singleton.instance?.setForceTv(value);
 }
 
-/// User-selected layout, persisted as `SettingsService.layoutMode`. [auto]
+/// User-selected layout, persisted as `PlebzPrefs.layoutMode`. [auto]
 /// follows device detection; every other value forces that layout regardless
 /// of the detected form factor.
 ///

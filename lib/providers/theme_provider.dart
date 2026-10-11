@@ -16,7 +16,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   settings.GlasAccent _glasAccent = settings.GlasAccent.eisblau;
   Color _flachAccent = flachDefaultAccent;
 
-  /// [settings.SettingsService.flachPreset]: a ready-made Flach look, or empty
+  /// [settings.PlebzPrefs.flachPreset]: a ready-made Flach look, or empty
   /// for the viewer's own colours.
   String _flachPreset = '';
 
@@ -33,36 +33,36 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     final loaded = settings.SettingsService.instanceOrNull;
     if (loaded != null) {
       _themeMode = loaded.read(settings.SettingsService.themeMode);
-      _variant = supportedAppThemeVariant(loaded.read(settings.SettingsService.appThemeVariant));
-      _glasAccent = loaded.read(settings.SettingsService.glasAccent);
-      _flachAccent = flachAccentFromHex(loaded.read(settings.SettingsService.flachAccent));
-      _flachPreset = loaded.read(settings.SettingsService.flachPreset);
+      _variant = supportedAppThemeVariant(loaded.read(settings.PlebzPrefs.appThemeVariant));
+      _glasAccent = loaded.read(settings.PlebzPrefs.glasAccent);
+      _flachAccent = flachAccentFromHex(loaded.read(settings.PlebzPrefs.flachAccent));
+      _flachPreset = loaded.read(settings.PlebzPrefs.flachPreset);
       _plainGround = plainGroundFrom(loaded);
-      GlassEdgeSpin.instance.enabled = loaded.read(settings.SettingsService.glasSpinningFocus);
+      GlassEdgeSpin.instance.enabled = loaded.read(settings.PlebzPrefs.glasSpinningFocus);
     }
     applyIconDefaultsFor(_variant);
     _settingsBinding = SettingsBindingOwner(
       prefs: const [
         settings.SettingsService.themeMode,
-        settings.SettingsService.appThemeVariant,
-        settings.SettingsService.glasAccent,
-        settings.SettingsService.flachAccent,
-        settings.SettingsService.flachPreset,
-        settings.SettingsService.redesignOffBlack,
-        settings.SettingsService.redesignCustomGround,
-        settings.SettingsService.redesignGroundColour,
-        settings.SettingsService.glasSpinningFocus,
+        settings.PlebzPrefs.appThemeVariant,
+        settings.PlebzPrefs.glasAccent,
+        settings.PlebzPrefs.flachAccent,
+        settings.PlebzPrefs.flachPreset,
+        settings.PlebzPrefs.redesignOffBlack,
+        settings.PlebzPrefs.redesignCustomGround,
+        settings.PlebzPrefs.redesignGroundColour,
+        settings.PlebzPrefs.glasSpinningFocus,
       ],
       onRefresh: (service) {
         // Not part of the theme: the edge reads the turn itself, and a switch
         // needs no rebuild of anything.
-        GlassEdgeSpin.instance.enabled = service.read(settings.SettingsService.glasSpinningFocus);
+        GlassEdgeSpin.instance.enabled = service.read(settings.PlebzPrefs.glasSpinningFocus);
         _sync(
           service.read(settings.SettingsService.themeMode),
-          service.read(settings.SettingsService.appThemeVariant),
-          glasAccent: service.read(settings.SettingsService.glasAccent),
-          flachAccent: flachAccentFromHex(service.read(settings.SettingsService.flachAccent)),
-          flachPreset: service.read(settings.SettingsService.flachPreset),
+          service.read(settings.PlebzPrefs.appThemeVariant),
+          glasAccent: service.read(settings.PlebzPrefs.glasAccent),
+          flachAccent: flachAccentFromHex(service.read(settings.PlebzPrefs.flachAccent)),
+          flachPreset: service.read(settings.PlebzPrefs.flachPreset),
           ground: (colour: plainGroundFrom(service)),
         );
       },
@@ -144,10 +144,10 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
   /// colour where that is on, off-black where that is, null for the design's
   /// own. OLED is the theme mode's and decided apart from this.
   static Color? plainGroundFrom(settings.SettingsService service) {
-    if (service.read(settings.SettingsService.redesignCustomGround)) {
-      return redesignGroundFromHex(service.read(settings.SettingsService.redesignGroundColour));
+    if (service.read(settings.PlebzPrefs.redesignCustomGround)) {
+      return redesignGroundFromHex(service.read(settings.PlebzPrefs.redesignGroundColour));
     }
-    return service.read(settings.SettingsService.redesignOffBlack) ? redesignOffBlackGround : null;
+    return service.read(settings.PlebzPrefs.redesignOffBlack) ? redesignOffBlackGround : null;
   }
 
   settings.ThemeMode get themeMode => _themeMode;
@@ -221,10 +221,10 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
     if (service != null) {
       _sync(
         service.read(settings.SettingsService.themeMode),
-        service.read(settings.SettingsService.appThemeVariant),
-        glasAccent: service.read(settings.SettingsService.glasAccent),
-        flachAccent: flachAccentFromHex(service.read(settings.SettingsService.flachAccent)),
-        flachPreset: service.read(settings.SettingsService.flachPreset),
+        service.read(settings.PlebzPrefs.appThemeVariant),
+        glasAccent: service.read(settings.PlebzPrefs.glasAccent),
+        flachAccent: flachAccentFromHex(service.read(settings.PlebzPrefs.flachAccent)),
+        flachPreset: service.read(settings.PlebzPrefs.flachPreset),
         ground: (colour: plainGroundFrom(service)),
         forceNotify: true,
       );

@@ -7,7 +7,7 @@ import '../test_helpers/prefs.dart';
 void main() {
   setUp(resetSharedPreferencesForTest);
 
-  const pref = SettingsService.tmdbApiKey;
+  const pref = PlebzPrefs.tmdbApiKey;
 
   test('a written key reads back as itself and lies sealed in the preferences', () async {
     final settings = await SettingsService.getInstance();

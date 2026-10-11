@@ -519,7 +519,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
   /// [ListenableBuilder] below listens to the pref, so the toggle just writes.
   bool get _librariesExpanded => SettingsService.instance.read(SettingsService.librariesSectionExpanded);
 
-  bool get _liveTvExpanded => SettingsService.instance.read(SettingsService.liveTvSectionExpanded);
+  bool get _liveTvExpanded => SettingsService.instance.read(PlebzPrefs.liveTvSectionExpanded);
 
   /// The Live TV entries the rail can offer right now. Empty unless Live TV is
   /// the screen on show — the actions belong to it, and it is the only one
@@ -638,11 +638,11 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
   /// section, except offline where it is the only thing to watch.
   /// Read live, like [_showDownloads]: the shell rebuilds this rail when the
   /// switch flips, so the answer is never older than the frame.
-  bool get _showSport => SettingsService.instance.read(SettingsService.showSportTab);
+  bool get _showSport => SettingsService.instance.read(PlebzPrefs.showSportTab);
 
   bool get _showDownloads =>
       !PlatformDetector.isAppleTV() &&
-      (widget.isOfflineMode || SettingsService.instance.read(SettingsService.showDownloadAction));
+      (widget.isOfflineMode || SettingsService.instance.read(PlebzPrefs.showDownloadAction));
 
   /// macOS has the system green button; mobile/TV have no OS fullscreen toggle.
   bool get _showFullscreenToggle => Platform.isWindows || Platform.isLinux;
@@ -1068,9 +1068,9 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
         FullscreenStateManager(),
         SettingsService.instance.listenable(SettingsService.groupLibrariesByServer),
         SettingsService.instance.listenable(SettingsService.showExploreTab),
-        SettingsService.instance.listenable(SettingsService.showSportTab),
+        SettingsService.instance.listenable(PlebzPrefs.showSportTab),
         SettingsService.instance.listenable(SettingsService.librariesSectionExpanded),
-        SettingsService.instance.listenable(SettingsService.liveTvSectionExpanded),
+        SettingsService.instance.listenable(PlebzPrefs.liveTvSectionExpanded),
       ]),
       builder: (context, _) {
         final hasExplore = hasExploreSource && SettingsService.instance.read(SettingsService.showExploreTab);
@@ -1590,7 +1590,7 @@ class SideNavigationRailState extends State<SideNavigationRail> with MountedSetS
             // ask for them. With no rows to show there is nothing to toggle,
             // so it stays a plain destination.
             if (isSelected && rows.isNotEmpty) {
-              unawaited(SettingsService.instance.write(SettingsService.liveTvSectionExpanded, !_liveTvExpanded));
+              unawaited(SettingsService.instance.write(PlebzPrefs.liveTvSectionExpanded, !_liveTvExpanded));
               return;
             }
             widget.onDestinationSelected(NavigationTabId.liveTv);

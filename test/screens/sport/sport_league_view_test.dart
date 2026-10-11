@@ -206,6 +206,16 @@ void main() {
     expect(tableRow.left, greaterThan(fixture.right));
   });
 
+  testWidgets('under the redesign the table stands as far from the fixtures as the page from its edge', (tester) async {
+    TvDetectionService.debugSetAppleTVOverride(true);
+    await pumpLeague(tester, provider(), variant: AppThemeVariant.flach);
+    await tester.pump(const Duration(seconds: 1));
+
+    final fixtures = tester.getRect(find.byType(ListView));
+    final table = tester.getRect(find.byWidgetPredicate((w) => w.runtimeType.toString() == '_SportTable'));
+    expect(table.left - fixtures.right, moreOrLessEquals(OckerLayout.safeMargin, epsilon: 0.5));
+  });
+
   testWidgets('the bar: the matchday in the middle, an arrow either side', (tester) async {
     await pumpLeague(tester, provider());
 
@@ -331,7 +341,7 @@ void main() {
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_matchday', reason: 'back on the button');
   });
 
-  testWidgets('under Flach a running game on the focus fill keeps its LIVE badge red and darkens its score', (
+  testWidgets('under Flach a running game on the focus fill keeps its LIVE badge and its scoreboard as they are', (
     tester,
   ) async {
     // Focus shows as the white fill only while the remote is in use.
@@ -347,13 +357,59 @@ void main() {
     await tester.pumpAndSettle();
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_match_402');
 
-    expect(OckerFlatFocusInk.invertingAt(tester.element(find.text('0 : 1'))), isTrue);
-    expect(scoreColour(), tk.ink(1), reason: 'ink, which the fill turns dark — not the accent turned its complement');
+    // The names turn with the fill; the board keeps its own colours.
+    expect(OckerFlatFocusInk.invertingAt(tester.element(find.text('Borussia Dortmund'))), isTrue);
+    expect(
+      find.ancestor(of: find.text('0 : 1'), matching: find.byType(OckerKeepColours)),
+      findsOneWidget,
+      reason: 'a scoreboard stays one: black, the score in the live colour, not turned to its complement',
+    );
+    expect(scoreColour(), isNot(tk.ink(1)));
     expect(
       find.ancestor(of: find.text(t.sport.live), matching: find.byType(OckerKeepColours)),
       findsOneWidget,
       reason: 'the badge in its own colours',
     );
+  });
+
+  testWidgets('a favourite club\'s game stands on a stage over the rest, and the cursor starts there (Plebz)', (
+    tester,
+  ) async {
+    await SettingsService.instance.write(PlebzPrefs.sportFavouriteClub, dortmund['teamId'] as int);
+    final key = GlobalKey<SportLeagueViewState>();
+    await pumpLeague(tester, provider(), key: key, variant: AppThemeVariant.flach);
+
+    expect(find.text('Borussia Dortmund – RB Leipzig'), findsOneWidget, reason: 'the pairing under the stage');
+    expect(part('sport_match_402'), findsNothing, reason: 'not a second time in the list');
+    expect(part('sport_match_401'), findsOneWidget);
+
+    key.currentState!.focusFirstMatch();
+    await tester.pump();
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_favourite_stage');
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_match_401');
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+    await tester.pump();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_favourite_stage');
+  });
+
+  testWidgets('without a favourite, or where it does not play, there is no stage', (tester) async {
+    await SettingsService.instance.write(PlebzPrefs.sportFavouriteClub, koeln['teamId'] as int);
+    await pumpLeague(tester, provider(), variant: AppThemeVariant.flach);
+
+    expect(find.byWidgetPredicate((w) => w.runtimeType.toString() == '_FavouriteStage'), findsNothing);
+    expect(part('sport_match_402'), findsOneWidget);
+  });
+
+  testWidgets('under the redesign the table\'s zones are coloured, with a key under it', (tester) async {
+    await pumpLeague(tester, provider(), variant: AppThemeVariant.flach);
+
+    expect(find.text(t.sport.zoneChampionsLeague), findsOneWidget);
+    expect(find.text(t.sport.zoneEurope), findsOneWidget);
+    expect(find.text(t.sport.zoneRelegation), findsOneWidget);
   });
 
   testWidgets('under Flach the current matchday\'s "current" turns dark on the focus fill, not its complement', (

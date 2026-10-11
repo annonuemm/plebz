@@ -81,7 +81,7 @@ Future<void> _pumpThreeSeasonShow(
   bool withVersions = false,
 }) async {
   await SettingsService.getInstance();
-  await SettingsService.instance.write(SettingsService.seasonTabsFor(flat: variant == AppThemeVariant.flach), tabs);
+  await SettingsService.instance.write(PlebzPrefs.seasonTabsFor(flat: variant == AppThemeVariant.flach), tabs);
 
   final show = testMediaItem(
     id: 'show_1',
@@ -468,7 +468,7 @@ void main() {
 
   testWidgets('TV detail metadata line shows every rating source the item carries', (tester) async {
     await SettingsService.getInstance();
-    await SettingsService.instance.write(SettingsService.averageRatings, false);
+    await SettingsService.instance.write(PlebzPrefs.averageRatings, false);
     tester.view.physicalSize = const Size(1280, 720);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -2949,7 +2949,7 @@ void main() {
 
       // Per-source scores: averaging is on by default in this fork.
       await SettingsService.getInstance();
-      await SettingsService.instance.write(SettingsService.averageRatings, false);
+      await SettingsService.instance.write(PlebzPrefs.averageRatings, false);
       await pumpPhoneDetail(tester, client, movie);
 
       Future<void> resizeTo(double width) async {

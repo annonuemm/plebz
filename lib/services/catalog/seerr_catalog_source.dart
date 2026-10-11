@@ -287,13 +287,13 @@ class SeerrCatalogSource implements CatalogSource {
   /// Seerr's discover response carries neither — unlike Plex, whose hubs ship
   /// `leafCount` and `duration` inline — so each show costs its own detail
   /// request. That is why this is behind
-  /// [SettingsService.seerrCardEpisodeFacts] and why movies are skipped: no
+  /// [PlebzPrefs.seerrCardEpisodeFacts] and why movies are skipped: no
   /// badge on this ladder applies to them.
   ///
   /// A title whose request fails keeps its plain row entry. One instance that
   /// cannot describe a show must not cost the whole shelf.
   Future<List<CatalogItem>> _withEpisodeFacts(List<CatalogItem> items) async {
-    if (SettingsService.instanceOrNull?.read(SettingsService.seerrCardEpisodeFacts) != true) return items;
+    if (SettingsService.instanceOrNull?.read(PlebzPrefs.seerrCardEpisodeFacts) != true) return items;
 
     final wanted = <int>{
       for (final item in items)

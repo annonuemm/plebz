@@ -14,6 +14,8 @@ import '../../i18n/app_locale_utils.dart';
 import '../../i18n/strings.g.dart';
 import '../../models/livetv_channel.dart';
 import '../../providers/multi_server_provider.dart';
+import '../../services/settings_service.dart';
+import '../../services/sport/club_colours.dart';
 import '../../services/sport/sport_broadcast_matching.dart';
 import '../../services/sport/sport_crest_fallback.dart';
 import '../../services/sport/sport_models.dart';
@@ -22,8 +24,10 @@ import '../../theme/mono_tokens.dart';
 import '../../widgets/app_icon.dart';
 import '../../widgets/app_menu.dart';
 import '../../widgets/optimized_media_image.dart';
+import '../../widgets/settings_builder.dart';
 import '../../utils/live_tv_matching.dart';
 import '../../utils/live_tv_player_navigation.dart';
+import 'club_colour_ground.dart';
 import 'sport_broadcast_finder.dart';
 import 'sport_look.dart';
 import 'sport_match_sheet.dart';
@@ -115,6 +119,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
   final _matchdayKey = GlobalKey();
   final Map<int, FocusNode> _matchNodes = {};
   final _retryNode = FocusNode(debugLabel: 'sport_retry');
+  final _stageNode = FocusNode(debugLabel: 'sport_favourite_stage');
 
   /// While a match is being played, how often its score is asked for again.
   static const _livePoll = Duration(seconds: 60);
@@ -139,10 +144,31 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
       node.dispose();
     }
     _retryNode.dispose();
+    _stageNode.dispose();
     super.dispose();
   }
 
   FocusNode _matchNode(int id) => _matchNodes.putIfAbsent(id, () => FocusNode(debugLabel: 'sport_match_$id'));
+
+  /// The favourite club's game of the matchday on show (Plebz), which stands
+  /// on a stage over the rest; null without a favourite, or where it does not
+  /// play.
+  SportMatch? get _stage {
+    final club = SettingsService.instanceOrNull?.read(PlebzPrefs.sportFavouriteClub) ?? 0;
+    if (club == 0) return null;
+    return _matches.where((match) => match.home.id == club || match.away.id == club).firstOrNull;
+  }
+
+  /// The matchday's games in the list: all but the one on the stage.
+  List<SportMatch> get _listed {
+    final stage = _stage;
+    return stage == null
+        ? _matches
+        : [
+            for (final match in _matches)
+              if (match.id != stage.id) match,
+          ];
+  }
 
   /// Where the cursor goes when this league is entered: the matchday itself,
   /// in the middle of the bar.
@@ -338,68 +364,75 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     }
     if (_failed) return _buildFailure(look);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bar = _buildMatchdayBar(look);
-        // Side by side wherever there is a table's width to spare; on a phone
-        // the table goes under the fixtures instead of crushing both into
-        // columns too narrow for a club's name.
-        final wide = constraints.maxWidth >= 720;
-        if (!wide) {
-          return Column(
+    // A favourite club chosen in the settings takes the stage at once.
+    return SettingValueBuilder<int>(
+      pref: PlebzPrefs.sportFavouriteClub,
+      builder: (context, _, _) => LayoutBuilder(
+        builder: (context, constraints) {
+          final bar = _buildMatchdayBar(look);
+          // Side by side wherever there is a table's width to spare; on a phone
+          // the table goes under the fixtures instead of crushing both into
+          // columns too narrow for a club's name.
+          final wide = constraints.maxWidth >= 720;
+          if (!wide) {
+            return Column(
+              children: [
+                bar,
+                SizedBox(height: look.gap),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      if (_dayLoading || _matches.isEmpty)
+                        SizedBox(height: look.matchRowHeight * 3, child: _buildFixturesPlaceholder(look))
+                      else
+                        ..._matchItems(look, compact: _isCompact(look, constraints.maxWidth)),
+                      SizedBox(height: look.gap * 2),
+                      _SportTable(rows: _table, look: look, highlight: _highlightedTeams, league: widget.league),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }
+          final tableWidth = ((look.ocker ? 600 : 380) * look.scale).clamp(0.0, constraints.maxWidth * 0.46);
+          // Under the redesign the table stands as far from the fixtures as
+          // from the screen's edge — the page's own margin, both sides alike.
+          final columnGap = look.ocker ? OckerLayout.safeMargin * look.scale : look.gap * 2;
+          final fixturesWidth = constraints.maxWidth - tableWidth - columnGap;
+          // The bar belongs to the fixtures — it says which ones these are — so
+          // it stands over their column, centred on it, and the table beside
+          // them keeps the full height.
+          return Row(
+            crossAxisAlignment: .start,
             children: [
-              bar,
-              SizedBox(height: look.gap),
               Expanded(
-                child: ListView(
+                child: Column(
                   children: [
-                    if (_dayLoading || _matches.isEmpty)
-                      SizedBox(height: look.matchRowHeight * 3, child: _buildFixturesPlaceholder(look))
-                    else
-                      ..._matchItems(look, compact: _isCompact(look, constraints.maxWidth)),
-                    SizedBox(height: look.gap * 2),
-                    _SportTable(rows: _table, look: look, highlight: _highlightedTeams, league: widget.league),
+                    bar,
+                    SizedBox(height: look.gap),
+                    Expanded(
+                      child: _dayLoading || _matches.isEmpty
+                          ? _buildFixturesPlaceholder(look)
+                          : ListView(children: _matchItems(look, compact: _isCompact(look, fixturesWidth))),
+                    ),
                   ],
+                ),
+              ),
+              SizedBox(width: columnGap),
+              SizedBox(
+                width: tableWidth,
+                child: _SportTable(
+                  rows: _table,
+                  look: look,
+                  highlight: _highlightedTeams,
+                  league: widget.league,
+                  fitHeight: true,
                 ),
               ),
             ],
           );
-        }
-        final tableWidth = ((look.ocker ? 600 : 380) * look.scale).clamp(0.0, constraints.maxWidth * 0.46);
-        final fixturesWidth = constraints.maxWidth - tableWidth - look.gap * 2;
-        // The bar belongs to the fixtures — it says which ones these are — so
-        // it stands over their column, centred on it, and the table beside
-        // them keeps the full height.
-        return Row(
-          crossAxisAlignment: .start,
-          children: [
-            Expanded(
-              child: Column(
-                children: [
-                  bar,
-                  SizedBox(height: look.gap),
-                  Expanded(
-                    child: _dayLoading || _matches.isEmpty
-                        ? _buildFixturesPlaceholder(look)
-                        : ListView(children: _matchItems(look, compact: _isCompact(look, fixturesWidth))),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: look.gap * 2),
-            SizedBox(
-              width: tableWidth,
-              child: _SportTable(
-                rows: _table,
-                look: look,
-                highlight: _highlightedTeams,
-                league: widget.league,
-                fitHeight: true,
-              ),
-            ),
-          ],
-        );
-      },
+        },
+      ),
     );
   }
 
@@ -730,6 +763,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
 
   void _focusFirstMatch() {
     if (_dayLoading || _matches.isEmpty) return;
+    if (_stage != null) return _stageNode.requestFocus();
     _matchNode(_matches.first.id).requestFocus();
   }
 
@@ -746,14 +780,21 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     final items = <Widget>[];
     final locale = LocaleSettings.currentLocale.intlLocaleName;
     DateTime? day;
-    for (var i = 0; i < _matches.length; i++) {
-      final match = _matches[i];
+    final listed = _listed;
+    final stage = _stage;
+    if (stage != null) items.add(_buildStage(look, stage, locale));
+    for (var i = 0; i < listed.length; i++) {
+      final match = listed[i];
       final matchDay = DateUtils.dateOnly(match.kickoff);
       if (matchDay != day) {
         day = matchDay;
         items.add(
           Padding(
-            padding: EdgeInsets.only(top: i == 0 ? 0 : look.gap, bottom: look.gap / 2, left: 4 * look.scale),
+            padding: EdgeInsets.only(
+              top: i == 0 && stage == null ? 0 : look.gap,
+              bottom: look.gap / 2,
+              left: 4 * look.scale,
+            ),
             child: Text(
               look.headingCase(_dayLabel(matchDay, locale)),
               style: look.dayHeading.copyWith(color: look.ink(0.55)),
@@ -782,6 +823,10 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     final now = clock.now();
     final score = match.scoreAt(now);
     final live = match.isLive(now);
+    final listed = _listed;
+    // Both redesigns (Plebz): the line as a scoreboard — the clubs' colours at
+    // its two ends, the score on a board of its own, a game on now lit up.
+    final board = look.flat;
     final homeWon = score != null && match.isFinished && score.home > score.away;
     final awayWon = score != null && match.isFinished && score.away > score.home;
 
@@ -802,11 +847,20 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
           if (score != null) score.toString() else DateFormat.Hm(locale).format(match.kickoff),
         ].join(', '),
         onFocusChange: (focused) {
-          if (focused && _focusedMatch?.id != match.id) setState(() => _focusedMatch = match);
+          if (focused && _focusedMatch?.id != match.id) {
+            setState(() => _focusedMatch = match);
+          } else if (!focused && board && live) {
+            // ignore: no-empty-block - the lit plate comes back with the rebuild
+            setState(() {});
+          }
         },
         onSelect: () => _openMatch(match),
-        onNavigateUp: index == 0 ? _focusMatchdayButton : () => _matchNode(_matches[index - 1].id).requestFocus(),
-        onNavigateDown: index == _matches.length - 1 ? () {} : () => _matchNode(_matches[index + 1].id).requestFocus(),
+        onNavigateUp: index > 0
+            ? () => _matchNode(listed[index - 1].id).requestFocus()
+            : _stage != null
+            ? _stageNode.requestFocus
+            : _focusMatchdayButton,
+        onNavigateDown: index == listed.length - 1 ? () {} : () => _matchNode(listed[index + 1].id).requestFocus(),
         onNavigateLeft: widget.onExitLeft ?? () {},
         // Nothing to the right takes focus: the table is read, not walked.
         onNavigateRight: () {},
@@ -819,8 +873,16 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
             // the plate that marks the row holding focus — wherever that plate
             // is glass, a phone wearing the look included.
             padding: EdgeInsets.symmetric(horizontal: ockerGlass(context) ? 16 * look.scale : 0),
+            decoration: board && live && !_matchNode(match.id).hasFocus
+                ? BoxDecoration(
+                    color: look.live.withValues(alpha: 0.1),
+                    border: Border.all(color: look.live.withValues(alpha: 0.45)),
+                    borderRadius: BorderRadius.circular(look.tk.radiusSm),
+                  )
+                : null,
             child: Row(
               children: [
+                if (board) ...[_ClubEdge(team: match.home, look: look), SizedBox(width: 12 * look.scale)],
                 SizedBox(
                   width: (look.ocker ? 88 : (compact ? 50 : 64)) * look.scale,
                   child: live
@@ -839,25 +901,200 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
                     // On Flach's white focus fill what stands on it is
                     // inverted, and the accent came out as its complement. In
                     // ink there, the score turns dark like the names beside it.
-                    child: Builder(
-                      builder: (context) => Text(
-                        score == null ? '–:–' : '${score.home} : ${score.away}',
-                        style: look
-                            .score(strong: score != null)
-                            .copyWith(
-                              color: live && !OckerFlatFocusInk.invertingAt(context)
-                                  ? look.live
-                                  : look.ink(score == null ? 0.4 : 1),
+                    child: board
+                        ? _ScoreBoard(score: score, live: live, look: look)
+                        : Builder(
+                            builder: (context) => Text(
+                              score == null ? '–:–' : '${score.home} : ${score.away}',
+                              style: look
+                                  .score(strong: score != null)
+                                  .copyWith(
+                                    color: live && !OckerFlatFocusInk.invertingAt(context)
+                                        ? look.live
+                                        : look.ink(score == null ? 0.4 : 1),
+                                  ),
                             ),
-                      ),
-                    ),
+                          ),
                   ),
                 ),
                 Expanded(
                   child: _TeamCell(team: match.away, look: look, alignEnd: false, strong: awayWon, short: compact),
                 ),
+                if (board) ...[SizedBox(width: 12 * look.scale), _ClubEdge(team: match.away, look: look)],
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The favourite club's game, on a stage of its clubs' colours over the
+  /// rest of the matchday (Plebz). OK opens it as a line of the list does.
+  Widget _buildStage(SportLook look, SportMatch match, String locale) {
+    final listed = _listed;
+    final radius = (look.flat ? 20 : 12) * look.scale;
+    final score = match.scoreAt(clock.now());
+    return Padding(
+      padding: EdgeInsets.only(bottom: look.gap / 2),
+      child: FocusableWrapper(
+        focusNode: _stageNode,
+        borderRadius: radius,
+        disableScale: true,
+        semanticLabel: [match.home.name, match.away.name, if (score != null) score.toString()].join(', '),
+        onFocusChange: (focused) {
+          if (focused && _focusedMatch?.id != match.id) setState(() => _focusedMatch = match);
+        },
+        onSelect: () => _openMatch(match),
+        onNavigateUp: _focusMatchdayButton,
+        onNavigateDown: listed.isEmpty ? () {} : () => _matchNode(listed.first.id).requestFocus(),
+        onNavigateLeft: widget.onExitLeft ?? () {},
+        onNavigateRight: () {},
+        onBack: _focusMatchdayButton,
+        child: SportTap(
+          onTap: () => _openMatch(match),
+          child: _FavouriteStage(match: match, look: look, locale: locale, radius: radius),
+        ),
+      ),
+    );
+  }
+}
+
+/// The favourite club's game, large (Plebz): both crests and the score — or
+/// the pairing, before it starts — on the clubs' colours, the state of the
+/// game over them and the clubs' names under them.
+class _FavouriteStage extends StatelessWidget {
+  const _FavouriteStage({required this.match, required this.look, required this.locale, required this.radius});
+
+  final SportMatch match;
+  final SportLook look;
+  final String locale;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = clock.now();
+    final live = match.isLive(now);
+    final score = match.scoreAt(now);
+    final home = clubColourFor(match.home);
+    final away = clubColourFor(match.away);
+    final ink = home != null || away != null ? Colors.white : look.ink(1);
+    final s = look.scale;
+    final kickoff = match.kickoff.toLocal();
+    final status = live
+        ? _LiveBadge(look: look)
+        : Text(
+            match.isFinished
+                ? t.sport.finalScore
+                : '${DateFormat.EEEE(locale).format(kickoff)}, ${DateFormat.Hm(locale).format(kickoff)}',
+            style: look.time.copyWith(color: ink.withValues(alpha: 0.78)),
+          );
+    return SizedBox(
+      height: (look.ocker ? 220 : 160) * s,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: ClubColourGround(
+          home: home,
+          away: away,
+          borderRadius: BorderRadius.circular(radius),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20 * s, 16 * s, 20 * s, 16 * s),
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(height: 26 * s, child: status),
+                ),
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: .min,
+                      children: [
+                        SportCrest(team: match.home, size: look.crest * 2.6),
+                        SizedBox(width: 40 * s),
+                        if (score != null)
+                          Text(
+                            '${score.home} : ${score.away}',
+                            style: look.score().copyWith(fontSize: 64 * s, color: ink),
+                          )
+                        else
+                          Text(t.sport.versus, style: look.teamName().copyWith(color: ink.withValues(alpha: 0.6))),
+                        SizedBox(width: 40 * s),
+                        SportCrest(team: match.away, size: look.crest * 2.6),
+                      ],
+                    ),
+                  ),
+                ),
+                Text(
+                  '${match.home.name} – ${match.away.name}',
+                  maxLines: 1,
+                  overflow: .ellipsis,
+                  style: look.teamName().copyWith(color: ink.withValues(alpha: 0.9)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A club's colour as an edge of its line (Plebz): the clubs of a game told
+/// apart before their names are read. Grey for a club in black and white.
+class _ClubEdge extends StatelessWidget {
+  const _ClubEdge({required this.team, required this.look});
+
+  final SportTeam team;
+  final SportLook look;
+
+  @override
+  Widget build(BuildContext context) {
+    final colour = clubColourFor(team);
+    // In their own colours on Flach's white focus fill too.
+    return OckerKeepColours(
+      child: Container(
+        width: 4 * look.scale,
+        height: look.matchRowHeight * 0.56,
+        decoration: BoxDecoration(
+          color: colour == null ? Colors.white.withValues(alpha: 0.22) : clubMarkColour(colour),
+          borderRadius: BorderRadius.circular(2 * look.scale),
+        ),
+      ),
+    );
+  }
+}
+
+/// The score on a board of its own, as a stadium shows it (Plebz): white on
+/// black, in the live colour while the game is on, faint before it starts.
+/// Its own colours on Flach's white focus fill as well — a scoreboard stays
+/// one.
+class _ScoreBoard extends StatelessWidget {
+  const _ScoreBoard({required this.score, required this.live, required this.look});
+
+  final SportScore? score;
+  final bool live;
+  final SportLook look;
+
+  @override
+  Widget build(BuildContext context) {
+    final score = this.score;
+    return OckerKeepColours(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: (look.ocker ? 12 : 8) * look.scale, vertical: 6 * look.scale),
+          decoration: BoxDecoration(
+            color: const Color(0xF2050505),
+            border: Border.all(color: live ? look.live : Colors.white.withValues(alpha: 0.14)),
+            borderRadius: BorderRadius.circular(8 * look.scale),
+          ),
+          child: Text(
+            score == null ? '–:–' : '${score.home} : ${score.away}',
+            style: look
+                .score(strong: score != null)
+                .copyWith(color: live ? look.live : Colors.white.withValues(alpha: score == null ? 0.4 : 1)),
           ),
         ),
       ),
@@ -894,9 +1131,21 @@ class _LiveBadge extends StatelessWidget {
   }
 
   Widget _badge() => Container(
-    padding: EdgeInsets.symmetric(horizontal: 6 * look.scale, vertical: 3 * look.scale),
-    decoration: BoxDecoration(color: look.live, borderRadius: BorderRadius.circular(look.tk.radiusXs)),
-    child: Text(t.sport.live, style: look.badge.copyWith(color: Colors.white)),
+    padding: EdgeInsets.symmetric(horizontal: (look.flat ? 9 : 6) * look.scale, vertical: 3 * look.scale),
+    decoration: ShapeDecoration(
+      color: look.live,
+      shape: look.flat
+          ? const StadiumBorder()
+          : RoundedRectangleBorder(borderRadius: BorderRadius.circular(look.tk.radiusXs)),
+    ),
+    // White or the ground, whichever reads on the colour: a picked yellow
+    // accent takes the dark.
+    child: Text(
+      t.sport.live,
+      style: look.badge.copyWith(
+        color: ThemeData.estimateBrightnessForColor(look.live) == Brightness.dark ? Colors.white : look.tk.bg,
+      ),
+    ),
   );
 }
 
@@ -1121,10 +1370,11 @@ class _SportTable extends StatelessWidget {
   }
 
   /// Where a place in the table stands for something — the places that go
-  /// up, or into Europe, and the ones that go down — as a stroke at its left
-  /// under "Flach": strongest for the top, quieter for the next, quietest for
-  /// the foot. Null for the places between.
-  double? _zoneStrength(int position) {
+  /// up, or into the Champions League (0), the next ones, Europe or the
+  /// promotion play-off (1), and the foot, the ones that go down (2) — as a
+  /// stroke at its left under the redesigns, in the zone's colour, with a key
+  /// under the table. Null for the places between.
+  int? _zone(int position) {
     final count = rows.length;
     final (top, next, bottom) = switch (league) {
       // Champions League, then the Europa places; the play-off and the drop.
@@ -1134,10 +1384,54 @@ class _SportTable extends StatelessWidget {
       // Promotion, the play-off; the drop.
       SportLeague.liga3 => (2, 3, 4),
     };
-    if (position <= top) return 0.55;
-    if (position <= next) return 0.28;
-    if (position > count - bottom) return 0.18;
+    if (position <= top) return 0;
+    if (position <= next) return 1;
+    if (position > count - bottom) return 2;
     return null;
+  }
+
+  Color _zoneColour(int zone) => switch (zone) {
+    0 => league == SportLeague.bundesliga1 ? const Color(0xFF3D7BE0) : const Color(0xFF2FAE5B),
+    1 => const Color(0xFFE8912D),
+    _ => const Color(0xFFD9534F),
+  };
+
+  String _zoneLabel(int zone) => switch (zone) {
+    0 => league == SportLeague.bundesliga1 ? t.sport.zoneChampionsLeague : t.sport.zonePromotion,
+    1 => league == SportLeague.bundesliga1 ? t.sport.zoneEurope : t.sport.zonePlayoff,
+    _ => t.sport.zoneRelegation,
+  };
+
+  TextStyle get _legendStyle {
+    final cell = look.tableCell();
+    return cell.copyWith(fontSize: cell.fontSize! * 0.72, color: look.ink(0.55));
+  }
+
+  /// What the strokes stand for, under the table.
+  Widget _legend() {
+    final s = look.scale;
+    return Padding(
+      padding: EdgeInsets.only(top: look.gap * 0.6, left: 4 * s),
+      child: Wrap(
+        spacing: 14 * s,
+        runSpacing: 4 * s,
+        children: [
+          for (final zone in const [0, 1, 2])
+            Row(
+              mainAxisSize: .min,
+              children: [
+                Container(
+                  width: 3 * s,
+                  height: 12 * s,
+                  decoration: BoxDecoration(color: _zoneColour(zone), borderRadius: BorderRadius.circular(2 * s)),
+                ),
+                SizedBox(width: 6 * s),
+                Text(_zoneLabel(zone), style: _legendStyle),
+              ],
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _buildTable(BuildContext context) {
@@ -1153,13 +1447,19 @@ class _SportTable extends StatelessWidget {
     if (!fitHeight) {
       return Column(
         crossAxisAlignment: .start,
-        children: [heading, _headerRow(), for (final row in rows) _row(row, (look.ocker ? 40 : 30) * look.scale)],
+        children: [
+          heading,
+          _headerRow(),
+          for (final row in rows) _row(row, (look.ocker ? 40 : 30) * look.scale),
+          if (look.flat) _legend(),
+        ],
       );
     }
     return LayoutBuilder(
       builder: (context, constraints) {
         final headingHeight = look.heading.fontSize! * 1.4 + look.gap / 2;
-        final available = constraints.maxHeight - headingHeight;
+        final legendHeight = look.flat ? _legendStyle.fontSize! * 1.4 + look.gap * 0.6 : 0.0;
+        final available = constraints.maxHeight - headingHeight - legendHeight;
         final rowHeight = (available / (rows.length + 1)).clamp(18.0 * look.scale, (look.ocker ? 44 : 34) * look.scale);
         return SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
@@ -1169,6 +1469,7 @@ class _SportTable extends StatelessWidget {
               heading,
               _headerRow(height: rowHeight),
               for (final row in rows) _row(row, rowHeight),
+              if (look.flat) _legend(),
             ],
           ),
         );
@@ -1205,7 +1506,7 @@ class _SportTable extends StatelessWidget {
     final lit = highlight.contains(row.team.id);
     final style = look.tableCell(strong: lit).copyWith(color: look.ink(lit ? 1 : 0.82));
     final difference = row.goalDifference > 0 ? '+${row.goalDifference}' : '${row.goalDifference}';
-    final zone = look.flat ? _zoneStrength(row.position) : null;
+    final zone = look.flat ? _zone(row.position) : null;
     return Container(
       height: height,
       padding: EdgeInsets.symmetric(horizontal: 4 * look.scale),
@@ -1221,7 +1522,7 @@ class _SportTable extends StatelessWidget {
               height: (height * 0.5).clamp(0.0, 24 * look.scale),
               margin: EdgeInsets.only(right: 8 * look.scale),
               decoration: BoxDecoration(
-                color: zone == null ? Colors.transparent : look.ink(zone),
+                color: zone == null ? Colors.transparent : _zoneColour(zone),
                 borderRadius: BorderRadius.circular(2 * look.scale),
               ),
             ),

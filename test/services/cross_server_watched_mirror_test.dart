@@ -170,7 +170,7 @@ void main() {
   });
 
   test('a film watched on one server is marked on the other', () async {
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     final s = twoServers();
 
     await s.mirror.handleEvent(_event(s.watchedOnPlex));
@@ -182,7 +182,7 @@ void main() {
   });
 
   test('a profile whose progress Simkl keeps leaves the servers alone', () async {
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     ProgressRouting.instance.activate(ProgressSourceKind.tracker);
     addTearDown(ProgressRouting.instance.debugReset);
     final s = twoServers();
@@ -194,7 +194,7 @@ void main() {
   });
 
   test('unmarking travels the same way', () async {
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     // Both sides watched: the Jellyfin copy is the one that has to be cleared.
     final onPlex = _movie(id: 'p1', serverId: 'plex', viewCount: 1);
     final onJellyfin = _movie(id: 'j1', serverId: 'jellyfin', viewCount: 1);
@@ -215,7 +215,7 @@ void main() {
   test('a second copy on the same server is marked too', () async {
     // A 4K section and an HD section hold the same film under two rating keys;
     // "every version" means both, not just the other server's.
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     final watched4k = _movie(id: 'p1', serverId: 'plex', viewCount: 1);
     final hdCopy = _movie(id: 'p2', serverId: 'plex');
     final plex = _FakeClient(id: 'plex', items: [watched4k], ids: {'p1': dune}, copies: [watched4k, hdCopy]);
@@ -231,7 +231,7 @@ void main() {
   });
 
   test('a copy already in the right state is left alone', () async {
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     final onPlex = _movie(id: 'p1', serverId: 'plex', viewCount: 1);
     final alreadyWatched = _movie(id: 'j1', serverId: 'jellyfin', viewCount: 1);
     final plex = _FakeClient(id: 'plex', items: [onPlex], ids: {'p1': dune}, copies: [onPlex]);
@@ -249,7 +249,7 @@ void main() {
   });
 
   test('episodes are out of scope', () async {
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     final s = twoServers(kind: MediaKind.episode);
 
     await s.mirror.handleEvent(_event(s.watchedOnPlex));
@@ -259,7 +259,7 @@ void main() {
   });
 
   test('a film with no external id is never matched by title alone', () async {
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     final s = twoServers(sourceIds: const ExternalIds());
 
     await s.mirror.handleEvent(_event(s.watchedOnPlex));
@@ -271,7 +271,7 @@ void main() {
   test('the echo of its own write does not start a second round', () async {
     // Writing a copy emits the same kind of event the mirror listens to. Left
     // unguarded that is a loop between the two servers.
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     final s = twoServers();
 
     await s.mirror.handleEvent(_event(s.watchedOnPlex));
@@ -287,7 +287,7 @@ void main() {
   test('a whole series is marked on the other server in one write', () async {
     // The point of stopping at series level: both backends mark the episodes
     // themselves, so a 60-episode show costs exactly what a film costs.
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     const severance = ExternalIds(imdb: 'tt11280740', tmdb: 95396);
     final onPlex = _show(id: 'p1', serverId: 'plex', viewCount: 1);
     final onJellyfin = _show(id: 'j1', serverId: 'jellyfin');
@@ -307,7 +307,7 @@ void main() {
   });
 
   test('a season is matched through its show and its number', () async {
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     const severance = ExternalIds(imdb: 'tt11280740', tmdb: 95396);
     final showOnPlex = _show(id: 'p-show', serverId: 'plex');
     final seasonOnPlex = _season(id: 'p-s2', serverId: 'plex', showId: 'p-show', number: 2, viewCount: 1);
@@ -344,7 +344,7 @@ void main() {
   });
 
   test('a season the other server does not have is simply not marked', () async {
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     const severance = ExternalIds(imdb: 'tt11280740', tmdb: 95396);
     final showOnPlex = _show(id: 'p-show', serverId: 'plex');
     final seasonOnPlex = _season(id: 'p-s3', serverId: 'plex', showId: 'p-show', number: 3, viewCount: 1);
@@ -375,7 +375,7 @@ void main() {
   });
 
   test('a failing server does not take the others down with it', () async {
-    await settings.write(SettingsService.mirrorWatchedAcrossServers, true);
+    await settings.write(PlebzPrefs.mirrorWatchedAcrossServers, true);
     final onPlex = _movie(id: 'p1', serverId: 'plex', viewCount: 1);
     final plex = _FakeClient(id: 'plex', items: [onPlex], ids: {'p1': dune}, copies: [onPlex]);
     final broken = _ThrowingClient(

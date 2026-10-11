@@ -138,7 +138,7 @@ void main() {
     await tester.tap(title);
     await tester.pumpAndSettle();
 
-    expect(SettingsService.instance.read(SettingsService.disableDolbyVision), isTrue);
+    expect(SettingsService.instance.read(PlebzPrefs.disableDolbyVision), isTrue);
   });
 
   testWidgets('audio passthrough is held off and inactive while loudness normalization is on', (tester) async {

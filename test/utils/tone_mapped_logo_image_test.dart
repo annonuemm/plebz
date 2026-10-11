@@ -203,7 +203,7 @@ void main() {
       );
       expect(channelLogoToneTargetFor(surface: Colors.white, foreground: target), target);
 
-      await settings.write(SettingsService.iptvBrightenDarkLogos, true);
+      await settings.write(PlebzPrefs.iptvBrightenDarkLogos, true);
       expect(channelLogoToneTargetFor(surface: Colors.black, foreground: light), light);
       expect(
         logoToneTargetFor(surface: Colors.black, foreground: light),

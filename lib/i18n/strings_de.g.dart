@@ -487,6 +487,10 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get showExploreTabDescription => 'Inhalte aus Plex Discover';
 	@override String get showSportTab => 'Sport';
 	@override String get showSportTabDescription => '1. Bundesliga, 2. Bundesliga und 3. Liga: Spiele und Tabelle';
+	@override String get sportFavouriteClub => 'Lieblingsverein';
+	@override String get sportFavouriteClubDescription => 'Sein Spiel steht oben auf der Seite seiner Liga.';
+	@override String get sportFavouriteClubNone => 'Keiner';
+	@override String get sportFavouriteClubLoadFailed => 'Die Vereine konnten nicht geladen werden.';
 	@override String get liveTvDefaultFavorites => 'Nur Favoriten beim Öffnen';
 	@override String get general => 'Allgemein';
 	@override String get generalDescription => 'Sprache, Start und Fensterverhalten';
@@ -2711,6 +2715,11 @@ class _Translations$sport$de extends Translations$sport$en {
 	@override String get today => 'Heute';
 	@override String get tomorrow => 'Morgen';
 	@override String get yesterday => 'Gestern';
+	@override String get zoneChampionsLeague => 'Champions League';
+	@override String get zoneEurope => 'Europa';
+	@override String get zonePromotion => 'Aufstieg';
+	@override String get zonePlayoff => 'Relegation';
+	@override String get zoneRelegation => 'Abstieg';
 }
 
 // Path: plebz
@@ -4111,6 +4120,10 @@ extension on TranslationsDe {
 			'settings.showExploreTabDescription' => 'Inhalte aus Plex Discover',
 			'settings.showSportTab' => 'Sport',
 			'settings.showSportTabDescription' => '1. Bundesliga, 2. Bundesliga und 3. Liga: Spiele und Tabelle',
+			'settings.sportFavouriteClub' => 'Lieblingsverein',
+			'settings.sportFavouriteClubDescription' => 'Sein Spiel steht oben auf der Seite seiner Liga.',
+			'settings.sportFavouriteClubNone' => 'Keiner',
+			'settings.sportFavouriteClubLoadFailed' => 'Die Vereine konnten nicht geladen werden.',
 			'settings.liveTvDefaultFavorites' => 'Nur Favoriten beim Öffnen',
 			'settings.general' => 'Allgemein',
 			'settings.generalDescription' => 'Sprache, Start und Fensterverhalten',
@@ -4263,12 +4276,12 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.possible' => 'möglich',
 			'settings.hardwareTestLabels.notPossible' => 'nicht möglich',
 			'settings.hardwareTestLabels.unavailable' => 'nicht verfügbar',
+			_ => null,
+		} ?? switch (path) {
 			'settings.hardwareTestLabels.none' => 'keine',
 			'settings.hardwareTestLabels.yes' => 'ja',
 			'settings.hardwareTestLabels.no' => 'nein',
 			'settings.yearFilter' => 'Jahresbereich',
-			_ => null,
-		} ?? switch (path) {
 			'settings.yearFilterDescription' => 'Filme und Serien auf Erscheinungsjahre eingrenzen',
 			'settings.yearFilterMovies' => 'Filme',
 			'settings.yearFilterShows' => 'Serien',
@@ -4777,12 +4790,12 @@ extension on TranslationsDe {
 			'profiles.summaryMultipleWithActive' => ({required Object count, required Object activeName}) => '${count} Profile · aktiv: ${activeName}',
 			'profiles.summaryMultiple' => ({required Object count}) => '${count} Profile',
 			'profiles.removeConnectionTitle' => 'Verbindung entfernen?',
+			_ => null,
+		} ?? switch (path) {
 			'profiles.removeConnectionMessage' => ({required Object displayName, required Object connectionLabel}) => 'Zugriff von ${displayName} auf ${connectionLabel} entfernen. Andere Profile behalten ihn.',
 			'profiles.deleteProfileTitle' => 'Profil löschen?',
 			'profiles.deleteProfileMessage' => ({required Object displayName}) => '${displayName} und Verbindungen entfernen. Server bleiben verfügbar.',
 			'profiles.profileNameLabel' => 'Profilname',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.pinProtectionLabel' => 'PIN-Schutz',
 			'profiles.pinManagedByPlex' => 'PIN wird von Plex verwaltet. Auf plex.tv bearbeiten.',
 			'profiles.noPinSetEditOnPlex' => 'Keine PIN festgelegt. Um eine zu verlangen, bearbeite den Home-Benutzer auf plex.tv.',
@@ -5291,12 +5304,12 @@ extension on TranslationsDe {
 			'liveTv.favoritesLoadFailed' => 'Favoriten konnten nicht geladen werden. Überprüfe deine Verbindung und versuche es erneut.',
 			'liveTv.favoritesUpdateFailed' => 'Favoriten konnten nicht aktualisiert werden. Prüfe deine Verbindung und versuche es erneut.',
 			'liveTv.joinSession' => 'Aktueller Sitzung beitreten',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.watchFromStart' => ({required Object minutes}) => 'Von Anfang an ansehen (vor ${minutes} Min.)',
 			'liveTv.watchLive' => 'Live ansehen',
 			'liveTv.goToLive' => 'Zum Live-Bild',
 			'liveTv.record' => 'Aufnehmen',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.recordEpisode' => 'Episode aufnehmen',
 			'liveTv.recordSeries' => 'Serie aufnehmen',
 			'liveTv.recordOptions' => 'Aufnahmeoptionen',
@@ -5805,12 +5818,12 @@ extension on TranslationsDe {
 			'performanceOverlay.cacheLimit' => 'Cache-Limit',
 			'performanceOverlay.speed' => 'Geschwindigkeit',
 			'performanceOverlay.player' => 'Player',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.memory' => 'Speicher',
 			'performanceOverlay.uiFps' => 'UI-FPS',
 			'performanceOverlay.fps' => 'FPS',
 			'performanceOverlay.decoderAndroidHw' => 'Android HW',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.decoderNvidiaHw' => 'NVIDIA HW',
 			'performanceOverlay.decoderQualcommHw' => 'Qualcomm HW',
 			'performanceOverlay.decoderMediatekHw' => 'MediaTek HW',
@@ -6257,6 +6270,11 @@ extension on TranslationsDe {
 			'sport.today' => 'Heute',
 			'sport.tomorrow' => 'Morgen',
 			'sport.yesterday' => 'Gestern',
+			'sport.zoneChampionsLeague' => 'Champions League',
+			'sport.zoneEurope' => 'Europa',
+			'sport.zonePromotion' => 'Aufstieg',
+			'sport.zonePlayoff' => 'Relegation',
+			'sport.zoneRelegation' => 'Abstieg',
 			'plebz.settingsGroupLook' => 'Aussehen und Wiedergabe',
 			'plebz.settingsGroupContent' => 'Inhalte',
 			'plebz.settingsGroupApp' => 'App',
@@ -6314,6 +6332,8 @@ extension on TranslationsDe {
 			'localFiles.volumes' => 'Speicherorte',
 			'localFiles.up' => 'Eine Ebene höher',
 			'localFiles.noVolumes' => 'Kein Speicher gefunden.',
+			_ => null,
+		} ?? switch (path) {
 			'localFiles.unreadable' => 'Dieser Ordner lässt sich nicht lesen.',
 			'localFiles.nothingHere' => ({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.',
 			'reminders.add' => 'Erinnern',
@@ -6323,8 +6343,6 @@ extension on TranslationsDe {
 			'reminders.soonTitle' => 'Gleich geht’s los',
 			'reminders.runningTitle' => 'Läuft gerade',
 			'reminders.tune' => 'Umschalten',
-			_ => null,
-		} ?? switch (path) {
 			'reminders.channelGone' => ({required Object channel}) => 'Der Sender ${channel} ist nicht mehr in der Senderliste.',
 			'remoteKeys.title' => 'Fernbedienung',
 			'remoteKeys.entryDescription' => 'Welche Taste im Player was tut',

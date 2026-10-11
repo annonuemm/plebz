@@ -271,18 +271,14 @@ class SettingsExportService {
   static Future<void> revealSecretsForExport(Map<String, dynamic> exportedPrefs) async {
     await _mapSeerrSecret(exportedPrefs, CredentialVault.reveal);
     await _mapIptvSecrets(exportedPrefs, reveal: true);
-    await _mapSealedPref(exportedPrefs, SettingsService.tmdbApiKey.key, CredentialVault.reveal);
+    await _mapSealedPref(exportedPrefs, PlebzPrefs.tmdbApiKey.key, CredentialVault.reveal);
   }
 
   /// The other direction: seal it with the vault of the device restoring it.
   static Future<void> protectSecretsForImport(Map<String, dynamic> exportedPrefs) async {
     await _mapSeerrSecret(exportedPrefs, (secret) async => CredentialVault.protect(secret));
     await _mapIptvSecrets(exportedPrefs, reveal: false);
-    await _mapSealedPref(
-      exportedPrefs,
-      SettingsService.tmdbApiKey.key,
-      (secret) async => CredentialVault.protect(secret),
-    );
+    await _mapSealedPref(exportedPrefs, PlebzPrefs.tmdbApiKey.key, (secret) async => CredentialVault.protect(secret));
   }
 
   /// A [SealedStringPref]'s value, opened for the file or sealed again from
@@ -973,7 +969,7 @@ class SettingsExportService {
     final settings = await SettingsService.getInstance();
     final result = await applyImportMap(data, settings.prefs, currentUserUuid: uuid, withCredentials: withCredentials);
     // A sealed value read back from the file is opened into memory again.
-    await SettingsService.tmdbApiKey.load(settings);
+    await PlebzPrefs.tmdbApiKey.load(settings);
     // The app's own watchlist titles are held in memory once read.
     LocalWatchlist.reloadAll();
     if (connections.isEmpty || writeConnection == null) return result;

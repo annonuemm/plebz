@@ -460,7 +460,7 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
         // what the other servers are told, not about how anything plays.
         SettingSwitchTile(
           focusNode: _focusTracker.get(_kMirrorWatched),
-          pref: settings.SettingsService.mirrorWatchedAcrossServers,
+          pref: settings.PlebzPrefs.mirrorWatchedAcrossServers,
           icon: Symbols.sync_alt_rounded,
           title: t.settings.mirrorWatchedAcrossServers,
           subtitle: t.settings.mirrorWatchedAcrossServersDescription,

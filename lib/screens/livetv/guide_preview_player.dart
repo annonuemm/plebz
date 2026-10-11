@@ -411,7 +411,7 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   /// reset its decoder.
   Future<void> _applyOpeningRoute(Player player, SettingsService settings) async {
     try {
-      final dolbyVisionOff = settings.read(SettingsService.disableDolbyVision);
+      final dolbyVisionOff = settings.read(PlebzPrefs.disableDolbyVision);
       final dvConversionMode = settings.read(SettingsService.dvConversionMode);
       await player.setProperty('dv-conversion-mode', dolbyVisionOff ? 'off' : dvConversionMode.nativeValue);
       if (player is PlayerAndroidMpv) {

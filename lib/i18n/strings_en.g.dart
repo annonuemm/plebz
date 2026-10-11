@@ -1281,6 +1281,18 @@ class Translations$settings$en {
 	/// en: 'Bundesliga, 2. Bundesliga and 3. Liga: games and table'
 	String get showSportTabDescription => 'Bundesliga, 2. Bundesliga and 3. Liga: games and table';
 
+	/// en: 'Favourite club'
+	String get sportFavouriteClub => 'Favourite club';
+
+	/// en: 'Its game stands at the top of its league's page.'
+	String get sportFavouriteClubDescription => 'Its game stands at the top of its league\'s page.';
+
+	/// en: 'None'
+	String get sportFavouriteClubNone => 'None';
+
+	/// en: 'The clubs could not be loaded.'
+	String get sportFavouriteClubLoadFailed => 'The clubs could not be loaded.';
+
 	/// en: 'Favorites only on open'
 	String get liveTvDefaultFavorites => 'Favorites only on open';
 
@@ -7013,6 +7025,21 @@ class Translations$sport$en {
 
 	/// en: 'Yesterday'
 	String get yesterday => 'Yesterday';
+
+	/// en: 'Champions League'
+	String get zoneChampionsLeague => 'Champions League';
+
+	/// en: 'Europe'
+	String get zoneEurope => 'Europe';
+
+	/// en: 'Promotion'
+	String get zonePromotion => 'Promotion';
+
+	/// en: 'Play-off'
+	String get zonePlayoff => 'Play-off';
+
+	/// en: 'Relegation'
+	String get zoneRelegation => 'Relegation';
 }
 
 // Path: plebz
@@ -9751,6 +9778,10 @@ extension on Translations {
 			'settings.showExploreTabDescription' => 'Content from Plex Discover',
 			'settings.showSportTab' => 'Sport',
 			'settings.showSportTabDescription' => 'Bundesliga, 2. Bundesliga and 3. Liga: games and table',
+			'settings.sportFavouriteClub' => 'Favourite club',
+			'settings.sportFavouriteClubDescription' => 'Its game stands at the top of its league\'s page.',
+			'settings.sportFavouriteClubNone' => 'None',
+			'settings.sportFavouriteClubLoadFailed' => 'The clubs could not be loaded.',
 			'settings.liveTvDefaultFavorites' => 'Favorites only on open',
 			'settings.liveTvDefaultFavoritesDescription' => '',
 			'settings.general' => 'General',
@@ -9861,12 +9892,12 @@ extension on Translations {
 			'settings.glasUltraBlurDescription' => 'On Home and Explore',
 			'settings.glasDetailPanel' => 'Description beside the posters',
 			'settings.glasDetailPanelDescription' => 'Without it, more posters fit in a row',
+			_ => null,
+		} ?? switch (path) {
 			'settings.redesignSeasonTabs' => 'Seasons as tabs',
 			'settings.redesignSeasonTabsDescription' => 'Otherwise each season gets its own row',
 			'settings.glasSpinningFocus' => 'Turning focus edge',
 			'settings.glasSpinningFocusDescription' => 'Costs a little performance',
-			_ => null,
-		} ?? switch (path) {
 			'settings.homeTitleLogos' => 'Logos on Home and Explore',
 			'settings.homeTitleLogosDescription' => 'Title logos instead of text in the spotlight',
 			'settings.seerrCardEpisodeFacts' => 'Episode facts on Seerr posters',
@@ -10375,12 +10406,12 @@ extension on Translations {
 			'subtitlingStyling.background' => 'Background',
 			'subtitlingStyling.fontSize' => 'Font Size',
 			'subtitlingStyling.textColor' => 'Text Color',
+			_ => null,
+		} ?? switch (path) {
 			'subtitlingStyling.borderSize' => 'Border Size',
 			'subtitlingStyling.borderColor' => 'Border Color',
 			'subtitlingStyling.backgroundOpacity' => 'Background opacity',
 			'subtitlingStyling.backgroundColor' => 'Background Color',
-			_ => null,
-		} ?? switch (path) {
 			'subtitlingStyling.position' => 'Position',
 			'subtitlingStyling.assOverride' => 'ASS Override',
 			'subtitlingStyling.overrideScale' => 'Scale',
@@ -10889,12 +10920,12 @@ extension on Translations {
 			'explore.relation.sequel' => 'Sequel',
 			'explore.relation.sideStory' => 'Side story',
 			'explore.relation.spinOff' => 'Spin-off',
+			_ => null,
+		} ?? switch (path) {
 			'explore.relation.alternativeVersion' => 'Alternative version',
 			'explore.relation.summary' => 'Summary',
 			'explore.relation.parentStory' => 'Parent story',
 			'explore.relation.adaptation' => 'Adaptation',
-			_ => null,
-		} ?? switch (path) {
 			'explore.relation.other' => 'Related',
 			'explore.broadcast' => ({required Object day, required Object time}) => 'Airs ${day} at ${time}',
 			'explore.broadcastWithZone' => ({required Object day, required Object time, required Object timezone}) => 'Airs ${day} at ${time} ${timezone}',
@@ -11403,12 +11434,12 @@ extension on Translations {
 			'companionRemote.pairing.unpaired' => ({required Object name}) => '${name} is no longer paired',
 			'companionRemote.remote.disconnectConfirm' => 'Do you want to disconnect from the remote session?',
 			'companionRemote.remote.reconnecting' => 'Reconnecting...',
+			_ => null,
+		} ?? switch (path) {
 			'companionRemote.remote.attemptOf' => ({required Object current}) => 'Attempt ${current} of 5',
 			'companionRemote.remote.retryNow' => 'Retry Now',
 			'companionRemote.remote.tabRemote' => 'Remote',
 			'companionRemote.remote.tabPlay' => 'Play',
-			_ => null,
-		} ?? switch (path) {
 			'companionRemote.remote.tabMore' => 'More',
 			'companionRemote.remote.menu' => 'Menu',
 			'companionRemote.remote.tabNavigation' => 'Tab Navigation',
@@ -11917,12 +11948,12 @@ extension on Translations {
 			'actor.departments.production' => 'Production',
 			'actor.departments.writing' => 'Writing',
 			'actor.availability.all' => 'Everything',
+			_ => null,
+		} ?? switch (path) {
 			'actor.availability.available' => 'Available',
 			'actor.availability.missing' => 'Not available',
 			'sport.bundesliga1' => 'Bundesliga',
 			'sport.bundesliga2' => '2. Bundesliga',
-			_ => null,
-		} ?? switch (path) {
 			'sport.liga3' => '3. Liga',
 			'sport.matchday' => ({required Object n}) => 'Matchday ${n}',
 			'sport.chooseMatchday' => 'Choose matchday',
@@ -11954,6 +11985,11 @@ extension on Translations {
 			'sport.today' => 'Today',
 			'sport.tomorrow' => 'Tomorrow',
 			'sport.yesterday' => 'Yesterday',
+			'sport.zoneChampionsLeague' => 'Champions League',
+			'sport.zoneEurope' => 'Europe',
+			'sport.zonePromotion' => 'Promotion',
+			'sport.zonePlayoff' => 'Play-off',
+			'sport.zoneRelegation' => 'Relegation',
 			'plebz.settingsGroupLook' => 'Look and playback',
 			'plebz.settingsGroupContent' => 'Content',
 			'plebz.settingsGroupApp' => 'App',

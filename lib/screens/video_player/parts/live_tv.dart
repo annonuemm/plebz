@@ -697,7 +697,7 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
       counts[group] = (counts[group] ?? 0) + 1;
     }
     if (counts.length < 2) return const [];
-    final hidePrefix = SettingsService.instanceOrNull?.read(SettingsService.iptvHideGroupCountryPrefix) ?? false;
+    final hidePrefix = SettingsService.instanceOrNull?.read(PlebzPrefs.iptvHideGroupCountryPrefix) ?? false;
     return [
       (key: null, label: t.liveTv.allChannels, count: channels.length),
       for (final entry in counts.entries)

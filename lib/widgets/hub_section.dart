@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:plezy/widgets/app_icon.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import '../focus/card_focus_scope.dart';
 import '../focus/dpad_navigator.dart';
 import '../focus/dpad_select_long_press_controller.dart';
 import '../focus/focus_theme.dart';
@@ -705,7 +706,10 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
 
                     // A tile carries no caption — the logo or the word is the
                     // name — so the row keeps no height for one.
-                    final containerHeight = posterHeight + (isPlatformHub || isChipHub ? 0 : (isTv ? 48 : 33));
+                    // "Jetzt live" under the redesigns: two lines, the league or the
+                    // channel under the pairing or the programme.
+                    final captionHeight = isLiveHub && ockerGlass(context) ? (isTv ? 56 : 42) : (isTv ? 48 : 33);
+                    final containerHeight = posterHeight + (isPlatformHub || isChipHub ? 0 : captionHeight);
                     final focusBorderWidth = FocusTheme.focusBorderWidth;
                     final focusExtra = focusBorderWidth * 2; // border on both sides
                     _itemExtent = cardWidth + focusExtra + cardGap;
@@ -820,6 +824,10 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                                     width: cardWidth,
                                     cardHeight: posterHeight,
                                     captionHeight: containerHeight - posterHeight,
+                                    // The ring a keyboard's focus shows, round the
+                                    // card as on the television.
+                                    card: (card) =>
+                                        CardFocusBorder(borderRadius: liveNowTileRadius(context, 1), child: card),
                                   ),
                                 ),
                               );

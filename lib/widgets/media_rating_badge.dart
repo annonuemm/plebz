@@ -15,7 +15,7 @@ import 'settings_builder.dart';
 /// Every attributed score for [item], falling back to [fallbackItem] as a
 /// whole rather than per-source — a show's ratings never mix with an
 /// episode's.
-/// Honours [SettingsService.averageRatings], collapsing the list to one mean
+/// Honours [PlebzPrefs.averageRatings], collapsing the list to one mean
 /// score when the user asked for that. It happens here, at the single point
 /// every score list originates from, rather than inside the badge widgets:
 /// [FittedMetadataLine] measures badges with [inlineRatingBadgeWidth] to decide
@@ -26,7 +26,7 @@ List<MediaRatingSource> mediaRatingsFor(MediaItem item, {MediaItem? fallbackItem
   final resolved = ratings.isNotEmpty || fallbackItem == null ? ratings : _ratingsFor(fallbackItem);
   // instanceOrNull: score lists are built during startup and in widget tests
   // that never boot settings; both mean "not averaged" rather than a crash.
-  final average = SettingsService.instanceOrNull?.read(SettingsService.averageRatings) ?? false;
+  final average = SettingsService.instanceOrNull?.read(PlebzPrefs.averageRatings) ?? false;
   return average ? averagedRatings(resolved) : resolved;
 }
 
@@ -187,10 +187,7 @@ class MediaRatingBadgeGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     // The pill is the surface the setting is aimed at, so it follows the
     // switch live instead of waiting for the page to be reopened.
-    return SettingValueBuilder<bool>(
-      pref: SettingsService.averageRatings,
-      builder: (context, _, _) => _buildPill(context),
-    );
+    return SettingValueBuilder<bool>(pref: PlebzPrefs.averageRatings, builder: (context, _, _) => _buildPill(context));
   }
 
   Widget _buildPill(BuildContext context) {

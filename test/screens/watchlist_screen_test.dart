@@ -388,7 +388,7 @@ void main() {
     await tester.tap(find.text(t.watchlist.typeMovies));
     await tester.pumpAndSettle();
     expect(find.byType(OckerPosterTile), findsNWidgets(2), reason: 'only the films');
-    expect(SettingsService.instance.read(SettingsService.watchlistTypeFilter), WatchlistTypeFilter.movies);
+    expect(SettingsService.instance.read(PlebzPrefs.watchlistTypeFilter), WatchlistTypeFilter.movies);
 
     await tester.tap(find.text(t.watchlist.typeAll));
     await tester.pumpAndSettle();
@@ -529,11 +529,11 @@ void main() {
 
     expect(find.text('Plex Title 0'), findsOneWidget);
     expect(find.text('Simkl Title 0'), findsNothing);
-    expect(SettingsService.instance.read(SettingsService.watchlistSource), CatalogSourceId.plex.name);
+    expect(SettingsService.instance.read(PlebzPrefs.watchlistSource), CatalogSourceId.plex.name);
   });
 
   testWidgets('a remembered provider is restored on open', (tester) async {
-    await SettingsService.instance.write(SettingsService.watchlistSource, CatalogSourceId.plex.name);
+    await SettingsService.instance.write(PlebzPrefs.watchlistSource, CatalogSourceId.plex.name);
     await _pumpWatchlist(tester, [
       _FakeWatchlistSource(CatalogSourceId.simkl, 'Simkl'),
       _FakeWatchlistSource(CatalogSourceId.plex, 'Plex'),
@@ -543,7 +543,7 @@ void main() {
   });
 
   testWidgets('a remembered provider that is gone falls back to a connected one', (tester) async {
-    await SettingsService.instance.write(SettingsService.watchlistSource, CatalogSourceId.trakt.name);
+    await SettingsService.instance.write(PlebzPrefs.watchlistSource, CatalogSourceId.trakt.name);
     await _pumpWatchlist(tester, [_FakeWatchlistSource(CatalogSourceId.simkl, 'Simkl')]);
 
     expect(find.text('Simkl Title 0'), findsOneWidget);
@@ -639,7 +639,7 @@ void main() {
 
     expect(find.text('Favorite 0'), findsOneWidget);
     expect(find.text('Simkl Title 0'), findsNothing);
-    expect(SettingsService.instance.read(SettingsService.watchlistSource), WatchlistScreenState.favoritesTabId);
+    expect(SettingsService.instance.read(PlebzPrefs.watchlistSource), WatchlistScreenState.favoritesTabId);
   });
 
   testWidgets('a title the app keeps itself stands first on its provider\'s watchlist', (tester) async {
@@ -707,7 +707,7 @@ void main() {
     expect(withPanel.perRow, 5);
     expect(find.byType(OckerDetailPanel), findsOneWidget);
 
-    await SettingsService.instance.write(SettingsService.glasDetailPanel, false);
+    await SettingsService.instance.write(PlebzPrefs.glasDetailPanel, false);
     await tester.pumpAndSettle();
     final without = await firstRow();
     expect(find.byType(OckerDetailPanel), findsNothing);
@@ -855,13 +855,13 @@ void main() {
 
       await pickType(tester, t.watchlist.typeShows);
 
-      expect(SettingsService.instance.read(SettingsService.watchlistTypeFilter), WatchlistTypeFilter.shows);
-      expect(SettingsService.instance.read(SettingsService.watchlistStatusFilter), WatchlistStatusFilter.any);
+      expect(SettingsService.instance.read(PlebzPrefs.watchlistTypeFilter), WatchlistTypeFilter.shows);
+      expect(SettingsService.instance.read(PlebzPrefs.watchlistStatusFilter), WatchlistStatusFilter.any);
     });
 
     testWidgets('a remembered narrowing is in force on open', (tester) async {
-      await SettingsService.instance.write(SettingsService.watchlistTypeFilter, WatchlistTypeFilter.shows);
-      await SettingsService.instance.write(SettingsService.watchlistStatusFilter, WatchlistStatusFilter.watched);
+      await SettingsService.instance.write(PlebzPrefs.watchlistTypeFilter, WatchlistTypeFilter.shows);
+      await SettingsService.instance.write(PlebzPrefs.watchlistStatusFilter, WatchlistStatusFilter.watched);
 
       await _pumpWatchlist(tester, [mixedSource()]);
 

@@ -197,12 +197,6 @@ class GuideTabState extends State<GuideTab>
   /// buys the row its shorter height.
   double get _channelColumnWidth => _ockerLayout ? 104.0 : 116.0;
 
-  /// How much of the guide one channel takes.
-  ///
-  /// Chosen against the preview band rather than for its own sake: a guide is
-  /// read by comparing channels, so the number of rows that fit beside (or
-  /// under) the picture is what decides this. The logo and the block text
-  /// scale with it.
   /// How tall one channel row is.
   ///
   /// Derived rather than fixed: a guide is read by comparing channels, so what
@@ -337,67 +331,6 @@ class GuideTabState extends State<GuideTab>
     showFirstChannel();
   }
 
-  /// Take the cursor back without moving it.
-  ///
-  /// For a host that borrowed focus for a moment — the column of groups off
-  /// the left — and is handing it back. The grid remembers which channel it
-  /// was on, so sending it to the top would lose the viewer's place for no
-  /// reason; [focusContent] is for arriving, this is for returning.
-  void resumeFocus() {
-    if (!InputModeTracker.isKeyboardMode(context)) return;
-    if (_isLoading) {
-      _pendingFocus = true;
-      return;
-    }
-    _guideFocusNode.requestFocus();
-  }
-
-  /// Bring [scopeKey]'s channel under the viewport and onto the cursor.
-  ///
-  /// What the guide is asked for after the player closes: the viewer left it
-  /// on a channel, zapped away in full screen, and coming back to the row
-  /// they started on would lose the journey they just made.
-  ///
-  /// A guide built just now keeps it until its programmes are in: the first
-  /// load anchors the window on the live line, and the channel comes after.
-  void showChannel(String scopeKey) {
-    if (_isLoading) {
-      _pendingShowChannel = scopeKey;
-      return;
-    }
-    final index = widget.channels.indexWhere((channel) => liveTvChannelScopeKey(channel) == scopeKey);
-    if (index < 0) {
-      showFirstChannel();
-      return;
-    }
-    // In the grid: the viewer left from a channel, and a guide built for a
-    // hand-off would otherwise start out on the time bar.
-    _updateFocus(() {
-      _focusZone = _GuideZone.grid;
-      _gridChannelIndex = index;
-    });
-    _scrollToChannel(index);
-  }
-
-  /// Ask every source for the programmes again — for channels shown again,
-  /// whose IPTV guide was not read while they were hidden.
-  void reloadPrograms() => unawaited(_loadPrograms());
-
-  /// Put the top of the channel list back under the viewport.
-  ///
-  /// The grid keeps its scroll offset when the channel list is replaced, so
-  /// switching group left the guide parked at the offset the previous group
-  /// had been read at — with the first channel of the new one above the top
-  /// edge, invisible until some later key press dragged it into view.
-  void showFirstChannel() {
-    if (_gridVerticalController.hasClients && _gridVerticalController.offset != 0) {
-      _gridVerticalController.jumpTo(0);
-    }
-    if (_channelVerticalController.hasClients && _channelVerticalController.offset != 0) {
-      _channelVerticalController.jumpTo(0);
-    }
-  }
-
   /// Jump the guide to [channel] (from guide search): scroll to its row and
   /// land d-pad focus on the channel cell in keyboard mode.
   void jumpToChannel(LiveTvChannel channel) {
@@ -524,12 +457,6 @@ class GuideTabState extends State<GuideTab>
     // the background — the preview is playing to nobody, and it holds both a
     // stream from the provider and the app's only playback core.
     stopPreview();
-  }
-
-  /// Give up the preview, if one is running.
-  void stopPreview() {
-    if (_previewChannel == null) return;
-    _setPreviewChannel(null);
   }
 
   @override
@@ -707,19 +634,7 @@ class GuideTabState extends State<GuideTab>
         },
       );
 
-      // An IPTV source has its own guide (XMLTV for a playlist, the panel's
-      // per-channel EPG for Xtream) and no DVR, so it contributes programmes
-      // but no scheduled recordings.
-      for (final source in iptvSources) {
-        try {
-          final programs = await source.fetchSchedule(from: from, to: to);
-          if (!_isCurrentProgramLoad(loadGeneration)) return;
-          allPrograms.addAll(programs);
-        } catch (error, stackTrace) {
-          if (!_isCurrentProgramLoad(loadGeneration)) return;
-          appLogger.e('Failed to load programs from an IPTV source', error: error, stackTrace: stackTrace);
-        }
-      }
+      if (!await _addIptvPrograms(iptvSources, allPrograms, from, to, loadGeneration)) return;
 
       if (!_isCurrentProgramLoad(loadGeneration)) return;
       final shouldFocus = _pendingFocus;
@@ -754,19 +669,7 @@ class GuideTabState extends State<GuideTab>
       }
 
       _scrollToNow(loadGeneration: loadGeneration);
-      if (_pendingShowChannel case final key?) {
-        _pendingShowChannel = null;
-        showChannel(key);
-        // Focus asked for meanwhile lands on that channel; an arrival's
-        // focusContent would put the cursor back on the first.
-        if (shouldFocus) {
-          _pendingFocus = false;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_isCurrentProgramLoad(loadGeneration)) resumeFocus();
-          });
-        }
-        return;
-      }
+      if (_showPendingChannel(shouldFocus: shouldFocus, loadGeneration: loadGeneration)) return;
 
       if (shouldFocus) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1415,93 +1318,7 @@ class GuideTabState extends State<GuideTab>
           focusNode: _guideFocusNode,
           onFocusChange: _handleGuideFocusChange,
           onKeyEvent: _handleKeyEvent,
-          child: _showsPreview && _ockerLayout
-              // "Ocker" arranges Live TV the way every other variant does, and
-              // the way this screen was always read: the picture top left, what
-              // is on beside it, and the schedule across the full width under
-              // both. It ran as a column down the left for a while; that gave
-              // the grid its height back but took a quarter of its width, and a
-              // guide with an hour and a half on screen is not a guide.
-              ? Padding(
-                  // The same gap under the header every other screen keeps.
-                  // Without it the picture and the words began directly under
-                  // the row of destinations, which made the navigation look
-                  // like part of the panel.
-                  //
-                  // At the left it is the header's own inset, not the design's
-                  // safe margin: the destinations start there, and a schedule
-                  // stepping in another forty pixels past them read as a page
-                  // inside the page — the gap beside the first logo had no
-                  // job.
-                  padding: EdgeInsets.only(left: ockerFlushLeftInset(context), top: ockerContentTop(context)),
-                  child: Column(
-                    crossAxisAlignment: .start,
-                    children: [
-                      // The band keeps a margin on the right — it is words, and
-                      // words want an edge to stop at. The schedule under it
-                      // does not: it runs off the screen because it carries on
-                      // past midnight, and a margin there would only mark where
-                      // it was cut.
-                      Padding(
-                        padding: EdgeInsets.only(right: OckerLayout.safeMargin * ockerScale(context)),
-                        child: ValueListenableBuilder<_GuideFocusSnapshot>(
-                          valueListenable: _focusSnapshot,
-                          builder: (context, focus, _) => OckerGuidePanel(
-                            playerKey: _previewKey,
-                            streamInfo: _previewStreamInfo,
-                            previewChannel: _previewChannel,
-                            focusedChannel: _channelAt(focus.channelIndex),
-                            focusedProgram: focus.program ?? _findCurrentProgram(focus.channelIndex),
-                            nextProgram: _findNextProgram(focus.channelIndex, focus.program),
-                            sourceLabel: _channelAt(focus.channelIndex)?.serverName,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 24 * ockerScale(context)),
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            _measureGridHeight(constraints.maxHeight);
-                            return _buildGuideGrid(theme);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : _showsPreview
-              ? LayoutBuilder(
-                  builder: (context, constraints) => Column(
-                    children: [
-                      SizedBox(
-                        height: constraints.maxHeight * GuidePreviewPanel.heightFraction,
-                        child: ValueListenableBuilder<_GuideFocusSnapshot>(
-                          valueListenable: _focusSnapshot,
-                          builder: (context, focus, _) => GuidePreviewPanel(
-                            playerKey: _previewKey,
-                            previewChannel: _previewChannel,
-                            focusedChannel: _channelAt(focus.channelIndex),
-                            focusedProgram: focus.program ?? _findCurrentProgram(focus.channelIndex),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            _measureGridHeight(constraints.maxHeight);
-                            return _buildGuideGrid(theme);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : LayoutBuilder(
-                  builder: (context, constraints) {
-                    _measureGridHeight(constraints.maxHeight);
-                    return _buildGuideGrid(theme);
-                  },
-                ),
+          child: _buildGuideBody(theme),
         ),
         if (_isLoading)
           const Positioned.fill(
@@ -1652,71 +1469,12 @@ class GuideTabState extends State<GuideTab>
 
     final gridHeight = _timeHeaderHeight + _guideContentHeight(_guideRows);
 
-    if (!_ocker) {
-      return Positioned(
-        left: left,
-        top: 0,
-        height: gridHeight,
-        child: IgnorePointer(child: Container(width: 2, color: Colors.red)),
-      );
-    }
-
-    // Ocker's now-line is the accent, not a red that appears nowhere else —
-    // marking the present moment is one of the three jobs that colour has. The
-    // chip on top says which moment, because a line alone in a grid of
-    // half-hours is easy to read as a ruler tick.
-    final tk = tokens(context);
-    final type = OckerType.of(context);
-    // A box of its own width, centred on the moment. The first cut hung an
-    // OverflowBox off a Positioned with no width to work from, which is an
-    // unbounded-width layout and draws nothing at all — the line simply was
-    // not there under this theme.
-    const chipBox = 96.0;
+    if (_ocker) return _ockerNowLine(now, left: left, gridHeight: gridHeight);
     return Positioned(
-      left: left - chipBox / 2,
+      left: left,
       top: 0,
-      width: chipBox,
       height: gridHeight,
-      child: IgnorePointer(
-        child: Column(
-          mainAxisSize: .min,
-          children: [
-            // "Flach": level with the ruler's times rather than above them —
-            // the pill is as tall as its figures and its padding.
-            if (ockerFlatSizes(context))
-              SizedBox(height: ((_timeHeaderHeight - 26 * ockerScale(context)) / 2).clamp(0.0, double.infinity)),
-            if (ockerFlatSizes(context))
-              // "Flach": a pill of the accent, its figures in whichever of white
-              // or the ground reads on it — a picked yellow takes the dark.
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10 * ockerScale(context), vertical: 6 * ockerScale(context)),
-                decoration: ShapeDecoration(color: tk.accent, shape: const StadiumBorder()),
-                child: Text(
-                  formatClockTime(now, is24Hour: MediaQuery.alwaysUse24HourFormatOf(context)),
-                  style: type.nowChip.copyWith(
-                    fontFamily: type.metadata.fontFamily,
-                    fontSize: 14 * ockerScale(context),
-                    fontWeight: .w700,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                    color: ThemeData.estimateBrightnessForColor(tk.accent) == Brightness.dark ? Colors.white : tk.bg,
-                  ),
-                  maxLines: 1,
-                ),
-              )
-            else
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                color: tk.accent,
-                child: Text(
-                  formatClockTime(now, is24Hour: MediaQuery.alwaysUse24HourFormatOf(context)),
-                  style: type.nowChip.copyWith(color: tk.bg),
-                  maxLines: 1,
-                ),
-              ),
-            Expanded(child: Container(width: 2, color: tk.accent)),
-          ],
-        ),
-      ),
+      child: IgnorePointer(child: Container(width: 2, color: Colors.red)),
     );
   }
 

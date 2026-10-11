@@ -44,7 +44,7 @@ void main() {
   ThemeMode stored() => SettingsService.instance.read(SettingsService.themeMode);
 
   testWidgets('the other designs keep light, dark, OLED and system', (tester) async {
-    await SettingsService.instance.write(SettingsService.appThemeVariant, AppThemeVariant.standard);
+    await SettingsService.instance.write(PlebzPrefs.appThemeVariant, AppThemeVariant.standard);
     await pumpRow(tester);
 
     expect(find.text(t.settings.theme), findsOneWidget);
@@ -58,7 +58,7 @@ void main() {
   });
 
   testWidgets('the redesign offers its own ground or black, and OLED is the one stored choice', (tester) async {
-    await SettingsService.instance.write(SettingsService.appThemeVariant, AppThemeVariant.glas);
+    await SettingsService.instance.write(PlebzPrefs.appThemeVariant, AppThemeVariant.glas);
     await SettingsService.instance.write(SettingsService.themeMode, ThemeMode.system);
     await pumpRow(tester);
 
@@ -77,7 +77,7 @@ void main() {
   });
 
   testWidgets('a viewer who already has OLED sees it named under the redesign', (tester) async {
-    await SettingsService.instance.write(SettingsService.appThemeVariant, AppThemeVariant.glas);
+    await SettingsService.instance.write(PlebzPrefs.appThemeVariant, AppThemeVariant.glas);
     await SettingsService.instance.write(SettingsService.themeMode, ThemeMode.oled);
     await pumpRow(tester);
 

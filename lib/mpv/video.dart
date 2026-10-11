@@ -92,9 +92,9 @@ class _VideoState extends State<Video> {
     super.dispose();
   }
 
-  /// A picture that moves between its texture and a window surface while it
-  /// plays (see [VideoOutputHandover]) has to be told its size again: the
-  /// cache describes the output it left, and a new texture starts sizeless.
+  /// A picture whose texture changes while it plays has to be told its size
+  /// again: the cache describes the output it left, and a new texture starts
+  /// sizeless.
   void _listenForTextureChanges() {
     _textureSource?.removeListener(_forgetSentRect);
     final player = widget.player;

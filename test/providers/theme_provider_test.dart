@@ -58,8 +58,8 @@ void main() {
     test('a Flach look draws its accent and its ground under Flach, and leaves Glas alone', () async {
       final svc = await settings.SettingsService.getInstance();
       await svc.write(settings.SettingsService.themeMode, settings.ThemeMode.dark);
-      await svc.write(settings.SettingsService.appThemeVariant, settings.AppThemeVariant.flach);
-      await svc.write(settings.SettingsService.flachPreset, 'kino');
+      await svc.write(settings.PlebzPrefs.appThemeVariant, settings.AppThemeVariant.flach);
+      await svc.write(settings.PlebzPrefs.flachPreset, 'kino');
       final p = ThemeProvider();
       await Future.delayed(Duration.zero);
       MonoTokens tk() => p.darkTheme.extension<MonoTokens>()!;
@@ -69,13 +69,13 @@ void main() {
       expect(tk().accent, kino.accent);
 
       // Back to the viewer's own colours: Flach's own ground again.
-      await svc.write(settings.SettingsService.flachPreset, '');
+      await svc.write(settings.PlebzPrefs.flachPreset, '');
       await Future.delayed(Duration.zero);
       expect(tk().bg, flachGround);
 
       // Glas never wears a Flach look.
-      await svc.write(settings.SettingsService.flachPreset, 'kino');
-      await svc.write(settings.SettingsService.appThemeVariant, settings.AppThemeVariant.glas);
+      await svc.write(settings.PlebzPrefs.flachPreset, 'kino');
+      await svc.write(settings.PlebzPrefs.appThemeVariant, settings.AppThemeVariant.glas);
       await Future.delayed(Duration.zero);
       expect(tk().bg, isNot(kino.ground));
 

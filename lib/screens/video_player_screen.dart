@@ -1883,11 +1883,11 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       if (Platform.isAndroid && useExoPlayer && handedOver == null) {
         // Two settings, because they are two workloads: the master switch, and
         // whether it reaches live TV as well. A live stream gains little from
-        // tunneling and can lose a lot — see [SettingsService.tunneledPlaybackLiveTv].
-        final tunneledPlayback = SettingsService.tunneledPlaybackFor(
+        // tunneling and can lose a lot — see [PlebzPrefs.tunneledPlaybackLiveTv].
+        final tunneledPlayback = PlebzPrefs.tunneledPlaybackFor(
           isLive: widget.isLive,
           enabled: settingsService.read(SettingsService.tunneledPlayback),
-          enabledForLiveTv: settingsService.read(SettingsService.tunneledPlaybackLiveTv),
+          enabledForLiveTv: settingsService.read(PlebzPrefs.tunneledPlaybackLiveTv),
         );
         await currentPlayer.setProperty('tunneled-playback', tunneledPlayback ? 'yes' : 'no');
         await currentPlayer.setProperty('exo-buffer-tier', playbackBufferTier.nativeValue);
@@ -1901,7 +1901,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
         // One wire value carries both questions. `off` means no Dolby Vision
         // output at all, which also settles what profile 7 does — so the
         // profile-7 choice below only speaks when Dolby Vision is still on.
-        final dolbyVisionOff = settingsService.read(SettingsService.disableDolbyVision);
+        final dolbyVisionOff = settingsService.read(PlebzPrefs.disableDolbyVision);
         final dvConversionMode = settingsService.read(SettingsService.dvConversionMode);
         await currentPlayer.setProperty('dv-conversion-mode', dolbyVisionOff ? 'off' : dvConversionMode.nativeValue);
       }
@@ -2381,7 +2381,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
 
   /// The "up next" panel, unless it is switched off — then Plezy's own
   /// end-of-episode prompt does the countdown.
-  bool get _upNextPanelEnabled => SettingsService.instanceOrNull?.read(SettingsService.showUpNextPanel) ?? true;
+  bool get _upNextPanelEnabled => SettingsService.instanceOrNull?.read(PlebzPrefs.showUpNextPanel) ?? true;
 
   /// The episode has ended and the next one is offered — counting down, or
   /// waiting where auto-play is off — on the panel.

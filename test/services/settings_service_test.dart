@@ -150,14 +150,14 @@ void main() {
       SettingsService.resetForTesting();
       settings = await SettingsService.getInstance();
 
-      expect(settings.read(SettingsService.layoutMode), LayoutMode.tv, reason: 'the migration is written once');
+      expect(settings.read(PlebzPrefs.layoutMode), LayoutMode.tv, reason: 'the migration is written once');
       expect(settings.read(SettingsService.forceTvMode), isFalse);
     });
 
     test('an explicit layout choice survives the legacy flag', () async {
       final settings = await SettingsService.getInstance();
       await settings.write(SettingsService.forceTvMode, true);
-      await settings.write(SettingsService.layoutMode, LayoutMode.tablet);
+      await settings.write(PlebzPrefs.layoutMode, LayoutMode.tablet);
 
       expect(settings.readLayoutMode(), LayoutMode.tablet);
     });
@@ -573,18 +573,18 @@ void main() {
     // high-frame-rate files and can wedge on a provider's live transport
     // stream, so a viewer must be able to keep it for one and not the other.
     test('a film follows the master switch alone', () {
-      expect(SettingsService.tunneledPlaybackFor(isLive: false, enabled: true, enabledForLiveTv: false), isTrue);
-      expect(SettingsService.tunneledPlaybackFor(isLive: false, enabled: false, enabledForLiveTv: true), isFalse);
+      expect(PlebzPrefs.tunneledPlaybackFor(isLive: false, enabled: true, enabledForLiveTv: false), isTrue);
+      expect(PlebzPrefs.tunneledPlaybackFor(isLive: false, enabled: false, enabledForLiveTv: true), isFalse);
     });
 
     test('live TV needs both', () {
-      expect(SettingsService.tunneledPlaybackFor(isLive: true, enabled: true, enabledForLiveTv: false), isFalse);
-      expect(SettingsService.tunneledPlaybackFor(isLive: true, enabled: true, enabledForLiveTv: true), isTrue);
+      expect(PlebzPrefs.tunneledPlaybackFor(isLive: true, enabled: true, enabledForLiveTv: false), isFalse);
+      expect(PlebzPrefs.tunneledPlaybackFor(isLive: true, enabled: true, enabledForLiveTv: true), isTrue);
     });
 
     test('the master switch off means off everywhere', () {
-      expect(SettingsService.tunneledPlaybackFor(isLive: true, enabled: false, enabledForLiveTv: true), isFalse);
-      expect(SettingsService.tunneledPlaybackFor(isLive: false, enabled: false, enabledForLiveTv: false), isFalse);
+      expect(PlebzPrefs.tunneledPlaybackFor(isLive: true, enabled: false, enabledForLiveTv: true), isFalse);
+      expect(PlebzPrefs.tunneledPlaybackFor(isLive: false, enabled: false, enabledForLiveTv: false), isFalse);
     });
 
     test('live TV is off by default while films keep it', () async {
@@ -593,7 +593,7 @@ void main() {
       final settings = await SettingsService.getInstance();
 
       expect(settings.read(SettingsService.tunneledPlayback), isTrue);
-      expect(settings.read(SettingsService.tunneledPlaybackLiveTv), isFalse);
+      expect(settings.read(PlebzPrefs.tunneledPlaybackLiveTv), isFalse);
     });
   });
 
@@ -602,17 +602,17 @@ void main() {
     // once; on a channel it happens at every zap, and IPTV providers declare
     // their rates loosely enough that the app may switch to the wrong one.
     test('a film follows the master switch alone', () {
-      expect(SettingsService.matchContentFrameRateFor(isLive: false, enabled: true, enabledForLiveTv: false), isTrue);
-      expect(SettingsService.matchContentFrameRateFor(isLive: false, enabled: false, enabledForLiveTv: true), isFalse);
+      expect(PlebzPrefs.matchContentFrameRateFor(isLive: false, enabled: true, enabledForLiveTv: false), isTrue);
+      expect(PlebzPrefs.matchContentFrameRateFor(isLive: false, enabled: false, enabledForLiveTv: true), isFalse);
     });
 
     test('live TV needs both', () {
-      expect(SettingsService.matchContentFrameRateFor(isLive: true, enabled: true, enabledForLiveTv: false), isFalse);
-      expect(SettingsService.matchContentFrameRateFor(isLive: true, enabled: true, enabledForLiveTv: true), isTrue);
+      expect(PlebzPrefs.matchContentFrameRateFor(isLive: true, enabled: true, enabledForLiveTv: false), isFalse);
+      expect(PlebzPrefs.matchContentFrameRateFor(isLive: true, enabled: true, enabledForLiveTv: true), isTrue);
     });
 
     test('the master switch off means off everywhere', () {
-      expect(SettingsService.matchContentFrameRateFor(isLive: true, enabled: false, enabledForLiveTv: true), isFalse);
+      expect(PlebzPrefs.matchContentFrameRateFor(isLive: true, enabled: false, enabledForLiveTv: true), isFalse);
     });
 
     test('live TV leaves it off by default, as the seamless preview needs (Plebz)', () async {
@@ -622,7 +622,7 @@ void main() {
       SettingsService.resetForTesting();
       final settings = await SettingsService.getInstance();
 
-      expect(settings.read(SettingsService.matchContentFrameRateLiveTv), isFalse);
+      expect(settings.read(PlebzPrefs.matchContentFrameRateLiveTv), isFalse);
     });
   });
 }

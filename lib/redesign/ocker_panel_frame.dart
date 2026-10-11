@@ -57,7 +57,7 @@ class _OckerPanelFrameState extends State<OckerPanelFrame> {
 
   @override
   Widget build(BuildContext context) => SettingValueBuilder<bool>(
-    pref: SettingsService.glasDetailPanel,
+    pref: PlebzPrefs.glasDetailPanel,
     builder: (context, panelWanted, _) => _build(context, showPanel: widget.showPanel && panelWanted),
   );
 

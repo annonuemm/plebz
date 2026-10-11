@@ -294,9 +294,9 @@ void main() {
     /// Read the row again, as a change of its source does.
     Future<void> settingsReload() async {
       final settings = await SettingsService.getInstance();
-      final current = settings.read(SettingsService.recommendationsSource);
+      final current = settings.read(PlebzPrefs.recommendationsSource);
       await settings.write(
-        SettingsService.recommendationsSource,
+        PlebzPrefs.recommendationsSource,
         current == RecommendationsSource.all ? RecommendationsSource.plex : RecommendationsSource.all,
       );
       await pumpEventQueue();
@@ -328,7 +328,7 @@ void main() {
 
     test('the chosen source scope reaches the service', () async {
       final settings = await SettingsService.getInstance();
-      await settings.write(SettingsService.recommendationsSource, RecommendationsSource.jellyfin);
+      await settings.write(PlebzPrefs.recommendationsSource, RecommendationsSource.jellyfin);
       recommendations.result = [_item('suggested')];
 
       await provider.load();
@@ -348,7 +348,7 @@ void main() {
 
     test('the switch keeps it off the page and off the network', () async {
       final settings = await SettingsService.getInstance();
-      await settings.write(SettingsService.showRecommendationsRow, false);
+      await settings.write(PlebzPrefs.showRecommendationsRow, false);
       recommendations.result = [_item('suggested')];
 
       await provider.load();
@@ -413,17 +413,17 @@ void main() {
       // It used to be read only after a page load, so a row switched on in
       // the settings stayed away until the next one.
       final settings = await SettingsService.getInstance();
-      await settings.write(SettingsService.showRecommendationsRow, false);
+      await settings.write(PlebzPrefs.showRecommendationsRow, false);
       recommendations.result = [_item('suggested')];
       await provider.load();
       await pumpEventQueue();
       expect(provider.hubs.where((hub) => hub.title == t.discover.recommendedForYou), isEmpty);
 
-      await settings.write(SettingsService.showRecommendationsRow, true);
+      await settings.write(PlebzPrefs.showRecommendationsRow, true);
       await pumpEventQueue();
       expect(provider.hubs.first.title, t.discover.recommendedForYou);
 
-      await settings.write(SettingsService.showRecommendationsRow, false);
+      await settings.write(PlebzPrefs.showRecommendationsRow, false);
       await pumpEventQueue();
       expect(provider.hubs.where((hub) => hub.title == t.discover.recommendedForYou), isEmpty);
     });

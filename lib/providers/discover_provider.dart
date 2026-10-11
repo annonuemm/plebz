@@ -139,8 +139,8 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     // one.
     final settings = SettingsService.instanceOrNull;
     _recommendationSettings = [
-      ?settings?.listenable(SettingsService.showRecommendationsRow),
-      ?settings?.listenable(SettingsService.recommendationsSource),
+      ?settings?.listenable(PlebzPrefs.showRecommendationsRow),
+      ?settings?.listenable(PlebzPrefs.recommendationsSource),
     ];
     for (final setting in _recommendationSettings) {
       setting.addListener(_onRecommendationSettingsChanged);
@@ -787,7 +787,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
   /// there at all, and either way nothing else on the page is affected.
   Future<void> _loadRecommendations() async {
     final generation = ++_recommendationsGeneration;
-    if (!(SettingsService.instanceOrNull?.read(SettingsService.showRecommendationsRow) ?? true)) {
+    if (!(SettingsService.instanceOrNull?.read(PlebzPrefs.showRecommendationsRow) ?? true)) {
       if (_recommendations != null) {
         _recommendations = null;
         safeNotifyListeners();
@@ -815,8 +815,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
         liked: [for (final like in feedback.likes) like.toItem()],
         disliked: {for (final dislike in dislikes) dislike.key},
         heldBack: {for (final dislike in dislikes) ...dislike.related},
-        source:
-            SettingsService.instanceOrNull?.read(SettingsService.recommendationsSource) ?? RecommendationsSource.all,
+        source: SettingsService.instanceOrNull?.read(PlebzPrefs.recommendationsSource) ?? RecommendationsSource.all,
         rotation: rotation,
       );
       if (isDisposed || generation != _recommendationsGeneration) return;

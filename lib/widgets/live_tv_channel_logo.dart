@@ -294,7 +294,7 @@ class LiveTvChannelLogo extends StatelessWidget {
   Widget _fromCollection(BuildContext context) {
     final wanted =
         channel.key.startsWith('iptv:') &&
-        (SettingsService.instanceOrNull?.read(SettingsService.iptvPublicLogoFallback) ?? false);
+        (SettingsService.instanceOrNull?.read(PlebzPrefs.iptvPublicLogoFallback) ?? false);
     if (!wanted) return fallback(context);
     final collection = PublicLogoIndex.instance..ensureLoaded();
     return ValueListenableBuilder<bool>(

@@ -3,7 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 /// The slow turn of the glass focus edge, when the viewer has switched it on
-/// (`SettingsService.glasSpinningFocus`).
+/// (`PlebzPrefs.glasSpinningFocus`).
 ///
 /// One turn for the whole app: every focus edge on screen reads [turn], and
 /// only an edge that is showing listens. What it costs is the thing to watch.

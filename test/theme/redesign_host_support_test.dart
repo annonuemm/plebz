@@ -49,7 +49,7 @@ void main() {
 
     test('a stored redesign variant is drawn as the standard theme', () async {
       final service = await settings.SettingsService.getInstance();
-      await service.write(settings.SettingsService.appThemeVariant, settings.AppThemeVariant.glas);
+      await service.write(settings.PlebzPrefs.appThemeVariant, settings.AppThemeVariant.glas);
 
       final provider = ThemeProvider();
       await Future.delayed(Duration.zero);
@@ -60,7 +60,7 @@ void main() {
       expect(provider.darkTheme.extension<MonoTokens>()?.redesignLayout, isNot(true));
       // The stored value is deliberately left alone: the same profile still
       // opens in the redesign on the television it was set from.
-      expect(service.read(settings.SettingsService.appThemeVariant), settings.AppThemeVariant.glas);
+      expect(service.read(settings.PlebzPrefs.appThemeVariant), settings.AppThemeVariant.glas);
 
       provider.dispose();
     });

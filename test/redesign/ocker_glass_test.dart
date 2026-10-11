@@ -184,7 +184,7 @@ void main() {
 
     test('draws the accent the settings name, and follows a change', () async {
       final service = await SettingsService.getInstance();
-      await service.write(SettingsService.appThemeVariant, AppThemeVariant.glas);
+      await service.write(PlebzPrefs.appThemeVariant, AppThemeVariant.glas);
       debugRedesignOfferedHere = true;
       addTearDown(() => debugRedesignOfferedHere = null);
 
@@ -195,7 +195,7 @@ void main() {
 
       var notified = 0;
       provider.addListener(() => notified++);
-      await service.write(SettingsService.glasAccent, GlasAccent.flieder);
+      await service.write(PlebzPrefs.glasAccent, GlasAccent.flieder);
       await Future<void>.delayed(Duration.zero);
 
       expect(notified, greaterThan(0));
@@ -982,7 +982,7 @@ void main() {
       DevicePerformance.debugReset(override: VisualEffectsSetting.reduced);
       expect(ockerGlassMotion(glide), Duration.zero);
 
-      await SettingsService.instanceOrNull!.write(SettingsService.glasSmoothFocus, true);
+      await SettingsService.instanceOrNull!.write(PlebzPrefs.glasSmoothFocus, true);
       expect(ockerGlassMotion(glide), glide, reason: 'on its own, without the rest of the effects');
     });
   });

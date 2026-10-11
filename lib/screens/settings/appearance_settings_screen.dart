@@ -25,6 +25,7 @@ import '../../widgets/settings_section.dart';
 import '../../redesign/ocker_skin.dart' show isOckerLayout;
 import 'plebz_settings_rows.dart' show flachColourTiles, plebzThemeModeRow;
 import 'settings_utils.dart';
+import 'sport_favourite_club_tile.dart';
 import '../../utils/fork_identity.dart';
 
 class AppearanceSettingsScreen extends StatelessWidget {
@@ -39,7 +40,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
     // connected are left out elsewhere rather than offered as dead switches.
     final isMobile = PlatformDetector.isMobile(context);
     final hasSeerr = context.watch<SeerrAccountProvider?>()?.isConnected ?? false;
-    final hasTmdbKey = SettingsService.instance.read(SettingsService.tmdbApiKey)?.trim().isNotEmpty ?? false;
+    final hasTmdbKey = SettingsService.instance.read(PlebzPrefs.tmdbApiKey)?.trim().isNotEmpty ?? false;
     // The redesign on a television lays out its own grids and rail: these rows
     // have nothing left to steer there (Plebz). On a phone, tablet or Mac it
     // is a look only, and they keep working.
@@ -57,7 +58,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
             // Only asked while glass is the theme: the accent is a detail of a
             // look that is otherwise not there.
             SettingValueBuilder<AppThemeVariant>(
-              pref: SettingsService.appThemeVariant,
+              pref: PlebzPrefs.appThemeVariant,
               builder: (context, variant, _) => switch (supportedAppThemeVariant(variant)) {
                 AppThemeVariant.glas => _glasAccentSelector(),
                 AppThemeVariant.flach => flachColourTiles(),
@@ -67,10 +68,10 @@ class AppearanceSettingsScreen extends StatelessWidget {
             // The glass focus's own motion, apart from the rest of the effects.
             // Not on a phone or tablet: a finger never puts focus anywhere.
             SettingValueBuilder<AppThemeVariant>(
-              pref: SettingsService.appThemeVariant,
+              pref: PlebzPrefs.appThemeVariant,
               builder: (context, variant, _) => supportedAppThemeVariant(variant) == AppThemeVariant.glas && !isMobile
                   ? SettingSwitchTile(
-                      pref: SettingsService.glasSmoothFocus,
+                      pref: PlebzPrefs.glasSmoothFocus,
                       icon: Symbols.animation_rounded,
                       title: t.settings.glasSmoothFocus,
                       subtitle: t.settings.glasSmoothFocusDescription,
@@ -78,10 +79,10 @@ class AppearanceSettingsScreen extends StatelessWidget {
                   : const SizedBox.shrink(),
             ),
             SettingValueBuilder<AppThemeVariant>(
-              pref: SettingsService.appThemeVariant,
+              pref: PlebzPrefs.appThemeVariant,
               builder: (context, variant, _) => supportedAppThemeVariant(variant) == AppThemeVariant.glas && !isMobile
                   ? SettingSwitchTile(
-                      pref: SettingsService.glasSpinningFocus,
+                      pref: PlebzPrefs.glasSpinningFocus,
                       icon: Symbols.autorenew_rounded,
                       title: t.settings.glasSpinningFocus,
                       subtitle: t.settings.glasSpinningFocusDescription,
@@ -92,7 +93,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
             // such ground on a phone, a tablet or the Mac.
             if (PlatformDetector.isTV())
               SettingValueBuilder<AppThemeVariant>(
-                pref: SettingsService.appThemeVariant,
+                pref: PlebzPrefs.appThemeVariant,
                 builder: (context, variant, _) => isRedesignVariant(supportedAppThemeVariant(variant))
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
@@ -100,7 +101,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
                           // Both redesigns: under "Flach" the colours take
                           // the place of its plain ground (the user's wish).
                           SettingSwitchTile(
-                            pref: SettingsService.ultraBlurFor(
+                            pref: PlebzPrefs.ultraBlurFor(
                               flat: supportedAppThemeVariant(variant) == AppThemeVariant.flach,
                             ),
                             icon: Symbols.gradient_rounded,
@@ -108,7 +109,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
                             subtitle: t.settings.glasUltraBlurDescription,
                           ),
                           SettingSwitchTile(
-                            pref: SettingsService.seasonTabsFor(
+                            pref: PlebzPrefs.seasonTabsFor(
                               flat: supportedAppThemeVariant(variant) == AppThemeVariant.flach,
                             ),
                             icon: Symbols.tab_rounded,
@@ -116,7 +117,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
                             subtitle: t.settings.redesignSeasonTabsDescription,
                           ),
                           SettingSwitchTile(
-                            pref: SettingsService.glasDetailPanel,
+                            pref: PlebzPrefs.glasDetailPanel,
                             icon: Symbols.view_sidebar_rounded,
                             title: t.settings.glasDetailPanel,
                             subtitle: t.settings.glasDetailPanelDescription,
@@ -193,20 +194,20 @@ class AppearanceSettingsScreen extends StatelessWidget {
             // draws its logo either way (Plebz).
             if (PlatformDetector.isTV())
               SettingSwitchTile(
-                pref: SettingsService.showHomeTitleLogos,
+                pref: PlebzPrefs.showHomeTitleLogos,
                 icon: Symbols.title_rounded,
                 title: t.settings.homeTitleLogos,
                 subtitle: t.settings.homeTitleLogosDescription,
               ),
             if (hasSeerr)
               SettingSwitchTile(
-                pref: SettingsService.seerrCardEpisodeFacts,
+                pref: PlebzPrefs.seerrCardEpisodeFacts,
                 icon: Symbols.playlist_add_check_rounded,
                 title: t.settings.seerrCardEpisodeFacts,
                 subtitle: t.settings.seerrCardEpisodeFactsDescription,
               ),
             SettingSwitchTile(
-              pref: SettingsService.showLibraryPlaylistsTab,
+              pref: PlebzPrefs.showLibraryPlaylistsTab,
               icon: Symbols.queue_music_rounded,
               title: t.settings.showLibraryPlaylistsTab,
               subtitle: t.settings.showLibraryPlaylistsTabDescription,
@@ -220,26 +221,26 @@ class AppearanceSettingsScreen extends StatelessWidget {
           title: t.settings.detailPages,
           children: [
             SettingSwitchTile(
-              pref: SettingsService.showDownloadAction,
+              pref: PlebzPrefs.showDownloadAction,
               icon: Symbols.download_rounded,
               title: t.settings.showDownloadAction,
               subtitle: t.settings.showDownloadActionDescription,
             ),
             SettingSwitchTile(
-              pref: SettingsService.showPlaybackTracksStatus,
+              pref: PlebzPrefs.showPlaybackTracksStatus,
               icon: Symbols.subtitles_rounded,
               title: t.settings.showPlaybackTracksStatus,
               subtitle: t.settings.showPlaybackTracksStatusDescription,
             ),
             SettingSwitchTile(
-              pref: SettingsService.averageRatings,
+              pref: PlebzPrefs.averageRatings,
               icon: Symbols.star_half_rounded,
               title: t.settings.averageRatings,
               subtitle: t.settings.averageRatingsDescription,
             ),
             if (hasTmdbKey)
               SettingSwitchTile(
-                pref: SettingsService.showActorFilmography,
+                pref: PlebzPrefs.showActorFilmography,
                 icon: Symbols.theater_comedy_rounded,
                 title: t.settings.showActorFilmography,
                 subtitle: t.settings.showActorFilmographyDescription,
@@ -249,14 +250,14 @@ class AppearanceSettingsScreen extends StatelessWidget {
             // box, always, and these two switches steer nothing (Plebz).
             if (hasExplore && !catalogStage)
               SettingSwitchTile(
-                pref: SettingsService.showCatalogDetailFacts,
+                pref: PlebzPrefs.showCatalogDetailFacts,
                 icon: Symbols.list_alt_rounded,
                 title: t.settings.showCatalogDetailFacts,
                 subtitle: t.settings.showCatalogDetailFactsDescription,
               ),
             if (hasExplore && !catalogStage)
               SettingSwitchTile(
-                pref: SettingsService.showCatalogDetailCrew,
+                pref: PlebzPrefs.showCatalogDetailCrew,
                 icon: Symbols.movie_edit_rounded,
                 title: t.settings.showCatalogDetailCrew,
                 subtitle: t.settings.showCatalogDetailCrewDescription,
@@ -290,39 +291,39 @@ class AppearanceSettingsScreen extends StatelessWidget {
             ),
             if (watchTogetherAvailable)
               SettingSwitchTile(
-                pref: SettingsService.showWatchTogetherAction,
+                pref: PlebzPrefs.showWatchTogetherAction,
                 icon: Symbols.group_rounded,
                 title: t.settings.showWatchTogetherAction,
                 subtitle: t.settings.showWatchTogetherActionDescription,
               ),
             SettingSwitchTile(
-              pref: SettingsService.showCompanionRemoteAction,
+              pref: PlebzPrefs.showCompanionRemoteAction,
               icon: Symbols.phone_android_rounded,
               title: t.settings.showCompanionRemoteAction,
               subtitle: t.settings.showCompanionRemoteActionDescription,
             ),
             if (!isMobile)
               SettingSwitchTile(
-                pref: SettingsService.showServerActivitiesAction,
+                pref: PlebzPrefs.showServerActivitiesAction,
                 icon: Symbols.monitor_heart_rounded,
                 title: t.settings.showServerActivitiesAction,
                 subtitle: t.settings.showServerActivitiesActionDescription,
               ),
             if (!isMobile)
               SettingSwitchTile(
-                pref: SettingsService.hideHomeActionsUntilFocus,
+                pref: PlebzPrefs.hideHomeActionsUntilFocus,
                 icon: Symbols.visibility_off_rounded,
                 title: t.settings.hideHomeActionsUntilFocus,
                 subtitle: t.settings.hideHomeActionsUntilFocusDescription,
               ),
             SettingSwitchTile(
-              pref: SettingsService.showLiveNowRow,
+              pref: PlebzPrefs.showLiveNowRow,
               icon: Symbols.live_tv_rounded,
               title: t.settings.showLiveNowRow,
               subtitle: t.settings.showLiveNowRowDescription,
             ),
             SettingSwitchTile(
-              pref: SettingsService.showRecommendationsRow,
+              pref: PlebzPrefs.showRecommendationsRow,
               icon: Symbols.recommend_rounded,
               title: t.settings.showRecommendationsRow,
               subtitle: t.settings.showRecommendationsRowDescription,
@@ -330,13 +331,13 @@ class AppearanceSettingsScreen extends StatelessWidget {
             // Only asked once the row is on: it is a detail of a thing that is
             // otherwise not there.
             SettingValueBuilder<bool>(
-              pref: SettingsService.showRecommendationsRow,
+              pref: PlebzPrefs.showRecommendationsRow,
               builder: (context, showRow, _) => showRow ? _recommendationsSourceSelector() : const SizedBox.shrink(),
             ),
             // Forgets the row's "Mehr davon" and "Weniger davon"; only while
             // the row is on, like its source.
             SettingValueBuilder<bool>(
-              pref: SettingsService.showRecommendationsRow,
+              pref: PlebzPrefs.showRecommendationsRow,
               builder: (context, showRow, _) => showRow
                   ? SettingNavigationTile(
                       icon: Symbols.restart_alt_rounded,
@@ -363,10 +364,15 @@ class AppearanceSettingsScreen extends StatelessWidget {
             // Right under Explore's switch, as the destination sits right after
             // Explore's in the navigation.
             SettingSwitchTile(
-              pref: SettingsService.showSportTab,
+              pref: PlebzPrefs.showSportTab,
               icon: Symbols.sports_soccer_rounded,
               title: t.settings.showSportTab,
               subtitle: t.settings.showSportTabDescription,
+            ),
+            // Only while there is a Sport page to put the club on.
+            SettingValueBuilder<bool>(
+              pref: PlebzPrefs.showSportTab,
+              builder: (context, sport, _) => sport ? const SportFavouriteClubTile() : const SizedBox.shrink(),
             ),
             if (Platform.isAndroid || PlatformDetector.isDesktopOS()) _layoutModeSelector(context),
             if (PlatformDetector.shouldUseSideNavigation(context) && !glasLayout)
@@ -561,7 +567,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
   };
 
   Widget _recommendationsSourceSelector() => SettingSelectionTile<RecommendationsSource>(
-    pref: SettingsService.recommendationsSource,
+    pref: PlebzPrefs.recommendationsSource,
     icon: Symbols.dns_rounded,
     title: t.settings.recommendationsSource,
     subtitleBuilder: _recommendationsSourceLabel,
@@ -579,7 +585,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
   };
 
   Widget _layoutModeSelector(BuildContext context) => SettingSelectionTile<LayoutMode>(
-    pref: SettingsService.layoutMode,
+    pref: PlebzPrefs.layoutMode,
     icon: Symbols.devices_rounded,
     title: t.settings.layoutMode,
     subtitleBuilder: _layoutModeLabel,
@@ -619,7 +625,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
   };
 
   Widget _themeVariantSelector(BuildContext context) => SettingSelectionTile<AppThemeVariant>(
-    pref: SettingsService.appThemeVariant,
+    pref: PlebzPrefs.appThemeVariant,
     icon: Symbols.palette_rounded,
     title: t.settings.appThemeVariant,
     // Through the host gate, so a carried-in redesign value names the theme
@@ -661,7 +667,7 @@ class AppearanceSettingsScreen extends StatelessWidget {
   };
 
   Widget _glasAccentSelector() => SettingSelectionTile<GlasAccent>(
-    pref: SettingsService.glasAccent,
+    pref: PlebzPrefs.glasAccent,
     icon: Symbols.colors_rounded,
     title: t.settings.glasAccent,
     subtitleBuilder: _glasAccentLabel,

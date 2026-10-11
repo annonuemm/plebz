@@ -405,7 +405,7 @@ void main() {
 
     testWidgets('a colour key does what it is set to: here, the channel list', (tester) async {
       final settings = await SettingsService.getInstance();
-      await settings.write(SettingsService.remoteBlueButton, RemoteButtonFunction.channelList);
+      await settings.write(PlebzPrefs.remoteBlueButton, RemoteButtonFunction.channelList);
       await pumpPlayer(tester);
 
       await press(tester, LogicalKeyboardKey.colorF3Blue, platform: 'android');
@@ -417,7 +417,7 @@ void main() {
 
     testWidgets('a colour key set to nothing does nothing', (tester) async {
       final settings = await SettingsService.getInstance();
-      await settings.write(SettingsService.remoteBlueButton, RemoteButtonFunction.none);
+      await settings.write(PlebzPrefs.remoteBlueButton, RemoteButtonFunction.none);
       await pumpPlayer(tester);
 
       await press(tester, LogicalKeyboardKey.colorF3Blue, platform: 'android');

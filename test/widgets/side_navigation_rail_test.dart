@@ -600,7 +600,7 @@ void main() {
     await _pumpBasicRail(tester, alwaysExpanded: true, catalogSources: catalogSources);
     expect(find.widgetWithText(NavigationRailItem, t.navigation.sport), findsNothing, reason: 'off until asked for');
 
-    await SettingsService.instance.write(SettingsService.showSportTab, true);
+    await SettingsService.instance.write(PlebzPrefs.showSportTab, true);
     await tester.pumpAndSettle();
     final sport = find.widgetWithText(NavigationRailItem, t.navigation.sport);
     expect(sport, findsOneWidget);
@@ -609,7 +609,7 @@ void main() {
     final explore = tester.widget<NavigationRailItem>(find.widgetWithText(NavigationRailItem, 'Explore'));
     expect(items.indexOf(tester.widget<NavigationRailItem>(sport)), items.indexOf(explore) + 1);
 
-    await SettingsService.instance.write(SettingsService.showSportTab, false);
+    await SettingsService.instance.write(PlebzPrefs.showSportTab, false);
     await tester.pumpAndSettle();
     expect(find.widgetWithText(NavigationRailItem, t.navigation.sport), findsNothing);
   });
@@ -1133,7 +1133,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(selected, [NavigationTabId.liveTv], reason: 'the press is a destination, nothing more');
-    expect(SettingsService.instance.read(SettingsService.liveTvSectionExpanded), isFalse);
+    expect(SettingsService.instance.read(PlebzPrefs.liveTvSectionExpanded), isFalse);
     expect(_liveTvRowsFolded(tester), isTrue);
   });
 
@@ -1152,12 +1152,12 @@ void main() {
 
     await tester.tap(find.text(t.navigation.liveTv));
     await tester.pumpAndSettle();
-    expect(SettingsService.instance.read(SettingsService.liveTvSectionExpanded), isTrue);
+    expect(SettingsService.instance.read(PlebzPrefs.liveTvSectionExpanded), isTrue);
     expect(_liveTvRowsFolded(tester), isFalse);
 
     await tester.tap(find.text(t.navigation.liveTv));
     await tester.pumpAndSettle();
-    expect(SettingsService.instance.read(SettingsService.liveTvSectionExpanded), isFalse);
+    expect(SettingsService.instance.read(PlebzPrefs.liveTvSectionExpanded), isFalse);
     expect(selected, isEmpty, reason: 'the tab is already open; the press was about the rows');
   });
 

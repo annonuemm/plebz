@@ -185,7 +185,7 @@ void main() {
 
     Future<_FakeSourcesProvider> providerFor(String profile, {required List<String> simklLed}) async {
       final settings = await SettingsService.getInstance();
-      await settings.write(SettingsService.simklLedProfiles, simklLed);
+      await settings.write(PlebzPrefs.simklLedProfiles, simklLed);
       final provider = _FakeSourcesProvider([
         _FakeWatchlistSource(CatalogSourceId.simkl),
         _FakeWatchlistSource(CatalogSourceId.plex),
@@ -221,7 +221,7 @@ void main() {
       var notified = 0;
       provider.addListener(() => notified++);
 
-      await SettingsService.instance.write(SettingsService.simklLedProfiles, ['anna']);
+      await SettingsService.instance.write(PlebzPrefs.simklLedProfiles, ['anna']);
 
       expect(notified, greaterThan(0));
       expect(provider.watchlistCapableSources.map((source) => source.id), [CatalogSourceId.simkl]);

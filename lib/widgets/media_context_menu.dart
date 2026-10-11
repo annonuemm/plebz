@@ -141,7 +141,7 @@ List<_MenuAction> _syncDownloadMenuActions({
   // manageable — otherwise the switch would strand files and rules with no
   // way to reach them. A server that forbids downloading is read the same way:
   // it governs new files, not the ones already on the device.
-  final allowNewDownload = serverAllowsDownload && SettingsService.instance.read(SettingsService.showDownloadAction);
+  final allowNewDownload = serverAllowsDownload && SettingsService.instance.read(PlebzPrefs.showDownloadAction);
   _MenuAction deleteDownload() => _MenuAction(
     value: 'delete_download',
     icon: Symbols.delete_rounded,

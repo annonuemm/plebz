@@ -111,7 +111,7 @@ class _ColourKeyTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SettingSelectionTile<RemoteButtonFunction>(
-    pref: SettingsService.remoteButtonPref(colour),
+    pref: PlebzPrefs.remoteButtonPref(colour),
     icon: Symbols.radio_button_checked_rounded,
     title: _name,
     subtitleBuilder: remoteButtonFunctionLabel,

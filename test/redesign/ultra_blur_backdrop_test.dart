@@ -209,7 +209,7 @@ void main() {
     final railScope = FocusScopeNode();
     addTearDown(contentScope.dispose);
     addTearDown(railScope.dispose);
-    await SettingsService.instance.write(SettingsService.glasUltraBlur, true);
+    await SettingsService.instance.write(PlebzPrefs.glasUltraBlur, true);
     UltraBlurAmbient? seen;
 
     Future<void> pumpOn(NavigationTabId tab) => tester.pumpWidget(
@@ -278,12 +278,12 @@ void main() {
     expect(find.byType(UltraBlurLayer), findsNothing);
     final screen = screenKey.currentState;
 
-    await SettingsService.instance.write(SettingsService.glasUltraBlur, true);
+    await SettingsService.instance.write(PlebzPrefs.glasUltraBlur, true);
     await tester.pumpAndSettle();
     expect(find.byType(UltraBlurLayer), findsOneWidget);
     expect(screenKey.currentState, same(screen));
 
-    await SettingsService.instance.write(SettingsService.glasUltraBlur, false);
+    await SettingsService.instance.write(PlebzPrefs.glasUltraBlur, false);
     await tester.pumpAndSettle();
     expect(find.byType(UltraBlurLayer), findsNothing);
     expect(screenKey.currentState, same(screen));

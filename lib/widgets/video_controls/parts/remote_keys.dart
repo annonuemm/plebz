@@ -38,7 +38,7 @@ extension _PlexVideoControlsRemoteKeys on _PlexVideoControlsState {
     if (event is! KeyDownEvent) return KeyEventResult.handled;
 
     if (colour != null) {
-      _runRemoteFunction(SettingsService.instance.read(SettingsService.remoteButtonPref(colour)));
+      _runRemoteFunction(SettingsService.instance.read(PlebzPrefs.remoteButtonPref(colour)));
       return KeyEventResult.handled;
     }
     switch (action!) {

@@ -437,7 +437,7 @@ void main() {
     SettingsService.resetForTesting();
     await SettingsService.getInstance();
     // Per-source scores: averaging is on by default in this fork.
-    await SettingsService.instance.write(SettingsService.averageRatings, false);
+    await SettingsService.instance.write(PlebzPrefs.averageRatings, false);
     TvDetectionService.debugSetAppleTVOverride(true);
   });
 
@@ -489,6 +489,25 @@ void main() {
         expect(tester.widget<Offstage>(buttons).offstage, isFalse);
       });
     }
+
+    testWidgets('UP from the buttons reaches the home button, DOWN from it the buttons', (tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.reset);
+      await _pumpDetail(tester, _FakeCatalogSource(), variant: AppThemeVariant.glas);
+      await tester.pump(const Duration(seconds: 1));
+
+      final firstAction = FocusManager.instance.primaryFocus;
+      expect(firstAction?.context?.findAncestorWidgetOfExactType<FocusableActionBar>(), isNotNull);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(FocusManager.instance.primaryFocus?.debugLabel, 'catalog_detail_home');
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(FocusManager.instance.primaryFocus, same(firstAction));
+    });
 
     testWidgets('a member of the cast row opens their person page (Plebz)', (tester) async {
       tester.view.physicalSize = const Size(1920, 1080);
@@ -1544,7 +1563,7 @@ void main() {
     );
     final source = _FakeCatalogSource(detail: const CatalogDetail(item: item));
 
-    await SettingsService.instance.write(SettingsService.averageRatings, true);
+    await SettingsService.instance.write(PlebzPrefs.averageRatings, true);
     await _pumpDetail(tester, source, item: item);
 
     // (8.1 + 8.3 + 7.2 + 8.8) / 4 = 8.1
@@ -1575,7 +1594,7 @@ void main() {
     expect(find.text('8.5 (3.62K votes)'), findsOneWidget);
     expect(find.text(t.explore.detail.ratings), findsOneWidget);
 
-    await SettingsService.instance.write(SettingsService.averageRatings, true);
+    await SettingsService.instance.write(PlebzPrefs.averageRatings, true);
     await tester.pumpAndSettle();
 
     expect(find.text('${t.common.ratingSource.average} 8.5'), findsOneWidget);
@@ -1595,7 +1614,7 @@ void main() {
     );
     final source = _FakeCatalogSource(detail: const CatalogDetail(item: item));
 
-    await SettingsService.instance.write(SettingsService.averageRatings, true);
+    await SettingsService.instance.write(PlebzPrefs.averageRatings, true);
     await _pumpDetail(tester, source, item: item);
 
     expect(find.textContaining(t.common.ratingSource.average), findsNothing);
@@ -2040,7 +2059,7 @@ void main() {
     );
     final source = _FakeCatalogSource(detail: CatalogDetail(item: item));
 
-    await SettingsService.instance.write(SettingsService.showCatalogDetailFacts, false);
+    await SettingsService.instance.write(PlebzPrefs.showCatalogDetailFacts, false);
     await _pumpDetail(tester, source, item: item);
 
     expect(find.text('Original Fact Title'), findsNothing);
@@ -2052,7 +2071,7 @@ void main() {
     expect(find.text('A. Director'), findsOneWidget);
 
     // The page reacts to the switch without being reopened.
-    await SettingsService.instance.write(SettingsService.showCatalogDetailFacts, true);
+    await SettingsService.instance.write(PlebzPrefs.showCatalogDetailFacts, true);
     await tester.pumpAndSettle();
 
     expect(find.text('Original Fact Title'), findsOneWidget);
@@ -2074,7 +2093,7 @@ void main() {
     );
     final source = _FakeCatalogSource(detail: CatalogDetail(item: item));
 
-    await SettingsService.instance.write(SettingsService.showCatalogDetailCrew, false);
+    await SettingsService.instance.write(PlebzPrefs.showCatalogDetailCrew, false);
     await _pumpDetail(tester, source, item: item);
 
     expect(find.text(t.explore.detail.crew), findsNothing);
@@ -2084,7 +2103,7 @@ void main() {
     expect(find.text('Overview stays visible'), findsOneWidget);
     expect(find.text('Original Fact Title'), findsOneWidget);
 
-    await SettingsService.instance.write(SettingsService.showCatalogDetailCrew, true);
+    await SettingsService.instance.write(PlebzPrefs.showCatalogDetailCrew, true);
     await tester.pumpAndSettle();
 
     expect(find.text(t.explore.detail.crew), findsOneWidget);
@@ -2103,7 +2122,7 @@ void main() {
 
     await _pumpDetail(tester, source, item: item);
 
-    expect(SettingsService.instance.read(SettingsService.showCatalogDetailFacts), isTrue);
+    expect(SettingsService.instance.read(PlebzPrefs.showCatalogDetailFacts), isTrue);
     expect(find.text('Original Fact Title'), findsOneWidget);
   });
 

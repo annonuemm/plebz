@@ -604,7 +604,7 @@ List<FocusableAction> buildSyncRuleActions(
   if (PlatformDetector.isAppleTV()) return const [];
   // The switch hides every way to start a download; an existing rule keeps
   // its manage/remove entries so nothing becomes unreachable.
-  final allowNewDownload = SettingsService.instance.read(SettingsService.showDownloadAction);
+  final allowNewDownload = SettingsService.instance.read(PlebzPrefs.showDownloadAction);
   return [
     if (showDownload && (hasRule || allowNewDownload))
       FocusableAction(

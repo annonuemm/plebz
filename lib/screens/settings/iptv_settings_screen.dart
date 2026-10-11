@@ -76,31 +76,31 @@ class IptvSettingsScreen extends StatelessWidget {
               SettingsGroup(
                 children: [
                   SettingSwitchTile(
-                    pref: SettingsService.iptvMergeDuplicateChannels,
+                    pref: PlebzPrefs.iptvMergeDuplicateChannels,
                     icon: Symbols.merge_rounded,
                     title: t.iptv.mergeDuplicatesLabel,
                     subtitle: t.iptv.mergeDuplicatesDescription,
                   ),
                   SettingSwitchTile(
-                    pref: SettingsService.iptvHideGroupCountryPrefix,
+                    pref: PlebzPrefs.iptvHideGroupCountryPrefix,
                     icon: Symbols.label_off_rounded,
                     title: t.iptv.hideGroupCountryPrefixLabel,
                     subtitle: t.iptv.hideGroupCountryPrefixDescription,
                   ),
                   SettingSwitchTile(
-                    pref: SettingsService.iptvPublicLogoFallback,
+                    pref: PlebzPrefs.iptvPublicLogoFallback,
                     icon: Symbols.image_search_rounded,
                     title: t.iptv.publicLogoFallbackLabel,
                     subtitle: t.iptv.publicLogoFallbackDescription,
                   ),
                   SettingSwitchTile(
-                    pref: SettingsService.iptvBrightenDarkLogos,
+                    pref: PlebzPrefs.iptvBrightenDarkLogos,
                     icon: Symbols.brightness_high_rounded,
                     title: t.iptv.brightenDarkLogosLabel,
                     subtitle: t.iptv.brightenDarkLogosDescription,
                   ),
                   SettingSelectionTile<int>(
-                    pref: SettingsService.iptvRefreshIntervalDays,
+                    pref: PlebzPrefs.iptvRefreshIntervalDays,
                     icon: Symbols.update_rounded,
                     title: t.iptv.refreshIntervalLabel,
                     subtitleBuilder: _refreshIntervalLabel,
@@ -194,7 +194,7 @@ class _LiveTvSettings extends StatelessWidget {
       prefs: const [
         ...livePictureSettingPrefs,
         SettingsService.useExoPlayer,
-        SettingsService.iptvPlayerBackend,
+        PlebzPrefs.iptvPlayerBackend,
         SettingsService.matchContentFrameRate,
         SettingsService.tunneledPlayback,
       ],
@@ -211,7 +211,7 @@ class _LiveTvSettings extends StatelessWidget {
         final playback = <Widget>[
           if (hasIptv)
             SettingSelectionTile<IptvPlayerChoice>(
-              pref: SettingsService.iptvPlayerBackend,
+              pref: PlebzPrefs.iptvPlayerBackend,
               icon: Symbols.live_tv_rounded,
               title: t.settings.iptvPlayerBackend,
               subtitleBuilder: (choice) => '${_playerChoiceLabel(choice)} · ${t.settings.iptvPlayerBackendDescription}',
@@ -223,7 +223,7 @@ class _LiveTvSettings extends StatelessWidget {
           ...livePictureSettingTiles(),
           if (androidTv && svc.read(SettingsService.matchContentFrameRate))
             SettingSwitchTile(
-              pref: SettingsService.matchContentFrameRateLiveTv,
+              pref: PlebzPrefs.matchContentFrameRateLiveTv,
               icon: Symbols.display_settings_rounded,
               title: t.settings.matchContentFrameRateLiveTv,
               subtitle: t.settings.matchContentFrameRateLiveTvDescription,
@@ -231,7 +231,7 @@ class _LiveTvSettings extends StatelessWidget {
             ),
           if (exoInUse && !PlatformDetector.isMobile(context) && svc.read(SettingsService.tunneledPlayback))
             SettingSwitchTile(
-              pref: SettingsService.tunneledPlaybackLiveTv,
+              pref: PlebzPrefs.tunneledPlaybackLiveTv,
               icon: Symbols.tv_options_input_settings_rounded,
               title: t.settings.tunneledPlaybackLiveTv,
               subtitle: t.settings.tunneledPlaybackLiveTvDescription,
@@ -252,7 +252,7 @@ class _LiveTvSettings extends StatelessWidget {
                   subtitle: t.settings.liveTvDefaultFavoritesDescription,
                 ),
                 SettingSwitchTile(
-                  pref: SettingsService.liveTvGuideTimeNavigation,
+                  pref: PlebzPrefs.liveTvGuideTimeNavigation,
                   icon: Symbols.schedule_rounded,
                   title: t.settings.liveTvGuideTimeNavigation,
                   subtitle: t.settings.liveTvGuideTimeNavigationDescription,
@@ -369,7 +369,7 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
   /// form. Paired everywhere with [TvTextInputAutoOpenBehavior.never]: a
   /// keyboard that opens by itself when focus arrives makes the form
   /// untraversable, so it waits for the select button.
-  bool get _usesSystemKeyboard => SettingsService.instance.read(SettingsService.useSystemTvKeyboard);
+  bool get _usesSystemKeyboard => SettingsService.instance.read(PlebzPrefs.useSystemTvKeyboard);
 
   TvTextInputPresentation get _keyboard =>
       _usesSystemKeyboard ? TvTextInputPresentation.platform : TvTextInputPresentation.flutterOverlay;

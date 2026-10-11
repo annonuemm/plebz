@@ -22,14 +22,14 @@ Color? logoToneTargetFor({required Color surface, required Color foreground}) {
 
 /// Remap target for a *channel* logo over [surface]: what [logoToneTargetFor]
 /// gives, and — where the viewer switched it on
-/// ([SettingsService.iptvBrightenDarkLogos]) — on a dark surface the light
+/// ([PlebzPrefs.iptvBrightenDarkLogos]) — on a dark surface the light
 /// foreground too, so a dark silhouette ([isDarkSilhouette]: a black or navy
 /// wordmark on transparency, which guides link from Wikipedia) is drawn light
 /// instead of vanishing into the tile. A matter of taste, hence the switch.
 /// Channel logos only: a film's title logo is part of its artwork and keeps
 /// its colours.
 Color? channelLogoToneTargetFor({required Color surface, required Color foreground}) {
-  final brighten = SettingsService.instanceOrNull?.read(SettingsService.iptvBrightenDarkLogos) ?? false;
+  final brighten = SettingsService.instanceOrNull?.read(PlebzPrefs.iptvBrightenDarkLogos) ?? false;
   return brighten ? foreground : logoToneTargetFor(surface: surface, foreground: foreground);
 }
 

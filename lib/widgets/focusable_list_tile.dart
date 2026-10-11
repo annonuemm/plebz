@@ -5,6 +5,7 @@ import '../focus/input_mode_tracker.dart';
 import '../focus/focus_theme.dart';
 import '../theme/mono_tokens.dart';
 import '../redesign/ocker_skin.dart';
+import '../redesign/ocker_text_stroke.dart';
 import '../focus/focusable_tile_mixin.dart';
 import '../utils/platform_detector.dart';
 import 'clickable_cursor.dart';
@@ -170,27 +171,17 @@ Widget _ockerRowMark(
             ),
           ),
         ),
-        // Flat focus is a white fill: the row's words turn dark on it.
-        OckerFlatFocusInk(invert: showFocus, child: tile),
-        if (flat && selected)
-          Positioned(
-            left: 6 * scale,
-            top: 0,
-            bottom: 0,
-            child: IgnorePointer(
-              child: Center(
-                child: Container(
-                  key: flatSelectedStrokeKey,
-                  width: math.max(3 * scale, 2),
-                  height: 24 * scale,
-                  decoration: BoxDecoration(
-                    color: tokens(context).accent,
-                    borderRadius: BorderRadius.circular(3 * scale),
-                  ),
-                ),
-              ),
-            ),
-          ),
+        // Flat focus is a white fill: the row's words turn dark on it. The
+        // stroke beside the row on show stands outside it, in the accent.
+        OckerTextStroke(
+          show: flat && selected,
+          strokeKey: flatSelectedStrokeKey,
+          left: 6 * scale,
+          width: math.max(3 * scale, 2),
+          fallbackHeight: 24 * scale,
+          colour: tokens(context).accent,
+          child: OckerFlatFocusInk(invert: showFocus, child: tile),
+        ),
       ],
     );
   }

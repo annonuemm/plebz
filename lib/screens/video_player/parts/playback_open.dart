@@ -183,16 +183,16 @@ extension _VideoPlayerOpenMethods on VideoPlayerScreenState {
   }) {
     if (!Platform.isAndroid) return false;
     // Live TV has its own answer for the cadence half — see
-    // [SettingsService.matchContentFrameRateFor].
+    // [PlebzPrefs.matchContentFrameRateFor].
     final rateEligible = _matchesFrameRate(settingsService) && fps != null && fps > 0;
     final resolutionEligible = _matchesDisplayResolution(settingsService) && width > 0 && height > 0;
     return rateEligible || resolutionEligible;
   }
 
-  bool _matchesFrameRate(SettingsService settingsService) => SettingsService.matchContentFrameRateFor(
+  bool _matchesFrameRate(SettingsService settingsService) => PlebzPrefs.matchContentFrameRateFor(
     isLive: widget.isLive,
     enabled: settingsService.read(SettingsService.matchContentFrameRate),
-    enabledForLiveTv: settingsService.read(SettingsService.matchContentFrameRateLiveTv),
+    enabledForLiveTv: settingsService.read(PlebzPrefs.matchContentFrameRateLiveTv),
   );
 
   /// Live TV leaves the resolution alone while the guide's preview may grow
@@ -200,8 +200,8 @@ extension _VideoPlayerOpenMethods on VideoPlayerScreenState {
   /// out right where the picture was meant to carry on.
   bool _matchesDisplayResolution(SettingsService settingsService) =>
       Platform.isAndroid &&
-      settingsService.read(SettingsService.matchDisplayResolution) &&
-      !(widget.isLive && settingsService.read(SettingsService.liveTvSeamlessFullscreen));
+      settingsService.read(PlebzPrefs.matchDisplayResolution) &&
+      !(widget.isLive && settingsService.read(PlebzPrefs.liveTvSeamlessFullscreen));
 
   /// Resolve where a fresh open should start: explicit request → shuffle
   /// override → locally tracked offline progress → server view offset.
@@ -261,7 +261,7 @@ extension _VideoPlayerOpenMethods on VideoPlayerScreenState {
       final plan = _FrameRateStartupPlan(fps: null);
       final matchingEnabled =
           settingsService.read(SettingsService.matchContentFrameRate) ||
-          settingsService.read(SettingsService.matchDisplayResolution);
+          settingsService.read(PlebzPrefs.matchDisplayResolution);
       // Apple TV matching is a system setting (AVDisplayManager); the gate
       // only exists to keep playback from running through the HDMI blank.
       plan.needsFirstFrameSwitch = hasVideoUrl && (!isAndroidMpv || matchingEnabled);

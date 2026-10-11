@@ -104,9 +104,7 @@ class CatalogSourcesProvider extends ChangeNotifier with DisposableChangeNotifie
   // A profile that keeps its progress in Simkl keeps its watchlist there too
   // (fork addition): the Plex account's list belongs to whoever shares the
   // account, so it is neither shown nor offered to add to.
-  final Listenable? _profileProgressChoice = SettingsService.instanceOrNull?.listenable(
-    SettingsService.simklLedProfiles,
-  );
+  final Listenable? _profileProgressChoice = SettingsService.instanceOrNull?.listenable(PlebzPrefs.simklLedProfiles);
 
   void _onProfileProgressChoice() {
     _invalidateWatchlistCandidates();
@@ -116,7 +114,7 @@ class CatalogSourcesProvider extends ChangeNotifier with DisposableChangeNotifie
   /// Whether the active profile's watchlist is Simkl's rather than Plex's.
   bool get plexWatchlistSetAside =>
       connectedSources.any((source) => source.id == CatalogSourceId.simkl) &&
-      (SettingsService.instanceOrNull?.read(SettingsService.simklLedProfiles).contains(_activeUserUuid) ?? false);
+      (SettingsService.instanceOrNull?.read(PlebzPrefs.simklLedProfiles).contains(_activeUserUuid) ?? false);
 
   bool _keepsWatchlist(CatalogSource source) =>
       source.supportsWatchlist && !(source.id == CatalogSourceId.plex && plexWatchlistSetAside);

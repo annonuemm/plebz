@@ -242,6 +242,7 @@ class TvBrowseRailLayout {
     double tallPosterScale = 1.0,
     double widePosterScale = 1.0,
     bool hasLeading = false,
+    bool twoLineLiveCaption = false,
   }) {
     final focusExtra = FocusTheme.focusBorderWidth * 2 * scale;
     final railEdgePadding = railEdgePaddingForScale(scale);
@@ -305,10 +306,11 @@ class TvBrowseRailLayout {
     // A service tile carries no name under it — the logo is the name — and a
     // chip is nothing but its name, so neither row keeps height for one.
     // "Jetzt live" keeps its caption under full cards too: the pairing or the
-    // programme is what its tile says, not a label on a poster.
+    // programme is what its tile says, not a label on a poster. Under the
+    // redesigns it is two lines, the league or the channel under it.
     final labelHeight = ((fullCardLayout && !isLiveNowHub(hub)) || isPlatformHub || isChipHub)
         ? 0.0
-        : ((isPersonHub ? 52 : 36) * scale);
+        : ((isPersonHub ? 52 : (twoLineLiveCaption && isLiveNowHub(hub) ? 50 : 36)) * scale);
     final containerHeight = (posterHeight + labelHeight).ceilToDouble();
     final height = containerHeight + focusExtra + (10 * scale);
 
@@ -345,6 +347,7 @@ class TvBrowseRailLayout {
     GridSpacing gridSpacing = GridSpacing.tight,
     double tallPosterScale = 1.0,
     double widePosterScale = 1.0,
+    bool twoLineLiveCaption = false,
   }) {
     var maxHeight = 0.0;
     for (final hub in hubs) {
@@ -361,6 +364,7 @@ class TvBrowseRailLayout {
         gridSpacing: gridSpacing,
         tallPosterScale: tallPosterScale,
         widePosterScale: widePosterScaleForHub?.call(hub) ?? widePosterScale,
+        twoLineLiveCaption: twoLineLiveCaption,
       );
       if (metrics.height > maxHeight) maxHeight = metrics.height;
     }
@@ -476,6 +480,7 @@ class TvBrowseRailLayout {
     GridSpacing gridSpacing = GridSpacing.tight,
     double tallPosterScale = 1.0,
     double widePosterScale = 1.0,
+    bool twoLineLiveCaption = false,
   }) {
     if (hubs.isEmpty) return 0;
 
@@ -496,6 +501,7 @@ class TvBrowseRailLayout {
       gridSpacing: gridSpacing,
       tallPosterScale: tallPosterScale,
       widePosterScale: widePosterScale,
+      twoLineLiveCaption: twoLineLiveCaption,
     );
 
     final sectionHeight = hubSectionHeightFor(scale: scale, activeRailHeight: railHeight);
@@ -1472,6 +1478,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                 tallPosterScale: widget.tallPosterScale,
                 widePosterScale: wideScales[i],
                 hasLeading: _hasLeadingFor(widget.hubs[i]),
+                twoLineLiveCaption: ockerGlass(context),
               ),
           ];
           final sectionHeights = [
@@ -2138,7 +2145,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
         cardHeight: metrics.posterHeight,
         captionHeight: metrics.containerHeight - metrics.posterHeight,
         scale: scale,
-        card: (card) => CardFocusBorder(borderRadius: 8 * scale, child: card),
+        card: (card) => CardFocusBorder(borderRadius: liveNowTileRadius(context, scale), child: card),
       );
     }
     if (metrics.isBrandHub) {

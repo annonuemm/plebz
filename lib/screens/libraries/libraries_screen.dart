@@ -51,7 +51,7 @@ List<LibraryTabType> visibleLibraryTabs(MediaLibrary library) {
   // Switched off, the Playlists tab goes entirely rather than showing empty:
   // a destination that never has anything in it costs a place on the row and
   // a press to find that out.
-  final playlists = SettingsService.instanceOrNull?.read(SettingsService.showLibraryPlaylistsTab) ?? true;
+  final playlists = SettingsService.instanceOrNull?.read(PlebzPrefs.showLibraryPlaylistsTab) ?? true;
   if (library.isShared) return [LibraryTabType.browse, if (playlists) LibraryTabType.playlists];
   return [
     for (final tab in LibraryTabType.values)

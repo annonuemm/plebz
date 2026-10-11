@@ -32,7 +32,7 @@ class _TrackerProgressBinderState extends State<TrackerProgressBinder> {
   void initState() {
     super.initState();
     final settings = SettingsService.instanceOrNull;
-    _choice = settings?.listenable(SettingsService.simklLedProfiles);
+    _choice = settings?.listenable(PlebzPrefs.simklLedProfiles);
     _choice?.addListener(_onChoice);
   }
 
@@ -51,7 +51,7 @@ class _TrackerProgressBinderState extends State<TrackerProgressBinder> {
     final profileId = context.watch<ActiveProfileProvider?>()?.activeId;
     final simkl = context.watch<TrackersProvider?>()?.simklCatalogClient;
     final multiServer = context.watch<MultiServerProvider?>();
-    final led = SettingsService.instanceOrNull?.read(SettingsService.simklLedProfiles) ?? const [];
+    final led = SettingsService.instanceOrNull?.read(PlebzPrefs.simklLedProfiles) ?? const [];
     final trackerLed = profileId != null && led.contains(profileId);
 
     final servers = <String, ExternalIdIndexClient>{};

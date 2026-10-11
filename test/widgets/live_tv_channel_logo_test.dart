@@ -183,7 +183,7 @@ void main() {
         .firstOrNull;
 
     testWidgets('switched on, a channel with no logo that loads takes the collection\'s', (tester) async {
-      await SettingsService.instance.write(SettingsService.iptvPublicLogoFallback, true);
+      await SettingsService.instance.write(PlebzPrefs.iptvPublicLogoFallback, true);
       PublicLogoIndex.instance.debugUse(paths);
 
       await pumpLogo(tester, dmax);
@@ -201,7 +201,7 @@ void main() {
     });
 
     testWidgets('a server\'s channel is not an IPTV channel and is left alone', (tester) async {
-      await SettingsService.instance.write(SettingsService.iptvPublicLogoFallback, true);
+      await SettingsService.instance.write(PlebzPrefs.iptvPublicLogoFallback, true);
       PublicLogoIndex.instance.debugUse(paths);
 
       await pumpLogo(tester, LiveTvChannel(key: 'channel/7', title: 'DMAX HD', serverId: 'plex-1'));

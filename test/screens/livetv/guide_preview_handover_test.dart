@@ -9,9 +9,10 @@ import 'package:plezy/services/iptv/iptv_live_tv_source.dart';
 import 'package:plezy/services/live_picture_handover.dart';
 import 'package:plezy/widgets/video_surface_hole.dart';
 
-/// A playing picture whose output can leave its texture, as both Android
-/// backends' can; just enough of a player for the preview box to draw it.
-class _PicturePlayer implements Player, VideoOutputHandover, VideoTextureTarget {
+/// A playing picture in a texture on one of the Android backends, both of
+/// which can also place their picture on the video plane; just enough of a
+/// player for the preview box to draw it.
+class _PicturePlayer implements Player, VideoViewportTarget, VideoTextureTarget {
   bool _disposed = false;
 
   @override
@@ -21,7 +22,13 @@ class _PicturePlayer implements Player, VideoOutputHandover, VideoTextureTarget 
   Future<void> dispose({bool preserveDisplayMode = false}) async => _disposed = true;
 
   @override
-  bool get rendersToTexture => true;
+  bool get followsVideoRect => false;
+
+  @override
+  bool videoRectDriven = false;
+
+  @override
+  Future<void> driveVideoRect({required int left, required int top, required int right, required int bottom}) async {}
 
   @override
   final ValueListenable<int?> videoTextureId = ValueNotifier<int?>(null);
@@ -57,18 +64,9 @@ class _PicturePlayer implements Player, VideoOutputHandover, VideoTextureTarget 
 }
 
 /// The same picture on the video plane, in a box behind the guide.
-class _PlanePicturePlayer extends _PicturePlayer implements VideoViewportTarget {
-  @override
-  bool get rendersToTexture => false;
-
+class _PlanePicturePlayer extends _PicturePlayer {
   @override
   bool get followsVideoRect => true;
-
-  @override
-  bool videoRectDriven = false;
-
-  @override
-  Future<void> driveVideoRect({required int left, required int top, required int right, required int bottom}) async {}
 }
 
 final _channel = LiveTvChannel(key: 'iptv-1', identifier: 'das-erste', callSign: 'Das Erste HD');

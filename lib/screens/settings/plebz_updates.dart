@@ -34,11 +34,11 @@ Future<void> maybeShowPlebzUpdatedNotice(
   final settings = SettingsService.instance;
   final current = await (installed ?? _installedVersion)();
   if (current == null) return;
-  final lastSeen = settings.read(SettingsService.plebzLastSeenBuild);
+  final lastSeen = settings.read(PlebzPrefs.plebzLastSeenBuild);
   if (lastSeen == current.build) return;
-  await settings.write(SettingsService.plebzLastSeenBuild, current.build);
+  await settings.write(PlebzPrefs.plebzLastSeenBuild, current.build);
   if (lastSeen > current.build) return;
-  if (lastSeen == 0 && !settings.read(SettingsService.onboardingCompleted)) return;
+  if (lastSeen == 0 && !settings.read(PlebzPrefs.onboardingCompleted)) return;
   if (!context.mounted) return;
   appLogger.i('Plebz: first start of build ${current.build} (last seen $lastSeen)');
   final notes = plebzWhatsNewSince(await (whatsNew ?? loadPlebzWhatsNew)(), lastSeen: lastSeen, current: current.build);
@@ -81,7 +81,7 @@ Future<({String version, int build})?> _installedVersion() async {
 Future<void> maybeCheckPlebzUpdateOnStartup(BuildContext context) async {
   if (!plebzUpdatesAvailable) return;
   // Not over the first-run setup; the next start asks.
-  if (!SettingsService.instance.read(SettingsService.onboardingCompleted)) return;
+  if (!SettingsService.instance.read(PlebzPrefs.onboardingCompleted)) return;
   if (!SettingsService.instance.read(SettingsService.autoCheckUpdatesOnStartup)) return;
   await checkForPlebzUpdate(context, userInitiated: false);
 }

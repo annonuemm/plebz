@@ -47,19 +47,10 @@ void main() {
       expect(PlebzUpdateService.buildNumberOf('v1.0.1'), isNull);
     });
 
-    test('the dialog gets the German notes hidden behind the English ones', () {
-      const body =
-          '**Plebz 1.4.0 is an update.**\n\n- English\n\n<!-- de\n**Plebz 1.4.0 ist ein Update.**\n\n- Deutsch\n-->';
-      final release = PlebzUpdateService.parseRelease({..._releaseJson(), 'body': body})!;
-      expect(release.notes, '**Plebz 1.4.0 ist ein Update.**\n\n- Deutsch');
-      expect(release.notes, isNot(contains('English')));
-      expect(release.notes, isNot(contains('<!--')));
-    });
-
-    test('a body without hidden German is shown as it stands', () {
-      expect(PlebzUpdateService.notesForApp('- Fixes'), '- Fixes');
-      expect(PlebzUpdateService.notesForApp('- English only\n<!-- note -->'), '- English only\n<!-- note -->');
-      expect(PlebzUpdateService.notesForApp('a\r\n<!-- de\r\n- Deutsch\r\n-->'), '- Deutsch');
+    test('a release body reaches the dialog as it stands; none is no notes', () {
+      expect(PlebzUpdateService.parseRelease({..._releaseJson(), 'body': '- Fixes'})!.notes, '- Fixes');
+      expect(PlebzUpdateService.parseRelease({..._releaseJson(), 'body': ''})!.notes, isEmpty);
+      expect(PlebzUpdateService.parseRelease({..._releaseJson()}..remove('body'))!.notes, isEmpty);
     });
 
     test('newer means a higher build number, whatever the version name says', () {
@@ -322,16 +313,16 @@ void main() {
     String body(int build) => t.plebz.updatedBody(version: '1.1.0', build: build);
 
     testWidgets('the first start of a newer build says which one is installed', (tester) async {
-      await SettingsService.instance.write(SettingsService.plebzLastSeenBuild, 557);
+      await SettingsService.instance.write(PlebzPrefs.plebzLastSeenBuild, 557);
       await start(tester, build: 558);
 
       expect(find.text(t.plebz.updatedTitle), findsOneWidget);
       expect(find.text(body(558)), findsOneWidget);
-      expect(SettingsService.instance.read(SettingsService.plebzLastSeenBuild), 558);
+      expect(SettingsService.instance.read(PlebzPrefs.plebzLastSeenBuild), 558);
     });
 
     testWidgets('with what is new since the build last started, a skipped release included', (tester) async {
-      await SettingsService.instance.write(SettingsService.plebzLastSeenBuild, 556);
+      await SettingsService.instance.write(PlebzPrefs.plebzLastSeenBuild, 556);
       await start(
         tester,
         build: 558,
@@ -355,7 +346,7 @@ void main() {
     });
 
     testWidgets('and says it once', (tester) async {
-      await SettingsService.instance.write(SettingsService.plebzLastSeenBuild, 558);
+      await SettingsService.instance.write(PlebzPrefs.plebzLastSeenBuild, 558);
       await start(tester, build: 558);
 
       expect(find.text(t.plebz.updatedTitle), findsNothing);
@@ -365,15 +356,11 @@ void main() {
       await start(tester, build: 558);
 
       expect(find.text(t.plebz.updatedTitle), findsNothing);
-      expect(
-        SettingsService.instance.read(SettingsService.plebzLastSeenBuild),
-        558,
-        reason: 'remembered for next time',
-      );
+      expect(SettingsService.instance.read(PlebzPrefs.plebzLastSeenBuild), 558, reason: 'remembered for next time');
     });
 
     testWidgets('an app set up before this notice existed was updated', (tester) async {
-      await SettingsService.instance.write(SettingsService.onboardingCompleted, true);
+      await SettingsService.instance.write(PlebzPrefs.onboardingCompleted, true);
       await start(tester, build: 558);
 
       expect(find.text(t.plebz.updatedTitle), findsOneWidget);

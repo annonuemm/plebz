@@ -41,13 +41,13 @@ class PlaybackSettingsScreen extends StatelessWidget {
     return SettingsBuilder(
       prefs: const [
         SettingsService.useExoPlayer,
-        SettingsService.iptvPlayerBackend,
+        PlebzPrefs.iptvPlayerBackend,
         SettingsService.matchRefreshRate,
         SettingsService.matchDynamicRange,
         SettingsService.matchContentFrameRate,
-        SettingsService.matchDisplayResolution,
+        PlebzPrefs.matchDisplayResolution,
         SettingsService.audioChannelLimit,
-        SettingsService.disableDolbyVision,
+        PlebzPrefs.disableDolbyVision,
       ],
       builder: (context) {
         final svc = SettingsService.instance;
@@ -71,13 +71,13 @@ class PlaybackSettingsScreen extends StatelessWidget {
         // (and shows) as Original there.
         final storedChannelLimit = svc.read(SettingsService.audioChannelLimit);
         final channelLimit = exoActive ? storedChannelLimit.onExoPlayer : storedChannelLimit;
-        final dolbyVisionOff = svc.read(SettingsService.disableDolbyVision);
+        final dolbyVisionOff = svc.read(PlebzPrefs.disableDolbyVision);
         final showDisplaySwitchDelay =
             PlatformDetector.isAppleTV() ||
             (Platform.isWindows &&
                 (svc.read(SettingsService.matchRefreshRate) || svc.read(SettingsService.matchDynamicRange))) ||
             (androidTv &&
-                (svc.read(SettingsService.matchContentFrameRate) || svc.read(SettingsService.matchDisplayResolution)));
+                (svc.read(SettingsService.matchContentFrameRate) || svc.read(PlebzPrefs.matchDisplayResolution)));
 
         return SettingsPage(
           title: Text(t.settings.videoPlayback),
@@ -377,7 +377,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
       // auto-play. Same switch either way — it belongs with the credits
       // options too, because that is the marker it rides on.
       SettingSwitchTile(
-        pref: SettingsService.showUpNextPanel,
+        pref: PlebzPrefs.showUpNextPanel,
         icon: Symbols.featured_video_rounded,
         title: t.settings.showUpNextPanel,
         subtitle: t.settings.showUpNextPanelDescription,
@@ -516,7 +516,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
   );
 
   Widget _matchDisplayResolutionTile() => SettingSwitchTile(
-    pref: SettingsService.matchDisplayResolution,
+    pref: PlebzPrefs.matchDisplayResolution,
     icon: Symbols.aspect_ratio_rounded,
     title: t.settings.matchDisplayResolution,
     subtitle: t.settings.matchDisplayResolutionDescription,
@@ -613,7 +613,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
   );
 
   Widget _disableDolbyVisionTile() => SettingSwitchTile(
-    pref: SettingsService.disableDolbyVision,
+    pref: PlebzPrefs.disableDolbyVision,
     icon: Symbols.hdr_off_rounded,
     title: t.settings.disableDolbyVision,
     subtitle: t.settings.disableDolbyVisionDescription,
@@ -709,7 +709,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
   // direct-play-vs-transcode call server-side (#2152, #2193).
   /// Which copy the Explore detail page's button opens (Plebz).
   Widget _bestCopyPreferenceTile() => SettingSelectionTile<BestCopyPreference>(
-    pref: SettingsService.bestCopyPreference,
+    pref: PlebzPrefs.bestCopyPreference,
     icon: Symbols.workspace_premium_rounded,
     title: t.settings.bestCopy,
     subtitleBuilder: (preference) => '${_bestCopyLabel(preference)} · ${t.settings.bestCopyDescription}',

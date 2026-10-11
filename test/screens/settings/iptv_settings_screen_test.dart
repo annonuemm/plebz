@@ -66,7 +66,7 @@ void main() {
 
   testWidgets("focus alone leaves Plebz's keyboard closed", (tester) async {
     final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.useSystemTvKeyboard, false);
+    await settings.write(PlebzPrefs.useSystemTvKeyboard, false);
 
     await pumpEditor(tester, source: _existing);
 
@@ -97,7 +97,7 @@ void main() {
 
   testWidgets("Plebz's own keyboard takes over when the setting says so", (tester) async {
     final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.useSystemTvKeyboard, false);
+    await settings.write(PlebzPrefs.useSystemTvKeyboard, false);
 
     await pumpEditor(tester, source: _existing);
 
@@ -223,9 +223,9 @@ void main() {
 
     expect(find.text(t.settings.liveTv), findsOneWidget);
     expect(find.text(t.settings.liveTvDefaultFavorites), findsOneWidget);
-    final before = SettingsService.instance.read(SettingsService.liveTvGuideTimeNavigation);
+    final before = SettingsService.instance.read(PlebzPrefs.liveTvGuideTimeNavigation);
     await tester.tap(find.text(t.settings.liveTvGuideTimeNavigation));
     await tester.pumpAndSettle();
-    expect(SettingsService.instance.read(SettingsService.liveTvGuideTimeNavigation), !before);
+    expect(SettingsService.instance.read(PlebzPrefs.liveTvGuideTimeNavigation), !before);
   });
 }

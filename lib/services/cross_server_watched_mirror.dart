@@ -72,7 +72,7 @@ class CrossServerWatchedMirror {
     };
     if (watched == null) return;
     if (_consumeSelfWrite(event.globalKey)) return;
-    if (!(SettingsService.instanceOrNull?.read(SettingsService.mirrorWatchedAcrossServers) ?? false)) return;
+    if (!(SettingsService.instanceOrNull?.read(PlebzPrefs.mirrorWatchedAcrossServers) ?? false)) return;
     // A tracker keeps this profile's marks across every server already, and
     // the servers' own state is not its to write (fork addition).
     if (!ProgressRouting.instance.serverKeepsWatchState) return;

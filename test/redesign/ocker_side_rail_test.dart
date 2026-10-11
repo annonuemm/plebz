@@ -60,6 +60,7 @@ void main() {
       NavigationTabId selectedTab = NavigationTabId.libraries,
       OckerRailMenu? menu,
       bool settle = true,
+      List<NavigationTab>? railTabs,
     }) async {
       tvView(tester);
       final selected = <NavigationTabId>[];
@@ -75,7 +76,7 @@ void main() {
                 height: 720,
                 child: OckerSideRail(
                   key: key,
-                  tabs: tabs,
+                  tabs: railTabs ?? tabs,
                   selectedTab: selectedTab,
                   expanded: expanded,
                   onDestinationSelected: selected.add,
@@ -370,6 +371,28 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.select);
         await tester.pumpAndSettle();
         expect(find.text('Durchsuchen'), findsOneWidget, reason: 'and back');
+      });
+
+      testWidgets('Live-TV, Erkunden and Sport keep theirs folded until pressed, and fold again once left', (
+        tester,
+      ) async {
+        final all = NavigationTab.getVisibleTabs(isOffline: false, hasLiveTv: true, hasExplore: true, showSport: true);
+        for (final id in [NavigationTabId.liveTv, NavigationTabId.explore, NavigationTabId.sport]) {
+          final key = GlobalKey<OckerSideRailState>();
+          await pumpRail(tester, key: key, selectedTab: id, menu: menu(), railTabs: all);
+          expect(find.text('Durchsuchen'), findsNothing, reason: '${id.name}: seldom wanted, so folded');
+
+          key.currentState!.focusTab(id);
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.select);
+          await tester.pumpAndSettle();
+          expect(find.text('Durchsuchen'), findsOneWidget, reason: '${id.name}: a press unfolds them');
+
+          // Another destination chosen, and this one again: folded once more.
+          await pumpRail(tester, key: key, selectedTab: NavigationTabId.libraries, menu: menu(), railTabs: all);
+          await pumpRail(tester, key: key, selectedTab: id, menu: menu(), railTabs: all);
+          expect(find.text('Durchsuchen'), findsNothing, reason: '${id.name}: folded again');
+        }
       });
 
       testWidgets('SELECT on a row does what choosing it in the sheet did', (tester) async {

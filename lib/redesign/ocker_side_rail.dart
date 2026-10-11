@@ -124,8 +124,20 @@ class OckerSideRailState extends State<OckerSideRail> {
   /// for as long as the app runs, as the standard rail keeps its sections.
   final Set<NavigationTabId> _folded = {};
 
+  /// Destinations whose rows stay folded until asked for (Plebz, the user's
+  /// call): what Live-TV, Erkunden and Sport list under them is seldom wanted,
+  /// so a press on the destination unfolds it, and choosing another folds it
+  /// again. The libraries' and the watchlist's views stay open — choosing
+  /// one is what those destinations are for.
+  static const _foldedUntilAsked = {NavigationTabId.liveTv, NavigationTabId.explore, NavigationTabId.sport};
+
+  /// Of those, the one unfolded by a press since it was chosen.
+  final Set<NavigationTabId> _unfolded = {};
+
+  bool _isFolded(NavigationTabId id) => _foldedUntilAsked.contains(id) ? !_unfolded.contains(id) : _folded.contains(id);
+
   /// The rows showing under the destination on show, if any.
-  OckerRailMenu? get _openMenu => _folded.contains(widget.selectedTab) ? null : _menu;
+  OckerRailMenu? get _openMenu => _isFolded(widget.selectedTab) ? null : _menu;
 
   FocusNode _nodeFor(NavigationTabId id) =>
       _nodes.putIfAbsent(id, () => FocusNode(debugLabel: 'ocker_side_rail_${id.name}'));
@@ -163,6 +175,7 @@ class OckerSideRailState extends State<OckerSideRail> {
     for (final id in _nodes.keys.where((id) => !ids.contains(id)).toList()) {
       _nodes.remove(id)?.dispose();
     }
+    if (oldWidget.selectedTab != widget.selectedTab) _unfolded.clear();
   }
 
   @override
@@ -247,7 +260,10 @@ class OckerSideRailState extends State<OckerSideRail> {
   /// already does, and no way at all to put the rows away.
   void _select(NavigationTabId id) {
     if (id == widget.selectedTab && _menu != null) {
-      setState(() => _folded.contains(id) ? _folded.remove(id) : _folded.add(id));
+      setState(() {
+        final toggled = _foldedUntilAsked.contains(id) ? _unfolded : _folded;
+        toggled.contains(id) ? toggled.remove(id) : toggled.add(id);
+      });
       return;
     }
     if (id == widget.selectedTab && (widget.onReselect?.call(id) ?? false)) return;

@@ -381,10 +381,10 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
     if (settings == null) return;
     _yearFilterChanges = Listenable.merge([
       for (final pref in const [
-        SettingsService.yearFilterMovieFrom,
-        SettingsService.yearFilterMovieTo,
-        SettingsService.yearFilterShowFrom,
-        SettingsService.yearFilterShowTo,
+        PlebzPrefs.yearFilterMovieFrom,
+        PlebzPrefs.yearFilterMovieTo,
+        PlebzPrefs.yearFilterShowFrom,
+        PlebzPrefs.yearFilterShowTo,
       ])
         settings.listenableOf(pref),
     ])..addListener(_reloadForYearFilter);

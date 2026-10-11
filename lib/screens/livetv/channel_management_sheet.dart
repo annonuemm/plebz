@@ -22,8 +22,7 @@ import '../../widgets/overlay_sheet.dart';
 typedef ChannelGroupEntry = ({String key, String label, int count, int hiddenCount});
 
 /// Whether group names here read the way the group bar shows them.
-bool _hideGroupCountryPrefix() =>
-    SettingsService.instanceOrNull?.read(SettingsService.iptvHideGroupCountryPrefix) ?? false;
+bool _hideGroupCountryPrefix() => SettingsService.instanceOrNull?.read(PlebzPrefs.iptvHideGroupCountryPrefix) ?? false;
 
 /// Open the channel arrangement UI: groups first, each opening its channels.
 ///

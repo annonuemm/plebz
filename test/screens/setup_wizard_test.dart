@@ -48,19 +48,19 @@ void main() {
     expect(profileHasIptvSources('p'), isFalse);
     expect(profileHasIptvSources(null), isFalse);
 
-    await settings.write(SettingsService.iptvSourcesForProfile('p'), '[]');
+    await settings.write(PlebzPrefs.iptvSourcesForProfile('p'), '[]');
     expect(profileHasIptvSources('p'), isFalse);
 
-    await settings.write(SettingsService.iptvSourcesForProfile('p'), 'not json');
+    await settings.write(PlebzPrefs.iptvSourcesForProfile('p'), 'not json');
     expect(profileHasIptvSources('p'), isFalse);
 
-    await settings.write(SettingsService.iptvSourcesForProfile('p'), '[{"id":"src"}]');
+    await settings.write(PlebzPrefs.iptvSourcesForProfile('p'), '[{"id":"src"}]');
     expect(profileHasIptvSources('p'), isTrue);
     expect(profileHasIptvSources('someone-else'), isFalse);
   });
 
   test('the setup is not yet done on a fresh install', () {
-    expect(SettingsService.instance.read(SettingsService.onboardingCompleted), isFalse);
+    expect(SettingsService.instance.read(PlebzPrefs.onboardingCompleted), isFalse);
   });
 
   Future<void> pump(WidgetTester tester, Widget home, {IptvSourcesProvider? iptv}) async {
@@ -113,7 +113,7 @@ void main() {
     expect(find.text(t.plebz.addSourceFirst), findsOneWidget);
     final done = tester.widget<FilledButton>(find.widgetWithText(FilledButton, t.plebz.finish));
     expect(done.onPressed, isNull);
-    expect(SettingsService.instance.read(SettingsService.onboardingCompleted), isFalse);
+    expect(SettingsService.instance.read(PlebzPrefs.onboardingCompleted), isFalse);
   });
 
   testWidgets('the extras say how several viewers keep their own progress', (tester) async {
@@ -162,7 +162,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, t.plebz.finish));
     await tester.pumpAndSettle();
 
-    expect(SettingsService.instance.read(SettingsService.onboardingCompleted), isTrue);
+    expect(SettingsService.instance.read(PlebzPrefs.onboardingCompleted), isTrue);
     expect(find.text(t.plebz.extrasTitle), findsNothing);
   });
 }

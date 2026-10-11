@@ -13,6 +13,14 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.20.0 (Build 762)
+
+- Jetzt live: Die Spiel-Kacheln passen jetzt zu Glas und Flach und stehen in den Farben der beiden Vereine. Bei laufenden Spielen siehst du wieder den aktuellen Stand, unter der Kachel Liga und Anstoßzeit.
+- Sport: Der Spieltag sieht aus wie eine Anzeigetafel – Vereinsfarben an den Rändern, der Stand auf einer Tafel, laufende Spiele hervorgehoben. Die Tabelle zeigt farbig, wer oben und wer unten steht.
+- Neu: Lieblingsverein (Einstellungen → Darstellung → Navigation, unter Sport). Sein Spiel steht auf der Sportseite oben groß.
+- Seitenleiste: Live-TV, Erkunden und Sport klappen ihre Unterpunkte erst auf, wenn du auf OK drückst.
+- Flach: Die Markierung neben der gewählten Mediathek oder Gruppe sitzt auf Höhe des Textes.
+
 ## 1.19.1 (Build 753)
 
 - Darsteller-Seite: Am Rand des Poster-Rasters bleibt der Fokus jetzt im Raster. Vorher sprang die Seite beim Drücken nach links zurück nach oben.

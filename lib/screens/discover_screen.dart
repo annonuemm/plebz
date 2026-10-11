@@ -271,7 +271,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   /// The row's switch in the settings; off, nothing behind the row is loaded.
   ValueListenable<bool>? _showLiveNowListenable;
 
-  bool get _liveNowWanted => SettingsService.instanceOrNull?.read(SettingsService.showLiveNowRow) ?? true;
+  bool get _liveNowWanted => SettingsService.instanceOrNull?.read(PlebzPrefs.showLiveNowRow) ?? true;
 
   void _startLiveNow() {
     final multiServer = context.read<MultiServerProvider?>();
@@ -282,9 +282,9 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       multiServer: multiServer,
       finder: finder,
       iptv: context.read<IptvSourcesProvider?>(),
-      sportEnabled: () => SettingsService.instanceOrNull?.read(SettingsService.showSportTab) ?? false,
+      sportEnabled: () => SettingsService.instanceOrNull?.read(PlebzPrefs.showSportTab) ?? false,
     );
-    _showLiveNowListenable = SettingsService.instanceOrNull?.listenable(SettingsService.showLiveNowRow);
+    _showLiveNowListenable = SettingsService.instanceOrNull?.listenable(PlebzPrefs.showLiveNowRow);
     _showLiveNowListenable?.addListener(_onShowLiveNowChanged);
     _resumeLiveNow();
   }
@@ -1035,21 +1035,21 @@ class _DiscoverScreenState extends State<DiscoverScreen>
         // so the bar rebuilds when any of them is flipped.
         return SettingsBuilder(
           prefs: const [
-            SettingsService.showWatchTogetherAction,
-            SettingsService.showCompanionRemoteAction,
-            SettingsService.showServerActivitiesAction,
+            PlebzPrefs.showWatchTogetherAction,
+            PlebzPrefs.showCompanionRemoteAction,
+            PlebzPrefs.showServerActivitiesAction,
           ],
           builder: (context) {
             final settings = SettingsService.instance;
             return FocusableActionBar(
               key: _actionBarKey,
-              hideUntilFocused: settings.read(SettingsService.hideHomeActionsUntilFocus),
+              hideUntilFocused: settings.read(PlebzPrefs.hideHomeActionsUntilFocus),
               onNavigateLeft: _navigateToSidebar,
               onNavigateDown: _focusContentFromAppBar,
               actions: [
                 FocusableAction(icon: Symbols.refresh_rounded, iconColor: foregroundColor, onPressed: manualRefresh),
                 // Watch Together
-                if (watchTogetherAvailable && settings.read(SettingsService.showWatchTogetherAction))
+                if (watchTogetherAvailable && settings.read(PlebzPrefs.showWatchTogetherAction))
                   FocusableAction(
                     onPressed: openWatchTogether,
                     child: Stack(
@@ -1083,7 +1083,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                     ),
                   ),
                 // Companion Remote
-                if (settings.read(SettingsService.showCompanionRemoteAction))
+                if (settings.read(PlebzPrefs.showCompanionRemoteAction))
                   FocusableAction(
                     onPressed: openCompanionRemote,
                     child: Stack(
@@ -1118,7 +1118,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                 // Jellyfin equivalent), hide the button entirely on
                 // Jellyfin-only profiles so the chrome doesn't show
                 // a permanently empty popover.
-                if (settings.read(SettingsService.showServerActivitiesAction) &&
+                if (settings.read(PlebzPrefs.showServerActivitiesAction) &&
                     PlatformDetector.isDesktop(context) &&
                     context.select<MultiServerProvider, bool>((p) => p.hasOnlinePlexServers))
                   FocusableAction(

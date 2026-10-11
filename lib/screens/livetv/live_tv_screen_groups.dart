@@ -36,7 +36,7 @@ extension _LiveTvScreenFork on _LiveTvScreenState {
   /// Whether a provider's country prefix is left off the chips. Read on every
   /// build and watched below, so switching it takes effect without a reload.
   bool get _hideGroupCountryPrefix =>
-      SettingsService.instanceOrNull?.read(SettingsService.iptvHideGroupCountryPrefix) ?? false;
+      SettingsService.instanceOrNull?.read(PlebzPrefs.iptvHideGroupCountryPrefix) ?? false;
 
   /// What a group is called on screen: the name the user gave it, else the
   /// provider's own, with or without its country prefix.

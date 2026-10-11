@@ -584,7 +584,7 @@ class _ClearLogoImageState extends State<ClearLogoImage> {
   @override
   void initState() {
     super.initState();
-    _enabledListenable = SettingsService.instanceOrNull?.listenable(SettingsService.tmdbLogosEnabled);
+    _enabledListenable = SettingsService.instanceOrNull?.listenable(PlebzPrefs.tmdbLogosEnabled);
     _enabledListenable?.addListener(_onEnabledChanged);
     _resolveIfNeeded();
   }

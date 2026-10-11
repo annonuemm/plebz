@@ -41,7 +41,7 @@ import '../settings/tracker_service_info.dart';
 ///    the sign-in screen, which also offers "IPTV only" ([startIptvOnly]).
 /// 2. Inside the session, once there is a profile to hang things on:
 ///    [SetupExtrasScreen] — more sources, services, extras — pushed by the
-///    main screen while [SettingsService.onboardingCompleted] is unset.
+///    main screen while [PlebzPrefs.onboardingCompleted] is unset.
 ///
 /// From Settings, "Run setup again" walks the look and the extras once more.
 
@@ -58,7 +58,7 @@ EmptyStartRoute routeForEmptyStart({required bool onboardingCompleted, required 
 /// Whether [profileId] has at least one IPTV source stored.
 bool profileHasIptvSources(String? profileId) {
   if (profileId == null || profileId.trim().isEmpty) return false;
-  final raw = SettingsService.instance.read(SettingsService.iptvSourcesForProfile(profileId));
+  final raw = SettingsService.instance.read(PlebzPrefs.iptvSourcesForProfile(profileId));
   if (raw == null || raw.trim().isEmpty) return false;
   try {
     final decoded = jsonDecode(raw);
@@ -95,14 +95,14 @@ Future<void> startIptvOnly(BuildContext context) async {
   // Without a playlist yet, the session opens on the page that asks for one —
   // also when the setup was finished long ago and this comes from sign-in.
   if (!profileHasIptvSources(profile.id)) {
-    await SettingsService.instance.write(SettingsService.onboardingCompleted, false);
+    await SettingsService.instance.write(PlebzPrefs.onboardingCompleted, false);
   }
   await navigator.pushAndRemoveUntil(fadeRoute(const ProfileSessionScreen()), (_) => false);
 }
 
 /// Pushes the second half of the setup while it has not been finished.
 Future<void> maybeContinueSetup(BuildContext context) async {
-  if (SettingsService.instance.read(SettingsService.onboardingCompleted)) return;
+  if (SettingsService.instance.read(PlebzPrefs.onboardingCompleted)) return;
   await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SetupExtrasScreen()));
 }
 
@@ -201,7 +201,7 @@ class _SetupExtrasScreenState extends State<SetupExtrasScreen> {
   }
 
   Future<void> _finish() async {
-    await SettingsService.instance.write(SettingsService.onboardingCompleted, true);
+    await SettingsService.instance.write(PlebzPrefs.onboardingCompleted, true);
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -216,7 +216,7 @@ class _SetupExtrasScreenState extends State<SetupExtrasScreen> {
       // come back at every start; without one it will, until there is one.
       onPopInvokedWithResult: (didPop, _) {
         if (didPop && hasSource) {
-          SettingsService.instance.write(SettingsService.onboardingCompleted, true);
+          SettingsService.instance.write(PlebzPrefs.onboardingCompleted, true);
         }
       },
       child: FocusedScrollScaffold(
@@ -278,7 +278,7 @@ class _SetupExtrasScreenState extends State<SetupExtrasScreen> {
                   title: t.plebz.extrasGroup,
                   children: [
                     SettingSwitchTile(
-                      pref: SettingsService.showSportTab,
+                      pref: PlebzPrefs.showSportTab,
                       icon: Symbols.sports_soccer_rounded,
                       title: t.settings.showSportTab,
                       subtitle: t.settings.showSportTabDescription,
@@ -382,7 +382,7 @@ class _TmdbRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final key = SettingsService.instance.read(SettingsService.tmdbApiKey);
+    final key = SettingsService.instance.read(PlebzPrefs.tmdbApiKey);
     final hasKey = (key ?? '').trim().isNotEmpty;
     return FocusableListTile(
       leading: const AppIcon(Symbols.imagesmode_rounded, fill: 1),

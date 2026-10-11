@@ -40,7 +40,7 @@ void main() {
     expect(flachAccentFromHex('#00C2A8'), const Color(0xFF00C2A8));
     expect(flachAccentFromHex('00c2a8'), const Color(0xFF00C2A8));
     expect(flachAccentFromHex('nonsense'), flachDefaultAccent);
-    expect(SettingsService.flachAccent.defaultValue, '#A866EE');
+    expect(PlebzPrefs.flachAccent.defaultValue, '#A866EE');
   });
 
   testWidgets('flat focus inverts what stands on it, and only while focused', (tester) async {
@@ -395,6 +395,39 @@ void main() {
       find.ancestor(of: find.byType(OckerGlassFocusFill), matching: find.byType(AnimatedOpacity)),
     );
     expect(fill.opacity, 0, reason: 'no pane behind the row on show');
+  });
+
+  testWidgets('the stroke is as tall as the row\'s words: one line, or a name and its count', (tester) async {
+    Future<(Rect, Rect, Rect)> pump({required bool twoLines}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: _flach(),
+          home: Scaffold(
+            body: FocusableListTile(
+              title: const Text('Sport DAZN'),
+              subtitle: twoLines ? const Text('2 Sender') : null,
+              selected: true,
+              glassMarks: true,
+              onTap: () {},
+            ),
+          ),
+        ),
+      );
+      // The words are measured once laid out.
+      await tester.pump();
+      final stroke = tester.getRect(find.byKey(flatSelectedStrokeKey));
+      final title = tester.getRect(find.text('Sport DAZN'));
+      final last = twoLines ? tester.getRect(find.text('2 Sender')) : title;
+      return (stroke, title, last);
+    }
+
+    final (one, title, _) = await pump(twoLines: false);
+    expect(one.top, greaterThanOrEqualTo(title.top - 0.5), reason: 'not above the line');
+    expect(one.bottom, lessThan(title.bottom), reason: 'down to its baseline, not into the space below it');
+
+    final (two, first, count) = await pump(twoLines: true);
+    expect(two.top, lessThan(first.center.dy), reason: 'beside the name');
+    expect(two.bottom, greaterThan(count.center.dy), reason: 'and beside its count');
   });
 
   testWidgets('a row of tabs stands on one faint track; the controls beside it are shapes of their own', (

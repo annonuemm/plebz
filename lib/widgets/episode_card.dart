@@ -128,7 +128,7 @@ class _EpisodeCardState extends State<EpisodeCard> with ContextMenuTapMixin<Epis
     final qualityLabels = [
       ...buildMediaQualityLabels(
         episode,
-        dolbyVisionDisabled: SettingsService.instance.read(SettingsService.disableDolbyVision),
+        dolbyVisionDisabled: SettingsService.instance.read(PlebzPrefs.disableDolbyVision),
       ),
       ?buildMediaSizeLabel(episode),
     ];

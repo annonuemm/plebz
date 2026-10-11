@@ -62,7 +62,7 @@ class WatchlistScreen extends StatefulWidget {
 class _WatchlistTab {
   const _WatchlistTab({required this.id, required this.label, this.source});
 
-  /// Stored in [SettingsService.watchlistSource]; [WatchlistScreenState.favoritesTabId]
+  /// Stored in [PlebzPrefs.watchlistSource]; [WatchlistScreenState.favoritesTabId]
   /// for the favorites tab, otherwise the provider's enum name.
   final String id;
   final String label;
@@ -128,12 +128,12 @@ class WatchlistScreenState extends State<WatchlistScreen>
   @override
   void initState() {
     super.initState();
-    final stored = SettingsService.instance.read(SettingsService.watchlistSource);
+    final stored = SettingsService.instance.read(PlebzPrefs.watchlistSource);
     _selectedId = stored.isEmpty ? null : stored;
     final settings = SettingsService.instance;
     _filter = WatchlistFilter(
-      type: settings.read(SettingsService.watchlistTypeFilter),
-      status: settings.read(SettingsService.watchlistStatusFilter),
+      type: settings.read(PlebzPrefs.watchlistTypeFilter),
+      status: settings.read(PlebzPrefs.watchlistStatusFilter),
     );
     _itemFilter = _filter.isEmpty ? null : _filter.matches;
   }
@@ -202,7 +202,7 @@ class WatchlistScreenState extends State<WatchlistScreen>
       _selectedId = id;
       _gridKey = GlobalKey<HubDetailScreenState>();
     });
-    unawaited(SettingsService.instance.write(SettingsService.watchlistSource, id));
+    unawaited(SettingsService.instance.write(PlebzPrefs.watchlistSource, id));
   }
 
   /// Narrow the list to [filter]. The grid keeps the items it has — the
@@ -215,8 +215,8 @@ class WatchlistScreenState extends State<WatchlistScreen>
       _itemFilter = filter.isEmpty ? null : filter.matches;
     });
     final settings = SettingsService.instance;
-    unawaited(settings.write(SettingsService.watchlistTypeFilter, filter.type));
-    unawaited(settings.write(SettingsService.watchlistStatusFilter, filter.status));
+    unawaited(settings.write(PlebzPrefs.watchlistTypeFilter, filter.type));
+    unawaited(settings.write(PlebzPrefs.watchlistStatusFilter, filter.status));
   }
 
   Future<void> _pickStatusFilter() async {

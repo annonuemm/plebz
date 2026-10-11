@@ -83,7 +83,7 @@ const plebzGradient = LinearGradient(
 const glasOledGround = Color(0xFF000000);
 
 /// The redesigns' ground with the off-black choice on
-/// ([SettingsService.redesignOffBlack]): the dark grey Material calls its
+/// ([PlebzPrefs.redesignOffBlack]): the dark grey Material calls its
 /// dark surface, softer than black, and as plain — no lift, no glow. No
 /// palette's own ground is this either.
 const redesignOffBlackGround = Color(0xFF121212);
@@ -92,7 +92,7 @@ const redesignOffBlackGround = Color(0xFF121212);
 /// redesigns' ink stays light, and over a lighter ground it stops reading.
 const redesignGroundMaxValue = 0.35;
 
-/// A ground of the viewer's own colour ([SettingsService.redesignGroundColour]),
+/// A ground of the viewer's own colour ([PlebzPrefs.redesignGroundColour]),
 /// taken down to [redesignGroundMaxValue] where it is lighter; off-black for
 /// anything that does not read as `#RRGGBB`.
 Color redesignGroundFromHex(String hex) {
@@ -126,7 +126,7 @@ const flachGround = Color(0xFF08070C);
 const flachInk = Color(0xFFF9FAFB);
 const flachDefaultAccent = Color(0xFFA866EE);
 
-/// [SettingsService.flachAccent]'s `#RRGGBB` as a colour; the default violet
+/// [PlebzPrefs.flachAccent]'s `#RRGGBB` as a colour; the default violet
 /// for anything that does not read as one.
 Color flachAccentFromHex(String hex) {
   final digits = hex.replaceFirst('#', '');
@@ -141,7 +141,7 @@ Color flachAccentFromHex(String hex) {
 class FlachPreset {
   const FlachPreset(this.id, {required this.accent, required this.ground});
 
-  /// What [SettingsService.flachPreset] stores.
+  /// What [PlebzPrefs.flachPreset] stores.
   final String id;
   final Color accent;
   final Color ground;

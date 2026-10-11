@@ -121,7 +121,7 @@ class _ActorMediaScreenState extends BaseMediaListDetailScreen<ActorMediaScreen>
   bool get _filmographyEnabled =>
       widget.sourceTitle != null &&
       (TmdbFillInService.instanceOrNull?.isEnabled ?? false) &&
-      SettingsService.instance.read(SettingsService.showActorFilmography);
+      SettingsService.instance.read(PlebzPrefs.showActorFilmography);
 
   Future<void> _loadFilmography() async {
     final source = widget.sourceTitle;

@@ -411,7 +411,7 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
     final downloadAction =
         !widget.isOffline &&
             !PlatformDetector.isAppleTV() &&
-            context.settingsRead(SettingsService.showDownloadAction) &&
+            context.settingsRead(PlebzPrefs.showDownloadAction) &&
             // The server's own rule. Nothing to explain here: an action that
             // would be refused is better not offered.
             DownloadPermissionService.instance.allowsItem(metadata)

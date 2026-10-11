@@ -10,7 +10,7 @@ extension _VideoPlayerDisplayMatchingMethods on VideoPlayerScreenState {
     PlayerOutputFormat output,
   ) {
     final fps = settingsService.read(SettingsService.matchContentFrameRate) ? output.fps : null;
-    final matchResolution = settingsService.read(SettingsService.matchDisplayResolution);
+    final matchResolution = settingsService.read(PlebzPrefs.matchDisplayResolution);
     if (matchResolution && !output.hasDimensions) {
       appLogger.d('Display matching: no decoded dimensions for resolution matching');
     }

@@ -71,8 +71,8 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
     diskCache: IptvDiskCache(),
     guideStore: DriftIptvGuideStore.shared,
     diskCacheMaxAge: () =>
-        Duration(days: SettingsService.instanceOrNull?.read(SettingsService.iptvRefreshIntervalDays) ?? 1),
-    mergeDuplicates: () => SettingsService.instanceOrNull?.read(SettingsService.iptvMergeDuplicateChannels) ?? false,
+        Duration(days: SettingsService.instanceOrNull?.read(PlebzPrefs.iptvRefreshIntervalDays) ?? 1),
+    mergeDuplicates: () => SettingsService.instanceOrNull?.read(PlebzPrefs.iptvMergeDuplicateChannels) ?? false,
     channelLayout: channelLayout == null
         ? null
         : () async {
@@ -113,7 +113,7 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
   /// has to read and write something.
   NullableStringPref get _pref => profileId.trim().isEmpty
       ? const NullableStringPref(iptvSourcesBaseKey)
-      : SettingsService.iptvSourcesForProfile(profileId);
+      : PlebzPrefs.iptvSourcesForProfile(profileId);
 
   /// The sources' credentials ([iptvSealedFields]) are sealed with
   /// `CredentialVault` at rest. Sources stored before that are sealed on this

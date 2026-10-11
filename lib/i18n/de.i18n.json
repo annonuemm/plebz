@@ -412,6 +412,10 @@
     "showExploreTabDescription": "Inhalte aus Plex Discover",
     "showSportTab": "Sport",
     "showSportTabDescription": "1. Bundesliga, 2. Bundesliga und 3. Liga: Spiele und Tabelle",
+    "sportFavouriteClub": "Lieblingsverein",
+    "sportFavouriteClubDescription": "Sein Spiel steht oben auf der Seite seiner Liga.",
+    "sportFavouriteClubNone": "Keiner",
+    "sportFavouriteClubLoadFailed": "Die Vereine konnten nicht geladen werden.",
     "liveTvDefaultFavorites": "Nur Favoriten beim Öffnen",
     "liveTvDefaultFavoritesDescription": "",
     "general": "Allgemein",
@@ -2822,7 +2826,12 @@
     "noMatches": "Für diesen Spieltag gibt es keine Spiele.",
     "today": "Heute",
     "tomorrow": "Morgen",
-    "yesterday": "Gestern"
+    "yesterday": "Gestern",
+    "zoneChampionsLeague": "Champions League",
+    "zoneEurope": "Europa",
+    "zonePromotion": "Aufstieg",
+    "zonePlayoff": "Relegation",
+    "zoneRelegation": "Abstieg"
   },
   "plebz": {
     "settingsGroupLook": "Aussehen und Wiedergabe",

@@ -116,7 +116,7 @@ class _TmdbHubRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final key = SettingsService.instance.read(SettingsService.tmdbApiKey);
+    final key = SettingsService.instance.read(PlebzPrefs.tmdbApiKey);
     final hasKey = (key ?? '').trim().isNotEmpty;
     return FocusableListTile(
       leading: const AppIcon(Symbols.imagesmode_rounded, fill: 1),

@@ -59,7 +59,7 @@ void main() {
     TvDetectionService.debugSetAppleTVOverride(true);
     addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
     // A television starts in glass; this one starts in the original look.
-    await SettingsService.instanceOrNull!.write(SettingsService.appThemeVariant, AppThemeVariant.standard);
+    await SettingsService.instanceOrNull!.write(PlebzPrefs.appThemeVariant, AppThemeVariant.standard);
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1000, 3000);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -79,7 +79,7 @@ void main() {
     expect(find.text(t.settings.glasAccent), findsNothing);
     expect(find.text(t.settings.glasSmoothFocus), findsNothing);
 
-    await SettingsService.instanceOrNull!.write(SettingsService.appThemeVariant, AppThemeVariant.glas);
+    await SettingsService.instanceOrNull!.write(PlebzPrefs.appThemeVariant, AppThemeVariant.glas);
     await tester.pumpAndSettle();
     expect(find.text(t.settings.glasAccent), findsOneWidget);
     expect(find.text(t.settings.glasAccentEisblau), findsOneWidget, reason: 'the accent on show by default');
@@ -92,7 +92,7 @@ void main() {
     TvDetectionService.debugSetAppleTVOverride(true);
     addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
     final service = SettingsService.instanceOrNull!;
-    await service.write(SettingsService.appThemeVariant, AppThemeVariant.flach);
+    await service.write(PlebzPrefs.appThemeVariant, AppThemeVariant.flach);
     await service.write(SettingsService.themeMode, ThemeMode.dark);
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(1000, 3000);
@@ -122,8 +122,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(t.settings.flachPresetKino).last);
     await tester.pumpAndSettle();
-    expect(service.read(SettingsService.flachPreset), 'kino');
-    expect(service.read(SettingsService.flachAccent), '#E50914');
+    expect(service.read(PlebzPrefs.flachPreset), 'kino');
+    expect(service.read(PlebzPrefs.flachAccent), '#E50914');
     expect(find.text(t.settings.flachPresetGround), findsOneWidget, reason: 'the ground row names the look');
 
     // A ground of the viewer's own leaves the look; its accent stays.
@@ -131,9 +131,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(t.settings.glasGroundOffBlack).last);
     await tester.pumpAndSettle();
-    expect(service.read(SettingsService.flachPreset), '');
-    expect(service.read(SettingsService.redesignOffBlack), isTrue);
-    expect(service.read(SettingsService.flachAccent), '#E50914');
+    expect(service.read(PlebzPrefs.flachPreset), '');
+    expect(service.read(PlebzPrefs.redesignOffBlack), isTrue);
+    expect(service.read(PlebzPrefs.flachAccent), '#E50914');
   });
 
   testWidgets('glass on a television leaves out the rows it has nothing to steer with', (tester) async {
@@ -229,7 +229,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     debugRedesignOfferedHere = true;
     addTearDown(() => debugRedesignOfferedHere = null);
-    await SettingsService.instanceOrNull!.write(SettingsService.appThemeVariant, AppThemeVariant.glas);
+    await SettingsService.instanceOrNull!.write(PlebzPrefs.appThemeVariant, AppThemeVariant.glas);
 
     final theme = ThemeProvider();
     addTearDown(theme.dispose);

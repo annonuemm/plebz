@@ -606,7 +606,7 @@ http://provider/stream/ard
     resetSharedPreferencesForTest();
     SettingsService.resetForTesting();
     final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.liveTvGuideTimeNavigation, false);
+    await settings.write(PlebzPrefs.liveTvGuideTimeNavigation, false);
     TvDetectionService.debugSetAppleTVOverride(true);
     GuidePreviewPlayerState.debugSuppressPlayback = true;
     addTearDown(() => GuidePreviewPlayerState.debugSuppressPlayback = false);
@@ -661,7 +661,7 @@ http://provider/stream/ard
     resetSharedPreferencesForTest();
     SettingsService.resetForTesting();
     final settings = await SettingsService.getInstance();
-    await settings.write(SettingsService.liveTvGuideTimeNavigation, false);
+    await settings.write(PlebzPrefs.liveTvGuideTimeNavigation, false);
     TvDetectionService.debugSetAppleTVOverride(true);
     GuidePreviewPlayerState.debugSuppressPlayback = true;
     addTearDown(() => GuidePreviewPlayerState.debugSuppressPlayback = false);
@@ -1360,7 +1360,7 @@ http://provider/stream/ard
     await pumpGuide();
     expect(find.text(t.liveTv.today), findsOneWidget);
 
-    await settings.write(SettingsService.liveTvGuideTimeNavigation, false);
+    await settings.write(PlebzPrefs.liveTvGuideTimeNavigation, false);
     await pumpGuide();
 
     // Hidden, the guide opens on now and is travelled with the D-pad alone.

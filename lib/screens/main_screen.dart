@@ -580,12 +580,12 @@ class _MainScreenState extends State<MainScreen>
     // Same for Downloads: _getVisibleTabs() reads the setting live, so without
     // this the cached _screens list keeps the Downloads entry the tab list has
     // already dropped and every index past it resolves to the wrong screen.
-    _showDownloadsListenable = SettingsService.instanceOrNull?.listenable(SettingsService.showDownloadAction);
+    _showDownloadsListenable = SettingsService.instanceOrNull?.listenable(PlebzPrefs.showDownloadAction);
     _showDownloadsListenable?.addListener(_handleTabAvailabilityChanged);
     // And Sport, for the same reason: switched on or off in the settings, the
     // cached screen list has to follow the tab list or every index past it
     // resolves to the neighbouring screen.
-    _showSportListenable = SettingsService.instanceOrNull?.listenable(SettingsService.showSportTab);
+    _showSportListenable = SettingsService.instanceOrNull?.listenable(PlebzPrefs.showSportTab);
     _showSportListenable?.addListener(_handleTabAvailabilityChanged);
     _currentTab = _defaultTabForMode(_isOffline);
     _lastOnlineTabId = _isOffline ? null : NavigationTabId.discover;
@@ -1379,8 +1379,8 @@ class _MainScreenState extends State<MainScreen>
     hasLiveTv: _hasLiveTv,
     hasExplore: _lastHasExplore,
     hasWatchlist: _lastHasWatchlist,
-    showDownloads: SettingsService.instance.read(SettingsService.showDownloadAction),
-    showSport: SettingsService.instance.read(SettingsService.showSportTab),
+    showDownloads: SettingsService.instance.read(PlebzPrefs.showDownloadAction),
+    showSport: SettingsService.instance.read(PlebzPrefs.showSportTab),
     preferredStartup: SettingsService.instanceOrNull?.read(SettingsService.startupSection),
   );
 
@@ -2118,8 +2118,8 @@ class _MainScreenState extends State<MainScreen>
       hasLiveTv: _hasLiveTv,
       hasExplore: _lastHasExplore,
       hasWatchlist: _lastHasWatchlist,
-      showDownloads: SettingsService.instance.read(SettingsService.showDownloadAction),
-      showSport: SettingsService.instance.read(SettingsService.showSportTab),
+      showDownloads: SettingsService.instance.read(PlebzPrefs.showDownloadAction),
+      showSport: SettingsService.instance.read(PlebzPrefs.showSportTab),
     );
   }
 

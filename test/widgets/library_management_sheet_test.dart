@@ -47,6 +47,9 @@ Future<({int Function() selects, int Function() backs, LibrariesProvider librari
   // Admin actions are offered to owners and administrators only. Most tests
   // exercise the actions themselves, so they skip that check; null keeps it.
   bool Function(MediaLibrary library)? canAdministerLibrary = _alwaysAdmin,
+  // The launcher on a navigator of its own below the sheet host, as a page
+  // beside the settings column stands.
+  bool nestedNavigator = false,
 }) async {
   final librariesProvider = LibrariesProvider();
   await librariesProvider.updateLibraryOrder(libraries ?? [library]);
@@ -68,6 +71,18 @@ Future<({int Function() selects, int Function() backs, LibrariesProvider librari
   var underlyingSelects = 0;
   var underlyingBacks = 0;
 
+  final launcher = Scaffold(
+    body: Center(
+      child: Builder(
+        builder: (context) => ElevatedButton(
+          autofocus: true,
+          onPressed: () => showLibraryManagementSheet(context, canAdministerLibrary: canAdministerLibrary),
+          child: const Text('Open library management'),
+        ),
+      ),
+    ),
+  );
+
   await tester.pumpWidget(
     TranslationProvider(
       child: InputModeTracker(
@@ -86,18 +101,9 @@ Future<({int Function() selects, int Function() backs, LibrariesProvider librari
                 return KeyEventResult.ignored;
               },
               child: OverlaySheetHost(
-                child: Scaffold(
-                  body: Center(
-                    child: Builder(
-                      builder: (context) => ElevatedButton(
-                        autofocus: true,
-                        onPressed: () =>
-                            showLibraryManagementSheet(context, canAdministerLibrary: canAdministerLibrary),
-                        child: const Text('Open library management'),
-                      ),
-                    ),
-                  ),
-                ),
+                child: nestedNavigator
+                    ? Navigator(onGenerateRoute: (_) => MaterialPageRoute<void>(builder: (_) => launcher))
+                    : launcher,
               ),
             ),
           ),
@@ -397,6 +403,28 @@ void main() {
     );
     expect(moving.bright, isFalse);
     expect(moving.tint, 1, reason: 'the quiet pane, washed with the accent');
+  });
+
+  // Settings shows its pages on a navigator of their own, below MainScreen's
+  // sheet host. BACK in the TV dialog went to that host, which had no sheet
+  // open, and the dialog could not be left.
+  testWidgets('BACK closes the TV dialog opened from a page with a navigator of its own', (tester) async {
+    TvDetectionService.debugSetAppleTVOverride(true);
+    final underlyingActions = await _pumpLibraryManagementLauncher(tester, nestedNavigator: true);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.byType(Dialog), findsOneWidget);
+
+    final backsBefore = underlyingActions.backs();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dialog), findsNothing);
+    expect(find.text('Open library management'), findsOneWidget);
+    expect(underlyingActions.backs(), backsBefore, reason: 'the BACK that closed the dialog went no further');
   });
 
   testWidgets('the D-pad cursor stays on screen while walking a long library list', (tester) async {

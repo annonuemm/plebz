@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.23.1 (Build 783)
+
+### Einstellungen
+- Fernseher: „Mediatheken verwalten“ lässt sich wieder mit der Zurück-Taste schließen.
+
 ## 1.23.0 (Build 781)
 
 ### Updates

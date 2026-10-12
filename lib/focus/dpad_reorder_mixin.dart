@@ -195,7 +195,7 @@ mixin DpadReorderListMixin<E, W extends StatefulWidget> on State<W> {
           _originalOrder = null;
         });
       } else {
-        OverlaySheetController.popAdaptive(context);
+        _dismissHost();
       }
     });
     if (backResult != KeyEventResult.ignored) {
@@ -254,6 +254,20 @@ mixin DpadReorderListMixin<E, W extends StatefulWidget> on State<W> {
     }
 
     return KeyEventResult.ignored;
+  }
+
+  /// Closes the sheet or dialog holding the list.
+  ///
+  /// Plebz: a dialog is popped off its own navigator. One opened from a page
+  /// beside the settings column sits on that page's navigator, below
+  /// MainScreen's sheet host, and [OverlaySheetController.popAdaptive] went to
+  /// that host — which had no sheet open, so BACK closed nothing.
+  void _dismissHost() {
+    if (ModalRoute.of(context) is PopupRoute) {
+      Navigator.of(context).pop();
+    } else {
+      OverlaySheetController.popAdaptive(context);
+    }
   }
 
   void _activateSelect() {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/media/media_hub.dart';
+import 'package:plezy/media/media_kind.dart';
 import 'package:plezy/redesign/ocker_poster_tile.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
@@ -83,6 +84,50 @@ void main() {
     );
     nodes[index]!.requestFocus();
     await tester.pumpAndSettle();
+  }
+
+  for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+    testWidgets('${variant.name}: without full-card posters a film names its year and runtime (Plebz)', (tester) async {
+      await SettingsService.instance.write(SettingsService.tvFullCardLayout, false);
+      final node = FocusNode();
+      addTearDown(node.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: monoTheme(dark: true, variant: variant),
+          home: Scaffold(
+            body: OckerPosterTile(
+              item: testMediaItem(
+                id: 'f',
+                kind: MediaKind.movie,
+                title: 'Titel',
+                year: 2024,
+                durationMs: const Duration(minutes: 166).inMilliseconds,
+              ),
+              hub: hub,
+              index: 0,
+              itemCount: 1,
+              posterMode: EpisodePosterMode.seriesPoster,
+              mixedHub: false,
+              hideSpoilers: false,
+              tileWidth: 210,
+              tileHeight: 315,
+              focusNode: node,
+              resolveClient: (_) => null,
+              onPlay: () {},
+              onFocused: () {},
+              columns: 1,
+              neighbour: (_) => null,
+              onExitUp: () {},
+              onExitDown: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('Titel'), findsOneWidget);
+      expect(find.text('2024 · 166 min'), findsOneWidget);
+    });
   }
 
   Future<void> press(WidgetTester tester, LogicalKeyboardKey key) async {

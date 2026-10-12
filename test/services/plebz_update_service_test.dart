@@ -20,8 +20,15 @@ import '../test_helpers/prefs.dart';
 
 const _channel = MethodChannel('com.plebz/update_installer');
 
-Map<String, dynamic> _releaseJson({String tag = 'v1.0.1+551', List<Map<String, dynamic>>? assets}) => {
+Map<String, dynamic> _releaseJson({
+  String tag = 'v1.0.1+551',
+  List<Map<String, dynamic>>? assets,
+  bool draft = false,
+  bool prerelease = false,
+}) => {
   'tag_name': tag,
+  'draft': draft,
+  'prerelease': prerelease,
   'name': 'Plebz 1.0.1 (Build 551)',
   'body': 'Fixes',
   'assets':
@@ -41,6 +48,19 @@ void main() {
   setUpAll(() => LocaleSettings.setLocaleSync(AppLocale.en));
 
   group('reading a release', () {
+    test('an important release is marked in its tag, which still gives the build (Plebz)', () {
+      expect(PlebzUpdateService.isImportantTag('v1.22.2+779-wichtig'), isTrue);
+      expect(PlebzUpdateService.isImportantTag('v1.22.2+779-important'), isTrue);
+      expect(PlebzUpdateService.isImportantTag('v1.22.2+779'), isFalse);
+      expect(PlebzUpdateService.isImportantTag('v1.22.2+779-wichtigkeit'), isFalse);
+      expect(PlebzUpdateService.buildNumberOf('v1.22.2+779-wichtig'), 779);
+
+      final important = PlebzUpdateService.parseRelease(_releaseJson(tag: 'v1.0.1+551-wichtig'))!;
+      expect(important.important, isTrue);
+      expect(important.build, 551);
+      expect(PlebzUpdateService.parseRelease(_releaseJson())!.important, isFalse);
+    });
+
     test('takes the build number from the tag, the title or a file name', () {
       expect(PlebzUpdateService.buildNumberOf('v1.0.1+551'), 551);
       expect(PlebzUpdateService.buildNumberOf('Plebz 1.0.1 (Build 551)'), 551);
@@ -96,6 +116,70 @@ void main() {
     expect(PlebzUpdateService.assetFor(assets, ['armeabi-v7a', 'armeabi'])!.name, contains('arm32'));
     expect(PlebzUpdateService.assetFor(assets, ['x86_64'])!.name, contains('x86_64'));
     expect(PlebzUpdateService.assetFor(assets, ['mips']), isNull);
+  });
+
+  group('how often the start-up check offers (Plebz)', () {
+    final now = DateTime(2026, 10, 12, 12);
+    int daysAgo(int days) => now.subtract(Duration(days: days)).millisecondsSinceEpoch;
+
+    test('as soon as available offers at every start', () {
+      expect(
+        plebzUpdateOfferDue(
+          offer: PlebzUpdateOffer.whenAvailable,
+          lastOfferAtMs: daysAgo(0),
+          now: now,
+          important: false,
+        ),
+        isTrue,
+      );
+    });
+
+    test('a spacing waits since the last offer, and never offered is due', () {
+      expect(
+        plebzUpdateOfferDue(offer: PlebzUpdateOffer.weekly, lastOfferAtMs: daysAgo(6), now: now, important: false),
+        isFalse,
+      );
+      expect(
+        plebzUpdateOfferDue(offer: PlebzUpdateOffer.weekly, lastOfferAtMs: daysAgo(7), now: now, important: false),
+        isTrue,
+      );
+      expect(
+        plebzUpdateOfferDue(offer: PlebzUpdateOffer.biweekly, lastOfferAtMs: daysAgo(13), now: now, important: false),
+        isFalse,
+      );
+      expect(
+        plebzUpdateOfferDue(offer: PlebzUpdateOffer.monthly, lastOfferAtMs: daysAgo(29), now: now, important: false),
+        isFalse,
+      );
+      expect(
+        plebzUpdateOfferDue(offer: PlebzUpdateOffer.monthly, lastOfferAtMs: daysAgo(30), now: now, important: false),
+        isTrue,
+      );
+      expect(
+        plebzUpdateOfferDue(offer: PlebzUpdateOffer.monthly, lastOfferAtMs: 0, now: now, important: false),
+        isTrue,
+      );
+    });
+
+    test('an important release comes whatever the spacing', () {
+      expect(
+        plebzUpdateOfferDue(offer: PlebzUpdateOffer.monthly, lastOfferAtMs: daysAgo(1), now: now, important: true),
+        isTrue,
+      );
+    });
+
+    test('a last offer in the future, a clock set back, holds nothing up', () {
+      expect(
+        plebzUpdateOfferDue(offer: PlebzUpdateOffer.monthly, lastOfferAtMs: daysAgo(-40), now: now, important: false),
+        isTrue,
+      );
+    });
+
+    test('the choice travels with a backup; when it was last offered stays on the device', () {
+      expect(PlebzPrefs.resetAndPortable, contains(PlebzPrefs.plebzUpdateOffer));
+      expect(PlebzPrefs.resetAndPortable, isNot(contains(PlebzPrefs.plebzLastUpdateOfferAt)));
+      expect(PlebzPrefs.portableOnly, isNot(contains(PlebzPrefs.plebzLastUpdateOfferAt)));
+    });
   });
 
   group('downloading', () {
@@ -219,13 +303,16 @@ void main() {
       required int installedBuild,
       required Directory temp,
       int githubStatus = 200,
+      bool userInitiated = true,
+      Map<String, dynamic>? latest,
+      List<Map<String, dynamic>> releases = const [],
     }) async {
       final updates = PlebzUpdateService(
         client: MockClient((request) async {
           if (request.url.host == 'api.github.com') {
-            return githubStatus == 200
-                ? http.Response(jsonEncode(_releaseJson()), 200)
-                : http.Response('{"message":"API rate limit exceeded"}', githubStatus);
+            if (githubStatus != 200) return http.Response('{"message":"API rate limit exceeded"}', githubStatus);
+            if (!request.url.path.endsWith('/latest')) return http.Response(jsonEncode(releases), 200);
+            return http.Response(jsonEncode(latest ?? _releaseJson()), 200);
           }
           return http.Response.bytes(utf8.encode('apk!'), 200);
         }),
@@ -242,7 +329,7 @@ void main() {
                 builder: (context) => TextButton(
                   onPressed: () => checkForPlebzUpdate(
                     context,
-                    userInitiated: true,
+                    userInitiated: userInitiated,
                     service: updates,
                     currentBuild: () async => installedBuild,
                     supportedAbis: () async => ['arm64-v8a'],
@@ -321,6 +408,170 @@ void main() {
     });
   });
 
+  group('the start-up offer keeps to "Updates anbieten" (Plebz)', () {
+    setUp(() async {
+      resetSharedPreferencesForTest();
+      SettingsService.resetForTesting();
+      await SettingsService.getInstance();
+      debugPlebzUpdatesAvailable = true;
+    });
+
+    tearDown(() {
+      debugPlebzUpdatesAvailable = null;
+      SettingsService.resetForTesting();
+    });
+
+    var listRequests = 0;
+
+    Future<void> startUp(
+      WidgetTester tester, {
+      required PlebzUpdateOffer offer,
+      required Duration lastOfferAgo,
+      bool userInitiated = false,
+      Map<String, dynamic>? latest,
+      List<Map<String, dynamic>> releases = const [],
+    }) async {
+      final settings = SettingsService.instance;
+      await settings.write(PlebzPrefs.plebzUpdateOffer, offer);
+      await settings.write(
+        PlebzPrefs.plebzLastUpdateOfferAt,
+        DateTime.now().subtract(lastOfferAgo).millisecondsSinceEpoch,
+      );
+      listRequests = 0;
+      final updates = PlebzUpdateService(
+        client: MockClient((request) async {
+          if (!request.url.path.endsWith('/latest')) {
+            listRequests++;
+            return http.Response(jsonEncode(releases), 200);
+          }
+          return http.Response(jsonEncode(latest ?? _releaseJson()), 200);
+        }),
+        repository: 'plebz/plebz',
+      );
+      addTearDown(updates.dispose);
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: MaterialApp(
+            theme: monoTheme(dark: true),
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => checkForPlebzUpdate(
+                    context,
+                    userInitiated: userInitiated,
+                    service: updates,
+                    currentBuild: () async => 550,
+                    supportedAbis: () async => ['arm64-v8a'],
+                  ),
+                  child: const Text('check'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('check'));
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.pumpAndSettle();
+    }
+
+    int lastOfferAt() => SettingsService.instance.read(PlebzPrefs.plebzLastUpdateOfferAt);
+
+    testWidgets('an ordinary update waits out the spacing', (tester) async {
+      await startUp(tester, offer: PlebzUpdateOffer.monthly, lastOfferAgo: const Duration(days: 3));
+      final before = lastOfferAt();
+
+      expect(find.text(t.plebz.updateAvailableTitle), findsNothing);
+      expect(lastOfferAt(), before, reason: 'nothing shown, nothing offered');
+    });
+
+    testWidgets('and is offered once the spacing is over, which starts the next one', (tester) async {
+      await startUp(tester, offer: PlebzUpdateOffer.monthly, lastOfferAgo: const Duration(days: 31));
+
+      expect(find.text(t.plebz.updateAvailableTitle), findsOneWidget);
+      expect(find.textContaining(t.plebz.updateImportant), findsNothing);
+      expect(DateTime.now().millisecondsSinceEpoch - lastOfferAt(), lessThan(60000));
+    });
+
+    testWidgets('an important release comes inside the spacing, and says why', (tester) async {
+      await startUp(
+        tester,
+        offer: PlebzUpdateOffer.monthly,
+        lastOfferAgo: const Duration(days: 3),
+        latest: _releaseJson(tag: 'v1.0.1+551-wichtig'),
+      );
+
+      expect(find.text(t.plebz.updateAvailableTitle), findsOneWidget);
+      expect(find.textContaining(t.plebz.updateImportant), findsOneWidget);
+    });
+
+    testWidgets('so does one an ordinary release has followed since', (tester) async {
+      await startUp(
+        tester,
+        offer: PlebzUpdateOffer.weekly,
+        lastOfferAgo: const Duration(days: 1),
+        latest: _releaseJson(tag: 'v1.0.2+552'),
+        releases: [
+          _releaseJson(tag: 'v1.0.2+552'),
+          _releaseJson(tag: 'v1.0.1+551-wichtig'),
+          _releaseJson(tag: 'v1.0.0+540-wichtig'),
+        ],
+      );
+
+      expect(find.text(t.plebz.updateAvailableTitle), findsOneWidget);
+      expect(find.textContaining(t.plebz.updateImportant), findsOneWidget);
+    });
+
+    testWidgets('an important release already installed does not count', (tester) async {
+      await startUp(
+        tester,
+        offer: PlebzUpdateOffer.weekly,
+        lastOfferAgo: const Duration(days: 1),
+        latest: _releaseJson(tag: 'v1.0.2+552'),
+        releases: [
+          _releaseJson(tag: 'v1.0.2+552'),
+          _releaseJson(tag: 'v1.0.0+540-wichtig'),
+        ],
+      );
+
+      expect(find.text(t.plebz.updateAvailableTitle), findsNothing);
+    });
+
+    testWidgets('a draft or pre-release marked important does not count', (tester) async {
+      await startUp(
+        tester,
+        offer: PlebzUpdateOffer.weekly,
+        lastOfferAgo: const Duration(days: 1),
+        latest: _releaseJson(tag: 'v1.0.2+552'),
+        releases: [
+          _releaseJson(tag: 'v1.0.3+553-wichtig', draft: true),
+          _releaseJson(tag: 'v1.0.3+554-wichtig', prerelease: true),
+          _releaseJson(tag: 'v1.0.2+552'),
+        ],
+      );
+
+      expect(find.text(t.plebz.updateAvailableTitle), findsNothing);
+    });
+
+    testWidgets('as soon as available offers at once and asks GitHub once', (tester) async {
+      await startUp(tester, offer: PlebzUpdateOffer.whenAvailable, lastOfferAgo: Duration.zero);
+
+      expect(find.text(t.plebz.updateAvailableTitle), findsOneWidget);
+      expect(listRequests, 0);
+    });
+
+    testWidgets('asking by hand always shows it', (tester) async {
+      await startUp(
+        tester,
+        offer: PlebzUpdateOffer.monthly,
+        lastOfferAgo: const Duration(days: 1),
+        userInitiated: true,
+      );
+
+      expect(find.text(t.plebz.updateAvailableTitle), findsOneWidget);
+    });
+  });
+
   group('the release query', () {
     PlebzUpdateService withStatus(int status) =>
         PlebzUpdateService(client: MockClient((_) async => http.Response('{}', status)), repository: 'plebz/plebz');
@@ -334,6 +585,26 @@ void main() {
         withStatus(403).latestRelease(),
         throwsA(isA<PlebzUpdateCheckException>().having((e) => e.statusCode, 'statusCode', 403)),
       );
+    });
+
+    test('the release list leaves drafts and pre-releases out, and refuses like the latest (Plebz)', () async {
+      final updates = PlebzUpdateService(
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode([
+              _releaseJson(tag: 'v1.0.3+553', draft: true),
+              _releaseJson(tag: 'v1.0.3+554', prerelease: true),
+              _releaseJson(tag: 'v1.0.2+552-wichtig'),
+            ]),
+            200,
+          ),
+        ),
+        repository: 'plebz/plebz',
+      );
+      addTearDown(updates.dispose);
+      expect((await updates.recentReleases()).map((r) => r.tag), ['v1.0.2+552-wichtig']);
+      expect(await withStatus(404).recentReleases(), isEmpty);
+      await expectLater(withStatus(403).recentReleases(), throwsA(isA<PlebzUpdateCheckException>()));
     });
   });
 

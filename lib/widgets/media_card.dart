@@ -37,6 +37,7 @@ import '../utils/platform_detector.dart';
 import '../utils/provider_extensions.dart';
 import '../utils/formatters.dart';
 import '../utils/media_navigation_helper.dart';
+import '../utils/poster_caption.dart';
 import '../utils/snackbar_helper.dart';
 import '../theme/mono_tokens.dart';
 import '../i18n/strings.g.dart';
@@ -1275,7 +1276,8 @@ class _MediaCardHelpers {
     if (mi.parentTitle != null) return mi.parentTitle;
     if (mi.year case final year?) {
       final edition = mi.editionTitle;
-      return edition != null ? '$year · $edition' : '$year';
+      // An edition keeps the line it had: with a runtime too it would not fit.
+      return edition != null ? '$year · $edition' : posterYearCaption(mi);
     }
     return null;
   }

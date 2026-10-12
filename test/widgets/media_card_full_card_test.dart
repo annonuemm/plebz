@@ -161,7 +161,9 @@ void main() {
     expect(metadata.data, isNot(contains('(')), reason: 'vote counts do not fit a shelf caption');
   });
 
-  testWidgets('plain library grid metadata remains year only', (tester) async {
+  // Plebz: a film's caption is its year and runtime in minutes since 1.23.0
+  // (the user's choice); the rest still stays off the shelf.
+  testWidgets('plain library grid metadata is the year and runtime only', (tester) async {
     final item = testMediaItem(
       id: 'library-movie',
       kind: MediaKind.movie,
@@ -175,9 +177,9 @@ void main() {
 
     await tester.pumpWidget(_catalogGridHarness(item));
 
-    expect(find.text('2024'), findsOneWidget);
+    expect(find.text('2024 · 125 min'), findsOneWidget);
     expect(find.textContaining('PG-13'), findsNothing);
-    expect(find.textContaining('2h 5m'), findsNothing);
+    expect(find.textContaining('2h 5m'), findsNothing, reason: "the detail page's long form does not fit a poster");
     expect(find.textContaining('8.6★'), findsNothing);
     expect(find.textContaining('Drama'), findsNothing);
   });

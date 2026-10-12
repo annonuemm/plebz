@@ -2783,6 +2783,18 @@ class _Translations$plebz$de extends Translations$plebz$en {
 	@override String get checkForUpdates => 'Nach Updates suchen';
 	@override String get checkOnStartup => 'Beim Start nach Updates suchen';
 	@override String get checkOnStartupDescription => 'GitHub sieht dabei deine IP-Adresse';
+	@override String get updateOffer => 'Updates anbieten';
+	@override String get updateOfferDescription => 'Wichtige Updates kommen immer sofort';
+	@override String get updateOfferWhenAvailable => 'Sobald verfügbar';
+	@override String get updateOfferWeekly => 'Einmal pro Woche';
+	@override String get updateOfferBiweekly => 'Alle 2 Wochen';
+	@override String get updateOfferMonthly => 'Einmal im Monat';
+	@override String get updateImportant => 'Wichtiges Update – es wird unabhängig von deiner Einstellung angeboten.';
+	@override String posterRuntimeMinutes({required Object n}) => '${n} Min';
+	@override String posterSeasonCount({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n,
+		one: '${n} Staffel',
+		other: '${n} Staffeln',
+	);
 	@override String get downloading => 'Update wird geladen …';
 	@override String updateSize({required Object size}) => 'Der Download ist ${size} groß.';
 	@override String get updateOnMobileData => 'Du bist gerade über mobile Daten verbunden.';
@@ -6362,9 +6374,18 @@ extension on TranslationsDe {
 			'plebz.checkForUpdates' => 'Nach Updates suchen',
 			'plebz.checkOnStartup' => 'Beim Start nach Updates suchen',
 			'plebz.checkOnStartupDescription' => 'GitHub sieht dabei deine IP-Adresse',
-			'plebz.downloading' => 'Update wird geladen …',
+			'plebz.updateOffer' => 'Updates anbieten',
 			_ => null,
 		} ?? switch (path) {
+			'plebz.updateOfferDescription' => 'Wichtige Updates kommen immer sofort',
+			'plebz.updateOfferWhenAvailable' => 'Sobald verfügbar',
+			'plebz.updateOfferWeekly' => 'Einmal pro Woche',
+			'plebz.updateOfferBiweekly' => 'Alle 2 Wochen',
+			'plebz.updateOfferMonthly' => 'Einmal im Monat',
+			'plebz.updateImportant' => 'Wichtiges Update – es wird unabhängig von deiner Einstellung angeboten.',
+			'plebz.posterRuntimeMinutes' => ({required Object n}) => '${n} Min',
+			'plebz.posterSeasonCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Staffel', other: '${n} Staffeln', ), 
+			'plebz.downloading' => 'Update wird geladen …',
 			'plebz.updateSize' => ({required Object size}) => 'Der Download ist ${size} groß.',
 			'plebz.updateOnMobileData' => 'Du bist gerade über mobile Daten verbunden.',
 			'plebz.installPermissionTitle' => 'Installieren erlauben',

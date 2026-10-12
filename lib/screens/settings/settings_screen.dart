@@ -48,6 +48,7 @@ import '../../widgets/focusable_list_tile.dart';
 import '../../widgets/library_management_sheet.dart';
 import '../../widgets/overlay_sheet.dart';
 import '../../widgets/setting_tile.dart';
+import '../../widgets/settings_builder.dart';
 import '../../widgets/settings_page.dart';
 import '../../widgets/settings_section.dart';
 import '../../profiles/active_profile_provider.dart';
@@ -309,29 +310,33 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
         icon: Symbols.info_rounded,
         title: t.plebz.aboutAndUpdates,
         page: (context) => _rowsPage(t.plebz.aboutAndUpdates, [
-          SettingsGroup(
-            children: [
-              ...plebzUpdateRows(context),
-              SettingNavigationTile(
-                focusNode: _focusTracker.get(_kSetupAgain),
-                icon: Symbols.auto_fix_high_rounded,
-                title: t.plebz.setupAgain,
-                subtitle: t.plebz.setupAgainDescription,
-                // The setup is a screen of its own, not a page beside the
-                // column.
-                onTap: () => Navigator.of(
-                  this.context,
-                ).push(MaterialPageRoute<void>(builder: (_) => const SetupLookScreen(firstRun: false))),
-              ),
-              SettingNavigationTile(
-                focusNode: _focusTracker.get(_kAbout),
-                icon: Symbols.info_rounded,
-                title: t.settings.about,
-                subtitle: t.settings.aboutDescription,
-                destinationBuilder: (context) => const AboutScreen(),
-              ),
-              if (DonationService.isEnabled) _buildDonateTile(),
-            ],
+          // Rebuilt on the start-up check, which "Updates anbieten" follows.
+          SettingsBuilder(
+            prefs: const [settings.SettingsService.autoCheckUpdatesOnStartup],
+            builder: (context) => SettingsGroup(
+              children: [
+                ...plebzUpdateRows(context),
+                SettingNavigationTile(
+                  focusNode: _focusTracker.get(_kSetupAgain),
+                  icon: Symbols.auto_fix_high_rounded,
+                  title: t.plebz.setupAgain,
+                  subtitle: t.plebz.setupAgainDescription,
+                  // The setup is a screen of its own, not a page beside the
+                  // column.
+                  onTap: () => Navigator.of(
+                    this.context,
+                  ).push(MaterialPageRoute<void>(builder: (_) => const SetupLookScreen(firstRun: false))),
+                ),
+                SettingNavigationTile(
+                  focusNode: _focusTracker.get(_kAbout),
+                  icon: Symbols.info_rounded,
+                  title: t.settings.about,
+                  subtitle: t.settings.aboutDescription,
+                  destinationBuilder: (context) => const AboutScreen(),
+                ),
+                if (DonationService.isEnabled) _buildDonateTile(),
+              ],
+            ),
           ),
           if (UpdateService.isUpdateCheckAvailable) _buildUpdateSection(),
         ]),

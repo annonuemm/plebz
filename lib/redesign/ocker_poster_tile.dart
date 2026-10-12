@@ -16,6 +16,7 @@ import '../services/settings_service.dart';
 import '../theme/mono_tokens.dart';
 import '../utils/formatters.dart' show formatSeasonEpisodeLabel;
 import '../utils/media_image_helper.dart';
+import '../utils/poster_caption.dart';
 import '../widgets/media_card.dart' show catalogPosterOverlays;
 import '../widgets/media_context_menu.dart';
 import '../widgets/optimized_media_image.dart';
@@ -420,8 +421,8 @@ class OckerPosterTileState extends State<OckerPosterTile> {
 }
 
 /// The original look's captions under a poster, for the redesign's grids
-/// (fork addition): the title, and its year — or, for an episode, which one
-/// it is.
+/// (fork addition): the title, and its year with a film's runtime or a
+/// series' seasons ([posterYearCaption]) — or, for an episode, which one it is.
 extension _OckerPosterCaption on Widget {
   Widget withCaption(
     BuildContext context, {
@@ -464,7 +465,7 @@ class _OckerPosterCaptionText extends StatelessWidget {
     final tk = tokens(context);
     final textTheme = Theme.of(context).textTheme;
     final title = item.isEpisode ? (item.grandparentTitle ?? item.displayTitle) : item.displayTitle;
-    final second = item.isEpisode ? formatSeasonEpisodeLabel(item.parentIndex, item.index) : item.year?.toString();
+    final second = item.isEpisode ? formatSeasonEpisodeLabel(item.parentIndex, item.index) : posterYearCaption(item);
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Column(

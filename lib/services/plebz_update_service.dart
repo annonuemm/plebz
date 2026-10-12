@@ -48,11 +48,15 @@ class PlebzRelease {
     required this.notes,
     required this.build,
     required this.assets,
+    this.important = false,
   });
 
   final String tag;
   final String title;
   final String notes;
+
+  /// Offered whatever "Updates anbieten" says ([PlebzUpdateService.isImportantTag]).
+  final bool important;
 
   /// The Android build number the release carries ("…+551" or "…build551"),
   /// which is what decides whether it is newer — never the version name.
@@ -110,6 +114,34 @@ class PlebzUpdateService {
     return decoded is Map<String, dynamic> ? parseRelease(decoded) : null;
   }
 
+  /// The newest published releases, newest first — drafts and pre-releases
+  /// left out, as `releases/latest` leaves them out. For finding an important
+  /// release that a newer, ordinary one followed. Throws as [latestRelease].
+  Future<List<PlebzRelease>> recentReleases({int count = 20}) async {
+    if (repository.isEmpty) return const [];
+    final response = await _client
+        .get(
+          Uri.parse('https://api.github.com/repos/$repository/releases?per_page=$count'),
+          headers: const {'Accept': 'application/vnd.github+json', 'User-Agent': 'Plebz'},
+        )
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode == 404) return const [];
+    if (response.statusCode != 200) throw PlebzUpdateCheckException(response.statusCode);
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) return const [];
+    return [
+      for (final raw in decoded)
+        if (raw is Map<String, dynamic> && raw['draft'] != true && raw['prerelease'] != true) ?parseRelease(raw),
+    ];
+  }
+
+  /// Whether a release tag marks an important update: `v1.22.2+779-wichtig`.
+  ///
+  /// The tag, not the body: a body line would reach every installed Plebz up
+  /// to 1.22.1 as visible text in its update dialog, while the tag only ever
+  /// gave them the build number, which reads the same with the suffix.
+  static bool isImportantTag(String tag) => RegExp(r'[-_.](wichtig|important)$', caseSensitive: false).hasMatch(tag);
+
   static PlebzRelease? parseRelease(Map<String, dynamic> json) {
     final tag = json['tag_name'];
     if (tag is! String) return null;
@@ -132,6 +164,7 @@ class PlebzUpdateService {
       build:
           buildNumberOf(tag) ?? buildNumberOf(title) ?? assets.map((a) => buildNumberOf(a.name)).nonNulls.firstOrNull,
       assets: assets,
+      important: isImportantTag(tag),
     );
   }
 
@@ -286,4 +319,38 @@ class _DigestSink implements Sink<Digest> {
 
   @override
   void close() {}
+}
+
+/// How often the start-up check may show an available update (Plebz). Only
+/// with "Beim Start nach Updates suchen" on; asking by hand always shows it,
+/// and an important release comes whatever is set here.
+enum PlebzUpdateOffer {
+  whenAvailable(null),
+  weekly(Duration(days: 7)),
+  biweekly(Duration(days: 14)),
+  monthly(Duration(days: 30));
+
+  const PlebzUpdateOffer(this.spacing);
+
+  /// The least time between two offers; null offers at every start.
+  final Duration? spacing;
+}
+
+/// Whether the start-up check shows an available update now.
+///
+/// GitHub is still asked at every start — that is what lets an [important]
+/// release through at once — but the offer waits out [offer]'s spacing since
+/// the last one ([lastOfferAtMs], 0 for never); a "Später" counts as one. A
+/// last offer in the future, a clock set back, does not hold anything up.
+bool plebzUpdateOfferDue({
+  required PlebzUpdateOffer offer,
+  required int lastOfferAtMs,
+  required DateTime now,
+  required bool important,
+}) {
+  final spacing = offer.spacing;
+  if (important || spacing == null || lastOfferAtMs <= 0) return true;
+  final last = DateTime.fromMillisecondsSinceEpoch(lastOfferAtMs);
+  if (last.isAfter(now)) return true;
+  return now.difference(last) >= spacing;
 }

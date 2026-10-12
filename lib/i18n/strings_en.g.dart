@@ -7213,6 +7213,36 @@ class Translations$plebz$en {
 	/// en: 'GitHub sees your IP address'
 	String get checkOnStartupDescription => 'GitHub sees your IP address';
 
+	/// en: 'Offer updates'
+	String get updateOffer => 'Offer updates';
+
+	/// en: 'Important updates always come right away'
+	String get updateOfferDescription => 'Important updates always come right away';
+
+	/// en: 'As soon as available'
+	String get updateOfferWhenAvailable => 'As soon as available';
+
+	/// en: 'Once a week'
+	String get updateOfferWeekly => 'Once a week';
+
+	/// en: 'Every 2 weeks'
+	String get updateOfferBiweekly => 'Every 2 weeks';
+
+	/// en: 'Once a month'
+	String get updateOfferMonthly => 'Once a month';
+
+	/// en: 'Important update – offered whatever your setting is.'
+	String get updateImportant => 'Important update – offered whatever your setting is.';
+
+	/// en: '${n} min'
+	String posterRuntimeMinutes({required Object n}) => '${n} min';
+
+	/// en: '(one) {${n} season} (other) {${n} seasons}'
+	String posterSeasonCount({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: '${n} season',
+		other: '${n} seasons',
+	);
+
 	/// en: 'Downloading the update…'
 	String get downloading => 'Downloading the update…';
 
@@ -12120,6 +12150,15 @@ extension on Translations {
 			'plebz.checkForUpdatesDescription' => '',
 			'plebz.checkOnStartup' => 'Check for updates at start',
 			'plebz.checkOnStartupDescription' => 'GitHub sees your IP address',
+			'plebz.updateOffer' => 'Offer updates',
+			'plebz.updateOfferDescription' => 'Important updates always come right away',
+			'plebz.updateOfferWhenAvailable' => 'As soon as available',
+			'plebz.updateOfferWeekly' => 'Once a week',
+			'plebz.updateOfferBiweekly' => 'Every 2 weeks',
+			'plebz.updateOfferMonthly' => 'Once a month',
+			'plebz.updateImportant' => 'Important update – offered whatever your setting is.',
+			'plebz.posterRuntimeMinutes' => ({required Object n}) => '${n} min',
+			'plebz.posterSeasonCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '${n} season', other: '${n} seasons', ), 
 			'plebz.downloading' => 'Downloading the update…',
 			'plebz.updateSize' => ({required Object size}) => 'The download is ${size}.',
 			'plebz.updateOnMobileData' => 'You\'re on mobile data right now.',

@@ -13,6 +13,14 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.23.0 (Build 781)
+
+### Updates
+- Neu: „Updates anbieten“. Wer nicht jedes Update sofort will, wählt einmal pro Woche, alle 2 Wochen oder einmal im Monat. Wichtige Updates kommen trotzdem gleich.
+
+### Poster
+- Ohne vollflächige Poster steht unter Filmen neben dem Jahr jetzt die Laufzeit, unter Serien die Anzahl der Staffeln.
+
 ## 1.22.1 (Build 778)
 
 ### Live-TV

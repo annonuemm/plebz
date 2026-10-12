@@ -7,6 +7,7 @@ import '../media/year_filter.dart';
 import '../profiles/profile.dart';
 import '../utils/platform_detector.dart';
 import 'base_shared_preferences_service.dart';
+import 'plebz_update_service.dart' show PlebzUpdateOffer;
 import 'recommendations_service.dart';
 import 'sensitive_prefs.dart';
 import 'settings_service.dart';
@@ -189,6 +190,18 @@ abstract final class PlebzPrefs {
   /// The Plebz build this device last started, so the first start of a newer
   /// one can say it was updated. Per device: not exported with the settings.
   static const plebzLastSeenBuild = IntPref('plebz_last_seen_build');
+
+  /// How often the start-up check shows an available update. Exported: a
+  /// choice about the viewer's patience, not about this device.
+  static const plebzUpdateOffer = EnumPref<PlebzUpdateOffer>(
+    'plebz_update_offer',
+    values: PlebzUpdateOffer.values,
+    defaultValue: PlebzUpdateOffer.whenAvailable,
+  );
+
+  /// When an available update was last shown, in milliseconds since the
+  /// epoch; 0 for never. Per device, like [plebzLastSeenBuild].
+  static const plebzLastUpdateOfferAt = IntPref('plebz_last_update_offer_at');
 
   /// Plebz: whether the first-run setup (look, sources, services) has been
   /// through once. Device-local on purpose — in no export or reset list: a
@@ -607,6 +620,7 @@ abstract final class PlebzPrefs {
     showPlaybackTracksStatus,
     showHomeTitleLogos,
     hideHomeActionsUntilFocus,
+    plebzUpdateOffer,
   ];
 
   /// Exported but left alone by a reset.

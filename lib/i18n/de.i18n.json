@@ -2893,6 +2893,18 @@
     "checkForUpdatesDescription": "",
     "checkOnStartup": "Beim Start nach Updates suchen",
     "checkOnStartupDescription": "GitHub sieht dabei deine IP-Adresse",
+    "updateOffer": "Updates anbieten",
+    "updateOfferDescription": "Wichtige Updates kommen immer sofort",
+    "updateOfferWhenAvailable": "Sobald verfügbar",
+    "updateOfferWeekly": "Einmal pro Woche",
+    "updateOfferBiweekly": "Alle 2 Wochen",
+    "updateOfferMonthly": "Einmal im Monat",
+    "updateImportant": "Wichtiges Update – es wird unabhängig von deiner Einstellung angeboten.",
+    "posterRuntimeMinutes": "${n} Min",
+    "posterSeasonCount": {
+      "one": "${n} Staffel",
+      "other": "${n} Staffeln"
+    },
     "downloading": "Update wird geladen …",
     "updateSize": "Der Download ist ${size} groß.",
     "updateOnMobileData": "Du bist gerade über mobile Daten verbunden.",

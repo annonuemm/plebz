@@ -18,6 +18,7 @@ import '../../utils/formatters.dart';
 import '../../utils/snackbar_helper.dart';
 import '../../widgets/dialog_action_button.dart';
 import '../../widgets/setting_tile.dart';
+import 'settings_utils.dart';
 
 /// At start, once after an update: which Plebz is now installed. The update
 /// is approved twice — here and in Android's installer — and then the app
@@ -134,15 +135,38 @@ Future<void> checkForPlebzUpdate(
       if (userInitiated) showErrorSnackBar(context, t.plebz.noMatchingDownload);
       return;
     }
+    // At start, the offer keeps to "Updates anbieten" (Plebz); an important
+    // release comes anyway, also when an ordinary one has followed it.
+    final settings = SettingsService.instance;
+    var important = release.important;
+    if (!userInitiated) {
+      final offer = settings.read(PlebzPrefs.plebzUpdateOffer);
+      if (!important && offer.spacing != null) important = await _importantSince(updates, build);
+      final due = plebzUpdateOfferDue(
+        offer: offer,
+        lastOfferAtMs: settings.read(PlebzPrefs.plebzLastUpdateOfferAt),
+        now: DateTime.now(),
+        important: important,
+      );
+      if (!due) {
+        appLogger.i('Plebz update check: ${release.title} waits for the next offer (${offer.name})');
+        return;
+      }
+      if (!context.mounted) return;
+    }
     // On a phone the download may be paid for by the megabyte: how big it is,
     // and whether it would come over mobile data, is said before the yes.
     final cellular = (await ConnectivityProbe.check()).isCellularOnly;
     if (!context.mounted) return;
     final lead = [
+      if (important) t.plebz.updateImportant,
       t.plebz.updateAvailableBody(release: release.title),
       if (asset.size > 0) t.plebz.updateSize(size: ByteFormatter.formatBytes(asset.size, decimals: 0)),
       if (cellular) t.plebz.updateOnMobileData,
     ].join(' ');
+    // Shown is offered: a "Später" holds until the next offer is due.
+    await settings.write(PlebzPrefs.plebzLastUpdateOfferAt, DateTime.now().millisecondsSinceEpoch);
+    if (!context.mounted) return;
     // What the release brings, as written for it — the text that ships in
     // the new build's own notes.
     final wanted = await showFullTextConfirmDialog(
@@ -246,8 +270,29 @@ Future<dynamic> _downloadWithProgress(BuildContext context, PlebzUpdateService u
   });
 }
 
+/// Whether any release newer than [build] is marked important: the latest
+/// may be an ordinary one that followed it. A list GitHub would not give is
+/// read as none — the ordinary spacing then decides.
+Future<bool> _importantSince(PlebzUpdateService updates, int build) async {
+  try {
+    final releases = await updates.recentReleases();
+    return releases.any((release) => release.important && PlebzUpdateService.isNewer(release, build));
+  } catch (error) {
+    appLogger.d('Plebz update check: releases not listed', error: error);
+    return false;
+  }
+}
+
+String _updateOfferLabel(PlebzUpdateOffer offer) => switch (offer) {
+  PlebzUpdateOffer.whenAvailable => t.plebz.updateOfferWhenAvailable,
+  PlebzUpdateOffer.weekly => t.plebz.updateOfferWeekly,
+  PlebzUpdateOffer.biweekly => t.plebz.updateOfferBiweekly,
+  PlebzUpdateOffer.monthly => t.plebz.updateOfferMonthly,
+};
+
 /// The update rows for the settings page: "Was ist neu" everywhere, the
-/// update check only where [plebzUpdatesAvailable].
+/// update check only where [plebzUpdatesAvailable]. "Updates anbieten" only
+/// while the start-up check is on — the caller rebuilds on that switch.
 List<Widget> plebzUpdateRows(BuildContext context) {
   final whatsNew = SettingNavigationTile(
     icon: Symbols.new_releases_rounded,
@@ -270,5 +315,15 @@ List<Widget> plebzUpdateRows(BuildContext context) {
       title: t.plebz.checkOnStartup,
       subtitle: t.plebz.checkOnStartupDescription,
     ),
+    if (SettingsService.instance.read(SettingsService.autoCheckUpdatesOnStartup))
+      SettingSelectionTile<PlebzUpdateOffer>(
+        pref: PlebzPrefs.plebzUpdateOffer,
+        icon: Symbols.event_repeat_rounded,
+        title: t.plebz.updateOffer,
+        subtitleBuilder: (offer) => '${_updateOfferLabel(offer)} · ${t.plebz.updateOfferDescription}',
+        options: [
+          for (final offer in PlebzUpdateOffer.values) DialogOption(value: offer, title: _updateOfferLabel(offer)),
+        ],
+      ),
   ];
 }

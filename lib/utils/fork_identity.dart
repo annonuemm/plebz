@@ -15,7 +15,7 @@ const forkAppName = 'Plebz';
 /// (pubspec), so this is where the base is named — About shows it, and
 /// `scripts/publish_public.sh` puts it in every public commit. Set it at each
 /// upstream merge.
-const upstreamBaseVersion = '2.22.0';
+const upstreamBaseVersion = '2.23.0';
 
 /// Where Plebz publishes its releases, as "owner/repository" on GitHub.
 /// Releases carry the arm32 and arm64 APKs `scripts/build_apk.sh` names; an
@@ -75,9 +75,10 @@ bool debugPlezyHostedServicesAvailable = false;
 /// registered.
 ///
 /// Simkl came back on 2026-10-06 at the user's word, as the tracker a profile
-/// can keep its own progress in. It signs in with a PIN straight at Simkl —
-/// no relay page on Plezy's host — and still on the app id Plezy registered,
-/// which the user accepted; an own id is one constant in `simkl_constants.dart`.
+/// can keep its own progress in. It signs in with Simkl's device flow (AUTH
+/// V2, since Plezy 2.23) straight at Simkl — no relay page on Plezy's host —
+/// and still on the app id Plezy registered, which the user accepted; an own
+/// id is `v2ClientId` in `simkl_constants.dart`.
 const forkRemovedTrackers = {TrackerService.mal, TrackerService.anilist, TrackerService.trakt, TrackerService.mdblist};
 
 bool isTrackerAvailable(TrackerService service) =>

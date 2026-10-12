@@ -65,6 +65,7 @@ class _FakeClient implements MediaServerClient {
     MediaItem item, {
     int mediaIndex = 0,
     String? mediaSourceId,
+    Duration? position,
   }) async => ExternalPlaybackTarget(url: 'https://server/${item.id}?X-Plex-Token=abc');
 
   @override

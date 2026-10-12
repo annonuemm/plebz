@@ -472,6 +472,8 @@ class _Translations$settings$ru extends Translations$settings$en {
 	@override String get dvConversionNativeDescription => 'Принудительно использовать нативный DV7 и не повторять DV-конвертацию';
 	@override String get dvConversionDv81Description => 'Принудительно выполнять inline-конвертацию RPU в Dolby Vision профиль 8.1';
 	@override String get dvConversionHevcStripDescription => 'Удалять слои Dolby Vision RPU/EL и передавать обычный HEVC';
+	@override String get disableDolbyVision => 'Отключить Dolby Vision';
+	@override String get disableDolbyVisionDescription => 'Воспроизводить слой HDR10 или HLG из файла вместо Dolby Vision, если он есть';
 	@override String get hdrSdrConversion => 'Преобразование HDR в SDR';
 	@override String get hdrSdrConversionDescription => 'Выберите, что преобразует HDR-видео, если дисплей не поддерживает HDR.';
 	@override String get hdrSdrConversionAuto => 'Авто';
@@ -3405,6 +3407,8 @@ extension on TranslationsRu {
 			'settings.dvConversionNativeDescription' => 'Принудительно использовать нативный DV7 и не повторять DV-конвертацию',
 			'settings.dvConversionDv81Description' => 'Принудительно выполнять inline-конвертацию RPU в Dolby Vision профиль 8.1',
 			'settings.dvConversionHevcStripDescription' => 'Удалять слои Dolby Vision RPU/EL и передавать обычный HEVC',
+			'settings.disableDolbyVision' => 'Отключить Dolby Vision',
+			'settings.disableDolbyVisionDescription' => 'Воспроизводить слой HDR10 или HLG из файла вместо Dolby Vision, если он есть',
 			'settings.hdrSdrConversion' => 'Преобразование HDR в SDR',
 			'settings.hdrSdrConversionDescription' => 'Выберите, что преобразует HDR-видео, если дисплей не поддерживает HDR.',
 			'settings.hdrSdrConversionAuto' => 'Авто',
@@ -3566,10 +3570,10 @@ extension on TranslationsRu {
 			'fileInfo.languageCode' => 'Код языка',
 			'fileInfo.streamTitle' => 'Название дорожки',
 			'fileInfo.channels' => 'Каналы',
-			'fileInfo.sampleRate' => 'Частота дискретизации',
-			'fileInfo.spatialAudio' => 'Пространственное аудио',
 			_ => null,
 		} ?? switch (path) {
+			'fileInfo.sampleRate' => 'Частота дискретизации',
+			'fileInfo.spatialAudio' => 'Пространственное аудио',
 			'fileInfo.textBased' => 'Текстовый',
 			'fileInfo.subtitleFormat' => 'Формат файла-спутника',
 			'fileInfo.provider' => 'Провайдер',
@@ -4080,10 +4084,10 @@ extension on TranslationsRu {
 			'libraries.emptyingTrash' => ({required Object title}) => 'Очистка корзины для "${title}"...',
 			'libraries.trashEmptied' => ({required Object title}) => 'Корзина очищена для "${title}"',
 			'libraries.failedToEmptyTrash' => ({required Object error}) => 'Не удалось очистить корзину: ${error}',
-			'libraries.analyzing' => ({required Object title}) => 'Анализ "${title}"...',
-			'libraries.analysisStarted' => ({required Object title}) => 'Анализ начат для "${title}"',
 			_ => null,
 		} ?? switch (path) {
+			'libraries.analyzing' => ({required Object title}) => 'Анализ "${title}"...',
+			'libraries.analysisStarted' => ({required Object title}) => 'Анализ начат для "${title}"',
 			'libraries.failedToAnalyze' => ({required Object error}) => 'Не удалось проанализировать библиотеку: ${error}',
 			'libraries.noLibrariesFound' => 'Библиотеки не найдены',
 			'libraries.allLibrariesHidden' => 'Все библиотеки скрыты',
@@ -4594,10 +4598,10 @@ extension on TranslationsRu {
 			'watchTogether.guestSwitchUnavailable' => 'Не удалось переключиться — сервер недоступен для синхронизации',
 			'watchTogether.guestSwitchFailed' => 'Не удалось переключиться — содержимое не найдено на этом сервере',
 			'watchTogether.defaultDisplayName' => 'Пользователь',
-			'watchTogether.errors.timedOut' => 'Сервер ретрансляции не ответил вовремя',
-			'watchTogether.errors.connectionLost' => 'Соединение закрылось до того, как сессия была готова',
 			_ => null,
 		} ?? switch (path) {
+			'watchTogether.errors.timedOut' => 'Сервер ретрансляции не ответил вовремя',
+			'watchTogether.errors.connectionLost' => 'Соединение закрылось до того, как сессия была готова',
 			'watchTogether.errors.invalidRelayResponse' => 'Сервер ретрансляции прислал неожиданный ответ',
 			'watchTogether.errors.sessionEnded' => 'Организатор завершил сессию',
 			'watchTogether.errors.sessionUnavailable' => 'Не удалось возобновить эту сессию. Присоединитесь к комнате или создайте её, чтобы продолжить.',
@@ -5108,10 +5112,10 @@ extension on TranslationsRu {
 			'addServer.invalidCredentials' => 'Неверное имя пользователя или пароль',
 			'addServer.authResponseNotJson' => 'Ответ аутентификации не является допустимым JSON',
 			'addServer.authResponseIncomplete' => 'Ответ сервера при входе оказался неполным',
-			'addServer.quickConnectRejected' => 'Quick Connect был отклонён сервером',
-			'addServer.quickConnectNotJson' => 'Ответ Quick Connect не является допустимым JSON',
 			_ => null,
 		} ?? switch (path) {
+			'addServer.quickConnectRejected' => 'Quick Connect был отклонён сервером',
+			'addServer.quickConnectNotJson' => 'Ответ Quick Connect не является допустимым JSON',
 			'addServer.quickConnectMissingFields' => 'В ответе Quick Connect отсутствует код или секрет',
 			'addServer.quickConnectPollRejected' => 'Опрос Quick Connect был отклонён сервером',
 			'addServer.serverTimedOut' => 'Сервер не ответил вовремя',

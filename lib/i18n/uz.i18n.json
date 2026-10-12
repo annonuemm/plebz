@@ -372,6 +372,8 @@
     "dvConversionNativeDescription": "Ichki DV7 rejimini majburlash",
     "dvConversionDv81Description": "Dolby Vision profile 8.1 formatiga oʻtkazish",
     "dvConversionHevcStripDescription": "Dolby Vision qatlamlarini olib tashlash va HEVC sifatida koʻrsatish",
+    "disableDolbyVision": "Dolby Vision'ni oʻchirish",
+    "disableDolbyVisionDescription": "Faylda boʻlsa, Dolby Vision oʻrniga HDR10 yoki HLG qatlamini ijro etish",
     "hdrSdrConversion": "HDR'ni SDR'ga aylantirish",
     "hdrSdrConversionDescription": "Displey HDR'ni ko‘rsata olmaganda HDR videoni nima aylantirishini tanlang.",
     "hdrSdrConversionAuto": "Avtomatik",
@@ -1764,6 +1766,9 @@
     "episodesQueued": "${count} qism yuklash navbatiga qoʻshildi",
     "downloadDeleted": "Yuklama oʻchirildi",
     "deleteConfirm": "\"${title}\" ushbu qurilmadan oʻchirilsinmi?",
+    "deleteCollectionDownloads": "",
+    "deleteCollectionDownloadsConfirm": "",
+    "collectionDownloadsDeleted": "",
     "cancelledDownloadTitle": "Toʻxtatilgan yuklama",
     "cancelledDownloadMessage": "Ushbu yuklash bekor qilindi. Nima qilmoqchisiz?",
     "allEpisodesAlreadyDownloaded": "Barcha qismlar avvaldan yuklab olingan",
@@ -1781,6 +1786,8 @@
     "noDownloadsTree": "Yuklamalar yoʻq",
     "pauseAll": "Barchasini toʻxtatib turish",
     "resumeAll": "Barchasini davom ettirish",
+    "retryAll": "",
+    "retryFailed": "",
     "deleteAll": "Barchasini oʻchirish",
     "selectVersion": "Versiyani tanlash",
     "allEpisodes": "Barcha qismlar",
@@ -1851,7 +1858,8 @@
     },
     "options": "Yuklamalar parametrlari",
     "groupings": {
-      "library": "Kutubxona"
+      "library": "Kutubxona",
+      "collections": ""
     },
     "unknownLibrary": "Nomaʼlum kutubxona",
     "unknownShow": "Nomaʼlum serial",
@@ -2004,6 +2012,13 @@
     "rotation": "Aylanish",
     "dvSource": "DV manbasi",
     "dvPath": "DV yoʻli",
+    "dvRouteDecoder": "",
+    "dvRouteDecoderP81": "",
+    "dvRouteBaseLayer": "",
+    "dvRouteBaseLayerHdr10": "",
+    "dvRouteBaseLayerHlg": "",
+    "dvRouteBaseLayerSdr": "",
+    "dvRouteReshaped": "",
     "p7Conversion": "P7 oʻtkazmasi",
     "sampleRate": "Diskretlash chastotasi",
     "pixelFormat": "Piksel formati",
@@ -2233,6 +2248,10 @@
       "simkl": "Simkl",
       "seerr": "Seerr",
       "mdblist": "MDBList"
+    },
+    "simklReconnect": {
+      "title": "",
+      "subtitle": ""
     },
     "deviceCode": {
       "title": "Plebz-ni ${service} xizmatida faollashtiring",

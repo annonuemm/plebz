@@ -2007,6 +2007,9 @@ class _Translations$downloads$de extends Translations$downloads$en {
 	@override String episodesQueued({required Object count}) => '${count} Episoden zum Download hinzugefügt';
 	@override String get downloadDeleted => 'Download gelöscht';
 	@override String deleteConfirm({required Object title}) => '"${title}" von diesem Gerät löschen?';
+	@override String get deleteCollectionDownloads => 'Downloads löschen';
+	@override String deleteCollectionDownloadsConfirm({required Object title}) => 'Alle Downloads aus „${title}“ von diesem Gerät löschen?';
+	@override String get collectionDownloadsDeleted => 'Downloads gelöscht';
 	@override String get cancelledDownloadTitle => 'Abgebrochener Download';
 	@override String get cancelledDownloadMessage => 'Dieser Download wurde abgebrochen. Was möchtest du tun?';
 	@override String get allEpisodesAlreadyDownloaded => 'Alle Episoden sind bereits heruntergeladen';
@@ -2024,6 +2027,8 @@ class _Translations$downloads$de extends Translations$downloads$en {
 	@override String get noDownloadsTree => 'Keine Downloads';
 	@override String get pauseAll => 'Alle pausieren';
 	@override String get resumeAll => 'Alle fortsetzen';
+	@override String get retryAll => 'Alle wiederholen';
+	@override String get retryFailed => 'Fehlgeschlagene Downloads wiederholen';
 	@override String get deleteAll => 'Alle löschen';
 	@override String get selectVersion => 'Version auswählen';
 	@override String get allEpisodes => 'Alle Episoden';
@@ -2180,6 +2185,13 @@ class _Translations$performanceOverlay$de extends Translations$performanceOverla
 	@override String get rotation => 'Drehung';
 	@override String get dvSource => 'DV-Quelle';
 	@override String get dvPath => 'DV-Pfad';
+	@override String get dvRouteDecoder => 'Dolby-Vision-Decoder';
+	@override String get dvRouteDecoderP81 => 'Dolby-Vision-Decoder (P7→8.1)';
+	@override String get dvRouteBaseLayer => 'Basisschicht';
+	@override String get dvRouteBaseLayerHdr10 => 'HDR10-Basisschicht';
+	@override String get dvRouteBaseLayerHlg => 'HLG-Basisschicht';
+	@override String get dvRouteBaseLayerSdr => 'SDR-Basisschicht';
+	@override String get dvRouteReshaped => 'RPU umgeformt (gpu-next)';
 	@override String get p7Conversion => 'P7-Konv.';
 	@override String get sampleRate => 'Abtastrate';
 	@override String get pixelFormat => 'Pixelformat';
@@ -2476,6 +2488,7 @@ class _Translations$services$de extends Translations$services$en {
 	@override String disconnectConfirmBody({required Object service}) => 'Plebz aktualisiert ${service} nicht mehr. Jederzeit erneut verbinden.';
 	@override String connectFailed({required Object service}) => 'Verbindung zu ${service} fehlgeschlagen. Versuche es erneut.';
 	@override late final _Translations$services$names$de names = _Translations$services$names$de._(_root);
+	@override late final _Translations$services$simklReconnect$de simklReconnect = _Translations$services$simklReconnect$de._(_root);
 	@override late final _Translations$services$deviceCode$de deviceCode = _Translations$services$deviceCode$de._(_root);
 	@override late final _Translations$services$oauthProxy$de oauthProxy = _Translations$services$oauthProxy$de._(_root);
 	@override late final _Translations$services$pendingAuth$de pendingAuth = _Translations$services$pendingAuth$de._(_root);
@@ -3502,6 +3515,7 @@ class _Translations$downloads$groupings$de extends Translations$downloads$groupi
 
 	// Translations
 	@override String get library => 'Mediathek';
+	@override String get collections => 'Sammlungen';
 }
 
 // Path: companionRemote.session
@@ -3632,6 +3646,17 @@ class _Translations$services$names$de extends Translations$services$names$en {
 	@override String get seerr => 'Seerr';
 	@override String get mdblist => 'MDBList';
 	@override String get tmdb => 'TMDB';
+}
+
+// Path: services.simklReconnect
+class _Translations$services$simklReconnect$de extends Translations$services$simklReconnect$en {
+	_Translations$services$simklReconnect$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Simkl neu verbinden';
+	@override String get subtitle => 'Simkl stellt die alte Anmeldung ein; einmal auf simkl.com bestätigen.';
 }
 
 // Path: services.deviceCode
@@ -5567,6 +5592,9 @@ extension on TranslationsDe {
 			'downloads.episodesQueued' => ({required Object count}) => '${count} Episoden zum Download hinzugefügt',
 			'downloads.downloadDeleted' => 'Download gelöscht',
 			'downloads.deleteConfirm' => ({required Object title}) => '"${title}" von diesem Gerät löschen?',
+			'downloads.deleteCollectionDownloads' => 'Downloads löschen',
+			'downloads.deleteCollectionDownloadsConfirm' => ({required Object title}) => 'Alle Downloads aus „${title}“ von diesem Gerät löschen?',
+			'downloads.collectionDownloadsDeleted' => 'Downloads gelöscht',
 			'downloads.cancelledDownloadTitle' => 'Abgebrochener Download',
 			'downloads.cancelledDownloadMessage' => 'Dieser Download wurde abgebrochen. Was möchtest du tun?',
 			'downloads.allEpisodesAlreadyDownloaded' => 'Alle Episoden sind bereits heruntergeladen',
@@ -5584,6 +5612,8 @@ extension on TranslationsDe {
 			'downloads.noDownloadsTree' => 'Keine Downloads',
 			'downloads.pauseAll' => 'Alle pausieren',
 			'downloads.resumeAll' => 'Alle fortsetzen',
+			'downloads.retryAll' => 'Alle wiederholen',
+			'downloads.retryFailed' => 'Fehlgeschlagene Downloads wiederholen',
 			'downloads.deleteAll' => 'Alle löschen',
 			'downloads.selectVersion' => 'Version auswählen',
 			'downloads.allEpisodes' => 'Alle Episoden',
@@ -5652,6 +5682,7 @@ extension on TranslationsDe {
 			'downloads.backgroundWarning.linkUnavailable' => 'dontkillmyapp.com konnte auf diesem Gerät nicht geöffnet werden',
 			'downloads.options' => 'Download-Optionen',
 			'downloads.groupings.library' => 'Mediathek',
+			'downloads.groupings.collections' => 'Sammlungen',
 			'downloads.unknownLibrary' => 'Unbekannte Mediathek',
 			'downloads.unknownShow' => 'Unbekannte Serie',
 			'downloads.unknownSeason' => 'Unbekannte Staffel',
@@ -5804,6 +5835,13 @@ extension on TranslationsDe {
 			'performanceOverlay.rotation' => 'Drehung',
 			'performanceOverlay.dvSource' => 'DV-Quelle',
 			'performanceOverlay.dvPath' => 'DV-Pfad',
+			'performanceOverlay.dvRouteDecoder' => 'Dolby-Vision-Decoder',
+			'performanceOverlay.dvRouteDecoderP81' => 'Dolby-Vision-Decoder (P7→8.1)',
+			'performanceOverlay.dvRouteBaseLayer' => 'Basisschicht',
+			'performanceOverlay.dvRouteBaseLayerHdr10' => 'HDR10-Basisschicht',
+			'performanceOverlay.dvRouteBaseLayerHlg' => 'HLG-Basisschicht',
+			'performanceOverlay.dvRouteBaseLayerSdr' => 'SDR-Basisschicht',
+			'performanceOverlay.dvRouteReshaped' => 'RPU umgeformt (gpu-next)',
 			'performanceOverlay.p7Conversion' => 'P7-Konv.',
 			'performanceOverlay.sampleRate' => 'Abtastrate',
 			'performanceOverlay.pixelFormat' => 'Pixelformat',
@@ -5811,6 +5849,8 @@ extension on TranslationsDe {
 			'performanceOverlay.matrix' => 'Matrix',
 			'performanceOverlay.primaries' => 'Primärfarben',
 			'performanceOverlay.transfer' => 'Transfer',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.renderFps' => 'Render-FPS',
 			'performanceOverlay.displayFps' => 'Display-FPS',
 			'performanceOverlay.avSync' => 'A/V-Sync',
@@ -5824,8 +5864,6 @@ extension on TranslationsDe {
 			'performanceOverlay.maxFall' => 'MaxFALL',
 			'performanceOverlay.cacheUsed' => 'Cache genutzt',
 			'performanceOverlay.cacheLimit' => 'Cache-Limit',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.speed' => 'Geschwindigkeit',
 			'performanceOverlay.player' => 'Player',
 			'performanceOverlay.memory' => 'Speicher',
@@ -6044,6 +6082,8 @@ extension on TranslationsDe {
 			'services.names.seerr' => 'Seerr',
 			'services.names.mdblist' => 'MDBList',
 			'services.names.tmdb' => 'TMDB',
+			'services.simklReconnect.title' => 'Simkl neu verbinden',
+			'services.simklReconnect.subtitle' => 'Simkl stellt die alte Anmeldung ein; einmal auf simkl.com bestätigen.',
 			'services.deviceCode.title' => ({required Object service}) => 'Plebz auf ${service} aktivieren',
 			'services.deviceCode.instructions' => 'Scanne den QR-Code oder rufe die unten angegebene Adresse auf und gib diesen Code ein:',
 			'services.deviceCode.openToActivate' => ({required Object service}) => '${service} zum Aktivieren öffnen',
@@ -6323,6 +6363,8 @@ extension on TranslationsDe {
 			'plebz.checkOnStartup' => 'Beim Start nach Updates suchen',
 			'plebz.checkOnStartupDescription' => 'GitHub sieht dabei deine IP-Adresse',
 			'plebz.downloading' => 'Update wird geladen …',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.updateSize' => ({required Object size}) => 'Der Download ist ${size} groß.',
 			'plebz.updateOnMobileData' => 'Du bist gerade über mobile Daten verbunden.',
 			'plebz.installPermissionTitle' => 'Installieren erlauben',
@@ -6338,8 +6380,6 @@ extension on TranslationsDe {
 			'localFiles.accessTitle' => 'Zugriff auf Dateien',
 			'localFiles.accessMessage' => 'Diese Box hat keine eigene Dateiauswahl. Damit Plebz Ordner und USB-Sticks durchsuchen kann, braucht die App einmalig den „Zugriff auf alle Dateien“. Auf der nächsten Seite schaltest du ihn für Plebz ein und kommst dann mit Zurück wieder hierher.',
 			'localFiles.accessConfirm' => 'Weiter',
-			_ => null,
-		} ?? switch (path) {
 			'localFiles.accessUnavailable' => 'Diese Box bietet keine Einstellung für den Dateizugriff an. Er lässt sich nur über einen PC freischalten:\nadb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow',
 			'localFiles.accessDenied' => 'Ohne den Zugriff auf alle Dateien kann Plebz hier keine Ordner durchsuchen.',
 			'localFiles.volumes' => 'Speicherorte',

@@ -429,6 +429,7 @@ class TrackChapterControls extends StatelessWidget {
         title: audio.title,
         language: audio.language,
         codec: audio.codec,
+        profile: audio.codecProfile,
         channels: audio.channelsCount,
         index: visibleIndex,
       );

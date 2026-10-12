@@ -472,6 +472,8 @@ class _Translations$settings$ko extends Translations$settings$en {
 	@override String get dvConversionNativeDescription => '네이티브 DV7을 강제하고 DV 변환 재시도를 억제합니다';
 	@override String get dvConversionDv81Description => 'Dolby Vision 프로필 8.1로 인라인 RPU 변환을 강제합니다';
 	@override String get dvConversionHevcStripDescription => 'Dolby Vision RPU/EL 레이어를 제거하고 일반 HEVC로 제공합니다';
+	@override String get disableDolbyVision => 'Dolby Vision 끄기';
+	@override String get disableDolbyVisionDescription => '파일에 HDR10 또는 HLG 레이어가 있으면 Dolby Vision 대신 해당 레이어를 재생합니다';
 	@override String get hdrSdrConversion => 'HDR을 SDR로 변환';
 	@override String get hdrSdrConversionDescription => '디스플레이가 HDR을 표시할 수 없을 때 HDR 동영상을 무엇으로 변환할지 선택합니다.';
 	@override String get hdrSdrConversionAuto => '자동';
@@ -3372,6 +3374,8 @@ extension on TranslationsKo {
 			'settings.dvConversionNativeDescription' => '네이티브 DV7을 강제하고 DV 변환 재시도를 억제합니다',
 			'settings.dvConversionDv81Description' => 'Dolby Vision 프로필 8.1로 인라인 RPU 변환을 강제합니다',
 			'settings.dvConversionHevcStripDescription' => 'Dolby Vision RPU/EL 레이어를 제거하고 일반 HEVC로 제공합니다',
+			'settings.disableDolbyVision' => 'Dolby Vision 끄기',
+			'settings.disableDolbyVisionDescription' => '파일에 HDR10 또는 HLG 레이어가 있으면 Dolby Vision 대신 해당 레이어를 재생합니다',
 			'settings.hdrSdrConversion' => 'HDR을 SDR로 변환',
 			'settings.hdrSdrConversionDescription' => '디스플레이가 HDR을 표시할 수 없을 때 HDR 동영상을 무엇으로 변환할지 선택합니다.',
 			'settings.hdrSdrConversionAuto' => '자동',
@@ -3533,10 +3537,10 @@ extension on TranslationsKo {
 			'fileInfo.languageCode' => '언어 코드',
 			'fileInfo.streamTitle' => '트랙 제목',
 			'fileInfo.channels' => '채널',
-			'fileInfo.sampleRate' => '샘플 레이트',
-			'fileInfo.spatialAudio' => '공간 오디오',
 			_ => null,
 		} ?? switch (path) {
+			'fileInfo.sampleRate' => '샘플 레이트',
+			'fileInfo.spatialAudio' => '공간 오디오',
 			'fileInfo.textBased' => '텍스트 기반',
 			'fileInfo.subtitleFormat' => '사이드카 포맷',
 			'fileInfo.provider' => '제공자',
@@ -4047,10 +4051,10 @@ extension on TranslationsKo {
 			'libraries.emptyingTrash' => ({required Object title}) => '「${title}」의 휴지통을 비우고 있습니다...',
 			'libraries.trashEmptied' => ({required Object title}) => '「${title}」의 휴지통을 비웠습니다',
 			'libraries.failedToEmptyTrash' => ({required Object error}) => '휴지통 비우기 실패: ${error}',
-			'libraries.analyzing' => ({required Object title}) => '"${title}" 분석 중...',
-			'libraries.analysisStarted' => ({required Object title}) => '"${title}" 분석 시작됨',
 			_ => null,
 		} ?? switch (path) {
+			'libraries.analyzing' => ({required Object title}) => '"${title}" 분석 중...',
+			'libraries.analysisStarted' => ({required Object title}) => '"${title}" 분석 시작됨',
 			'libraries.failedToAnalyze' => ({required Object error}) => '미디어 라이브러리 분석 실패: ${error}',
 			'libraries.noLibrariesFound' => '미디어 라이브러리 없음',
 			'libraries.allLibrariesHidden' => '모든 라이브러리가 숨겨졌습니다',
@@ -4561,10 +4565,10 @@ extension on TranslationsKo {
 			'watchTogether.guestSwitchUnavailable' => '전환할 수 없음 — 동기화 서버를 사용할 수 없습니다',
 			'watchTogether.guestSwitchFailed' => '전환할 수 없음 — 이 서버에서 콘텐츠를 찾을 수 없습니다',
 			'watchTogether.defaultDisplayName' => '사용자',
-			'watchTogether.errors.timedOut' => '릴레이 서버가 제시간에 응답하지 않았습니다',
-			'watchTogether.errors.connectionLost' => '세션이 준비되기 전에 연결이 종료되었습니다',
 			_ => null,
 		} ?? switch (path) {
+			'watchTogether.errors.timedOut' => '릴레이 서버가 제시간에 응답하지 않았습니다',
+			'watchTogether.errors.connectionLost' => '세션이 준비되기 전에 연결이 종료되었습니다',
 			'watchTogether.errors.invalidRelayResponse' => '릴레이 서버가 예기치 않은 응답을 보냈습니다',
 			'watchTogether.errors.sessionEnded' => '호스트가 세션을 종료했습니다',
 			'watchTogether.errors.sessionUnavailable' => '이 세션을 재개할 수 없습니다. 방에 참여하거나 만들어 계속하세요.',
@@ -5075,10 +5079,10 @@ extension on TranslationsKo {
 			'addServer.invalidCredentials' => '사용자 이름 또는 비밀번호가 올바르지 않습니다',
 			'addServer.authResponseNotJson' => '인증 응답이 유효한 JSON이 아닙니다',
 			'addServer.authResponseIncomplete' => '서버의 로그인 응답이 불완전합니다',
-			'addServer.quickConnectRejected' => '서버에서 Quick Connect를 거부했습니다',
-			'addServer.quickConnectNotJson' => 'Quick Connect 응답이 유효한 JSON이 아닙니다',
 			_ => null,
 		} ?? switch (path) {
+			'addServer.quickConnectRejected' => '서버에서 Quick Connect를 거부했습니다',
+			'addServer.quickConnectNotJson' => 'Quick Connect 응답이 유효한 JSON이 아닙니다',
 			'addServer.quickConnectMissingFields' => 'Quick Connect 응답에 코드 또는 비밀 키가 없습니다',
 			'addServer.quickConnectPollRejected' => '서버에서 Quick Connect 폴링을 거부했습니다',
 			'addServer.serverTimedOut' => '서버가 제시간에 응답하지 않았습니다',

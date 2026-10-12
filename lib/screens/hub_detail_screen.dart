@@ -167,7 +167,6 @@ class HubDetailScreenState extends State<HubDetailScreen>
     ];
   }
 
-  /// Override to add bounds check for filtered items (sorting can change item order)
   @override
   void navigateToGrid() {
     // Down out of the chrome row under the redesign. Its grid owns its own
@@ -183,17 +182,7 @@ class HubDetailScreenState extends State<HubDetailScreen>
       page.focusGridFromBand();
       return;
     }
-    if (!hasItems) return;
-
-    final targetIndex = shouldRestoreGridFocus && lastFocusedGridIndex! < _filteredItems.length
-        ? lastFocusedGridIndex!
-        : 0;
-
-    setState(() {
-      isAppBarFocused = false;
-    });
-
-    _focusNodeForIndex(targetIndex).requestFocus();
+    super.navigateToGrid();
   }
 
   FocusNode _focusNodeForIndex(int index) => focusNodeForIndex(

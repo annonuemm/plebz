@@ -32,6 +32,7 @@ import 'widgets/live_channel_strip.dart';
 import 'widgets/live_group_strip.dart';
 import 'widgets/live_timeline_bar.dart';
 import 'widgets/first_frame_guard.dart';
+import 'widgets/finish_time_builder.dart';
 import 'widgets/play_pause_stream_builder.dart';
 import 'widgets/video_controls_header.dart';
 import 'widgets/video_timeline_bar.dart';
@@ -781,34 +782,58 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
                 const Spacer(),
                 // When content strip is visible, hide the normal controls (like mobile)
                 if (!_contentStripVisible)
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      _glassBottomControls(context, _buildBottomControlsContent(context, hasFrame: true)),
-                      // Down arrow hint when strip content is available
-                      if (widget.useDpadNavigation && _hasStripContent)
-                        const ContentStripHint(Symbols.keyboard_arrow_down_rounded),
-                    ],
+                  _absorbMissedClicks(
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        _glassBottomControls(context, _buildBottomControlsContent(context, hasFrame: true)),
+                        // Down arrow hint when strip content is available
+                        if (widget.useDpadNavigation && _hasStripContent)
+                          const ContentStripHint(Symbols.keyboard_arrow_down_rounded),
+                      ],
+                    ),
                   ),
                 // Content strip (TV/dpad only) — replaces normal controls
                 if (_contentStripVisible && widget.useDpadNavigation && _stripMode == _ContentStripMode.groups)
-                  ContentStripPanel(
-                    padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8, top: 32),
-                    chevron: Symbols.keyboard_arrow_up_rounded,
-                    // Under glass the list is a pane of its own, on its own
-                    // ground; the scrim behind it was a dark box round it.
-                    scrim: !ockerGlass(context),
-                    // Half the screen, in the middle under the chevron: a list
-                    // of group names across the whole width was mostly empty
-                    // pane.
-                    child: FractionallySizedBox(
-                      widthFactor: LiveGroupStrip.widthFactor,
-                      child: LiveGroupStrip(
-                        key: _groupStripKey,
-                        groups: widget.liveGroups,
-                        selected: widget.liveGroup,
-                        onGroupSelected: (group) {
-                          widget.onLiveGroupSelected?.call(group);
+                  _absorbMissedClicks(
+                    ContentStripPanel(
+                      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8, top: 32),
+                      chevron: Symbols.keyboard_arrow_up_rounded,
+                      // Under glass the list is a pane of its own, on its own
+                      // ground; the scrim behind it was a dark box round it.
+                      scrim: !ockerGlass(context),
+                      // Half the screen, in the middle under the chevron: a list
+                      // of group names across the whole width was mostly empty
+                      // pane.
+                      child: FractionallySizedBox(
+                        widthFactor: LiveGroupStrip.widthFactor,
+                        child: LiveGroupStrip(
+                          key: _groupStripKey,
+                          groups: widget.liveGroups,
+                          selected: widget.liveGroup,
+                          onGroupSelected: (group) {
+                            widget.onLiveGroupSelected?.call(group);
+                            _onContentStripNavigateUp();
+                          },
+                          onNavigateUp: _onContentStripNavigateUp,
+                          onFocusActivity: widget.onFocusActivity,
+                        ),
+                      ),
+                    ),
+                  )
+                else if (_contentStripVisible && widget.useDpadNavigation && _hasChannelStrip)
+                  _absorbMissedClicks(
+                    ContentStripPanel(
+                      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8, top: 32),
+                      chevron: Symbols.keyboard_arrow_up_rounded,
+                      child: LiveChannelStrip(
+                        key: _channelStripKey,
+                        channels: widget.liveChannels,
+                        currentIndex: widget.liveChannelIndex,
+                        programFor: widget.liveProgramFor,
+                        nextProgramFor: widget.liveNextProgramFor,
+                        onChannelSelected: (index) {
+                          widget.onLiveChannelSelected?.call(index);
                           _onContentStripNavigateUp();
                         },
                         onNavigateUp: _onContentStripNavigateUp,
@@ -816,46 +841,30 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
                       ),
                     ),
                   )
-                else if (_contentStripVisible && widget.useDpadNavigation && _hasChannelStrip)
-                  ContentStripPanel(
-                    padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8, top: 32),
-                    chevron: Symbols.keyboard_arrow_up_rounded,
-                    child: LiveChannelStrip(
-                      key: _channelStripKey,
-                      channels: widget.liveChannels,
-                      currentIndex: widget.liveChannelIndex,
-                      programFor: widget.liveProgramFor,
-                      nextProgramFor: widget.liveNextProgramFor,
-                      onChannelSelected: (index) {
-                        widget.onLiveChannelSelected?.call(index);
-                        _onContentStripNavigateUp();
-                      },
-                      onNavigateUp: _onContentStripNavigateUp,
-                      onFocusActivity: widget.onFocusActivity,
-                    ),
-                  )
                 else if (_contentStripVisible && widget.useDpadNavigation)
-                  ContentStripPanel(
-                    padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8, top: 32),
-                    chevron: Symbols.keyboard_arrow_up_rounded,
-                    // Under glass the strip stands on a pane, as the control
-                    // bar it takes the place of does, and needs no scrim.
-                    scrim: !ockerGlass(context),
-                    child: _glassContentStrip(
-                      context,
-                      ContentStrip(
-                        key: _contentStripKey,
-                        player: widget.player,
-                        chapters: widget.chapters,
-                        serverId: widget.serverId,
-                        canControl: _canControl,
-                        showQueueTab: widget.showQueueTab,
-                        onQueueItemSelected: widget.onQueueItemSelected,
-                        onSeekRequested: widget.onSeekRequested,
-                        onSeekCompleted: widget.onSeekCompleted,
-                        useFocusNavigation: true,
-                        onNavigateUp: _onContentStripNavigateUp,
-                        onFocusActivity: widget.onFocusActivity,
+                  _absorbMissedClicks(
+                    ContentStripPanel(
+                      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8, top: 32),
+                      chevron: Symbols.keyboard_arrow_up_rounded,
+                      // Under glass the strip stands on a pane, as the control
+                      // bar it takes the place of does, and needs no scrim.
+                      scrim: !ockerGlass(context),
+                      child: _glassContentStrip(
+                        context,
+                        ContentStrip(
+                          key: _contentStripKey,
+                          player: widget.player,
+                          chapters: widget.chapters,
+                          serverId: widget.serverId,
+                          canControl: _canControl,
+                          showQueueTab: widget.showQueueTab,
+                          onQueueItemSelected: widget.onQueueItemSelected,
+                          onSeekRequested: widget.onSeekRequested,
+                          onSeekCompleted: widget.onSeekCompleted,
+                          useFocusNavigation: true,
+                          onNavigateUp: _onContentStripNavigateUp,
+                          onFocusActivity: widget.onFocusActivity,
+                        ),
                       ),
                     ),
                   ),
@@ -866,6 +875,20 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
       ],
     );
   }
+
+  /// A bar is chrome, not video. The controls overlay behind it treats every
+  /// tap no control claims as a click on the video — play/pause, fullscreen on
+  /// a double click, or hiding the chrome — so a click that misses a button or
+  /// the seek bar by a few pixels would act on playback (#2578). This claims
+  /// those taps without acting on them; the bar's own controls sit deeper in
+  /// the hit-test path and still win the gesture arena.
+  Widget _absorbMissedClicks(Widget bar) => GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    excludeFromSemantics: true,
+    // ignore: no-empty-block - claims taps that miss every control in the bar
+    onTap: () {},
+    child: bar,
+  );
 
   Widget _buildTopBar(BuildContext _) {
     // Use global fullscreen state for padding
@@ -911,7 +934,7 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
       ),
     );
 
-    return DesktopAppBarHelper.wrapWithGestureDetector(topBar, opaque: true);
+    return DesktopAppBarHelper.wrapWithGestureDetector(_absorbMissedClicks(topBar), opaque: true);
   }
 
   /// Under "Redesign – Glas" the bar is a pane over the picture rather than
@@ -1133,48 +1156,19 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
                   const Spacer()
                 else
                   Expanded(
-                    child: StreamBuilder<Duration>(
-                      stream: widget.player.streams.duration,
-                      initialData: widget.player.state.duration,
-                      builder: (context, durationSnapshot) {
-                        final duration = durationSnapshot.data ?? Duration.zero;
-                        return StreamBuilder<double>(
-                          stream: widget.player.streams.rate,
-                          initialData: widget.player.state.rate,
-                          builder: (context, rateSnapshot) {
-                            final rate = rateSnapshot.data ?? 1.0;
-                            final initialRemaining = duration - widget.player.state.position;
-                            return StreamBuilder<Duration>(
-                              stream: widget.player.streams.position.map((position) => duration - position).distinct((
-                                previous,
-                                next,
-                              ) {
-                                final previousHasRemaining = previous.inSeconds > 0;
-                                final nextHasRemaining = next.inSeconds > 0;
-                                return previousHasRemaining == nextHasRemaining &&
-                                    (!previousHasRemaining || previous.inMinutes == next.inMinutes);
-                              }),
-                              initialData: initialRemaining,
-                              builder: (context, remainingSnapshot) {
-                                final remaining = remainingSnapshot.data ?? Duration.zero;
-                                if (remaining.inSeconds <= 0) return const SizedBox.shrink();
+                    child: FinishTimeBuilder(
+                      player: widget.player,
+                      builder: (context, finishTime) {
+                        if (finishTime == null) return const SizedBox.shrink();
 
-                                final text = t.videoControls.endsAt(
-                                  time: formatFinishTime(
-                                    remaining,
-                                    rate: rate,
-                                    is24Hour: MediaQuery.alwaysUse24HourFormatOf(context),
-                                  ),
-                                );
-                                const style = TextStyle(color: Colors.white70, fontSize: 13);
+                        final text = t.videoControls.endsAt(
+                          time: formatClockTime(finishTime, is24Hour: MediaQuery.alwaysUse24HourFormatOf(context)),
+                        );
+                        const style = TextStyle(color: Colors.white70, fontSize: 13);
 
-                                return Padding(
-                                  padding: const EdgeInsets.only(left: 8),
-                                  child: Text(text, style: style, maxLines: 1, softWrap: false, overflow: .fade),
-                                );
-                              },
-                            );
-                          },
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Text(text, style: style, maxLines: 1, softWrap: false, overflow: .fade),
                         );
                       },
                     ),

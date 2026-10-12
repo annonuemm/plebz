@@ -472,6 +472,8 @@ class _Translations$settings$hu extends Translations$settings$en {
 	@override String get dvConversionNativeDescription => 'A natív DV7 kényszerítése és a DV-átalakítási újrapróbálkozás letiltása';
 	@override String get dvConversionDv81Description => 'A közvetlen RPU-átalakítás kényszerítése Dolby Vision Profile 8.1-re';
 	@override String get dvConversionHevcStripDescription => 'A Dolby Vision RPU/EL-rétegek eltávolítása és egyszerű HEVC-ként való megjelenítés';
+	@override String get disableDolbyVision => 'Dolby Vision letiltása';
+	@override String get disableDolbyVisionDescription => 'A Dolby Vision helyett a fájl HDR10 vagy HLG rétegének lejátszása, ha van ilyen';
 	@override String get hdrSdrConversion => 'HDR–SDR átalakítás';
 	@override String get hdrSdrConversionDescription => 'Válaszd ki, mi alakítsa át a HDR-videót, ha a kijelző nem tud HDR-t megjeleníteni.';
 	@override String get hdrSdrConversionAuto => 'Automatikus';
@@ -3383,6 +3385,8 @@ extension on TranslationsHu {
 			'settings.dvConversionNativeDescription' => 'A natív DV7 kényszerítése és a DV-átalakítási újrapróbálkozás letiltása',
 			'settings.dvConversionDv81Description' => 'A közvetlen RPU-átalakítás kényszerítése Dolby Vision Profile 8.1-re',
 			'settings.dvConversionHevcStripDescription' => 'A Dolby Vision RPU/EL-rétegek eltávolítása és egyszerű HEVC-ként való megjelenítés',
+			'settings.disableDolbyVision' => 'Dolby Vision letiltása',
+			'settings.disableDolbyVisionDescription' => 'A Dolby Vision helyett a fájl HDR10 vagy HLG rétegének lejátszása, ha van ilyen',
 			'settings.hdrSdrConversion' => 'HDR–SDR átalakítás',
 			'settings.hdrSdrConversionDescription' => 'Válaszd ki, mi alakítsa át a HDR-videót, ha a kijelző nem tud HDR-t megjeleníteni.',
 			'settings.hdrSdrConversionAuto' => 'Automatikus',
@@ -3544,10 +3548,10 @@ extension on TranslationsHu {
 			'fileInfo.languageCode' => 'Nyelvkód',
 			'fileInfo.streamTitle' => 'Sáv címe',
 			'fileInfo.channels' => 'Csatornák',
-			'fileInfo.sampleRate' => 'Mintavételi frekvencia',
-			'fileInfo.spatialAudio' => 'Térbeli hang',
 			_ => null,
 		} ?? switch (path) {
+			'fileInfo.sampleRate' => 'Mintavételi frekvencia',
+			'fileInfo.spatialAudio' => 'Térbeli hang',
 			'fileInfo.textBased' => 'Szövegalapú',
 			'fileInfo.subtitleFormat' => 'Kísérő formátum',
 			'fileInfo.provider' => 'Szolgáltató',
@@ -4058,10 +4062,10 @@ extension on TranslationsHu {
 			'libraries.emptyingTrash' => ({required Object title}) => 'Lomtár ürítése a következőhöz: "${title}"...',
 			'libraries.trashEmptied' => ({required Object title}) => 'Lomtár kiürítve a következőhöz: "${title}"',
 			'libraries.failedToEmptyTrash' => ({required Object error}) => 'Nem sikerült a lomtár ürítése: ${error}',
-			'libraries.analyzing' => ({required Object title}) => '"${title}" elemzése...',
-			'libraries.analysisStarted' => ({required Object title}) => 'Elemzés elindítva a következőhöz: "${title}"',
 			_ => null,
 		} ?? switch (path) {
+			'libraries.analyzing' => ({required Object title}) => '"${title}" elemzése...',
+			'libraries.analysisStarted' => ({required Object title}) => 'Elemzés elindítva a következőhöz: "${title}"',
 			'libraries.failedToAnalyze' => ({required Object error}) => 'Nem sikerült a könyvtár elemzése: ${error}',
 			'libraries.noLibrariesFound' => 'Nem találhatók könyvtárak',
 			'libraries.allLibrariesHidden' => 'Minden könyvtár el van rejtve',
@@ -4572,10 +4576,10 @@ extension on TranslationsHu {
 			'watchTogether.guestSwitchUnavailable' => 'Nem sikerült a váltás — a szerver nem érhető el szinkronizáláshoz',
 			'watchTogether.guestSwitchFailed' => 'Nem sikerült a váltás — a tartalom nem található ezen a szerveren',
 			'watchTogether.defaultDisplayName' => 'Felhasználó',
-			'watchTogether.errors.timedOut' => 'A relészerver nem válaszolt időben',
-			'watchTogether.errors.connectionLost' => 'A kapcsolat lezárult, mielőtt a munkamenet elkészült volna',
 			_ => null,
 		} ?? switch (path) {
+			'watchTogether.errors.timedOut' => 'A relészerver nem válaszolt időben',
+			'watchTogether.errors.connectionLost' => 'A kapcsolat lezárult, mielőtt a munkamenet elkészült volna',
 			'watchTogether.errors.invalidRelayResponse' => 'A relészerver váratlan választ küldött',
 			'watchTogether.errors.sessionEnded' => 'A házigazda befejezte a munkamenetet',
 			'watchTogether.errors.sessionUnavailable' => 'Ez a munkamenet nem folytatható. A folytatáshoz csatlakozz egy szobához vagy hozz létre egyet.',
@@ -5086,10 +5090,10 @@ extension on TranslationsHu {
 			'addServer.invalidCredentials' => 'Érvénytelen felhasználónév vagy jelszó',
 			'addServer.authResponseNotJson' => 'A hitelesítési válasz nem érvényes JSON',
 			'addServer.authResponseIncomplete' => 'A szerver bejelentkezési válasza hiányos volt',
-			'addServer.quickConnectRejected' => 'A szerver elutasította a Quick Connect-kérést',
-			'addServer.quickConnectNotJson' => 'A Quick Connect válasza nem érvényes JSON',
 			_ => null,
 		} ?? switch (path) {
+			'addServer.quickConnectRejected' => 'A szerver elutasította a Quick Connect-kérést',
+			'addServer.quickConnectNotJson' => 'A Quick Connect válasza nem érvényes JSON',
 			'addServer.quickConnectMissingFields' => 'A Quick Connect válaszából hiányzik a kód vagy a titkos kulcs',
 			'addServer.quickConnectPollRejected' => 'A szerver elutasította a Quick Connect lekérdezését',
 			'addServer.serverTimedOut' => 'A szerver nem válaszolt időben',

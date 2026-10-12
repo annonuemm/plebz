@@ -2056,6 +2056,9 @@
     "episodesQueued": "${count} Episoden zum Download hinzugefügt",
     "downloadDeleted": "Download gelöscht",
     "deleteConfirm": "\"${title}\" von diesem Gerät löschen?",
+    "deleteCollectionDownloads": "Downloads löschen",
+    "deleteCollectionDownloadsConfirm": "Alle Downloads aus „${title}“ von diesem Gerät löschen?",
+    "collectionDownloadsDeleted": "Downloads gelöscht",
     "cancelledDownloadTitle": "Abgebrochener Download",
     "cancelledDownloadMessage": "Dieser Download wurde abgebrochen. Was möchtest du tun?",
     "allEpisodesAlreadyDownloaded": "Alle Episoden sind bereits heruntergeladen",
@@ -2073,6 +2076,8 @@
     "noDownloadsTree": "Keine Downloads",
     "pauseAll": "Alle pausieren",
     "resumeAll": "Alle fortsetzen",
+    "retryAll": "Alle wiederholen",
+    "retryFailed": "Fehlgeschlagene Downloads wiederholen",
     "deleteAll": "Alle löschen",
     "selectVersion": "Version auswählen",
     "allEpisodes": "Alle Episoden",
@@ -2143,7 +2148,8 @@
     },
     "options": "Download-Optionen",
     "groupings": {
-      "library": "Mediathek"
+      "library": "Mediathek",
+      "collections": "Sammlungen"
     },
     "unknownLibrary": "Unbekannte Mediathek",
     "unknownShow": "Unbekannte Serie",
@@ -2313,6 +2319,13 @@
     "rotation": "Drehung",
     "dvSource": "DV-Quelle",
     "dvPath": "DV-Pfad",
+    "dvRouteDecoder": "Dolby-Vision-Decoder",
+    "dvRouteDecoderP81": "Dolby-Vision-Decoder (P7→8.1)",
+    "dvRouteBaseLayer": "Basisschicht",
+    "dvRouteBaseLayerHdr10": "HDR10-Basisschicht",
+    "dvRouteBaseLayerHlg": "HLG-Basisschicht",
+    "dvRouteBaseLayerSdr": "SDR-Basisschicht",
+    "dvRouteReshaped": "RPU umgeformt (gpu-next)",
     "p7Conversion": "P7-Konv.",
     "sampleRate": "Abtastrate",
     "pixelFormat": "Pixelformat",
@@ -2568,6 +2581,10 @@
       "seerr": "Seerr",
       "mdblist": "MDBList",
       "tmdb": "TMDB"
+    },
+    "simklReconnect": {
+      "title": "Simkl neu verbinden",
+      "subtitle": "Simkl stellt die alte Anmeldung ein; einmal auf simkl.com bestätigen."
     },
     "deviceCode": {
       "title": "Plebz auf ${service} aktivieren",

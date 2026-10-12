@@ -28,6 +28,9 @@ extension _VideoPlayerPlaybackStartMethods on VideoPlayerScreenState {
       final startLease = _transitionGate.tryAcquire(PlaybackTransition.startingLive);
       final replacement = _live.beginReplacement();
       var committed = false;
+      _FrameRateStartupPlan? frameRatePlan;
+      int? openedStream;
+      var holdPlaybackStart = false;
       try {
         // The guide's preview, taken over as it plays (Plebz): its session and
         // stream are adopted, nothing is tuned or opened, and the picture never
@@ -135,13 +138,16 @@ extension _VideoPlayerPlaybackStartMethods on VideoPlayerScreenState {
             targetEpoch = captureBuffer == null ? null : _live.streamStartEpoch.round();
           }
 
-          await _openLiveStream(
+          frameRatePlan = _armLiveDisplayNegotiation(currentPlayer, () => attempt.outcome);
+          holdPlaybackStart = frameRatePlan?.holdPlaybackStart ?? false;
+          final opened = await _openLiveStream(
             currentPlayer,
             streamUrl,
             targetEpoch: targetEpoch,
-            play: !PlatformDetector.isAutomotive(),
+            play: !holdPlaybackStart && !PlatformDetector.isAutomotive(),
             timeShifted: offsetSeconds != null,
           );
+          if (opened) openedStream = _live.streamGeneration;
         }
         if (!attempt.isCurrent) return;
 
@@ -180,7 +186,9 @@ extension _VideoPlayerPlaybackStartMethods on VideoPlayerScreenState {
           });
           _trackManager?.mediaInfo = null;
         }
-        if (PlatformDetector.isAutomotive()) {
+        // A held start is resumed by the display gate, which applies the
+        // same vehicle check.
+        if (PlatformDetector.isAutomotive() && !holdPlaybackStart) {
           await _playWithPlaybackIntent(currentPlayer);
         }
         committed = attempt.isCurrent;
@@ -194,6 +202,10 @@ extension _VideoPlayerPlaybackStartMethods on VideoPlayerScreenState {
         }
       } finally {
         if (startLease != null) _finishLiveReplacement(startLease, replacement, committed: committed);
+        final plan = frameRatePlan;
+        if (plan != null) {
+          await _releaseLiveDisplayNegotiation(currentPlayer, plan, stream: committed ? openedStream : null);
+        }
       }
       return;
     }
@@ -225,6 +237,15 @@ extension _VideoPlayerPlaybackStartMethods on VideoPlayerScreenState {
           serverManager: context.read<MultiServerProvider>().serverManager,
           database: context.read<AppDatabase>(),
         );
+        // The resume the open will land on, so a stacked download opens the
+        // file holding it.
+        final startPosition = await _resolveOpenResumePosition(
+          metadata: _currentMetadata,
+          isOffline: true,
+          offlineWatchService: offlineWatchService,
+          requested: widget.initialPosition,
+        );
+        if (!attempt.isCurrent) return;
         playbackContext = await playbackResolver.resolve(
           PlaybackInitializationOptions(
             metadata: _currentMetadata,
@@ -236,6 +257,7 @@ extension _VideoPlayerPlaybackStartMethods on VideoPlayerScreenState {
             preferredSubtitleTrack: _preferredSubtitleTrack,
             sessionIdentifier: _playbackSessionIdentifier,
             transcodeSessionId: _playbackTranscodeSessionId,
+            startPosition: startPosition,
           ),
           offlineLibraryMode: true,
         );

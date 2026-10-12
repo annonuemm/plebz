@@ -472,6 +472,8 @@ class Translations$settings$zh extends Translations$settings$en {
 	@override String get dvConversionNativeDescription => '强制原生 DV7 并禁止重试 DV 转换';
 	@override String get dvConversionDv81Description => '强制内联 RPU 转换为 Dolby Vision Profile 8.1';
 	@override String get dvConversionHevcStripDescription => '移除 Dolby Vision RPU/EL 层并呈现普通 HEVC';
+	@override String get disableDolbyVision => '禁用 Dolby Vision';
+	@override String get disableDolbyVisionDescription => '文件包含 HDR10 或 HLG 层时，改为播放该层而非 Dolby Vision';
 	@override String get hdrSdrConversion => 'HDR 转 SDR';
 	@override String get hdrSdrConversionDescription => '选择在显示器无法显示 HDR 时由谁转换 HDR 视频。';
 	@override String get hdrSdrConversionAuto => '自动';
@@ -3372,6 +3374,8 @@ extension on TranslationsZh {
 			'settings.dvConversionNativeDescription' => '强制原生 DV7 并禁止重试 DV 转换',
 			'settings.dvConversionDv81Description' => '强制内联 RPU 转换为 Dolby Vision Profile 8.1',
 			'settings.dvConversionHevcStripDescription' => '移除 Dolby Vision RPU/EL 层并呈现普通 HEVC',
+			'settings.disableDolbyVision' => '禁用 Dolby Vision',
+			'settings.disableDolbyVisionDescription' => '文件包含 HDR10 或 HLG 层时，改为播放该层而非 Dolby Vision',
 			'settings.hdrSdrConversion' => 'HDR 转 SDR',
 			'settings.hdrSdrConversionDescription' => '选择在显示器无法显示 HDR 时由谁转换 HDR 视频。',
 			'settings.hdrSdrConversionAuto' => '自动',
@@ -3533,10 +3537,10 @@ extension on TranslationsZh {
 			'fileInfo.languageCode' => '语言代码',
 			'fileInfo.streamTitle' => '轨道标题',
 			'fileInfo.channels' => '声道',
-			'fileInfo.sampleRate' => '采样率',
-			'fileInfo.spatialAudio' => '空间音频',
 			_ => null,
 		} ?? switch (path) {
+			'fileInfo.sampleRate' => '采样率',
+			'fileInfo.spatialAudio' => '空间音频',
 			'fileInfo.textBased' => '基于文本',
 			'fileInfo.subtitleFormat' => '外挂文件格式',
 			'fileInfo.provider' => '提供方',
@@ -4047,10 +4051,10 @@ extension on TranslationsZh {
 			'libraries.emptyingTrash' => ({required Object title}) => '正在清空“${title}”的回收站…',
 			'libraries.trashEmptied' => ({required Object title}) => '已清空“${title}”的回收站',
 			'libraries.failedToEmptyTrash' => ({required Object error}) => '无法清空回收站：${error}',
-			'libraries.analyzing' => ({required Object title}) => '正在分析“${title}”…',
-			'libraries.analysisStarted' => ({required Object title}) => '已开始分析“${title}”',
 			_ => null,
 		} ?? switch (path) {
+			'libraries.analyzing' => ({required Object title}) => '正在分析“${title}”…',
+			'libraries.analysisStarted' => ({required Object title}) => '已开始分析“${title}”',
 			'libraries.failedToAnalyze' => ({required Object error}) => '无法分析媒体库：${error}',
 			'libraries.noLibrariesFound' => '未找到媒体库',
 			'libraries.allLibrariesHidden' => '所有媒体库已隐藏',
@@ -4561,10 +4565,10 @@ extension on TranslationsZh {
 			'watchTogether.guestSwitchUnavailable' => '无法切换 — 服务器不可用于同步',
 			'watchTogether.guestSwitchFailed' => '无法切换 — 在此服务器上未找到内容',
 			'watchTogether.defaultDisplayName' => '用户',
-			'watchTogether.errors.timedOut' => '中继服务器未及时响应',
-			'watchTogether.errors.connectionLost' => '会话准备就绪前连接已断开',
 			_ => null,
 		} ?? switch (path) {
+			'watchTogether.errors.timedOut' => '中继服务器未及时响应',
+			'watchTogether.errors.connectionLost' => '会话准备就绪前连接已断开',
 			'watchTogether.errors.invalidRelayResponse' => '中继服务器返回了意外的响应',
 			'watchTogether.errors.sessionEnded' => '主持人已结束会话',
 			'watchTogether.errors.sessionUnavailable' => '无法恢复此会话。请加入或创建房间以继续。',
@@ -5075,10 +5079,10 @@ extension on TranslationsZh {
 			'addServer.invalidCredentials' => '用户名或密码无效',
 			'addServer.authResponseNotJson' => '身份验证响应不是有效的 JSON',
 			'addServer.authResponseIncomplete' => '服务器返回的登录响应不完整',
-			'addServer.quickConnectRejected' => '服务器拒绝了 Quick Connect',
-			'addServer.quickConnectNotJson' => 'Quick Connect 响应不是有效的 JSON',
 			_ => null,
 		} ?? switch (path) {
+			'addServer.quickConnectRejected' => '服务器拒绝了 Quick Connect',
+			'addServer.quickConnectNotJson' => 'Quick Connect 响应不是有效的 JSON',
 			'addServer.quickConnectMissingFields' => 'Quick Connect 响应中缺少代码或密钥',
 			'addServer.quickConnectPollRejected' => '服务器拒绝了 Quick Connect 轮询',
 			'addServer.serverTimedOut' => '服务器未及时响应',

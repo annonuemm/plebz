@@ -524,6 +524,62 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     );
   }
 
+  /// Arm display negotiation for a live open that tunes a channel — the
+  /// launch and every zap. Android mpv and Apple TV open the stream paused
+  /// and negotiate from what the player presents at its first frame, the way
+  /// a VOD open does ([_firstFrameStartupPlan]). Broadcast is where
+  /// interlaced video lives, and a MediaCodec decoder that deinterlaces by
+  /// itself presents one frame per field with only the measured cadence to
+  /// say so: matched from the container rate, 1080i25 got a 25 Hz mode that
+  /// dropped every other frame and let video fall behind audio (#2568).
+  ///
+  /// [firstFrame] is the open's first-frame signal, armed before the open:
+  /// the launch's attempt outcome, or the one a zap arms for itself. Null —
+  /// open as before — on ExoPlayer, which keeps its post-first-frame
+  /// detection, and on desktop. Time-shift seeks, subtitle rebuilds and
+  /// stream recovery reopen the same channel and keep its negotiated mode.
+  ///
+  /// [firstFrame] is only called when there is something to match: with
+  /// nothing to match a channel opens as it always did (Plebz) — live matching
+  /// is off by default, and the seamless preview turns it off.
+  _FrameRateStartupPlan? _armLiveDisplayNegotiation(Player currentPlayer, PlaybackOpenOutcome Function() firstFrame) {
+    final plan = _firstFrameStartupPlan(currentPlayer, SettingsService.instance, hasVideoUrl: true);
+    if (plan == null || !plan.needsFirstFrameSwitch) return null;
+    _frameRate.resetForNewItem();
+    if (plan.countsAsApplied) _frameRate.applied = true;
+    plan.armFirstFrameGate(firstFrame(), _frameRate);
+    return plan;
+  }
+
+  /// Release a gate [_armLiveDisplayNegotiation] armed: negotiate the display
+  /// at the stream's first frame, then resume it. Runs once the start or zap
+  /// gave up its transition lock, so a channel that never shows a frame
+  /// cannot hold the next zap up. Any later live open (zap, recovery,
+  /// time-shift seek, subtitle rebuild) supersedes it and owns the play state
+  /// it leaves. [stream] is the [LiveTvSessionState.streamGeneration] the
+  /// gated open produced; null when that open did not commit, which only
+  /// releases the first-frame hold.
+  Future<void> _releaseLiveDisplayNegotiation(
+    Player currentPlayer,
+    _FrameRateStartupPlan plan, {
+    required int? stream,
+  }) async {
+    final generation = _transitionGate.generation;
+    try {
+      if (stream == null || !plan.holdPlaybackStart) return;
+      await _releaseFrameRateStartupGate(
+        currentPlayer: currentPlayer,
+        settingsService: SettingsService.instance,
+        plan: plan,
+        isCurrent: () => _isCurrentPlaybackGeneration(generation, currentPlayer) && _live.streamGeneration == stream,
+        resumeAfterStartupGate: (reason) =>
+            _resumeAfterFrameRateStartupGate(currentPlayer: currentPlayer, reason: reason),
+      );
+    } finally {
+      _frameRate.endDisplayNegotiation(plan.displayNegotiation);
+    }
+  }
+
   int _liveEpochForPosition(Duration position) => _liveSeek.pendingEpoch ?? _live.epochForPosition(position);
 
   /// Current playback position in absolute epoch seconds.
@@ -788,6 +844,9 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
 
     LiveTvPlaybackSession? session;
     var replacementOpenStarted = false;
+    PlaybackOpenOutcome? zapOutcome;
+    _FrameRateStartupPlan? frameRatePlan;
+    int? openedStream;
     try {
       // Channel switch IS a fresh start: same resolution path as launch. Keep
       // the old session alive until the replacement stream is actually open so
@@ -820,11 +879,18 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
       _firstFrame.resetRenderedForAttempt();
       _live.markStreamRestartedAtLiveEdge(session.captureBuffer);
       final targetEpoch = session.captureBuffer == null ? null : _live.streamStartEpoch.round();
-      await _openLiveStream(
+      // A zap starts no playback attempt, so it arms its own first-frame
+      // signal; the deadline bounds a stream that stops moving before one.
+      frameRatePlan = _armLiveDisplayNegotiation(
+        currentPlayer,
+        () => zapOutcome = PlaybackOpenOutcome.arm(currentPlayer, deadline: VideoPlayerScreenState._openDeadline),
+      );
+      final opened = await _openLiveStream(
         currentPlayer,
         streamUrl,
         targetEpoch: targetEpoch,
         session: session,
+        play: (frameRatePlan?.holdPlaybackStart ?? false) ? false : null,
         onOpenStarted: () {
           replacementOpenStarted = true;
           // The native state belongs to the replacement from this point,
@@ -833,6 +899,7 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
           widget.launchObserver?.detach();
         },
       );
+      if (opened) openedStream = _live.streamGeneration;
       if (!isCurrentChannelSwitch()) {
         _abandonLiveSession(session);
         return;
@@ -898,6 +965,11 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
       // The guide ages while a session runs; a zap is the natural moment to
       // re-read it, and it never blocks the picture.
       unawaited(_loadLiveSchedule());
+      if (!committed) zapOutcome?.abort('channel switch did not commit');
+      final plan = frameRatePlan;
+      if (plan != null) {
+        await _releaseLiveDisplayNegotiation(currentPlayer, plan, stream: committed ? openedStream : null);
+      }
     }
   }
 

@@ -56,6 +56,8 @@ final class AppDatabaseBootstrap {
     OfflineWatchProgress,
     SyncRules,
     SyncRuleDownloads,
+    DownloadCollections,
+    DownloadCollectionSyncs,
     Connections,
     Profiles,
     ProfileConnections,
@@ -367,7 +369,7 @@ class AppDatabase extends _$AppDatabase {
   static const FormatException _invalidRecoveryImage = FormatException('Invalid tvOS database recovery image');
 
   @override
-  int get schemaVersion => 25;
+  int get schemaVersion => 27;
 
   @override
   MigrationStrategy get migration {
@@ -775,6 +777,21 @@ class AppDatabase extends _$AppDatabase {
             'DownloadedMedia.libraryTitle column',
             () => m.addColumn(downloadedMedia, downloadedMedia.libraryTitle),
           );
+        }
+        // Upstream 2.23 numbered these two v24 and v25, both of which this
+        // fork had already spent on the steps above. v26 and v27 keep every
+        // installed database upgradable; the schema changes are upstream's.
+        if (from < 26) {
+          appLogger.i('Adding additionalPartPaths column to DownloadedMedia (v26 migration)');
+          await _ignoreAlreadyExists(
+            'DownloadedMedia.additionalPartPaths column',
+            () => m.addColumn(downloadedMedia, downloadedMedia.additionalPartPaths),
+          );
+        }
+        if (from < 27) {
+          appLogger.i('Adding download collection membership tables (v27 migration)');
+          await _ignoreAlreadyExists('DownloadCollections table', () => m.createTable(downloadCollections));
+          await _ignoreAlreadyExists('DownloadCollectionSyncs table', () => m.createTable(downloadCollectionSyncs));
         }
       },
     );

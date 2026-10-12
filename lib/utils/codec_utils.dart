@@ -191,7 +191,8 @@ class CodecUtils {
   /// The DTS variant a stream profile names, or null when it names none.
   ///
   /// Plex sends the short form off the bitstream (`ma`, `hra`, `es`), Jellyfin
-  /// the marketing name. Values that only repeat the family (`dts`, `dca`)
+  /// the marketing name, and mpv ffmpeg's profile name (`DTS 96/24`,
+  /// `DTS-HD MA + DTS:X`). Values that only repeat the family (`dts`, `dca`)
   /// carry no extra information and are left to the caller's default.
   static String? _dtsName(String? profile) {
     final key = profile?.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
@@ -200,7 +201,8 @@ class CodecUtils {
       'ma' || 'dtshdma' || 'dtshdmasteraudio' => 'DTS-HD MA',
       'hra' || 'dtshdhra' || 'dtshdhighresolutionaudio' => 'DTS-HD HRA',
       'es' || 'dtses' || 'dtsesmatrix' || 'dtsesdiscrete' => 'DTS-ES',
-      'x' || 'dtsx' || 'dtshdx' || 'dtsuhd' => 'DTS:X',
+      'x' || 'dtsx' || 'dtshdx' || 'dtsuhd' || 'dtshdmadtsx' || 'dtshdmadtsximax' => 'DTS:X',
+      'dts9624' => 'DTS 96/24',
       'lbr' || 'express' || 'dtsexpress' => 'DTS Express',
       'dtshd' => 'DTS-HD',
       _ => null,

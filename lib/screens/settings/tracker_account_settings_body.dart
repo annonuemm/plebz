@@ -27,6 +27,9 @@ class TrackerAccountSettingsBody extends StatelessWidget {
   final Widget title;
   final String accountTitle;
   final String? accountSubtitle;
+
+  /// Service-specific rows shown under the account tile, in the same group.
+  final List<Widget> accountActions;
   final TrackerService service;
   final List<TrackerSettingsToggle> toggles;
 
@@ -39,6 +42,7 @@ class TrackerAccountSettingsBody extends StatelessWidget {
     required this.title,
     required this.accountTitle,
     this.accountSubtitle,
+    this.accountActions = const [],
     required this.service,
     required this.toggles,
     this.extraRows = const [],
@@ -57,6 +61,7 @@ class TrackerAccountSettingsBody extends StatelessWidget {
               title: Text(accountTitle),
               subtitle: accountSubtitle != null ? Text(accountSubtitle!) : null,
             ),
+            ...accountActions,
           ],
         ),
         if (extraRows.isNotEmpty) SettingsGroup(children: extraRows),

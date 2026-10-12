@@ -48,7 +48,7 @@ index 0000000..48bdda3
 +# Android: entropy from getrandom(), /dev/urandom as the fallback.
 +0001-android-entropy-no-blocking.patch
 diff --git a/versions.json b/versions.json
-index 8811351..f2cc034 100644
+index 5b9056b..ac3ac9d 100644
 --- a/versions.json
 +++ b/versions.json
 @@ -35,11 +35,11 @@
@@ -67,7 +67,7 @@ index 8811351..f2cc034 100644
        "platforms": [
          "apple",
          "android",
-@@ -167,11 +167,11 @@
+@@ -168,11 +168,11 @@
      },
      "mbedtls": {
        "kind": "git",
@@ -83,7 +83,7 @@ index 8811351..f2cc034 100644
        "platforms": [
          "android"
        ],
-@@ -179,11 +179,11 @@
+@@ -180,11 +180,11 @@
      },
      "freetype": {
        "kind": "git",

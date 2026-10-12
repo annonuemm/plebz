@@ -94,6 +94,7 @@ extension _MediaDetailPlaybackTracksStatus on _MediaDetailScreenState {
           serverName: target.serverName ?? fetched.serverName,
         );
         _probedPlaybackItems[key] = item;
+        _recordProbedRatings(key, item.ratings);
         final selection = await resolveSavedMediaVersionFor(item);
         if (!current()) return;
         source = await client!.fetchCachedMediaSourceInfo(
@@ -193,6 +194,15 @@ extension _MediaDetailPlaybackTracksStatus on _MediaDetailScreenState {
     final row = resolved.preview?.audio;
     final audioFormat = (row == null ? null : buildAudioTrackLabel(row)) ?? resolved.containerAudioLabel;
     return [...resolved.videoLabels, ?audioFormat];
+  }
+
+  /// Repaints the TV hero only when the scores are new for the episode it
+  /// shows; a re-probe after a refresh returns the same scores.
+  void _recordProbedRatings(String key, List<MediaRatingSource>? ratings) {
+    if (ratings == null || ratings.isEmpty) return;
+    final isNew = !_probedRatings.containsKey(key);
+    _probedRatings[key] = ratings;
+    if (isNew && _tvDetailFocusedEpisode.value?.globalKey == key) _focusedEpisodeRatingsRevision.value++;
   }
 
   /// The listener stays mounted while a source is resolving, without adding

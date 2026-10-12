@@ -67,8 +67,11 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
   /// until [fetchHubs] has run.
   List<PlexTileShelf> get tileShelves => _tileShelves;
 
-  /// The language the shelf headings are asked for, or null where Discover's
-  /// own wording already is the app's — its records are English by default.
+  /// The language shelf headings, titles and descriptions are asked for, or
+  /// null where Discover's own wording already is the app's — its records are
+  /// English by default. Titles and descriptions are laid over the plain
+  /// records and keep their English words where Discover has no translation
+  /// ([PlexDiscoverClient.withLocalizedText]); search stays plain.
   static String? get _uiLanguage {
     final language = LocaleSettings.currentLocale.languageCode;
     return language == 'en' ? null : language;
@@ -105,7 +108,7 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
   @override
   Future<CatalogPage> fetchRow(CatalogRowId row, {int page = 1, int limit = 25}) async {
     if (row != CatalogRowId.watchlist) throw ArgumentError('Plex does not serve ${row.name}');
-    final response = await _client.getWatchlist(page: page, limit: limit);
+    final response = await _client.getWatchlist(page: page, limit: limit, language: _uiLanguage);
     final items = _fromMetadata(response.items);
     // The play state is what the watched filter runs on, and `includeUserState`
     // is undocumented enough to be worth one line: silence here is the first
@@ -256,7 +259,12 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
   Future<CatalogPage> fetchHub(String id, {int page = 1, int limit = 25}) async {
     final key = _hubKeys[id];
     if (key == null || page > 1) return const CatalogPage(items: []);
-    final response = await _client.getHub(key, limit: limit, includeImageVariants: includeImageVariants);
+    final response = await _client.getHub(
+      key,
+      limit: limit,
+      includeImageVariants: includeImageVariants,
+      language: _uiLanguage,
+    );
     return CatalogPage(items: _fromMetadata(response.items), hasMore: false, totalResults: response.totalResults);
   }
 
@@ -308,17 +316,15 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
     final ratingKey = item.ids.plex;
     if (ratingKey == null || ratingKey.isEmpty) return CatalogDetail(item: item);
 
-    // All three run together: the localized summary does not depend on the
-    // plain record, so asking for it costs a request but no waiting.
+    // All three run together: the localized record does not depend on the
+    // plain one, so asking for it costs a request but no waiting.
     final metadataFuture = _loadDetailMetadata(ratingKey);
     final relatedFuture = _loadRelatedMetadata(ratingKey);
-    final localizedOverviewFuture = _localizedOverview(ratingKey);
+    final localizedRecordFuture = _localizedRecord(ratingKey);
     final metadata = await metadataFuture;
     final relatedMetadata = await relatedFuture;
-    final localizedOverview = await localizedOverviewFuture;
-    final localized = metadata == null || localizedOverview == null
-        ? metadata
-        : {...metadata, 'summary': localizedOverview, 'Summary': const <Object?>[]};
+    final localizedRecord = await localizedRecordFuture;
+    final localized = metadata == null ? null : PlexDiscoverClient.withLocalizedText(metadata, localizedRecord);
     final detailItem = localized == null ? null : _toCatalogItem(localized);
     final safeCastLimit = castLimit < 0 ? 0 : castLimit;
     final safeRelatedLimit = relatedLimit < 0 ? 0 : relatedLimit;
@@ -393,7 +399,7 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
   /// per title: the first group to name a title keeps it, and Discover sends
   /// the person's main work first.
   Future<List<CatalogPersonCredit>> fetchPersonCredits(String personId) async {
-    final groups = await _client.getPersonCredits(personId);
+    final groups = await _client.getPersonCredits(personId, language: _uiLanguage);
     final credits = <CatalogPersonCredit>[];
     final seen = <String>{};
     for (final group in groups) {
@@ -418,30 +424,30 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
     }
   }
 
-  /// The description in the app's language, or null to keep the one the
-  /// unlocalized record carried.
+  /// The record in the app's language, or null to keep the unlocalized one
+  /// as it is.
   ///
   /// A second request rather than one localized fetch for everything: Discover
   /// answers a localized request with an *empty* summary when it has no
   /// translation instead of falling back, and there is no telling what else
   /// thins out with it. So the plain record stays the source of truth and this
-  /// only ever adds a description on top — German where it exists, the English
-  /// one where it does not.
-  Future<String?> _localizedOverview(String ratingKey) async {
-    final language = LocaleSettings.currentLocale.languageCode;
-    if (language == 'en') return null;
+  /// only ever lends its title and description
+  /// ([PlexDiscoverClient.withLocalizedText]) — German where they exist, the
+  /// English ones where they do not.
+  Future<Map<String, dynamic>?> _localizedRecord(String ratingKey) async {
+    final language = _uiLanguage;
+    if (language == null) return null;
     try {
-      final localized = await _client.getMetadata(ratingKey, language: language);
-      return localized == null ? null : _overviewFor(localized);
+      return await _client.getMetadata(ratingKey, language: language);
     } catch (error) {
-      appLogger.d('Plex: localized summary failed', error: error);
+      appLogger.d('Plex: localized record failed', error: error);
       return null;
     }
   }
 
   Future<List<Map<String, dynamic>>> _loadRelatedMetadata(String ratingKey) async {
     try {
-      return await _client.getRelated(ratingKey);
+      return await _client.getRelated(ratingKey, language: _uiLanguage);
     } catch (error, stackTrace) {
       appLogger.w('Plex: related metadata failed', error: error, stackTrace: stackTrace);
       return const [];
@@ -654,16 +660,7 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
     imdbVotes: flexibleInt(metadata['imdbRatingCount']),
   );
 
-  static String? _overviewFor(Map<String, dynamic> metadata) {
-    var overview = _nonEmptyString(metadata['summary']);
-    for (final summary in flexibleMapList(metadata['Summary'])) {
-      final candidate = _nonEmptyString(summary['tag'] ?? summary['summary']);
-      if (candidate != null && (overview == null || candidate.length > overview.length)) {
-        overview = candidate;
-      }
-    }
-    return overview;
-  }
+  static String? _overviewFor(Map<String, dynamic> metadata) => PlexDiscoverClient.overviewOf(metadata);
 
   static String? _contentAdvisoryFor(Map<String, dynamic> metadata) {
     final advisories = <String>[];

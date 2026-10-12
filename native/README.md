@@ -3,7 +3,7 @@
 The Android build plays through libmpv and FFmpeg, one prebuilt tarball per
 ABI, named with their sha256 checksums in `mpv-build.lock.json`. They are built
 from [edde746/mpv-build](https://github.com/edde746/mpv-build) at commit
-`93aa2d2db12eb594df3dab04882a6f5fe148b3aa` with
+`690a755f66c21240515bb2ef84f86a9187652856` with
 [`mpv-build.patch`](mpv-build.patch) applied, which moves some dependency
 versions forward and adds one patch of its own. The tarballs are not
 published.
@@ -16,7 +16,7 @@ tools its `platforms/android/include/download-sdk.sh` lists:
 ```bash
 git clone https://github.com/edde746/mpv-build.git
 cd mpv-build
-git checkout 93aa2d2db12eb594df3dab04882a6f5fe148b3aa
+git checkout 690a755f66c21240515bb2ef84f86a9187652856
 git apply /path/to/plebz/native/mpv-build.patch
 cd platforms/android
 export MPV_ANDROID_SDK=/path/to/android-sdk

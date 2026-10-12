@@ -604,6 +604,46 @@ void main() {
       expect(tester.getSemantics(englishTile).getSemanticsData().flagsCollection.isSelected, Tristate.isTrue);
       expect(tester.getSemantics(tamilTile).getSemanticsData().flagsCollection.isSelected, Tristate.isFalse);
     });
+
+    testWidgets('tells a DTS-HD MA track from its DTS core by mpv codec-profile (#2603)', (tester) async {
+      // mpv's demuxer calls both tracks `dts` with the same layout and title;
+      // only the profile separates them.
+      const ma = AudioTrack(
+        id: 'a1',
+        title: 'Surround 5.1',
+        language: 'eng',
+        codec: 'dts',
+        codecProfile: 'DTS-HD MA',
+        channels: 6,
+      );
+      final player = _FakeTrackSheetPlayer(
+        tracks: const Tracks(
+          audio: [
+            ma,
+            AudioTrack(
+              id: 'a2',
+              title: 'Surround 5.1',
+              language: 'eng',
+              codec: 'dts',
+              codecProfile: 'DTS',
+              channels: 6,
+            ),
+          ],
+        ),
+        track: const TrackSelection(audio: ma, subtitle: SubtitleTrack.off),
+      );
+
+      await _pumpTrackSheet(
+        tester,
+        player: player,
+        trackControlsState: const TrackControlsState(subtitleSearchSupported: false),
+      );
+
+      // The title already names the layout, so Plebz drops the channel field
+      // (TrackLabelBuilder._statesTech); the profile still parts the two.
+      expect(find.text('Surround 5.1 · DTS-HD MA'), findsOneWidget);
+      expect(find.text('Surround 5.1 · DTS'), findsOneWidget);
+    });
   });
 
   group('TrackControlsState.hasSubtitleControls', () {

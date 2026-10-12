@@ -13,6 +13,36 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.22.0 (Build 775)
+
+### Wiedergabe
+- Ältere Filme im Xvid- oder MPEG-2-Format laufen jetzt mit Bild statt nur mit Ton.
+- Filme starten auch in Netzen zuverlässig, in denen sie bisher lange hingen oder abbrachen.
+- Lautstärke angleichen, Tempo oder Stereo-Grenze bei Ton-Durchleitung umstellen: kein Tonausfall und kein Standbild mehr.
+- Die Tonspurliste unterscheidet DTS-HD MA, DTS:X und die anderen DTS-Varianten.
+- Fortsetzen über eine langsame Verbindung bricht nicht mehr nach 30 Sekunden ab. Auf Fire TV hängen AV1-Filme beim Fortsetzen nicht mehr.
+- Plex-Filme, die auf mehrere Dateien verteilt sind, laufen in einem Stück durch, auch als Download.
+- Neu im Player-Menü: die Dateiinfo zum laufenden Titel. Untertitel lassen sich bis in den schwarzen Balken schieben.
+- „Endet um“ läuft auch in der Pause weiter.
+
+### Live-TV
+- Mit eingeschalteter Bildratenanpassung für Live-TV laufen 1080i-Sender ohne Ruckeln und ohne Tonversatz.
+- „Von Anfang an“ springt nach dem Bildwechsel nicht mehr eine Minute vor.
+
+### Erkunden
+- Filme und Serien von Plex tragen ihren deutschen Titel und die deutsche Beschreibung, wo Plex sie kennt, sonst wie bisher die englische.
+
+### Server, Suche und Downloads
+- Ein langsamer Server hält die Ergebnisse der anderen nicht mehr auf und wird nicht vorschnell als „nicht erreichbar“ gemeldet.
+- Jellyfin: Die Suche findet auch Heim- und Musikvideos. Noch nicht ausgestrahlte Folgen tauchen nicht mehr unter „Zuletzt hinzugefügt“ auf.
+- Plex: Smart-Playlists spielen ab dem gewählten Eintrag weiter. Nach dem Wechsel des Plex-Home-Benutzers erscheinen keine Reihen des vorigen mehr.
+- Downloads machen nach einer Unterbrechung weiter, statt neu anzufangen. „Nur über WLAN“ klappt auch mit VPN oder Netzwerkkabel. Neu: „Alle wiederholen“ und die Gruppierung nach Sammlungen.
+
+### Außerdem
+- Handy: Die Bewertungen stehen auf der Detailseite in einer eigenen Zeile.
+- Fernseher: Die Serienseite zeigt die IMDb-Wertung der gewählten Folge.
+- Simkl: Wer verbunden ist, sieht in den Simkl-Einstellungen einmal „Simkl neu verbinden“. Auf simkl.com bestätigen, der Verlauf bleibt erhalten.
+
 ## 1.21.0 (Build 771)
 
 ### Handy und Tablet

@@ -472,6 +472,8 @@ class _Translations$settings$it extends Translations$settings$en {
 	@override String get dvConversionNativeDescription => 'Forza il DV7 nativo e impedisce nuovi tentativi di conversione DV';
 	@override String get dvConversionDv81Description => 'Forza la conversione RPU diretta al profilo Dolby Vision 8.1';
 	@override String get dvConversionHevcStripDescription => 'Rimuove i livelli RPU/EL di Dolby Vision e riproduce il video come semplice HEVC';
+	@override String get disableDolbyVision => 'Disattiva Dolby Vision';
+	@override String get disableDolbyVisionDescription => 'Riproduci il livello HDR10 o HLG del file al posto di Dolby Vision, se presente';
 	@override String get hdrSdrConversion => 'Conversione da HDR a SDR';
 	@override String get hdrSdrConversionDescription => 'Scegli cosa converte i video HDR quando lo schermo non può mostrare l\'HDR.';
 	@override String get hdrSdrConversionAuto => 'Auto';
@@ -3383,6 +3385,8 @@ extension on TranslationsIt {
 			'settings.dvConversionNativeDescription' => 'Forza il DV7 nativo e impedisce nuovi tentativi di conversione DV',
 			'settings.dvConversionDv81Description' => 'Forza la conversione RPU diretta al profilo Dolby Vision 8.1',
 			'settings.dvConversionHevcStripDescription' => 'Rimuove i livelli RPU/EL di Dolby Vision e riproduce il video come semplice HEVC',
+			'settings.disableDolbyVision' => 'Disattiva Dolby Vision',
+			'settings.disableDolbyVisionDescription' => 'Riproduci il livello HDR10 o HLG del file al posto di Dolby Vision, se presente',
 			'settings.hdrSdrConversion' => 'Conversione da HDR a SDR',
 			'settings.hdrSdrConversionDescription' => 'Scegli cosa converte i video HDR quando lo schermo non può mostrare l\'HDR.',
 			'settings.hdrSdrConversionAuto' => 'Auto',
@@ -3544,10 +3548,10 @@ extension on TranslationsIt {
 			'fileInfo.languageCode' => 'Codice lingua',
 			'fileInfo.streamTitle' => 'Titolo traccia',
 			'fileInfo.channels' => 'Canali',
-			'fileInfo.sampleRate' => 'Frequenza di campionamento',
-			'fileInfo.spatialAudio' => 'Audio spaziale',
 			_ => null,
 		} ?? switch (path) {
+			'fileInfo.sampleRate' => 'Frequenza di campionamento',
+			'fileInfo.spatialAudio' => 'Audio spaziale',
 			'fileInfo.textBased' => 'Testuale',
 			'fileInfo.subtitleFormat' => 'Formato sidecar',
 			'fileInfo.provider' => 'Provider',
@@ -4058,10 +4062,10 @@ extension on TranslationsIt {
 			'libraries.emptyingTrash' => ({required Object title}) => 'Svuotamento del cestino di "${title}"...',
 			'libraries.trashEmptied' => ({required Object title}) => 'Cestino di "${title}" svuotato',
 			'libraries.failedToEmptyTrash' => ({required Object error}) => 'Impossibile svuotare il cestino: ${error}',
-			'libraries.analyzing' => ({required Object title}) => 'Analisi di "${title}"...',
-			'libraries.analysisStarted' => ({required Object title}) => 'Analisi avviata per "${title}"',
 			_ => null,
 		} ?? switch (path) {
+			'libraries.analyzing' => ({required Object title}) => 'Analisi di "${title}"...',
+			'libraries.analysisStarted' => ({required Object title}) => 'Analisi avviata per "${title}"',
 			'libraries.failedToAnalyze' => ({required Object error}) => 'Impossibile analizzare la libreria: ${error}',
 			'libraries.noLibrariesFound' => 'Nessuna libreria trovata',
 			'libraries.allLibrariesHidden' => 'Tutte le librerie sono nascoste',
@@ -4572,10 +4576,10 @@ extension on TranslationsIt {
 			'watchTogether.guestSwitchUnavailable' => 'Impossibile cambiare — server non disponibile per la sincronizzazione',
 			'watchTogether.guestSwitchFailed' => 'Impossibile cambiare — contenuto non trovato su questo server',
 			'watchTogether.defaultDisplayName' => 'Utente',
-			'watchTogether.errors.timedOut' => 'Il server relay non ha risposto in tempo',
-			'watchTogether.errors.connectionLost' => 'La connessione si è chiusa prima che la sessione fosse pronta',
 			_ => null,
 		} ?? switch (path) {
+			'watchTogether.errors.timedOut' => 'Il server relay non ha risposto in tempo',
+			'watchTogether.errors.connectionLost' => 'La connessione si è chiusa prima che la sessione fosse pronta',
 			'watchTogether.errors.invalidRelayResponse' => 'Il server relay ha inviato una risposta imprevista',
 			'watchTogether.errors.sessionEnded' => 'L’host ha terminato la sessione',
 			'watchTogether.errors.sessionUnavailable' => 'Impossibile riprendere questa sessione. Partecipa a una stanza o creane una per continuare.',
@@ -5086,10 +5090,10 @@ extension on TranslationsIt {
 			'addServer.invalidCredentials' => 'Nome utente o password non validi',
 			'addServer.authResponseNotJson' => 'La risposta di autenticazione non era un JSON valido',
 			'addServer.authResponseIncomplete' => 'La risposta di accesso del server era incompleta',
-			'addServer.quickConnectRejected' => 'Quick Connect è stato rifiutato dal server',
-			'addServer.quickConnectNotJson' => 'La risposta di Quick Connect non era un JSON valido',
 			_ => null,
 		} ?? switch (path) {
+			'addServer.quickConnectRejected' => 'Quick Connect è stato rifiutato dal server',
+			'addServer.quickConnectNotJson' => 'La risposta di Quick Connect non era un JSON valido',
 			'addServer.quickConnectMissingFields' => 'Nella risposta di Quick Connect manca un codice o un segreto',
 			'addServer.quickConnectPollRejected' => 'Il polling di Quick Connect è stato rifiutato dal server',
 			'addServer.serverTimedOut' => 'Il server non ha risposto in tempo',

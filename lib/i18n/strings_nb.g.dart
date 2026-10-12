@@ -472,6 +472,8 @@ class _Translations$settings$nb extends Translations$settings$en {
 	@override String get dvConversionNativeDescription => 'Tving opprinnelig DV7-avspilling og ikke prøv DV-konvertering på nytt';
 	@override String get dvConversionDv81Description => 'Tving direkte RPU-konvertering til Dolby Vision-profil 8.1';
 	@override String get dvConversionHevcStripDescription => 'Fjern Dolby Vision RPU/EL-lag og lever som vanlig HEVC';
+	@override String get disableDolbyVision => 'Deaktiver Dolby Vision';
+	@override String get disableDolbyVisionDescription => 'Spill av filens HDR10- eller HLG-lag i stedet for Dolby Vision når det finnes';
 	@override String get hdrSdrConversion => 'HDR til SDR-konvertering';
 	@override String get hdrSdrConversionDescription => 'Velg hva som konverterer HDR-video når skjermen ikke kan vise HDR.';
 	@override String get hdrSdrConversionAuto => 'Automatisk';
@@ -3383,6 +3385,8 @@ extension on TranslationsNb {
 			'settings.dvConversionNativeDescription' => 'Tving opprinnelig DV7-avspilling og ikke prøv DV-konvertering på nytt',
 			'settings.dvConversionDv81Description' => 'Tving direkte RPU-konvertering til Dolby Vision-profil 8.1',
 			'settings.dvConversionHevcStripDescription' => 'Fjern Dolby Vision RPU/EL-lag og lever som vanlig HEVC',
+			'settings.disableDolbyVision' => 'Deaktiver Dolby Vision',
+			'settings.disableDolbyVisionDescription' => 'Spill av filens HDR10- eller HLG-lag i stedet for Dolby Vision når det finnes',
 			'settings.hdrSdrConversion' => 'HDR til SDR-konvertering',
 			'settings.hdrSdrConversionDescription' => 'Velg hva som konverterer HDR-video når skjermen ikke kan vise HDR.',
 			'settings.hdrSdrConversionAuto' => 'Automatisk',
@@ -3544,10 +3548,10 @@ extension on TranslationsNb {
 			'fileInfo.languageCode' => 'Språkkode',
 			'fileInfo.streamTitle' => 'Spor-tittel',
 			'fileInfo.channels' => 'Kanaler',
-			'fileInfo.sampleRate' => 'Samplingsfrekvens',
-			'fileInfo.spatialAudio' => 'Romlig lyd',
 			_ => null,
 		} ?? switch (path) {
+			'fileInfo.sampleRate' => 'Samplingsfrekvens',
+			'fileInfo.spatialAudio' => 'Romlig lyd',
 			'fileInfo.textBased' => 'Tekstbasert',
 			'fileInfo.subtitleFormat' => 'Sidecar-format',
 			'fileInfo.provider' => 'Tilbyder',
@@ -4058,10 +4062,10 @@ extension on TranslationsNb {
 			'libraries.emptyingTrash' => ({required Object title}) => 'Tømmer papirkurv for "${title}"...',
 			'libraries.trashEmptied' => ({required Object title}) => 'Papirkurv tømt for "${title}"',
 			'libraries.failedToEmptyTrash' => ({required Object error}) => 'Kunne ikke tømme papirkurv: ${error}',
-			'libraries.analyzing' => ({required Object title}) => 'Analyserer "${title}"...',
-			'libraries.analysisStarted' => ({required Object title}) => 'Analyse startet for "${title}"',
 			_ => null,
 		} ?? switch (path) {
+			'libraries.analyzing' => ({required Object title}) => 'Analyserer "${title}"...',
+			'libraries.analysisStarted' => ({required Object title}) => 'Analyse startet for "${title}"',
 			'libraries.failedToAnalyze' => ({required Object error}) => 'Kunne ikke analysere bibliotek: ${error}',
 			'libraries.noLibrariesFound' => 'Ingen biblioteker funnet',
 			'libraries.allLibrariesHidden' => 'Alle biblioteker er skjult',
@@ -4572,10 +4576,10 @@ extension on TranslationsNb {
 			'watchTogether.guestSwitchUnavailable' => 'Kunne ikke bytte — server ikke tilgjengelig for synkronisering',
 			'watchTogether.guestSwitchFailed' => 'Kunne ikke bytte — innhold ble ikke funnet på denne serveren',
 			'watchTogether.defaultDisplayName' => 'Bruker',
-			'watchTogether.errors.timedOut' => 'Reléserveren svarte ikke i tide',
-			'watchTogether.errors.connectionLost' => 'Tilkoblingen ble lukket før økten var klar',
 			_ => null,
 		} ?? switch (path) {
+			'watchTogether.errors.timedOut' => 'Reléserveren svarte ikke i tide',
+			'watchTogether.errors.connectionLost' => 'Tilkoblingen ble lukket før økten var klar',
 			'watchTogether.errors.invalidRelayResponse' => 'Reléserveren sendte et uventet svar',
 			'watchTogether.errors.sessionEnded' => 'Verten avsluttet økten',
 			'watchTogether.errors.sessionUnavailable' => 'Kan ikke gjenoppta denne økten. Bli med i eller opprett et rom for å fortsette.',
@@ -5086,10 +5090,10 @@ extension on TranslationsNb {
 			'addServer.invalidCredentials' => 'Ugyldig brukernavn eller passord',
 			'addServer.authResponseNotJson' => 'Autentiseringssvaret var ikke gyldig JSON',
 			'addServer.authResponseIncomplete' => 'Påloggingssvaret fra serveren var ufullstendig',
-			'addServer.quickConnectRejected' => 'Quick Connect ble avvist av serveren',
-			'addServer.quickConnectNotJson' => 'Quick Connect-svaret var ikke gyldig JSON',
 			_ => null,
 		} ?? switch (path) {
+			'addServer.quickConnectRejected' => 'Quick Connect ble avvist av serveren',
+			'addServer.quickConnectNotJson' => 'Quick Connect-svaret var ikke gyldig JSON',
 			'addServer.quickConnectMissingFields' => 'Quick Connect-svaret mangler en kode eller hemmelighet',
 			'addServer.quickConnectPollRejected' => 'Quick Connect-spørringen ble avvist av serveren',
 			'addServer.serverTimedOut' => 'Serveren svarte ikke i tide',

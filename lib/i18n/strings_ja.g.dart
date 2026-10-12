@@ -472,6 +472,8 @@ class _Translations$settings$ja extends Translations$settings$en {
 	@override String get dvConversionNativeDescription => 'ネイティブ DV7 を強制し、DV 変換の再試行を抑制します';
 	@override String get dvConversionDv81Description => 'Dolby Vision プロファイル 8.1 へのインライン RPU 変換を強制します';
 	@override String get dvConversionHevcStripDescription => 'Dolby Vision の RPU/EL レイヤーを削除し、通常の HEVC として扱います';
+	@override String get disableDolbyVision => 'Dolby Vision を無効にする';
+	@override String get disableDolbyVisionDescription => 'ファイルに HDR10 または HLG レイヤーがある場合は、Dolby Vision の代わりにそれを再生します';
 	@override String get hdrSdrConversion => 'HDRからSDRへの変換';
 	@override String get hdrSdrConversionDescription => 'ディスプレイがHDRを表示できないときに、HDR映像を何で変換するかを選択します。';
 	@override String get hdrSdrConversionAuto => '自動';
@@ -3372,6 +3374,8 @@ extension on TranslationsJa {
 			'settings.dvConversionNativeDescription' => 'ネイティブ DV7 を強制し、DV 変換の再試行を抑制します',
 			'settings.dvConversionDv81Description' => 'Dolby Vision プロファイル 8.1 へのインライン RPU 変換を強制します',
 			'settings.dvConversionHevcStripDescription' => 'Dolby Vision の RPU/EL レイヤーを削除し、通常の HEVC として扱います',
+			'settings.disableDolbyVision' => 'Dolby Vision を無効にする',
+			'settings.disableDolbyVisionDescription' => 'ファイルに HDR10 または HLG レイヤーがある場合は、Dolby Vision の代わりにそれを再生します',
 			'settings.hdrSdrConversion' => 'HDRからSDRへの変換',
 			'settings.hdrSdrConversionDescription' => 'ディスプレイがHDRを表示できないときに、HDR映像を何で変換するかを選択します。',
 			'settings.hdrSdrConversionAuto' => '自動',
@@ -3533,10 +3537,10 @@ extension on TranslationsJa {
 			'fileInfo.languageCode' => '言語コード',
 			'fileInfo.streamTitle' => 'トラックタイトル',
 			'fileInfo.channels' => 'チャンネル',
-			'fileInfo.sampleRate' => 'サンプルレート',
-			'fileInfo.spatialAudio' => '空間オーディオ',
 			_ => null,
 		} ?? switch (path) {
+			'fileInfo.sampleRate' => 'サンプルレート',
+			'fileInfo.spatialAudio' => '空間オーディオ',
 			'fileInfo.textBased' => 'テキストベース',
 			'fileInfo.subtitleFormat' => 'サイドカーフォーマット',
 			'fileInfo.provider' => 'プロバイダー',
@@ -4047,10 +4051,10 @@ extension on TranslationsJa {
 			'libraries.emptyingTrash' => ({required Object title}) => '「${title}」のゴミ箱を空にしています…',
 			'libraries.trashEmptied' => ({required Object title}) => '「${title}」のゴミ箱を空にしました',
 			'libraries.failedToEmptyTrash' => ({required Object error}) => 'ゴミ箱を空にできませんでした: ${error}',
-			'libraries.analyzing' => ({required Object title}) => '「${title}」を解析中…',
-			'libraries.analysisStarted' => ({required Object title}) => '「${title}」の解析を開始しました',
 			_ => null,
 		} ?? switch (path) {
+			'libraries.analyzing' => ({required Object title}) => '「${title}」を解析中…',
+			'libraries.analysisStarted' => ({required Object title}) => '「${title}」の解析を開始しました',
 			'libraries.failedToAnalyze' => ({required Object error}) => 'ライブラリの解析に失敗しました: ${error}',
 			'libraries.noLibrariesFound' => 'ライブラリが見つかりません',
 			'libraries.allLibrariesHidden' => 'すべてのライブラリが非表示です',
@@ -4561,10 +4565,10 @@ extension on TranslationsJa {
 			'watchTogether.guestSwitchUnavailable' => '切り替えられません — 同期に必要なサーバーを利用できません',
 			'watchTogether.guestSwitchFailed' => '切り替えられません — このサーバーにコンテンツが見つかりません',
 			'watchTogether.defaultDisplayName' => 'ユーザー',
-			'watchTogether.errors.timedOut' => 'リレーサーバーが時間内に応答しませんでした',
-			'watchTogether.errors.connectionLost' => 'セッションの準備が整う前に接続が閉じられました',
 			_ => null,
 		} ?? switch (path) {
+			'watchTogether.errors.timedOut' => 'リレーサーバーが時間内に応答しませんでした',
+			'watchTogether.errors.connectionLost' => 'セッションの準備が整う前に接続が閉じられました',
 			'watchTogether.errors.invalidRelayResponse' => 'リレーサーバーから予期しない応答が返されました',
 			'watchTogether.errors.sessionEnded' => 'ホストがセッションを終了しました',
 			'watchTogether.errors.sessionUnavailable' => 'このセッションを再開できません。ルームに参加するか作成して続行してください。',
@@ -5075,10 +5079,10 @@ extension on TranslationsJa {
 			'addServer.invalidCredentials' => 'ユーザー名またはパスワードが正しくありません',
 			'addServer.authResponseNotJson' => '認証レスポンスが有効なJSONではありません',
 			'addServer.authResponseIncomplete' => 'サーバーからのサインイン応答が不完全です',
-			'addServer.quickConnectRejected' => 'Quick Connectがサーバーに拒否されました',
-			'addServer.quickConnectNotJson' => 'Quick Connectのレスポンスが有効なJSONではありません',
 			_ => null,
 		} ?? switch (path) {
+			'addServer.quickConnectRejected' => 'Quick Connectがサーバーに拒否されました',
+			'addServer.quickConnectNotJson' => 'Quick Connectのレスポンスが有効なJSONではありません',
 			'addServer.quickConnectMissingFields' => 'Quick Connectのレスポンスにコードまたはシークレットがありません',
 			'addServer.quickConnectPollRejected' => 'Quick Connectのポーリングがサーバーに拒否されました',
 			'addServer.serverTimedOut' => 'サーバーが時間内に応答しませんでした',

@@ -93,7 +93,84 @@ class PlexDiscoverClient {
   // Discover for German returns records whose summary is *empty* rather than
   // falling back to the English one, so sending them everywhere emptied the
   // pages of descriptions. Only callers that can handle
-  // an empty answer — by asking again unlocalized — may pass a language.
+  // an empty answer — by asking again unlocalized, or by laying the
+  // localized words over the plain record ([withLocalizedText]) — may pass a
+  // language.
+
+  /// The longest description a Discover record carries: its `summary`, or a
+  /// longer entry of its `Summary` list.
+  static String? overviewOf(Map<String, dynamic> metadata) {
+    var overview = _nonEmptyString(metadata['summary']);
+    for (final summary in flexibleMapList(metadata['Summary'])) {
+      final candidate = _nonEmptyString(summary['tag'] ?? summary['summary']);
+      if (candidate != null && (overview == null || candidate.length > overview.length)) {
+        overview = candidate;
+      }
+    }
+    return overview;
+  }
+
+  /// [plain] with the title and description [localized] has in the app's
+  /// language, where it has them (Plebz).
+  ///
+  /// The plain record stays the source of everything else, and a field
+  /// Discover left empty for want of a translation keeps its English words —
+  /// "Der Pate" where Discover knows it, "The Godfather" where it does not.
+  /// A title that changes keeps the plain one as the original where the
+  /// record names none: the library lookup tries the original first.
+  static Map<String, dynamic> withLocalizedText(Map<String, dynamic> plain, Map<String, dynamic>? localized) {
+    if (localized == null) return plain;
+    final plainTitle = _nonEmptyString(plain['title']);
+    final title = _nonEmptyString(localized['title']);
+    final retitled = title != null && title != plainTitle;
+    final overview = overviewOf(localized);
+    if (!retitled && overview == null) return plain;
+    return {
+      ...plain,
+      if (retitled) 'title': title,
+      if (retitled && plainTitle != null && _nonEmptyString(plain['originalTitle']) == null)
+        'originalTitle': plainTitle,
+      if (overview != null) ...{'summary': overview, 'Summary': const <Object?>[]},
+    };
+  }
+
+  /// [withLocalizedText] for a page of entries, matched by rating key. The
+  /// log line is the only trace of how much Discover translated: it answers
+  /// nothing without a token, so it can only be read off a device.
+  static List<Map<String, dynamic>> withLocalizedTexts(
+    List<Map<String, dynamic>> plain,
+    List<Map<String, dynamic>>? localized, {
+    required String language,
+    required String label,
+  }) {
+    if (localized == null || localized.isEmpty || plain.isEmpty) return plain;
+    final byKey = {for (final entry in localized) ?_nonEmptyString(entry['ratingKey']): entry};
+    var retitled = 0;
+    final result = [for (final entry in plain) withLocalizedText(entry, byKey[_nonEmptyString(entry['ratingKey'])])];
+    for (var i = 0; i < plain.length; i++) {
+      if (!identical(result[i], plain[i]) && result[i]['title'] != plain[i]['title']) retitled++;
+    }
+    appLogger.d('Plex Discover: $label, $retitled of ${plain.length} titles in $language');
+    return result;
+  }
+
+  /// The entries of a localized copy of a request, or null when it fails:
+  /// the localized answer only ever lends words, so losing it costs the
+  /// translation and nothing else.
+  Future<List<Map<String, dynamic>>?> _localizedEntries(
+    String path, {
+    Map<String, Object?>? query,
+    required String language,
+    required List<Map<String, dynamic>> Function(Map<String, dynamic> container) entries,
+  }) async {
+    try {
+      final data = await _request('GET', path, query: query, allowNotFound: true, language: language);
+      return data == null ? null : entries(_mediaContainer(data));
+    } catch (error) {
+      appLogger.d('Plex Discover: localized $path failed', error: error);
+      return null;
+    }
+  }
 
   /// Largest container size field-proven against Discover's request
   /// validation: the Explore row fetch uses it on every load. Oversized
@@ -102,12 +179,14 @@ class PlexDiscoverClient {
   /// became "Invalid value provided for x-plex-container-size!").
   static const int _watchlistChunkSize = 25;
 
-  Future<PlexDiscoverPage> getWatchlist({int page = 1, int limit = 25}) async {
+  /// [language] lays the entries' localized titles and descriptions over
+  /// them ([withLocalizedTexts]); the membership snapshot needs none.
+  Future<PlexDiscoverPage> getWatchlist({int page = 1, int limit = 25, String? language}) async {
     final safePage = page < 1 ? 1 : page;
     final safeLimit = limit.clamp(1, 500);
     final offset = (safePage - 1) * safeLimit;
     try {
-      return await _watchlistRange(offset, safeLimit);
+      return await _watchlistRange(offset, safeLimit, language: language);
     } on PlexDiscoverException catch (error) {
       if (safeLimit <= _watchlistChunkSize || !_isContainerSizeRejection(error)) rethrow;
       appLogger.w('Plex Discover: container size $safeLimit rejected, refetching in chunks of $_watchlistChunkSize');
@@ -118,6 +197,7 @@ class PlexDiscoverClient {
         chunk = await _watchlistRange(
           offset + items.length,
           remaining > _watchlistChunkSize ? _watchlistChunkSize : remaining,
+          language: language,
         );
         items.addAll(chunk.items);
       } while (items.length < safeLimit && chunk.hasMore && chunk.items.isNotEmpty);
@@ -125,10 +205,20 @@ class PlexDiscoverClient {
     }
   }
 
-  Future<PlexDiscoverPage> _watchlistRange(int offset, int size) async {
+  Future<PlexDiscoverPage> _watchlistRange(int offset, int size, {String? language}) async {
+    const path = '/library/sections/watchlist/all';
+    // Asked alongside the plain page, not after it: a request more, no wait.
+    final localized = language == null
+        ? null
+        : _localizedEntries(
+            path,
+            query: {'X-Plex-Container-Start': offset, 'X-Plex-Container-Size': size},
+            language: language,
+            entries: (container) => flexibleMapList(container['Metadata']),
+          );
     final data = await _request(
       'GET',
-      '/library/sections/watchlist/all',
+      path,
       query: {
         'X-Plex-Container-Start': offset,
         'X-Plex-Container-Size': size,
@@ -144,7 +234,13 @@ class PlexDiscoverClient {
     final items = flexibleMapList(container['Metadata']);
     final reportedTotal = flexibleInt(container['totalSize']);
     final total = reportedTotal ?? flexibleInt(container['size']) ?? items.length;
-    return PlexDiscoverPage(items: items, hasMore: offset + items.length < total, totalResults: reportedTotal);
+    return PlexDiscoverPage(
+      items: localized == null
+          ? items
+          : withLocalizedTexts(items, await localized, language: language!, label: 'watchlist'),
+      hasMore: offset + items.length < total,
+      totalResults: reportedTotal,
+    );
   }
 
   static bool _isContainerSizeRejection(PlexDiscoverException error) =>
@@ -185,10 +281,10 @@ class PlexDiscoverClient {
   /// Home is one such section; a streaming service's page
   /// (`/library/platforms/<service>`) is another, and both answer the same
   /// way — placeholders that each cost a request of their own.
-  /// [language] localizes the shelf headings, and only those: it rides on the
-  /// listing request, which carries no summaries to be emptied. The shelves
-  /// themselves are hydrated plainly, so what the note above warns of cannot
-  /// happen here.
+  /// [language] localizes the shelf headings on the listing request, which
+  /// carries no summaries to be emptied. The shelves of titles are hydrated
+  /// plainly, with their localized titles and descriptions laid over them
+  /// ([getHub]), so what the note above warns of cannot happen here either.
   Future<List<PlexDiscoverHub>> getSectionHubs(
     String path, {
     int limit = 25,
@@ -250,6 +346,8 @@ class PlexDiscoverClient {
             candidate.key,
             limit: limits[index] + 1,
             includeImageVariants: includeImageVariants,
+            // Destinations are named in the listing's words already.
+            language: candidate.type == 'directory' || candidate.style == 'availabilityPlatforms' ? null : language,
           );
         } catch (error, stackTrace) {
           firstError ??= error;
@@ -290,13 +388,27 @@ class PlexDiscoverClient {
   /// already fill a grid.
   static const int _shelfHydrationLimit = 8;
 
+  ///
+  /// [language] lays the entries' localized titles and descriptions over the
+  /// plain ones ([withLocalizedTexts]).
   Future<PlexDiscoverPage> getHub(
     String key, {
     int limit = 100,
     bool includeImageVariants = false,
     bool hydrateShelves = true,
+    String? language,
   }) async {
     final safeLimit = limit.clamp(1, 500);
+    // Asked alongside the plain hub, not after it: a request more, no wait.
+    // A page of placeholders wastes it; its shelves ask for their own.
+    final localized = language == null
+        ? null
+        : _localizedEntries(
+            key,
+            query: {'limit': safeLimit, 'excludeElements': 'Media,Image'},
+            language: language,
+            entries: _hubEntries,
+          );
     final data = await _request(
       'GET',
       key,
@@ -313,24 +425,14 @@ class PlexDiscoverClient {
       },
     );
     final container = _mediaContainer(data!);
-    // Every shelf the answer carries. Usually one — the hub that was asked
-    // for — but a streaming service's own key answers with its whole page,
-    // and then the titles are spread over several.
     final hubs = flexibleMapList(container['Hub']);
-    List<Map<String, dynamic>> fromHubs(String field) => [for (final hub in hubs) ...flexibleMapList(hub[field])];
-    // Four places to look, because Discover files a shelf's entries wherever
-    // suits it: titles as Metadata, destinations — a streaming service, say —
-    // as Directory, either on the container or in the shelves it wraps. The
-    // first that holds anything wins; appending would list a hub's entries
-    // twice where the container repeats them.
-    final items = [
-      flexibleMapList(container['Metadata']),
-      fromHubs('Metadata'),
-      flexibleMapList(container['Directory']),
-      fromHubs('Directory'),
-    ].firstWhere((found) => found.isNotEmpty, orElse: () => const []);
+    final items = _hubEntries(container);
     if (items.isNotEmpty || !hydrateShelves) {
-      return PlexDiscoverPage(items: items.take(safeLimit).toList(), totalResults: flexibleInt(container['totalSize']));
+      final page = items.take(safeLimit).toList();
+      return PlexDiscoverPage(
+        items: localized == null ? page : withLocalizedTexts(page, await localized, language: language!, label: key),
+        totalResults: flexibleInt(container['totalSize']),
+      );
     }
 
     // Nothing here, but shelves that say where it is. Discover answers a
@@ -338,8 +440,32 @@ class PlexDiscoverClient {
     // shelf to be fetched by its own key; that is what Home does, and a
     // streaming service's page is built the same way.
     return PlexDiscoverPage(
-      items: await _hydrateShelves(hubs, limit: safeLimit, includeImageVariants: includeImageVariants),
+      items: await _hydrateShelves(
+        hubs,
+        limit: safeLimit,
+        includeImageVariants: includeImageVariants,
+        language: language,
+      ),
     );
+  }
+
+  /// A hub answer's entries. Every shelf the answer carries counts: usually
+  /// one — the hub that was asked for — but a streaming service's own key
+  /// answers with its whole page, and then the titles are spread over
+  /// several. Four places to look, because Discover files a shelf's entries
+  /// wherever suits it: titles as Metadata, destinations — a streaming
+  /// service, say — as Directory, either on the container or in the shelves
+  /// it wraps. The first that holds anything wins; appending would list a
+  /// hub's entries twice where the container repeats them.
+  static List<Map<String, dynamic>> _hubEntries(Map<String, dynamic> container) {
+    final hubs = flexibleMapList(container['Hub']);
+    List<Map<String, dynamic>> fromHubs(String field) => [for (final hub in hubs) ...flexibleMapList(hub[field])];
+    return [
+      flexibleMapList(container['Metadata']),
+      fromHubs('Metadata'),
+      flexibleMapList(container['Directory']),
+      fromHubs('Directory'),
+    ].firstWhere((found) => found.isNotEmpty, orElse: () => const []);
   }
 
   /// The entries of [hubs], fetched one key at a time and merged in order.
@@ -350,6 +476,7 @@ class PlexDiscoverClient {
     List<Map<String, dynamic>> hubs, {
     required int limit,
     required bool includeImageVariants,
+    String? language,
   }) async {
     final keys = [
       for (final hub in hubs) ?_nonEmptyString(hub['key'] ?? hub['hubKey']),
@@ -363,6 +490,7 @@ class PlexDiscoverClient {
           limit: limit,
           includeImageVariants: includeImageVariants,
           hydrateShelves: false,
+          language: language,
         ).then<PlexDiscoverPage?>(
           (page) => page,
           onError: (Object error) {
@@ -485,19 +613,22 @@ class PlexDiscoverClient {
     return firstFlexibleMap(_mediaContainer(data)['Metadata']);
   }
 
-  Future<List<Map<String, dynamic>>> getRelated(String ratingKey) async {
-    final data = await _request(
-      'GET',
-      '/library/metadata/${Uri.encodeComponent(ratingKey)}/related',
-      allowNotFound: true,
-    );
+  /// [language] behaves as in [getHub].
+  Future<List<Map<String, dynamic>>> getRelated(String ratingKey, {String? language}) async {
+    final path = '/library/metadata/${Uri.encodeComponent(ratingKey)}/related';
+    final localized = language == null ? null : _localizedEntries(path, language: language, entries: _relatedEntries);
+    final data = await _request('GET', path, allowNotFound: true);
     if (data == null) return const [];
-    final container = _mediaContainer(data);
-    return [
-      for (final hub in flexibleMapList(container['Hub'])) ...flexibleMapList(hub['Metadata']),
-      if (container['Hub'] == null) ...flexibleMapList(container['Metadata']),
-    ];
+    final entries = _relatedEntries(_mediaContainer(data));
+    return localized == null
+        ? entries
+        : withLocalizedTexts(entries, await localized, language: language!, label: 'related');
   }
+
+  static List<Map<String, dynamic>> _relatedEntries(Map<String, dynamic> container) => [
+    for (final hub in flexibleMapList(container['Hub'])) ...flexibleMapList(hub['Metadata']),
+    if (container['Hub'] == null) ...flexibleMapList(container['Metadata']),
+  ];
 
   /// People whose name matches [name], best match first: the `Directory` rows
   /// of a people search, each carrying `metadataId`, `title` and `thumb`.
@@ -537,8 +668,19 @@ class PlexDiscoverClient {
   /// "Appearances" — each group `{type, title, Credit: [{role, Metadata}]}`
   /// with one Discover item per credit. An unknown person answers an empty
   /// list; a body without groups throws, since that is not an empty career.
-  Future<List<Map<String, dynamic>>> getPersonCredits(String personId) async {
-    final data = await _request('GET', '/library/people/${Uri.encodeComponent(personId)}/credits', allowNotFound: true);
+  ///
+  /// [language] lays each credit's localized title and description over it,
+  /// as [getHub] does.
+  Future<List<Map<String, dynamic>>> getPersonCredits(String personId, {String? language}) async {
+    final path = '/library/people/${Uri.encodeComponent(personId)}/credits';
+    final localized = language == null
+        ? null
+        : _localizedEntries(
+            path,
+            language: language,
+            entries: (container) => _creditEntries(flexibleMapList(container['CreditGroup'])),
+          );
+    final data = await _request('GET', path, allowNotFound: true);
     if (data == null) return const [];
     final container = _mediaContainer(data);
     final groups = container['CreditGroup'];
@@ -546,8 +688,32 @@ class PlexDiscoverClient {
       if (flexibleInt(container['size']) == 0 || flexibleInt(container['totalSize']) == 0) return const [];
       throw const PlexDiscoverException(200, 'Person credits carried no CreditGroup');
     }
-    return flexibleMapList(groups);
+    final plainGroups = flexibleMapList(groups);
+    if (localized == null) return plainGroups;
+    final overlaid = withLocalizedTexts(
+      _creditEntries(plainGroups),
+      await localized,
+      language: language!,
+      label: 'person credits',
+    );
+    // Back into the groups in the order they were read out.
+    var next = 0;
+    return [
+      for (final group in plainGroups)
+        {
+          ...group,
+          'Credit': [
+            for (final credit in flexibleMapList(group['Credit']))
+              if (firstFlexibleMap(credit['Metadata']) != null) {...credit, 'Metadata': overlaid[next++]} else credit,
+          ],
+        },
+    ];
   }
+
+  static List<Map<String, dynamic>> _creditEntries(List<Map<String, dynamic>> groups) => [
+    for (final group in groups)
+      for (final credit in flexibleMapList(group['Credit'])) ?firstFlexibleMap(credit['Metadata']),
+  ];
 
   Future<void> setWatchlisted(String ratingKey, {required bool add}) async {
     await _request(

@@ -5201,6 +5201,15 @@ class Translations$downloads$en {
 	/// en: 'Delete "${title}" from this device?'
 	String deleteConfirm({required Object title}) => 'Delete "${title}" from this device?';
 
+	/// en: 'Delete downloads'
+	String get deleteCollectionDownloads => 'Delete downloads';
+
+	/// en: 'Delete every download in "${title}" from this device?'
+	String deleteCollectionDownloadsConfirm({required Object title}) => 'Delete every download in "${title}" from this device?';
+
+	/// en: 'Downloads deleted'
+	String get collectionDownloadsDeleted => 'Downloads deleted';
+
 	/// en: 'Canceled Download'
 	String get cancelledDownloadTitle => 'Canceled Download';
 
@@ -5251,6 +5260,12 @@ class Translations$downloads$en {
 
 	/// en: 'Resume all'
 	String get resumeAll => 'Resume all';
+
+	/// en: 'Retry all'
+	String get retryAll => 'Retry all';
+
+	/// en: 'Retry failed downloads'
+	String get retryFailed => 'Retry failed downloads';
 
 	/// en: 'Delete all'
 	String get deleteAll => 'Delete all';
@@ -5638,6 +5653,27 @@ class Translations$performanceOverlay$en {
 
 	/// en: 'DV Path'
 	String get dvPath => 'DV Path';
+
+	/// en: 'Dolby Vision decoder'
+	String get dvRouteDecoder => 'Dolby Vision decoder';
+
+	/// en: 'Dolby Vision decoder (P7→8.1)'
+	String get dvRouteDecoderP81 => 'Dolby Vision decoder (P7→8.1)';
+
+	/// en: 'Base layer'
+	String get dvRouteBaseLayer => 'Base layer';
+
+	/// en: 'HDR10 base layer'
+	String get dvRouteBaseLayerHdr10 => 'HDR10 base layer';
+
+	/// en: 'HLG base layer'
+	String get dvRouteBaseLayerHlg => 'HLG base layer';
+
+	/// en: 'SDR base layer'
+	String get dvRouteBaseLayerSdr => 'SDR base layer';
+
+	/// en: 'RPU reshaped (gpu-next)'
+	String get dvRouteReshaped => 'RPU reshaped (gpu-next)';
 
 	/// en: 'P7 Conv'
 	String get p7Conversion => 'P7 Conv';
@@ -6405,6 +6441,7 @@ class Translations$services$en {
 	String connectFailed({required Object service}) => 'Couldn\'t connect to ${service}. Try again.';
 
 	late final Translations$services$names$en names = Translations$services$names$en.internal(_root);
+	late final Translations$services$simklReconnect$en simklReconnect = Translations$services$simklReconnect$en.internal(_root);
 	late final Translations$services$deviceCode$en deviceCode = Translations$services$deviceCode$en.internal(_root);
 	late final Translations$services$oauthProxy$en oauthProxy = Translations$services$oauthProxy$en.internal(_root);
 	late final Translations$services$pendingAuth$en pendingAuth = Translations$services$pendingAuth$en.internal(_root);
@@ -8848,6 +8885,9 @@ class Translations$downloads$groupings$en {
 
 	/// en: 'Library'
 	String get library => 'Library';
+
+	/// en: 'Collections'
+	String get collections => 'Collections';
 }
 
 // Path: companionRemote.session
@@ -9148,6 +9188,21 @@ class Translations$services$names$en {
 
 	/// en: 'TMDB'
 	String get tmdb => 'TMDB';
+}
+
+// Path: services.simklReconnect
+class Translations$services$simklReconnect$en {
+	Translations$services$simklReconnect$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Reconnect Simkl'
+	String get title => 'Reconnect Simkl';
+
+	/// en: 'Simkl is retiring the old sign-in; approve once on simkl.com.'
+	String get subtitle => 'Simkl is retiring the old sign-in; approve once on simkl.com.';
 }
 
 // Path: services.deviceCode
@@ -11288,6 +11343,9 @@ extension on Translations {
 			'downloads.episodesQueued' => ({required Object count}) => '${count} episodes queued for download',
 			'downloads.downloadDeleted' => 'Download deleted',
 			'downloads.deleteConfirm' => ({required Object title}) => 'Delete "${title}" from this device?',
+			'downloads.deleteCollectionDownloads' => 'Delete downloads',
+			'downloads.deleteCollectionDownloadsConfirm' => ({required Object title}) => 'Delete every download in "${title}" from this device?',
+			'downloads.collectionDownloadsDeleted' => 'Downloads deleted',
 			'downloads.cancelledDownloadTitle' => 'Canceled Download',
 			'downloads.cancelledDownloadMessage' => 'This download was canceled. What would you like to do?',
 			'downloads.allEpisodesAlreadyDownloaded' => 'All episodes already downloaded',
@@ -11305,6 +11363,8 @@ extension on Translations {
 			'downloads.noDownloadsTree' => 'No downloads',
 			'downloads.pauseAll' => 'Pause all',
 			'downloads.resumeAll' => 'Resume all',
+			'downloads.retryAll' => 'Retry all',
+			'downloads.retryFailed' => 'Retry failed downloads',
 			'downloads.deleteAll' => 'Delete all',
 			'downloads.selectVersion' => 'Select Version',
 			'downloads.allEpisodes' => 'All episodes',
@@ -11373,6 +11433,7 @@ extension on Translations {
 			'downloads.backgroundWarning.linkUnavailable' => 'Couldn\'t open dontkillmyapp.com on this device',
 			'downloads.options' => 'Downloads options',
 			'downloads.groupings.library' => 'Library',
+			'downloads.groupings.collections' => 'Collections',
 			'downloads.unknownLibrary' => 'Unknown library',
 			'downloads.unknownShow' => 'Unknown Show',
 			'downloads.unknownSeason' => 'Unknown Season',
@@ -11446,14 +11507,14 @@ extension on Translations {
 			'companionRemote.pairing.cancelled' => 'Pairing cancelled',
 			'companionRemote.pairing.busy' => 'The device is pairing another one right now. Try again in a moment.',
 			'companionRemote.pairing.expired' => 'The code has expired. Connect again.',
+			_ => null,
+		} ?? switch (path) {
 			'companionRemote.pairing.pairingRequired' => 'This device is no longer paired. Connect again to pair it.',
 			'companionRemote.pairing.hostTooOld' => 'The device runs an older Plebz. Update it to pair.',
 			'companionRemote.pairing.pairedDevices' => 'Paired devices',
 			'companionRemote.pairing.noPairedDevices' => 'No device paired yet. A code appears here on the first connection.',
 			'companionRemote.pairing.unpair' => 'Remove',
 			'companionRemote.pairing.unpaired' => ({required Object name}) => '${name} is no longer paired',
-			_ => null,
-		} ?? switch (path) {
 			'companionRemote.remote.disconnectConfirm' => 'Do you want to disconnect from the remote session?',
 			'companionRemote.remote.reconnecting' => 'Reconnecting...',
 			'companionRemote.remote.attemptOf' => ({required Object current}) => 'Attempt ${current} of 5',
@@ -11527,6 +11588,13 @@ extension on Translations {
 			'performanceOverlay.rotation' => 'Rotation',
 			'performanceOverlay.dvSource' => 'DV Source',
 			'performanceOverlay.dvPath' => 'DV Path',
+			'performanceOverlay.dvRouteDecoder' => 'Dolby Vision decoder',
+			'performanceOverlay.dvRouteDecoderP81' => 'Dolby Vision decoder (P7→8.1)',
+			'performanceOverlay.dvRouteBaseLayer' => 'Base layer',
+			'performanceOverlay.dvRouteBaseLayerHdr10' => 'HDR10 base layer',
+			'performanceOverlay.dvRouteBaseLayerHlg' => 'HLG base layer',
+			'performanceOverlay.dvRouteBaseLayerSdr' => 'SDR base layer',
+			'performanceOverlay.dvRouteReshaped' => 'RPU reshaped (gpu-next)',
 			'performanceOverlay.p7Conversion' => 'P7 Conv',
 			'performanceOverlay.sampleRate' => 'Sample Rate',
 			'performanceOverlay.pixelFormat' => 'Pixel Fmt',
@@ -11767,6 +11835,8 @@ extension on Translations {
 			'services.names.seerr' => 'Seerr',
 			'services.names.mdblist' => 'MDBList',
 			'services.names.tmdb' => 'TMDB',
+			'services.simklReconnect.title' => 'Reconnect Simkl',
+			'services.simklReconnect.subtitle' => 'Simkl is retiring the old sign-in; approve once on simkl.com.',
 			'services.deviceCode.title' => ({required Object service}) => 'Activate Plebz on ${service}',
 			'services.deviceCode.instructions' => 'Scan the QR code, or visit the address below and enter this code:',
 			'services.deviceCode.openToActivate' => ({required Object service}) => 'Open ${service} to activate',
@@ -11951,6 +12021,8 @@ extension on Translations {
 			'actor.inLibraries' => 'In your libraries',
 			'actor.notInLibraries' => 'Not in your libraries',
 			'actor.noDiscoverSource' => 'Connect a Plex account to open titles you do not have.',
+			_ => null,
+		} ?? switch (path) {
 			'actor.notOnDiscover' => ({required Object title}) => 'Plex Discover has no page for “${title}”.',
 			'actor.appearances' => 'Appearances',
 			'actor.biography' => 'Biography',
@@ -11966,8 +12038,6 @@ extension on Translations {
 			'actor.departments.acting' => 'Acting',
 			'actor.departments.directing' => 'Directing',
 			'actor.departments.production' => 'Production',
-			_ => null,
-		} ?? switch (path) {
 			'actor.departments.writing' => 'Writing',
 			'actor.availability.all' => 'Everything',
 			'actor.availability.available' => 'Available',

@@ -1658,6 +1658,202 @@ void main() {
       });
     });
 
+    group('localized titles (Plebz)', () {
+      // German is a deferred locale; setLocaleSync cannot load it.
+      setUp(() async => LocaleSettings.setLocale(AppLocale.de));
+      tearDown(() => LocaleSettings.setLocaleSync(AppLocale.en));
+
+      /// What Discover answers when asked in German: the translated title and
+      /// description where it has them, empty fields where it does not.
+      Map<String, Object?> german(String ratingKey, {String title = '', String summary = ''}) => {
+        'ratingKey': ratingKey,
+        'type': 'movie',
+        'title': title,
+        'summary': summary,
+      };
+
+      bool asksGerman(http.Request request) => request.headers['X-Plex-Language'] == 'de';
+
+      PlexCatalogSource sourceWithShelf({required bool germanFails}) => PlexCatalogSource(
+        PlexDiscoverClient(
+          _session,
+          httpClient: MockClient((request) async {
+            switch (request.url.path) {
+              case '/hubs/sections/home':
+                return jsonResponse({
+                  'MediaContainer': {
+                    'Hub': [_placeholderHub('home.trending-plex', 'Trending on Plex', style: 'shelf')],
+                  },
+                });
+              case '/hubs/sections/home/trending-plex':
+                if (asksGerman(request)) {
+                  if (germanFails) return http.Response('{}', 500);
+                  return jsonResponse({
+                    'MediaContainer': {
+                      'Metadata': [
+                        german('plex-movie-1', title: 'Der Pate', summary: 'Ein Mafia-Epos.'),
+                        german('plex-movie-2'),
+                      ],
+                    },
+                  });
+                }
+                return jsonResponse({
+                  'MediaContainer': {
+                    'Metadata': [
+                      _metadata(title: 'The Godfather'),
+                      _metadata(ratingKey: 'plex-movie-2', title: 'Interstellar', imdb: 'tt0816692', tmdb: 157336),
+                    ],
+                  },
+                });
+            }
+            return http.Response('not found', 404);
+          }),
+        ),
+      );
+
+      test('a shelf shows German titles and descriptions, English where Discover has none', () async {
+        final source = sourceWithShelf(germanFails: false);
+        addTearDown(source.dispose);
+
+        final items = (await source.fetchHubs()).single.page.items;
+
+        expect([for (final item in items) item.title], ['Der Pate', 'Interstellar']);
+        expect(items.first.overview, 'Ein Mafia-Epos.');
+        expect(items.first.originalTitle, 'The Godfather', reason: 'the library lookup tries the original first');
+        expect(items.last.overview, 'A dream within a dream.');
+        expect(items.last.originalTitle, isNull);
+        // Everything else is the plain record's.
+        expect(items.first.year, 2010);
+        expect(items.first.ids.imdb, 'tt1375666');
+      });
+
+      test('a failed German request leaves the shelf in English', () async {
+        final source = sourceWithShelf(germanFails: true);
+        addTearDown(source.dispose);
+
+        final items = (await source.fetchHubs()).single.page.items;
+
+        expect([for (final item in items) item.title], ['The Godfather', 'Interstellar']);
+        expect(items.first.overview, 'A dream within a dream.');
+      });
+
+      test('the watchlist row follows; its membership snapshot stays plain', () async {
+        final languages = <String?>[];
+        final source = PlexCatalogSource(
+          PlexDiscoverClient(
+            _session,
+            httpClient: MockClient((request) async {
+              languages.add(request.headers['X-Plex-Language']);
+              return jsonResponse({
+                'MediaContainer': {
+                  'totalSize': 1,
+                  'Metadata': [if (asksGerman(request)) german('plex-movie-1', title: 'Der Pate') else _metadata()],
+                },
+              });
+            }),
+          ),
+        );
+        addTearDown(source.dispose);
+
+        final page = await source.fetchRow(CatalogRowId.watchlist);
+        expect(page.items.single.title, 'Der Pate');
+        expect(languages, containsAll(<String?>[null, 'de']));
+
+        languages.clear();
+        await source.fetchWatchlistKeyPage(1, 100);
+        expect(languages, [null], reason: 'membership needs no words');
+      });
+
+      test('the detail page and its related row take the German titles too', () async {
+        final source = PlexCatalogSource(
+          PlexDiscoverClient(
+            _session,
+            httpClient: MockClient((request) async {
+              if (request.url.path.endsWith('/related')) {
+                return jsonResponse({
+                  'MediaContainer': {
+                    'Hub': [
+                      {
+                        'Metadata': [
+                          if (asksGerman(request))
+                            german('plex-movie-2', title: 'Interstellar – Die Reise')
+                          else
+                            _metadata(
+                              ratingKey: 'plex-movie-2',
+                              title: 'Interstellar',
+                              imdb: 'tt0816692',
+                              tmdb: 157336,
+                            ),
+                        ],
+                      },
+                    ],
+                  },
+                });
+              }
+              return jsonResponse({
+                'MediaContainer': {
+                  'Metadata': [if (asksGerman(request)) german('plex-movie-1', title: 'Der Pate') else _metadata()],
+                },
+              });
+            }),
+          ),
+        );
+        addTearDown(source.dispose);
+
+        final detail = await source.fetchDetail(
+          const CatalogItem(
+            source: CatalogSourceId.plex,
+            kind: MediaKind.movie,
+            title: 'Inception',
+            ids: CatalogItemIds(plex: 'plex-movie-1'),
+          ),
+        );
+
+        expect(detail.item.title, 'Der Pate');
+        expect(detail.item.overview, 'A dream within a dream.', reason: 'no German description, so the English one');
+        expect(detail.related.single.title, 'Interstellar – Die Reise');
+      });
+
+      test('a person\'s credits take the German titles in their groups', () async {
+        Map<String, Object?> credit(String ratingKey, String title) => {
+          'role': 'Role',
+          'Metadata': {'ratingKey': ratingKey, 'type': 'movie', 'title': title},
+        };
+        final source = PlexCatalogSource(
+          PlexDiscoverClient(
+            _session,
+            httpClient: MockClient((request) async {
+              final de = asksGerman(request);
+              return jsonResponse({
+                'MediaContainer': {
+                  'CreditGroup': [
+                    {
+                      'type': 'actor',
+                      'Credit': [credit('a', de ? 'Der Pate' : 'The Godfather'), credit('b', de ? '' : 'Heat')],
+                    },
+                    {
+                      'type': 'producer',
+                      'Credit': [
+                        credit('c', de ? 'Apocalypse Now' : 'Apocalypse Now'),
+                        {'role': 'No item'},
+                      ],
+                    },
+                  ],
+                },
+              });
+            }),
+          ),
+        );
+        addTearDown(source.dispose);
+
+        final credits = await source.fetchPersonCredits('person-1');
+
+        expect([for (final c in credits) c.item.title], ['Der Pate', 'Heat', 'Apocalypse Now']);
+        expect([for (final c in credits) c.group], ['actor', 'actor', 'producer']);
+        expect(credits.first.role, 'Role');
+      });
+    });
+
     group('person pages (Plebz)', () {
       PlexCatalogSource sourceAnswering(Map<String, Object?> Function(http.Request request) answer) {
         return PlexCatalogSource(

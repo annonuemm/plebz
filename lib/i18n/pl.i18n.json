@@ -372,6 +372,8 @@
     "dvConversionNativeDescription": "Wymuś natywne DV7 i wyłącz ponowną próbę konwersji DV",
     "dvConversionDv81Description": "Wymuś wbudowaną konwersję RPU do profilu Dolby Vision 8.1",
     "dvConversionHevcStripDescription": "Usuń warstwy Dolby Vision RPU/EL i przedstaw zwykłe HEVC",
+    "disableDolbyVision": "Wyłącz Dolby Vision",
+    "disableDolbyVisionDescription": "Odtwarzaj warstwę HDR10 lub HLG pliku zamiast Dolby Vision, jeśli jest dostępna",
     "hdrSdrConversion": "Konwersja HDR do SDR",
     "hdrSdrConversionDescription": "Wybierz, co konwertuje wideo HDR, gdy wyświetlacz nie obsługuje HDR.",
     "hdrSdrConversionAuto": "Automatycznie",
@@ -1786,6 +1788,9 @@
     "episodesQueued": "${count} odcinków w kolejce pobierania",
     "downloadDeleted": "Pobranie usunięte",
     "deleteConfirm": "Usunąć \"${title}\" z tego urządzenia?",
+    "deleteCollectionDownloads": "",
+    "deleteCollectionDownloadsConfirm": "",
+    "collectionDownloadsDeleted": "",
     "cancelledDownloadTitle": "Anulowane pobieranie",
     "cancelledDownloadMessage": "To pobieranie zostało anulowane. Co chcesz zrobić?",
     "allEpisodesAlreadyDownloaded": "Wszystkie odcinki są już pobrane",
@@ -1803,6 +1808,8 @@
     "noDownloadsTree": "Brak pobrań",
     "pauseAll": "Wstrzymaj wszystko",
     "resumeAll": "Wznów wszystko",
+    "retryAll": "",
+    "retryFailed": "",
     "deleteAll": "Usuń wszystko",
     "selectVersion": "Wybierz wersję",
     "allEpisodes": "Wszystkie odcinki",
@@ -1873,7 +1880,8 @@
     },
     "options": "Opcje pobrań",
     "groupings": {
-      "library": "Biblioteka"
+      "library": "Biblioteka",
+      "collections": ""
     },
     "unknownLibrary": "Nieznana biblioteka",
     "unknownShow": "Nieznany serial",
@@ -2026,6 +2034,13 @@
     "rotation": "Obrót",
     "dvSource": "Źródło DV",
     "dvPath": "Ścieżka DV",
+    "dvRouteDecoder": "",
+    "dvRouteDecoderP81": "",
+    "dvRouteBaseLayer": "",
+    "dvRouteBaseLayerHdr10": "",
+    "dvRouteBaseLayerHlg": "",
+    "dvRouteBaseLayerSdr": "",
+    "dvRouteReshaped": "",
     "p7Conversion": "Konw. P7",
     "sampleRate": "Częstotliwość próbkowania",
     "pixelFormat": "Format pikseli",
@@ -2255,6 +2270,10 @@
       "simkl": "Simkl",
       "seerr": "Seerr",
       "mdblist": "MDBList"
+    },
+    "simklReconnect": {
+      "title": "",
+      "subtitle": ""
     },
     "deviceCode": {
       "title": "Aktywuj Plebz w ${service}",

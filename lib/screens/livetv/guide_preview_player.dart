@@ -19,6 +19,7 @@ import '../../providers/multi_server_provider.dart';
 import '../../services/iptv/iptv_live_tv_source.dart' show IptvPlaybackSession;
 import '../../services/iptv/iptv_stream_probing.dart';
 import '../../services/live_picture_handover.dart';
+import '../../services/live_software_decode.dart';
 import '../../services/playback_coordinator.dart';
 import '../../services/settings_service.dart';
 import '../../theme/mono_tokens.dart';
@@ -100,6 +101,10 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   /// out offstage, and the box would show the channel's still for it.
   Player? _shownAfterHandover;
 
+  /// Watches a preview opened on a phone's hardware decoder for one that never
+  /// shows a frame (Plebz); see [LiveSoftwareDecodeGuard].
+  final LiveSoftwareDecodeGuard _decodeGuard = LiveSoftwareDecodeGuard();
+
   @override
   void initState() {
     super.initState();
@@ -153,6 +158,10 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     final session = _session;
     final channel = widget.channel;
     if (player == null || session == null || channel == null || _starting || _failed) return null;
+    // A guarded open that has not shown a frame may be one the hardware
+    // decoder cannot show: the full screen opens the channel itself, and
+    // watches its own open.
+    if (_decodeGuard.isWatching) return null;
     if (!LivePictureHandover.canMove(player, session)) return null;
     // Only a picture on the plane in its box is where the growing player
     // expects it.
@@ -203,6 +212,7 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     if (_player != null || _session != null) appLogger.d('Guide preview: stopping');
     _generation++;
     _shownAfterHandover = null;
+    _decodeGuard.disarm();
     final player = _player;
     final session = _session;
     _player = null;
@@ -329,6 +339,7 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       await player.setProperty('hwdec', mpvHwdecValue(hardwareDecoding));
       if (mayHandOver) await _applyOpeningRoute(player, settings);
       await applyLiveStreamProbing(player, session);
+      final decodeMode = await applyLiveDecodeMode(player, channel, settings: settings);
       await _applyAudioSettings(player, settings);
       if (!mounted || generation != _generation) {
         await player.dispose();
@@ -338,6 +349,9 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
 
       _session = session;
       _player = player;
+      _decodeGuard
+        ..prepare(channel, decodeMode)
+        ..armForOpen(player, onStuck: (stuck) => unawaited(_restartInSoftware(stuck, generation)));
       await player.open(Media(url, headers: session!.streamHeaders), play: true, isLive: true);
       if (!mounted || generation != _generation) return;
       appLogger.d('Guide preview: playing ${channel.displayName}');
@@ -351,6 +365,18 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
         _failed = true;
       });
     }
+  }
+
+  /// The hardware decoder took the stream and showed nothing (Plebz, see
+  /// [LiveSoftwareDecodeGuard]): remember the channel on this device and start
+  /// it again, which now decodes in software.
+  Future<void> _restartInSoftware(LiveTvChannel channel, int generation) async {
+    await rememberLiveSoftwareDecode(channel);
+    if (_disposed || !mounted || generation != _generation || widget.channel?.key != channel.key) return;
+    appLogger.d('Guide preview: restarting ${channel.displayName} in software');
+    await _stop();
+    if (_disposed || !mounted || widget.channel?.key != channel.key) return;
+    unawaited(_start(channel));
   }
 
   /// Reads what the stream turned out to be, a few times over its first

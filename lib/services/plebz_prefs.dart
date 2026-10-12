@@ -393,6 +393,14 @@ abstract final class PlebzPrefs {
   /// its HDR10 one. Profile 5 carries no base layer and is left alone.
   static const disableDolbyVision = BoolPref('disable_dolby_vision');
 
+  /// Live channels this device's hardware decoder showed no picture for, which
+  /// therefore open in software here (see `live_software_decode.dart`).
+  ///
+  /// About this device's decoder, not the viewer's taste: deliberately in
+  /// neither export list, so a backup restored on a box that decodes them fine
+  /// does not carry a phone's answer over.
+  static const liveSoftwareDecodeChannels = StringListPref('live_software_decode_channels');
+
   /// Whether the HDMI output follows the video's resolution.
   ///
   /// Off by default. On, the player asks for the smallest display mode the

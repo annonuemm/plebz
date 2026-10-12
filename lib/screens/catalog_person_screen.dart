@@ -13,6 +13,7 @@ import '../i18n/strings.g.dart';
 import '../media/media_item.dart';
 import '../media/media_kind.dart';
 import '../mixins/grid_focus_node_mixin.dart';
+import '../models/catalog/catalog_item.dart';
 import '../models/catalog/catalog_person.dart';
 import '../providers/catalog_sources_provider.dart';
 import '../providers/hidden_libraries_provider.dart';
@@ -34,6 +35,13 @@ import '../widgets/overlay_sheet.dart';
 import 'catalog_person_stage.dart';
 import 'focusable_detail_screen_mixin.dart';
 import 'libraries/content_state_builder.dart';
+
+/// Whether a person opens on [CatalogPersonScreen] rather than a server's own
+/// list: the page's filmography comes from Plex Discover, so it needs the Plex
+/// account. Without one, callers open `navigateToPersonMedia`, which needs none.
+bool plexPersonPageAvailable(BuildContext context) =>
+    context.read<CatalogSourcesProvider?>()?.connectedSources.any((source) => source.id == CatalogSourceId.plex) ??
+    false;
 
 /// Opens [CatalogPersonScreen] for a cast member of an Explore page.
 Future<void> navigateToCatalogPerson(

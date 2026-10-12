@@ -73,7 +73,6 @@ import '../services/settings_service.dart';
 import '../services/watch_actions.dart';
 import '../widgets/settings_builder.dart';
 import '../utils/layout_constants.dart';
-import '../models/catalog/catalog_item.dart';
 import '../providers/catalog_sources_provider.dart';
 import '../providers/download_provider.dart';
 import '../providers/multi_server_provider.dart';

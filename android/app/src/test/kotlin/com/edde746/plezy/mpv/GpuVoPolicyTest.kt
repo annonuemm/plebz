@@ -501,6 +501,78 @@ class GpuVoPolicyTest {
     assertFalse(GpuVoPolicy.needsSoftwareDecode("av1", "Main", hardwareHigh10 = false, hardwareAv1 = true))
   }
 
+  @Test
+  fun `a live channel the hardware showed no picture for opens in software whatever its codec`() {
+    assertTrue(
+      GpuVoPolicy.needsSoftwareDecode(
+        "h264",
+        "High",
+        hardwareHigh10 = true,
+        hardwareAv1 = true,
+        liveDecode = GpuVoPolicy.LIVE_DECODE_SOFTWARE
+      )
+    )
+    assertTrue(
+      GpuVoPolicy.needsSoftwareDecode(
+        null,
+        null,
+        hardwareHigh10 = true,
+        hardwareAv1 = true,
+        liveDecode = GpuVoPolicy.LIVE_DECODE_SOFTWARE
+      )
+    )
+  }
+
+  @Test
+  fun `a guarded live open sends MPEG-2 to software only without a hardware decoder`() {
+    assertTrue(
+      GpuVoPolicy.needsSoftwareDecode(
+        "mpeg2video",
+        "Main",
+        hardwareHigh10 = true,
+        hardwareAv1 = true,
+        liveDecode = GpuVoPolicy.LIVE_DECODE_GUARDED,
+        hardwareMpeg2 = false
+      )
+    )
+    assertFalse(
+      GpuVoPolicy.needsSoftwareDecode(
+        "mpeg2video",
+        "Main",
+        hardwareHigh10 = true,
+        hardwareAv1 = true,
+        liveDecode = GpuVoPolicy.LIVE_DECODE_GUARDED,
+        hardwareMpeg2 = true
+      )
+    )
+    // A guarded open of anything else keeps trying hardware first.
+    assertFalse(
+      GpuVoPolicy.needsSoftwareDecode(
+        "h264",
+        "High",
+        hardwareHigh10 = true,
+        hardwareAv1 = true,
+        liveDecode = GpuVoPolicy.LIVE_DECODE_GUARDED,
+        hardwareMpeg2 = false
+      )
+    )
+  }
+
+  @Test
+  fun `without the live player's word MPEG-2 keeps the configured decoder`() {
+    assertFalse(GpuVoPolicy.needsSoftwareDecode("mpeg2video", "Main", hardwareHigh10 = true, hardwareAv1 = true))
+    assertFalse(
+      GpuVoPolicy.needsSoftwareDecode(
+        "mpeg2video",
+        "Main",
+        hardwareHigh10 = true,
+        hardwareAv1 = true,
+        liveDecode = GpuVoPolicy.LIVE_DECODE_OFF,
+        hardwareMpeg2 = false
+      )
+    )
+  }
+
   // The per-file policies run inside on_preloaded, before mpv selects a
   // track, so the track they decide for comes from the pending selection.
 

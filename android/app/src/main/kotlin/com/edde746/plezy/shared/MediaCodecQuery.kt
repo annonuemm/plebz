@@ -63,6 +63,17 @@ internal object MediaCodecQuery {
   }
 
   /**
+   * Whether a hardware MPEG-2 decoder exists. Television chips carry one for
+   * broadcast; many phone chips do not, and a satellite channel's SD picture
+   * is still MPEG-2 (Plebz).
+   */
+  fun hardwareMpeg2Support(): Boolean = hardwareMpeg2.value
+
+  private val hardwareMpeg2: Lazy<Boolean> = lazy {
+    findHardwareDecoder("video/mpeg2") != null
+  }
+
+  /**
    * Whether the hardware AV1 decoder is Tensor's BigOcean block
    * (`c2.google.av1.decoder`, Pixel 6+). Its vendor service dies when a new
    * instance starts while the previous one is still being torn down (#2272);

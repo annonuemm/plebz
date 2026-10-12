@@ -455,9 +455,65 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
   /// reconnection is handled by the server's transcoder on the input side.
   /// [session] is the one the next open belongs to, where the screen has not
   /// adopted it yet (a zap adopts after the open).
-  Future<void> _setLiveStreamOptions(Player player, {LiveTvPlaybackSession? session}) async {
+  ///
+  /// [channel] is the one the next open tunes, where the screen has not
+  /// adopted it yet; its decode mode ([applyLiveDecodeMode], Plebz) is set
+  /// here too and watched once the open starts ([_armLiveDecodeGuard]).
+  Future<void> _setLiveStreamOptions(Player player, {LiveTvPlaybackSession? session, LiveTvChannel? channel}) async {
     await player.setProperty('force-seekable', 'no');
     await applyLiveStreamProbing(player, session ?? _live.session);
+    final target = channel ?? _currentLiveChannel;
+    _liveDecodeGuard.prepare(target, await applyLiveDecodeMode(player, target));
+  }
+
+  /// Right before a live open: watch it for a hardware decoder that never
+  /// shows a frame (Plebz). Only an open at the live edge — an archive or
+  /// time-shift open is the channel's stream at another point, and a channel
+  /// that needs software has been remembered by its live open already.
+  void _armLiveDecodeGuard(Player player, {required bool timeShifted}) {
+    if (timeShifted) {
+      _liveDecodeGuard
+        ..prepare(null, LiveDecodeMode.untouched)
+        ..disarm();
+      return;
+    }
+    _liveDecodeGuard.armForOpen(player, onStuck: (channel) => unawaited(_reopenLiveInSoftware(player, channel)));
+  }
+
+  /// The hardware decoder took [channel]'s stream and showed nothing
+  /// ([LiveSoftwareDecodeGuard]): remember the channel on this device and open
+  /// the same session's stream again, which now decodes in software. A zap or
+  /// recovery already in flight replaces the stream anyway — and opens it in
+  /// software too, since the channel is remembered first.
+  Future<void> _reopenLiveInSoftware(Player currentPlayer, LiveTvChannel channel) async {
+    await rememberLiveSoftwareDecode(channel);
+    final session = _live.session;
+    final playing = _currentLiveChannel;
+    if (!mounted || _shuttingDown || player != currentPlayer || session == null || _firstFrame.rendered) return;
+    if (playing == null || liveSoftwareDecodeKey(playing) != liveSoftwareDecodeKey(channel)) return;
+    final lease = _transitionGate.tryAcquire(PlaybackTransition.recoveringLive);
+    if (lease == null) return;
+    final generation = _transitionGate.generation;
+    bool isCurrent() =>
+        _isCurrentPlaybackGeneration(generation, currentPlayer) &&
+        _transitionGate.owns(lease, expected: PlaybackTransition.recoveringLive) &&
+        _live.session == session;
+    try {
+      final streamUrl = await session.streamUrlAt();
+      if (streamUrl == null || !isCurrent()) return;
+      appLogger.i('Live TV: reopening ${channel.displayName} in software');
+      _live.markStreamRestartedAtLiveEdge(session.captureBuffer);
+      await _openLiveStream(
+        currentPlayer,
+        streamUrl,
+        targetEpoch: session.captureBuffer == null ? null : _live.streamStartEpoch.round(),
+        channel: playing,
+      );
+    } catch (e, stackTrace) {
+      appLogger.w('Live TV: software reopen failed', error: e, stackTrace: stackTrace);
+    } finally {
+      _transitionGate.release(lease);
+    }
   }
 
   /// Re-opens the current session's live stream at [streamUrl].
@@ -477,15 +533,17 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     bool timeShifted = false,
     void Function()? onOpenStarted,
     LiveTvPlaybackSession? session,
+    LiveTvChannel? channel,
   }) async {
     if (_shuttingDown || !_launchCurrent) return false;
     _live.streamGeneration++;
     final media = Media(streamUrl, headers: _liveMediaHeaders(_live.session));
     final playNow = play ?? automotivePlaybackAllowedNow();
     if (targetEpoch == null || player is! PlayerNative) {
-      if (applyOptions) await _setLiveStreamOptions(player, session: session);
+      if (applyOptions) await _setLiveStreamOptions(player, session: session, channel: channel);
       if (_shuttingDown || !_launchCurrent) return false;
       onOpenStarted?.call();
+      _armLiveDecodeGuard(player, timeShifted: timeShifted);
       await player.open(media, play: playNow, isLive: true);
       return true;
     }
@@ -494,9 +552,10 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     final clockResult = _live.clockOpenResult(clockGeneration);
     final int? sourceId;
     try {
-      if (applyOptions) await _setLiveStreamOptions(player, session: session);
+      if (applyOptions) await _setLiveStreamOptions(player, session: session, channel: channel);
       if (_shuttingDown || !_launchCurrent) return false;
       onOpenStarted?.call();
+      _armLiveDecodeGuard(player, timeShifted: timeShifted);
       sourceId = await player.open(media, play: playNow, isLive: true, startLivePlaylistFromBeginning: timeShifted);
     } catch (_) {
       _live.failClockOpen(clockGeneration);
@@ -890,6 +949,7 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
         streamUrl,
         targetEpoch: targetEpoch,
         session: session,
+        channel: channel,
         play: (frameRatePlan?.holdPlaybackStart ?? false) ? false : null,
         onOpenStarted: () {
           replacementOpenStarted = true;

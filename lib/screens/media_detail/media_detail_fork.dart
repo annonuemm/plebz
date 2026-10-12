@@ -44,10 +44,7 @@ extension _MediaDetailFork on _MediaDetailScreenState {
   /// the server's own list stays, which needs no account: false, for the
   /// caller to open that.
   bool _openActorOnPlexPage(MediaRole actor) {
-    final hasDiscover = context.read<CatalogSourcesProvider>().connectedSources.any(
-      (source) => source.id == CatalogSourceId.plex,
-    );
-    if (!hasDiscover || actor.tag.trim().isEmpty) return false;
+    if (!plexPersonPageAvailable(context) || actor.tag.trim().isEmpty) return false;
     unawaited(
       navigateToCatalogPerson(
         context,

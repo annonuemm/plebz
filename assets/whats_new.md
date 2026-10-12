@@ -13,6 +13,14 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.22.1 (Build 778)
+
+### Live-TV
+- Handy und Tablet: Sender, bei denen der Videochip kein Bild zeigt, etwa manche SAT-Sender, starten jetzt trotzdem. Plebz schaltet für diesen Sender auf Software-Dekodierung um und merkt sich das. Beim ersten Mal dauert der Start ein paar Sekunden länger, danach geht es sofort.
+
+### Suche
+- Schauspieler aus der Suche öffnen mit Plex-Konto die neue Personenseite, wie die Besetzung auf den Detailseiten.
+
 ## 1.22.0 (Build 775)
 
 ### Wiedergabe

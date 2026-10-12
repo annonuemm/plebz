@@ -301,16 +301,28 @@ internal object GpuVoPolicy {
    * hardware and stays on this path; its rebuild hazard is handled by
    * [needsParkedRebuild] (#2272). [codec] and [codecProfile] come from mpv's
    * pending video track.
+   *
+   * [liveDecode] is the live player's word for this one file (Plebz, see
+   * [LIVE_DECODE_GUARDED]): a phone's hardware decoder can take a broadcast
+   * stream and never show a frame, so a channel that did once is opened in
+   * software from then on, and MPEG-2 without a hardware decoder goes there
+   * at once on a guarded open.
    */
   fun needsSoftwareDecode(
     codec: String?,
     codecProfile: String?,
     hardwareHigh10: Boolean,
-    hardwareAv1: Boolean
-  ): Boolean = when (codec) {
-    "h264" -> !hardwareHigh10 && codecProfile?.startsWith("High 10") == true
-    "av1" -> !hardwareAv1
-    else -> false
+    hardwareAv1: Boolean,
+    liveDecode: String = LIVE_DECODE_OFF,
+    hardwareMpeg2: Boolean = true
+  ): Boolean = when {
+    liveDecode == LIVE_DECODE_SOFTWARE -> true
+    liveDecode == LIVE_DECODE_GUARDED && codec == "mpeg2video" && !hardwareMpeg2 -> true
+    else -> when (codec) {
+      "h264" -> !hardwareHigh10 && codecProfile?.startsWith("High 10") == true
+      "av1" -> !hardwareAv1
+      else -> false
+    }
   }
 
   /**
@@ -412,4 +424,13 @@ internal object GpuVoPolicy {
   const val REASON_FORMAT_REJECTED = "format-rejected"
   const val REASON_HDR_SDR = "hdr-sdr"
   const val REASON_CODEC_SW_DECODE = "codec-sw-decode"
+
+  /** `plebz-live-decode`: no word from the live player; the file is routed by codec alone. */
+  const val LIVE_DECODE_OFF = "off"
+
+  /** `plebz-live-decode`: a live open on a phone or tablet that tries hardware first. */
+  const val LIVE_DECODE_GUARDED = "guarded"
+
+  /** `plebz-live-decode`: a channel the hardware decoder showed no picture for. */
+  const val LIVE_DECODE_SOFTWARE = "software"
 }

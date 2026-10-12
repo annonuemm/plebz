@@ -7,6 +7,7 @@ import '../focus/card_focus_scope.dart';
 import '../focus/focusable_wrapper.dart';
 import '../i18n/strings.g.dart';
 import '../media/media_person.dart';
+import '../screens/catalog_person_screen.dart';
 import '../services/settings_service.dart';
 import '../theme/mono_tokens.dart';
 import '../utils/media_image_helper.dart';
@@ -23,7 +24,9 @@ import 'settings_builder.dart';
 /// circular avatar centered in the rows' artwork column, name and credit
 /// beside it.
 ///
-/// Tap, click, or D-pad/keyboard/gamepad select opens the person's filmography.
+/// Tap, click, or D-pad/keyboard/gamepad select opens the person's filmography:
+/// with a Plex account the page a title's cast opens (Plebz), else the
+/// server's own list.
 /// A person has no context menu: nothing on it can be played, rated, or marked.
 class PersonSearchRow extends StatelessWidget {
   const PersonSearchRow({
@@ -53,7 +56,19 @@ class PersonSearchRow extends StatelessWidget {
     null => null,
   };
 
+  /// The hit's picture where it needs no server to resolve it. The Plex page
+  /// brings its own portrait otherwise.
+  String? get _absoluteThumb {
+    final thumb = person.thumbPath;
+    if (thumb == null) return null;
+    return thumb.startsWith('https://') || thumb.startsWith('http://') ? thumb : null;
+  }
+
   void _open(BuildContext context) {
+    if (plexPersonPageAvailable(context)) {
+      unawaited(navigateToCatalogPerson(context, name: person.name, thumbUrl: _absoluteThumb));
+      return;
+    }
     unawaited(
       navigateToPersonMedia(
         context,

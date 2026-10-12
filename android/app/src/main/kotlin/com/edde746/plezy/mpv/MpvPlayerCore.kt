@@ -301,6 +301,12 @@ class MpvPlayerCore private constructor(
 
   private val parkedHwdec = java.util.concurrent.atomic.AtomicReference<String?>()
 
+  /** The live player's decode word for the next file (`plebz-live-decode`,
+   * Plebz): one of the `GpuVoPolicy.LIVE_DECODE_*` values. Taken — and reset
+   * to off — by that file's preloaded hook, so a later open that says
+   * nothing, a film after a channel, is routed by its codec alone. */
+  private val liveDecodeRequest = java.util.concurrent.atomic.AtomicReference(GpuVoPolicy.LIVE_DECODE_OFF)
+
   /** The `vd-lavc-o` list mpv sees: the session's keys composed with the
    * user's own line ([DecoderOptions]). Mutated and written under
    * [writeOperations]; the user's line arrives through [setProperty]. */
@@ -875,6 +881,7 @@ class MpvPlayerCore private constructor(
         hwdecHeld = false
       }
       parkedHwdec.set(null)
+      liveDecodeRequest.set(GpuVoPolicy.LIVE_DECODE_OFF)
       synchronized(cheapRenderRestore) {
         cheapRenderRestore.clear()
         cheapRenderTierActive = false
@@ -1586,17 +1593,28 @@ class MpvPlayerCore private constructor(
    * hardware decoder (#2272). Keep the GL requirement for the file, including
    * ambient toggles and surface recreation, rather than waiting for failure
    * or transient `hwdec-current` observations. [track] is the pending video
-   * track, see [pendingVideoTrack].
+   * track, see [pendingVideoTrack]. The live player's word for this file
+   * ([liveDecodeRequest]) is taken here and joins the decision.
    */
   private suspend fun applySoftwareDecodePolicy(p: MpvPlayer, track: org.json.JSONObject?) {
     val codec = track?.optString("codec")
     val codecProfile = track?.optString("codec-profile")
     val hardwareHigh10 = MediaCodecQuery.hardwareAvcHigh10Support()
     val hardwareAv1 = MediaCodecQuery.hardwareAv1Support()
-    PlayerDebugLog.d(TAG) { "Decode routing: codec=$codec profile=$codecProfile hardwareHigh10=$hardwareHigh10 hardwareAv1=$hardwareAv1" }
-    val needs = GpuVoPolicy.needsSoftwareDecode(codec, codecProfile, hardwareHigh10, hardwareAv1)
+    val liveDecode = liveDecodeRequest.getAndSet(GpuVoPolicy.LIVE_DECODE_OFF)
+    val hardwareMpeg2 = liveDecode == GpuVoPolicy.LIVE_DECODE_OFF || MediaCodecQuery.hardwareMpeg2Support()
+    PlayerDebugLog.d(TAG) {
+      "Decode routing: codec=$codec profile=$codecProfile hardwareHigh10=$hardwareHigh10 " +
+        "hardwareAv1=$hardwareAv1 liveDecode=$liveDecode hardwareMpeg2=$hardwareMpeg2"
+    }
+    val needs = GpuVoPolicy.needsSoftwareDecode(codec, codecProfile, hardwareHigh10, hardwareAv1, liveDecode, hardwareMpeg2)
     if (holdHwdec(p, GpuVoPolicy.REASON_CODEC_SW_DECODE, needs) && needs) {
       Log.i(TAG, "$codec profile=$codecProfile without hardware support: native software decode on the GL vo")
+      if (liveDecode != GpuVoPolicy.LIVE_DECODE_OFF) {
+        // In the uploadable log: the first thing to look for when a channel
+        // plays in software on a phone.
+        emitLog("info", "video-route", "live $codec in software (liveDecode=$liveDecode, hardwareMpeg2=$hardwareMpeg2)")
+      }
     }
     setGpuVoRequirement(GpuVoPolicy.REASON_CODEC_SW_DECODE, needs)
   }
@@ -2719,6 +2737,14 @@ class MpvPlayerCore private constructor(
 
     nativeFailure.get()?.let {
       onComplete?.invoke(Result.failure(it))
+      return
+    }
+
+    // Not an mpv property: the live player's word for the next file, read by
+    // its preloaded hook (see [applySoftwareDecodePolicy]).
+    if (name == "plebz-live-decode") {
+      liveDecodeRequest.set(value)
+      onComplete?.invoke(Result.success(Unit))
       return
     }
 

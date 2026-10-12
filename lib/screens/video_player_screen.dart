@@ -80,6 +80,7 @@ import '../services/player_sync_offsets.dart';
 import '../services/scoped_player_prefs.dart';
 import '../services/iptv/iptv_stream_probing.dart';
 import '../services/live_picture_handover.dart';
+import '../services/live_software_decode.dart';
 import '../widgets/video_surface_hole.dart';
 import '../services/live_tv_last_selection.dart';
 import '../services/settings_service.dart';
@@ -1209,7 +1210,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
 
   /// Collapse every waiter armed for the current open: the attempt's outcome
   /// (frame-rate startup gate, sidecar guard), the track manager's pending
-  /// automatic selection, and the 503 watchdog.
+  /// automatic selection, the 503 watchdog and the live decode guard.
   /// Idempotent. Called from the terminal player-error branches, shutdown,
   /// and dispose — before the player closes its streams, so nothing waits on
   /// a `Stream.first` that can only die with them.
@@ -1217,6 +1218,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     _playbackAttempt?.outcome.abort(reason);
     unawaited(_trackManager?.invalidatePendingSelection());
     _http503Watchdog.disarm();
+    _liveDecodeGuard.disarm();
   }
 
   Future<void> _playWithPlaybackIntent(Player currentPlayer) {
@@ -2908,6 +2910,11 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
   /// otherwise never raises an error (#1830). Armed from [_onPlayerLog],
   /// disarmed on first frame, on every new-open reset, and in [dispose].
   late final OpenHttp503Watchdog _http503Watchdog = OpenHttp503Watchdog(onPersistent: _onOpenHttp503Persistent);
+
+  /// Watches a live open on a phone or tablet for a hardware decoder that
+  /// never shows a frame (Plebz); see [LiveSoftwareDecodeGuard]. Disarmed by
+  /// the next live open and in [_abortCurrentOpen].
+  final LiveSoftwareDecodeGuard _liveDecodeGuard = LiveSoftwareDecodeGuard();
 
   // OS Media Controls Integration
 

@@ -26,10 +26,12 @@ class VaultKeyWrapException implements Exception {
   String toString() => 'VaultKeyWrapException(${failure.name}${detail == null ? '' : ': $detail'})';
 }
 
-/// The Android Keystore wrapping of the credential vault's key
-/// (`VaultKeyChannel.kt`): the key stays in the preferences only encrypted
-/// under a key that never leaves the Keystore. Android only — elsewhere the
-/// vault keeps its key as it always did.
+/// The wrapping of the credential vault's key: the key stays in the
+/// preferences only encrypted under a key that never leaves the device — the
+/// Android Keystore (`VaultKeyChannel.kt`), and on iPhone, iPad and Apple TV
+/// the Keychain (`ios/Runner/VaultKeyPlugin.swift`, Plebz). Not on the Mac,
+/// where an ad-hoc signed build would face a Keychain prompt; there and
+/// elsewhere the vault keeps its key as it always did.
 abstract final class VaultKeyWrap {
   @visibleForTesting
   static const MethodChannel channel = MethodChannel('com.plebz/vault_key');
@@ -37,7 +39,7 @@ abstract final class VaultKeyWrap {
   @visibleForTesting
   static bool? debugSupported;
 
-  static bool get supported => debugSupported ?? (!kIsWeb && Platform.isAndroid);
+  static bool get supported => debugSupported ?? (!kIsWeb && (Platform.isAndroid || Platform.isIOS));
 
   /// [key] wrapped, but only once this device's Keystore has proved it can
   /// give it back: wrapped and unwrapped again, byte for byte. Null where

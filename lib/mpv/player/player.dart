@@ -10,6 +10,7 @@ import 'player_native.dart';
 import 'player_state.dart';
 import 'player_streams.dart';
 import 'platform/player_linux.dart';
+import 'platform/player_ios.dart';
 import 'platform/player_macos.dart';
 import 'platform/player_windows.dart';
 
@@ -418,7 +419,9 @@ abstract class Player {
       return PlayerMacOS();
     }
     if (Platform.isIOS) {
-      return PlayerNative();
+      // iPhone, iPad and Apple TV report their geometry too, for the guide's
+      // preview — see [PlayerIOS] (Plebz).
+      return PlayerIOS();
     }
     if (Platform.isWindows) {
       return PlayerWindows();

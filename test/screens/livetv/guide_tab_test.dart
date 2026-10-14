@@ -23,6 +23,7 @@ import 'package:plezy/screens/livetv/tabs/guide_tab.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:plezy/providers/iptv_sources_provider.dart';
+import 'package:plezy/redesign/ocker_guide_panel.dart';
 import 'package:plezy/providers/multi_server_provider.dart';
 import 'package:plezy/services/iptv/iptv_live_tv_source.dart';
 import 'package:plezy/services/iptv/iptv_source.dart';
@@ -1085,7 +1086,7 @@ http://provider/stream/ard
     );
   }
 
-  group('a phone\'s preview band (Plebz)', () {
+  group('a phone\'s and a tablet\'s preview band (Plebz)', () {
     late MultiServerProvider multiServer;
     final channel = LiveTvChannel(key: 'channel/1', identifier: 'station-1', title: 'Sender 1', serverId: 'server-a');
 
@@ -1106,7 +1107,11 @@ http://provider/stream/ard
       multiServer.dispose();
     });
 
-    Future<List<String>> pumpPhone(WidgetTester tester, Size size) async {
+    Future<List<String>> pumpPhone(
+      WidgetTester tester,
+      Size size, {
+      AppThemeVariant variant = AppThemeVariant.standard,
+    }) async {
       final fullScreen = <String>[];
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = size;
@@ -1116,7 +1121,7 @@ http://provider/stream/ard
           child: MultiProvider(
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(dark: true, variant: variant),
               home: Scaffold(
                 body: GuideTab(channels: [channel], onPlayChannel: (played) async => fullScreen.add(played.key)),
               ),
@@ -1187,11 +1192,127 @@ http://provider/stream/ard
       expect(find.text('full screen'), findsNothing);
     });
 
-    testWidgets('a tablet keeps the band either way up, picture beside its words', (tester) async {
+    testWidgets('back from the whole screen, the band plays its channel again', (tester) async {
+      // The player is pushed, not awaited to its close: the band must pick
+      // its channel up again when the guide is shown again (it was blank on
+      // the iPhone).
+      final navigatorKey = GlobalKey<NavigatorState>();
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 844);
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: MultiProvider(
+            providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
+            child: MaterialApp(
+              navigatorKey: navigatorKey,
+              theme: monoTheme(dark: true),
+              home: Scaffold(
+                body: GuideTab(
+                  channels: [channel],
+                  onPlayChannel: (played) async {
+                    unawaited(
+                      navigatorKey.currentState!.push(
+                        MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('full screen'))),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.text('Sender 1').first);
+      await tester.pump();
+      await tester.tap(find.byTooltip(t.common.fullscreen));
+      await tester.pumpAndSettle();
+      expect(find.text('full screen'), findsOneWidget);
+
+      navigatorKey.currentState!.pop();
+      await tester.pumpAndSettle();
+      expect(band(tester).previewChannel?.key, channel.key);
+    });
+
+    testWidgets('turned on its side with nothing in the band, the schedule keeps its state', (tester) async {
+      // The band going away rebuilt the whole schedule, its scroll
+      // controllers attached twice for a frame: the rows built then came out
+      // black until the next rebuild.
+      await pumpPhone(tester, const Size(390, 844));
+      ScrollableState schedule() => tester.state<ScrollableState>(find.byType(Scrollable).last);
+      final before = schedule();
+
+      tester.view.physicalSize = const Size(844, 390);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(GuidePreviewBand), findsNothing);
+      expect(tester.takeException(), isNull);
+      expect(schedule(), same(before));
+
+      tester.view.physicalSize = const Size(390, 844);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull);
+      expect(schedule(), same(before));
+      expect(find.text('Sender 1'), findsWidgets);
+    });
+
+    testWidgets('a tablet upright has the picture across the width, as a phone does', (tester) async {
+      await pumpPhone(tester, const Size(800, 1280));
+
+      expect(find.byType(GuidePreviewBand), findsOneWidget);
+      expect(tester.getSize(find.byType(GuidePreviewBand)).width, 800);
+      expect(find.byType(GuidePreviewPanel), findsNothing);
+    });
+
+    testWidgets('a tablet on its side keeps the picture beside its words', (tester) async {
       await pumpPhone(tester, const Size(1280, 800));
 
       expect(find.byType(GuidePreviewPanel), findsOneWidget);
       expect(find.byType(GuidePreviewBand), findsNothing);
+      expect(find.byType(OckerGuidePanel), findsNothing);
+    });
+
+    for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+      testWidgets('under ${variant.name} a tablet on its side wears the television\'s band', (tester) async {
+        await pumpPhone(tester, const Size(1280, 800), variant: variant);
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(find.byType(OckerGuidePanel), findsOneWidget);
+        expect(find.byType(GuidePreviewPanel), findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('a phone on its side under Glas never takes the television\'s band', (tester) async {
+      final fullScreen = await pumpPhone(tester, const Size(390, 844), variant: AppThemeVariant.glas);
+      await tester.tap(find.text('Sender 1').first);
+      await tester.pump();
+
+      tester.view.physicalSize = const Size(844, 390);
+      await tester.pump();
+      expect(find.byType(OckerGuidePanel), findsNothing);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(fullScreen, [channel.key]);
+    });
+
+    testWidgets('a tablet turned keeps its channel in the band and stays on the guide', (tester) async {
+      final fullScreen = await pumpPhone(tester, const Size(800, 1280), variant: AppThemeVariant.glas);
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.text('Sender 1').first);
+      await tester.pump();
+      expect(band(tester).previewChannel?.key, channel.key);
+
+      tester.view.physicalSize = const Size(1280, 800);
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(fullScreen, isEmpty, reason: 'only a phone goes to the whole screen by turning');
+      expect(tester.widget<OckerGuidePanel>(find.byType(OckerGuidePanel)).previewChannel?.key, channel.key);
     });
   });
 
@@ -1669,9 +1790,10 @@ http://provider/stream/ard
     // native core (the two cannot both hold it) and the player opens.
     expect(fullScreen, [channel.key]);
     expect(previewHeldStream, isFalse, reason: 'the preview lets the stream and the core go first');
-    // And when the viewer comes back from the player, the picture they left
-    // is in the box again.
-    expect(panel().previewChannel?.key, channel.key);
+    // The box has given the picture up for the player; it takes it back when
+    // the guide is shown again, not the moment the player is opened (see the
+    // phone band's "back from the whole screen").
+    expect(panel().previewChannel, isNull);
   });
 
   testWidgets('up/down in the program column keeps the focused time', (tester) async {

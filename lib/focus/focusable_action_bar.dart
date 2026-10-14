@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../redesign/ocker_glas_look.dart';
 import '../widgets/app_icon.dart';
 import '../widgets/clickable_cursor.dart';
 import '../redesign/ocker_filter_glyph.dart';
@@ -349,16 +350,27 @@ class FocusableActionBarState extends State<FocusableActionBar> {
   /// gesture below is only for a pointer.
   Widget _buildOckerFace(BuildContext context, FocusableAction action, {required bool showFocus}) {
     if (action.child != null) return action.child!;
-    Widget glyph = GestureDetector(
+    // On iPhone and iPad the whole of Apple's touch target answers, not only
+    // the glyph — which is all a bare glyph hit-tests on its own.
+    final appleTarget = ockerGlasTouch(context);
+    Widget glyph = OckerFilterGlyph(
+      icon: action.icon,
+      focused: showFocus,
+      // Small where the redesign sets these beside the tabs; a toolbar's own
+      // size where the layout is the app's own and they sit in an app bar.
+      size: isOckerLayout(context) ? OckerFilterGlyph.glyphSize : action.iconSize,
+      flatDiameter: widget.flatGlyphDiameter,
+    );
+    if (appleTarget) {
+      glyph = ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: appleMinTouchTarget, minHeight: appleMinTouchTarget),
+        child: Center(widthFactor: 1, heightFactor: 1, child: glyph),
+      );
+    }
+    glyph = GestureDetector(
       onTap: action.onPressed,
-      child: OckerFilterGlyph(
-        icon: action.icon,
-        focused: showFocus,
-        // Small where the redesign sets these beside the tabs; a toolbar's own
-        // size where the layout is the app's own and they sit in an app bar.
-        size: isOckerLayout(context) ? OckerFilterGlyph.glyphSize : action.iconSize,
-        flatDiameter: widget.flatGlyphDiameter,
-      ),
+      behavior: appleTarget ? HitTestBehavior.opaque : null,
+      child: glyph,
     );
     if (action.tooltip case final tooltip?) glyph = Tooltip(message: tooltip, child: glyph);
     return glyph;

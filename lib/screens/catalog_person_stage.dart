@@ -258,6 +258,7 @@ class CatalogPersonStageState extends State<CatalogPersonStage> {
   Widget _biographyButton(double s, MonoTokens tk) {
     return OckerGlassBand(
       overhang: EdgeInsets.all(ockerBandMargin(context)),
+      liquidBubble: true,
       child: FocusableActionBar(
         key: _biographyBarKey,
         wrapBuiltAction: ockerGlass(context)

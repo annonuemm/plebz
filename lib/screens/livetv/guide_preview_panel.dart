@@ -99,6 +99,7 @@ class GuidePreviewBand extends StatelessWidget {
     required this.program,
     required this.onFullScreen,
     this.playerKey,
+    this.streamInfo,
   });
 
   final LiveTvChannel? previewChannel;
@@ -107,6 +108,10 @@ class GuidePreviewBand extends StatelessWidget {
   final LiveTvProgram? program;
   final VoidCallback onFullScreen;
   final GlobalKey<GuidePreviewPlayerState>? playerKey;
+
+  /// Handed to the picture, which reports its stream there; the band itself
+  /// does not show it.
+  final ValueNotifier<GuideStreamInfo?>? streamInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +123,7 @@ class GuidePreviewBand extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        GuidePreviewPlayer(key: playerKey, channel: channel),
+        GuidePreviewPlayer(key: playerKey, channel: channel, streamInfo: streamInfo),
         if (channel == null)
           Align(
             alignment: const Alignment(0, 0.5),

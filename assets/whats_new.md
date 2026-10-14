@@ -13,6 +13,26 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.24.0 (Build 804)
+
+### Glas
+- Glas hat einen neuen Look nach dem Vorbild von Apples Apps: ruhigere Überschriften, Angaben in Worten, Navigation und Menüs in Glasoptik mit hellem Rand.
+- Fernseher: Die Seitenleiste blendet sich aus, oben bleibt nur eine kleine Kapsel mit dem aktuellen Bereich. Mit „Symbolleiste immer zeigen“ bleibt sie sichtbar.
+- Handy und Tablet: Tab-Leiste und Seitenleiste schweben über dem Inhalt.
+- Neu unter Darstellung: „Glaseffekt“. Wer es schlichter mag, schaltet die Glasoptik damit aus.
+
+### Fernseher
+- Neu: „Weiches Scrollen“ (an). Reihen und Poster gleiten sanft statt zu springen und verschwinden oben weich am Rand.
+
+### Live-TV
+- „Beim Start öffnen: Live-TV“ klappt jetzt auch, wenn Live-TV nur aus IPTV kommt.
+- Tablet hochkant: Das Bild geht über die ganze Breite, das Programm steht darunter, wie auf dem Handy. Quer liegend zeigen Glas und Flach die Leiste vom Fernseher.
+- Handy: Die Vorschau läuft nach dem Vollbild weiter, und nach dem Drehen bleiben keine Zeilen mehr schwarz.
+
+### Erkunden und Sport
+- Handy und Tablet: Die Trailer-Bühne öffnet sich über den neuen Knopf oben neben „Aktualisieren“.
+- Sport auf Handy und Tablet: Begegnungen passen wieder in eine Zeile, die Tabelle ist nur so hoch wie nötig.
+
 ## 1.23.1 (Build 783)
 
 ### Einstellungen

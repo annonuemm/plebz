@@ -19,6 +19,7 @@ import '../../widgets/focusable_tab_chip.dart';
 import '../main_screen.dart';
 import 'sport_league_view.dart';
 import 'sport_look.dart';
+import '../../redesign/ocker_glas_look.dart';
 
 /// The Sport destination: 1. Bundesliga, 2. Bundesliga and 3. Liga.
 ///
@@ -258,24 +259,27 @@ class SportScreenState extends State<SportScreen>
             ],
           ),
           SliverFillRemaining(
-            child: Column(
-              children: [
-                if (!sideNav)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    alignment: .centerLeft,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(children: _chips()),
+            child: OckerClearOfRail(
+              // Plebz: clear of Glas's floating rail in landscape on Apple's handhelds.
+              child: Column(
+                children: [
+                  if (!sideNav)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      alignment: .centerLeft,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(children: _chips()),
+                      ),
+                    ),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(sideNav ? 24 : 16, 8, sideNav ? 32 : 16, 16),
+                      child: views,
                     ),
                   ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(sideNav ? 24 : 16, 8, sideNav ? 32 : 16, 16),
-                    child: views,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

@@ -205,8 +205,10 @@ void main() {
       ),
     ];
 
-    await _openSection(tester, 'advanced');
-    final referenceHeight = tester.getSize(_focusableTileFor(t.settings.hardwareTest)).height;
+    // A row with a subtitle that is there on every platform (the hardware
+    // test, the reference before, is Android's only).
+    await _openSection(tester, 'backup');
+    final referenceHeight = tester.getSize(_focusableTileFor(t.settings.exportSettings)).height;
 
     for (final row in rows) {
       await _openSection(tester, row.section);

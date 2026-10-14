@@ -123,7 +123,8 @@ class FittedMetadataLine extends StatelessWidget {
   final double? ratingEntrySpacing;
 
   /// Draw each part inside a thin outline instead of separating them with
-  /// bullets — under "Glas" a small capsule of glass instead of the outline.
+  /// bullets — under the redesigns words with dots between them instead
+  /// ([ockerFlatFacts]).
   ///
   /// The box does the separating, so the bullets go: two devices for one job
   /// read as clutter. Opt-in, because a card's subtitle is a sentence of
@@ -167,26 +168,18 @@ class FittedMetadataLine extends StatelessWidget {
     if (parts.isEmpty) return const SizedBox.shrink();
     return LayoutBuilder(
       builder: (context, constraints) {
-        // A capsule of glass rather than an outline: rounder, so it wants more
-        // room at its ends and a little more above and below the words.
-        // "Flach" (Plebz) sets a chipped line as words with dots between: three
-        // boxes read as three buttons that are not. Only a [badge] keeps one.
-        final flat = chipped && ockerFlat(context);
+        // The redesigns (Plebz) set a chipped line as words with dots between:
+        // three boxes read as three buttons that are not. Only a [badge] keeps
+        // one. "Flach" from the start, Glas since it follows Apple's TV app.
+        final flat = chipped && ockerFlatFacts(context);
         final boxed = chipped && !flat;
-        final glass = boxed && ockerGlass(context);
-        // Every glass chip in the same weight, whoever draws it: bold, as the
-        // detail page and the spotlight set theirs. A thin fact on one card
-        // and a bold one on the next read as two different things.
-        //
-        // "Flach": a rank instead — the facts bright and semibold, the genres
-        // after them quieter, the second row smaller and quieter still. The
-        // viewer's call: at one strength the line ran together.
+        // A rank: the facts bright and semibold, the genres after them
+        // quieter, the second row smaller and quieter still. The viewer's
+        // call: at one strength the line ran together.
         final tk = flat ? tokens(context) : null;
         final ambient = DefaultTextStyle.of(context).style;
         final sizeFactor = tk != null && secondary ? 0.82 : 1.0;
-        final textStyle = glass
-            ? this.textStyle.copyWith(fontWeight: FontWeight.w700)
-            : tk != null
+        final textStyle = tk != null
             ? this.textStyle.copyWith(
                 color: tk.ink(secondary ? 0.45 : 0.92),
                 fontWeight: secondary ? FontWeight.w500 : FontWeight.w600,
@@ -244,8 +237,8 @@ class FittedMetadataLine extends StatelessWidget {
         final fontSize = effectiveStyle.fontSize ?? 13;
         // The outline costs width too, and a line that measured only its text
         // would shed nothing until the boxes were already over the edge.
-        final chipPaddingH = fontSize * (glass ? 0.75 : 0.5);
-        final chipPaddingV = fontSize * (glass ? 0.3 : 0.2);
+        final chipPaddingH = fontSize * 0.5;
+        final chipPaddingV = fontSize * 0.2;
         final chipOverhead = boxed ? (chipPaddingH + 1) * 2 : 0.0;
         final gap = separatorFor(context);
         final flatGapSide = fontSize * 0.32;
@@ -361,18 +354,7 @@ class FittedMetadataLine extends StatelessWidget {
             ),
           };
           children.add(
-            glass
-                ? OckerGlassPlate(
-                    shape: const StadiumBorder(),
-                    lit: false,
-                    // The band's own glass, as light as the buttons below.
-                    firm: false,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: chipPaddingH + 1, vertical: chipPaddingV),
-                      child: content,
-                    ),
-                  )
-                : boxed
+            boxed
                 ? Container(
                     padding: EdgeInsets.symmetric(horizontal: chipPaddingH, vertical: chipPaddingV),
                     decoration: BoxDecoration(

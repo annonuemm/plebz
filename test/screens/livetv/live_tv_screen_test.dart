@@ -689,7 +689,9 @@ void main() {
     );
   }
 
-  testWidgets('under glass the group column is a rounded pane, its counts quieter than its names', (tester) async {
+  testWidgets('under glass the group column is a sheet from the edge, its counts quieter than its names', (
+    tester,
+  ) async {
     TvDetectionService.debugSetAppleTVOverride(true);
     addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
     await SettingsService.getInstance();
@@ -709,7 +711,11 @@ void main() {
 
     final pane = find.ancestor(of: find.byType(ListView).first, matching: find.byType(OckerGlass));
     expect(pane, findsOneWidget);
-    expect(tester.widget<OckerGlass>(pane).borderRadius.topLeft.x, greaterThan(0), reason: 'no hard corners');
+    // As Apple's sidebars come in (Plebz): flush with the screen's edge,
+    // rounded on the open side — with Liquid Glass on or off.
+    final radius = tester.widget<OckerGlass>(pane).borderRadius;
+    expect(radius.topRight.x, greaterThan(0), reason: 'no hard corners on the open side');
+    expect(radius.topLeft.x, 0, reason: 'flush with the edge');
 
     final count = tester.widget<Text>(find.text(t.liveTv.channelCount(count: 2)));
     final name = tester.widget<Text>(find.text('News'));

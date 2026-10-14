@@ -85,6 +85,8 @@ import 'video_player_screen.dart';
 import 'profile/profile_teardown.dart';
 import '../services/system_shelf_service.dart';
 import '../watch_together/watch_together.dart';
+import '../redesign/ocker_glas_look.dart';
+import '../redesign/ocker_floating_tab_bar.dart';
 import '../redesign/ocker_rail_shell.dart';
 import '../redesign/ocker_side_rail.dart';
 import '../redesign/ocker_skin.dart';
@@ -268,11 +270,13 @@ List<NavigationTab> mainScreenBottomNavigationTabs({
   required bool isMobile,
   required bool isOffline,
   required NavigationTabId currentTab,
+  bool keepSettings = false,
 }) {
   if (!isMobile) return visibleTabs;
   return visibleTabs.where((tab) {
     if (tab.id != NavigationTabId.settings) return true;
-    return isOffline || currentTab == NavigationTabId.settings;
+    // Plebz: an iPad under Glas keeps the settings among its places.
+    return keepSettings || isOffline || currentTab == NavigationTabId.settings;
   }).toList();
 }
 
@@ -284,10 +288,16 @@ const mainScreenBottomBarMaxSlots = 6;
 /// everything set up Start, Merkliste, Mediatheken, Erkunden and Live-TV — and
 /// the rest (Sport, Suche, Downloads) go under a sixth place, "Mehr" (the
 /// user's call, 2026-10-11). Eight in a row left each label a few letters.
+///
+/// [maxSlots] for a bar with room for more (Plebz: an iPad under Glas holds
+/// every place, see `ockerGlasTablet`).
 @visibleForTesting
-({List<NavigationTab> bar, List<NavigationTab> more}) splitBottomNavigationTabs(List<NavigationTab> tabs) {
-  if (tabs.length <= mainScreenBottomBarMaxSlots) return (bar: tabs, more: const <NavigationTab>[]);
-  const kept = mainScreenBottomBarMaxSlots - 1;
+({List<NavigationTab> bar, List<NavigationTab> more}) splitBottomNavigationTabs(
+  List<NavigationTab> tabs, {
+  int maxSlots = mainScreenBottomBarMaxSlots,
+}) {
+  if (tabs.length <= maxSlots) return (bar: tabs, more: const <NavigationTab>[]);
+  final kept = maxSlots - 1;
   return (bar: tabs.sublist(0, kept), more: tabs.sublist(kept));
 }
 
@@ -568,6 +578,7 @@ class _MainScreenState extends State<MainScreen>
     TrackerProgressController.instance.revision.addListener(_onTrackerRevision);
     profileNavigationRegistry.attachHome(_showHomeTab);
     _contentFocusScope.addListener(_syncSidebarFocusWithContent);
+    _sidebarFocusScope.addListener(_syncSidebarFocusWithRail);
 
     if (PlatformDetector.isDesktopOS()) {
       windowManager.addListener(this);
@@ -1209,6 +1220,7 @@ class _MainScreenState extends State<MainScreen>
     _startupSettleTimeout = null;
     _sidebarFocusScope.dispose();
     _contentFocusScope.removeListener(_syncSidebarFocusWithContent);
+    _sidebarFocusScope.removeListener(_syncSidebarFocusWithRail);
     _contentFocusScope.dispose();
     _setTvosMenuPassthrough(false);
 
@@ -1384,7 +1396,10 @@ class _MainScreenState extends State<MainScreen>
       NavigationTabId.search => SearchScreen(key: _screenKeys[tab]),
       NavigationTabId.downloads => DownloadsScreen(key: _screenKeys[tab]),
       // A list with nothing behind it: its choosers stay filled under glass.
-      NavigationTabId.settings => OverlaySheetNoGlass(child: SettingsScreen(key: _screenKeys[tab])),
+      // Plebz: clear of Glas's floating rail in landscape on Apple's handhelds.
+      NavigationTabId.settings => OverlaySheetNoGlass(
+        child: OckerClearOfRail(child: SettingsScreen(key: _screenKeys[tab])),
+      ),
     };
   }
 
@@ -1630,6 +1645,17 @@ class _MainScreenState extends State<MainScreen>
   void _syncSidebarFocusWithContent() {
     if (!mounted || !_isSidebarFocused || !_contentFocusScope.hasFocus) return;
     setState(() => _isSidebarFocused = false);
+    _updateTvosMenuPassthrough();
+  }
+
+  /// Plebz: the mirror of [_syncSidebarFocusWithContent] for the redesign's
+  /// rail. Focus can walk into it without [_focusSidebar] — LEFT from a
+  /// page's chrome in the top right corner — and Glas's hidden rail then held
+  /// focus out of sight. It opens to match.
+  void _syncSidebarFocusWithRail() {
+    if (!mounted || _isSidebarFocused || !_sidebarFocusScope.hasFocus) return;
+    if (_ockerRailKey.currentState == null) return;
+    setState(() => _isSidebarFocused = true);
     _updateTvosMenuPassthrough();
   }
 
@@ -2132,6 +2158,16 @@ class _MainScreenState extends State<MainScreen>
     if (hasIptv == _lastHasIptv) return;
     _lastHasIptv = hasIptv;
     _handleTabAvailabilityChanged();
+
+    // A startup section waiting for Live TV: an IPTV source makes it available
+    // as a server's DVR does ([_handleLiveTvChanged]). After the frame — the
+    // first call comes from didChangeDependencies, before any screen is built.
+    final pending = _pendingStartupTab;
+    if (pending == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _pendingStartupTab != pending) return;
+      if (_getVisibleTabs(_isOffline).any((t) => t.id == pending)) _selectTab(pending);
+    });
   }
 
   List<NavigationTab> _getVisibleTabs(bool isOffline) {
@@ -2151,6 +2187,7 @@ class _MainScreenState extends State<MainScreen>
       isMobile: PlatformDetector.isMobile(context),
       isOffline: _isOffline,
       currentTab: _currentTab,
+      keepSettings: ockerGlasTablet(context),
     );
   }
 
@@ -2277,6 +2314,45 @@ class _MainScreenState extends State<MainScreen>
           ],
         );
       },
+    );
+  }
+
+  /// [_buildBottomNavigationBar]'s places on Apple's floating bar (Plebz; see
+  /// [OckerFloatingTabBar]): the same split into the bar and "Mehr", the same
+  /// taps, the same hold on the libraries.
+  Widget _buildAppleTabBar(BuildContext context, {required bool hideLabels}) {
+    // An iPad holds every place; a phone keeps "Mehr".
+    final tabs = _getBottomNavigationTabs(context);
+    final (:bar, :more) = splitBottomNavigationTabs(
+      tabs,
+      maxSlots: ockerGlasTablet(context) ? tabs.length : mainScreenBottomBarMaxSlots,
+    );
+    final selectedIndex = bar.indexWhere((tab) => tab.id == _currentTab);
+    final moreSelected = more.any((tab) => tab.id == _currentTab);
+    return OckerFloatingTabBar(
+      showLabels: !hideLabels,
+      selectedIndex: moreSelected ? bar.length : (selectedIndex >= 0 ? selectedIndex : 0),
+      onSelected: (i) {
+        if (i < bar.length) {
+          _selectTab(bar[i].id);
+        } else {
+          unawaited(_showMoreDestinations(context, more));
+        }
+      },
+      items: [
+        for (final tab in bar)
+          OckerFloatingTabBarItem(
+            icon: tab.icon,
+            label: tab.getLabel(),
+            onLongPress: tab.id == NavigationTabId.libraries
+                ? () {
+                    Feedback.forLongPress(context);
+                    _showLibraryQuickPicker(context);
+                  }
+                : null,
+          ),
+        if (more.isNotEmpty) OckerFloatingTabBarItem(icon: Symbols.more_horiz_rounded, label: t.plebz.more),
+      ],
     );
   }
 
@@ -2505,44 +2581,51 @@ class _MainScreenState extends State<MainScreen>
           if (settingsResult == KeyEventResult.handled) return settingsResult;
           return _handleBackKey(event);
         },
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final railWidth = OckerSideRail.collapsedWidth(context);
-            final contentWidth = (constraints.maxWidth - railWidth).clamp(0.0, double.infinity).toDouble();
-            return MainScreenFocusScope(
-              focusSidebar: _focusSidebar,
-              // Fixed, open or shut: the open rail lies over the content, so
-              // nothing positioned against these has to follow it.
-              sideNavigationWidth: railWidth,
-              reservedSideNavigationWidth: railWidth,
-              foregroundLeft: railWidth,
-              foregroundWidth: contentWidth,
-              viewportWidth: constraints.maxWidth,
-              selectLibrary: _selectLibrary,
-              openSettings: _openSettings,
-              child: OckerRailShell(
-                railKey: _ockerRailKey,
-                railFocusScope: _sidebarFocusScope,
-                contentFocusScope: _contentFocusScope,
-                tabs: _getVisibleTabs(_isOffline),
-                selectedTab: _currentTab,
-                expanded: _isSidebarFocused,
-                onDestinationSelected: (tab) {
-                  final restorePreviousFocus = tab == _currentTab;
-                  _selectTab(tab);
-                  _focusContent(restorePreviousFocus: restorePreviousFocus);
-                },
-                onNavigateToContent: _focusContent,
-                // The rail lists every destination's sub-navigation as rows
-                // under it, and a second press folds them. Where there are
-                // none, a second press on "Mediatheken" opens the libraries
-                // beside the page.
-                onReselect: (tab) => tab == NavigationTabId.libraries && _openLibraryColumn(),
-                menuFor: _ockerRailMenu,
-                content: _buildTickerAwareStack(),
-              ),
-            );
-          },
+        // Plebz: whether Glas keeps its rail of symbols in view, for the shell
+        // and every page measured against it.
+        child: SettingValueBuilder<bool>(
+          pref: PlebzPrefs.glasRailSymbolsPinned,
+          builder: (context, pinned, child) => OckerRailPinned(pinned: pinned, child: child!),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Plebz: nothing where Glas hides its shut rail.
+              final railWidth = OckerSideRail.reservedWidth(context);
+              final contentWidth = (constraints.maxWidth - railWidth).clamp(0.0, double.infinity).toDouble();
+              return MainScreenFocusScope(
+                focusSidebar: _focusSidebar,
+                // Fixed, open or shut: the open rail lies over the content, so
+                // nothing positioned against these has to follow it.
+                sideNavigationWidth: railWidth,
+                reservedSideNavigationWidth: railWidth,
+                foregroundLeft: railWidth,
+                foregroundWidth: contentWidth,
+                viewportWidth: constraints.maxWidth,
+                selectLibrary: _selectLibrary,
+                openSettings: _openSettings,
+                child: OckerRailShell(
+                  railKey: _ockerRailKey,
+                  railFocusScope: _sidebarFocusScope,
+                  contentFocusScope: _contentFocusScope,
+                  tabs: _getVisibleTabs(_isOffline),
+                  selectedTab: _currentTab,
+                  expanded: _isSidebarFocused,
+                  onDestinationSelected: (tab) {
+                    final restorePreviousFocus = tab == _currentTab;
+                    _selectTab(tab);
+                    _focusContent(restorePreviousFocus: restorePreviousFocus);
+                  },
+                  onNavigateToContent: _focusContent,
+                  // The rail lists every destination's sub-navigation as rows
+                  // under it, and a second press folds them. Where there are
+                  // none, a second press on "Mediatheken" opens the libraries
+                  // beside the page.
+                  onReselect: (tab) => tab == NavigationTabId.libraries && _openLibraryColumn(),
+                  menuFor: _ockerRailMenu,
+                  content: _buildTickerAwareStack(),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -2559,29 +2642,14 @@ class _MainScreenState extends State<MainScreen>
   /// content beside it. The rail absorbs the leading system inset itself, so
   /// the content must not indent for it a second time.
   Widget _buildLandscapeShell(BuildContext context) {
+    if (ockerGlasTouch(context)) return _buildAppleLandscapeShell(context);
     return Scaffold(
       body: Builder(
         builder: (context) {
           final isRtl = Directionality.of(context) == TextDirection.rtl;
           return Row(
             children: [
-              SettingValueBuilder<bool>(
-                pref: SettingsService.showNavBarLabels,
-                builder: (context, showNavBarLabels, _) {
-                  _scheduleNavBarMeasure(rail: true);
-                  return MobileNavigationRail(
-                    key: _navBarKey,
-                    tabs: _getBottomNavigationTabs(context),
-                    selectedTab: _currentTab,
-                    showLabels: showNavBarLabels,
-                    onDestinationSelected: _selectTab,
-                    onLibrariesLongPress: () => _showLibraryQuickPicker(context),
-                    isOffline: _isOffline,
-                    isReconnecting: _isReconnecting,
-                    onReconnect: _triggerReconnect,
-                  );
-                },
-              ),
+              _buildLandscapeRail(context),
               Expanded(
                 child: MediaQuery.removePadding(
                   context: context,
@@ -2597,8 +2665,58 @@ class _MainScreenState extends State<MainScreen>
     );
   }
 
+  Widget _buildLandscapeRail(BuildContext context) => SettingValueBuilder<bool>(
+    pref: SettingsService.showNavBarLabels,
+    builder: (context, showNavBarLabels, _) {
+      _scheduleNavBarMeasure(rail: true);
+      return MobileNavigationRail(
+        key: _navBarKey,
+        tabs: _getBottomNavigationTabs(context),
+        selectedTab: _currentTab,
+        showLabels: showNavBarLabels,
+        onDestinationSelected: _selectTab,
+        onLibrariesLongPress: () => _showLibraryQuickPicker(context),
+        isOffline: _isOffline,
+        isReconnecting: _isReconnecting,
+        onReconnect: _triggerReconnect,
+      );
+    },
+  );
+
+  /// Plebz: Glas on Apple's handhelds in landscape — the rail floats over the
+  /// page, which runs on beneath it as it does beneath Apple's sidebar. The
+  /// page is told the rail's extent as its leading padding, so what rests on
+  /// it starts past the glass ([ockerFloatingStartInset]).
+  Widget _buildAppleLandscapeShell(BuildContext context) {
+    return Scaffold(
+      body: Builder(
+        builder: (context) {
+          final isRtl = Directionality.of(context) == TextDirection.rtl;
+          final media = MediaQuery.of(context);
+          final extent = MobileNavigationRail.appleExtent(context);
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: MediaQuery(
+                  data: media.copyWith(
+                    padding: isRtl ? media.padding.copyWith(right: extent) : media.padding.copyWith(left: extent),
+                  ),
+                  child: _buildTickerAwareStack(),
+                ),
+              ),
+              PositionedDirectional(start: 0, top: 0, bottom: 0, child: _buildLandscapeRail(context)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildPortraitShell(BuildContext context) {
     return Scaffold(
+      // Plebz: Glas's floating bar on Apple's handhelds lets the page run on
+      // beneath it; the pages end with its height ([SliverFloatingBarSpace]).
+      extendBody: ockerGlasTouch(context),
       body: _buildTickerAwareStack(),
       bottomNavigationBar: Column(
         key: _navBarKey,
@@ -2644,6 +2762,9 @@ class _MainScreenState extends State<MainScreen>
               // this builder reruns on label toggles AND on every
               // MainScreen rebuild (offline bar appearing/disappearing).
               _scheduleNavBarMeasure(rail: false);
+              // Plebz: on iPhone and iPad under the redesign on Apple's build,
+              // the same places on Apple's floating glass bar.
+              if (ockerGlasTouch(context)) return _buildAppleTabBar(context, hideLabels: hideLabels);
               return NavigationBarTheme(
                 data: NavigationBarTheme.of(context).copyWith(height: hideLabels ? 56 : null),
                 child: _buildBottomNavigationBar(context, hideLabels: hideLabels),

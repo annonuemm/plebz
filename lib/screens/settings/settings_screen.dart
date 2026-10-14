@@ -676,13 +676,16 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
           title: t.settings.autoHidePerformanceOverlay,
           subtitle: t.settings.autoHidePerformanceOverlayDescription,
         ),
-        SettingNavigationTile(
-          focusNode: _focusTracker.get(_kHardwareTest),
-          icon: Symbols.monitor_heart_rounded,
-          title: t.settings.hardwareTest,
-          subtitle: t.settings.hardwareTestDescription,
-          destinationBuilder: (_) => const HardwareTestScreen(),
-        ),
+        // Only Android reports its hardware (HardwareReport.kt); elsewhere the
+        // screen would only say "unavailable" (Plebz: hidden there).
+        if (Platform.isAndroid)
+          SettingNavigationTile(
+            focusNode: _focusTracker.get(_kHardwareTest),
+            icon: Symbols.monitor_heart_rounded,
+            title: t.settings.hardwareTest,
+            subtitle: t.settings.hardwareTestDescription,
+            destinationBuilder: (_) => const HardwareTestScreen(),
+          ),
         SettingNavigationTile(
           focusNode: _focusTracker.get(_kViewLogs),
           icon: Symbols.article_rounded,

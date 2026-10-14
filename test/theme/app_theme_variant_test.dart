@@ -116,6 +116,24 @@ void main() {
       expect(monoTheme(dark: true, variant: AppThemeVariant.glas).textTheme.bodyMedium?.fontFamily, 'Inter');
     });
 
+    test('on Apple devices is the system face, SF Pro; Standard stays on the platform one', () {
+      debugOckerAppleSystemFont = true;
+      addTearDown(() => debugOckerAppleSystemFont = null);
+
+      for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+        final tk = _tokens(variant);
+        expect(tk.displayFontFamily, 'CupertinoSystemDisplay', reason: variant.name);
+        expect(tk.uiFontFamily, 'CupertinoSystemText', reason: variant.name);
+        expect(tk.monoFontFamily, 'CupertinoSystemText', reason: variant.name);
+        expect(
+          monoTheme(dark: true, variant: variant).textTheme.bodyMedium?.fontFamily,
+          'CupertinoSystemText',
+          reason: variant.name,
+        );
+      }
+      expect(_tokens(AppThemeVariant.standard).displayFontFamily, isNull);
+    });
+
     test('leaves Standard on the platform typeface', () {
       for (final variant in [AppThemeVariant.standard]) {
         final tokens = _tokens(variant);
@@ -187,11 +205,11 @@ void main() {
       }
     });
 
-    test('draws its symbols as light outlines', () {
+    test('draws its symbols as outlines, as heavy as the words beside them', () {
       applyIconDefaultsFor(AppThemeVariant.glas);
 
       expect(AppIconDefaults.fill, 0, reason: 'outline, not solid');
-      expect(AppIconDefaults.weight, 200);
+      expect(AppIconDefaults.weight, 400, reason: 'Apple\'s rule, on every device (Plebz)');
     });
   });
 

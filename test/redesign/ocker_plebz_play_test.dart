@@ -40,7 +40,9 @@ void main() {
     }
   });
 
-  testWidgets('the play button is glass tinted with the logo, the page showing through', (tester) async {
+  testWidgets('the play button is tinted with the logo, the page showing through; flat without Liquid Glass', (
+    tester,
+  ) async {
     Future<void> pump({required bool focused}) => tester.pumpWidget(
       Theme(
         data: monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: GlasAccent.plebz),
@@ -66,7 +68,8 @@ void main() {
 
     await pump(focused: false);
     expect(tint().colors.first.a, closeTo(OckerPlebzPlayGround.restingTint, 0.01));
-    expect(find.descendant(of: find.byType(OckerPlebzPlayGround), matching: find.byType(CustomPaint)), findsWidgets);
+    // Without Liquid Glass the tint alone, flat: no lit edge (Plebz).
+    expect(find.descendant(of: find.byType(OckerPlebzPlayGround), matching: find.byType(CustomPaint)), findsNothing);
 
     await pump(focused: true);
     expect(tint().colors.first.a, closeTo(OckerPlebzPlayGround.focusedTint, 0.01));

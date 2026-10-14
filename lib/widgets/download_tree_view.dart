@@ -12,6 +12,7 @@ import '../utils/dialogs.dart';
 import '../utils/global_key_utils.dart';
 import '../mixins/unsuppress_focus_mixin.dart';
 import 'download_status_icon.dart';
+import '../redesign/ocker_glas_look.dart';
 
 class DownloadTreeNode {
   final String key;
@@ -100,7 +101,8 @@ class _DownloadTreeViewState extends State<DownloadTreeView> with UnsuppressFocu
     }
 
     return ListView.builder(
-      padding: .zero,
+      // Plebz: clear of Glas's floating tab bar at the foot.
+      padding: EdgeInsets.only(bottom: ockerFloatingBottomInset(context)),
       itemCount: flattenedNodes.length,
       itemBuilder: (context, index) {
         final item = flattenedNodes[index];

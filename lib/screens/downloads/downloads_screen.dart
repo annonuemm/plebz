@@ -11,6 +11,7 @@ import '../../media/media_server_client.dart';
 import '../../providers/download_provider.dart';
 import '../../providers/multi_server_provider.dart';
 import '../../services/music/music_playback_service.dart';
+import '../../redesign/ocker_rail_shell.dart' show OckerHidesPlace;
 import '../../redesign/ocker_skin.dart';
 import '../../theme/mono_tokens.dart';
 import '../../utils/music_navigation.dart';
@@ -38,6 +39,7 @@ import '../libraries/content_state_builder.dart';
 import 'downloads_options.dart';
 import '../../i18n/strings.g.dart';
 import 'sync_rules_screen.dart';
+import '../../redesign/ocker_glas_look.dart';
 
 class DownloadsScreen extends StatefulWidget {
   const DownloadsScreen({super.key});
@@ -165,6 +167,12 @@ class DownloadsScreenState extends State<DownloadsScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Plebz: the tabs stand at the top left where Glas's place capsule does on
+    // the television, and name the place already — the capsule stands aside.
+    return OckerHidesPlace(hide: ockerGlasHiddenRail(context), child: _buildPage(context));
+  }
+
+  Widget _buildPage(BuildContext context) {
     return Scaffold(
       body: CustomScrollView(
         primary: false,
@@ -224,89 +232,92 @@ class DownloadsScreenState extends State<DownloadsScreen>
             ],
           ),
           SliverFillRemaining(
-            child: Column(
-              children: [
-                // Only while something is actually queued or transferring —
-                // an idle Downloads screen has nothing to warn about.
-                Selector<DownloadProvider, bool>(
-                  selector: (_, provider) => provider.downloads.values.any(
-                    (progress) =>
-                        progress.status == DownloadStatus.downloading || progress.status == DownloadStatus.queued,
+            child: OckerClearOfRail(
+              // Plebz: clear of Glas's floating rail in landscape on Apple's handhelds.
+              child: Column(
+                children: [
+                  // Only while something is actually queued or transferring —
+                  // an idle Downloads screen has nothing to warn about.
+                  Selector<DownloadProvider, bool>(
+                    selector: (_, provider) => provider.downloads.values.any(
+                      (progress) =>
+                          progress.status == DownloadStatus.downloading || progress.status == DownloadStatus.queued,
+                    ),
+                    builder: (context, hasPendingDownloads, _) =>
+                        BackgroundDownloadWarningBanner(hasPendingDownloads: hasPendingDownloads),
                   ),
-                  builder: (context, hasPendingDownloads, _) =>
-                      BackgroundDownloadWarningBanner(hasPendingDownloads: hasPendingDownloads),
-                ),
-                if (!PlatformDetector.shouldUseSideNavigation(context))
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    alignment: .centerLeft,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildTabChip(t.downloads.manage, 0),
-                          const SizedBox(width: 8),
-                          _buildTabChip(t.downloads.tvShows, 1),
-                          const SizedBox(width: 8),
-                          _buildTabChip(t.downloads.movies, 2),
-                          const SizedBox(width: 8),
-                          _buildTabChip(t.downloads.music, 3),
-                        ],
+                  if (!PlatformDetector.shouldUseSideNavigation(context))
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      alignment: .centerLeft,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildTabChip(t.downloads.manage, 0),
+                            const SizedBox(width: 8),
+                            _buildTabChip(t.downloads.tvShows, 1),
+                            const SizedBox(width: 8),
+                            _buildTabChip(t.downloads.movies, 2),
+                            const SizedBox(width: 8),
+                            _buildTabChip(t.downloads.music, 3),
+                          ],
+                        ),
                       ),
                     ),
+                  Expanded(
+                    child: TabBarView(
+                      controller: tabController,
+                      children: [
+                        Consumer<DownloadProvider>(
+                          builder: (context, downloadProvider, _) {
+                            return DownloadTreeView(
+                              downloads: downloadProvider.downloads,
+                              metadata: downloadProvider.metadata,
+                              onPause: downloadProvider.pauseDownload,
+                              onResume: (globalKey) {
+                                final client = _clientForDownload(globalKey);
+                                if (client != null) {
+                                  downloadProvider.resumeDownload(globalKey, client);
+                                }
+                              },
+                              onRetry: (globalKey) {
+                                final client = _clientForDownload(globalKey);
+                                if (client != null) {
+                                  downloadProvider.retryDownload(globalKey, client);
+                                }
+                              },
+                              onRetryAll: _retryDownloads,
+                              onCancel: downloadProvider.cancelDownload,
+                              onDelete: downloadProvider.deleteDownload,
+                              onNavigateLeft: () => MainScreenFocusScope.focusSidebarOf(context),
+                              onBack: focusTabBar,
+                              suppressAutoFocus: suppressAutoFocus,
+                            );
+                          },
+                        ),
+                        _DownloadsGridContent(
+                          key: _tvShowsTabKey,
+                          type: DownloadType.tvShows,
+                          isActive: tabController.index == 1,
+                          onBack: focusTabBar,
+                        ),
+                        _DownloadsGridContent(
+                          key: _moviesTabKey,
+                          type: DownloadType.movies,
+                          isActive: tabController.index == 2,
+                          onBack: focusTabBar,
+                        ),
+                        _DownloadedMusicContent(
+                          key: _musicTabKey,
+                          isActive: tabController.index == 3,
+                          onBack: focusTabBar,
+                        ),
+                      ],
+                    ),
                   ),
-                Expanded(
-                  child: TabBarView(
-                    controller: tabController,
-                    children: [
-                      Consumer<DownloadProvider>(
-                        builder: (context, downloadProvider, _) {
-                          return DownloadTreeView(
-                            downloads: downloadProvider.downloads,
-                            metadata: downloadProvider.metadata,
-                            onPause: downloadProvider.pauseDownload,
-                            onResume: (globalKey) {
-                              final client = _clientForDownload(globalKey);
-                              if (client != null) {
-                                downloadProvider.resumeDownload(globalKey, client);
-                              }
-                            },
-                            onRetry: (globalKey) {
-                              final client = _clientForDownload(globalKey);
-                              if (client != null) {
-                                downloadProvider.retryDownload(globalKey, client);
-                              }
-                            },
-                            onRetryAll: _retryDownloads,
-                            onCancel: downloadProvider.cancelDownload,
-                            onDelete: downloadProvider.deleteDownload,
-                            onNavigateLeft: () => MainScreenFocusScope.focusSidebarOf(context),
-                            onBack: focusTabBar,
-                            suppressAutoFocus: suppressAutoFocus,
-                          );
-                        },
-                      ),
-                      _DownloadsGridContent(
-                        key: _tvShowsTabKey,
-                        type: DownloadType.tvShows,
-                        isActive: tabController.index == 1,
-                        onBack: focusTabBar,
-                      ),
-                      _DownloadsGridContent(
-                        key: _moviesTabKey,
-                        type: DownloadType.movies,
-                        isActive: tabController.index == 2,
-                        onBack: focusTabBar,
-                      ),
-                      _DownloadedMusicContent(
-                        key: _musicTabKey,
-                        isActive: tabController.index == 3,
-                        onBack: focusTabBar,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -446,6 +457,7 @@ class _DownloadsGridContentState extends State<_DownloadsGridContent>
                     attachFirstItemFocus: true,
                     firstRowUp: navigateToChips,
                   ),
+                const SliverFloatingBarSpace(),
               ],
             );
           },
@@ -713,8 +725,10 @@ class _DownloadedMusicContentState extends State<_DownloadedMusicContent>
     if (!widget.isActive) return const SizedBox.shrink();
     return Consumer<DownloadProvider>(
       builder: (context, downloadProvider, _) {
-        // Keep the last rows reachable above the floating mini-player.
-        final bottomInset = context.watch<MiniPlayerInsetController?>()?.overlayHeight ?? 0;
+        // Keep the last rows reachable above the floating mini-player, and
+        // above Glas's floating tab bar (Plebz).
+        final bottomInset =
+            (context.watch<MiniPlayerInsetController?>()?.overlayHeight ?? 0) + ockerFloatingBottomInset(context);
 
         return SettingsBuilder(
           prefs: const [SettingsService.viewMode, SettingsService.libraryDensity, SettingsService.tvFullCardLayout],

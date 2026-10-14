@@ -280,9 +280,10 @@ def icon(px: int, *, mark_height: float, tile_radius: float | None) -> Image.Ima
     return img.resize((px, px), Image.Resampling.LANCZOS)
 
 
-def lockup(width: int, height: int, *, span: float, background, text: str) -> Image.Image:
-    """Mark and "Plebz" side by side, [span] of the width, centred."""
-    w_, h_ = width * SS, height * SS
+def lockup(width: int, height: int, *, span: float, background, text: str, ss: int = SS) -> Image.Image:
+    """Mark and "Plebz" side by side, [span] of the width, centred. Images a
+    few thousand pixels wide pass a smaller [ss]; at SS they need gigabytes."""
+    w_, h_ = width * ss, height * ss
     img = Image.new("RGBA", (w_, h_), background)
     font_path = _font_path()
     probe = ImageFont.truetype(str(font_path), 1000)

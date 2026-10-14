@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../redesign/ocker_skin.dart' show OckerLiquidFocusRim;
 import 'focus_theme.dart';
 
 /// Exposes the focus state of an enclosing focus wrapper to a descendant
@@ -40,8 +41,22 @@ class CardFocusBorder extends StatelessWidget {
     this.borderRadius = FocusTheme.defaultBorderRadius,
     this.borderRadii,
     this.strokeAlign = BorderSide.strokeAlignOutside,
+    this.liquidRim = false,
+    this.glassRim = false,
+    this.glassRimBends = false,
     required this.child,
   });
+
+  /// Plebz: whether [child] lays a [CardLiquidRim] on its artwork. While
+  /// Liquid Glass is on, the rim is the focus and the ring stands down.
+  final bool liquidRim;
+
+  /// Plebz: whether this border lays the Liquid Glass rim over the whole
+  /// card itself — tiles, whose words and logos are part of the card — in
+  /// place of the ring. It bends what lies under it only with
+  /// [glassRimBends], for a card that is nothing but a picture.
+  final bool glassRim;
+  final bool glassRimBends;
 
   final double borderRadius;
 
@@ -56,17 +71,47 @@ class CardFocusBorder extends StatelessWidget {
     final showFocus = CardFocusScope.maybeOf(context);
     if (showFocus == null) return child;
 
+    // Plebz: a card that wears the Liquid Glass rim needs no ring.
+    final rim = (liquidRim || glassRim) && OckerLiquidFocusRim.showsInsteadOfRing(context);
     return AnimatedContainer(
       duration: FocusTheme.getAnimationDuration(context),
       curve: Curves.easeOutCubic,
       foregroundDecoration: FocusTheme.focusDecoration(
         context,
-        isFocused: showFocus,
+        isFocused: showFocus && !rim,
         borderRadius: borderRadius,
         radii: borderRadii,
         borderStrokeAlign: strokeAlign,
       ),
-      child: child,
+      child: glassRim && rim
+          ? Stack(
+              fit: StackFit.passthrough,
+              children: [
+                child,
+                Positioned.fill(
+                  child: OckerLiquidFocusRim(
+                    focused: showFocus,
+                    radii: borderRadii ?? BorderRadius.circular(borderRadius),
+                    bend: glassRimBends,
+                  ),
+                ),
+              ],
+            )
+          : child,
     );
   }
+}
+
+/// Plebz: the Liquid Glass rim on a card's artwork while it shows focus (see
+/// OckerLiquidFocusRim). Laid over the picture and under what the card puts
+/// on it — badges, labels — so only the picture bends. Reads the focus here,
+/// so a focus flip rebuilds this slot and not the card.
+class CardLiquidRim extends StatelessWidget {
+  const CardLiquidRim({super.key, required this.radii});
+
+  final BorderRadius radii;
+
+  @override
+  Widget build(BuildContext context) =>
+      OckerLiquidFocusRim(focused: CardFocusScope.maybeOf(context) ?? false, radii: radii);
 }

@@ -1488,8 +1488,8 @@ class Translations$settings$en {
 	/// en: 'Redesign – Glass'
 	String get appThemeVariantGlas => 'Redesign – Glass';
 
-	/// en: 'Translucent menus over the picture, rearranged on TV'
-	String get appThemeVariantGlasDescription => 'Translucent menus over the picture, rearranged on TV';
+	/// en: 'Floating navigation, rearranged on TV'
+	String get appThemeVariantGlasDescription => 'Floating navigation, rearranged on TV';
 
 	/// en: 'Redesign – Flat'
 	String get appThemeVariantFlach => 'Redesign – Flat';
@@ -1634,6 +1634,30 @@ class Translations$settings$en {
 
 	/// en: 'Costs a little performance'
 	String get glasSpinningFocusDescription => 'Costs a little performance';
+
+	/// en: 'Liquid Glass'
+	String get glasLiquid => 'Liquid Glass';
+
+	/// en: 'Blurred background as on Apple, costs performance'
+	String get glasLiquidDescription => 'Blurred background as on Apple, costs performance';
+
+	/// en: 'Glass effect'
+	String get glasFakeGlass => 'Glass effect';
+
+	/// en: 'Navigation and menus as glass, otherwise flat'
+	String get glasFakeGlassDescription => 'Navigation and menus as glass, otherwise flat';
+
+	/// en: 'Always show the symbol rail'
+	String get glasRailSymbols => 'Always show the symbol rail';
+
+	/// en: 'The navigation stays visible on the left'
+	String get glasRailSymbolsDescription => 'The navigation stays visible on the left';
+
+	/// en: 'Smooth scrolling'
+	String get smoothScroll => 'Smooth scrolling';
+
+	/// en: 'Rows and posters glide instead of jumping'
+	String get smoothScrollDescription => 'Rows and posters glide instead of jumping';
 
 	/// en: 'Logos on Home and Explore'
 	String get homeTitleLogos => 'Logos on Home and Explore';
@@ -9950,7 +9974,7 @@ extension on Translations {
 			'settings.showPlaybackTracksStatus' => 'Audio and subtitles',
 			'settings.showPlaybackTracksStatusDescription' => 'Shows which tracks Play would pick',
 			'settings.appThemeVariantGlas' => 'Redesign – Glass',
-			'settings.appThemeVariantGlasDescription' => 'Translucent menus over the picture, rearranged on TV',
+			'settings.appThemeVariantGlasDescription' => 'Floating navigation, rearranged on TV',
 			'settings.appThemeVariantFlach' => 'Redesign – Flat',
 			'settings.appThemeVariantFlachDescription' => 'Like Glass, but flat, with a white focus',
 			'settings.flachAccent' => 'Accent colour',
@@ -10001,6 +10025,14 @@ extension on Translations {
 			'settings.redesignSeasonTabsDescription' => 'Otherwise each season gets its own row',
 			'settings.glasSpinningFocus' => 'Turning focus edge',
 			'settings.glasSpinningFocusDescription' => 'Costs a little performance',
+			'settings.glasLiquid' => 'Liquid Glass',
+			'settings.glasLiquidDescription' => 'Blurred background as on Apple, costs performance',
+			'settings.glasFakeGlass' => 'Glass effect',
+			'settings.glasFakeGlassDescription' => 'Navigation and menus as glass, otherwise flat',
+			'settings.glasRailSymbols' => 'Always show the symbol rail',
+			'settings.glasRailSymbolsDescription' => 'The navigation stays visible on the left',
+			'settings.smoothScroll' => 'Smooth scrolling',
+			'settings.smoothScrollDescription' => 'Rows and posters glide instead of jumping',
 			'settings.homeTitleLogos' => 'Logos on Home and Explore',
 			'settings.homeTitleLogosDescription' => 'Title logos instead of text in the spotlight',
 			'settings.seerrCardEpisodeFacts' => 'Episode facts on Seerr posters',
@@ -10501,6 +10533,8 @@ extension on Translations {
 			'messages.playbackDataNotPrepared' => 'Playback was started before its data was ready',
 			'messages.streamSelectionUnavailable' => 'Stream selection is not available for this source',
 			'messages.streamSelectionFailed' => 'Could not apply the selected streams',
+			_ => null,
+		} ?? switch (path) {
 			'messages.trackSelectionNotRemembered' => 'This track choice applies to the current playback only.',
 			'messages.serverUnavailableForProfile' => 'No server is available for the active profile',
 			'messages.favoritesUpdateFailed' => 'Could not update favorites',
@@ -10509,8 +10543,6 @@ extension on Translations {
 			'subtitlingStyling.background' => 'Background',
 			'subtitlingStyling.fontSize' => 'Font Size',
 			'subtitlingStyling.textColor' => 'Text Color',
-			_ => null,
-		} ?? switch (path) {
 			'subtitlingStyling.borderSize' => 'Border Size',
 			'subtitlingStyling.borderColor' => 'Border Color',
 			'subtitlingStyling.backgroundOpacity' => 'Background opacity',
@@ -11015,6 +11047,8 @@ extension on Translations {
 			'explore.sourceMaterial.otherMedia' => 'Other',
 			'explore.creditRole.actor' => 'Actor',
 			'explore.creditRole.director' => 'Director',
+			_ => null,
+		} ?? switch (path) {
 			'explore.creditRole.writer' => 'Writer',
 			'explore.creditRole.producer' => 'Producer',
 			'explore.creditRole.creator' => 'Creator',
@@ -11023,8 +11057,6 @@ extension on Translations {
 			'explore.relation.sequel' => 'Sequel',
 			'explore.relation.sideStory' => 'Side story',
 			'explore.relation.spinOff' => 'Spin-off',
-			_ => null,
-		} ?? switch (path) {
 			'explore.relation.alternativeVersion' => 'Alternative version',
 			'explore.relation.summary' => 'Summary',
 			'explore.relation.parentStory' => 'Parent story',
@@ -11529,6 +11561,8 @@ extension on Translations {
 			'companionRemote.pairing.codeTitle' => 'Pair a device',
 			'companionRemote.pairing.codeMessage' => ({required Object name}) => '${name} wants to control Plebz here. Enter this code on that device:',
 			'companionRemote.pairing.codeValidFor' => 'The code is valid for two minutes.',
+			_ => null,
+		} ?? switch (path) {
 			'companionRemote.pairing.enterCodeTitle' => 'Enter code',
 			'companionRemote.pairing.enterCodeMessage' => ({required Object name}) => '${name} is now showing an eight-digit code. Enter it here.',
 			'companionRemote.pairing.codeLabel' => 'Code',
@@ -11537,8 +11571,6 @@ extension on Translations {
 			'companionRemote.pairing.cancelled' => 'Pairing cancelled',
 			'companionRemote.pairing.busy' => 'The device is pairing another one right now. Try again in a moment.',
 			'companionRemote.pairing.expired' => 'The code has expired. Connect again.',
-			_ => null,
-		} ?? switch (path) {
 			'companionRemote.pairing.pairingRequired' => 'This device is no longer paired. Connect again to pair it.',
 			'companionRemote.pairing.hostTooOld' => 'The device runs an older Plebz. Update it to pair.',
 			'companionRemote.pairing.pairedDevices' => 'Paired devices',
@@ -12043,6 +12075,8 @@ extension on Translations {
 			'trailerStage.startNarrowed' => 'Only what fits your choice, in random order',
 			'trailerStage.nextTrailer' => 'Next',
 			'trailerStage.openDetail' => 'Open the title',
+			_ => null,
+		} ?? switch (path) {
 			'trailerStage.chooseAgain' => 'Choose again',
 			'trailerStage.noLibraries' => 'No film or series library is connected for the stage to draw trailers from.',
 			'trailerStage.noTrailers' => 'No trailer found',
@@ -12051,8 +12085,6 @@ extension on Translations {
 			'actor.inLibraries' => 'In your libraries',
 			'actor.notInLibraries' => 'Not in your libraries',
 			'actor.noDiscoverSource' => 'Connect a Plex account to open titles you do not have.',
-			_ => null,
-		} ?? switch (path) {
 			'actor.notOnDiscover' => ({required Object title}) => 'Plex Discover has no page for “${title}”.',
 			'actor.appearances' => 'Appearances',
 			'actor.biography' => 'Biography',

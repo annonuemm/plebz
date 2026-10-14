@@ -10,6 +10,7 @@ import '../theme/mono_tokens.dart';
 import '../widgets/focusable_list_tile.dart';
 import 'ocker_skin.dart';
 import 'ocker_type.dart';
+import 'ocker_rail_shell.dart' show OckerHidesPlace;
 
 /// The libraries, as a column that opens beside a library page — the way the
 /// channel groups open beside the guide.
@@ -269,6 +270,9 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
     final scale = ockerScale(context);
     final width = _width(context);
     final radius = BorderRadius.circular(tk.radiusSm + 8);
+    // Under Glas a sheet from the edge, the same shape with Liquid Glass on or
+    // off (Plebz).
+    final liquid = !ockerFlat(context);
     final order = <String>[];
     final rows = buildLibraryServerEntries<Widget>(
       widget.libraries,
@@ -322,47 +326,61 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
       ),
     );
 
-    return AnimatedContainer(
-      duration: DevicePerformance.reducedDuration(const Duration(milliseconds: 180)),
-      curve: Curves.easeOutCubic,
-      width: _open ? width : 0,
-      // Clipped rather than laid out narrower: the rows keep their width and
-      // slide in instead of squeezing.
-      child: ClipRect(
-        // Shut, the rows are still there and still focusable, and the cursor
-        // could walk into a column nobody can see.
-        child: ExcludeFocus(
-          excluding: !_open,
-          child: OverflowBox(
-            alignment: .centerLeft,
-            minWidth: width,
-            maxWidth: width,
-            child: Focus(
-              onFocusChange: _onFocusChange,
-              onKeyEvent: _onKey,
-              // Flat (Plebz): the column runs the full height, square, its rows
-              // starting where the content does.
-              child: ockerFlat(context)
-                  ? OckerGlass(
-                      key: OckerLibraryColumn.paneKey,
-                      borderRadius: BorderRadius.zero,
-                      scrimInset: 0,
-                      child: Padding(
-                        padding: EdgeInsets.only(top: ockerContentTop(context)),
-                        child: list,
-                      ),
-                    )
-                  // Glas: the same room above the pane as below it, the screen's
-                  // edge either way (the viewer's call).
-                  : Padding(
-                      padding: EdgeInsets.all(12 * scale),
-                      child: OckerGlass(
+    // Plebz: open, the column stands where the Apple TV's place capsule does.
+    return OckerHidesPlace(
+      hide: _open,
+      child: AnimatedContainer(
+        duration: DevicePerformance.reducedDuration(const Duration(milliseconds: 180)),
+        curve: Curves.easeOutCubic,
+        width: _open ? width : 0,
+        // Clipped rather than laid out narrower: the rows keep their width and
+        // slide in instead of squeezing.
+        child: ClipRect(
+          // Shut, the rows are still there and still focusable, and the cursor
+          // could walk into a column nobody can see.
+          child: ExcludeFocus(
+            excluding: !_open,
+            child: OverflowBox(
+              alignment: .centerLeft,
+              minWidth: width,
+              maxWidth: width,
+              child: Focus(
+                onFocusChange: _onFocusChange,
+                onKeyEvent: _onKey,
+                // Flat (Plebz): the column runs the full height, square, its rows
+                // starting where the content does.
+                child: ockerFlat(context)
+                    ? OckerGlass(
                         key: OckerLibraryColumn.paneKey,
-                        borderRadius: radius,
+                        borderRadius: BorderRadius.zero,
                         scrimInset: 0,
-                        child: ClipRRect(borderRadius: radius, child: list),
+                        child: Padding(
+                          padding: EdgeInsets.only(top: ockerContentTop(context)),
+                          child: list,
+                        ),
+                      )
+                    // Glas: the same room above the pane as below it, the screen's
+                    // edge either way (the viewer's call). Under Liquid Glass the
+                    // column is a drawer: flush with the navigation, the top and
+                    // the foot, rounded only on its open side, as the rail's
+                    // own pane (the viewer's call).
+                    : Padding(
+                        padding: liquid ? EdgeInsets.zero : EdgeInsets.all(12 * scale),
+                        child: OckerGlass(
+                          key: OckerLibraryColumn.paneKey,
+                          borderRadius: liquid ? BorderRadius.horizontal(right: radius.topRight) : radius,
+                          scrimInset: 0,
+                          liquid: true,
+                          lensBeyond: liquid
+                              ? EdgeInsets.fromLTRB(400 * scale, 400 * scale, 0, 400 * scale)
+                              : EdgeInsets.zero,
+                          child: ClipRRect(
+                            borderRadius: liquid ? BorderRadius.horizontal(right: radius.topRight) : radius,
+                            child: list,
+                          ),
+                        ),
                       ),
-                    ),
+              ),
             ),
           ),
         ),

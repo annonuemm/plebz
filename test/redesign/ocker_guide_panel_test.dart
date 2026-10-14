@@ -78,17 +78,19 @@ void main() {
     audioChannels: 2,
   );
 
-  testWidgets('on the channel in the picture, its stream stands on glass beside the eyebrow', (tester) async {
+  testWidgets('on the channel in the picture, its stream stands beside the eyebrow', (tester) async {
     final info = await pumpPanel(tester, focused: erste);
     final titleBefore = tester.getTopLeft(find.text('Tagesschau'));
 
     info.value = playing;
     await tester.pump();
 
+    // Words with dots between them since Glas follows Apple's TV app (Plebz).
     for (final label in ['1080p', '50 fps', audio]) {
+      expect(find.text(label), findsOneWidget, reason: label);
       expect(
         find.ancestor(of: find.text(label), matching: find.byType(OckerGlassPlate)),
-        findsOneWidget,
+        findsNothing,
         reason: label,
       );
     }

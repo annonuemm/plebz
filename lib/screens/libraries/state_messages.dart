@@ -4,6 +4,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../focus/focusable_button.dart';
 import '../../i18n/strings.g.dart';
+import '../../redesign/ocker_glas_look.dart';
 
 /// Base widget for displaying state messages (empty, error, etc.)
 /// Provides a consistent UI pattern for showing icons, messages, and actions
@@ -66,9 +67,11 @@ class StateMessageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Plebz: centred on what Glas's floating rail leaves in view.
+    final railInset = ockerFloatingStartInset(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsetsDirectional.fromSTEB(24 + railInset, 24, 24, 24),
         child: Column(
           mainAxisAlignment: .center,
           children: [

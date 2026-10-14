@@ -80,6 +80,11 @@ class OckerSideRail extends StatefulWidget {
   /// that did not would stop fitting them.
   static double collapsedWidth(BuildContext context) => 96 * ockerScale(context);
 
+  /// How much of the screen the shut rail keeps from the page: its strip —
+  /// or nothing on the Apple TV, where the shut rail hides itself and the
+  /// page has the whole width (Plebz, [ockerGlasHiddenRail]).
+  static double reservedWidth(BuildContext context) => ockerGlasHiddenRail(context) ? 0 : collapsedWidth(context);
+
   /// The rows under destinations, in every rail alive (Plebz).
   static final Set<FocusNode> _subRowNodes = {};
 
@@ -214,7 +219,7 @@ class OckerSideRailState extends State<OckerSideRail> {
       if (tab.id == widget.selectedTab && widget.expanded)
         for (var i = 0; i < (_openMenu?.items.length ?? 0); i++) _subNodeFor(i),
     ],
-    if (tokens(context).flat) _profileNode,
+    if (tokens(context).flat || ockerGlasTv(context)) _profileNode,
   ];
 
   /// The row's word where no profile is named. A getter of its own because
@@ -319,12 +324,14 @@ class OckerSideRailState extends State<OckerSideRail> {
     final tk = tokens(context);
     final scale = ockerScale(context);
     final collapsed = OckerSideRail.collapsedWidth(context);
-    // Flat (Plebz): the open pane runs to the screen's left, top and foot,
-    // square — the viewer's call.
-    final margin = tk.flat ? 0.0 : 16 * scale;
+    // The open pane runs to the screen's left, top and foot (Plebz): square
+    // under "Flach" — the viewer's call — and under Glas a sheet of glass
+    // coming in from the edge, rounded only on its open side (the viewer's
+    // call, after Apple's own sidebars), the same with Liquid Glass on or off.
     final paneWidth = OckerSideRail.expandedWidth(context);
-    final width = lerpDouble(collapsed, paneWidth + 2 * margin, t)!;
-    final radius = tk.flat ? BorderRadius.zero : BorderRadius.circular(tk.radiusSm + 8);
+    final width = lerpDouble(collapsed, paneWidth, t)!;
+    final corner = Radius.circular(tk.radiusSm + 8);
+    final radius = tk.flat ? BorderRadius.zero : BorderRadius.horizontal(right: corner);
     final safeTop = MediaQuery.paddingOf(context).top;
     final safeBottom = MediaQuery.paddingOf(context).bottom;
     // "Flach" (Plebz) stands the Plebz mark at the head of the strip as its
@@ -335,13 +342,19 @@ class OckerSideRailState extends State<OckerSideRail> {
       flat: tk.flat,
       scale: scale,
       collapsedWidth: collapsed,
-      paneLeft: margin * t,
+      paneLeft: 0,
       paneWidth: lerpDouble(collapsed, paneWidth, t)!,
-      labelRight: margin + paneWidth,
+      labelRight: paneWidth,
     );
     final menu = _openMenu;
+    // Plebz: Glas on the Apple TV hides the rail while it is shut, as Apple's
+    // TV app hides its sidebar — no strip of symbols; the page has the width
+    // and a capsule at its top left says where one is (OckerRailShell). It
+    // fades in with the pane, the profile at its foot as under "Flach".
+    final apple = ockerGlasHiddenRail(context);
+    final withProfile = tk.flat || ockerGlasTv(context);
 
-    return SizedBox(
+    final rail = SizedBox(
       width: width,
       child: Stack(
         // Clipped to the width the rail has reached: the names are laid out
@@ -351,10 +364,10 @@ class OckerSideRailState extends State<OckerSideRail> {
         children: [
           if (t > 0)
             Positioned(
-              left: margin * t,
-              top: margin * t,
-              bottom: margin * t,
-              width: lerpDouble(collapsed, paneWidth, t),
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: width,
               child: Opacity(
                 opacity: t.clamp(0.0, 1.0),
                 // Nearly the whole ground, above even the reading strength
@@ -366,6 +379,9 @@ class OckerSideRailState extends State<OckerSideRail> {
                   borderRadius: radius,
                   scrimInset: 0,
                   groundOpacity: 0.97,
+                  liquid: true,
+                  // Flush with the left, top and foot: the rim is the open side.
+                  lensBeyond: EdgeInsets.fromLTRB(400 * scale, 400 * scale, 0, 400 * scale),
                   child: const SizedBox.expand(),
                 ),
               ),
@@ -388,7 +404,7 @@ class OckerSideRailState extends State<OckerSideRail> {
             // call). The fade lies in padding of its own, so a list at rest
             // stands exactly where it did.
             top: tk.flat ? top - _flatListFade * scale : top,
-            bottom: tk.flat ? _flatProfileBottom * scale + safeBottom + geometry.rowHeight : margin,
+            bottom: withProfile ? _flatProfileBottom * scale + safeBottom + geometry.rowHeight : 0,
             child: _FlatListEdges(
               fade: tk.flat ? _flatListFade * scale : 0,
               child: SingleChildScrollView(
@@ -456,7 +472,7 @@ class OckerSideRailState extends State<OckerSideRail> {
           // the rail is shut, and the current profile's name beside it once
           // it opens. It used to sit at the start page's top right (the
           // viewer's call).
-          if (tk.flat)
+          if (withProfile)
             Positioned(
               left: 0,
               right: 0,
@@ -482,6 +498,7 @@ class OckerSideRailState extends State<OckerSideRail> {
         ],
       ),
     );
+    return apple ? Opacity(opacity: t.clamp(0.0, 1.0), child: rail) : rail;
   }
 }
 
@@ -685,8 +702,14 @@ class _RailItemState extends State<_RailItem> {
                         // it read as the row's two halves not matching.
                         ? tk.ink(widget.active ? 1 : 0.62)
                         : (lit ? tk.ink(1) : tk.ink(0.55)),
-                    builder: (context, ink) =>
-                        AppIcon(widget.icon, size: g.iconSize, fill: navIconFill, weight: navIconWeight, color: ink),
+                    builder: (context, ink) => AppIcon(
+                      widget.icon,
+                      size: g.iconSize,
+                      fill: navIconFill,
+                      // Plebz: on the Apple TV a symbol as heavy as its word.
+                      weight: ockerGlasTv(context) ? 500 : navIconWeight,
+                      color: ink,
+                    ),
                   ),
                 ),
                 if (g.t > 0)
@@ -711,7 +734,18 @@ class _RailItemState extends State<_RailItem> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 softWrap: false,
-                                style: type.navWord(active: widget.active).copyWith(fontSize: 26 * scale, color: ink),
+                                style: type
+                                    .navWord(active: widget.active)
+                                    .copyWith(
+                                      fontSize: 26 * scale,
+                                      color: ink,
+                                      // Plebz: Apple's TV app sets its sidebar
+                                      // in medium, the place on show in bold;
+                                      // the regular read thin from the sofa.
+                                      fontWeight: ockerGlasTv(context)
+                                          ? (widget.active ? FontWeight.w700 : FontWeight.w500)
+                                          : null,
+                                    ),
                               ),
                             ),
                           ),

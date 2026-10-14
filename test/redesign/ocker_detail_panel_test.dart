@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/widgets/fitted_metadata_line.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/media/media_hub.dart';
 import 'package:plezy/media/media_item.dart';
@@ -219,18 +220,14 @@ void main() {
     expect(find.byKey(glassCreditsRuleKey), findsNothing, reason: 'no rule over nothing');
   });
 
-  testWidgets('glas: the facts lie on capsules of glass, without bullets between', (tester) async {
+  testWidgets('glas: the facts are words with dots between them, as Apple\'s TV app writes them', (tester) async {
     final film = testMediaItem(id: 'fakten', title: 'Fakten', summary: 'Kurz.', year: 2002, durationMs: 7740000);
     final films = MediaHub(id: 'filme', title: 'Filme', type: 'movie', items: [film]);
     bus.report(OckerFocused(item: film, hub: films, index: 0));
     await pumpPanel(tester, variant: AppThemeVariant.glas);
 
-    expect(find.ancestor(of: find.text('2002'), matching: find.byType(OckerGlassPlate)), findsOneWidget);
-    expect(
-      tester.widget<OckerGlassPlate>(find.ancestor(of: find.text('2002'), matching: find.byType(OckerGlassPlate))).firm,
-      isFalse,
-      reason: 'the band\'s glass, not a button\'s firmer one',
-    );
+    expect(find.ancestor(of: find.text('2002'), matching: find.byType(OckerGlassPlate)), findsNothing);
+    expect(find.text(FittedMetadataLine.flatSeparator), findsWidgets);
     expect(find.textContaining('•'), findsNothing);
   });
 
@@ -261,7 +258,7 @@ void main() {
     expect(lefts, [...lefts]..sort(), reason: 'year, kind, age, length, edition');
   });
 
-  testWidgets('glas: the genres each stand on a chip of their own', (tester) async {
+  testWidgets('glas: the genres follow the facts, joined by a comma', (tester) async {
     const film = MediaItem.plex(
       id: 'genres',
       kind: MediaKind.movie,
@@ -273,9 +270,9 @@ void main() {
     bus.report(OckerFocused(item: film, hub: films, index: 0));
     await pumpPanel(tester, variant: AppThemeVariant.glas);
 
-    expect(find.ancestor(of: find.text('Drama'), matching: find.byType(OckerGlassPlate)), findsOneWidget);
-    expect(find.ancestor(of: find.text('Krimi'), matching: find.byType(OckerGlassPlate)), findsOneWidget);
-    expect(find.text('Drama, Krimi'), findsNothing);
+    expect(find.ancestor(of: find.text('Drama'), matching: find.byType(OckerGlassPlate)), findsNothing);
+    expect(find.text('Drama'), findsOneWidget);
+    expect(find.text('Krimi'), findsOneWidget);
   });
 
   testWidgets('draws nothing that looks like a control', (tester) async {

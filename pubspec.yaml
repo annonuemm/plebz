@@ -1,7 +1,7 @@
 name: plezy
 description: "A beautiful Plex and Jellyfin client for Flutter"
 publish_to: "none"
-version: 1.23.1+783
+version: 1.24.0+804
 
 environment:
   # Dart floor stays 3.12: freezed 3.x emits `final` constructor parameters,
@@ -148,6 +148,9 @@ dependency_overrides:
     path: packages/sentry_flutter
 flutter:
   uses-material-design: true
+  # Liquid Glass's lens (see lib/theme/liquid_glass.dart).
+  shaders:
+    - shaders/liquid_glass.frag
   assets:
     - assets/plezy.png
     - assets/whats_new.md

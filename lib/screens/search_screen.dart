@@ -39,6 +39,7 @@ import '../widgets/person_search_row.dart';
 import '../utils/focus_utils.dart';
 import 'libraries/state_messages.dart';
 import 'main_screen.dart';
+import '../redesign/ocker_glas_look.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -683,6 +684,9 @@ class _SearchScreenState extends State<SearchScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
+        // Plebz: under Glas's floating tab bar the results run on beneath it,
+        // and end with its height instead.
+        bottom: !ockerGlasTouch(context),
         child: CustomScrollView(
           primary: false,
           slivers: [
@@ -745,12 +749,10 @@ class _SearchScreenState extends State<SearchScreen>
                 ),
               )
             else ...[
-              if (searchResults.isNotEmpty) ...[
-                if (_showFilterChips) _buildFilterChips(),
-                _buildResultsList(context),
-              ],
+              if (searchResults.isNotEmpty) ...[if (_showFilterChips) _buildFilterChips(), _buildResultsList(context)],
               if (_unownedCatalogResults.isNotEmpty) ..._buildCatalogSection(context),
             ],
+            const SliverFloatingBarSpace(),
           ],
         ),
       ),

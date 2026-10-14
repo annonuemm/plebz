@@ -5,6 +5,7 @@ import '../focus/focusable_button.dart';
 import '../focus/focusable_text_field.dart';
 import 'app_icon.dart';
 import 'pill_input_decoration.dart';
+import '../redesign/ocker_glas_look.dart';
 
 /// The pill search field the search screens put above their results, with the
 /// clear affordance that appears once there is text: RIGHT out of the field
@@ -61,7 +62,8 @@ class _SearchInputFieldState extends State<SearchInputField> {
   Widget build(BuildContext context) {
     final hasText = widget.controller.text.isNotEmpty;
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+      // Plebz: past Glas's floating rail in landscape on Apple's handhelds.
+      padding: EdgeInsetsDirectional.only(start: 16 + ockerFloatingStartInset(context), end: 16, bottom: 16),
       child: Stack(
         alignment: Alignment.centerRight,
         children: [

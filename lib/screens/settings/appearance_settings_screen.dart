@@ -14,6 +14,7 @@ import '../../services/settings_service.dart' hide ThemeMode;
 import '../../theme/mono_theme.dart' show isRedesignVariant, redesignOfferedHere, supportedAppThemeVariant;
 import '../../focus/focusable_slider.dart';
 import '../../services/device_performance.dart';
+import '../../theme/liquid_glass.dart';
 import '../../utils/dialogs.dart';
 import '../../utils/platform_detector.dart';
 import '../../utils/snackbar_helper.dart';
@@ -89,6 +90,49 @@ class AppearanceSettingsScreen extends StatelessWidget {
                     )
                   : const SizedBox.shrink(),
             ),
+            // Glass that blurs what lies behind it: the Apple builds only, and
+            // not on the reduced tier, where it never runs.
+            SettingValueBuilder<AppThemeVariant>(
+              pref: PlebzPrefs.appThemeVariant,
+              builder: (context, variant, _) =>
+                  supportedAppThemeVariant(variant) == AppThemeVariant.glas && OckerLiquidGlass.offerable
+                  ? SettingSwitchTile(
+                      pref: PlebzPrefs.glasLiquid,
+                      icon: Symbols.blur_on_rounded,
+                      title: t.settings.glasLiquid,
+                      subtitle: t.settings.glasLiquidDescription,
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            // Plebz: where there is no Liquid Glass, the fake glass that stands
+            // in for it — or, switched off, the flat surfaces Apple's builds
+            // show with Liquid Glass off.
+            if (!OckerLiquidGlass.offeredHere)
+              SettingValueBuilder<AppThemeVariant>(
+                pref: PlebzPrefs.appThemeVariant,
+                builder: (context, variant, _) => supportedAppThemeVariant(variant) == AppThemeVariant.glas
+                    ? SettingSwitchTile(
+                        pref: PlebzPrefs.glasFakeGlass,
+                        icon: Symbols.layers_rounded,
+                        title: t.settings.glasFakeGlass,
+                        subtitle: t.settings.glasFakeGlassDescription,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            // Plebz: Glas hides its shut rail after Apple's TV app; this keeps
+            // the symbols in view. The television's rail only.
+            if (PlatformDetector.isTV())
+              SettingValueBuilder<AppThemeVariant>(
+                pref: PlebzPrefs.appThemeVariant,
+                builder: (context, variant, _) => supportedAppThemeVariant(variant) == AppThemeVariant.glas
+                    ? SettingSwitchTile(
+                        pref: PlebzPrefs.glasRailSymbolsPinned,
+                        icon: Symbols.side_navigation_rounded,
+                        title: t.settings.glasRailSymbols,
+                        subtitle: t.settings.glasRailSymbolsDescription,
+                      )
+                    : const SizedBox.shrink(),
+              ),
             // The colours behind the television layout's screens; there is no
             // such ground on a phone, a tablet or the Mac.
             if (PlatformDetector.isTV())
@@ -126,8 +170,18 @@ class AppearanceSettingsScreen extends StatelessWidget {
                       )
                     : const SizedBox.shrink(),
               ),
+            // Plebz: the rows glide as on the Apple TV, which always does.
+            if (PlatformDetector.isTV() && !PlatformDetector.isAppleTV())
+              SettingSwitchTile(
+                pref: PlebzPrefs.smoothScroll,
+                icon: Symbols.swipe_vertical_rounded,
+                title: t.settings.smoothScroll,
+                subtitle: t.settings.smoothScrollDescription,
+              ),
             if (PlatformDetector.isAutomotive()) _displayScaleSelector(),
-            if (Platform.isAndroid) _visualEffectsSelector(context),
+            // Plebz: on iPhone, iPad and Apple TV too — nothing is detected
+            // there, but "reduced" chosen by hand still lightens the effects.
+            if (Platform.isAndroid || Platform.isIOS) _visualEffectsSelector(context),
           ],
         ),
 

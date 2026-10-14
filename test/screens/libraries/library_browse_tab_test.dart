@@ -674,8 +674,9 @@ void main() {
           expect(page.location.center.dy, closeTo(page.band.center.dy, 1));
           expect(page.location.left, greaterThan(page.band.right));
         }
-        expect(find.text('MERKLISTE · PLEX'), findsNothing, reason: 'the watchlist page is gone by now');
-        expect(find.text('FILME 4K'), findsOneWidget);
+        expect(find.text('Merkliste · Plex'), findsNothing, reason: 'the watchlist page is gone by now');
+        // In sentence case: Glas writes its headings as Apple's apps do.
+        expect(find.text('Filme 4K'), findsOneWidget);
 
         // The letter bar beside the last column of posters, clear of the
         // describing column.

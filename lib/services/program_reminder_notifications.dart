@@ -43,8 +43,9 @@ class ProgramReminderNotice {
 
 /// Plebz: guide reminders as system notifications on phones and tablets, so
 /// one comes when Plebz is closed too. Android posts them from alarms
-/// (`ProgramReminderAlarms.kt`); the app hands over the whole list whenever it
-/// changes and asks, on coming back, which were posted and which was tapped.
+/// (`ProgramReminderAlarms.kt`), iPhone and iPad schedule local notifications
+/// (`ProgramRemindersPlugin.swift`); the app hands over the whole list whenever
+/// it changes and asks, on coming back, which were posted and which was tapped.
 ///
 /// A television keeps the reminder inside the app: Google TV hardly shows
 /// another app's notifications.
@@ -58,7 +59,11 @@ class ProgramReminderNotifications {
   @visibleForTesting
   static bool? debugSupportedOverride;
 
-  bool get supported => debugSupportedOverride ?? (Platform.isAndroid && !PlatformDetector.isTvDevice());
+  bool get supported =>
+      debugSupportedOverride ??
+      ((Platform.isAndroid && !PlatformDetector.isTvDevice()) ||
+          // iPhone and iPad: `ios/Runner/ProgramRemindersPlugin.swift`.
+          (Platform.isIOS && !PlatformDetector.isAppleTV()));
 
   /// [onOpened] runs when a notification is tapped while the app is running;
   /// [takeOpened] then names the reminder.

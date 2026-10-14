@@ -5,7 +5,9 @@ import 'package:plezy/providers/catalog_sources_provider.dart';
 import 'package:plezy/providers/theme_provider.dart';
 import 'package:plezy/redesign/ocker_skin.dart' show debugOckerLayoutOnThisHost;
 import 'package:plezy/screens/settings/appearance_settings_screen.dart';
+import 'package:plezy/services/device_performance.dart';
 import 'package:plezy/services/settings_service.dart';
+import 'package:plezy/theme/liquid_glass.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/utils/platform_detector.dart';
 import 'package:provider/provider.dart';
@@ -54,6 +56,8 @@ void main() {
   });
 
   testWidgets('the accent colour is asked only while glass is the theme', (tester) async {
+    OckerLiquidGlass.debugOfferedHere = true;
+    addTearDown(() => OckerLiquidGlass.debugOfferedHere = null);
     // A television: the glass focus's own switches are asked only where
     // something is ever focused.
     TvDetectionService.debugSetAppleTVOverride(true);
@@ -78,12 +82,66 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(t.settings.glasAccent), findsNothing);
     expect(find.text(t.settings.glasSmoothFocus), findsNothing);
+    expect(find.text(t.settings.glasLiquid), findsNothing);
 
     await SettingsService.instanceOrNull!.write(PlebzPrefs.appThemeVariant, AppThemeVariant.glas);
     await tester.pumpAndSettle();
     expect(find.text(t.settings.glasAccent), findsOneWidget);
     expect(find.text(t.settings.glasAccentEisblau), findsOneWidget, reason: 'the accent on show by default');
     expect(find.text(t.settings.glasSmoothFocus), findsOneWidget, reason: 'the glide, apart from the effects');
+    expect(find.text(t.settings.glasLiquid), findsOneWidget, reason: 'an Apple build');
+  });
+
+  testWidgets('liquid glass is never offered in the APK', (tester) async {
+    OckerLiquidGlass.debugOfferedHere = false;
+    addTearDown(() => OckerLiquidGlass.debugOfferedHere = null);
+    await SettingsService.instanceOrNull!.write(PlebzPrefs.appThemeVariant, AppThemeVariant.glas);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1000, 3000);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    debugRedesignOfferedHere = true;
+    addTearDown(() => debugRedesignOfferedHere = null);
+
+    final theme = ThemeProvider();
+    addTearDown(theme.dispose);
+    await tester.pumpWidget(
+      ChangeNotifierProvider<ThemeProvider>.value(
+        value: theme,
+        child: MaterialApp(theme: monoTheme(dark: true), home: const AppearanceSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(t.settings.glasAccent), findsOneWidget, reason: 'glass is the theme');
+    expect(find.text(t.settings.glasLiquid), findsNothing);
+  });
+
+  testWidgets('liquid glass is not offered on the reduced tier, where it never runs', (tester) async {
+    OckerLiquidGlass.debugOfferedHere = true;
+    addTearDown(() => OckerLiquidGlass.debugOfferedHere = null);
+    DevicePerformance.debugReset(override: VisualEffectsSetting.reduced);
+    addTearDown(DevicePerformance.debugReset);
+    await SettingsService.instanceOrNull!.write(PlebzPrefs.appThemeVariant, AppThemeVariant.glas);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1000, 3000);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    debugRedesignOfferedHere = true;
+    addTearDown(() => debugRedesignOfferedHere = null);
+
+    final theme = ThemeProvider();
+    addTearDown(theme.dispose);
+    await tester.pumpWidget(
+      ChangeNotifierProvider<ThemeProvider>.value(
+        value: theme,
+        child: MaterialApp(theme: monoTheme(dark: true), home: const AppearanceSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(t.settings.glasAccent), findsOneWidget, reason: 'glass is the theme');
+    expect(find.text(t.settings.glasLiquid), findsNothing);
   });
 
   testWidgets('Flach offers its colour profiles; one sets accent and look, a ground of your own leaves it', (

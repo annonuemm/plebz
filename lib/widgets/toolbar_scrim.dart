@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'rasterized_gradient.dart';
+import '../redesign/ocker_glas_look.dart';
 
 /// Top-edge fade behind a toolbar that floats over content, keeping its
 /// glyphs legible against artwork without a solid chrome bar.
@@ -31,7 +32,13 @@ class ToolbarScrim extends StatelessWidget {
         stops: const [0.0, 0.3, 0.6, 1.0],
       ),
       child: Padding(
-        padding: EdgeInsets.only(top: statusBarHeight + 8, left: 16, right: 16, bottom: 16),
+        // Plebz: past Glas's floating rail in landscape on Apple's handhelds.
+        padding: EdgeInsetsDirectional.only(
+          top: statusBarHeight + 8,
+          start: 16 + ockerFloatingStartInset(context),
+          end: 16,
+          bottom: 16,
+        ),
         child: child,
       ),
     );

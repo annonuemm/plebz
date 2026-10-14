@@ -140,6 +140,14 @@ void main() {
       expect(more, isEmpty);
     });
 
+    test('an iPad under Glas holds every place: no "Mehr"', () {
+      final all = without({});
+      final (:bar, :more) = splitBottomNavigationTabs(all, maxSlots: all.length);
+
+      expect(_ids(bar), _ids(all));
+      expect(more, isEmpty);
+    });
+
     test('a missing destination lets the next one move up', () {
       final (:bar, :more) = splitBottomNavigationTabs(without({NavigationTabId.watchlist}));
 
@@ -183,6 +191,18 @@ void main() {
       );
 
       expect(_ids(tabs), contains(NavigationTabId.settings));
+    });
+
+    test('an iPad under Glas keeps Settings among its places', () {
+      final tabs = mainScreenBottomNavigationTabs(
+        visibleTabs: allNavigationTabs,
+        isMobile: true,
+        isOffline: false,
+        currentTab: NavigationTabId.discover,
+        keepSettings: true,
+      );
+
+      expect(_ids(tabs).last, NavigationTabId.settings);
     });
 
     test('non-mobile returns all visible tabs unchanged', () {

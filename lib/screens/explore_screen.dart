@@ -52,6 +52,7 @@ import '../redesign/ocker_status_bar_ground.dart';
 import '../theme/mono_tokens.dart';
 import '../redesign/ocker_submenu.dart';
 import 'package:collection/collection.dart';
+import '../redesign/ocker_glas_look.dart';
 
 /// The Explore tab: watchlist + discover rows from the active external
 /// catalog source (Trakt). Only mounted when a source is connected (the tab
@@ -415,14 +416,19 @@ class ExploreScreenState extends State<ExploreScreen>
       child: Row(
         mainAxisSize: .min,
         children: [
-          Text(
-            active.displayName.toUpperCase(),
-            style: base?.copyWith(
-              fontFamily: tk.monoFontFamily,
-              fontSize: (base.fontSize ?? 20) * 0.74,
-              fontWeight: FontWeight.w400,
-              letterSpacing: 1.9,
-              color: base.color ?? tk.ink(1),
+          Flexible(
+            child: Text(
+              active.displayName.toUpperCase(),
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+              style: base?.copyWith(
+                fontFamily: tk.monoFontFamily,
+                fontSize: (base.fontSize ?? 20) * 0.74,
+                fontWeight: FontWeight.w400,
+                letterSpacing: 1.9,
+                color: base.color ?? tk.ink(1),
+              ),
             ),
           ),
           const SizedBox(width: 7),
@@ -448,7 +454,17 @@ class ExploreScreenState extends State<ExploreScreen>
               children: [
                 CatalogSourceLogo(active.id, size: 22),
                 const SizedBox(width: 8),
-                Text(active.displayName, style: textStyle ?? Theme.of(context).textTheme.titleLarge),
+                // A narrow phone's bar has the trailer stage beside refresh: a
+                // long source name gives way with an ellipsis.
+                Flexible(
+                  child: Text(
+                    active.displayName,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                    style: textStyle ?? Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
                 const SizedBox(width: 4),
                 const AppIcon(Symbols.arrow_drop_down_rounded, fill: 1, size: 24),
               ],
@@ -526,6 +542,14 @@ class ExploreScreenState extends State<ExploreScreen>
           key: _actionBarKey,
           onNavigateDown: searchFocusNode.requestFocus,
           actions: [
+            // Plebz: the trailer stage's door off the television too — the rail
+            // and the TV toolbar were the only ones. A glyph here, as a
+            // phone's app bar has room for: its name is the tooltip.
+            FocusableAction(
+              icon: Symbols.theaters_rounded,
+              tooltip: t.trailerStage.title,
+              onPressed: _openTrailerStage,
+            ),
             FocusableAction(icon: Symbols.refresh_rounded, tooltip: t.common.refresh, onPressed: manualRefresh),
           ],
         ),
@@ -556,7 +580,7 @@ class ExploreScreenState extends State<ExploreScreen>
 
     Widget content;
     if (searchIsActive) {
-      content = scroll([_buildSearchResults()]);
+      content = scroll([_buildSearchResults(), const SliverFloatingBarSpace()]);
     } else if (rowHubs.isEmpty && explore.isLoading) {
       content = scroll(const [SliverFillRemaining(child: Center(child: CircularProgressIndicator()))]);
     } else if (rowHubs.isEmpty && explore.state == ExploreLoadState.error) {
@@ -599,6 +623,7 @@ class ExploreScreenState extends State<ExploreScreen>
             ),
           ),
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
+        const SliverFloatingBarSpace(),
       ]);
     }
 

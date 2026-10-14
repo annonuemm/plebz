@@ -136,7 +136,8 @@ void main() {
     expect(flat.gap, greaterThan(0), reason: 'air between the artwork and the ring');
     expect(flat.opacity, 1);
     expect(flatScale, FocusTheme.flatPosterFocusScale);
-    expect(glasScale, FocusTheme.focusScale);
+    // Glas has taken Flach's ring and growth after Apple's TV app (Plebz).
+    expect(glasScale, FocusTheme.flatPosterFocusScale);
   });
 
   test('Flach names a row in sentence case and keeps the mono label for eyebrows only', () {
@@ -184,9 +185,10 @@ void main() {
     );
     expect((outline.decoration! as BoxDecoration).border, isNotNull);
 
+    // Glas writes its facts as Flach does since it follows Apple's TV app.
     await pump(_glas());
-    expect(find.text(FittedMetadataLine.flatSeparator), findsNothing);
-    expect(find.byType(OckerGlassPlate), findsNWidgets(3));
+    expect(find.text(FittedMetadataLine.flatSeparator), findsNWidgets(2));
+    expect(find.byType(OckerGlassPlate), findsNothing);
   });
 
   group('the facts line ranks its parts under Flach', () {
@@ -251,10 +253,10 @@ void main() {
       expect(find.text(', '), findsNothing);
     });
 
-    testWidgets('Glas keeps every genre on a capsule of its own', (tester) async {
+    testWidgets('Glas ranks them as Flach does, since it follows Apple\'s TV app', (tester) async {
       await pump(tester, _glas());
-      expect(find.text(', '), findsNothing);
-      expect(find.byType(OckerGlassPlate), findsNWidgets(4));
+      expect(find.text(', '), findsOneWidget);
+      expect(find.byType(OckerGlassPlate), findsNothing);
     });
   });
 

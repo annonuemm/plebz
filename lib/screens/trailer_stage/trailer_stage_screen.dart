@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -28,6 +29,8 @@ import '../../widgets/loading_indicator_box.dart';
 import '../../widgets/optimized_media_image.dart';
 import '../media_detail_screen.dart';
 import 'trailer_stage_setup_screen.dart';
+import '../../mpv/player/video_rect_support.dart';
+import '../../widgets/video_surface_hole.dart';
 
 /// One trailer after another, full screen, for whatever the viewer asked for.
 ///
@@ -263,10 +266,19 @@ class _TrailerStageScreenState extends State<TrailerStageScreen> with WidgetsBin
   Widget build(BuildContext context) {
     final player = _player;
     return Scaffold(
-      backgroundColor: Colors.black,
+      // Android's players draw the picture inline (see inlineSurface below);
+      // everywhere else it lies behind the Flutter view, as in the full-screen
+      // player, and a black ground here hid it — sound, black screen (Plebz).
+      backgroundColor: player == null || Platform.isAndroid ? Colors.black : Colors.transparent,
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // Plebz: on Apple's devices the picture is a surface behind the
+          // whole Flutter view, and a transparent page is not enough — the
+          // redesign lays its ground under every page, and that ground hid it
+          // (sound, a black screen). Cleared down to the window, as the guide's
+          // preview does.
+          if (player is VideoRectTarget && player is! VideoTextureTarget) const VideoSurfaceHole(),
           if (player != null)
             Video(player: player, controls: (_) => _buildOverlay(context))
           else
@@ -281,6 +293,7 @@ class _TrailerStageScreenState extends State<TrailerStageScreen> with WidgetsBin
 
   Widget _buildOverlay(BuildContext context) {
     final scale = TvLayoutConstants.scaleOf(context);
+    final safe = MediaQuery.paddingOf(context);
     final entry = _current;
     return Stack(
       fit: StackFit.expand,
@@ -293,7 +306,13 @@ class _TrailerStageScreenState extends State<TrailerStageScreen> with WidgetsBin
           right: 0,
           child: IgnorePointer(
             child: Container(
-              padding: EdgeInsets.fromLTRB(48 * scale, 36 * scale, 48 * scale, 48 * scale),
+              // Plebz: clear of a phone's clock, camera and rounded corners.
+              padding: EdgeInsets.fromLTRB(
+                48 * scale + safe.left,
+                36 * scale + safe.top,
+                48 * scale + safe.right,
+                48 * scale,
+              ),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -332,7 +351,8 @@ class _TrailerStageScreenState extends State<TrailerStageScreen> with WidgetsBin
       color: Colors.white,
       fontSize: metadataSize,
       fontWeight: FontWeight.w700,
-      letterSpacing: isOcker(context) ? metadataSize * 0.07 : 0.1,
+      // Plebz: Glas on the Apple TV writes its facts as words, untracked.
+      letterSpacing: isOcker(context) && !ockerGlasOnly(context) ? metadataSize * 0.07 : 0.1,
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,7 +365,7 @@ class _TrailerStageScreenState extends State<TrailerStageScreen> with WidgetsBin
         ),
         SizedBox(height: 13 * scale),
         FittedMetadataLine(
-          textStyle: monoFacts(context, textStyle),
+          textStyle: ockerGlasOnly(context) ? textStyle : monoFacts(context, textStyle),
           parts: parts,
           // Boxed in every theme — under "Glas" capsules of glass — like the
           // facts on the detail page and the spotlight.
@@ -361,8 +381,18 @@ class _TrailerStageScreenState extends State<TrailerStageScreen> with WidgetsBin
 
   Widget _buildControls(BuildContext context, double scale) {
     final entry = _current;
+    final safe = MediaQuery.paddingOf(context);
+    // Plebz: on an upright phone the four words do not fit in a row; there
+    // the controls are their glyphs, each word its tooltip.
+    final compact = MediaQuery.sizeOf(context).width < 600;
     return Container(
-      padding: EdgeInsets.fromLTRB(48 * scale, 48 * scale, 48 * scale, 36 * scale),
+      // Plebz: clear of a phone's home indicator and rounded corners.
+      padding: EdgeInsets.fromLTRB(
+        48 * scale + safe.left,
+        48 * scale,
+        48 * scale + safe.right,
+        36 * scale + safe.bottom,
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
@@ -383,19 +413,27 @@ class _TrailerStageScreenState extends State<TrailerStageScreen> with WidgetsBin
                 icon: _isPlaying ? Symbols.pause_rounded : Symbols.play_arrow_rounded,
                 label: _isPlaying ? t.common.pause : t.common.play,
                 autofocus: true,
+                compact: compact,
                 onPressed: entry == null ? null : () => unawaited(_togglePause()),
               ),
               _stageAction(
                 icon: Symbols.skip_next_rounded,
                 label: t.trailerStage.nextTrailer,
+                compact: compact,
                 onPressed: _exhausted ? null : () => unawaited(_advance()),
               ),
               _stageAction(
                 icon: Symbols.info_rounded,
                 label: t.trailerStage.openDetail,
+                compact: compact,
                 onPressed: entry == null ? null : _openDetail,
               ),
-              _stageAction(icon: Symbols.tune_rounded, label: t.trailerStage.chooseAgain, onPressed: _chooseAgain),
+              _stageAction(
+                icon: Symbols.tune_rounded,
+                label: t.trailerStage.chooseAgain,
+                compact: compact,
+                onPressed: _chooseAgain,
+              ),
             ],
           ),
         ],
@@ -484,12 +522,14 @@ class _TrailerStageScreenState extends State<TrailerStageScreen> with WidgetsBin
 }
 
 /// One control on the stage: an icon with its word, drawn as a pill that
-/// fills white when the remote reaches it.
+/// fills white when the remote reaches it. [compact]: the glyph alone, the
+/// word its tooltip and its name for a screen reader (Plebz, upright phones).
 FocusableAction _stageAction({
   required IconData icon,
   required String label,
   VoidCallback? onPressed,
   bool autofocus = false,
+  bool compact = false,
 }) => FocusableAction(
   debugLabel: 'trailer_stage_$label',
   autofocus: autofocus,
@@ -502,6 +542,25 @@ FocusableAction _stageAction({
     // The action bar hands a builder's face only focus and a cursor; a click
     // or a tap is the face's own to answer (as every other builder's button
     // does) — the pill answered neither.
+    if (compact) {
+      return Tooltip(
+        message: label,
+        child: Semantics(
+          label: label,
+          button: true,
+          excludeSemantics: true,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onPressed,
+            child: Container(
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+              child: Icon(icon, size: 22, color: foreground),
+            ),
+          ),
+        ),
+      );
+    }
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onPressed,

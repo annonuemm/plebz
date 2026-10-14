@@ -19,6 +19,7 @@ import '../../../widgets/skeleton_media_card.dart';
 import '../../../widgets/sliver_child_memo.dart';
 import '../../main_screen.dart';
 import 'base_library_tab.dart';
+import '../../../redesign/ocker_glas_look.dart';
 
 /// Library tabs whose whole body is one paginated grid of media cards.
 ///
@@ -119,6 +120,7 @@ abstract class PaginatedCardGridTabState<T extends Object, W extends BaseLibrary
             slivers: [
               SliverOverlapInjector(handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context)),
               _buildItemsSliver(viewMode, density, fullCardLayout: fullCardLayout),
+              const SliverFloatingBarSpace(),
             ],
           ),
         );
@@ -128,7 +130,8 @@ abstract class PaginatedCardGridTabState<T extends Object, W extends BaseLibrary
 
   EdgeInsets get _effectivePadding {
     final base = GridLayoutConstants.gridPadding;
-    return base.copyWith(top: base.top + _focusDecorationPadding);
+    // Plebz: past Glas's floating rail in landscape on Apple's handhelds.
+    return base.copyWith(top: base.top + _focusDecorationPadding, left: base.left + ockerFloatingStartInset(context));
   }
 
   Widget _buildItemsSliver(ViewMode viewMode, int density, {required bool fullCardLayout}) {

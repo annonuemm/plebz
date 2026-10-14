@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/device_performance.dart';
+import '../services/settings_service.dart';
 import '../redesign/ocker_skin.dart' show ockerScale;
 import '../theme/flat_focus_ring.dart';
 import '../theme/glass_focus_decoration.dart';
@@ -25,7 +26,8 @@ class FocusTheme {
   /// growth, and the ring around it stays thin.
   static double posterFocusScaleFor(BuildContext context) {
     final tk = Theme.of(context).extension<MonoTokens>();
-    return focusScaleFor(context, tk?.flat == true ? flatPosterFocusScale : focusScale);
+    // Plebz: Glas too, with the white outline (focusDecoration).
+    return focusScaleFor(context, tk?.glass == true ? flatPosterFocusScale : focusScale);
   }
 
   static const double flatPosterFocusScale = 1.06;
@@ -69,8 +71,15 @@ class FocusTheme {
   /// focus border on every press and reads as input lag next to the launcher.
   /// Successive presses (including hold-repeats) retarget the animation from
   /// wherever the row currently is, so a fast series still glides continuously.
+  ///
+  /// Plebz: an Android television glides as the Apple TV does unless
+  /// "Weiches Scrollen" is off ([PlebzPrefs.smoothScroll], the user's call:
+  /// Plezy's quick step read as a jump).
   static Duration navigationScrollDuration() =>
-      PlatformDetector.isAppleTV() ? const Duration(milliseconds: 500) : const Duration(milliseconds: 150);
+      PlatformDetector.isAppleTV() ||
+          (PlatformDetector.isTV() && (SettingsService.instanceOrNull?.read(PlebzPrefs.smoothScroll) ?? true))
+      ? const Duration(milliseconds: 500)
+      : const Duration(milliseconds: 150);
 
   /// [radii] overrides [borderRadius] when per-corner radii are needed
   /// (M3E grouped cards: large outer / small inner corners).
@@ -88,7 +97,10 @@ class FocusTheme {
     // Under "Redesign – Flach" (Plebz) a plain white frame — unless the
     // caller names a colour of its own. Aligned as the caller asks: a row in
     // a list draws it inside, where its card does not clip it away.
-    if (tk != null && tk.flat && color == null) {
+    // Plebz: Glas rings a picture as Apple's TV app does — a white outline
+    // with air between it and the artwork, Flach's ring.
+    final glasRing = tk != null && tk.glass && color == null && borderStrokeAlign == BorderSide.strokeAlignOutside;
+    if (tk != null && (tk.flat || glasRing) && color == null) {
       // Around a picture — a ring outside its edge — the design's thin ring
       // with air between it and the artwork.
       if (borderStrokeAlign == BorderSide.strokeAlignOutside) {

@@ -22,6 +22,7 @@ import '../live_tv_refresh_mixin.dart';
 import '../live_tv_server_iteration.dart';
 import '../livetv_recording_actions.dart';
 import '../livetv_styles.dart';
+import '../../../redesign/ocker_glas_look.dart';
 
 class RecordingsTab extends StatefulWidget {
   final VoidCallback? onNavigateUp;
@@ -259,7 +260,8 @@ class RecordingsTabState extends State<RecordingsTab> with WidgetsBindingObserve
     }
 
     return ListView(
-      padding: const EdgeInsets.only(bottom: 8),
+      // Plebz: clear of Glas's floating tab bar at the foot.
+      padding: EdgeInsets.only(bottom: 8 + ockerFloatingBottomInset(context)),
       children: [
         if (grabs.isNotEmpty)
           SettingsGroup(

@@ -44,7 +44,12 @@ Future<void> showSportMatchSheet(
   return OverlaySheetController.showAdaptive<void>(
     context,
     alignment: Alignment.center,
-    constraints: BoxConstraints(maxWidth: (size.width * 0.62).clamp(320.0, 1100.0), maxHeight: size.height * 0.86),
+    // Plebz: a phone's window the screen's width — at three fifths of it the
+    // clubs' names broke mid-word.
+    constraints: BoxConstraints(
+      maxWidth: size.width < 600 ? size.width : (size.width * 0.62).clamp(320.0, 1100.0),
+      maxHeight: size.height * 0.86,
+    ),
     builder: (sheetContext) => Padding(
       padding: EdgeInsets.symmetric(horizontal: 36 * look.scale, vertical: 30 * look.scale),
       child: SportMatchDetail(

@@ -246,10 +246,10 @@ void main() {
     }
   });
 
-  testWidgets('under glass every chip is set bold, whatever weight the caller asked for', (tester) async {
-    // A thin fact on one card and a bold one on the next read as two
-    // different things; the capsules of glass all carry the same weight.
-    Future<FontWeight?> weightOf2019({required AppThemeVariant variant, required bool chipped}) async {
+  testWidgets('both redesigns write a chipped line as ranked words; Original keeps the boxes', (tester) async {
+    // Plebz: "Flach" from the start, Glas since it follows Apple's TV app —
+    // three boxes read as three buttons that are not.
+    Future<FontWeight?> weightOf2019({required AppThemeVariant variant}) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: monoTheme(dark: true, variant: variant),
@@ -257,7 +257,7 @@ void main() {
             body: FittedMetadataLine(
               textStyle: _style.copyWith(fontWeight: FontWeight.w400),
               parts: _parts,
-              chipped: chipped,
+              chipped: true,
             ),
           ),
         ),
@@ -267,9 +267,12 @@ void main() {
       return tester.widget<Text>(find.text('2019')).style?.fontWeight;
     }
 
-    expect(await weightOf2019(variant: AppThemeVariant.glas, chipped: true), FontWeight.w700);
-    expect(await weightOf2019(variant: AppThemeVariant.glas, chipped: false), FontWeight.w400, reason: 'no chip');
-    expect(await weightOf2019(variant: AppThemeVariant.standard, chipped: true), FontWeight.w400, reason: 'no glass');
+    for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+      expect(await weightOf2019(variant: variant), FontWeight.w600, reason: '${variant.name}: the facts semibold');
+      expect(find.text(FittedMetadataLine.flatSeparator), findsWidgets, reason: '${variant.name}: dots between');
+    }
+    expect(await weightOf2019(variant: AppThemeVariant.standard), FontWeight.w400, reason: 'the caller\'s weight');
+    expect(find.text(FittedMetadataLine.separator), findsNothing, reason: 'the boxes separate');
   });
 
   group('as outlined boxes', () {

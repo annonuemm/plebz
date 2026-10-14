@@ -22,6 +22,7 @@ import '../live_tv_actions_mixin.dart';
 import '../live_tv_show_schedule_screen.dart';
 import '../live_tv_refresh_mixin.dart';
 import '../live_tv_server_iteration.dart';
+import '../../../redesign/ocker_glas_look.dart';
 
 class WhatsOnTab extends StatefulWidget {
   final List<LiveTvChannel> channels;
@@ -176,7 +177,8 @@ class WhatsOnTabState extends State<WhatsOnTab>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      // Plebz: clear of Glas's floating tab bar at the foot.
+      padding: EdgeInsets.fromLTRB(0, 8, 0, 8 + ockerFloatingBottomInset(context)),
       clipBehavior: Clip.none,
       itemCount: _hubs.length,
       itemBuilder: (context, index) {

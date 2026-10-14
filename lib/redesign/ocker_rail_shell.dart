@@ -1,6 +1,11 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
+
+import '../theme/liquid_glass.dart';
+import '../widgets/app_icon.dart';
+import '../widgets/side_navigation_rail.dart' show SideNavigationRailState;
 
 import '../media/ids.dart';
 import '../providers/multi_server_provider.dart';
@@ -121,7 +126,7 @@ class _OckerRailShellState extends State<OckerRailShell> {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    final railWidth = OckerSideRail.collapsedWidth(context);
+    final railWidth = OckerSideRail.reservedWidth(context);
 
     return SettingValueBuilder<bool>(
       pref: PlebzPrefs.ultraBlurFor(flat: tokens(context).flat),
@@ -164,12 +169,17 @@ class _OckerRailShellState extends State<OckerRailShell> {
       type: MaterialType.transparency,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final contentWidth = (constraints.maxWidth - railWidth).clamp(0.0, double.infinity).toDouble();
+          // Plebz: Glas on the Apple TV hides the shut rail (OckerSideRail), so
+          // the page has the whole width, dims while the rail is open over it,
+          // and a capsule at its top left says where one is — Apple's TV app.
+          final apple = ockerGlasHiddenRail(context);
+          final contentLeft = railWidth;
+          final contentWidth = (constraints.maxWidth - contentLeft).clamp(0.0, double.infinity).toDouble();
           return Stack(
             fit: StackFit.expand,
             children: [
               Positioned(
-                left: railWidth,
+                left: contentLeft,
                 top: 0,
                 bottom: 0,
                 width: contentWidth,
@@ -209,6 +219,19 @@ class _OckerRailShellState extends State<OckerRailShell> {
                   ),
                 ),
               ),
+              if (apple) ...[
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AnimatedOpacity(
+                      opacity: widget.expanded ? 1 : 0,
+                      duration: SideNavigationRailState.expandDuration,
+                      child: ColoredBox(color: tokens(context).bg.withValues(alpha: 0.55)),
+                    ),
+                  ),
+                ),
+                if (widget.tabs.firstWhereOrNull((tab) => tab.id == widget.selectedTab) case final tab?)
+                  _ApplePlace(tab: tab, visible: !widget.expanded),
+              ],
               Positioned(
                 left: 0,
                 top: 0,
@@ -265,4 +288,123 @@ class _Chrome extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Where one is, while Glas's rail is hidden on the Apple TV (Plebz): a small
+/// capsule of glass at the page's top left with the destination's symbol and
+/// name, a chevron before it saying the rail lies that way — as Apple's TV
+/// app shows its section ("‹ Apple TV"). Not a control: LEFT or BACK opens
+/// the rail as they always did.
+class _ApplePlace extends StatelessWidget {
+  const _ApplePlace({required this.tab, required this.visible});
+
+  final NavigationTab tab;
+  final bool visible;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = tokens(context);
+    final scale = ockerScale(context);
+    final word = OckerType.of(context).navWord(active: true).copyWith(color: tk.ink(1));
+    final height = 56 * scale;
+    return Positioned(
+      top: MediaQuery.paddingOf(context).top + OckerLayout.headerTop / 2 * scale,
+      left: ockerFlushLeftInset(context),
+      child: IgnorePointer(
+        child: ValueListenableBuilder<int>(
+          valueListenable: OckerHidesPlace.hiding,
+          builder: (context, hiding, child) => AnimatedOpacity(
+            opacity: visible && hiding == 0 ? 1 : 0,
+            duration: SideNavigationRailState.expandDuration,
+            child: child,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppIcon(Symbols.arrow_back_ios_new_rounded, size: 26 * scale, weight: 500, color: tk.ink(0.72)),
+              SizedBox(width: 10 * scale),
+              SizedBox(
+                height: height,
+                child: OckerGlass(
+                  borderRadius: BorderRadius.circular(height / 2),
+                  scrimInset: 0,
+                  liquid: true,
+                  lensThickness: OckerLiquidGlass.bubbleThickness,
+                  lensStrength: OckerLiquidGlass.bubbleStrength,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 22 * scale),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppIcon(tab.icon, size: 30 * scale, weight: 500, color: tk.ink(1)),
+                        SizedBox(width: 12 * scale),
+                        Text(tab.getLabel(), maxLines: 1, style: word),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// While [hide] holds, the place capsule on the Apple TV ([_ApplePlace])
+/// stands aside (Plebz): for a page or a column that shows its own heading at
+/// the top left — the settings' topic column, the libraries' column, the
+/// guide's group column — which the capsule would otherwise cover.
+class OckerHidesPlace extends StatefulWidget {
+  const OckerHidesPlace({super.key, required this.hide, required this.child});
+
+  final bool hide;
+  final Widget child;
+
+  /// How many are hiding it now.
+  static final ValueNotifier<int> hiding = ValueNotifier(0);
+
+  @override
+  State<OckerHidesPlace> createState() => _OckerHidesPlaceState();
+}
+
+class _OckerHidesPlaceState extends State<OckerHidesPlace> {
+  bool _counted = false;
+
+  /// Whether this page is the one on show. MainScreen keeps the tabs it has
+  /// opened alive behind the current one, their tickers muted
+  /// ([TickerMode]); one of those hides nothing — else the capsule stayed
+  /// hidden on every page once the settings had been opened.
+  bool _onShow = true;
+
+  void _sync(bool hide) {
+    if (hide == _counted) return;
+    _counted = hide;
+    // After the frame: a count changed mid-build would mark the capsule dirty
+    // while its own ancestor is building.
+    WidgetsBinding.instance.addPostFrameCallback((_) => OckerHidesPlace.hiding.value += hide ? 1 : -1);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _onShow = TickerMode.valuesOf(context).enabled;
+    _sync(widget.hide && _onShow);
+  }
+
+  @override
+  void didUpdateWidget(OckerHidesPlace oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _sync(widget.hide && _onShow);
+  }
+
+  @override
+  void dispose() {
+    _sync(false);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

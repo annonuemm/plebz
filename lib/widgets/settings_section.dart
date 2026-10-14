@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../redesign/ocker_glas_look.dart';
 import '../theme/mono_tokens.dart';
 import 'focusable_list_tile.dart';
 import '../utils/platform_detector.dart';
@@ -13,8 +14,15 @@ import 'expressive_button_group.dart';
 /// `dense: true` and the `Focusable*ListTile`s default to it — and Flutter
 /// draws a dense [ListTile] title at 13. Match that so a settings page reads
 /// as one family instead of one size per row type.
+///
+/// In Apple's lists ([AppleListRows]) the row's own 17.
 TextStyle? settingsOptionTitleStyle(BuildContext context) =>
-    Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 13);
+    Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: AppleListRows.of(context) ? appleListTitleSize : 13);
+
+/// A list row's title and the line under it in Apple's lists: iOS's body and
+/// its subheadline.
+const double appleListTitleSize = 17;
+const double appleListSubtitleSize = 15;
 
 class SettingsSectionHeader extends StatelessWidget {
   final String title;
@@ -65,6 +73,7 @@ class SettingsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = tokens(context);
+    if (ockerGlasTouch(context)) return _buildApple(context, t);
     return Column(
       crossAxisAlignment: .start,
       children: [
@@ -92,6 +101,56 @@ class SettingsGroup extends StatelessWidget {
     );
   }
 }
+
+extension on SettingsGroup {
+  /// iPhone and iPad on Apple's build ([ockerGlasTouch]): the group as iOS
+  /// draws one — a single rounded card, its rows 44 points and set at 17,
+  /// hairlines between the rows that show, starting where the words do.
+  Widget _buildApple(BuildContext context, MonoTokens t) {
+    final theme = Theme.of(context);
+    final outer = Radius.circular(t.radiusLg);
+    BorderRadius radii(int i) => BorderRadius.vertical(
+      top: i == 0 ? outer : Radius.zero,
+      bottom: i == children.length - 1 ? outer : Radius.zero,
+    );
+    return Column(
+      crossAxisAlignment: .start,
+      children: [
+        if (title != null) SettingsSectionHeader(title!),
+        Padding(
+          padding: margin,
+          child: AppleListRows(
+            child: ListTileTheme.merge(
+              visualDensity: const VisualDensity(vertical: -3),
+              titleTextStyle: theme.textTheme.bodyLarge?.copyWith(fontSize: appleListTitleSize),
+              subtitleTextStyle: theme.textTheme.bodyMedium?.copyWith(
+                fontSize: appleListSubtitleSize,
+                color: t.textMuted,
+              ),
+              child: Material(
+                color: t.surface,
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(outer)),
+                child: AppleSeparatedRows(
+                  color: t.outline,
+                  inset: _appleSeparatorInset,
+                  children: [
+                    for (var i = 0; i < children.length; i++) ListTileCardShape(radii: radii(i), child: children[i]),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Where a separator starts in an Apple group: under the words, past the
+/// row's icon — the list tile's 12 of padding, the 24 of the icon and the 16
+/// between icon and title.
+const double _appleSeparatorInset = 52;
 
 /// A setting with a label + icon row and a full-width button group below.
 /// Used for settings with 2-3 short options.

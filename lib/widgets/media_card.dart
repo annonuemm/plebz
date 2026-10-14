@@ -632,13 +632,17 @@ class MediaCardState extends State<MediaCard> with ContextMenuTapMixin<MediaCard
       if (item is MediaItem && _showsWatchedIndicator(item)) WatchedIndicator(item: item),
       ...catalogPosterOverlays(_catalogItem, badgeLabels: badgeLabels),
     ];
+    // Plebz: under Liquid Glass the focused picture wears a glass rim, laid
+    // under the overlays so only the picture bends.
+    final focusRadius = _posterFocusRadius(context, item);
+    final rim = Positioned.fill(child: CardLiquidRim(radii: BorderRadius.circular(focusRadius)));
     final poster = ExcludeSemantics(
       child: _CatalogFocusBorder(
         accentColor: _catalogAccent,
-        borderRadius: _posterFocusRadius(context, item),
+        borderRadius: focusRadius,
         child: fullBleed
-            ? _clipPosterImage(context, item, Stack(fit: StackFit.expand, children: [image, ...overlays]))
-            : Stack(children: [_clipPosterImage(context, item, image), ...overlays]),
+            ? _clipPosterImage(context, item, Stack(fit: StackFit.expand, children: [image, rim, ...overlays]))
+            : Stack(children: [_clipPosterImage(context, item, image), rim, ...overlays]),
       ),
     );
     // The glass ground's colours follow the focused poster (fork, a test).
@@ -1702,7 +1706,7 @@ class _CatalogFocusBorder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = accentColor;
-    if (color == null) return CardFocusBorder(borderRadius: borderRadius, child: child);
+    if (color == null) return CardFocusBorder(borderRadius: borderRadius, liquidRim: true, child: child);
     final showFocus = CardFocusScope.maybeOf(context);
     if (showFocus == null) return child;
     return AnimatedContainer(

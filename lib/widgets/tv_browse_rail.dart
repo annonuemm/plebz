@@ -24,6 +24,7 @@ import '../navigation/main_screen_scope.dart';
 import '../screens/hub_detail_screen.dart';
 import '../services/device_performance.dart';
 import '../services/settings_service.dart';
+import '../redesign/ocker_glide_edge.dart';
 import '../redesign/ocker_skin.dart';
 import '../redesign/ocker_type.dart';
 import '../theme/mono_tokens.dart';
@@ -674,6 +675,28 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
   bool _hasUserInteracted = false;
   bool _hasUserChangedHub = false;
   int _verticalScrollGeneration = 0;
+
+  /// Plebz: the soft top edge the rows glide under (see [OckerGlideEdge]),
+  /// eased in as a glide starts and out once it has settled; [_glideTarget]
+  /// is where the glide ends, so the edge clears over its last stretch and
+  /// the row arriving on top is whole by the time it stops.
+  late final AnimationController _glideEdgeIn = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 90),
+  );
+  double? _glideTarget;
+  double _glideEdgeRamp = 1;
+
+  double _glideEdgeStrength() {
+    var strength = _glideEdgeIn.value;
+    final target = _glideTarget;
+    if (target != null && _verticalController.hasClients) {
+      final remaining = (target - _verticalController.offset).abs();
+      strength = math.min(strength, (remaining / _glideEdgeRamp).clamp(0.0, 1.0));
+    }
+    return strength;
+  }
+
   bool _hasUserChangedItem = false;
 
   /// Hub key whose leading slot took focus only because the hub had no items
@@ -858,6 +881,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
 
   @override
   void dispose() {
+    _glideEdgeIn.dispose();
     _selectLongPress.dispose();
     _focusNode.removeListener(_handleFocusChange);
     _focusNode.dispose();
@@ -1106,6 +1130,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     if (animate) {
       _startVerticalScrollAnimation(
         () => _verticalController.animateTo(target, duration: _navigationScrollDuration, curve: Curves.easeOutCubic),
+        target: target,
       );
     } else {
       _verticalScrollGeneration++;
@@ -1142,8 +1167,13 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     });
   }
 
-  void _startVerticalScrollAnimation(Future<void> Function() animate) {
+  void _startVerticalScrollAnimation(Future<void> Function() animate, {double? target}) {
     final generation = ++_verticalScrollGeneration;
+    // From whatever strength the edge has now, so a step taken mid-glide
+    // carries on without a jump.
+    _glideEdgeIn.value = _glideEdgeStrength();
+    _glideTarget = target;
+    unawaited(_glideEdgeIn.forward());
     // Suppress the focus glow while the rail animates vertically: the glow
     // paints in the root overlay, unclipped by the vertical viewport, so on UP
     // moves it would flash over the rows above while the target row is still
@@ -1161,6 +1191,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
         if (!mounted || generation != _verticalScrollGeneration) return;
         _focusModel.verticalScrollActive = false;
         _verticalScrollSnapshotController.allowSnapshotting = false;
+        unawaited(_glideEdgeIn.reverse());
       }),
     );
   }
@@ -1548,19 +1579,24 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                           // on every frame when an accessibility service is
                           // active. A fixed proxy below exposes the same active
                           // selection and actions without tracking that motion.
-                          child: SizedBox(
-                            height: viewportHeight,
-                            child: _buildHubSectionList(
-                              modes: modes,
-                              metricsByHub: metricsByHub,
-                              sectionHeights: sectionHeights,
-                              scale: scale,
-                              fullCards: fullCards,
-                              leftOverflow: horizontalInset,
-                              interactionExpansion: interactionExpansion,
-                              railViewportWidth: railViewportWidth,
-                              bottomPadding: bottomPadding,
-                              viewportHeight: viewportHeight,
+                          child: _glideEdge(
+                            enabled: ockerGlass(context),
+                            scale: scale,
+                            leftOverflow: horizontalInset,
+                            child: SizedBox(
+                              height: viewportHeight,
+                              child: _buildHubSectionList(
+                                modes: modes,
+                                metricsByHub: metricsByHub,
+                                sectionHeights: sectionHeights,
+                                scale: scale,
+                                fullCards: fullCards,
+                                leftOverflow: horizontalInset,
+                                interactionExpansion: interactionExpansion,
+                                railViewportWidth: railViewportWidth,
+                                bottomPadding: bottomPadding,
+                                viewportHeight: viewportHeight,
+                              ),
                             ),
                           ),
                         ),
@@ -1601,6 +1637,25 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
           );
         },
       ),
+    );
+  }
+
+  /// Plebz: under the redesigns the rows glide under a soft top edge instead
+  /// of being cut by it ([OckerGlideEdge]); Original keeps the plain clip.
+  Widget _glideEdge({
+    required bool enabled,
+    required double scale,
+    required double leftOverflow,
+    required Widget child,
+  }) {
+    if (!enabled) return child;
+    _glideEdgeRamp = 140 * scale;
+    return OckerGlideEdge(
+      listenable: Listenable.merge([_verticalController, _glideEdgeIn]),
+      strength: _glideEdgeStrength,
+      fadeHeight: 72 * scale,
+      leftOverflow: leftOverflow,
+      child: child,
     );
   }
 
@@ -1816,7 +1871,10 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     // "Flach" names a row in sentence case, semibold, with its length beside it
     // in a quieter weight — the design's one voice per level.
     final flat = ockerFlat(context);
-    final flatType = flat ? OckerType.of(context) : null;
+    // Plebz: Glas names a row in Flach's voice — bold, in
+    // sentence case — as Apple's apps do ([OckerType.glasHeadings]).
+    final type = ocker ? OckerType.of(context) : null;
+    final flatType = flat || (type?.glasHeadings ?? false) ? type : null;
     final titleStyle = flatType != null
         ? flatType.sectionHeading.copyWith(color: tokens(context).ink(isActive ? 0.94 : 0.62))
         : ocker
@@ -1865,7 +1923,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                       child: Text(
                         // Upper case is half of what makes it read as a label;
                         // the mono face is the other half.
-                        ocker && !flat ? hub.title.toUpperCase() : hub.title,
+                        ocker && flatType == null ? hub.title.toUpperCase() : hub.title,
                         maxLines: 1,
                         overflow: .ellipsis,
                         style: titleStyle,
@@ -2128,6 +2186,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     if (metrics.isGenreHub) {
       return CardFocusBorder(
         borderRadius: 8 * scale,
+        glassRim: true,
         child: _buildGenreCard(
           context,
           item,
@@ -2145,24 +2204,27 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
         cardHeight: metrics.posterHeight,
         captionHeight: metrics.containerHeight - metrics.posterHeight,
         scale: scale,
-        card: (card) => CardFocusBorder(borderRadius: liveNowTileRadius(context, scale), child: card),
+        card: (card) => CardFocusBorder(borderRadius: liveNowTileRadius(context, scale), glassRim: true, child: card),
       );
     }
     if (metrics.isBrandHub) {
       return CardFocusBorder(
         borderRadius: 8 * scale,
+        glassRim: true,
         child: _buildBrandCard(context, item, width: metrics.cardWidth, height: metrics.posterHeight, scale: scale),
       );
     }
     if (metrics.isPlatformHub) {
       return CardFocusBorder(
         borderRadius: 8 * scale,
+        glassRim: true,
         child: _buildPlatformCard(context, item, size: metrics.posterHeight, scale: scale),
       );
     }
     if (metrics.isChipHub) {
       return CardFocusBorder(
         borderRadius: 8 * scale,
+        glassRim: true,
         child: _buildChipCard(context, item, height: metrics.posterHeight, scale: scale),
       );
     }

@@ -4495,8 +4495,9 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
     // two read as one block of facts, and the boxes were carrying the row's
     // emphasis on their own anyway.
     // "Flach": the start page's plain facts, quieter than the title, at the
-    // size this page's budget reserves for them.
-    final flat = ockerFlat(context);
+    // size this page's budget reserves for them — and Glas on the Apple TV
+    // (Plebz), as Apple's TV app writes them.
+    final flat = ockerFlatFacts(context);
     final compactGlass = _tvDetailCompactGlass(context);
     final textStyle = flat
         ? OckerType.of(context).spotlightFacts.copyWith(color: tokens(context).ink(0.66), fontSize: 16 * scale)

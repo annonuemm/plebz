@@ -37,6 +37,8 @@ import '../utils/scroll_utils.dart';
 import 'horizontal_scroll_with_arrows.dart';
 import 'tv_browse_rail.dart';
 import '../i18n/strings.g.dart';
+import '../redesign/ocker_glas_look.dart';
+import '../redesign/ocker_type.dart';
 
 enum HubCardSizing {
   /// Larger cards optimized for top-level TV shelves.
@@ -511,6 +513,9 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
     final isKeyboardMode = InputModeTracker.isKeyboardMode(context);
     final isTv = PlatformDetector.isTV();
     final leadingPadding = _leadingPaddingFor(isTv);
+    // Plebz: in landscape on Apple's handhelds under Glas the page runs on
+    // beneath the floating rail; the row rests past it and scrolls under it.
+    final railInset = widget.inset ? 0.0 : ockerFloatingStartInset(context);
     final ocker = isOcker(context);
     final baseTitle = Theme.of(context).textTheme.titleLarge;
     // "Ocker" reads a row's name as a *label*, not as a title: mono, upright,
@@ -523,7 +528,12 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
     // Derived from the scale rather than from the redesign's own type, which
     // is measured against a 1920 frame — on a television reporting 960 logical
     // pixels that would land at eight points.
-    final titleStyle = ocker
+    // Plebz: Glas names a row as Apple's apps do — bold, in
+    // sentence case, the redesign's heading ([OckerType.sectionHeading]).
+    final appleHeading = ocker ? OckerType.of(context) : null;
+    final titleStyle = appleHeading != null && appleHeading.glasHeadings
+        ? appleHeading.sectionHeading.copyWith(color: baseTitle?.color)
+        : ocker
         ? baseTitle?.copyWith(
             fontFamily: tokens(context).monoFontFamily,
             fontSize: (isTv ? 26 : baseTitle.fontSize ?? 22) * 0.62,
@@ -546,7 +556,7 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
           Padding(
             padding: widget.inset
                 ? EdgeInsets.symmetric(vertical: isTv ? 6 : 2)
-                : EdgeInsets.fromLTRB(leadingPadding - 4, isTv ? 6 : 2, 8, isTv ? 8 : 2),
+                : EdgeInsetsDirectional.fromSTEB(leadingPadding - 4 + railInset, isTv ? 6 : 2, 8, isTv ? 8 : 2),
             child: ExcludeFocus(
               child: InkWell(
                 mouseCursor: widget.hub.more ? SystemMouseCursors.click : MouseCursor.defer,
@@ -567,7 +577,9 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                         child: Text(
                           // Upper case is half of what makes it read as a
                           // label; the mono face is the other half.
-                          ocker ? widget.hub.title.toUpperCase() : widget.hub.title,
+                          ocker && !(appleHeading?.glasHeadings ?? false)
+                              ? widget.hub.title.toUpperCase()
+                              : widget.hub.title,
                           style: titleStyle,
                           overflow: .ellipsis,
                           maxLines: 1,
@@ -674,7 +686,7 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                           )
                         : MediaGridDelegate.cellWidth(
                             context: context,
-                            availableWidth: constraints.maxWidth,
+                            availableWidth: constraints.maxWidth - railInset,
                             density: density,
                             useWideAspectRatio: useWideLayout,
                           );
@@ -756,7 +768,12 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                           scrollCacheExtent: isTv ? null : const ScrollCacheExtent.pixels(0),
                           padding: widget.inset
                               ? EdgeInsets.symmetric(vertical: isTv ? 6 : 2)
-                              : EdgeInsets.symmetric(horizontal: isTv ? leadingPadding : 8, vertical: isTv ? 6 : 2),
+                              : EdgeInsetsDirectional.fromSTEB(
+                                  (isTv ? leadingPadding : 8) + railInset,
+                                  isTv ? 6 : 2,
+                                  isTv ? leadingPadding : 8,
+                                  isTv ? 6 : 2,
+                                ),
                           itemCount: isKeyboardMode ? _totalItemCount : widget.hub.items.length,
                           itemBuilder: (context, index) {
                             final isItemFocused = hasFocus && index == _focusedIndex;
@@ -832,8 +849,11 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                                     captionHeight: containerHeight - posterHeight,
                                     // The ring a keyboard's focus shows, round the
                                     // card as on the television.
-                                    card: (card) =>
-                                        CardFocusBorder(borderRadius: liveNowTileRadius(context, 1), child: card),
+                                    card: (card) => CardFocusBorder(
+                                      borderRadius: liveNowTileRadius(context, 1),
+                                      glassRim: true,
+                                      child: card,
+                                    ),
                                   ),
                                 ),
                               );
@@ -930,7 +950,7 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
             Padding(
               padding: widget.inset
                   ? const EdgeInsets.symmetric(vertical: 8)
-                  : const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  : EdgeInsetsDirectional.fromSTEB(16 + railInset, 8, 16, 8),
               child: Text(t.messages.noItemsAvailable, style: Theme.of(context).textTheme.bodySmall),
             ),
         ],

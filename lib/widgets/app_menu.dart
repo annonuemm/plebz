@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../redesign/ocker_glas_look.dart';
 import '../focus/dpad_navigator.dart';
 import '../focus/focus_theme.dart';
 import '../focus/focusable_tile_mixin.dart';
@@ -660,7 +661,10 @@ class _AppMenuItemTileState<T> extends State<AppMenuItemTile<T>> with FocusableT
                       color: redesign ? Colors.transparent : background,
                       borderRadius: BorderRadius.circular(tokens(context).radiusSm),
                     ),
-                    constraints: BoxConstraints(minHeight: subtitle == null ? 40 : 52),
+                    // Apple's 44-point touch target on iPhone and iPad.
+                    constraints: BoxConstraints(
+                      minHeight: subtitle == null ? (ockerGlasTouch(context) ? appleMinTouchTarget : 40) : 52,
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     child: Row(
                       children: [

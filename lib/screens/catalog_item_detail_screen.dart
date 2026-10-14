@@ -1648,6 +1648,7 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
         // focus its capsule gliding along.
         OckerGlassBand(
           overhang: EdgeInsets.all(ockerBandMargin(context)),
+          liquidBubble: true,
           child: FocusableActionBar(
             key: _actionBarKey,
             // On the stage, Flach's discs at a detail page's size: the

@@ -1,7 +1,12 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import '../services/settings_service.dart' show AppThemeVariant, GlasAccent;
+import '../utils/platform_detector.dart';
 import '../widgets/app_icon.dart';
+import 'apple_type.dart';
 import 'gapped_track_shape.dart';
 import 'glass_backdrop.dart';
 import 'mono_tokens.dart';
@@ -12,7 +17,8 @@ import 'mono_tokens.dart';
 /// the pre-play track summary — spend that difference by dropping a field at
 /// 1280x720; that is why the standard theme keeps the platform's face.
 
-/// **The redesign is set in one typeface: Inter.** Both palettes, every line.
+/// **The redesign is set in one typeface: Inter** (SF Pro on Apple, below).
+/// Both palettes, every line.
 ///
 /// It used to be three, one job each — a serif for content titles, a grotesque
 /// for the interface, a monospace for every label, counter and timecode. The
@@ -37,9 +43,42 @@ import 'mono_tokens.dart';
 /// Inter is a variable font, so a weight is an axis position rather than a
 /// separate file: every step from 100 to 900 is available and none of them is
 /// synthesised.
-const ockerDisplayFontFamily = 'Inter';
-const ockerUiFontFamily = 'Inter';
-const ockerMonoFontFamily = 'Inter';
+///
+/// **On Apple's devices the face is the system's own, SF Pro** (the user's
+/// call, 2026-10-13): Apple TV, the Mac, and iPhone and iPad once there is a
+/// build for them. SF Pro may not be shipped inside an app — that is why Inter
+/// came — but there it is already on the device, and the app only names it.
+/// Inter came from the same thinking, so the sizes hold; SF Pro runs a touch
+/// narrower, which only gives lines room.
+///
+/// Each style then takes the cut and the spacing Apple gives its size
+/// ([appleSystemType]): the redesign's styles in `OckerType`, the theme's own
+/// below.
+String get ockerDisplayFontFamily => ockerAppleSystemFont ? appleSystemDisplayFamily : 'Inter';
+String get ockerUiFontFamily => ockerAppleSystemFont ? appleSystemTextFamily : 'Inter';
+String get ockerMonoFontFamily => ockerAppleSystemFont ? appleSystemTextFamily : 'Inter';
+
+/// What one logical pixel is in Apple's points, for sizing type the way Apple
+/// does: 2 on the Apple TV, which draws a half-size surface scaled up (see
+/// `FormFactorScale`), 1 everywhere else.
+double get ockerApplePointsPerPixel => PlatformDetector.isAppleTV() ? 2 : 1;
+
+/// Whether the redesigns are set in the Apple system face (see above). Not
+/// under `flutter test`, which runs on a Mac but measures with Inter.
+bool get ockerAppleSystemFont => debugOckerAppleSystemFont ?? _appleSystemFontHere;
+
+/// Whether Glas wears what is Apple's alone (Plebz): the system face set by
+/// size and Apple's glyphs for Back, More and Share. The rest of what Glas
+/// took from Apple's apps it wears on every device (the user's call,
+/// 2026-10-13; see `ocker_glas_look.dart`). The Apple builds alone, where
+/// SF Pro is; the APK never.
+bool get ockerAppleLook => ockerAppleSystemFont;
+
+final bool _appleSystemFontHere =
+    !kIsWeb && (Platform.isIOS || Platform.isMacOS) && !Platform.environment.containsKey('FLUTTER_TEST');
+
+@visibleForTesting
+bool? debugOckerAppleSystemFont;
 
 /// The redesign's one corner for everything the interface draws — the tokens'
 /// radiusSm, and also every shape
@@ -220,6 +259,7 @@ final Map<
     AppThemeVariant variant,
     GlasAccent? glasAccent,
     Color? flachAccent,
+    bool appleSystemFont,
   }),
   ThemeData
 >
@@ -246,6 +286,8 @@ ThemeData monoTheme({
     variant: variant,
     glasAccent: variant == AppThemeVariant.glas ? glasAccent : null,
     flachAccent: variant == AppThemeVariant.flach ? flachAccent : null,
+    // Fixed for a host; a key only so a test can switch it.
+    appleSystemFont: isRedesignVariant(variant) && ockerAppleSystemFont,
   );
   final cached = _monoThemeCache[key];
   if (cached != null) return cached;
@@ -542,7 +584,21 @@ ThemeData _buildMonoTheme({
     ),
   );
 
+  // Apple's builds under Glas — the look being fitted to Apple's: every style
+  // the theme hands out in SF Pro, cut and spaced for its size, after
+  // ThemeData has merged its defaults in, since only then does every style
+  // have one. Flach keeps SF Pro as it was.
+  final appleType = variant == AppThemeVariant.glas && ockerAppleSystemFont;
+  TextStyle? apple(TextStyle? style) =>
+      style == null ? null : appleSystemType(style, pointsPerPixel: ockerApplePointsPerPixel);
+
   return base.copyWith(
+    textTheme: appleType ? _appleTextTheme(base.textTheme) : null,
+    appBarTheme: appleType
+        ? base.appBarTheme.copyWith(
+            titleTextStyle: apple(base.appBarTheme.titleTextStyle?.copyWith(fontFamily: ockerUiFontFamily)),
+          )
+        : null,
     extensions: [
       MonoTokens(
         // The redesign's corners, which were nothing at all until the posters
@@ -601,12 +657,45 @@ ThemeData _buildMonoTheme({
   );
 }
 
+/// [theme] with every style cut and spaced for its size ([appleSystemType]).
+TextTheme _appleTextTheme(TextTheme theme) {
+  TextStyle? apple(TextStyle? style) =>
+      style == null ? null : appleSystemType(style, pointsPerPixel: ockerApplePointsPerPixel, keepSpacedOut: false);
+  return TextTheme(
+    displayLarge: apple(theme.displayLarge),
+    displayMedium: apple(theme.displayMedium),
+    displaySmall: apple(theme.displaySmall),
+    headlineLarge: apple(theme.headlineLarge),
+    headlineMedium: apple(theme.headlineMedium),
+    headlineSmall: apple(theme.headlineSmall),
+    titleLarge: apple(theme.titleLarge),
+    titleMedium: apple(theme.titleMedium),
+    titleSmall: apple(theme.titleSmall),
+    bodyLarge: apple(theme.bodyLarge),
+    bodyMedium: apple(theme.bodyMedium),
+    bodySmall: apple(theme.bodySmall),
+    labelLarge: apple(theme.labelLarge),
+    labelMedium: apple(theme.labelMedium),
+    labelSmall: apple(theme.labelSmall),
+  );
+}
+
 /// Points [AppIconDefaults] at the look [variant] asks for.
 ///
 /// Icons do not come from [ThemeData] — [AppIcon] reads a set of statics, which
 /// is why one call here reaches every symbol drawn through it. Standard is what
 /// the app has always shown: filled and bold.
+///
+/// Glas takes Apple's rule instead of its own (the user's call, 2026-10-13,
+/// on every device): an icon as heavy as the words beside it — 400 — and
+/// drawn for the size it is shown at, so a small one does not thin out. On
+/// Apple's builds ([ockerAppleLook]) the three glyphs that read as Android's
+/// own give way to Apple's: Back is a chevron, More a row of dots, Share a box
+/// with an arrow.
 void applyIconDefaultsFor(AppThemeVariant variant) {
+  final glas = variant == AppThemeVariant.glas;
+  AppIconDefaults.substitutes = glas && ockerAppleLook ? appleGlyphSubstitutes : {};
+  AppIconDefaults.opticalSizeFollowsSize = glas;
   AppIconDefaults.update(
     fill: switch (variant) {
       AppThemeVariant.standard => 1,
@@ -616,16 +705,21 @@ void applyIconDefaultsFor(AppThemeVariant variant) {
     },
     weight: switch (variant) {
       AppThemeVariant.standard => 700,
-      // Lighter still: at 200 an icon carries about as much ink as the text
-      // beside it, which is the whole argument for letting words do the
-      // naming and leaving the symbol as a hint.
-      AppThemeVariant.glas => 200,
+      AppThemeVariant.glas => 400,
       // Flat leans on words and a few plain glyphs; a little more ink keeps
       // the glyphs from vanishing without glass to sit on.
       AppThemeVariant.flach => 300,
     },
   );
 }
+
+/// The glyphs Apple's apps draw where these draw Android's (see
+/// [applyIconDefaultsFor]).
+final appleGlyphSubstitutes = <IconData, IconData>{
+  Symbols.arrow_back_rounded: Symbols.arrow_back_ios_new_rounded,
+  Symbols.more_vert_rounded: Symbols.more_horiz_rounded,
+  Symbols.share_rounded: Symbols.ios_share_rounded,
+};
 
 /// [scale] with the two middle display sizes given the redesign's title
 /// treatment, or [scale] untouched when this is not a redesign variant.

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../redesign/ocker_glas_look.dart';
 import '../utils/desktop_window_padding.dart';
 import '../services/fullscreen_state_manager.dart';
 import 'app_bar_back_button.dart';
@@ -49,6 +50,12 @@ class DesktopSliverAppBar extends StatelessWidget {
       context: context,
     );
 
+    // iPhone, iPad and the Mac on Apple's build: a soft edge in place of the
+    // solid bar ([OckerScrollEdge]). Not where a screen asks for a clear bar
+    // of its own.
+    final appleEdge = ockerGlasLookOnly(context) && backgroundColor != Colors.transparent;
+    final adjustedFlexibleSpace = DesktopAppBarHelper.buildAdjustedFlexibleSpace(flexibleSpace);
+
     return SliverAppBar(
       title: title == null
           ? null
@@ -58,7 +65,7 @@ class DesktopSliverAppBar extends StatelessWidget {
       leadingWidth: DesktopAppBarHelper.calculateLeadingWidth(effectiveLeading, context: context),
       automaticallyImplyLeading: false, // Always false since we handle it manually
       elevation: elevation,
-      backgroundColor: backgroundColor,
+      backgroundColor: appleEdge ? Colors.transparent : backgroundColor,
       surfaceTintColor: surfaceTintColor,
       shadowColor: shadowColor,
       scrolledUnderElevation: scrolledUnderElevation,
@@ -66,7 +73,7 @@ class DesktopSliverAppBar extends StatelessWidget {
       pinned: pinned,
       snap: snap,
       expandedHeight: expandedHeight,
-      flexibleSpace: DesktopAppBarHelper.buildAdjustedFlexibleSpace(flexibleSpace),
+      flexibleSpace: appleEdge ? OckerScrollEdge(child: adjustedFlexibleSpace) : adjustedFlexibleSpace,
       bottom: bottom,
     );
   }

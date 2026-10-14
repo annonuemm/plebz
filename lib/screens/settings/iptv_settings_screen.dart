@@ -706,15 +706,17 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
                         textInputAction: TextInputAction.next,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: .centerLeft,
-                      child: TextButton.icon(
-                        icon: const AppIcon(Symbols.folder_open_rounded, fill: 1),
-                        label: Text(t.iptv.pickPlaylistFile),
-                        onPressed: () => unawaited(_pickPlaylistFile()),
+                    if (LocalFileAccess.available) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: .centerLeft,
+                        child: TextButton.icon(
+                          icon: const AppIcon(Symbols.folder_open_rounded, fill: 1),
+                          label: Text(t.iptv.pickPlaylistFile),
+                          onPressed: () => unawaited(_pickPlaylistFile()),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                   const SizedBox(height: 8),
                   // Which groups are loaded at all — the slim list a local

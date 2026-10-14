@@ -19,7 +19,9 @@ import 'package:flutter/widgets.dart';
 /// needs no platform branching: desktop and Android TV report no inset, tvOS
 /// has it zeroed by `_FormFactorScale`, and inside `MainScreen`'s tab bodies
 /// Flutter's [Scaffold] has already stripped it because a `bottomNavigationBar`
-/// is present.
+/// is present — except under Glas on Apple's handhelds (Plebz), where the
+/// page runs on beneath the floating tab bar and the padding is the bar's
+/// height (see `SliverFloatingBarSpace`).
 ///
 /// Reading the padding from this widget's own [BuildContext] — instead of the
 /// enclosing screen's — keeps it correct below any ancestor that removes

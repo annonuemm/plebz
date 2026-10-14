@@ -620,7 +620,8 @@ class TvSpotlightBackground extends StatelessWidget {
     // standard theme sets, which is close enough to nothing that the line
     // reads as a sentence of facts — right for a proportional face, wrong for
     // this one.
-    final flat = ockerFlat(context);
+    // Plebz: Glas on the Apple TV writes its facts as "Flach" does.
+    final flat = ockerFlatFacts(context);
     // Glas on "Flach"'s sizes: its capsules carry the facts at Flach's size.
     final metadataSize = ockerFlatSizes(context)
         ? OckerType.of(context).spotlightFacts.fontSize!

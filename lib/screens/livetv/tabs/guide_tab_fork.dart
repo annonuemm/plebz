@@ -98,7 +98,8 @@ extension _GuideTabFork on GuideTabState {
   }
 
   /// Plebz: a phone held upright and a tablet either way up have the band too
-  /// (the user's call, 2026-10-11): a tap puts a channel in it, a second tap,
+  /// (the user's call, 2026-10-11; its shape per way up, 2026-10-13 — see
+  /// [_isUprightBand] and [_isTabletGlassPanel]): a tap puts a channel in it, a second tap,
   /// a tap on the picture or its button puts it on the whole screen. A phone on
   /// its side keeps the bare grid, whose tap goes straight to the whole screen —
   /// except while a channel plays in the band: turning the phone is then the
@@ -112,12 +113,23 @@ extension _GuideTabFork on GuideTabState {
     return size.height >= size.width || _previewChannel != null;
   }
 
-  /// A phone held upright: the band is the picture across the whole width
-  /// ([GuidePreviewBand]) rather than a picture beside its words.
-  bool get _isPhoneBand {
+  /// A phone or tablet held upright: the band is the picture across the whole
+  /// width ([GuidePreviewBand]) rather than a picture beside its words. A
+  /// tablet's picture beside its words left most of an upright band empty.
+  bool get _isUprightBand {
     if (PlatformDetector.isTV() || !PlatformDetector.isMobile(context)) return false;
     final size = MediaQuery.sizeOf(context);
-    return size.shortestSide < 600 && size.height >= size.width;
+    return size.height >= size.width;
+  }
+
+  /// A tablet on its side under Glas or Flach: the television's band
+  /// ([OckerGuidePanel]) at the handheld's sizes, with what follows and what
+  /// the stream carries. Not a phone on its side: its band only shows while
+  /// a picture is on the way to the whole screen, and the television's would
+  /// take most of its height.
+  bool get _isTabletGlassPanel {
+    if (PlatformDetector.isTV() || !PlatformDetector.isMobile(context) || !ockerGlass(context)) return false;
+    return MediaQuery.sizeOf(context).shortestSide >= 600;
   }
 
   /// What is on the channel in the band.
@@ -158,6 +170,11 @@ extension _GuideTabFork on GuideTabState {
     } else if (OrientationHelper.followDeviceRotation && !onTop) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && OrientationHelper.followDeviceRotation) unawaited(Navigator.of(context).maybePop());
+      });
+    } else if (_backFromFullScreen && _channelBackFromFullScreen != null) {
+      // Back from the whole screen while still on its side: upright now.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _resumePreviewAfterFullScreen();
       });
     }
   }
@@ -242,6 +259,7 @@ extension _GuideTabFork on GuideTabState {
       return;
     }
     if (_previewChannel?.key != channel.key) {
+      _channelBackFromFullScreen = null;
       _setPreviewChannel(channel);
       return;
     }
@@ -249,12 +267,28 @@ extension _GuideTabFork on GuideTabState {
     await _previewKey.currentState?.stopForHandover();
     if (!mounted) return;
     _setPreviewChannel(null);
+    // Back from the player, the picture the viewer left goes back in the box
+    // ([_resumePreviewAfterFullScreen]). Not after [play]: it returns once the
+    // player is pushed, not once it is closed. Only this way: a guide left by
+    // any other route stops the preview and means it (see [onRefreshPaused]).
+    _channelBackFromFullScreen = channel;
+    _backFromFullScreen = false;
     await play(channel);
-    // Back from the player, the picture the viewer left goes back in the box.
-    // Only here: a guide left by any other route stops the preview and means
-    // it (see [onRefreshPaused]).
-    if (!mounted) return;
-    _setPreviewChannel(channel);
+  }
+
+  /// Plebz: the guide back from the whole screen — the band plays the channel
+  /// the viewer left there. A phone still on its side waits until it is
+  /// upright ([_followDeviceRotation]): turned on its side with a channel in
+  /// the band, it would go straight back to the whole screen.
+  void _resumePreviewAfterFullScreen() {
+    final channel = _channelBackFromFullScreen;
+    if (channel == null || !_backFromFullScreen || _previewChannel != null) return;
+    if (!TickerMode.valuesOf(context).enabled) return;
+    final size = MediaQuery.sizeOf(context);
+    final handheld = !PlatformDetector.isTV() && PlatformDetector.isMobile(context);
+    if (handheld && size.shortestSide < 600 && size.width > size.height) return;
+    _channelBackFromFullScreen = null;
+    if (_showsPreview) _setPreviewChannel(channel);
   }
 
   /// The second press, with the picture already playing in the box: the
@@ -389,9 +423,13 @@ extension _GuideTabFork on GuideTabState {
 
   /// What is left for the rows once the time ruler and the navigation strip
   /// above them have had theirs.
+  ///
+  /// Less what Glas's floating tab bar covers at the foot on Apple's
+  /// handhelds, where the grid runs on beneath it: the rows are sized for
+  /// what can be seen.
   void _measureGridHeight(double maxHeight) {
     final chrome = _timeHeaderHeight + (_showsTimeNavigation && !_timePillInRuler ? _timeNavigationHeight : 0.0);
-    final rows = maxHeight - chrome;
+    final rows = maxHeight - chrome - ockerFloatingBottomInset(context);
     if (rows.isFinite && rows > 0) _gridHeight = rows;
   }
 
@@ -616,6 +654,7 @@ extension _GuideTabFork on GuideTabState {
                 SizedBox(height: 24 * ockerScale(context)),
                 Expanded(
                   child: LayoutBuilder(
+                    key: _gridSlotKey,
                     builder: (context, constraints) {
                       _measureGridHeight(constraints.maxHeight);
                       return _buildGuideGrid(theme);
@@ -629,7 +668,7 @@ extension _GuideTabFork on GuideTabState {
         ? LayoutBuilder(
             builder: (context, constraints) => Column(
               children: [
-                if (_isPhoneBand)
+                if (_isUprightBand)
                   SizedBox(
                     height: constraints.maxWidth * 9 / 16,
                     child: GuidePreviewBand(
@@ -637,6 +676,26 @@ extension _GuideTabFork on GuideTabState {
                       previewChannel: _previewChannel,
                       program: _previewProgram,
                       onFullScreen: _openPreviewFullScreen,
+                      // A tablet turned on its side shows these on the
+                      // television's band; the picture reports them as it
+                      // starts, so it has to be listening from the first.
+                      streamInfo: _previewStreamInfo,
+                    ),
+                  )
+                else if (_isTabletGlassPanel)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: ValueListenableBuilder<_GuideFocusSnapshot>(
+                      valueListenable: _focusSnapshot,
+                      builder: (context, focus, _) => OckerGuidePanel(
+                        playerKey: _previewKey,
+                        streamInfo: _previewStreamInfo,
+                        previewChannel: _previewChannel,
+                        focusedChannel: _channelAt(focus.channelIndex),
+                        focusedProgram: focus.program ?? _findCurrentProgram(focus.channelIndex),
+                        nextProgram: _findNextProgram(focus.channelIndex, focus.program),
+                        sourceLabel: _channelAt(focus.channelIndex)?.serverName,
+                      ),
                     ),
                   )
                 else
@@ -654,6 +713,7 @@ extension _GuideTabFork on GuideTabState {
                   ),
                 Expanded(
                   child: LayoutBuilder(
+                    key: _gridSlotKey,
                     builder: (context, constraints) {
                       _measureGridHeight(constraints.maxHeight);
                       return _buildGuideGrid(theme);
@@ -664,6 +724,7 @@ extension _GuideTabFork on GuideTabState {
             ),
           )
         : LayoutBuilder(
+            key: _gridSlotKey,
             builder: (context, constraints) {
               _measureGridHeight(constraints.maxHeight);
               return _buildGuideGrid(theme);
@@ -853,6 +914,8 @@ extension GuideTabChannels on GuideTabState {
       showFirstChannel();
       return;
     }
+    // Plebz: zapped away in full screen — that channel goes back in the band.
+    if (_channelBackFromFullScreen != null) _channelBackFromFullScreen = widget.channels[index];
     // In the grid: the viewer left from a channel, and a guide built for a
     // hand-off would otherwise start out on the time bar.
     _updateFocus(() {

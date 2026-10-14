@@ -294,6 +294,16 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets('off the television the app bar opens the trailer stage, beside refresh', (tester) async {
+    TvDetectionService.debugSetAppleTVOverride(false);
+    await _pumpExplore(tester);
+
+    final stage = find.byTooltip(t.trailerStage.title);
+    expect(stage, findsOneWidget);
+    final refresh = find.byTooltip(t.common.refresh);
+    expect(tester.getCenter(stage).dx, lessThan(tester.getCenter(refresh).dx), reason: 'the stage, then refresh');
+  });
+
   testWidgets('source switcher exposes every catalog source with its brand logo', (tester) async {
     final sources = await _pumpExplore(tester);
     tester.state<ExploreScreenState>(find.byType(ExploreScreen)).focusActiveTabIfReady();

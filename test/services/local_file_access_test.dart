@@ -8,6 +8,7 @@ import 'package:plezy/screens/files/local_file_browser_screen.dart';
 import 'package:plezy/services/file_picker_service.dart';
 import 'package:plezy/services/local_file_access.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/utils/platform_detector.dart';
 
 class _Picker implements FilePickerDelegate {
   _Picker(this.path);
@@ -204,6 +205,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('adb shell appops set app.plebz MANAGE_EXTERNAL_STORAGE allow'), findsOneWidget);
+    expect(find.byType(LocalFileBrowserScreen), findsNothing);
+  });
+
+  testWidgets('Apple TV is offered no file at all: no picker, no access dialog, no browser', (tester) async {
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+    final picker = _Picker('/somewhere/list.m3u');
+    FilePickerService.setDelegateForTesting(picker);
+
+    expect(LocalFileAccess.available, isFalse);
+    expect(await LocalFileAccess.hasSystemPicker(), isFalse);
+
+    await pumpHost(tester);
+    await tester.tap(find.text('pick'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('result: nothing'), findsOneWidget);
+    expect(find.text(t.localFiles.accessTitle), findsNothing);
     expect(find.byType(LocalFileBrowserScreen), findsNothing);
   });
 }

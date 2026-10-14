@@ -443,13 +443,25 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
                 // Plebz: clear of a tablet's navigation bar, which cut the
                 // zones' key off the panel's foot.
                 padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
-                child: _SportTable(
-                  rows: _table,
-                  look: look,
-                  highlight: _highlightedTeams,
-                  league: widget.league,
-                  fitHeight: true,
-                ),
+                // Plebz: on a tablet the panel is as tall as its table and no
+                // taller; run to the page's foot it stood half empty on an
+                // upright one.
+                child: PlatformDetector.isMobile(context)
+                    ? SingleChildScrollView(
+                        child: _SportTable(
+                          rows: _table,
+                          look: look,
+                          highlight: _highlightedTeams,
+                          league: widget.league,
+                        ),
+                      )
+                    : _SportTable(
+                        rows: _table,
+                        look: look,
+                        highlight: _highlightedTeams,
+                        league: widget.league,
+                        fitHeight: true,
+                      ),
               ),
             ],
           );
@@ -859,7 +871,10 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
   /// Whether a fixtures column this wide gets the clubs' short names —
   /// "Dortmund", "HSV" — the way a results app on a phone sets them. Full
   /// names there leave "Borussia …" and "TSG Hoffe…".
-  bool _isCompact(SportLook look, double width) => width / look.scale < 640;
+  /// Plebz: the redesigns' scoreboard line holds a pairing on one line down
+  /// to 560 — an upright tablet's column beside the table stacked the two
+  /// clubs with room to spare.
+  bool _isCompact(SportLook look, double width) => width / look.scale < (look.flat ? 560 : 640);
 
   List<Widget> _matchItems(SportLook look, {required bool compact}) {
     final items = <Widget>[];

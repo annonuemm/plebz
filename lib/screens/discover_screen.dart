@@ -82,6 +82,7 @@ import '../redesign/ocker_filter_glyph.dart';
 import '../redesign/ocker_header_slot.dart';
 import '../redesign/ocker_skin.dart';
 import '../utils/fork_identity.dart';
+import '../redesign/ocker_glas_look.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
@@ -1289,7 +1290,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                   for (int i = 0; i < 3; i++)
                     SliverToBoxAdapter(
                       child: Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsetsDirectional.fromSTEB(16 + ockerFloatingStartInset(context), 16, 16, 16),
                         child: Column(
                           crossAxisAlignment: .start,
                           children: [
@@ -1306,6 +1307,10 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                               height: 200,
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
+                                // The container above already keeps clear of
+                                // the rail; the page's own padding is not
+                                // this row's to add again.
+                                padding: EdgeInsets.zero,
                                 itemCount: 5,
                                 itemBuilder: (context, index) {
                                   return Container(
@@ -1479,7 +1484,8 @@ class _DiscoverScreenState extends State<DiscoverScreen>
               if (!isTv)
                 Positioned(
                   bottom: 16,
-                  left: -26,
+                  // Plebz: centred on what the floating rail leaves in view.
+                  left: -26 + ockerFloatingStartInset(context),
                   right: 0,
                   child: Row(
                     mainAxisAlignment: .center,

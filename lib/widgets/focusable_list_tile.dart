@@ -99,7 +99,7 @@ class _FocusableListTileState extends State<FocusableListTile> with FocusableTil
       trailing: widget.trailing,
       onTap: widget.onTap,
       onLongPress: widget.onLongPress,
-      dense: automotive ? false : widget.dense,
+      dense: automotive || AppleListRows.of(context) ? false : widget.dense,
       enabled: widget.enabled,
       selected: widget.selected,
       contentPadding: widget.contentPadding,
@@ -300,7 +300,7 @@ class _FocusableSwitchListTileState extends State<FocusableSwitchListTile>
           secondary: widget.secondary,
           value: widget.value,
           onChanged: widget.onChanged,
-          dense: automotive ? false : widget.dense,
+          dense: automotive || AppleListRows.of(context) ? false : widget.dense,
           visualDensity: automotive ? VisualDensity.standard : widget.visualDensity,
           contentPadding: widget.contentPadding,
           focusNode: effectiveFocusNode,
@@ -370,7 +370,7 @@ class _FocusableCheckboxListTileState extends State<FocusableCheckboxListTile>
           value: widget.value,
           onChanged: widget.onChanged,
           tristate: widget.tristate,
-          dense: automotive ? false : widget.dense,
+          dense: automotive || AppleListRows.of(context) ? false : widget.dense,
           visualDensity: automotive ? VisualDensity.standard : widget.visualDensity,
           contentPadding: widget.contentPadding,
           focusNode: effectiveFocusNode,
@@ -397,4 +397,17 @@ class ListTileCardShape extends InheritedWidget {
 
   @override
   bool updateShouldNotify(ListTileCardShape oldWidget) => radii != oldWidget.radii;
+}
+
+/// Rows at the size Apple sets lists in (Plebz, iPhone and iPad on Apple's
+/// build — see `ockerGlasTouch`): not dense, so a row is 44 points and its
+/// title takes the group's 17 rather than the dense 13. Set by what draws the
+/// group ([SettingsGroup]), read by the `Focusable*ListTile`s.
+class AppleListRows extends InheritedWidget {
+  const AppleListRows({super.key, required super.child});
+
+  static bool of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<AppleListRows>() != null;
+
+  @override
+  bool updateShouldNotify(AppleListRows oldWidget) => false;
 }

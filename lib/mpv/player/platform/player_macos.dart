@@ -11,6 +11,5 @@ import '../video_rect_support.dart';
 /// and exactly wrong for a preview standing next to a programme guide, where
 /// a window-sized layer would put the picture behind the whole page.
 ///
-/// iOS and tvOS stay on the bare [PlayerNative]: they have no second place to
-/// put a picture, so there is no geometry to report.
+/// iPhone, iPad and Apple TV got the same since (Plebz) — see [PlayerIOS].
 class PlayerMacOS extends PlayerNative with VideoRectSupport {}

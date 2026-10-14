@@ -48,6 +48,7 @@ import '../livetv_styles.dart';
 import '../../../redesign/ocker_guide_panel.dart';
 import '../../../redesign/ocker_skin.dart';
 import '../../../redesign/ocker_type.dart';
+import '../../../redesign/ocker_glas_look.dart';
 
 part 'guide_tab_fork.dart';
 
@@ -307,6 +308,21 @@ class GuideTabState extends State<GuideTab>
   /// takes the band's picture to the whole screen ([_followDeviceRotation]).
   Orientation? _lastOrientation;
 
+  /// Plebz: the channel the band played when the viewer took it to the whole
+  /// screen the ordinary way — or the one they zapped to there — which plays
+  /// in the band again once the guide is back ([_resumePreviewAfterFullScreen]).
+  LiveTvChannel? _channelBackFromFullScreen;
+
+  /// Whether the guide has been shown again since then: a pause after that is
+  /// the viewer moving on, and the picture is not brought back.
+  bool _backFromFullScreen = false;
+
+  /// Plebz: the schedule keeps its state when the band comes or goes — a
+  /// phone turned on its side without a channel in the band — instead of
+  /// being built anew with its scroll controllers briefly attached twice
+  /// (which left its rows black until the next rebuild).
+  final GlobalKey _gridSlotKey = GlobalKey(debugLabel: 'guide_grid');
+
   /// What the preview is receiving, written by [GuidePreviewPlayer] and shown
   /// by the redesign's band.
   final ValueNotifier<GuideStreamInfo?> _previewStreamInfo = ValueNotifier(null);
@@ -476,6 +492,9 @@ class GuideTabState extends State<GuideTab>
   @override
   void onRefreshPaused() {
     _hiddenSince ??= DateTime.now();
+    // Plebz: hidden again after the return from the whole screen — the viewer
+    // has moved on, and the picture is not brought back.
+    if (_backFromFullScreen) _channelBackFromFullScreen = null;
     // Whatever hid the guide — another tab, another section, the app going to
     // the background — the preview is playing to nobody, and it holds both a
     // stream from the provider and the app's only playback core.
@@ -485,6 +504,13 @@ class GuideTabState extends State<GuideTab>
   @override
   void onRefreshResumed(LiveTvRefreshResumeReason reason) {
     unawaited(_refreshScheduledRecordingKeys());
+    // Plebz: back from the whole screen, the band plays its channel again.
+    if (_channelBackFromFullScreen != null) {
+      _backFromFullScreen = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _resumePreviewAfterFullScreen();
+      });
+    }
     // Post-frame: resume fires during tab transitions/build and the catch-up
     // may setState (reload or scroll).
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1273,13 +1299,15 @@ class GuideTabState extends State<GuideTab>
     final targetTop = _rowTopForChannelIndex(index);
     final targetBottom = targetTop + _rowHeight;
     final viewportTop = _gridVerticalController.offset;
-    final viewportBottom = viewportTop + _gridVerticalController.position.viewportDimension;
+    // Plebz: what Glas's floating tab bar covers at the foot is not in view.
+    final visibleHeight = _gridVerticalController.position.viewportDimension - ockerFloatingBottomInset(context);
+    final viewportBottom = viewportTop + visibleHeight;
 
     double? newOffset;
     if (targetTop < viewportTop) {
       newOffset = targetTop;
     } else if (targetBottom > viewportBottom) {
-      newOffset = targetBottom - _gridVerticalController.position.viewportDimension;
+      newOffset = targetBottom - visibleHeight;
     }
 
     if (newOffset != null) {
@@ -1422,6 +1450,9 @@ class GuideTabState extends State<GuideTab>
                                 };
                               },
                             ),
+                            // Plebz: the same room as the grid's, or the two
+                            // drift apart at the foot.
+                            const SliverFloatingBarSpace(),
                           ],
                         ),
                       ),
@@ -1461,6 +1492,8 @@ class GuideTabState extends State<GuideTab>
                                       };
                                     },
                                   ),
+                                  // Plebz: clear of Glas's floating tab bar.
+                                  const SliverFloatingBarSpace(),
                                 ],
                               ),
                             ),

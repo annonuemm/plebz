@@ -5,6 +5,7 @@ import '../exceptions/media_server_exceptions.dart';
 
 import '../utils/app_logger.dart';
 import '../utils/scroll_utils.dart';
+import '../redesign/ocker_glas_look.dart';
 
 /// Debounced free-text search shared by the main search screen and the
 /// catalog (Explore) search screens: text controller + focus nodes, a 500ms
@@ -183,13 +184,10 @@ mixin DebouncedMediaSearch<T extends StatefulWidget, R> on State<T> {
   /// The results list both screens render: padded, without keep-alives or
   /// semantic indexes. One child per entry of [searchResults] unless the
   /// caller renders a filtered view and passes its own [childCount].
-  Widget buildResultsSliver(
-    NullableIndexedWidgetBuilder itemBuilder, {
-    int? childCount,
-    EdgeInsetsGeometry padding = const EdgeInsets.all(16),
-  }) {
+  Widget buildResultsSliver(NullableIndexedWidgetBuilder itemBuilder, {int? childCount, EdgeInsetsGeometry? padding}) {
     return SliverPadding(
-      padding: padding,
+      // Plebz: past Glas's floating rail in landscape on Apple's handhelds.
+      padding: padding ?? EdgeInsetsDirectional.fromSTEB(16 + ockerFloatingStartInset(context), 16, 16, 16),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate(
           itemBuilder,

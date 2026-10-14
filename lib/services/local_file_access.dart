@@ -48,8 +48,13 @@ abstract final class LocalFileAccess {
     }
   }
 
+  /// Whether a local file can be chosen at all. Not on Apple TV: it has no
+  /// picker, no shared storage and no USB, so the offer is not made there.
+  static bool get available => debugChannel != null || !PlatformDetector.isAppleTV();
+
   /// Whether the system's picker is there to use.
   static Future<bool> hasSystemPicker() async {
+    if (!available) return false;
     // Phones, tablets and desktops always have one; only TV boxes need asking.
     if (debugChannel == null && (!Platform.isAndroid || !PlatformDetector.isTV())) return true;
     return await _call<bool>('hasDocumentPicker') ?? false;
@@ -77,6 +82,7 @@ abstract final class LocalFileAccess {
     required Set<String> extensions,
     required String title,
   }) async {
+    if (!available) return null;
     if (await hasSystemPicker()) {
       // Any type: Android has no MIME type for most of these (an M3U is
       // `audio/x-mpegurl` on some boxes, unknown on others), and a filter the

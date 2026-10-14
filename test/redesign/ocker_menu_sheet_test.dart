@@ -51,8 +51,9 @@ void main() {
   testWidgets('sets the sheet title as a heading of this design', (tester) async {
     await pumpSheet(tester, AppThemeVariant.glas);
 
-    expect(find.text('SENDERGRUPPEN'), findsOneWidget);
-    expect(find.text('Sendergruppen'), findsNothing);
+    // Glas writes headings as Apple's apps do: bold, in sentence case (Plebz).
+    expect(find.text('Sendergruppen'), findsOneWidget);
+    expect(find.text('SENDERGRUPPEN'), findsNothing);
   });
 
   testWidgets('marks the chosen entry with the accent and nothing else', (tester) async {

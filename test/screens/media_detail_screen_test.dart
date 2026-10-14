@@ -687,9 +687,7 @@ void main() {
     expect(find.descendant(of: qualityRow, matching: find.text('1080p')), findsOneWidget);
   });
 
-  testWidgets('under glass the facts take two rows of glass capsules: the title first, the picture below', (
-    tester,
-  ) async {
+  testWidgets('under glass the facts take two rows of words: the title first, the picture below', (tester) async {
     await SettingsService.getInstance();
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1;
@@ -745,28 +743,30 @@ void main() {
     expect(find.descendant(of: qualityRow, matching: find.text('1080p')), findsOneWidget);
     expect(find.descendant(of: qualityRow, matching: find.text('2017')), findsNothing);
     expect(tester.getTopLeft(find.text('2017')).dy, lessThan(tester.getTopLeft(find.text('1080p')).dy));
-    // Year, age and length side by side on the first row.
-    final ys = {
-      for (final text in ['2017', 'PG-13', '1h 46min', "Director's Cut"]) tester.getTopLeft(find.text(text)).dy,
-    };
-    expect(ys, hasLength(1));
-    // The genres close the first row, on capsules of their own, and the
-    // corner they stood in before is empty.
+    // Year, age and length side by side on the first row — words of a
+    // quieter rank stand a little lower, so the rows are told by their middle.
+    final row = tester.getCenter(find.text('2017')).dy;
+    for (final text in ['PG-13', '1h 46min', "Director's Cut"]) {
+      expect(tester.getCenter(find.text(text)).dy, closeTo(row, 2), reason: text);
+    }
+    // The genres close the first row, and the corner they stood in before is
+    // empty.
     for (final genre in ['Drama', 'Thriller']) {
       expect(find.text(genre), findsOneWidget, reason: genre);
-      expect(tester.getTopLeft(find.text(genre)).dy, ys.single, reason: genre);
-      expect(find.ancestor(of: find.text(genre), matching: find.byType(OckerGlassPlate)), findsOneWidget);
+      expect(tester.getCenter(find.text(genre)).dy, closeTo(row, 2), reason: genre);
     }
     // The cut stands after the length.
     expect(tester.getTopLeft(find.text("Director's Cut")).dx, greaterThan(tester.getTopLeft(find.text('1h 46min')).dx));
-    // Each on glass, and no bullets between them.
-    for (final text in ['2017', 'PG-13', '1h 46min', '1080p']) {
+    // Words with dots between, as Apple's TV app writes them (Plebz): no
+    // capsules, no bullets.
+    for (final text in ['2017', 'PG-13', '1h 46min', '1080p', 'Drama']) {
       expect(
         find.ancestor(of: find.text(text), matching: find.byType(OckerGlassPlate)),
-        findsOneWidget,
+        findsNothing,
         reason: text,
       );
     }
+    expect(find.text(FittedMetadataLine.flatSeparator), findsWidgets);
     expect(find.textContaining('•'), findsNothing);
   });
 

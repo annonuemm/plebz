@@ -58,6 +58,8 @@ import '../../widgets/app_icon.dart';
 import '../../widgets/app_menu.dart';
 import '../../widgets/focus_builders.dart';
 import '../../redesign/ocker_submenu.dart';
+import '../../redesign/ocker_glas_look.dart';
+import '../../redesign/ocker_rail_shell.dart' show OckerHidesPlace;
 
 part 'live_tv_screen_groups.dart';
 
@@ -1230,15 +1232,18 @@ class _LiveTvScreenState extends State<LiveTvScreen>
       ],
     );
 
-    if (!_groupColumnEnabled) return body;
+    // Plebz: clear of Glas's floating rail in landscape on Apple's handhelds.
+    if (!_groupColumnEnabled) return OckerClearOfRail(child: body);
     // A Row, so the column does not float over the guide: giving it width
     // takes width from everything else, which is exactly the movement asked
     // for — the schedule, the picture and the description all slide right.
-    return Row(
-      children: [
-        _buildGroupColumn(),
-        Expanded(child: body),
-      ],
+    return OckerClearOfRail(
+      child: Row(
+        children: [
+          _buildGroupColumn(),
+          Expanded(child: body),
+        ],
+      ),
     );
   }
 }

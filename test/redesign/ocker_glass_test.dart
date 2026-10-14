@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/theme/liquid_glass.dart';
+import 'package:plezy/theme/flat_focus_ring.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:plezy/utils/platform_detector.dart';
 import 'package:plezy/focus/focus_theme.dart';
@@ -115,7 +117,34 @@ void main() {
       }
     });
 
-    testWidgets('red marks the chosen in its red; the others as faintly as ever', (tester) async {
+    testWidgets('without Liquid Glass the chosen capsule is a flat wash, no sheen (Plebz)', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: GlasAccent.rot),
+          home: const Center(
+            child: SizedBox(
+              width: 120,
+              height: 48,
+              child: OckerGlassFocusFill(shape: StadiumBorder(), bright: false, tint: 1),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final boxes = tester.widgetList<DecoratedBox>(
+        find.descendant(of: find.byType(OckerGlassFocusFill), matching: find.byType(DecoratedBox)),
+      );
+      expect(boxes, hasLength(1), reason: 'one flat fill: no sheen layered on it');
+      expect(find.descendant(of: find.byType(OckerGlassFocusFill), matching: find.byType(CustomPaint)), findsNothing);
+    });
+
+    testWidgets('under Liquid Glass red marks the chosen in its red; the others as faintly as ever', (tester) async {
+      OckerLiquidGlass.debugOfferedHere = true;
+      OckerLiquidGlass.setting.value = true;
+      addTearDown(() {
+        OckerLiquidGlass.debugOfferedHere = null;
+        OckerLiquidGlass.setting.value = false;
+      });
       Future<Color> chosenFill(GlasAccent accent, {bool bright = false}) async {
         await tester.pumpWidget(
           MaterialApp(
@@ -254,6 +283,7 @@ void main() {
       );
       // The reading strength — the same as a card's, one of the glass's two.
       expect(pane.groundOpacity, ockerReadingGroundOpacity);
+      expect(pane.liquid, isTrue, reason: 'menus are what Liquid Glass reaches, with the side rail');
       expect(
         const OckerGlass(borderRadius: BorderRadius.zero, child: SizedBox()).groundOpacity,
         ockerReadingGroundOpacity,
@@ -359,8 +389,13 @@ void main() {
 
     testWidgets('is the lit edge under glass, and fades out rather than moving', (tester) async {
       final context = await contextIn(tester, AppThemeVariant.glas);
-      BoxDecoration ring(bool focused) =>
-          FocusTheme.focusDecoration(context, isFocused: focused, borderStrokeAlign: BorderSide.strokeAlignOutside);
+      // A picture is ringed in white since Glas follows Apple's TV app
+      // (Plebz); the lit edge stays on everything else.
+      expect(
+        FocusTheme.focusDecoration(context, isFocused: true, borderStrokeAlign: BorderSide.strokeAlignOutside),
+        isA<FlatFocusRingDecoration>(),
+      );
+      BoxDecoration ring(bool focused) => FocusTheme.focusDecoration(context, isFocused: focused);
 
       final on = ring(true), off = ring(false);
       expect(on, isA<GlassFocusDecoration>());
@@ -650,10 +685,32 @@ void main() {
     });
   }
 
-  testWidgets('the band and the capsule at its end are concentric: one margin all round', (tester) async {
+  testWidgets('Glas\'s band has no ground of its own (Plebz)', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        home: const Scaffold(
+          body: TabChipStrip(
+            children: [
+              FocusableTabChip(label: 'Empfohlen', isSelected: true, onSelect: _noop),
+              FocusableTabChip(label: 'Durchsuchen', isSelected: false, onSelect: _noop),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 1));
+    expect(
+      find.descendant(of: find.byType(OckerGlassBand), matching: find.byType(CustomPaint)),
+      findsNothing,
+      reason: 'no pane and no lit edge behind the words',
+    );
+  });
+
+  testWidgets('the band and the capsule at its end are concentric: one margin all round', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
         home: const Scaffold(
           body: Padding(
             padding: EdgeInsets.all(40),

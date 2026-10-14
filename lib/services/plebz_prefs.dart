@@ -125,6 +125,33 @@ abstract final class PlebzPrefs {
   /// which a weak box can feel beside scrolling and a playing preview.
   static const glasSpinningFocus = BoolPref('glas_spinning_focus', defaultValue: false);
 
+  /// Under "Redesign – Glas": "Liquid Glass" — the panes and bands blur and
+  /// brighten what lies behind them, as Apple's glass does, and their edge
+  /// catches the light on both sides. Apple builds only (Apple TV, Mac, later
+  /// iPhone and iPad), never the APK. Off by default: a blur is redrawn every
+  /// frame for as long as the glass is up, which is the cost the plain glass
+  /// was drawn to avoid (see `OckerLiquidGlass`).
+  static const glasLiquid = BoolPref('glas_liquid', defaultValue: false);
+
+  /// Under "Redesign – Glas" where there is no Liquid Glass (Android): the
+  /// navigation, the menus and the capsules as fake glass — a sheen and a lit
+  /// rim, no blur. Off, they are flat, as on Apple's builds with Liquid Glass
+  /// switched off (the user's call, 2026-10-14). On by default.
+  static const glasFakeGlass = BoolPref('glas_fake_glass', defaultValue: true);
+
+  /// Under "Redesign – Glas" on the television: the rail's strip of symbols
+  /// stays on show at the left, as it did before Glas hid its shut rail after
+  /// Apple's TV app (the user's call, 2026-10-13: for those who want the
+  /// symbols in view). Off by default: the rail hides itself and a capsule at
+  /// the page's top left names the place on show.
+  static const glasRailSymbolsPinned = BoolPref('glas_rail_symbols_pinned', defaultValue: false);
+
+  /// On the television, in every look: a D-pad step glides the rows and the
+  /// posters as the Apple TV does (half a second) rather than in Plezy's
+  /// quick Android step (the user's call, 2026-10-13). On by default; off for
+  /// a box that stutters. The Apple TV always glides.
+  static const smoothScroll = BoolPref('smooth_scroll', defaultValue: true);
+
   /// Under glass, the ground takes the colours of the Plex title holding focus
   /// — Plex's "UltraBlur". A test, off until switched on.
   static const glasUltraBlur = BoolPref('glas_ultra_blur', defaultValue: false);
@@ -616,6 +643,10 @@ abstract final class PlebzPrefs {
     flachPreset,
     glasDetailPanel,
     glasSpinningFocus,
+    glasLiquid,
+    glasFakeGlass,
+    glasRailSymbolsPinned,
+    smoothScroll,
     showLibraryPlaylistsTab,
     showPlaybackTracksStatus,
     showHomeTitleLogos,

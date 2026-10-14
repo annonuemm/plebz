@@ -1,8 +1,9 @@
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/redesign/ocker_glide_edge.dart';
 import 'package:plezy/focus/dpad_navigator.dart';
 import 'package:plezy/focus/input_mode_tracker.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -951,6 +952,62 @@ void main() {
     final third = find.ancestor(of: heading('Third Row'), matching: find.byType(AnimatedOpacity));
     if (third.evaluate().isNotEmpty) expect(tester.widget<AnimatedOpacity>(third.first).opacity, 0);
   });
+
+  for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach, AppThemeVariant.standard]) {
+    testWidgets('the rows glide under a soft top edge under the redesigns, none at rest (${variant.name})', (
+      tester,
+    ) async {
+      final serverManager = MultiServerManager();
+      MediaHub hub(String id, String title) => MediaHub(
+        id: id,
+        title: title,
+        type: 'movie',
+        items: [testMediaItem(id: '${id}_1', backend: MediaBackend.plex, kind: MediaKind.movie, title: '$title 1')],
+        size: 1,
+      );
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<MultiServerProvider>(
+          create: (_) => testMultiServerProvider(serverManager),
+          child: InputModeTracker(
+            child: MaterialApp(
+              theme: monoTheme(dark: true, variant: variant),
+              home: Scaffold(
+                body: SizedBox(
+                  width: 1280,
+                  height: 720,
+                  child: TvBrowseRail(
+                    focusMemory: focusMemory,
+                    hubs: [hub('first', 'First Row'), hub('second', 'Second Row'), hub('third', 'Third Row')],
+                    autofocus: true,
+                    iconForHub: (_, _) => Icons.tv_rounded,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      bool edgeDrawn() => tester.layers.whereType<ShaderMaskLayer>().isNotEmpty;
+      expect(edgeDrawn(), isFalse, reason: 'at rest nothing is drawn offscreen');
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowDown);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 40));
+      if (variant == AppThemeVariant.standard) {
+        expect(find.byType(OckerGlideEdge), findsNothing, reason: 'Original as it was: the edge clips');
+        expect(edgeDrawn(), isFalse);
+      } else {
+        expect(edgeDrawn(), isTrue, reason: 'the row going up dissolves into the edge');
+      }
+
+      await tester.pumpAndSettle();
+      expect(edgeDrawn(), isFalse, reason: 'gone again once the glide has settled');
+    });
+  }
 
   testWidgets('under glass a short row leaves its room to the row below, shown in part', (tester) async {
     final serverManager = MultiServerManager();

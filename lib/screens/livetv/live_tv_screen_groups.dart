@@ -527,125 +527,146 @@ extension _LiveTvScreenFork on _LiveTvScreenState {
       ),
     );
 
-    return AnimatedContainer(
-      duration: DevicePerformance.reducedDuration(const Duration(milliseconds: 180)),
-      curve: Curves.easeOutCubic,
-      width: width,
-      // No decoration here, deliberately. Ground and rule sit *inside* the clip
-      // and below the band (the DecoratedBox further down): on this box the
-      // rule ran the whole height — straight through the row of destinations —
-      // and a closed column is a box of zero width whose border still paints,
-      // leaving a hairline down the screen's left edge.
-      // Clipped rather than laid out narrower: the rows keep their full width
-      // through the whole animation and slide in, instead of squeezing.
-      child: ClipRect(
-        // A closed column is a box of zero width whose rows are all still
-        // there, still focusable — so the cursor could walk into something
-        // nobody can see, and LEFT on the guide then reached this list's own
-        // handler instead of opening the column again. Painted while it
-        // animates shut, reachable only while it is open.
-        child: ExcludeFocus(
-          excluding: !_groupColumnOpen,
-          child: OverflowBox(
-            alignment: .centerLeft,
-            minWidth: _groupColumnWidth(context),
-            maxWidth: _groupColumnWidth(context),
-            // The way back out. A list tile answers SELECT and nothing else, so
-            // without this the column is somewhere focus goes and does not
-            // return from — LEFT would wander off by traversal and BACK would
-            // leave Live TV altogether, from a column the viewer thinks of as a
-            // drawer over the guide.
-            child: Focus(
-              onFocusChange: _onGroupColumnFocusChange,
-              onKeyEvent: (node, event) {
-                // Past the column there is only the navigation, so both ways
-                // out lead there: the column sits where the rail and the header
-                // do, and stepping off it should feel like stepping onto them
-                // rather than being thrown back at the schedule.
-                if (event.logicalKey.isBackKey) {
-                  return handleBackKeyAction(event, _leaveGroupColumnForNavigation);
-                }
-                if (!event.isActionable) return KeyEventResult.ignored;
-                if (event.logicalKey.isLeftKey) {
-                  _leaveGroupColumnForNavigation();
-                  return KeyEventResult.handled;
-                }
-                // And RIGHT is the way back to the schedule — spelled out here
-                // rather than left to traversal, which walked into the guide
-                // while the column stayed open behind it.
-                if (event.logicalKey.isRightKey) {
-                  _closeGroupColumn(resumeWhereItWas: true);
-                  return KeyEventResult.handled;
-                }
-                // UP or DOWN past the first or last group stays on it
-                // (Plebz): traversal would walk out of the column, which then
-                // shut and opened again elsewhere.
-                final direction = event.logicalKey.isDownKey
-                    ? TraversalDirection.down
-                    : event.logicalKey.isUpKey
-                    ? TraversalDirection.up
-                    : null;
-                if (direction != null) {
-                  final current = FocusManager.instance.primaryFocus;
-                  final nodes = [for (final option in _channelGroupOptions) _groupChipFocusNode(option.key)];
-                  final at = current == null ? -1 : nodes.indexOf(current);
-                  if (at < 0) return KeyEventResult.ignored;
-                  final next = at + (direction == TraversalDirection.down ? 1 : -1);
-                  if (next < 0 || next >= nodes.length) return KeyEventResult.handled;
-                  nodes[next].requestFocus();
-                  if (nodes[next].context case final rowContext?) {
-                    Scrollable.ensureVisible(
-                      rowContext,
-                      alignmentPolicy: next > at
-                          ? ScrollPositionAlignmentPolicy.keepVisibleAtEnd
-                          : ScrollPositionAlignmentPolicy.keepVisibleAtStart,
-                    );
+    // Under Glas a sheet from the edge, the same shape with Liquid Glass on or
+    // off (Plebz).
+    final liquidDrawer = !ockerFlat(context);
+    final columnCorner = Radius.circular((tk?.radiusSm ?? 14) + 8);
+    final columnRadius = liquidDrawer ? BorderRadius.horizontal(right: columnCorner) : BorderRadius.all(columnCorner);
+    // Plebz: open, the column stands where the Apple TV's place capsule does.
+    return OckerHidesPlace(
+      hide: _groupColumnOpen,
+      child: AnimatedContainer(
+        duration: DevicePerformance.reducedDuration(const Duration(milliseconds: 180)),
+        curve: Curves.easeOutCubic,
+        width: width,
+        // No decoration here, deliberately. Ground and rule sit *inside* the clip
+        // and below the band (the DecoratedBox further down): on this box the
+        // rule ran the whole height — straight through the row of destinations —
+        // and a closed column is a box of zero width whose border still paints,
+        // leaving a hairline down the screen's left edge.
+        // Clipped rather than laid out narrower: the rows keep their full width
+        // through the whole animation and slide in, instead of squeezing.
+        child: ClipRect(
+          // A closed column is a box of zero width whose rows are all still
+          // there, still focusable — so the cursor could walk into something
+          // nobody can see, and LEFT on the guide then reached this list's own
+          // handler instead of opening the column again. Painted while it
+          // animates shut, reachable only while it is open.
+          child: ExcludeFocus(
+            excluding: !_groupColumnOpen,
+            child: OverflowBox(
+              alignment: .centerLeft,
+              minWidth: _groupColumnWidth(context),
+              maxWidth: _groupColumnWidth(context),
+              // The way back out. A list tile answers SELECT and nothing else, so
+              // without this the column is somewhere focus goes and does not
+              // return from — LEFT would wander off by traversal and BACK would
+              // leave Live TV altogether, from a column the viewer thinks of as a
+              // drawer over the guide.
+              child: Focus(
+                onFocusChange: _onGroupColumnFocusChange,
+                onKeyEvent: (node, event) {
+                  // Past the column there is only the navigation, so both ways
+                  // out lead there: the column sits where the rail and the header
+                  // do, and stepping off it should feel like stepping onto them
+                  // rather than being thrown back at the schedule.
+                  if (event.logicalKey.isBackKey) {
+                    return handleBackKeyAction(event, _leaveGroupColumnForNavigation);
                   }
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.ignored;
-              },
-              // The redesign's top margin. Outside the scrollable, not as its
-              // padding: padding is part of what scrolls, so the rows would
-              // travel up into it.
-              child: Padding(
-                // Flat (Plebz): the column runs the full height, square; its
-                // rows start where the content does. Glas: the panel keeps the
-                // same room to the screen's top as to its foot (the viewer's
-                // call), so no margin over it.
-                padding: EdgeInsets.only(
-                  top: isOckerLayout(context) && !ockerFlat(context) && !glass ? ockerContentTop(context) : 0,
-                ),
-                child: glass && ockerFlat(context)
-                    ? OckerGlass(
-                        borderRadius: BorderRadius.zero,
-                        scrimInset: 0,
-                        child: Padding(
-                          padding: EdgeInsets.only(top: isOckerLayout(context) ? ockerContentTop(context) : 0),
+                  if (!event.isActionable) return KeyEventResult.ignored;
+                  if (event.logicalKey.isLeftKey) {
+                    _leaveGroupColumnForNavigation();
+                    return KeyEventResult.handled;
+                  }
+                  // And RIGHT is the way back to the schedule — spelled out here
+                  // rather than left to traversal, which walked into the guide
+                  // while the column stayed open behind it.
+                  if (event.logicalKey.isRightKey) {
+                    _closeGroupColumn(resumeWhereItWas: true);
+                    return KeyEventResult.handled;
+                  }
+                  // UP or DOWN past the first or last group stays on it
+                  // (Plebz): traversal would walk out of the column, which then
+                  // shut and opened again elsewhere.
+                  final direction = event.logicalKey.isDownKey
+                      ? TraversalDirection.down
+                      : event.logicalKey.isUpKey
+                      ? TraversalDirection.up
+                      : null;
+                  if (direction != null) {
+                    final current = FocusManager.instance.primaryFocus;
+                    final nodes = [for (final option in _channelGroupOptions) _groupChipFocusNode(option.key)];
+                    final at = current == null ? -1 : nodes.indexOf(current);
+                    if (at < 0) return KeyEventResult.ignored;
+                    final next = at + (direction == TraversalDirection.down ? 1 : -1);
+                    if (next < 0 || next >= nodes.length) return KeyEventResult.handled;
+                    nodes[next].requestFocus();
+                    if (nodes[next].context case final rowContext?) {
+                      Scrollable.ensureVisible(
+                        rowContext,
+                        alignmentPolicy: next > at
+                            ? ScrollPositionAlignmentPolicy.keepVisibleAtEnd
+                            : ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+                      );
+                    }
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                // The redesign's top margin. Outside the scrollable, not as its
+                // padding: padding is part of what scrolls, so the rows would
+                // travel up into it.
+                child: Padding(
+                  // Flat (Plebz): the column runs the full height, square; its
+                  // rows start where the content does. Glas: the panel keeps the
+                  // same room to the screen's top as to its foot (the viewer's
+                  // call), so no margin over it.
+                  padding: EdgeInsets.only(
+                    top: isOckerLayout(context) && !ockerFlat(context) && !glass ? ockerContentTop(context) : 0,
+                  ),
+                  child: glass && ockerFlat(context)
+                      ? OckerGlass(
+                          borderRadius: BorderRadius.zero,
+                          scrimInset: 0,
+                          child: Padding(
+                            padding: EdgeInsets.only(top: isOckerLayout(context) ? ockerContentTop(context) : 0),
+                            child: list,
+                          ),
+                        )
+                      : glass
+                      // Under glass a panel floating clear of the edges, its
+                      // corners concentric with the rows' — their corner and
+                      // the room round them — and lit at its edge; nearly
+                      // opaque, because a schedule read through a haze is
+                      // still a haze.
+                      // Under Liquid Glass a drawer: flush with the navigation, the
+                      // top and the foot, rounded only on its open side, as the
+                      // rail's own pane (the viewer's call).
+                      ? Padding(
+                          padding: liquidDrawer ? EdgeInsets.zero : EdgeInsets.all(12 * ockerScale(context)),
+                          child: OckerGlass(
+                            borderRadius: columnRadius,
+                            scrimInset: 0,
+                            liquid: true,
+                            lensBeyond: liquidDrawer
+                                ? EdgeInsets.fromLTRB(
+                                    400 * ockerScale(context),
+                                    400 * ockerScale(context),
+                                    0,
+                                    400 * ockerScale(context),
+                                  )
+                                : EdgeInsets.zero,
+                            child: ClipRRect(borderRadius: columnRadius, child: list),
+                          ),
+                        )
+                      : DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: ground,
+                            border: Border(right: BorderSide(color: tk?.ink(0.12) ?? Theme.of(context).dividerColor)),
+                          ),
                           child: list,
                         ),
-                      )
-                    : glass
-                    // Under glass a panel floating clear of the edges, its
-                    // corners concentric with the rows' — their corner and
-                    // the room round them — and lit at its edge; nearly
-                    // opaque, because a schedule read through a haze is
-                    // still a haze.
-                    ? Padding(
-                        padding: EdgeInsets.all(12 * ockerScale(context)),
-                        child: OckerGlass(
-                          borderRadius: BorderRadius.circular((tk?.radiusSm ?? 14) + 8),
-                          scrimInset: 0,
-                          child: ClipRRect(borderRadius: BorderRadius.circular((tk?.radiusSm ?? 14) + 8), child: list),
-                        ),
-                      )
-                    : DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: ground,
-                          border: Border(right: BorderSide(color: tk?.ink(0.12) ?? Theme.of(context).dividerColor)),
-                        ),
-                        child: list,
-                      ),
+                ),
               ),
             ),
           ),

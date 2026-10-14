@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/widgets/fitted_metadata_line.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/media/media_item.dart';
 import 'package:plezy/media/media_kind.dart';
@@ -66,7 +67,9 @@ void main() {
 
   tearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
 
-  testWidgets('under glass the spotlight\'s facts lie on capsules of glass, without bullets', (tester) async {
+  testWidgets('under glass the spotlight\'s facts are words with dots between, as Apple\'s TV app writes them', (
+    tester,
+  ) async {
     await _pumpSpotlight(
       tester,
       const MediaItem.plex(
@@ -80,12 +83,13 @@ void main() {
       variant: AppThemeVariant.glas,
     );
 
-    expect(find.ancestor(of: find.text('1992'), matching: find.byType(OckerGlassPlate)), findsOneWidget);
+    expect(find.ancestor(of: find.text('1992'), matching: find.byType(OckerGlassPlate)), findsNothing);
+    expect(find.text(FittedMetadataLine.flatSeparator), findsWidgets);
     expect(find.textContaining('•'), findsNothing);
     // On "Flach"'s step to the synopsis (ockerFlatSizes): 22 at this scale.
-    final chip = tester.getRect(find.ancestor(of: find.text('1992'), matching: find.byType(OckerGlassPlate)));
+    final facts = tester.getRect(find.text('1992'));
     final synopsis = tester.getRect(find.text('A short synopsis.'));
-    expect(synopsis.top - chip.bottom, closeTo(22, 0.5));
+    expect(synopsis.top - facts.bottom, closeTo(22, 0.5));
   });
 
   testWidgets('the spotlight\'s facts follow the detail page\'s order', (tester) async {

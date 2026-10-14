@@ -230,8 +230,10 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
 
     final gap = isTv ? 8.0 * tvScale : 12.0;
 
-    // Under the Plebz palette the play segments wear the logo's gradient.
-    final plebzPlay = ockerPlebzPlay(context);
+    // Under the Plebz palette the play segments wear the logo's gradient;
+    // Glas tints them with any palette's accent — Apple's prominent button,
+    // colour behind the one main action.
+    final plebzPlay = ockerPlebzPlay(context) || ockerGlasTintedPlay(context);
     final plebzStyle = ButtonStyle(
       backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
       foregroundColor: const WidgetStatePropertyAll(Colors.white),
@@ -612,7 +614,7 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
             : null,
       );
       if (!glass) return bar;
-      return OckerGlassBand(overhang: EdgeInsets.all(ockerBandMargin(context)), child: bar);
+      return OckerGlassBand(overhang: EdgeInsets.all(ockerBandMargin(context)), liquidBubble: true, child: bar);
     }
 
     // Off TV the track status sits at the row's far end, right-aligned so it

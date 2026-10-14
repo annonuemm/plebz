@@ -16,6 +16,7 @@ import '../../widgets/focusable_list_tile.dart';
 import '../../widgets/setting_tile.dart';
 import '../../widgets/settings_section.dart';
 import '../../widgets/system_bottom_inset.dart';
+import '../../redesign/ocker_rail_shell.dart' show OckerHidesPlace;
 
 /// One topic of the settings (Plebz): a row in the column, its page beside it.
 class PlebzSettingsSection {
@@ -263,7 +264,12 @@ class PlebzSettingsShellState extends State<PlebzSettingsShell> {
     return LayoutBuilder(
       builder: (context, constraints) {
         _twoPane = _wantsTwoPane(context, constraints.maxWidth);
-        return _twoPane ? _buildTwoPane(context, constraints.maxWidth) : _buildList(context);
+        // Plebz: the topic column names the page at its top left, where the
+        // Apple TV's place capsule would stand over it.
+        return OckerHidesPlace(
+          hide: _twoPane,
+          child: _twoPane ? _buildTwoPane(context, constraints.maxWidth) : _buildList(context),
+        );
       },
     );
   }

@@ -895,6 +895,7 @@ class _OverlaySheetHostState extends State<OverlaySheetHost> with SingleTickerPr
                       ? OckerGlass(
                           borderRadius: borderRadius,
                           groundOpacity: ockerReadingGroundOpacity,
+                          liquid: true,
                           // A Material of its own inside the pane: the rows'
                           // ink lands on the nearest one, and the pane's
                           // ground between them would hide it.

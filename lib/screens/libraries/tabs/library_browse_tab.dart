@@ -76,6 +76,7 @@ import '../../../redesign/ocker_skin.dart';
 import '../../../redesign/ocker_poster_tile.dart';
 import '../../../redesign/ocker_filter_slot.dart';
 import '../../../services/watch_progress/tracker_library_query.dart';
+import '../../../redesign/ocker_glas_look.dart';
 
 /// Browse tab for library screen
 /// Shows library items with grouping, filtering, and sorting
@@ -1816,7 +1817,8 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
           Positioned(
             top: overlayTopPadding,
             right: _alphaJumpBarEdgeInset,
-            bottom: 0,
+            // Clear of Glas's floating tab bar on Apple's handhelds.
+            bottom: ockerFloatingBottomInset(context),
             // Select the derived letter rather than listening to the raw
             // index: the index changes every scrolled row, but the bar only
             // needs a rebuild when the letter itself flips.
@@ -1971,6 +1973,7 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
                 delegate: OptionsChipsBarDelegate(builder: (_) => _buildChipsBar()),
               ),
             ..._buildContentSlivers(),
+            const SliverFloatingBarSpace(),
           ],
         ),
       ),

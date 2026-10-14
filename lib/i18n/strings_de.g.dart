@@ -551,7 +551,7 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get showPlaybackTracksStatus => 'Ton und Untertitel';
 	@override String get showPlaybackTracksStatusDescription => 'Zeigt, welche Spuren beim Abspielen gewählt würden';
 	@override String get appThemeVariantGlas => 'Redesign – Glas';
-	@override String get appThemeVariantGlasDescription => 'Durchscheinende Menüs über dem Bild, am Fernseher neu angeordnet';
+	@override String get appThemeVariantGlasDescription => 'Schwebende Navigation, am Fernseher neu angeordnet';
 	@override String get appThemeVariantFlach => 'Redesign – Flach';
 	@override String get appThemeVariantFlachDescription => 'Wie Glas, aber flach, mit weißem Fokus';
 	@override String get flachAccent => 'Akzentfarbe';
@@ -600,6 +600,14 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get redesignSeasonTabsDescription => 'Sonst hat jede Staffel ihre eigene Reihe';
 	@override String get glasSpinningFocus => 'Drehender Fokusrahmen';
 	@override String get glasSpinningFocusDescription => 'Kostet etwas Leistung';
+	@override String get glasLiquid => 'Liquid Glass';
+	@override String get glasLiquidDescription => 'Unscharfer Hintergrund wie bei Apple, kostet Leistung';
+	@override String get glasFakeGlass => 'Glaseffekt';
+	@override String get glasFakeGlassDescription => 'Navigation und Menüs als Glas, sonst flach';
+	@override String get glasRailSymbols => 'Symbolleiste immer zeigen';
+	@override String get glasRailSymbolsDescription => 'Die Navigation bleibt links sichtbar';
+	@override String get smoothScroll => 'Weiches Scrollen';
+	@override String get smoothScrollDescription => 'Reihen und Poster gleiten statt zu springen';
 	@override String get homeTitleLogos => 'Logos auf Start und Erkunden';
 	@override String get homeTitleLogosDescription => 'Titel-Logos statt Text im großen Bild';
 	@override String get seerrCardEpisodeFacts => 'Folgenangaben auf Seerr-Kacheln';
@@ -4227,7 +4235,7 @@ extension on TranslationsDe {
 			'settings.showPlaybackTracksStatus' => 'Ton und Untertitel',
 			'settings.showPlaybackTracksStatusDescription' => 'Zeigt, welche Spuren beim Abspielen gewählt würden',
 			'settings.appThemeVariantGlas' => 'Redesign – Glas',
-			'settings.appThemeVariantGlasDescription' => 'Durchscheinende Menüs über dem Bild, am Fernseher neu angeordnet',
+			'settings.appThemeVariantGlasDescription' => 'Schwebende Navigation, am Fernseher neu angeordnet',
 			'settings.appThemeVariantFlach' => 'Redesign – Flach',
 			'settings.appThemeVariantFlachDescription' => 'Wie Glas, aber flach, mit weißem Fokus',
 			'settings.flachAccent' => 'Akzentfarbe',
@@ -4276,6 +4284,14 @@ extension on TranslationsDe {
 			'settings.redesignSeasonTabsDescription' => 'Sonst hat jede Staffel ihre eigene Reihe',
 			'settings.glasSpinningFocus' => 'Drehender Fokusrahmen',
 			'settings.glasSpinningFocusDescription' => 'Kostet etwas Leistung',
+			'settings.glasLiquid' => 'Liquid Glass',
+			'settings.glasLiquidDescription' => 'Unscharfer Hintergrund wie bei Apple, kostet Leistung',
+			'settings.glasFakeGlass' => 'Glaseffekt',
+			'settings.glasFakeGlassDescription' => 'Navigation und Menüs als Glas, sonst flach',
+			'settings.glasRailSymbols' => 'Symbolleiste immer zeigen',
+			'settings.glasRailSymbolsDescription' => 'Die Navigation bleibt links sichtbar',
+			'settings.smoothScroll' => 'Weiches Scrollen',
+			'settings.smoothScrollDescription' => 'Reihen und Poster gleiten statt zu springen',
 			'settings.homeTitleLogos' => 'Logos auf Start und Erkunden',
 			'settings.homeTitleLogosDescription' => 'Titel-Logos statt Text im großen Bild',
 			'settings.seerrCardEpisodeFacts' => 'Folgenangaben auf Seerr-Kacheln',
@@ -4311,6 +4327,8 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.hdrFormats' => 'HDR-Formate',
 			'settings.hardwareTestLabels.wideColour' => 'Erweiterter Farbraum',
 			'settings.hardwareTestLabels.peakBrightness' => 'Spitzenhelligkeit',
+			_ => null,
+		} ?? switch (path) {
 			'settings.hardwareTestLabels.audioOutput' => 'Ausgang',
 			'settings.hardwareTestLabels.channels' => 'Kanäle',
 			'settings.hardwareTestLabels.hardwareDecoder' => 'Hardware',
@@ -4319,8 +4337,6 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.possible' => 'möglich',
 			'settings.hardwareTestLabels.notPossible' => 'nicht möglich',
 			'settings.hardwareTestLabels.unavailable' => 'nicht verfügbar',
-			_ => null,
-		} ?? switch (path) {
 			'settings.hardwareTestLabels.none' => 'keine',
 			'settings.hardwareTestLabels.yes' => 'ja',
 			'settings.hardwareTestLabels.no' => 'nein',
@@ -4825,6 +4841,8 @@ extension on TranslationsDe {
 			'profiles.delete' => 'Löschen',
 			'profiles.signOut' => 'Abmelden',
 			'profiles.signOutPlexTitle' => 'Von Plex abmelden?',
+			_ => null,
+		} ?? switch (path) {
 			'profiles.signOutPlexMessage' => ({required Object displayName}) => '${displayName} und alle Plex Home-Benutzer entfernen? Du kannst dich jederzeit wieder anmelden.',
 			'profiles.signedOutPlex' => 'Von Plex abgemeldet.',
 			'profiles.signOutFailed' => 'Abmeldung fehlgeschlagen.',
@@ -4833,8 +4851,6 @@ extension on TranslationsDe {
 			'profiles.summaryMultipleWithActive' => ({required Object count, required Object activeName}) => '${count} Profile · aktiv: ${activeName}',
 			'profiles.summaryMultiple' => ({required Object count}) => '${count} Profile',
 			'profiles.removeConnectionTitle' => 'Verbindung entfernen?',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.removeConnectionMessage' => ({required Object displayName, required Object connectionLabel}) => 'Zugriff von ${displayName} auf ${connectionLabel} entfernen. Andere Profile behalten ihn.',
 			'profiles.deleteProfileTitle' => 'Profil löschen?',
 			'profiles.deleteProfileMessage' => ({required Object displayName}) => '${displayName} und Verbindungen entfernen. Server bleiben verfügbar.',
@@ -5339,6 +5355,8 @@ extension on TranslationsDe {
 			'liveTv.lateNight' => 'Spätnacht',
 			'liveTv.whatsOn' => 'Jetzt im TV',
 			'liveTv.watchChannel' => 'Kanal ansehen',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.favorites' => 'Favoriten',
 			'liveTv.reorderFavorites' => 'Favoriten sortieren',
 			'liveTv.noFavoriteChannels' => 'Keine Lieblingssender',
@@ -5347,8 +5365,6 @@ extension on TranslationsDe {
 			'liveTv.favoritesLoadFailed' => 'Favoriten konnten nicht geladen werden. Überprüfe deine Verbindung und versuche es erneut.',
 			'liveTv.favoritesUpdateFailed' => 'Favoriten konnten nicht aktualisiert werden. Prüfe deine Verbindung und versuche es erneut.',
 			'liveTv.joinSession' => 'Aktueller Sitzung beitreten',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.watchFromStart' => ({required Object minutes}) => 'Von Anfang an ansehen (vor ${minutes} Min.)',
 			'liveTv.watchLive' => 'Live ansehen',
 			'liveTv.goToLive' => 'Zum Live-Bild',
@@ -5853,6 +5869,8 @@ extension on TranslationsDe {
 			'performanceOverlay.dvRouteBaseLayerHdr10' => 'HDR10-Basisschicht',
 			'performanceOverlay.dvRouteBaseLayerHlg' => 'HLG-Basisschicht',
 			'performanceOverlay.dvRouteBaseLayerSdr' => 'SDR-Basisschicht',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.dvRouteReshaped' => 'RPU umgeformt (gpu-next)',
 			'performanceOverlay.p7Conversion' => 'P7-Konv.',
 			'performanceOverlay.sampleRate' => 'Abtastrate',
@@ -5861,8 +5879,6 @@ extension on TranslationsDe {
 			'performanceOverlay.matrix' => 'Matrix',
 			'performanceOverlay.primaries' => 'Primärfarben',
 			'performanceOverlay.transfer' => 'Transfer',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.renderFps' => 'Render-FPS',
 			'performanceOverlay.displayFps' => 'Display-FPS',
 			'performanceOverlay.avSync' => 'A/V-Sync',
@@ -6367,6 +6383,8 @@ extension on TranslationsDe {
 			'plebz.updateNow' => 'Aktualisieren',
 			'plebz.later' => 'Später',
 			'plebz.upToDate' => 'Plebz ist auf dem neuesten Stand',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.checking' => 'Suche nach Updates …',
 			'plebz.checkFailed' => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.',
 			'plebz.updatedTitle' => 'Plebz wurde aktualisiert',
@@ -6375,8 +6393,6 @@ extension on TranslationsDe {
 			'plebz.checkOnStartup' => 'Beim Start nach Updates suchen',
 			'plebz.checkOnStartupDescription' => 'GitHub sieht dabei deine IP-Adresse',
 			'plebz.updateOffer' => 'Updates anbieten',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.updateOfferDescription' => 'Wichtige Updates kommen immer sofort',
 			'plebz.updateOfferWhenAvailable' => 'Sobald verfügbar',
 			'plebz.updateOfferWeekly' => 'Einmal pro Woche',

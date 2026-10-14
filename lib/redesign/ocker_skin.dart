@@ -12,6 +12,7 @@ import '../media/media_item.dart';
 import '../media/media_server_client.dart';
 
 import '../theme/mono_theme.dart' show glasPalette, ockerDisplayFontFamily, plebzGradient, redesignBarColor;
+import '../theme/liquid_glass.dart';
 import '../theme/mono_tokens.dart';
 import '../utils/layout_constants.dart';
 import '../utils/platform_detector.dart';
@@ -98,7 +99,12 @@ set debugOckerLayoutOnThisHost(bool? value) => _debugOckerLayoutOnThisHost = val
 /// Where a screen's content starts under the redesign: at the top safe
 /// margin. The destinations stand in the rail down the left, so nothing lies
 /// across the top for a screen to clear.
-double ockerContentTop(BuildContext context) => OckerLayout.contentTop * ockerScale(context);
+///
+/// On the Apple TV under Glas (Plebz) a step lower: the capsule naming the
+/// place on show stands at the top left there, and the page begins under it
+/// rather than against it ([ockerGlasTv]).
+double ockerContentTop(BuildContext context) =>
+    (ockerGlasHiddenRail(context) ? OckerLayout.appleTvContentTop : OckerLayout.contentTop) * ockerScale(context);
 
 /// Reference frame the design was drawn in: 1920 x 1080, at 1x.
 const ockerReferenceWidth = 1920.0;
@@ -272,6 +278,10 @@ class OckerLayout {
   /// nothing to clear but the top of a television's safe area.
   static const contentTop = 72.0;
 
+  /// [contentTop] on the Apple TV under Glas (Plebz): under the place capsule
+  /// (from [headerTop] / 2, 56 high) with the page's gap of 30 below it.
+  static const appleTvContentTop = 112.0;
+
   /// The left panel that describes whatever holds focus.
   /// The describing column on the grid pages.
   ///
@@ -415,6 +425,44 @@ bool ockerGlass(BuildContext context) => Theme.of(context).extension<MonoTokens>
 /// white fill with what stands on it inverted ([OckerFlatFocusInk]).
 bool ockerFlat(BuildContext context) => Theme.of(context).extension<MonoTokens>()?.flat == true;
 
+/// "Redesign – Glas" itself, not "Flach" (Plebz): where Glas follows Apple's
+/// own apps (the user's call, 2026-10-13, on every device) — headings in
+/// sentence case, bands with no ground of their own, a picture's focus a
+/// white outline.
+bool ockerGlasOnly(BuildContext context) => ockerGlass(context) && !ockerFlat(context);
+
+/// Glas in the television arrangement (Plebz), after Apple's TV app.
+bool ockerGlasTv(BuildContext context) => isOckerLayout(context) && !ockerFlat(context);
+
+/// Glas on the television with its shut rail hidden (Plebz), Apple's TV app's
+/// way: no strip of symbols, the page the whole width, a capsule at its top
+/// left naming the place on show — unless the viewer keeps the symbols in
+/// view ([PlebzPrefs.glasRailSymbolsPinned], read through [OckerRailPinned]).
+bool ockerGlasHiddenRail(BuildContext context) => ockerGlasTv(context) && !OckerRailPinned.of(context);
+
+/// Whether the viewer keeps Glas's rail of symbols in view
+/// ([PlebzPrefs.glasRailSymbolsPinned]): published by the rail shell, so the
+/// pages measured against it rebuild when it changes; read from the settings
+/// where no shell is above.
+class OckerRailPinned extends InheritedWidget {
+  const OckerRailPinned({super.key, required this.pinned, required super.child});
+
+  final bool pinned;
+
+  static bool of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<OckerRailPinned>()?.pinned ??
+      SettingsService.instanceOrNull?.read(PlebzPrefs.glasRailSymbolsPinned) ??
+      false;
+
+  @override
+  bool updateShouldNotify(OckerRailPinned oldWidget) => pinned != oldWidget.pinned;
+}
+
+/// Whether a line of facts is written as words with dots between them rather
+/// than on capsules: both redesigns — "Flach" from the start, Glas since it
+/// follows Apple's TV app ("TV-Sendung · Thriller · Mystery").
+bool ockerFlatFacts(BuildContext context) => ockerGlass(context);
+
 /// Whether "Flach"'s sizes apply (Plebz) — the spotlight's title, facts and
 /// description, and the Live-TV band with its time pill in the ruler.
 ///
@@ -446,7 +494,7 @@ class OckerFlatFocusInk extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final on = invert && ockerFlat(context);
+    final on = invert && (ockerFlat(context) || _OckerBandScope.flatAt(context));
     return _FlatInvertScope(
       inverted: invertingAt(context) != on,
       child: _FlatInvert(invert: on, child: child),
@@ -572,6 +620,14 @@ bool ockerPlebzPlay(BuildContext context) {
   return tk != null && tk.glass && !tk.flat && tk.accent == glasPalette(GlasAccent.plebz).accent;
 }
 
+/// Whether Glas's play buttons wear the accent's tint on [OckerPlebzPlayGround]
+/// (Plebz, on every device): Apple gives the one main action a prominent,
+/// coloured glass, and the Plebz palette already did.
+bool ockerGlasTintedPlay(BuildContext context) {
+  final tk = Theme.of(context).extension<MonoTokens>();
+  return tk != null && tk.glass && !tk.flat;
+}
+
 /// A play button's ground under the Plebz palette: a capsule of the same
 /// glass as the navigation's, tinted with the logo's gradient — violet to
 /// pink glass, the page showing through, with the pane's sheen and lit edge.
@@ -596,19 +652,27 @@ class OckerPlebzPlayGround extends StatelessWidget {
   static const double restingTint = 0.36;
   static const double focusedTint = 0.5;
 
+  // Follows the glass switches at once: the play buttons on a page kept alive
+  // behind the settings change with them.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      ListenableBuilder(listenable: OckerLiquidGlass.changes, builder: (context, _) => _build(context));
+
+  Widget _build(BuildContext context) {
     final tk = tokens(context);
     final onBand = _OckerBandScope.maybeOf(context) != null;
     final lift = focused && onBand ? ockerWordFocusLift(context) : 0.0;
     final alpha = focused ? focusedTint : restingTint;
+    // The logo's gradient under the Plebz palette, any other palette's accent
+    // ([ockerGlasTintedPlay]).
+    final plebz = ockerPlebzPlay(context);
     final tint = DecoratedBox(
       decoration: ShapeDecoration(
         shape: shape,
         gradient: LinearGradient(
           begin: plebzGradient.begin,
           end: plebzGradient.end,
-          colors: [for (final colour in plebzGradient.colors) colour.withValues(alpha: alpha)],
+          colors: [for (final colour in plebzGradient.colors) (plebz ? colour : tk.accent).withValues(alpha: alpha)],
           stops: plebzGradient.stops,
         ),
       ),
@@ -618,6 +682,13 @@ class OckerPlebzPlayGround extends StatelessWidget {
     if (focused && onBand) {
       // The band's capsule under it is the glass.
       pane = tint;
+    } else if (!OckerLiquidGlass.look) {
+      // Plebz: on Apple's builds with Liquid Glass off the tint alone, flat —
+      // no sheen, no lit edge (the user's call, 2026-10-13).
+      pane = DecoratedBox(
+        decoration: ShapeDecoration(shape: shape, color: tk.bg.withValues(alpha: 0.30)),
+        child: tint,
+      );
     } else {
       final sheen = focused ? const [0.34, 0.12, 0.22] : const [0.12, 0.03, 0.07];
       pane = CustomPaint(
@@ -742,40 +813,137 @@ class OckerGlass extends StatelessWidget {
     required this.child,
     this.scrimInset = 8,
     this.groundOpacity = ockerReadingGroundOpacity,
+    this.liquid = false,
+    this.lensBeyond = EdgeInsets.zero,
+    this.lensThickness = OckerLiquidGlass.lensThickness,
+    this.lensStrength = OckerLiquidGlass.lensStrength,
   });
 
   final BorderRadius borderRadius;
   final double scrimInset;
 
+  /// How far in the lens's bevel reaches and how far it bends: a pane's own,
+  /// unless a narrow one wants a thinner rim (the floating bars).
+  final double lensThickness;
+  final double lensStrength;
+
   /// How much of the ground the pane holds; [ockerReadingGroundOpacity], as
   /// everything read on glass, unless a pane has a reason of its own.
   final double groundOpacity;
+
+  /// Whether this pane turns to Liquid Glass while that is switched on
+  /// (`OckerLiquidGlass`): the menus and the side rail ask for it; every
+  /// other pane stays plain glass.
+  final bool liquid;
+
+  /// For a liquid pane flush with the screen's edges: how far its lens takes
+  /// the shape to run on past them (see [OckerLiquidBackdrop.lensBeyond]).
+  final EdgeInsets lensBeyond;
 
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    if (ockerFlat(context)) {
-      // Flat: one solid surface, a step lighter than the ground.
-      return DecoratedBox(
-        decoration: BoxDecoration(color: _flatFill(context, 0.05), borderRadius: borderRadius),
-        child: Padding(padding: EdgeInsets.all(scrimInset), child: child),
-      );
-    }
-    return CustomPaint(
-      foregroundPainter: _OckerGlassEdge(
-        RoundedRectangleBorder(borderRadius: borderRadius),
-        Directionality.of(context),
+    if (ockerFlat(context)) return _flat(context);
+    final shape = RoundedRectangleBorder(borderRadius: borderRadius);
+    if (!liquid) return _pane(context, shape, liquid: false);
+    return OckerLiquidBackdrop(
+      shape: shape,
+      // The corner the lens follows: the pane's roundest, since a pane flush
+      // with the screen keeps its rounding only on the open side.
+      radius: [
+        borderRadius.topLeft.x,
+        borderRadius.topRight.x,
+        borderRadius.bottomLeft.x,
+        borderRadius.bottomRight.x,
+      ].reduce(math.max),
+      lensBeyond: lensBeyond,
+      thickness: lensThickness,
+      strength: lensStrength,
+      // Plebz (the user's call, 2026-10-13): where the lens does not run, the
+      // fake glass stands in for it on Android; on Apple's builds with Liquid
+      // Glass switched off the navigation, the menus and sheets keep their
+      // shapes as flat surfaces, without the sheen and the lit edge.
+      builder: (context, liquid) =>
+          liquid || OckerLiquidGlass.look ? _pane(context, shape, liquid: liquid, standIn: !liquid) : _flat(context),
+    );
+  }
+
+  /// How much lighter the fake glass is where it stands in for the lens
+  /// (Plebz, Android): a frost of white over the ground, which Apple's glass
+  /// gets from the blurred picture behind it. The ground keeps its strength,
+  /// so nothing behind shows through sharp.
+  static const double standInFrost = 0.09;
+
+  /// Flat: one solid surface, a step lighter than the ground.
+  Widget _flat(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(color: _flatFill(context, 0.05), borderRadius: borderRadius),
+    child: Padding(padding: EdgeInsets.all(scrimInset), child: child),
+  );
+
+  /// [standIn]: the fake glass standing in for the lens on Android — Liquid
+  /// Glass's lit rim and a frosted, lighter ground, without the blur.
+  Widget _pane(BuildContext context, ShapeBorder shape, {required bool liquid, bool standIn = false}) => CustomPaint(
+    foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context), liquid: liquid || standIn),
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: standIn
+            ? Color.alphaBlend(tokens(context).ink(standInFrost), tokens(context).bg).withValues(alpha: groundOpacity)
+            : tokens(context).bg.withValues(alpha: OckerLiquidGlass.ground(groundOpacity, liquid: liquid)),
+        borderRadius: borderRadius,
       ),
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: tokens(context).bg.withValues(alpha: groundOpacity),
-          borderRadius: borderRadius,
-        ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(gradient: ockerGlassSheen(context), borderRadius: borderRadius),
-          child: Padding(padding: EdgeInsets.all(scrimInset), child: child),
-        ),
+        decoration: BoxDecoration(gradient: ockerGlassSheen(context), borderRadius: borderRadius),
+        child: Padding(padding: EdgeInsets.all(scrimInset), child: child),
+      ),
+    ),
+  );
+}
+
+/// Liquid Glass on a focused poster (Apple builds, while switched on): the
+/// artwork's own rim bends as under the bevel of a slab of glass and catches
+/// the light, the way tvOS gives an image Liquid Glass when it gains focus.
+/// It lies over the picture, inside its corners, and stands in for the focus
+/// ring ([showsInsteadOfRing]). Nothing while not [focused], under Flach, or
+/// while the glass is plain.
+class OckerLiquidFocusRim extends StatelessWidget {
+  const OckerLiquidFocusRim({super.key, required this.focused, required this.radii, this.bend = true});
+
+  final bool focused;
+  final BorderRadius radii;
+
+  /// Whether the picture under the rim bends. Only where nothing but a
+  /// picture lies there: over a tile whose words, logos or crests run near
+  /// its edge the rim only catches the light (the user: no information may
+  /// bend).
+  final bool bend;
+
+  /// Whether a focused poster here wears the rim rather than the ring.
+  ///
+  /// Not on the Apple TV (Plebz): focus there is Apple's white outline round
+  /// the picture ([ockerGlasTv], the user's call).
+  ///
+  /// Never since Glas rings every picture in white (the user's call,
+  /// 2026-10-13, after Apple's TV app): the rim is retired with it.
+  static bool showsInsteadOfRing(BuildContext context) => false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!focused || !showsInsteadOfRing(context)) return const SizedBox.shrink();
+    final shape = RoundedRectangleBorder(borderRadius: radii);
+    return IgnorePointer(
+      child: OckerLiquidBackdrop(
+        shape: shape,
+        radius: radii.topLeft.x,
+        thickness: OckerLiquidGlass.rimThickness,
+        strength: bend ? OckerLiquidGlass.rimStrength : 0,
+        frost: 0,
+        builder: (context, liquid) => liquid
+            ? CustomPaint(
+                foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context), liquid: true),
+                child: const SizedBox.expand(),
+              )
+            : const SizedBox.shrink(),
       ),
     );
   }
@@ -971,7 +1139,8 @@ class _OckerWordFocusState extends State<OckerWordFocus> {
 /// as long as the capsule's glide, and late in it, so the word lights as the
 /// capsule arrives rather than a moment before. Instant everywhere else, and
 /// on the reduced tier.
-Duration ockerInkFade(BuildContext context) => ockerGlass(context) && !ockerFlat(context)
+Duration ockerInkFade(BuildContext context) =>
+    ockerGlass(context) && !ockerFlat(context) && !_OckerBandScope.flatAt(context)
     ? ockerGlassMotion(const Duration(milliseconds: 240))
     // Flat focus jumps (Plebz): the ink goes with it at once.
     : Duration.zero;
@@ -1082,8 +1251,12 @@ class OckerGlassFocusBehind extends StatelessWidget {
 /// way: past the band's even margin round a resting capsule, and a few pixels
 /// out of the band.
 double ockerWordFocusLift(BuildContext context) =>
-    // Flat: focus and the one on show are the same segment, one size.
-    ockerFlat(context) ? 0 : ockerBandMargin(context) + 4 * ockerScale(context);
+    // Flat — and a band gone flat under Liquid Glass: focus and the one on
+    // show are the same segment, one size, the band's even margin all round
+    // it, so track and capsule stay concentric (the user's call).
+    ockerFlat(context) || _OckerBandScope.flatAt(context) || _OckerBandScope.evenAt(context)
+    ? 0
+    : ockerBandMargin(context) + 4 * ockerScale(context);
 
 /// The wash every palette started with; the sheen stands whole up to it.
 const _faintWash = 0.22;
@@ -1101,16 +1274,29 @@ const _faintWash = 0.22;
 /// capsule with its colour, and the sheen gives way to it by as much as the
 /// wash goes past faint: over solid red a full sheen reads as pink.
 class _OckerGlassCapsule extends StatelessWidget {
-  const _OckerGlassCapsule({required this.bright, required this.tint, this.shape = const StadiumBorder()});
+  const _OckerGlassCapsule({
+    required this.bright,
+    required this.tint,
+    this.shape = const StadiumBorder(),
+    this.flat = false,
+    this.liquid = false,
+  });
 
   final bool bright;
   final double tint;
   final ShapeBorder shape;
 
+  /// Drawn flat although the theme is glass: a band under Liquid Glass.
+  final bool flat;
+
+  /// A bubble of Liquid Glass: clear, the picture behind it bending at its
+  /// rim — focus on a detail page's buttons under Liquid Glass.
+  final bool liquid;
+
   @override
   Widget build(BuildContext context) {
     final tk = tokens(context);
-    if (tk.flat) {
+    if (tk.flat || flat) {
       // Flat: focus a solid white fill (what stands on it is inverted, see
       // [OckerFlatFocusInk]); the one on show a lighter segment of ink, as a
       // segmented switch marks it — the accent is kept for "now" and "play".
@@ -1123,31 +1309,65 @@ class _OckerGlassCapsule extends StatelessWidget {
       );
     }
     final wash = tk.accentWash * tint;
+    // Plebz: on Apple's builds with Liquid Glass off a capsule is flat too —
+    // the same shape, a lighter wash of ink for focus, the accent's wash for
+    // the place on show; no sheen and no lit edge (the user's call,
+    // 2026-10-13). What stands on it keeps its own ink. Android keeps the
+    // glass ([OckerLiquidGlass.look]).
+    final plain = IgnorePointer(
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          shape: shape,
+          color: Color.alphaBlend(tk.accent.withValues(alpha: wash), tk.ink(bright ? 0.20 : 0.08)),
+        ),
+        child: const SizedBox.expand(),
+      ),
+    );
     final giveWay = 1 - 0.6 * math.max(0, wash - _faintWash);
     final sheen = [
       for (final a in bright ? const [0.34, 0.12, 0.22] : const [0.12, 0.03, 0.07]) a * giveWay,
     ];
-    return IgnorePointer(
-      child: CustomPaint(
-        foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context)),
+    // Android's fake glass stands in for the lens with Liquid Glass's lit rim.
+    Widget body(BuildContext context, bool liquid) => CustomPaint(
+      foregroundPainter: _OckerGlassEdge(
+        shape,
+        Directionality.of(context),
+        liquid: liquid || (OckerLiquidGlass.look && !OckerLiquidGlass.active),
+      ),
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          shape: shape,
+          // Liquid: clear glass, the lens showing what lies behind.
+          color: Color.alphaBlend(tk.accent.withValues(alpha: wash), tk.bg.withValues(alpha: liquid ? 0.10 : 0.30)),
+        ),
         child: DecoratedBox(
           decoration: ShapeDecoration(
             shape: shape,
-            color: Color.alphaBlend(tk.accent.withValues(alpha: wash), tk.bg.withValues(alpha: 0.30)),
-          ),
-          child: DecoratedBox(
-            decoration: ShapeDecoration(
-              shape: shape,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [for (final a in sheen) tk.ink(a)],
-                stops: const [0, 0.45, 1],
-              ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [for (final a in sheen) tk.ink(a)],
+              stops: const [0, 0.45, 1],
             ),
-            child: const SizedBox.expand(),
           ),
+          child: const SizedBox.expand(),
         ),
+      ),
+    );
+    if (!liquid) {
+      return ListenableBuilder(
+        listenable: OckerLiquidGlass.changes,
+        builder: (context, _) => OckerLiquidGlass.look ? IgnorePointer(child: body(context, false)) : plain,
+      );
+    }
+    return IgnorePointer(
+      child: OckerLiquidBackdrop(
+        shape: shape,
+        radius: 10000,
+        thickness: OckerLiquidGlass.bubbleThickness,
+        strength: OckerLiquidGlass.bubbleStrength,
+        frost: 0,
+        builder: body,
       ),
     );
   }
@@ -1166,7 +1386,19 @@ class _OckerGlassCapsule extends StatelessWidget {
 /// inside: a band of words over the page is not a menu over a poster, and the
 /// darker inner box read as a second band.
 class OckerGlassBand extends StatefulWidget {
-  const OckerGlassBand({super.key, required this.overhang, required this.child, this.flatTrack = false});
+  const OckerGlassBand({
+    super.key,
+    required this.overhang,
+    required this.child,
+    this.flatTrack = false,
+    this.liquidBubble = false,
+  });
+
+  /// Under Liquid Glass, whether focus on this band is a bubble of glass that
+  /// glides — a detail page's row of buttons, as a tvOS button takes on
+  /// Liquid Glass when it gains focus — rather than the white fill the tabs
+  /// and filters take (the viewer's calls).
+  final bool liquidBubble;
 
   /// Under "Flach", whether the words stand on a faint track of ink — a row
   /// of tabs, read as one segmented switch. Elsewhere there is no band.
@@ -1204,8 +1436,26 @@ class _OckerBandScope extends InheritedWidget {
     required this.active,
     required this.stackKey,
     required this.isAlive,
+    required this.flat,
+    required this.even,
     required super.child,
   });
+
+  /// Whether the band's focus is a white fill, what stands on it inverted:
+  /// under "Flach", and under Liquid Glass unless the band's focus is a bubble.
+  final bool flat;
+
+  /// Whether focus keeps the size of the capsule at rest, the band's even
+  /// margin all round it: whenever the band is flat or liquid.
+  final bool even;
+
+  /// Whether what is drawn at [context] stands on a flat band.
+  static bool flatAt(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_OckerBandScope>()?.flat ?? false;
+
+  /// Whether focus at [context] keeps its resting size.
+  static bool evenAt(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_OckerBandScope>()?.even ?? false;
 
   /// Whether the band is still there to be told anything.
   final bool Function() isAlive;
@@ -1247,7 +1497,7 @@ class _OckerBandScope extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(_OckerBandScope oldWidget) => false;
+  bool updateShouldNotify(_OckerBandScope oldWidget) => flat != oldWidget.flat || even != oldWidget.even;
 }
 
 class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStateMixin {
@@ -1270,10 +1520,23 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
   void initState() {
     super.initState();
     _focus.addListener(_follow);
+    OckerLiquidGlass.changes.addListener(_restyle);
   }
+
+  void _restyle() {
+    if (mounted) setState(() {});
+  }
+
+  /// Under Liquid Glass's look the band is no glass at all (the user's call,
+  /// after Apple's own flat buttons): a faint track, the word on show a
+  /// lighter segment of it, focus a white fill with the word inverted. The
+  /// glass is kept for the menus and the side rail. Android wears the look
+  /// for good ([OckerLiquidGlass.look]).
+  bool get _liquidFlat => OckerLiquidGlass.look && !ockerFlat(context);
 
   @override
   void dispose() {
+    OckerLiquidGlass.changes.removeListener(_restyle);
     _focus
       ..removeListener(_follow)
       ..dispose();
@@ -1290,7 +1553,7 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
     // Flat focus jumps: a solid white fill gliding under words that invert
     // the moment focus lands would show them dark on the dark ground on the
     // way.
-    final flat = mounted && ockerFlat(context);
+    final flat = mounted && (ockerFlat(context) || (_liquidFlat && !widget.liquidBubble));
     _glide.duration = flat ? Duration.zero : ockerGlassMotion(const Duration(milliseconds: 220));
     _presence.duration = flat ? Duration.zero : ockerGlassMotion(const Duration(milliseconds: 140));
     final to = _focus.value;
@@ -1317,18 +1580,29 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
     if (!ockerGlass(context)) return widget.child;
     const shape = StadiumBorder();
     final overhang = widget.overhang;
+    final flat = ockerFlat(context) || (_liquidFlat && !widget.liquidBubble);
+    final bubble = _liquidFlat && widget.liquidBubble;
+    // Plebz: on the Apple TV a band has no ground of its own — no track, no
+    // pane — and its words stand on the page, as the TV app's own do (the
+    // user's call, 2026-10-13). Focus and the place on show keep their
+    // capsules.
+    final bare = ockerGlasOnly(context);
     return _OckerBandScope(
       focus: _focus,
       active: _active,
       stackKey: _stackKey,
       isAlive: () => mounted,
+      flat: flat,
+      even: flat || _liquidFlat,
       child: Stack(
         key: _stackKey,
         clipBehavior: Clip.none,
         children: [
           // Flat: the words stand on the ground itself — or, for a row of
           // tabs, on a faint track of ink.
-          if (ockerFlat(context) && widget.flatTrack)
+          // Under Liquid Glass every band keeps a faint track, so the row
+          // still reads as one control (the user's call).
+          if (((ockerFlat(context) && widget.flatTrack) || _liquidFlat) && !bare)
             Positioned(
               left: -overhang.left,
               top: -overhang.top,
@@ -1341,7 +1615,7 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
                 ),
               ),
             ),
-          if (!ockerFlat(context))
+          if (!flat && !bubble && !bare)
             Positioned(
               left: -overhang.left,
               top: -overhang.top,
@@ -1385,7 +1659,7 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
                           rect: mark,
                           child: Opacity(
                             opacity: 1 - swallowed,
-                            child: const _OckerGlassCapsule(bright: false, tint: 1),
+                            child: _OckerGlassCapsule(bright: false, tint: 1, flat: flat || bubble),
                           ),
                         ),
                       if (focus != null && present > 0)
@@ -1394,7 +1668,7 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
                           rect: focus,
                           child: Opacity(
                             opacity: present,
-                            child: _OckerGlassCapsule(bright: true, tint: swallowed),
+                            child: _OckerGlassCapsule(bright: true, tint: swallowed, flat: flat, liquid: bubble),
                           ),
                         ),
                     ],
@@ -1411,14 +1685,27 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
 }
 
 class _OckerGlassEdge extends CustomPainter {
-  _OckerGlassEdge(this.shape, this.textDirection);
+  _OckerGlassEdge(this.shape, this.textDirection, {this.liquid = false});
 
   /// Where the light comes from: down and to the right, 55° below the
   /// horizontal — top left bright, bottom right in shade.
   static const _lightAngle = 55 * math.pi / 180;
 
+  /// The plain edge: bright at the top left, dark along the bottom right.
+  static const _plain = [Color(0x59FFFFFF), Color(0x1AFFFFFF), Color(0x0AFFFFFF), Color(0x66000000)];
+
+  /// The liquid edge: brighter where the light falls on, and lit again at the
+  /// bottom right where it comes out through the glass, as Apple's rim does —
+  /// no shade.
+  static const _liquid = [Color(0x8CFFFFFF), Color(0x24FFFFFF), Color(0x0FFFFFFF), Color(0x4DFFFFFF)];
+
   final ShapeBorder shape;
   final TextDirection textDirection;
+
+  /// Whether the glass is liquid (`OckerLiquidGlass`): the rim then catches
+  /// the light on both sides, and a softer band inside it gives the pane a
+  /// thickness.
+  final bool liquid;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1435,21 +1722,31 @@ class _OckerGlassEdge extends CustomPainter {
     // button still gets its lit top left and shaded bottom right.
     final along = Offset(math.cos(_lightAngle), math.sin(_lightAngle));
     final reach = (size.width * along.dx.abs() + size.height * along.dy.abs()) / 2;
+    Shader light(List<Color> colours) =>
+        ui.Gradient.linear(rect.center - along * reach, rect.center + along * reach, colours, const [0, 0.35, 0.6, 1]);
     canvas.drawPath(
       shape.getOuterPath(rect, textDirection: textDirection),
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
-        ..shader = ui.Gradient.linear(
-          rect.center - along * reach,
-          rect.center + along * reach,
-          const [Color(0x59FFFFFF), Color(0x1AFFFFFF), Color(0x0AFFFFFF), Color(0x66000000)],
-          const [0, 0.35, 0.6, 1],
-        ),
+        ..shader = light(liquid ? _liquid : _plain),
     );
+    if (liquid) {
+      // The pane's thickness: the same light, faint and wider, just inside
+      // the rim.
+      final inner = rect.deflate(2);
+      if (inner.isEmpty) return;
+      canvas.drawPath(
+        shape.getOuterPath(inner, textDirection: textDirection),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3
+          ..shader = light([for (final c in _liquid) c.withValues(alpha: c.a * 0.3)]),
+      );
+    }
   }
 
   @override
   bool shouldRepaint(_OckerGlassEdge oldDelegate) =>
-      oldDelegate.shape != shape || oldDelegate.textDirection != textDirection;
+      oldDelegate.shape != shape || oldDelegate.textDirection != textDirection || oldDelegate.liquid != liquid;
 }

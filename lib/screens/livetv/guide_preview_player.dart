@@ -68,10 +68,10 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   ///
   /// The video is not painted by this widget: it is a native surface the
   /// player places itself, and only a player that takes a rectangle from the
-  /// widget tree can put it anywhere but the whole window. iOS is the one
-  /// host left that cannot — there a preview would be sound under a black
-  /// rectangle, so it gets the still picture instead.
-  static bool get canPlayInline => Platform.isAndroid || Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+  /// widget tree can put it anywhere but the whole window. Every host takes
+  /// one now — iPhone, iPad and Apple TV last ([PlayerIOS], Plebz).
+  static bool get canPlayInline =>
+      Platform.isAndroid || Platform.isWindows || Platform.isLinux || Platform.isMacOS || Platform.isIOS;
 
   Player? _player;
   LiveTvPlaybackSession? _session;

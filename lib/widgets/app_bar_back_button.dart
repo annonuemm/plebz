@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../redesign/ocker_glas_look.dart';
 import '../focus/focusable_wrapper.dart';
 import '../i18n/strings.g.dart';
 import 'app_icon.dart';
@@ -119,6 +120,9 @@ class _AppBarBackButtonState extends State<AppBarBackButton> {
           child: GestureDetector(
             excludeFromSemantics: true,
             onTap: _handlePressed,
+            // On iPhone and iPad the margin answers too, past Apple's 44
+            // points; otherwise only the 40-point disc does.
+            behavior: ockerGlasTouch(context) ? HitTestBehavior.opaque : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               curve: Curves.easeInOut,

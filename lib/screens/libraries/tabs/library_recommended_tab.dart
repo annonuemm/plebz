@@ -29,6 +29,7 @@ import '../../main_screen.dart';
 import 'base_library_tab.dart';
 import '../../../redesign/ocker_library_column.dart';
 import '../../../services/watch_progress/tracker_progress_controller.dart';
+import '../../../redesign/ocker_glas_look.dart';
 
 /// Recommended tab for library screen
 /// Shows library-specific hubs and recommendations, including dedicated Continue Watching
@@ -345,6 +346,7 @@ class _LibraryRecommendedTabState extends BaseLibraryTabState<MediaHub, LibraryR
               },
             ),
           ),
+          const SliverFloatingBarSpace(),
         ],
       ),
     );

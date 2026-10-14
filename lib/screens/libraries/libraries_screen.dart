@@ -45,6 +45,7 @@ import '../../redesign/ocker_panel_frame.dart';
 import '../../redesign/ocker_submenu.dart';
 import '../../utils/provider_extensions.dart';
 import '../../redesign/ocker_side_rail.dart';
+import '../../redesign/ocker_glas_look.dart';
 
 enum LibraryTabType { recommended, browse, collections, playlists }
 
@@ -1136,7 +1137,9 @@ class _LibrariesScreenState extends State<LibrariesScreen>
                   SliverToBoxAdapter(
                     child: Container(
                       color: Theme.of(context).scaffoldBackgroundColor,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      // Plebz: past Glas's floating rail in landscape on
+                      // Apple's handhelds.
+                      padding: EdgeInsets.fromLTRB(16 + ockerFloatingStartInset(context), 4, 16, 4),
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(

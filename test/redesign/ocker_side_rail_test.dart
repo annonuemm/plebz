@@ -20,6 +20,7 @@ import 'package:plezy/redesign/ocker_side_rail.dart';
 import 'package:plezy/redesign/ocker_skin.dart';
 import 'package:plezy/redesign/ocker_submenu.dart';
 import 'package:plezy/services/settings_service.dart';
+import 'package:plezy/theme/liquid_glass.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/widgets/app_icon.dart';
 import 'package:plezy/widgets/app_menu.dart';
@@ -99,6 +100,25 @@ void main() {
     bool hasFocus(WidgetTester tester, NavigationTabId id) => Focus.of(
       tester.element(find.descendant(of: find.byKey(OckerSideRail.itemKey(id)), matching: find.byType(Text)).first),
     ).hasFocus;
+
+    testWidgets('under Liquid Glass the open pane runs flush with the left, top and foot', (tester) async {
+      OckerLiquidGlass.debugOfferedHere = true;
+      OckerLiquidGlass.setting.value = true;
+      addTearDown(() {
+        OckerLiquidGlass.setting.value = false;
+        OckerLiquidGlass.debugOfferedHere = null;
+      });
+      final key = GlobalKey<OckerSideRailState>();
+      await pumpRail(tester, key: key);
+      final pane = tester.getRect(find.byKey(OckerSideRail.paneKey));
+      final rail = tester.getRect(find.byType(OckerSideRail));
+      expect(pane.left, rail.left);
+      expect(pane.top, rail.top);
+      expect(pane.bottom, rail.bottom);
+      final glass = tester.widget<OckerGlass>(find.byKey(OckerSideRail.paneKey));
+      expect(glass.borderRadius.topLeft, Radius.zero, reason: 'rounded only on its open side');
+      expect(glass.borderRadius.topRight, isNot(Radius.zero));
+    });
 
     testWidgets('it lands on the destination on show and walks up and down', (tester) async {
       final key = GlobalKey<OckerSideRailState>();
@@ -494,6 +514,8 @@ void main() {
       await pumpRail(tester, key: key);
       expect(find.byKey(OckerSideRail.paneKey), findsOneWidget);
       expect(find.text(t.navigation.libraries), findsOneWidget);
+      // One of the two surfaces Liquid Glass reaches, with the menus.
+      expect(tester.widget<OckerGlass>(find.byKey(OckerSideRail.paneKey)).liquid, isTrue);
     });
   });
 

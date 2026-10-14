@@ -354,7 +354,8 @@ class OckerPosterTileState extends State<OckerPosterTile> {
       // instead of around it.
       foregroundDecoration: FocusTheme.focusDecoration(
         context,
-        isFocused: _focused,
+        // Under Liquid Glass the artwork's glass rim is the focus instead.
+        isFocused: _focused && !OckerLiquidFocusRim.showsInsteadOfRing(context),
         radii: corner,
         borderStrokeAlign: BorderSide.strokeAlignOutside,
       ),
@@ -404,6 +405,9 @@ class OckerPosterTileState extends State<OckerPosterTile> {
                         ),
                       )),
           ),
+          // Under Liquid Glass the focused picture wears a glass rim: over
+          // the picture, under what is laid on it, so only the picture bends.
+          OckerLiquidFocusRim(focused: _focused, radii: corner),
           // Whether a title has been watched is information, not
           // decoration: the design takes the caption away, and this is
           // the one thing under it that the caption never said anyway.

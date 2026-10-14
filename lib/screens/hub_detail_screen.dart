@@ -38,6 +38,7 @@ import '../redesign/ocker_browse_page.dart';
 import '../redesign/ocker_skin.dart';
 import '../widgets/focusable_tab_chip.dart';
 import '../utils/media_navigation_helper.dart';
+import '../redesign/ocker_glas_look.dart';
 
 /// Screen to display full content of a recommendation hub
 class HubDetailScreen extends StatefulWidget {
@@ -791,7 +792,9 @@ class HubDetailScreenState extends State<HubDetailScreen>
                         return index < 0 ? null : index;
                       },
                       density: libraryDensity,
-                      padding: const EdgeInsets.all(8),
+                      // Plebz: past Glas's floating rail in landscape on
+                      // Apple's handhelds.
+                      padding: EdgeInsets.fromLTRB(8 + ockerFloatingStartInset(context), 8, 8, 8),
                       useWideAspectRatio: useWideLayout,
                       fullBleedImage: fullCardLayout,
                       shape: isSquareHub ? CardShape.square : null,

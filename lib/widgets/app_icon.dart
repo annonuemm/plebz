@@ -31,15 +31,23 @@ class AppIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final icon = this.icon;
     if (icon == null) return const SizedBox.shrink();
+    final opticalSize =
+        this.opticalSize ??
+        AppIconDefaults.opticalSize ??
+        (AppIconDefaults.opticalSizeFollowsSize
+            // Material Symbols' optical size runs from 20 to 48.
+            ? (size ?? IconTheme.of(context).size ?? 24).clamp(20.0, 48.0)
+            : null);
     return Icon(
-      icon,
+      AppIconDefaults.substitutes[icon] ?? icon,
       size: size,
       color: color,
       fill: fill ?? AppIconDefaults.fill,
       weight: weight ?? AppIconDefaults.weight,
       grade: grade ?? AppIconDefaults.grade,
-      opticalSize: opticalSize ?? AppIconDefaults.opticalSize,
+      opticalSize: opticalSize,
       shadows: shadows ?? AppIconDefaults.shadows,
       semanticLabel: semanticLabel,
       textDirection: textDirection,
@@ -55,6 +63,14 @@ class AppIconDefaults {
   static double? opticalSize;
   static Color? color;
   static List<Shadow>? shadows;
+
+  /// Glyphs drawn in place of others (Plebz: Apple's own on the Apple
+  /// builds — see `applyIconDefaultsFor`).
+  static Map<IconData, IconData> substitutes = {};
+
+  /// Whether an icon without an optical size of its own is drawn for the size
+  /// it is shown at, rather than the font's 24.
+  static bool opticalSizeFollowsSize = false;
 
   static void update({
     double? fill,

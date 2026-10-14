@@ -206,6 +206,9 @@ class CastMemberStripState extends State<CastMemberStrip> {
                         children: [
                           CardFocusBorder(
                             borderRadius: tokens(context).radiusSm,
+                            // Plebz: a photo and nothing on it may bend.
+                            glassRim: true,
+                            glassRimBends: true,
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(tokens(context).radiusSm),
                               child: OptimizedMediaImage(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/mono_tokens.dart';
 import '../utils/platform_detector.dart';
+import 'ocker_glas_look.dart';
 import 'ocker_skin.dart';
 
 /// A strip of the page's ground behind the status bar (Plebz), for a page
@@ -48,15 +49,41 @@ class _OckerStatusBarGroundState extends State<OckerStatusBarGround> {
         children: [
           widget.child,
           if (_cover > 0)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: statusBar,
-              child: IgnorePointer(
-                child: ColoredBox(color: tokens(context).bg.withValues(alpha: _cover)),
+            if (ockerGlasLookOnly(context))
+              // Apple's scroll edge: the strip fades out below the clock
+              // rather than stopping at a hard line ([OckerScrollEdge]).
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: statusBar + OckerScrollEdge.fade,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          tokens(context).bg.withValues(alpha: _cover * OckerScrollEdge.groundOpacity),
+                          tokens(context).bg.withValues(alpha: _cover * OckerScrollEdge.groundOpacity),
+                          tokens(context).bg.withValues(alpha: 0),
+                        ],
+                        stops: [0, statusBar / (statusBar + OckerScrollEdge.fade), 1],
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            else
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: statusBar,
+                child: IgnorePointer(
+                  child: ColoredBox(color: tokens(context).bg.withValues(alpha: _cover)),
+                ),
               ),
-            ),
         ],
       ),
     );

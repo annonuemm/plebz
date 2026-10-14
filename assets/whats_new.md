@@ -13,6 +13,15 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.24.1 (Build 809)
+
+### Glas
+- Android: Die Lichtkante an Fokus, Menüs und der Kapsel oben links ist feiner und wirkt mehr wie Licht, die Fokusflächen sind klarer.
+- Mit „Hintergrund in Posterfarben“ fängt die Kapsel oben links das Licht des Titels ein.
+
+### Fernseher
+- Beim Wechsel zwischen den Reihen bleibt der Fokusrahmen des ersten Posters jetzt auch links vollständig.
+
 ## 1.24.0 (Build 804)
 
 ### Glas

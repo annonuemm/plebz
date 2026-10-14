@@ -8,6 +8,7 @@ import '../widgets/app_icon.dart';
 import '../widgets/side_navigation_rail.dart' show SideNavigationRailState;
 
 import '../media/ids.dart';
+import '../media/ultra_blur_colors.dart';
 import '../providers/multi_server_provider.dart';
 import '../services/plex_client.dart';
 import '../services/settings_service.dart';
@@ -325,21 +326,25 @@ class _ApplePlace extends StatelessWidget {
               SizedBox(width: 10 * scale),
               SizedBox(
                 height: height,
-                child: OckerGlass(
-                  borderRadius: BorderRadius.circular(height / 2),
-                  scrimInset: 0,
-                  liquid: true,
-                  lensThickness: OckerLiquidGlass.bubbleThickness,
-                  lensStrength: OckerLiquidGlass.bubbleStrength,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 22 * scale),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AppIcon(tab.icon, size: 30 * scale, weight: 500, color: tk.ink(1)),
-                        SizedBox(width: 12 * scale),
-                        Text(tab.getLabel(), maxLines: 1, style: word),
-                      ],
+                child: _PlaceLight(
+                  ambient: UltraBlurScope.of(context),
+                  builder: (context, light) => OckerGlass(
+                    borderRadius: BorderRadius.circular(height / 2),
+                    scrimInset: 0,
+                    liquid: true,
+                    lensThickness: OckerLiquidGlass.bubbleThickness,
+                    lensStrength: OckerLiquidGlass.bubbleStrength,
+                    lightTint: light,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 22 * scale),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AppIcon(tab.icon, size: 30 * scale, weight: 500, color: tk.ink(1)),
+                          SizedBox(width: 12 * scale),
+                          Text(tab.getLabel(), maxLines: 1, style: word),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -347,6 +352,48 @@ class _ApplePlace extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// The light the place capsule takes up (Plebz, the user's call
+/// 2026-10-14): the top left of the focused Plex title's colours, while
+/// "Hintergrund in Posterfarben" shows them — so its glass seems to catch the
+/// light of the picture behind it. Eased over as the ground crossfades;
+/// transparent while there are none.
+class _PlaceLight extends StatefulWidget {
+  const _PlaceLight({required this.ambient, required this.builder});
+
+  final UltraBlurAmbient? ambient;
+  final Widget Function(BuildContext context, Color? light) builder;
+
+  @override
+  State<_PlaceLight> createState() => _PlaceLightState();
+}
+
+class _PlaceLightState extends State<_PlaceLight> {
+  /// The last colour shown, which fades out in its own hue rather than
+  /// through black.
+  Color _last = const Color(0x00000000);
+
+  Color _target(UltraBlurColors? colours) {
+    final corner = colours?.topLeft;
+    if (corner != null) return _last = corner.withValues(alpha: 1);
+    return _last.withValues(alpha: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ambient = widget.ambient;
+    if (ambient == null) return widget.builder(context, null);
+    return ValueListenableBuilder<UltraBlurColors?>(
+      valueListenable: ambient,
+      builder: (context, colours, _) => TweenAnimationBuilder<Color?>(
+        tween: ColorTween(end: _target(colours)),
+        duration: UltraBlurLayer.crossfade,
+        curve: Curves.easeInOut,
+        builder: (context, light, _) => widget.builder(context, light),
       ),
     );
   }

@@ -817,10 +817,17 @@ class OckerGlass extends StatelessWidget {
     this.lensBeyond = EdgeInsets.zero,
     this.lensThickness = OckerLiquidGlass.lensThickness,
     this.lensStrength = OckerLiquidGlass.lensStrength,
+    this.lightTint,
   });
 
   final BorderRadius borderRadius;
   final double scrimInset;
+
+  /// The colour of the light behind the pane, which Android's fake glass
+  /// takes up in its ground and its edge (Plebz: the place capsule over
+  /// Plex's poster colours). Null, or transparent, for none; the lens and
+  /// the flat surfaces ignore it.
+  final Color? lightTint;
 
   /// How far in the lens's bevel reaches and how far it bends: a pane's own,
   /// unless a narrow one wants a thinner rim (the floating bars).
@@ -883,21 +890,29 @@ class OckerGlass extends StatelessWidget {
 
   /// [standIn]: the fake glass standing in for the lens on Android — Liquid
   /// Glass's lit rim and a frosted, lighter ground, without the blur.
-  Widget _pane(BuildContext context, ShapeBorder shape, {required bool liquid, bool standIn = false}) => CustomPaint(
-    foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context), liquid: liquid || standIn),
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        color: standIn
-            ? Color.alphaBlend(tokens(context).ink(standInFrost), tokens(context).bg).withValues(alpha: groundOpacity)
-            : tokens(context).bg.withValues(alpha: OckerLiquidGlass.ground(groundOpacity, liquid: liquid)),
-        borderRadius: borderRadius,
-      ),
+  Widget _pane(BuildContext context, ShapeBorder shape, {required bool liquid, bool standIn = false}) {
+    final tk = tokens(context);
+    final tint = standIn ? lightTint : null;
+    var ground = standIn
+        ? Color.alphaBlend(tk.ink(standInFrost), tk.bg).withValues(alpha: groundOpacity)
+        : tk.bg.withValues(alpha: OckerLiquidGlass.ground(groundOpacity, liquid: liquid));
+    if (tint != null && tint.a > 0) {
+      // The light behind, taken up as a dimmed wash: white words stay
+      // readable over any poster, a bright yellow one included.
+      final wash = Color.lerp(tint.withValues(alpha: 1), const Color(0xFF000000), 0.4)!;
+      ground = Color.alphaBlend(wash.withValues(alpha: 0.55 * tint.a), ground);
+    }
+    return CustomPaint(
+      foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context), liquid: liquid, light: standIn, tint: tint),
       child: DecoratedBox(
-        decoration: BoxDecoration(gradient: ockerGlassSheen(context), borderRadius: borderRadius),
-        child: Padding(padding: EdgeInsets.all(scrimInset), child: child),
+        decoration: BoxDecoration(color: ground, borderRadius: borderRadius),
+        child: DecoratedBox(
+          decoration: BoxDecoration(gradient: ockerGlassSheen(context), borderRadius: borderRadius),
+          child: Padding(padding: EdgeInsets.all(scrimInset), child: child),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 /// Liquid Glass on a focused poster (Apple builds, while switched on): the
@@ -1324,36 +1339,48 @@ class _OckerGlassCapsule extends StatelessWidget {
       ),
     );
     final giveWay = 1 - 0.6 * math.max(0, wash - _faintWash);
-    final sheen = [
-      for (final a in bright ? const [0.34, 0.12, 0.22] : const [0.12, 0.03, 0.07]) a * giveWay,
+    List<double> sheen({required bool clear}) => [
+      for (final a in switch ((bright, clear)) {
+        (true, false) => const [0.34, 0.12, 0.22],
+        (false, false) => const [0.12, 0.03, 0.07],
+        // Android's fake glass: a clearer middle, the focus carried by the
+        // glint at the top left and the edge's light (the user's call,
+        // 2026-10-14).
+        (true, true) => const [0.20, 0.04, 0.10],
+        (false, true) => const [0.08, 0.01, 0.04],
+      })
+        a * giveWay,
     ];
-    // Android's fake glass stands in for the lens with Liquid Glass's lit rim.
-    Widget body(BuildContext context, bool liquid) => CustomPaint(
-      foregroundPainter: _OckerGlassEdge(
-        shape,
-        Directionality.of(context),
-        liquid: liquid || (OckerLiquidGlass.look && !OckerLiquidGlass.active),
-      ),
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          shape: shape,
-          // Liquid: clear glass, the lens showing what lies behind.
-          color: Color.alphaBlend(tk.accent.withValues(alpha: wash), tk.bg.withValues(alpha: liquid ? 0.10 : 0.30)),
-        ),
+    Widget body(BuildContext context, bool liquid) {
+      // Android's fake glass stands in for the lens: light on its edge.
+      final standIn = !liquid && OckerLiquidGlass.look && !OckerLiquidGlass.active;
+      return CustomPaint(
+        foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context), liquid: liquid, light: standIn),
         child: DecoratedBox(
           decoration: ShapeDecoration(
             shape: shape,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [for (final a in sheen) tk.ink(a)],
-              stops: const [0, 0.45, 1],
+            // Liquid: clear glass, the lens showing what lies behind.
+            color: Color.alphaBlend(
+              tk.accent.withValues(alpha: wash),
+              tk.bg.withValues(alpha: liquid ? 0.10 : (standIn ? 0.15 : 0.30)),
             ),
           ),
-          child: const SizedBox.expand(),
+          child: DecoratedBox(
+            decoration: ShapeDecoration(
+              shape: shape,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [for (final a in sheen(clear: standIn)) tk.ink(a)],
+                stops: const [0, 0.45, 1],
+              ),
+            ),
+            child: const SizedBox.expand(),
+          ),
         ),
-      ),
-    );
+      );
+    }
+
     if (!liquid) {
       return ListenableBuilder(
         listenable: OckerLiquidGlass.changes,
@@ -1684,8 +1711,13 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
   }
 }
 
+/// Whether [painter] is a glass edge drawn as light (Android's fake glass),
+/// for tests.
+@visibleForTesting
+bool debugIsLitGlassEdge(CustomPainter? painter) => painter is _OckerGlassEdge && painter.light;
+
 class _OckerGlassEdge extends CustomPainter {
-  _OckerGlassEdge(this.shape, this.textDirection, {this.liquid = false});
+  _OckerGlassEdge(this.shape, this.textDirection, {this.liquid = false, this.light = false, this.tint});
 
   /// Where the light comes from: down and to the right, 55° below the
   /// horizontal — top left bright, bottom right in shade.
@@ -1699,6 +1731,16 @@ class _OckerGlassEdge extends CustomPainter {
   /// no shade.
   static const _liquid = [Color(0x8CFFFFFF), Color(0x24FFFFFF), Color(0x0FFFFFFF), Color(0x4DFFFFFF)];
 
+  /// Android's fake glass (Plebz, the user's call 2026-10-14): light caught
+  /// by the edge rather than a frame round it — bright at the top left,
+  /// gone down the sides, a faint glint again at the bottom right.
+  static const _light = [Color(0xBFFFFFFF), Color(0x1FFFFFFF), Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x47FFFFFF)];
+  static const _lightStops = [0.0, 0.18, 0.36, 0.7, 1.0];
+
+  /// The soft glow round [_light]'s bright ends.
+  static const _glow = [Color(0x66FFFFFF), Color(0x00FFFFFF), Color(0x00FFFFFF), Color(0x1FFFFFFF)];
+  static const _glowStops = [0.0, 0.2, 0.84, 1.0];
+
   final ShapeBorder shape;
   final TextDirection textDirection;
 
@@ -1706,6 +1748,22 @@ class _OckerGlassEdge extends CustomPainter {
   /// the light on both sides, and a softer band inside it gives the pane a
   /// thickness.
   final bool liquid;
+
+  /// Whether the edge is [_light]: a fine line with a glow where the light
+  /// falls, no band inside it. Wins over [liquid].
+  final bool light;
+
+  /// The colour of the light [light] catches; white when null. Its alpha says
+  /// how far the white goes toward it.
+  final Color? tint;
+
+  /// [white] taken toward [tint], keeping its own alpha.
+  Color _lit(Color white) {
+    final tint = this.tint;
+    if (tint == null || tint.a <= 0) return white;
+    final hue = Color.lerp(tint.withValues(alpha: 1), const Color(0xFFFFFFFF), 0.3)!;
+    return Color.lerp(const Color(0xFFFFFFFF), hue, 0.65 * tint.a)!.withValues(alpha: white.a);
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1722,14 +1780,37 @@ class _OckerGlassEdge extends CustomPainter {
     // button still gets its lit top left and shaded bottom right.
     final along = Offset(math.cos(_lightAngle), math.sin(_lightAngle));
     final reach = (size.width * along.dx.abs() + size.height * along.dy.abs()) / 2;
-    Shader light(List<Color> colours) =>
-        ui.Gradient.linear(rect.center - along * reach, rect.center + along * reach, colours, const [0, 0.35, 0.6, 1]);
+    Shader shade(List<Color> colours, [List<double> stops = const [0, 0.35, 0.6, 1]]) =>
+        ui.Gradient.linear(rect.center - along * reach, rect.center + along * reach, colours, stops);
+    if (light) {
+      final path = shape.getOuterPath(rect, textDirection: textDirection);
+      // The glow first, under the line: what makes it read as light. Kept on
+      // the reduced tier too — the 32-bit boxes it covers are where the user
+      // watches, and a small blurred stroke costs little.
+      canvas.drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5)
+          ..shader = shade([for (final c in _glow) _lit(c)], _glowStops),
+      );
+      canvas.drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8
+          ..shader = shade([for (final c in _light) _lit(c)], _lightStops),
+      );
+      return;
+    }
+    Shader lit(List<Color> colours) => shade(colours);
     canvas.drawPath(
       shape.getOuterPath(rect, textDirection: textDirection),
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
-        ..shader = light(liquid ? _liquid : _plain),
+        ..shader = lit(liquid ? _liquid : _plain),
     );
     if (liquid) {
       // The pane's thickness: the same light, faint and wider, just inside
@@ -1741,12 +1822,16 @@ class _OckerGlassEdge extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3
-          ..shader = light([for (final c in _liquid) c.withValues(alpha: c.a * 0.3)]),
+          ..shader = lit([for (final c in _liquid) c.withValues(alpha: c.a * 0.3)]),
       );
     }
   }
 
   @override
   bool shouldRepaint(_OckerGlassEdge oldDelegate) =>
-      oldDelegate.shape != shape || oldDelegate.textDirection != textDirection || oldDelegate.liquid != liquid;
+      oldDelegate.shape != shape ||
+      oldDelegate.textDirection != textDirection ||
+      oldDelegate.liquid != liquid ||
+      oldDelegate.light != light ||
+      oldDelegate.tint != tint;
 }

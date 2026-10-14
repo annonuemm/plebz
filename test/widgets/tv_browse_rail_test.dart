@@ -907,6 +907,72 @@ void main() {
     expect(snapshots.every((widget) => widget.controller.allowSnapshotting), isFalse);
   });
 
+  testWidgets('the low-end snapshot holds the first card\'s whole focus ring, left edge included', (tester) async {
+    await SettingsService.instanceOrNull!.write(SettingsService.tvFullCardLayout, true);
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+    DevicePerformance.debugReset(autoReduced: true);
+    addTearDown(DevicePerformance.debugReset);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 720);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final serverManager = MultiServerManager();
+    final hubs = List.generate(3, (hubIndex) {
+      final item = testMediaItem(
+        id: 'movie_$hubIndex',
+        backend: MediaBackend.plex,
+        kind: MediaKind.movie,
+        title: 'Movie $hubIndex',
+      );
+      return MediaHub(id: 'hub_$hubIndex', title: 'Hub $hubIndex', type: 'movie', items: [item], size: 1);
+    });
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<MultiServerProvider>(
+        create: (_) => testMultiServerProvider(serverManager),
+        child: InputModeTracker(
+          child: MaterialApp(
+            theme: monoTheme(dark: true),
+            home: Scaffold(
+              body: SizedBox(
+                width: 1280,
+                height: 720,
+                child: TvBrowseRail(
+                  focusMemory: focusMemory,
+                  hubs: hubs,
+                  autofocus: true,
+                  iconForHub: (_, _) => Icons.movie_rounded,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // The reduced tier has no glow overlay to scope to: the focused card is
+    // the one whose own border shows.
+    final cardFinder = find.byWidgetPredicate((widget) {
+      if (widget is! AnimatedContainer) return false;
+      final decoration = widget.foregroundDecoration;
+      if (decoration is! BoxDecoration) return false;
+      final border = decoration.border;
+      return border is Border && border.left.width > 0 && border.left.color.a > 0;
+    }).first;
+    final border =
+        (tester.widget<AnimatedContainer>(cardFinder).foregroundDecoration as BoxDecoration).border as Border;
+    final ringLeft = tester.getRect(cardFinder).left - border.left.width;
+    final snapshot = find.ancestor(of: cardFinder, matching: find.byType(SnapshotWidget));
+
+    // The glide paints this snapshot in place of the row: what lies outside
+    // it is gone until the row settles.
+    expect(tester.getRect(snapshot).left, lessThanOrEqualTo(ringLeft));
+    expect(tester.getRect(snapshot).right, 1280);
+  });
+
   testWidgets('under glass the next row is glimpsed, the rows past it stay hidden until the cursor reaches them', (
     tester,
   ) async {

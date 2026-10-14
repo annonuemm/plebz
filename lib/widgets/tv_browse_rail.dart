@@ -1594,6 +1594,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                                 leftOverflow: horizontalInset,
                                 interactionExpansion: interactionExpansion,
                                 railViewportWidth: railViewportWidth,
+                                sectionWidth: availableWidth,
                                 bottomPadding: bottomPadding,
                                 viewportHeight: viewportHeight,
                               ),
@@ -1668,6 +1669,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     required double leftOverflow,
     required double interactionExpansion,
     required double railViewportWidth,
+    required double sectionWidth,
     required double bottomPadding,
     required double viewportHeight,
   }) {
@@ -1751,27 +1753,38 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
             ],
           ),
         );
-        return SnapshotWidget(
-          controller: _verticalScrollSnapshotController,
-          mode: SnapshotMode.permissive,
-          autoresize: true,
-          // Under "Glas" the rows below the next are not shown until the
-          // cursor comes down to them — unless enough of one fits in the room
-          // a short row leaves: an empty band under a row of genres reads as
-          // unfinished. It fades in as it scrolls up into place.
-          child: hideRowsBelow
-              ? ListenableSelector<bool>(
-                  listenable: _focusModel,
-                  selector: () => shownBelow(hubIndex),
-                  builder: (context, reached, child) => AnimatedOpacity(
-                    opacity: reached ? 1 : 0,
-                    duration: ockerGlassMotion(const Duration(milliseconds: 220)),
-                    curve: Curves.easeOut,
-                    child: child,
-                  ),
-                  child: section,
-                )
-              : section,
+        // Plebz: the snapshot reaches out over the inset left of the list,
+        // which the rows paint into. Bounded by the section alone it cut the
+        // first card's focus ring in half for as long as a glide lasted.
+        return OverflowBox(
+          alignment: Alignment.centerRight,
+          minWidth: sectionWidth + leftOverflow,
+          maxWidth: sectionWidth + leftOverflow,
+          child: SnapshotWidget(
+            controller: _verticalScrollSnapshotController,
+            mode: SnapshotMode.permissive,
+            autoresize: true,
+            child: Padding(
+              padding: EdgeInsets.only(left: leftOverflow),
+              // Under "Glas" the rows below the next are not shown until the
+              // cursor comes down to them — unless enough of one fits in the room
+              // a short row leaves: an empty band under a row of genres reads as
+              // unfinished. It fades in as it scrolls up into place.
+              child: hideRowsBelow
+                  ? ListenableSelector<bool>(
+                      listenable: _focusModel,
+                      selector: () => shownBelow(hubIndex),
+                      builder: (context, reached, child) => AnimatedOpacity(
+                        opacity: reached ? 1 : 0,
+                        duration: ockerGlassMotion(const Duration(milliseconds: 220)),
+                        curve: Curves.easeOut,
+                        child: child,
+                      ),
+                      child: section,
+                    )
+                  : section,
+            ),
+          ),
         );
       },
     );

@@ -25,23 +25,28 @@ void main() {
     DevicePerformance.debugReset();
   });
 
-  Future<void> pumpPane(WidgetTester tester, {AppThemeVariant variant = AppThemeVariant.glas, bool liquid = true}) =>
-      tester.pumpWidget(
-        MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
-          home: Center(
-            child: SizedBox(
-              width: 200,
-              height: 100,
-              child: OckerGlass(
-                borderRadius: const BorderRadius.all(Radius.circular(18)),
-                liquid: liquid,
-                child: const SizedBox.expand(key: Key('words')),
-              ),
-            ),
+  Future<void> pumpPane(
+    WidgetTester tester, {
+    AppThemeVariant variant = AppThemeVariant.glas,
+    bool liquid = true,
+    Color? lightTint,
+  }) => tester.pumpWidget(
+    MaterialApp(
+      theme: monoTheme(dark: true, variant: variant),
+      home: Center(
+        child: SizedBox(
+          width: 200,
+          height: 100,
+          child: OckerGlass(
+            borderRadius: const BorderRadius.all(Radius.circular(18)),
+            liquid: liquid,
+            lightTint: lightTint,
+            child: const SizedBox.expand(key: Key('words')),
           ),
         ),
-      );
+      ),
+    ),
+  );
 
   Finder blurBehindWords() => find.ancestor(of: find.byKey(const Key('words')), matching: find.byType(BackdropFilter));
 
@@ -62,6 +67,15 @@ void main() {
         ),
       )
       .any((box) => (box.decoration as BoxDecoration).gradient != null);
+
+  bool litEdge(WidgetTester tester) => tester
+      .widgetList<CustomPaint>(
+        find.descendant(
+          of: find.byType(OckerGlass),
+          matching: find.ancestor(of: find.byKey(const Key('words')), matching: find.byType(CustomPaint)),
+        ),
+      )
+      .any((paint) => debugIsLitGlassEdge(paint.foregroundPainter));
 
   // Plebz (the user's call, 2026-10-13): under Glas the panes that turn to
   // Liquid Glass — the navigation, the menus, the sheets — are flat while it
@@ -99,6 +113,7 @@ void main() {
     OckerLiquidGlass.setting.value = true;
     await tester.pump();
     expect(blurBehindWords(), findsOneWidget);
+    expect(litEdge(tester), isFalse, reason: 'the lens keeps Liquid Glass\'s own rim');
     expect(
       groundAlpha(tester),
       closeTo(ockerReadingGroundOpacity * OckerLiquidGlass.groundFactor, 0.01),
@@ -140,10 +155,47 @@ void main() {
         .firstWhere((d) => d.color != null && d.gradient == null)
         .color!;
     expect(ground.computeLuminance(), greaterThan(tk.bg.computeLuminance()));
+    // Its edge is light caught by the glass, not Liquid Glass's banded rim
+    // (the user's call, 2026-10-14).
+    expect(litEdge(tester), isTrue);
 
     OckerLiquidGlass.setting.value = false;
     await tester.pump();
     expect(sheen(tester), isTrue, reason: 'whatever the switch says');
+    expect(litEdge(tester), isTrue);
+  });
+
+  testWidgets('Android\'s fake glass takes up the light behind it; the lens and Flach ignore it', (tester) async {
+    Color ground() => tester
+        .widgetList<DecoratedBox>(
+          find.ancestor(of: find.byKey(const Key('words')), matching: find.byType(DecoratedBox)),
+        )
+        .map((box) => box.decoration as BoxDecoration)
+        .firstWhere((d) => d.color != null && d.gradient == null)
+        .color!;
+    const warm = Color(0xFFE08A3C);
+
+    OckerLiquidGlass.debugOfferedHere = false;
+    await pumpPane(tester);
+    final neutral = ground();
+    await pumpPane(tester, lightTint: warm);
+    final lit = ground();
+    expect(lit.r - lit.b, greaterThan(neutral.r - neutral.b + 0.05), reason: 'a warm wash over the ground');
+    expect(lit.computeLuminance(), lessThan(0.2), reason: 'dimmed: white words stay readable');
+
+    await pumpPane(tester, lightTint: warm.withValues(alpha: 0));
+    expect(ground(), neutral, reason: 'transparent is no light');
+
+    OckerLiquidGlass.debugOfferedHere = true;
+    OckerLiquidGlass.setting.value = true;
+    await pumpPane(tester, lightTint: warm);
+    expect(blurBehindWords(), findsOneWidget);
+    expect(ground().r - ground().b, lessThan(0.05), reason: 'the lens shows the light itself');
+
+    OckerLiquidGlass.debugOfferedHere = false;
+    await pumpPane(tester, variant: AppThemeVariant.flach, lightTint: warm);
+    await tester.pump(const Duration(seconds: 1));
+    expect(litEdge(tester), isFalse, reason: 'Flach stays flat');
   });
 
   testWidgets('on Android the fake glass can be switched off: flat, as Apple\'s builds without Liquid Glass', (

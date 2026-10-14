@@ -151,6 +151,14 @@ class AppearanceSettingsScreen extends StatelessWidget {
                             icon: Symbols.gradient_rounded,
                             title: t.settings.glasUltraBlur,
                             subtitle: t.settings.glasUltraBlurDescription,
+                            // The colours need the picture in the corner: in
+                            // full the spotlight covers them (the user's call,
+                            // 2026-10-14).
+                            onAfterWrite: (on) async {
+                              if (on) {
+                                await SettingsService.instance.write(SettingsService.tvCornerSpotlightBackdrop, true);
+                              }
+                            },
                           ),
                           SettingSwitchTile(
                             pref: PlebzPrefs.seasonTabsFor(
@@ -236,6 +244,13 @@ class AppearanceSettingsScreen extends StatelessWidget {
                 icon: Symbols.picture_in_picture_alt_rounded,
                 title: t.settings.tvCornerSpotlightBackdrop,
                 subtitle: t.settings.tvCornerSpotlightBackdropDescription,
+                // Plebz: without the corner the poster colours do not show,
+                // so they go with it.
+                onAfterWrite: (on) async {
+                  if (on) return;
+                  await SettingsService.instance.write(PlebzPrefs.glasUltraBlur, false);
+                  await SettingsService.instance.write(PlebzPrefs.flachUltraBlur, false);
+                },
               ),
             if (PlatformDetector.isTV() && !glasLayout)
               SettingSwitchTile(

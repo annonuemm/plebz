@@ -1,5 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/media/media_backend.dart';
+import 'package:plezy/media/media_hub.dart';
+import 'package:plezy/media/media_item.dart';
+import 'package:plezy/media/media_kind.dart';
 import 'package:plezy/screens/video_player/up_next_trigger.dart';
+
+import '../../test_helpers/media_items.dart';
 
 void main() {
   const runtime = Duration(minutes: 45);
@@ -79,5 +85,76 @@ void main() {
       ),
       isFalse,
     );
+  });
+
+  // Plebz: the end card's own clock (the user's calls, 2026-10-14).
+  group('end card', () {
+    const runtime = Duration(minutes: 45);
+
+    test('opens at the credits marker where there is one', () {
+      const credits = Duration(minutes: 42);
+      expect(
+        shouldOpenEndCard(position: const Duration(minutes: 41), duration: runtime, creditsStart: credits),
+        isFalse,
+      );
+      expect(shouldOpenEndCard(position: credits, duration: runtime, creditsStart: credits), isTrue);
+    });
+
+    test('without a marker only at 98 %: at 97 % a series is often still the story', () {
+      expect(shouldOpenEndCard(position: runtime * 0.97, duration: runtime), isFalse);
+      expect(shouldOpenEndCard(position: runtime * 0.981, duration: runtime), isTrue);
+    });
+
+    test('Back opens it from the chosen share on, never on a short extra', () {
+      expect(endCardBackOpens(position: runtime * 0.94, duration: runtime, percent: 95), isFalse);
+      expect(endCardBackOpens(position: runtime * 0.95, duration: runtime, percent: 95), isTrue);
+      expect(
+        endCardBackOpens(
+          position: const Duration(minutes: 4, seconds: 50),
+          duration: const Duration(minutes: 5),
+          percent: 90,
+        ),
+        isFalse,
+      );
+    });
+  });
+
+  group('end card suggestion', () {
+    MediaItem item(String id, MediaKind kind, {int? viewCount}) =>
+        testMediaItem(id: id, backend: MediaBackend.plex, kind: kind, title: id, viewCount: viewCount);
+    MediaHub hub(String identifier, List<MediaItem> items) => MediaHub(
+      id: identifier,
+      identifier: identifier,
+      title: identifier,
+      type: 'mixed',
+      items: items,
+      size: items.length,
+    );
+
+    test('the similar-titles row first, its unwatched title first, nothing of another kind', () {
+      final pick = pickEndCardSuggestion([
+        hub('movie.director', [item('d1', MediaKind.movie)]),
+        hub('movie.similar', [
+          item('s0', MediaKind.show),
+          item('s1', MediaKind.movie, viewCount: 1),
+          item('s2', MediaKind.movie),
+        ]),
+      ], kind: MediaKind.movie);
+      expect(pick?.id, 's2');
+    });
+
+    test('never the title itself; watched rather than nothing; null when empty', () {
+      expect(
+        pickEndCardSuggestion(
+          [
+            hub('tv.similar', [item('self', MediaKind.show), item('w', MediaKind.show, viewCount: 3)]),
+          ],
+          kind: MediaKind.show,
+          exclude: {'self'},
+        )?.id,
+        'w',
+      );
+      expect(pickEndCardSuggestion(const [], kind: MediaKind.movie), isNull);
+    });
   });
 }

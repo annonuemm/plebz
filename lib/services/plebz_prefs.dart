@@ -424,6 +424,24 @@ abstract final class PlebzPrefs {
   /// an episode ends, this one whether anything is offered before it does.
   static const showUpNextPanel = BoolPref('show_up_next_panel', defaultValue: true);
 
+  /// What closes an episode that has a next one (Plebz, the user's call
+  /// 2026-10-14): the "up next" panel, the full-screen end card, or Plezy's own
+  /// prompt. Until chosen it follows [showUpNextPanel], the switch it grew
+  /// out of, so nobody's choice changes with the update.
+  static final endOfEpisodeStyle = EnumPref<EndOfEpisodeStyle>(
+    'end_of_episode_style',
+    values: EndOfEpisodeStyle.values,
+    defaultValueProvider: () => (SettingsService.instanceOrNull?.read(showUpNextPanel) ?? true)
+        ? EndOfEpisodeStyle.upNextPanel
+        : EndOfEpisodeStyle.plezyPrompt,
+  );
+
+  /// From how far into an episode Back opens the end card instead of leaving
+  /// the player, in percent of its runtime. Offered at [endCardBackFromChoices].
+  static const endCardBackFrom = IntPref('end_card_back_from', defaultValue: 95);
+
+  static const endCardBackFromChoices = [90, 93, 95, 97];
+
   /// Refuse Dolby Vision output and play the base layer instead.
   ///
   /// media3 already falls back on its own when the *display* reports no Dolby
@@ -623,6 +641,8 @@ abstract final class PlebzPrefs {
     remoteYellowButton,
     remoteBlueButton,
     showUpNextPanel,
+    endOfEpisodeStyle,
+    endCardBackFrom,
     iptvPlayerBackend,
     showSportTab,
     sportFavouriteClub,
@@ -729,4 +749,17 @@ extension PlebzSettingsReads on SettingsService {
     }
     return mode;
   }
+}
+
+/// What closes an episode that has a next one ([PlebzPrefs.endOfEpisodeStyle]).
+enum EndOfEpisodeStyle {
+  /// The "up next" panel over the picture, with the countdown on its button.
+  upNextPanel,
+
+  /// The full-screen end card: the playing episode shrunk to the left, the
+  /// next one beside it.
+  endCard,
+
+  /// Plezy's own end-of-episode prompt.
+  plezyPrompt,
 }

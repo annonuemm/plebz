@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import '../../../i18n/strings.g.dart';
 import '../../../media/ids.dart';
 import '../../../media/media_item.dart';
 import '../../../media/media_item_types.dart';
+import '../../../media/media_kind.dart';
 import '../../../redesign/ocker_skin.dart';
 import '../../../redesign/ocker_type.dart';
 import '../../../services/download_artwork_service.dart';
@@ -17,12 +19,15 @@ import '../../../services/download_storage_service.dart';
 import '../../../services/pip_service.dart';
 import '../../../services/settings_service.dart';
 import '../../../theme/mono_tokens.dart';
+import '../../../utils/formatters.dart';
 import '../../../utils/platform_detector.dart';
 import '../../../utils/provider_extensions.dart';
 import '../../../widgets/app_icon.dart';
 import '../../../widgets/optimized_media_image.dart';
 import '../../../widgets/settings_builder.dart';
 import '../../../widgets/video_controls/player_chrome_controller.dart';
+
+part 'player_end_card.dart';
 
 /// "Up next" while the episode is still running: what follows, and what to do
 /// about it.
@@ -205,28 +210,7 @@ class _UpNextCard extends StatelessWidget {
   /// Plebz, as the end-of-episode prompt it stands in for: the still of a
   /// downloaded episode from its saved artwork when no server answers, and
   /// blurred when spoilers are hidden.
-  Widget _still(BuildContext context, String thumb) {
-    final serverId = serverIdOrNull(episode.serverId);
-    final image = OptimizedMediaImage.thumb(
-      client: context.tryGetMediaClientForServer(serverId),
-      imagePath: thumb,
-      localFilePath: serverId == null
-          ? null
-          : DownloadArtworkService.localPathSync(DownloadStorageService.instance, serverId, thumb),
-      fit: BoxFit.cover,
-      errorWidget: (context, _, _) => const SizedBox.shrink(),
-    );
-    if (SettingsService.instanceOrNull == null) return image;
-    return SettingValueBuilder<bool>(
-      pref: SettingsService.hideSpoilers,
-      builder: (context, hideSpoilers, _) {
-        if (!hideSpoilers || !episode.shouldHideSpoiler) return image;
-        return ClipRect(
-          child: ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 12, sigmaY: 12), child: image),
-        );
-      },
-    );
-  }
+  Widget _still(BuildContext context, String thumb) => _episodeStill(context, episode, thumb);
 
   @override
   Widget build(BuildContext context) {
@@ -418,7 +402,9 @@ class _UpNextCard extends StatelessWidget {
 class _UpNextButton extends StatefulWidget {
   final FocusNode focusNode;
   final VoidCallback onPressed;
-  final IconData icon;
+
+  /// Null for words alone (the end card's quieter buttons).
+  final IconData? icon;
 
   /// Null for the small card's close button, which is its glyph alone.
   final String? label;
@@ -500,7 +486,15 @@ class _UpNextButtonState extends State<_UpNextButton> {
       ),
       shape: WidgetStatePropertyAll(shape),
     );
-    final icon = AppIcon(widget.icon, fill: 1, size: 20);
+    final glyph = widget.icon;
+    if (glyph == null) {
+      return FilledButton(
+        onPressed: widget.onPressed,
+        style: style,
+        child: Text(label ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+      );
+    }
+    final icon = AppIcon(glyph, fill: 1, size: 20);
     if (label == null) {
       final button = FilledButton(onPressed: widget.onPressed, style: style, child: icon);
       return widget.tooltip == null ? button : Tooltip(message: widget.tooltip!, child: button);
@@ -553,4 +547,30 @@ class _UpNextSurface extends StatelessWidget {
       child: child,
     );
   }
+}
+
+/// An episode's still (Plebz): from its saved artwork when it is downloaded
+/// and no server answers, blurred when spoilers are hidden. Shared by the
+/// panel and the end card.
+Widget _episodeStill(BuildContext context, MediaItem episode, String thumb) {
+  final serverId = serverIdOrNull(episode.serverId);
+  final image = OptimizedMediaImage.thumb(
+    client: context.tryGetMediaClientForServer(serverId),
+    imagePath: thumb,
+    localFilePath: serverId == null
+        ? null
+        : DownloadArtworkService.localPathSync(DownloadStorageService.instance, serverId, thumb),
+    fit: BoxFit.cover,
+    errorWidget: (context, _, _) => const SizedBox.shrink(),
+  );
+  if (SettingsService.instanceOrNull == null) return image;
+  return SettingValueBuilder<bool>(
+    pref: SettingsService.hideSpoilers,
+    builder: (context, hideSpoilers, _) {
+      if (!hideSpoilers || !episode.shouldHideSpoiler) return image;
+      return ClipRect(
+        child: ImageFiltered(imageFilter: ImageFilter.blur(sigmaX: 12, sigmaY: 12), child: image),
+      );
+    },
+  );
 }

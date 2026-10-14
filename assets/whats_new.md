@@ -13,6 +13,16 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.26.0 (Build 829)
+
+### Wiedergabe
+- Neu: die Endkarte. Unter Einstellungen → Wiedergabe → „Am Ende einer Folge“ wählst du zwischen dem Fenster „Als nächstes“, der Endkarte und dem Hinweis von Plezy. Die Endkarte nimmt den ganzen Bildschirm: Die laufende Folge schrumpft nach links und läuft dort zu Ende, rechts steht die nächste Folge mit Bild und Inhalt. Ist die Folge vorbei, startet die nächste nach deinem Countdown, oder sofort mit „Abspielen“.
+- Die Endkarte kommt mit dem Abspann, sonst kurz vor Schluss. Am Ende eines Films oder der letzten Folge schlägt sie einen ähnlichen Film oder eine passende Serie vor.
+- Zurück verlässt den Player jetzt erst beim zweiten Druck, damit nichts versehentlich endet. Gegen Ende öffnet ein einzelner Druck die Endkarte, zwei schnelle Drücke beenden. Im Live-TV bleibt es bei einem Druck.
+
+### Darstellung
+- „Hintergrund in Posterfarben“ schaltet „Hintergrundbild in der Ecke“ mit ein, ohne das die Farben nicht zu sehen sind.
+
 ## 1.25.0 (Build 820)
 
 ### Live-TV

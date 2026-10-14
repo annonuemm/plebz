@@ -660,6 +660,12 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String importBackupSuccess({required Object n}) => 'Sicherung wiederhergestellt: ${n} Server';
 	@override String get showUpNextPanel => 'Fenster „Als nächstes“';
 	@override String get showUpNextPanelDescription => 'Gegen Ende der Folge, mit Countdown';
+	@override String get endOfEpisodeStyle => 'Am Ende einer Folge';
+	@override String get endOfEpisodeUpNextPanel => 'Fenster „Als nächstes“';
+	@override String get endOfEpisodeEndCard => 'Endkarte';
+	@override String get endOfEpisodePlezyPrompt => 'Hinweis von Plezy';
+	@override String get endCardBackFrom => 'Endkarte per Zurück ab';
+	@override String endCardBackFromValue({required Object percent}) => '${percent} %';
 	@override String get mirrorWatchedAcrossServers => 'Gesehen-Status abgleichen';
 	@override String get mirrorWatchedAcrossServersDescription => 'Auf allen Kopien, außer bei einzelnen Folgen';
 	@override String get matchContentFrameRateLiveTv => 'Bildrate auch bei Live-TV';
@@ -1069,6 +1075,17 @@ class _Translations$videoControls$de extends Translations$videoControls$en {
 	@override String upNextStartsIn({required Object seconds}) => 'Nächste Folge in ${seconds} s';
 	@override String get closeUpNext => 'Schließen';
 	@override String get showUpNextPanel => '„Als nächstes"-Fenster zeigen';
+	@override String get endOfEpisodeStyle => 'Am Ende einer Folge';
+	@override String get endCardNowPlaying => 'LÄUFT GERADE';
+	@override String get endCardWatchCredits => 'Abspann';
+	@override String get endCardExit => 'Beenden';
+	@override String get endCardDetails => 'Details';
+	@override String get endCardSimilarMovie => 'ÄHNLICHER FILM';
+	@override String get endCardSimilarShow => 'PASSENDE SERIE';
+	@override String get endCardPlayNow => 'Abspielen';
+	@override String endCardStartsIn({required Object time}) => 'Startet in ${time}';
+	@override String endCardRemaining({required Object time}) => 'noch ${time}';
+	@override String endCardSeasonEpisode({required Object season, required Object episode}) => 'Staffel ${season}, Folge ${episode}';
 	@override String channelNumberTyped({required Object number}) => 'Sender ${number}';
 	@override String channelNumberMissing({required Object number}) => 'Kein Sender mit der Nummer ${number}';
 }
@@ -4372,6 +4389,12 @@ extension on TranslationsDe {
 			'settings.importBackupSuccess' => ({required Object n}) => 'Sicherung wiederhergestellt: ${n} Server',
 			'settings.showUpNextPanel' => 'Fenster „Als nächstes“',
 			'settings.showUpNextPanelDescription' => 'Gegen Ende der Folge, mit Countdown',
+			'settings.endOfEpisodeStyle' => 'Am Ende einer Folge',
+			'settings.endOfEpisodeUpNextPanel' => 'Fenster „Als nächstes“',
+			'settings.endOfEpisodeEndCard' => 'Endkarte',
+			'settings.endOfEpisodePlezyPrompt' => 'Hinweis von Plezy',
+			'settings.endCardBackFrom' => 'Endkarte per Zurück ab',
+			'settings.endCardBackFromValue' => ({required Object percent}) => '${percent} %',
 			'settings.mirrorWatchedAcrossServers' => 'Gesehen-Status abgleichen',
 			'settings.mirrorWatchedAcrossServersDescription' => 'Auf allen Kopien, außer bei einzelnen Folgen',
 			'settings.matchContentFrameRateLiveTv' => 'Bildrate auch bei Live-TV',
@@ -4722,6 +4745,17 @@ extension on TranslationsDe {
 			'videoControls.upNextStartsIn' => ({required Object seconds}) => 'Nächste Folge in ${seconds} s',
 			'videoControls.closeUpNext' => 'Schließen',
 			'videoControls.showUpNextPanel' => '„Als nächstes"-Fenster zeigen',
+			'videoControls.endOfEpisodeStyle' => 'Am Ende einer Folge',
+			'videoControls.endCardNowPlaying' => 'LÄUFT GERADE',
+			'videoControls.endCardWatchCredits' => 'Abspann',
+			'videoControls.endCardExit' => 'Beenden',
+			'videoControls.endCardDetails' => 'Details',
+			'videoControls.endCardSimilarMovie' => 'ÄHNLICHER FILM',
+			'videoControls.endCardSimilarShow' => 'PASSENDE SERIE',
+			'videoControls.endCardPlayNow' => 'Abspielen',
+			'videoControls.endCardStartsIn' => ({required Object time}) => 'Startet in ${time}',
+			'videoControls.endCardRemaining' => ({required Object time}) => 'noch ${time}',
+			'videoControls.endCardSeasonEpisode' => ({required Object season, required Object episode}) => 'Staffel ${season}, Folge ${episode}',
 			'videoControls.channelNumberTyped' => ({required Object number}) => 'Sender ${number}',
 			'videoControls.channelNumberMissing' => ({required Object number}) => 'Kein Sender mit der Nummer ${number}',
 			'messages.markedAsWatched' => 'Als gesehen markiert',
@@ -4825,6 +4859,8 @@ extension on TranslationsDe {
 			'mpvConfig.loadPreset' => 'Laden',
 			'mpvConfig.deletePreset' => 'Löschen',
 			'mpvConfig.presetSaved' => 'Voreinstellung gespeichert',
+			_ => null,
+		} ?? switch (path) {
 			'mpvConfig.presetLoaded' => 'Voreinstellung geladen',
 			'mpvConfig.presetDeleted' => 'Voreinstellung gelöscht',
 			'mpvConfig.confirmDeletePreset' => 'Diese Voreinstellung wirklich löschen?',
@@ -4842,8 +4878,6 @@ extension on TranslationsDe {
 			'profiles.manage' => 'Verwalten',
 			'profiles.delete' => 'Löschen',
 			'profiles.signOut' => 'Abmelden',
-			_ => null,
-		} ?? switch (path) {
 			'profiles.signOutPlexTitle' => 'Von Plex abmelden?',
 			'profiles.signOutPlexMessage' => ({required Object displayName}) => '${displayName} und alle Plex Home-Benutzer entfernen? Du kannst dich jederzeit wieder anmelden.',
 			'profiles.signedOutPlex' => 'Von Plex abgemeldet.',
@@ -5339,6 +5373,8 @@ extension on TranslationsDe {
 			'liveTv.channelNumber' => ({required Object number}) => 'Kanal ${number}',
 			'liveTv.unknownChannel' => 'Unbekannter Kanal',
 			'liveTv.live' => 'LIVE',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.reloadGuide' => 'TV-Programm neu laden',
 			'liveTv.searchGuide' => 'TV-Programm durchsuchen',
 			'liveTv.searchHint' => 'Kanäle & Sendungen suchen',
@@ -5356,8 +5392,6 @@ extension on TranslationsDe {
 			'liveTv.evening' => 'Abend',
 			'liveTv.lateNight' => 'Spätnacht',
 			'liveTv.whatsOn' => 'Jetzt im TV',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.watchChannel' => 'Kanal ansehen',
 			'liveTv.favorites' => 'Favoriten',
 			'liveTv.reorderFavorites' => 'Favoriten sortieren',
@@ -5853,6 +5887,8 @@ extension on TranslationsDe {
 			'videoSettings.audioNormalization' => 'Lautstärke normalisieren',
 			'videoSettings.audioNormalizationDisablesPassthrough' => 'Dekodiert Audio zu PCM; Durchleitung ist aus, solange dies aktiv ist',
 			'videoSettings.audioNormalizationStereoMix' => 'Dekodiert Audio zu einem Stereomix; Durchleitung ist aus, solange dies aktiv ist',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.color' => 'Farbe',
 			'performanceOverlay.performance' => 'Leistung',
 			'performanceOverlay.buffer' => 'Puffer',
@@ -5870,8 +5906,6 @@ extension on TranslationsDe {
 			'performanceOverlay.dvRouteBaseLayer' => 'Basisschicht',
 			'performanceOverlay.dvRouteBaseLayerHdr10' => 'HDR10-Basisschicht',
 			'performanceOverlay.dvRouteBaseLayerHlg' => 'HLG-Basisschicht',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.dvRouteBaseLayerSdr' => 'SDR-Basisschicht',
 			'performanceOverlay.dvRouteReshaped' => 'RPU umgeformt (gpu-next)',
 			'performanceOverlay.p7Conversion' => 'P7-Konv.',
@@ -6367,6 +6401,8 @@ extension on TranslationsDe {
 			'plebz.lookTitle' => 'Aussehen',
 			'plebz.lookBody' => 'Wähle das Aussehen. Es ändert sich schon beim Auswählen, du siehst es also sofort.',
 			'plebz.next' => 'Weiter',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.iptvOnly' => 'Nur IPTV',
 			'plebz.defaultProfileName' => 'Zuhause',
 			'plebz.extrasTitle' => 'Fast fertig',
@@ -6384,8 +6420,6 @@ extension on TranslationsDe {
 			'plebz.updateAvailableBody' => ({required Object release}) => '${release} ist bereit zur Installation. Deine Einstellungen und Anmeldungen bleiben erhalten.',
 			'plebz.updateNow' => 'Aktualisieren',
 			'plebz.later' => 'Später',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.upToDate' => 'Plebz ist auf dem neuesten Stand',
 			'plebz.checking' => 'Suche nach Updates …',
 			'plebz.checkFailed' => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.',

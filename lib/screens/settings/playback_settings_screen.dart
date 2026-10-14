@@ -18,6 +18,7 @@ import '../../services/video_decode_capabilities.dart';
 import '../../utils/codec_utils.dart';
 import '../../utils/platform_detector.dart';
 import '../../widgets/setting_tile.dart';
+import '../../widgets/end_of_episode_style_label.dart';
 import '../../widgets/settings_builder.dart';
 import '../../widgets/settings_page.dart';
 import '../../widgets/settings_section.dart';
@@ -376,11 +377,35 @@ class PlaybackSettingsScreen extends StatelessWidget {
       // Also offered in the player's own settings, where it sits beside
       // auto-play. Same switch either way — it belongs with the credits
       // options too, because that is the marker it rides on.
-      SettingSwitchTile(
-        pref: PlebzPrefs.showUpNextPanel,
+      // Plebz: the panel, the full-screen end card or Plezy's own prompt —
+      // one of the three; the end card's Back threshold below it.
+      SettingSelectionTile<EndOfEpisodeStyle>(
+        pref: PlebzPrefs.endOfEpisodeStyle,
         icon: Symbols.featured_video_rounded,
-        title: t.settings.showUpNextPanel,
-        subtitle: t.settings.showUpNextPanelDescription,
+        title: t.settings.endOfEpisodeStyle,
+        subtitleBuilder: endOfEpisodeStyleLabel,
+        options: EndOfEpisodeStyle.values
+            .map((style) => DialogOption(value: style, title: endOfEpisodeStyleLabel(style)))
+            .toList(),
+      ),
+      SettingValueBuilder<EndOfEpisodeStyle>(
+        pref: PlebzPrefs.endOfEpisodeStyle,
+        builder: (context, style, _) => style != EndOfEpisodeStyle.endCard
+            ? const SizedBox.shrink()
+            : SettingSelectionTile<int>(
+                pref: PlebzPrefs.endCardBackFrom,
+                icon: Symbols.keyboard_return_rounded,
+                title: t.settings.endCardBackFrom,
+                subtitleBuilder: (percent) => t.settings.endCardBackFromValue(percent: percent),
+                options: PlebzPrefs.endCardBackFromChoices
+                    .map(
+                      (percent) => DialogOption(
+                        value: percent,
+                        title: t.settings.endCardBackFromValue(percent: percent),
+                      ),
+                    )
+                    .toList(),
+              ),
       ),
       SettingSwitchTile(
         pref: SettingsService.forceSkipMarkerFallback,

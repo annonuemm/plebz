@@ -23,6 +23,7 @@ import '../../../providers/shader_provider.dart';
 import '../../../services/file_picker_service.dart';
 import '../../../services/scoped_player_prefs.dart';
 import '../../../services/settings_service.dart';
+import '../../end_of_episode_style_label.dart';
 import '../../../services/sleep_timer_service.dart';
 import '../../../services/video_filter_manager.dart';
 import '../../../focus/focusable_wrapper.dart';
@@ -883,10 +884,22 @@ class _VideoSettingsSheetState extends State<VideoSettingsSheet> {
           title: t.videoControls.autoPlayNext,
         ),
 
-        _SettingsToggleItem(
-          pref: PlebzPrefs.showUpNextPanel,
+        // Plebz: the panel, the end card or Plezy's prompt; each press moves
+        // on to the next of the three.
+        _SettingsMenuItem(
           icon: Symbols.featured_video_rounded,
-          title: t.videoControls.showUpNextPanel,
+          title: t.videoControls.endOfEpisodeStyle,
+          valueText: endOfEpisodeStyleLabel(SettingsService.instance.read(PlebzPrefs.endOfEpisodeStyle)),
+          onTap: () {
+            const styles = EndOfEpisodeStyle.values;
+            final current = SettingsService.instance.read(PlebzPrefs.endOfEpisodeStyle);
+            final next = styles[(current.index + 1) % styles.length];
+            unawaited(
+              SettingsService.instance.write(PlebzPrefs.endOfEpisodeStyle, next).then((_) {
+                if (mounted) setState(() {});
+              }),
+            );
+          },
         ),
 
         if (isDesktop)

@@ -126,6 +126,12 @@ extension _VideoPlayerPlaybackPromptMethods on VideoPlayerScreenState {
         return;
       }
 
+      // Plebz: the end card, where chosen, takes the end over.
+      if (!serverStopped && _endCardTakesCompletion(autoPlayEnabled: autoPlayEnabled)) {
+        _logVideoCompleted('action=presentNext endCard');
+        return;
+      }
+
       _logVideoCompleted(serverStopped ? 'action=presentNext prompt serverStopped' : 'action=presentNext prompt');
       _setPlayerState(() {
         _episode.showPlayNextDialog = true;
@@ -145,6 +151,12 @@ extension _VideoPlayerPlaybackPromptMethods on VideoPlayerScreenState {
         _startAutoPlayTimer();
       }
     } else if (navigationAction == CompletionNavigationAction.exit && !_episode.completionLatch.triggered) {
+      // Plebz: the end card, with a title like this one to suggest, stays.
+      if (_endCardTakesExit()) {
+        _logVideoCompleted('action=exit endCard');
+        _episode.completionLatch.latch();
+        return;
+      }
       _logVideoCompleted('action=exit');
       _episode.completionLatch.latch();
       unawaited(_handleBackButton());

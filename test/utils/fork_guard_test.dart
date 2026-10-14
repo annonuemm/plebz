@@ -10,7 +10,13 @@ void main() {
   test('no visible text names Plezy, except where it means the original', () {
     // "Support Plezy" donates to Plezy's developer; the license notice and
     // "Based on Plezy …" name the work this one is modified from.
-    const meantAsTheOriginal = {'supportDeveloper', 'appLicenseNotice', 'basedOnUpstream'};
+    const meantAsTheOriginal = {
+      'supportDeveloper',
+      'appLicenseNotice',
+      'basedOnUpstream',
+      // The end-of-episode choice that keeps Plezy's own prompt.
+      'endOfEpisodePlezyPrompt',
+    };
     final offenders = <String>[];
     final files = Directory('lib/i18n').listSync().whereType<File>().where((f) => f.path.endsWith('.i18n.json'));
     for (final file in files) {

@@ -1824,6 +1824,27 @@ class Translations$settings$en {
 	/// en: 'Near the end of an episode, with a countdown'
 	String get showUpNextPanelDescription => 'Near the end of an episode, with a countdown';
 
+	/// en: 'At the end of an episode'
+	String get endOfEpisodeStyle => 'At the end of an episode';
+
+	/// en: ''
+	String get endOfEpisodeStyleDescription => '';
+
+	/// en: '"Up next" panel'
+	String get endOfEpisodeUpNextPanel => '"Up next" panel';
+
+	/// en: 'End card'
+	String get endOfEpisodeEndCard => 'End card';
+
+	/// en: 'Plezy's prompt'
+	String get endOfEpisodePlezyPrompt => 'Plezy\'s prompt';
+
+	/// en: 'End card on Back from'
+	String get endCardBackFrom => 'End card on Back from';
+
+	/// en: '${percent} %'
+	String endCardBackFromValue({required Object percent}) => '${percent} %';
+
 	/// en: 'Sync watched state'
 	String get mirrorWatchedAcrossServers => 'Sync watched state';
 
@@ -2880,6 +2901,39 @@ class Translations$videoControls$en {
 
 	/// en: 'Show "up next" panel'
 	String get showUpNextPanel => 'Show "up next" panel';
+
+	/// en: 'At the end of an episode'
+	String get endOfEpisodeStyle => 'At the end of an episode';
+
+	/// en: 'NOW PLAYING'
+	String get endCardNowPlaying => 'NOW PLAYING';
+
+	/// en: 'Credits'
+	String get endCardWatchCredits => 'Credits';
+
+	/// en: 'Stop watching'
+	String get endCardExit => 'Stop watching';
+
+	/// en: 'Details'
+	String get endCardDetails => 'Details';
+
+	/// en: 'A SIMILAR FILM'
+	String get endCardSimilarMovie => 'A SIMILAR FILM';
+
+	/// en: 'A SERIES LIKE IT'
+	String get endCardSimilarShow => 'A SERIES LIKE IT';
+
+	/// en: 'Play'
+	String get endCardPlayNow => 'Play';
+
+	/// en: 'Starts in ${time}'
+	String endCardStartsIn({required Object time}) => 'Starts in ${time}';
+
+	/// en: '${time} left'
+	String endCardRemaining({required Object time}) => '${time} left';
+
+	/// en: 'Season ${season}, episode ${episode}'
+	String endCardSeasonEpisode({required Object season, required Object episode}) => 'Season ${season}, episode ${episode}';
 
 	/// en: 'Channel ${number}'
 	String channelNumberTyped({required Object number}) => 'Channel ${number}';
@@ -10120,6 +10174,13 @@ extension on Translations {
 			'settings.importBackupSuccess' => ({required Object n}) => 'Backup restored: ${n} servers',
 			'settings.showUpNextPanel' => '"Up next" panel',
 			'settings.showUpNextPanelDescription' => 'Near the end of an episode, with a countdown',
+			'settings.endOfEpisodeStyle' => 'At the end of an episode',
+			'settings.endOfEpisodeStyleDescription' => '',
+			'settings.endOfEpisodeUpNextPanel' => '"Up next" panel',
+			'settings.endOfEpisodeEndCard' => 'End card',
+			'settings.endOfEpisodePlezyPrompt' => 'Plezy\'s prompt',
+			'settings.endCardBackFrom' => 'End card on Back from',
+			'settings.endCardBackFromValue' => ({required Object percent}) => '${percent} %',
 			'settings.mirrorWatchedAcrossServers' => 'Sync watched state',
 			'settings.mirrorWatchedAcrossServersDescription' => 'On every copy, except single episodes',
 			'settings.matchContentFrameRateLiveTv' => 'Frame rate for live TV too',
@@ -10474,6 +10535,17 @@ extension on Translations {
 			'videoControls.upNextStartsIn' => ({required Object seconds}) => 'Next episode in ${seconds}s',
 			'videoControls.closeUpNext' => 'Close',
 			'videoControls.showUpNextPanel' => 'Show "up next" panel',
+			'videoControls.endOfEpisodeStyle' => 'At the end of an episode',
+			'videoControls.endCardNowPlaying' => 'NOW PLAYING',
+			'videoControls.endCardWatchCredits' => 'Credits',
+			'videoControls.endCardExit' => 'Stop watching',
+			'videoControls.endCardDetails' => 'Details',
+			'videoControls.endCardSimilarMovie' => 'A SIMILAR FILM',
+			'videoControls.endCardSimilarShow' => 'A SERIES LIKE IT',
+			'videoControls.endCardPlayNow' => 'Play',
+			'videoControls.endCardStartsIn' => ({required Object time}) => 'Starts in ${time}',
+			'videoControls.endCardRemaining' => ({required Object time}) => '${time} left',
+			'videoControls.endCardSeasonEpisode' => ({required Object season, required Object episode}) => 'Season ${season}, episode ${episode}',
 			'videoControls.channelNumberTyped' => ({required Object number}) => 'Channel ${number}',
 			'videoControls.channelNumberMissing' => ({required Object number}) => 'No channel numbered ${number}',
 			'messages.markedAsWatched' => 'Marked as watched',
@@ -10521,6 +10593,8 @@ extension on Translations {
 			'messages.noResultsFound' => 'No results found',
 			'messages.sleepTimerSet' => ({required Object label}) => 'Sleep timer set for ${label}',
 			'messages.noItemsAvailable' => 'No items available',
+			_ => null,
+		} ?? switch (path) {
 			'messages.failedToCreatePlayQueueNoItems' => 'Failed to create a play queue — no items',
 			'messages.failedPlayback' => ({required Object action, required Object error}) => 'Failed to ${action}: ${error}',
 			'messages.switchingToCompatiblePlayer' => 'Switching to compatible player...',
@@ -10539,8 +10613,6 @@ extension on Translations {
 			'messages.noVideoUrl' => 'No video URL available',
 			'messages.playbackNoMediaSources' => 'The server returned no playable media sources',
 			'messages.playbackDataNotPrepared' => 'Playback was started before its data was ready',
-			_ => null,
-		} ?? switch (path) {
 			'messages.streamSelectionUnavailable' => 'Stream selection is not available for this source',
 			'messages.streamSelectionFailed' => 'Could not apply the selected streams',
 			'messages.trackSelectionNotRemembered' => 'This track choice applies to the current playback only.',
@@ -11035,6 +11107,8 @@ extension on Translations {
 			'explore.season.spring' => 'Spring',
 			'explore.season.summer' => 'Summer',
 			'explore.season.fall' => 'Fall',
+			_ => null,
+		} ?? switch (path) {
 			'explore.season.withYear' => ({required Object season, required Object year}) => '${season} ${year}',
 			'explore.format.tv' => 'TV',
 			'explore.format.tvShort' => 'TV Short',
@@ -11053,8 +11127,6 @@ extension on Translations {
 			'explore.sourceMaterial.webComic' => 'Web comic',
 			'explore.sourceMaterial.musicRelease' => 'Music',
 			'explore.sourceMaterial.otherMedia' => 'Other',
-			_ => null,
-		} ?? switch (path) {
 			'explore.creditRole.actor' => 'Actor',
 			'explore.creditRole.director' => 'Director',
 			'explore.creditRole.writer' => 'Writer',
@@ -11549,6 +11621,8 @@ extension on Translations {
 			'companionRemote.session.usePhoneToControl' => 'Use your mobile device to control this app',
 			'companionRemote.session.startServer' => 'Start Server',
 			'companionRemote.session.stopServer' => 'Stop Server',
+			_ => null,
+		} ?? switch (path) {
 			'companionRemote.session.minimize' => 'Minimize',
 			'companionRemote.session.manualAddressHint' => 'Manual connection address:',
 			'companionRemote.pairing.discoveryDescription' => 'Plebz devices with the same Plex account appear here',
@@ -11567,8 +11641,6 @@ extension on Translations {
 			'companionRemote.pairing.authFailed' => 'Authentication failed. Both devices need the same Plex account.',
 			'companionRemote.pairing.failedToConnect' => ({required Object error}) => 'Failed to connect: ${error}',
 			'companionRemote.pairing.codeTitle' => 'Pair a device',
-			_ => null,
-		} ?? switch (path) {
 			'companionRemote.pairing.codeMessage' => ({required Object name}) => '${name} wants to control Plebz here. Enter this code on that device:',
 			'companionRemote.pairing.codeValidFor' => 'The code is valid for two minutes.',
 			'companionRemote.pairing.enterCodeTitle' => 'Enter code',
@@ -12063,6 +12135,8 @@ extension on Translations {
 			'iptv.groupsChosenWithChannels' => ({required Object chosen, required Object total, required Object channels}) => '${chosen} of ${total} chosen · ${channels} channels',
 			'iptv.groupsApply' => 'Apply',
 			'iptv.groupsAll' => 'Choose all',
+			_ => null,
+		} ?? switch (path) {
 			'iptv.groupsNone' => 'Choose none',
 			'iptv.groupsWithout' => 'No group',
 			'iptv.groupsChannelCount' => ({required Object count}) => '${count} channels',
@@ -12081,8 +12155,6 @@ extension on Translations {
 			'trailerStage.start' => 'Start the stage',
 			'trailerStage.startAnything' => 'Everything, in random order',
 			'trailerStage.startNarrowed' => 'Only what fits your choice, in random order',
-			_ => null,
-		} ?? switch (path) {
 			'trailerStage.nextTrailer' => 'Next',
 			'trailerStage.openDetail' => 'Open the title',
 			'trailerStage.chooseAgain' => 'Choose again',

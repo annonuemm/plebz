@@ -13,8 +13,11 @@ import 'package:os_media_controls/os_media_controls.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
+import '../media/media_kind.dart';
 import '../mpv/mpv.dart';
+import 'media_detail_screen.dart';
 import '../mpv/player/platform/player_android.dart';
+import '../mpv/player/platform/player_android_mpv.dart';
 import '../mpv/player/player_native.dart';
 import '../mpv/player/video_rect_support.dart';
 
@@ -149,6 +152,7 @@ import '../utils/error_message_utils.dart';
 
 part 'video_player/parts/companion_remote.dart';
 part 'video_player/parts/display_matching.dart';
+part 'video_player/parts/end_card.dart';
 part 'video_player/parts/episode_navigation.dart';
 part 'video_player/parts/episode_queue.dart';
 part 'video_player/parts/errors.dart';
@@ -775,6 +779,44 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
   /// The next episode's full row, once the prefetch has it — the adjacency
   /// row itself carries no summary.
   MediaItem? _upNextDetails;
+
+  // Plebz: the end card (parts/end_card.dart).
+  bool _endCardOpen = false;
+
+  /// Opened by Back rather than by the credits or the runtime: it stays until
+  /// Back again or a seek back past where Back would open it.
+  bool _endCardOpenedByBack = false;
+
+  /// The episode whose card, come on its own, was put away with Back: it
+  /// does not open again on its own for that episode (Back still opens it).
+  String? _endCardBackedOutFor;
+
+  /// What the card shows, taken when it opened: the next episode starts in
+  /// its box, and by then the queue has moved on.
+  MediaItem? _endCardCurrent;
+  MediaItem? _endCardNext;
+
+  /// A title like this one, when nothing follows it (a film, a series' last
+  /// episode), and the item it was fetched for.
+  MediaItem? _endCardSuggestion;
+  String? _endCardSuggestionFor;
+
+  /// The card shows [_endCardSuggestion] rather than a next episode.
+  bool _endCardSuggests = false;
+
+  /// The countdown with the credits known, in seconds; null while the card
+  /// counts the episode's real remaining time instead.
+  int? _endCardCountdown;
+  Timer? _endCardTimer;
+
+  /// The next episode was asked for from the card: it closes once that one
+  /// has its first frame, growing out of the box.
+  bool _endCardStarting = false;
+  final ValueNotifier<String> _endCardPlayLabel = ValueNotifier('');
+  final ValueNotifier<Duration?> _endCardRemaining = ValueNotifier(null);
+  final FocusNode _endCardPlayFocusNode = FocusNode(debugLabel: 'EndCardPlay');
+  final FocusNode _endCardCreditsFocusNode = FocusNode(debugLabel: 'EndCardCredits');
+  final FocusNode _endCardExitFocusNode = FocusNode(debugLabel: 'EndCardExit');
   late int _effectiveSelectedMediaIndex;
 
   /// Media source id to request on the next resolve: the caller's initial
@@ -1456,7 +1498,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
         videoPlayerNavigationEnabled: videoPlayerNavigationPreference(),
         playerEnteredFullscreen: FullscreenStateManager().scopeOwnsFullscreen,
       ),
-      exitPlayer: () => unawaited(_handleBackButton()),
+      exitPlayer: () => unawaited(_handleBackButton(fromBackKey: true)),
       navigateHome: _handleHomeButton,
       isActive: () => mounted,
     );
@@ -1925,6 +1967,29 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
           handedOver?.player ?? Player(useExoPlayer: useExoPlayer, hardwareDecoding: enableHardwareDecoding);
       attemptPlayer = currentPlayer;
       if (!mounted || generation != _playerInitializationGeneration) return;
+      // Plebz: the end card moves the picture into its box. The surface has
+      // to follow a rect for that, which is settled before the core is built
+      // — and a tunnelled picture cannot be placed at all, so it keeps the
+      // still in the box instead (parts/end_card.dart).
+      if (Platform.isAndroid && handedOver == null && _endCardChosen) {
+        final tunneled =
+            useExoPlayer &&
+            PlebzPrefs.tunneledPlaybackFor(
+              isLive: false,
+              enabled: settingsService.read(SettingsService.tunneledPlayback),
+              enabledForLiveTv: settingsService.read(PlebzPrefs.tunneledPlaybackLiveTv),
+            );
+        if (!tunneled) {
+          switch (currentPlayer) {
+            case PlayerAndroid():
+              currentPlayer.followsVideoRect = true;
+            case PlayerAndroidMpv():
+              currentPlayer.followsVideoRect = true;
+            default:
+              break;
+          }
+        }
+      }
       if (Platform.isAndroid) {
         await currentPlayer.setLogLevel(debugLoggingEnabled ? 'v' : 'warn');
         if (!mounted || generation != _playerInitializationGeneration) return;
@@ -2435,7 +2500,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
 
   /// The "up next" panel, unless it is switched off — then Plezy's own
   /// end-of-episode prompt does the countdown.
-  bool get _upNextPanelEnabled => SettingsService.instanceOrNull?.read(PlebzPrefs.showUpNextPanel) ?? true;
+  bool get _upNextPanelEnabled => _endOfEpisodeStyle == EndOfEpisodeStyle.upNextPanel;
 
   /// The episode has ended and the next one is offered — counting down, or
   /// waiting where auto-play is off — on the panel.
@@ -2448,9 +2513,57 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     if (_episode.showPlayNextDialog) _cancelAutoPlay();
   }
 
-  Future<void> _handleBackButton({bool navigateHome = false}) async {
+  /// Plebz: running while a second Back leaves the player ([_handleBackButton]).
+  Timer? _backAgainTimer;
+
+  /// Plebz: running while a first Back near the end waits to see whether a
+  /// second follows (then the player goes) or not (then the end card opens).
+  Timer? _endCardBackTimer;
+
+  static const Duration _endCardBackWait = Duration(milliseconds: 450);
+
+  /// How long a first Back keeps the way out open.
+  static const Duration _backAgainWindow = Duration(milliseconds: 2500);
+
+  /// Off in the test suite (test/flutter_test_config.dart), whose players are
+  /// left with one Back throughout; the tests of the rule itself turn it on.
+  @visibleForTesting
+  static bool backAgainToExit = true;
+
+  /// [fromBackKey]: the remote's or the system's Back, which leaves the
+  /// player only when pressed twice (Plebz, the user's call 2026-10-14: a
+  /// stray press ended films). Buttons on screen and the player's own exits
+  /// leave at once; live TV keeps its single press.
+  Future<void> _handleBackButton({
+    bool navigateHome = false,
+    bool fromBackKey = false,
+    bool fromEndCard = false,
+  }) async {
     final acceptedExit = _routeExitOperation;
     if (acceptedExit != null) return acceptedExit;
+    // Plebz: Back on the end card grows the picture back; near the end, Back
+    // opens it rather than leaving (parts/end_card.dart). Its own "Beenden"
+    // ([fromEndCard]) leaves.
+    if (!navigateHome && !fromEndCard && _endCardOpen) {
+      _endCardBack();
+      return;
+    }
+    if (!navigateHome && !fromEndCard && _backOpensEndCard) {
+      if (!fromBackKey) {
+        _openEndCard(byBack: true);
+        return;
+      }
+      // The remote's Back near the end: a moment's wait tells one press —
+      // the card — from two — leaving at once (the user's call, 2026-10-14).
+      if (_endCardBackTimer?.isActive != true) {
+        _endCardBackTimer = Timer(_endCardBackWait, () {
+          if (mounted && _backOpensEndCard) _openEndCard(byBack: true);
+        });
+        return;
+      }
+      _endCardBackTimer?.cancel();
+      fromEndCard = true; // the second press: out, past the card and the hint
+    }
     // Back on the panel means "let it finish", not "leave".
     if (!navigateHome && (_showUpNext || _upNextCountingDown)) {
       _closeUpNextPanel();
@@ -2459,6 +2572,18 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     if (!navigateHome && (_episode.showPlayNextDialog || _showStillWatchingPrompt)) {
       _dismissPlaybackPromptForBack();
       return;
+    }
+    if (backAgainToExit && fromBackKey && !fromEndCard && !navigateHome && !widget.isLive) {
+      if (_backAgainTimer?.isActive != true) {
+        _backAgainTimer = Timer(_backAgainWindow, () {});
+        _toastController.show(
+          Symbols.keyboard_return_rounded,
+          t.common.pressBackAgainToExit,
+          duration: _backAgainWindow,
+        );
+        return;
+      }
+      _backAgainTimer?.cancel();
     }
     if (_isHandlingBack) return;
     _isHandlingBack = true;
@@ -2652,6 +2777,14 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     _playNextConfirmFocusNode.dispose();
     _upNextPlayFocusNode.dispose();
     _upNextCloseFocusNode.dispose();
+    _endCardTimer?.cancel();
+    _backAgainTimer?.cancel();
+    _endCardBackTimer?.cancel();
+    _endCardPlayLabel.dispose();
+    _endCardRemaining.dispose();
+    _endCardPlayFocusNode.dispose();
+    _endCardCreditsFocusNode.dispose();
+    _endCardExitFocusNode.dispose();
 
     _stillWatchingPauseFocusNode.dispose();
     _stillWatchingContinueFocusNode.dispose();

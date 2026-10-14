@@ -285,13 +285,15 @@ extension _VideoPlayerPlaybackServiceMethods on VideoPlayerScreenState {
   /// that already exists, and a seek backwards past the mark takes the panel
   /// away again — which is what a viewer who jumped back expects.
   void _evaluateUpNext(Duration position, Duration duration) {
+    // Plebz: the end card has its own clock (parts/end_card.dart).
+    if (!widget.isLive) _evaluateEndCard(position, duration);
     if (!widget.isLive && _episode.next != null) {
       final due = shouldShowUpNext(
         position: position,
         duration: duration,
         hasNextEpisode: true,
         dismissed: _upNextDismissed,
-        enabled: SettingsService.instanceOrNull?.read(PlebzPrefs.showUpNextPanel) ?? true,
+        enabled: _endOfEpisodeStyle == EndOfEpisodeStyle.upNextPanel,
         creditsStart: _creditsStartOfThisEpisode,
       );
       if (due != _showUpNext) {

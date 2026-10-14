@@ -386,6 +386,8 @@ extension _VideoPlayerBuildMethods on VideoPlayerScreenState {
                 onClose: _closeUpNextPanel,
                 chromeController: _chromeController,
               ),
+              // Plebz: the end card, where chosen; the whole screen while open.
+              if (_endCardChosen || _endCardOpen) Positioned.fill(child: _buildEndCard()),
               // Netflix-style auto-play overlay (hidden in PiP mode), where the
               // panel above is switched off.
               VideoPlayerPlayNextOverlay(

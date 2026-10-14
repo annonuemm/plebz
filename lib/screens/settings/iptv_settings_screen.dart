@@ -257,6 +257,12 @@ class _LiveTvSettings extends StatelessWidget {
                   title: t.settings.liveTvGuideTimeNavigation,
                   subtitle: t.settings.liveTvGuideTimeNavigationDescription,
                 ),
+                SettingSwitchTile(
+                  pref: PlebzPrefs.liveTvGuideChannelNames,
+                  icon: Symbols.subtitles_rounded,
+                  title: t.settings.liveTvGuideChannelNames,
+                  subtitle: t.settings.liveTvGuideChannelNamesDescription,
+                ),
               ],
             ),
             if (playback.isNotEmpty) SettingsGroup(title: t.settings.player, children: playback),

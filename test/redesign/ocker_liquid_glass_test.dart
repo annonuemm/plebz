@@ -198,6 +198,45 @@ void main() {
     expect(litEdge(tester), isFalse, reason: 'Flach stays flat');
   });
 
+  testWidgets('on Android a pane flush with the screen carries no edge along those sides', (tester) async {
+    OckerLiquidGlass.debugOfferedHere = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        home: Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            width: 200,
+            height: 400,
+            child: OckerGlass(
+              borderRadius: const BorderRadius.horizontal(right: Radius.circular(24)),
+              liquid: true,
+              lensBeyond: const EdgeInsets.fromLTRB(400, 400, 0, 400),
+              child: const SizedBox.expand(key: Key('words')),
+            ),
+          ),
+        ),
+      ),
+    );
+    final flush = tester
+        .widgetList<CustomPaint>(find.ancestor(of: find.byKey(const Key('words')), matching: find.byType(CustomPaint)))
+        .map((paint) => debugGlassEdgeFlush(paint.foregroundPainter))
+        .nonNulls
+        .single;
+    expect(flush.left, greaterThan(0), reason: 'the television\'s own rim stays dark');
+    expect(flush.top, greaterThan(24), reason: 'the top goes, with the corner on it');
+    expect(flush.bottom, greaterThan(24));
+    expect(flush.right, 0, reason: 'the open side keeps its light');
+
+    await pumpPane(tester);
+    final free = tester
+        .widgetList<CustomPaint>(find.ancestor(of: find.byKey(const Key('words')), matching: find.byType(CustomPaint)))
+        .map((paint) => debugGlassEdgeFlush(paint.foregroundPainter))
+        .nonNulls
+        .single;
+    expect(free, EdgeInsets.zero, reason: 'a pane standing free keeps its whole edge');
+  });
+
   testWidgets('on Android the fake glass can be switched off: flat, as Apple\'s builds without Liquid Glass', (
     tester,
   ) async {

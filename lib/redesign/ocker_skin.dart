@@ -902,8 +902,26 @@ class OckerGlass extends StatelessWidget {
       final wash = Color.lerp(tint.withValues(alpha: 1), const Color(0xFF000000), 0.4)!;
       ground = Color.alphaBlend(wash.withValues(alpha: 0.55 * tint.a), ground);
     }
+    // Plebz: the sides flush with the screen carry no edge — light along the
+    // television's own rim read as a fault (the user's call, 2026-10-14).
+    // Their corners go with them.
+    final flush = standIn || liquid
+        ? EdgeInsets.fromLTRB(
+            lensBeyond.left > 0 ? math.max(borderRadius.topLeft.x, borderRadius.bottomLeft.x) + 3 : 0,
+            lensBeyond.top > 0 ? math.max(borderRadius.topLeft.y, borderRadius.topRight.y) + 3 : 0,
+            lensBeyond.right > 0 ? math.max(borderRadius.topRight.x, borderRadius.bottomRight.x) + 3 : 0,
+            lensBeyond.bottom > 0 ? math.max(borderRadius.bottomLeft.y, borderRadius.bottomRight.y) + 3 : 0,
+          )
+        : EdgeInsets.zero;
     return CustomPaint(
-      foregroundPainter: _OckerGlassEdge(shape, Directionality.of(context), liquid: liquid, light: standIn, tint: tint),
+      foregroundPainter: _OckerGlassEdge(
+        shape,
+        Directionality.of(context),
+        liquid: liquid,
+        light: standIn,
+        tint: tint,
+        flush: flush,
+      ),
       child: DecoratedBox(
         decoration: BoxDecoration(color: ground, borderRadius: borderRadius),
         child: DecoratedBox(
@@ -1716,8 +1734,19 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
 @visibleForTesting
 bool debugIsLitGlassEdge(CustomPainter? painter) => painter is _OckerGlassEdge && painter.light;
 
+/// The sides a glass edge leaves out ([_OckerGlassEdge.flush]), for tests.
+@visibleForTesting
+EdgeInsets? debugGlassEdgeFlush(CustomPainter? painter) => painter is _OckerGlassEdge ? painter.flush : null;
+
 class _OckerGlassEdge extends CustomPainter {
-  _OckerGlassEdge(this.shape, this.textDirection, {this.liquid = false, this.light = false, this.tint});
+  _OckerGlassEdge(
+    this.shape,
+    this.textDirection, {
+    this.liquid = false,
+    this.light = false,
+    this.tint,
+    this.flush = EdgeInsets.zero,
+  });
 
   /// Where the light comes from: down and to the right, 55° below the
   /// horizontal — top left bright, bottom right in shade.
@@ -1757,6 +1786,10 @@ class _OckerGlassEdge extends CustomPainter {
   /// how far the white goes toward it.
   final Color? tint;
 
+  /// How far in from each side a [light] edge is left out: the sides flush
+  /// with the screen, with their corners.
+  final EdgeInsets flush;
+
   /// [white] taken toward [tint], keeping its own alpha.
   Color _lit(Color white) {
     final tint = this.tint;
@@ -1782,6 +1815,19 @@ class _OckerGlassEdge extends CustomPainter {
     final reach = (size.width * along.dx.abs() + size.height * along.dy.abs()) / 2;
     Shader shade(List<Color> colours, [List<double> stops = const [0, 0.35, 0.6, 1]]) =>
         ui.Gradient.linear(rect.center - along * reach, rect.center + along * reach, colours, stops);
+    canvas.save();
+    if (flush != EdgeInsets.zero) {
+      // Room for the glow on the open sides.
+      const open = -8.0;
+      canvas.clipRect(
+        Rect.fromLTRB(
+          flush.left > 0 ? flush.left : open,
+          flush.top > 0 ? flush.top : open,
+          size.width - (flush.right > 0 ? flush.right : open),
+          size.height - (flush.bottom > 0 ? flush.bottom : open),
+        ),
+      );
+    }
     if (light) {
       final path = shape.getOuterPath(rect, textDirection: textDirection);
       // The glow first, under the line: what makes it read as light. Kept on
@@ -1802,6 +1848,7 @@ class _OckerGlassEdge extends CustomPainter {
           ..strokeWidth = 0.8
           ..shader = shade([for (final c in _light) _lit(c)], _lightStops),
       );
+      canvas.restore();
       return;
     }
     Shader lit(List<Color> colours) => shade(colours);
@@ -1814,17 +1861,21 @@ class _OckerGlassEdge extends CustomPainter {
     );
     if (liquid) {
       // The pane's thickness: the same light, faint and wider, just inside
-      // the rim.
-      final inner = rect.deflate(2);
-      if (inner.isEmpty) return;
-      canvas.drawPath(
-        shape.getOuterPath(inner, textDirection: textDirection),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3
-          ..shader = lit([for (final c in _liquid) c.withValues(alpha: c.a * 0.3)]),
-      );
+      // the rim — blurred into the pane, where a hard band of it read as a
+      // frame against the darker glass (the user's report, 2026-10-14).
+      final inner = rect.deflate(3.5);
+      if (!inner.isEmpty) {
+        canvas.drawPath(
+          shape.getOuterPath(inner, textDirection: textDirection),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 4
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3)
+            ..shader = lit([for (final c in _liquid) c.withValues(alpha: c.a * 0.25)]),
+        );
+      }
     }
+    canvas.restore();
   }
 
   @override
@@ -1833,5 +1884,6 @@ class _OckerGlassEdge extends CustomPainter {
       oldDelegate.textDirection != textDirection ||
       oldDelegate.liquid != liquid ||
       oldDelegate.light != light ||
-      oldDelegate.tint != tint;
+      oldDelegate.tint != tint ||
+      oldDelegate.flush != flush;
 }

@@ -93,7 +93,9 @@ void main() {
   // the picture under it as it is.
   if (u_frost > 0.5) {
     float luma = dot(colour, vec3(0.2126, 0.7152, 0.0722));
-    colour *= 1.0 - 0.5 * smoothstep(0.3, 0.9, luma) * (1.0 - t);
+    // Eased in, not straight: a straight ramp ending at the bevel's foot read
+    // as a line round the pane (Plebz, the user's report 2026-10-14).
+    colour *= 1.0 - 0.5 * smoothstep(0.3, 0.9, luma) * (1.0 - smoothstep(0.0, 1.0, t));
   }
 
   // The bevel catches light: brightest where it faces up and to the left,

@@ -681,6 +681,7 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get layoutModePhone => 'Telefon';
 	@override String get layoutModePhoneDescription => 'Kompakte Touch-Oberfläche mit unterer Navigation';
 	@override String get liveTvGuideTimeNavigation => 'Zeitauswahl im Programmführer';
+	@override String get liveTvGuideChannelNames => 'Sendernamen unter dem Logo';
 	@override String get liveTvSeamlessFullscreen => 'Vorschau nahtlos ins Vollbild';
 	@override String get liveTvSeamlessFullscreenDescription => 'Nur IPTV; schaltet Bildrate und Tunneling für Live-TV ab';
 	@override String get showActorFilmography => 'Vollständige Filmografie';
@@ -4392,6 +4393,7 @@ extension on TranslationsDe {
 			'settings.layoutModePhone' => 'Telefon',
 			'settings.layoutModePhoneDescription' => 'Kompakte Touch-Oberfläche mit unterer Navigation',
 			'settings.liveTvGuideTimeNavigation' => 'Zeitauswahl im Programmführer',
+			'settings.liveTvGuideChannelNames' => 'Sendernamen unter dem Logo',
 			'settings.liveTvSeamlessFullscreen' => 'Vorschau nahtlos ins Vollbild',
 			'settings.liveTvSeamlessFullscreenDescription' => 'Nur IPTV; schaltet Bildrate und Tunneling für Live-TV ab',
 			'settings.showActorFilmography' => 'Vollständige Filmografie',
@@ -4840,9 +4842,9 @@ extension on TranslationsDe {
 			'profiles.manage' => 'Verwalten',
 			'profiles.delete' => 'Löschen',
 			'profiles.signOut' => 'Abmelden',
-			'profiles.signOutPlexTitle' => 'Von Plex abmelden?',
 			_ => null,
 		} ?? switch (path) {
+			'profiles.signOutPlexTitle' => 'Von Plex abmelden?',
 			'profiles.signOutPlexMessage' => ({required Object displayName}) => '${displayName} und alle Plex Home-Benutzer entfernen? Du kannst dich jederzeit wieder anmelden.',
 			'profiles.signedOutPlex' => 'Von Plex abgemeldet.',
 			'profiles.signOutFailed' => 'Abmeldung fehlgeschlagen.',
@@ -5354,9 +5356,9 @@ extension on TranslationsDe {
 			'liveTv.evening' => 'Abend',
 			'liveTv.lateNight' => 'Spätnacht',
 			'liveTv.whatsOn' => 'Jetzt im TV',
-			'liveTv.watchChannel' => 'Kanal ansehen',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.watchChannel' => 'Kanal ansehen',
 			'liveTv.favorites' => 'Favoriten',
 			'liveTv.reorderFavorites' => 'Favoriten sortieren',
 			'liveTv.noFavoriteChannels' => 'Keine Lieblingssender',
@@ -5868,9 +5870,9 @@ extension on TranslationsDe {
 			'performanceOverlay.dvRouteBaseLayer' => 'Basisschicht',
 			'performanceOverlay.dvRouteBaseLayerHdr10' => 'HDR10-Basisschicht',
 			'performanceOverlay.dvRouteBaseLayerHlg' => 'HLG-Basisschicht',
-			'performanceOverlay.dvRouteBaseLayerSdr' => 'SDR-Basisschicht',
 			_ => null,
 		} ?? switch (path) {
+			'performanceOverlay.dvRouteBaseLayerSdr' => 'SDR-Basisschicht',
 			'performanceOverlay.dvRouteReshaped' => 'RPU umgeformt (gpu-next)',
 			'performanceOverlay.p7Conversion' => 'P7-Konv.',
 			'performanceOverlay.sampleRate' => 'Abtastrate',
@@ -6382,9 +6384,9 @@ extension on TranslationsDe {
 			'plebz.updateAvailableBody' => ({required Object release}) => '${release} ist bereit zur Installation. Deine Einstellungen und Anmeldungen bleiben erhalten.',
 			'plebz.updateNow' => 'Aktualisieren',
 			'plebz.later' => 'Später',
-			'plebz.upToDate' => 'Plebz ist auf dem neuesten Stand',
 			_ => null,
 		} ?? switch (path) {
+			'plebz.upToDate' => 'Plebz ist auf dem neuesten Stand',
 			'plebz.checking' => 'Suche nach Updates …',
 			'plebz.checkFailed' => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.',
 			'plebz.updatedTitle' => 'Plebz wurde aktualisiert',

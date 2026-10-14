@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -314,11 +316,8 @@ class _ApplePlace extends StatelessWidget {
       child: IgnorePointer(
         child: ValueListenableBuilder<int>(
           valueListenable: OckerHidesPlace.hiding,
-          builder: (context, hiding, child) => AnimatedOpacity(
-            opacity: visible && hiding == 0 ? 1 : 0,
-            duration: SideNavigationRailState.expandDuration,
-            child: child,
-          ),
+          builder: (context, hiding, child) =>
+              _PlaceVisibility(railShut: visible, columnShut: hiding == 0, child: child!),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -355,6 +354,78 @@ class _ApplePlace extends StatelessWidget {
       ),
     );
   }
+}
+
+/// When the place capsule shows (Plebz, the user's calls 2026-10-14). It lies
+/// above every page and under the rail:
+///
+/// - The rail opening slides over it. Under Liquid Glass it is never faded
+///   (a fade puts its lens in a layer of its own, where it sees nothing behind
+///   it and turned dark mid-fade): it goes once the rail has covered it and
+///   is back as the rail starts to close. Elsewhere it fades with the rail.
+/// - A column taking the top left (OckerHidesPlace) slides in over where it
+///   stands, and the capsule would show over it: it goes at once, and comes
+///   back as the column leaves.
+class _PlaceVisibility extends StatefulWidget {
+  const _PlaceVisibility({required this.railShut, required this.columnShut, required this.child});
+
+  final bool railShut;
+  final bool columnShut;
+  final Widget child;
+
+  @override
+  State<_PlaceVisibility> createState() => _PlaceVisibilityState();
+}
+
+class _PlaceVisibilityState extends State<_PlaceVisibility> {
+  late bool _shown = widget.railShut && widget.columnShut;
+  Duration _fade = Duration.zero;
+  Timer? _timer;
+
+  void _show(bool shown, {Duration after = Duration.zero, Duration fade = Duration.zero}) {
+    _timer?.cancel();
+    void apply() {
+      _shown = shown;
+      _fade = fade;
+    }
+
+    if (after == Duration.zero) {
+      apply();
+    } else {
+      _timer = Timer(after, () {
+        if (mounted) setState(apply);
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(_PlaceVisibility oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final want = widget.railShut && widget.columnShut;
+    if (want == (oldWidget.railShut && oldWidget.columnShut)) return;
+    final glide = SideNavigationRailState.expandDuration;
+    final liquid = OckerLiquidGlass.active;
+    if (!widget.columnShut) {
+      _show(false);
+    } else if (!oldWidget.columnShut) {
+      // The column is leaving: back at once. Waiting for it to have gone
+      // read worse than the moment over it (the user's call, 2026-10-14).
+      _show(true, fade: liquid ? Duration.zero : glide);
+    } else if (!widget.railShut) {
+      _show(false, after: liquid ? glide : Duration.zero, fade: liquid ? Duration.zero : glide);
+    } else {
+      _show(true, fade: liquid ? Duration.zero : glide);
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedOpacity(opacity: _shown ? 1 : 0, duration: _fade, child: widget.child);
 }
 
 /// The light the place capsule takes up (Plebz, the user's call

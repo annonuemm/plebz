@@ -950,3 +950,108 @@ extension GuideTabChannels on GuideTabState {
     _setPreviewChannel(null);
   }
 }
+
+/// A channel cell's mark (Plebz): the logo alone, as Plezy draws it, or —
+/// with "Sendernamen unter dem Logo" on — a smaller logo with the channel's
+/// name in one line under it, in the same cell (a viewer's wish, 2026-10-14).
+/// Where no logo loads, the name stands once, under the channel number.
+class _GuideChannelMark extends StatelessWidget {
+  const _GuideChannelMark({
+    required this.channel,
+    required this.height,
+    required this.nameColour,
+    required this.fallback,
+    required this.logo,
+  });
+
+  final LiveTvChannel channel;
+
+  /// The room the cell gives its mark.
+  final double height;
+  final Color nameColour;
+
+  /// The name in the logo's place, as Plezy sets it where no logo loads.
+  final Widget Function() fallback;
+
+  /// The logo at a height, with what stands in for it.
+  final Widget Function(double height, Widget Function() fallback) logo;
+
+  @override
+  Widget build(BuildContext context) {
+    // A host without settings (tests) draws the logo alone, as Plezy does.
+    final settings = SettingsService.instanceOrNull;
+    if (settings == null) return logo(height, fallback);
+    return ValueListenableBuilder<bool>(
+      valueListenable: settings.listenable(PlebzPrefs.liveTvGuideChannelNames),
+      builder: (context, withName, _) => withName ? _withName(context) : logo(height, fallback),
+    );
+  }
+
+  Widget _withName(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelSmall?.copyWith(color: nameColour, height: 1.15);
+    final line = (style?.fontSize ?? 11) * 1.15 * MediaQuery.textScalerOf(context).scale(1);
+    const gap = 3.0;
+    final logoHeight = (height - line - gap).clamp(0.0, height).toDouble();
+    return Column(
+      mainAxisAlignment: .center,
+      children: [
+        SizedBox(
+          height: logoHeight,
+          // Without a logo the name below says it: the number alone, if
+          // there is one, keeps the logo's place.
+          child: logo(
+            logoHeight,
+            () => Center(
+              child: channel.number == null
+                  ? const SizedBox.shrink()
+                  : Text(
+                      channel.number!,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: tokens(context).textMuted),
+                    ),
+            ),
+          ),
+        ),
+        const SizedBox(height: gap),
+        Text(channel.displayName, maxLines: 1, overflow: .ellipsis, textAlign: TextAlign.center, style: style),
+      ],
+    );
+  }
+}
+
+/// The channel playing in the guide's preview (Plebz, a viewer's wish
+/// 2026-10-14), marked as the player's channel strip marks it: under the
+/// redesigns a quiet pane washed with the accent, under Original a bar of it
+/// along the foot. Not while focus is on it — focus says enough.
+class _GuidePlayingMark extends StatelessWidget {
+  const _GuidePlayingMark({required this.playing, required this.radius, required this.child});
+
+  final bool playing;
+  final BorderRadius radius;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!playing) return child;
+    final glass = ockerGlass(context);
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        if (glass)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: OckerGlassFocusFill(shape: RoundedRectangleBorder(borderRadius: radius), bright: false, tint: 1),
+            ),
+          ),
+        child,
+        if (!glass)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(child: Container(height: 3, color: tokens(context).accent)),
+          ),
+      ],
+    );
+  }
+}

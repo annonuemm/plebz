@@ -15,6 +15,7 @@ import '../theme/mono_tokens.dart';
 import '../widgets/app_icon.dart';
 import '../widgets/plebz_start_animation.dart' show PlebzLockup, PlebzMark, plebzMarkColours;
 import '../widgets/side_navigation_rail.dart' show SideNavigationRailState;
+import '../theme/liquid_glass.dart';
 import 'ocker_skin.dart';
 import 'ocker_submenu.dart';
 import 'ocker_type.dart';
@@ -367,9 +368,16 @@ class OckerSideRailState extends State<OckerSideRail> {
               left: 0,
               top: 0,
               bottom: 0,
-              width: width,
+              // Unfaded glass grows from the edge itself, not from the strip
+              // of symbols, which would put a sliver of it behind them at once.
+              width: OckerLiquidGlass.active ? lerpDouble(0, paneWidth, t)! : width,
               child: Opacity(
-                opacity: t.clamp(0.0, 1.0),
+                // Plebz: under Liquid Glass the pane is not faded in. A fade
+                // draws it into a layer of its own, where the lens sees
+                // nothing behind it — the pane stood dense while it opened
+                // and turned to glass in one step at the end (the user's
+                // report). It grows in as glass from the first frame.
+                opacity: OckerLiquidGlass.active ? 1 : t.clamp(0.0, 1.0),
                 // Nearly the whole ground, above even the reading strength
                 // (ockerReadingGroundOpacity): the rail opens over a schedule,
                 // and at .9 the guide's words still read through its names —

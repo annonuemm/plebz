@@ -538,6 +538,11 @@ abstract final class PlebzPrefs {
   /// now and is travelled with the D-pad alone.
   static const liveTvGuideTimeNavigation = BoolPref('live_tv_guide_time_navigation', defaultValue: true);
 
+  /// Whether the guide's channel column sets each channel's name under a
+  /// smaller logo (a viewer's wish, 2026-10-14). The cells keep their size;
+  /// off by default, the logo alone as before.
+  static const liveTvGuideChannelNames = BoolPref('live_tv_guide_channel_names');
+
   /// Whether the guide's playing preview grows into the full-screen player —
   /// and back into its box on Back — as the very same picture, instead of
   /// being stopped and opened again (Plebz). IPTV on Android only; see
@@ -657,6 +662,7 @@ abstract final class PlebzPrefs {
   /// Exported but left alone by a reset.
   static final List<Pref<Object?>> portableOnly = [
     liveTvGuideTimeNavigation,
+    liveTvGuideChannelNames,
     liveTvSeamlessFullscreen,
     iptvRefreshIntervalDays,
     iptvMergeDuplicateChannels,

@@ -31,6 +31,8 @@ import 'package:plezy/services/live_tv_last_selection.dart';
 import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/theme/mono_tokens.dart';
+import 'package:plezy/widgets/live_tv_channel_logo.dart';
 import 'package:plezy/utils/dialogs.dart';
 import 'package:plezy/utils/orientation_helper.dart';
 import 'package:plezy/utils/platform_detector.dart';
@@ -1135,6 +1137,40 @@ http://provider/stream/ard
     }
 
     GuidePreviewBand band(WidgetTester tester) => tester.widget<GuidePreviewBand>(find.byType(GuidePreviewBand));
+
+    // Plebz (a viewer's wish, 2026-10-14): the name under a smaller logo, in
+    // a cell of the same size.
+    testWidgets('names under the logos leave the cells their size', (tester) async {
+      Finder cell() => find.ancestor(of: find.byType(LiveTvChannelLogo).first, matching: find.byType(InkWell)).first;
+      double logoHeight() => tester.widget<LiveTvChannelLogo>(find.byType(LiveTvChannelLogo).first).height!;
+
+      await pumpPhone(tester, const Size(390, 844));
+      final size = tester.getSize(cell());
+      final fullLogo = logoHeight();
+
+      await SettingsService.instance.write(PlebzPrefs.liveTvGuideChannelNames, true);
+      await tester.pump();
+      expect(tester.getSize(cell()), size);
+      expect(logoHeight(), lessThan(fullLogo));
+      expect(
+        find.descendant(of: cell(), matching: find.text('Sender 1')),
+        findsOneWidget,
+        reason: 'without a logo the name stands once, under it',
+      );
+    });
+
+    testWidgets('the channel in the band is marked in the channel column', (tester) async {
+      final accent = monoTheme(dark: true).extension<MonoTokens>()!.accent;
+      Finder bar() => find.byWidgetPredicate((widget) => widget is Container && widget.color == accent);
+
+      await pumpPhone(tester, const Size(390, 844));
+      expect(bar(), findsNothing);
+
+      await tester.tap(find.text('Sender 1').first);
+      await tester.pump();
+      expect(band(tester).previewChannel?.key, channel.key);
+      expect(bar(), findsOneWidget, reason: 'Original: a bar of the accent along the foot');
+    });
 
     testWidgets('upright: the picture across the width, quiet until a channel is tapped', (tester) async {
       await pumpPhone(tester, const Size(390, 844));

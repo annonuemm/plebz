@@ -1864,6 +1864,7 @@ class GuideTabState extends State<GuideTab>
           },
           isFocused: isFocused,
           isFavorite: widget.isFavoriteChannel?.call(channel) ?? false,
+          isPlaying: _previewChannel?.key == channel.key,
           fallbackBuilder: () => _buildChannelNameFallback(channel, theme),
         );
       },
@@ -2262,6 +2263,10 @@ class _ChannelCell extends StatefulWidget {
   final VoidCallback? onLongPress;
   final bool isFocused;
   final bool isFavorite;
+
+  /// Plebz: the channel playing in the guide's preview, marked as the
+  /// player's channel strip marks it.
+  final bool isPlaying;
   final Widget Function() fallbackBuilder;
 
   const _ChannelCell({
@@ -2274,6 +2279,7 @@ class _ChannelCell extends StatefulWidget {
     this.onLongPress,
     required this.isFocused,
     this.isFavorite = false,
+    this.isPlaying = false,
     required this.fallbackBuilder,
   });
 
@@ -2338,56 +2344,72 @@ class _ChannelCellState extends State<_ChannelCell> {
                           ? Color.alphaBlend(theme.colorScheme.primary.withValues(alpha: 0.18), tk.surface)
                           : tk.surface),
                 shape: RoundedRectangleBorder(borderRadius: radius),
+                clipBehavior: widget.isPlaying ? Clip.antiAlias : Clip.none,
                 child: InkWell(
                   borderRadius: radius,
                   canRequestFocus: false,
                   onTap: widget.onTap,
                   onLongPress: widget.onLongPress,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Stack(
-                      alignment: .center,
-                      children: [
-                        // The logo, the guide's where the playlist's is dead,
-                        // and the channel name where neither loads — see
-                        // [LiveTvChannelLogo].
-                        LiveTvChannelLogo(
-                          channel: widget.channel,
-                          client: widget.client,
-                          width: widget.channelColumnWidth - gapRight - 16,
-                          height: widget.rowHeight - gapBelow - 12,
-                          logoToneTarget: channelLogoToneTargetFor(
-                            surface: plateFocused ? theme.colorScheme.primary : tk.surface,
-                            foreground: plateFocused ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
-                          ),
-                          fallback: (_) => widget.fallbackBuilder(),
-                        ),
-                        if (widget.isFavorite)
-                          Positioned(
-                            top: 2,
-                            right: 0,
-                            child: AppIcon(
-                              Symbols.star_rounded,
-                              size: 14,
-                              color: plateFocused ? theme.colorScheme.onPrimary : theme.colorScheme.primary,
+                  child: _GuidePlayingMark(
+                    playing: widget.isPlaying && !widget.isFocused,
+                    radius: radius,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Stack(
+                        alignment: .center,
+                        children: [
+                          // The logo, the guide's where the playlist's is dead,
+                          // and the channel name where neither loads — see
+                          // [LiveTvChannelLogo]. Plebz: or a smaller logo with
+                          // the name under it ([_GuideChannelMark]).
+                          _GuideChannelMark(
+                            channel: widget.channel,
+                            height: widget.rowHeight - gapBelow - 12,
+                            nameColour: plateFocused
+                                ? theme.colorScheme.onPrimary
+                                : glass
+                                ? tk.ink(0.8)
+                                : theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                            fallback: widget.fallbackBuilder,
+                            logo: (height, fallback) => LiveTvChannelLogo(
+                              channel: widget.channel,
+                              client: widget.client,
+                              width: widget.channelColumnWidth - gapRight - 16,
+                              height: height,
+                              logoToneTarget: channelLogoToneTargetFor(
+                                surface: plateFocused ? theme.colorScheme.primary : tk.surface,
+                                foreground: plateFocused ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                              ),
+                              fallback: (_) => fallback(),
                             ),
                           ),
-                        // Opposite corner from the star, and a step quieter: the
-                        // star is the viewer's own decision, this is only a
-                        // property of the station. It answers "is scrolling back
-                        // here worth anything" while standing in the present,
-                        // where no past cell is on screen to say so.
-                        if (widget.channel.catchupDays != null)
-                          Positioned(
-                            bottom: 2,
-                            left: 0,
-                            child: AppIcon(
-                              Symbols.history_rounded,
-                              size: 14,
-                              color: plateFocused ? theme.colorScheme.onPrimary : tokens(context).textMuted,
+                          if (widget.isFavorite)
+                            Positioned(
+                              top: 2,
+                              right: 0,
+                              child: AppIcon(
+                                Symbols.star_rounded,
+                                size: 14,
+                                color: plateFocused ? theme.colorScheme.onPrimary : theme.colorScheme.primary,
+                              ),
                             ),
-                          ),
-                      ],
+                          // Opposite corner from the star, and a step quieter: the
+                          // star is the viewer's own decision, this is only a
+                          // property of the station. It answers "is scrolling back
+                          // here worth anything" while standing in the present,
+                          // where no past cell is on screen to say so.
+                          if (widget.channel.catchupDays != null)
+                            Positioned(
+                              bottom: 2,
+                              left: 0,
+                              child: AppIcon(
+                                Symbols.history_rounded,
+                                size: 14,
+                                color: plateFocused ? theme.colorScheme.onPrimary : tokens(context).textMuted,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

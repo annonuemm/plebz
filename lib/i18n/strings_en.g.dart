@@ -1893,6 +1893,12 @@ class Translations$settings$en {
 	/// en: ''
 	String get liveTvGuideTimeNavigationDescription => '';
 
+	/// en: 'Channel names under the logo'
+	String get liveTvGuideChannelNames => 'Channel names under the logo';
+
+	/// en: ''
+	String get liveTvGuideChannelNamesDescription => '';
+
 	/// en: 'Seamless preview to full screen'
 	String get liveTvSeamlessFullscreen => 'Seamless preview to full screen';
 
@@ -10137,6 +10143,8 @@ extension on Translations {
 			'settings.layoutModePhoneDescription' => 'Compact touch interface with bottom navigation',
 			'settings.liveTvGuideTimeNavigation' => 'Guide time picker',
 			'settings.liveTvGuideTimeNavigationDescription' => '',
+			'settings.liveTvGuideChannelNames' => 'Channel names under the logo',
+			'settings.liveTvGuideChannelNamesDescription' => '',
 			'settings.liveTvSeamlessFullscreen' => 'Seamless preview to full screen',
 			'settings.liveTvSeamlessFullscreenDescription' => 'IPTV only; turns off frame rate and tunnelling for live TV',
 			'settings.showActorFilmography' => 'Full filmography for actors',
@@ -10531,10 +10539,10 @@ extension on Translations {
 			'messages.noVideoUrl' => 'No video URL available',
 			'messages.playbackNoMediaSources' => 'The server returned no playable media sources',
 			'messages.playbackDataNotPrepared' => 'Playback was started before its data was ready',
-			'messages.streamSelectionUnavailable' => 'Stream selection is not available for this source',
-			'messages.streamSelectionFailed' => 'Could not apply the selected streams',
 			_ => null,
 		} ?? switch (path) {
+			'messages.streamSelectionUnavailable' => 'Stream selection is not available for this source',
+			'messages.streamSelectionFailed' => 'Could not apply the selected streams',
 			'messages.trackSelectionNotRemembered' => 'This track choice applies to the current playback only.',
 			'messages.serverUnavailableForProfile' => 'No server is available for the active profile',
 			'messages.favoritesUpdateFailed' => 'Could not update favorites',
@@ -11045,10 +11053,10 @@ extension on Translations {
 			'explore.sourceMaterial.webComic' => 'Web comic',
 			'explore.sourceMaterial.musicRelease' => 'Music',
 			'explore.sourceMaterial.otherMedia' => 'Other',
-			'explore.creditRole.actor' => 'Actor',
-			'explore.creditRole.director' => 'Director',
 			_ => null,
 		} ?? switch (path) {
+			'explore.creditRole.actor' => 'Actor',
+			'explore.creditRole.director' => 'Director',
 			'explore.creditRole.writer' => 'Writer',
 			'explore.creditRole.producer' => 'Producer',
 			'explore.creditRole.creator' => 'Creator',
@@ -11559,10 +11567,10 @@ extension on Translations {
 			'companionRemote.pairing.authFailed' => 'Authentication failed. Both devices need the same Plex account.',
 			'companionRemote.pairing.failedToConnect' => ({required Object error}) => 'Failed to connect: ${error}',
 			'companionRemote.pairing.codeTitle' => 'Pair a device',
-			'companionRemote.pairing.codeMessage' => ({required Object name}) => '${name} wants to control Plebz here. Enter this code on that device:',
-			'companionRemote.pairing.codeValidFor' => 'The code is valid for two minutes.',
 			_ => null,
 		} ?? switch (path) {
+			'companionRemote.pairing.codeMessage' => ({required Object name}) => '${name} wants to control Plebz here. Enter this code on that device:',
+			'companionRemote.pairing.codeValidFor' => 'The code is valid for two minutes.',
 			'companionRemote.pairing.enterCodeTitle' => 'Enter code',
 			'companionRemote.pairing.enterCodeMessage' => ({required Object name}) => '${name} is now showing an eight-digit code. Enter it here.',
 			'companionRemote.pairing.codeLabel' => 'Code',
@@ -12073,10 +12081,10 @@ extension on Translations {
 			'trailerStage.start' => 'Start the stage',
 			'trailerStage.startAnything' => 'Everything, in random order',
 			'trailerStage.startNarrowed' => 'Only what fits your choice, in random order',
-			'trailerStage.nextTrailer' => 'Next',
-			'trailerStage.openDetail' => 'Open the title',
 			_ => null,
 		} ?? switch (path) {
+			'trailerStage.nextTrailer' => 'Next',
+			'trailerStage.openDetail' => 'Open the title',
 			'trailerStage.chooseAgain' => 'Choose again',
 			'trailerStage.noLibraries' => 'No film or series library is connected for the stage to draw trailers from.',
 			'trailerStage.noTrailers' => 'No trailer found',

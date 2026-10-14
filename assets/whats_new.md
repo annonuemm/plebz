@@ -13,6 +13,16 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.25.0 (Build 820)
+
+### Live-TV
+- Neu: „Sendernamen unter dem Logo“ unter Einstellungen → IPTV und Live-TV. Das Logo wird etwas kleiner, der Name steht darunter, die Zellen bleiben gleich groß.
+- Der Sender, der gerade in der Vorschau läuft, ist in der Senderspalte markiert.
+
+### Glas
+- Android: Die Navigation zeigt am Bildschirmrand keine Lichtkante mehr.
+- Fernseher: Öffnet sich links eine Spalte, etwa die Gruppen im Live-TV oder die Mediatheken, verschwindet die Kapsel oben links sofort, statt über der Spalte auszublenden.
+
 ## 1.24.1 (Build 809)
 
 ### Glas

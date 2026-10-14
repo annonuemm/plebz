@@ -78,3 +78,6 @@ server/Caddyfile
 
 # Built APKs, one set per build. Output, not source.
 apk/
+
+# Signing material for the user's own Apple devices: never committed.
+/signing/

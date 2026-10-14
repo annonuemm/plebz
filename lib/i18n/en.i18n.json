@@ -646,6 +646,8 @@
     "layoutModePhoneDescription": "Compact touch interface with bottom navigation",
     "liveTvGuideTimeNavigation": "Guide time picker",
     "liveTvGuideTimeNavigationDescription": "",
+    "liveTvGuideChannelNames": "Channel names under the logo",
+    "liveTvGuideChannelNamesDescription": "",
     "liveTvSeamlessFullscreen": "Seamless preview to full screen",
     "liveTvSeamlessFullscreenDescription": "IPTV only; turns off frame rate and tunnelling for live TV",
     "showActorFilmography": "Full filmography for actors",

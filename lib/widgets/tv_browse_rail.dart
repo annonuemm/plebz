@@ -688,6 +688,10 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
   double _glideEdgeRamp = 1;
 
   double _glideEdgeStrength() {
+    // The reduced tier keeps the plain clip: the edge masks the whole list
+    // offscreen on every frame of a glide, which a weak box's GPU pays for
+    // in dropped frames (measured on a 32-bit Amlogic box, 2026-10-15).
+    if (DevicePerformance.isReduced) return 0;
     var strength = _glideEdgeIn.value;
     final target = _glideTarget;
     if (target != null && _verticalController.hasClients) {
@@ -1173,7 +1177,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     // carries on without a jump.
     _glideEdgeIn.value = _glideEdgeStrength();
     _glideTarget = target;
-    unawaited(_glideEdgeIn.forward());
+    if (!DevicePerformance.isReduced) unawaited(_glideEdgeIn.forward());
     // Suppress the focus glow while the rail animates vertically: the glow
     // paints in the root overlay, unclipped by the vertical viewport, so on UP
     // moves it would flash over the rows above while the target row is still

@@ -13,6 +13,14 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.26.2 (Build 839)
+
+### Darstellung
+- Glas läuft auf schwächeren Boxen deutlich flüssiger, vor allem beim Blättern auf der Startseite. Das Aussehen bleibt gleich.
+- Auch Flach und das „Hintergrundbild in der Ecke“ brauchen weniger Leistung.
+- Bei reduzierten Effekten gleiten die Reihen ohne den weichen Rand oben.
+- Glas: In Mediatheken und auf der Merkliste ist der Fokusrahmen in der obersten Reihe wieder vollständig zu sehen.
+
 ## 1.26.1 (Build 833)
 
 ### Wiedergabe

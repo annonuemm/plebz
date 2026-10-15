@@ -145,6 +145,8 @@ class _OckerRailShellState extends State<OckerRailShell> {
           child: OckerHeaderSlot(
             slot: _headerSlot,
             child: GlassBackdrop(
+              // The route under the shell lays the same ground already.
+              reuseRouteGround: true,
               child: Stack(
                 fit: StackFit.expand,
                 children: [

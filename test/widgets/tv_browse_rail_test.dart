@@ -1075,6 +1075,50 @@ void main() {
     });
   }
 
+  testWidgets('the reduced tier keeps the plain clip: no soft edge while the rows glide', (tester) async {
+    DevicePerformance.debugReset(override: VisualEffectsSetting.reduced);
+    addTearDown(DevicePerformance.debugReset);
+    final serverManager = MultiServerManager();
+    MediaHub hub(String id, String title) => MediaHub(
+      id: id,
+      title: title,
+      type: 'movie',
+      items: [testMediaItem(id: '${id}_1', backend: MediaBackend.plex, kind: MediaKind.movie, title: '$title 1')],
+      size: 1,
+    );
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<MultiServerProvider>(
+        create: (_) => testMultiServerProvider(serverManager),
+        child: InputModeTracker(
+          child: MaterialApp(
+            theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+            home: Scaffold(
+              body: SizedBox(
+                width: 1280,
+                height: 720,
+                child: TvBrowseRail(
+                  focusMemory: focusMemory,
+                  hubs: [hub('first', 'First Row'), hub('second', 'Second Row'), hub('third', 'Third Row')],
+                  autofocus: true,
+                  iconForHub: (_, _) => Icons.tv_rounded,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.arrowDown);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 40));
+    expect(tester.layers.whereType<ShaderMaskLayer>(), isEmpty, reason: 'nothing masked offscreen on a weak box');
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('under glass a short row leaves its room to the row below, shown in part', (tester) async {
     final serverManager = MultiServerManager();
     final genres = MediaHub(

@@ -167,7 +167,9 @@ List<RadialGradient> flachGroundGlows(MonoTokens tk) {
 class FlachGroundGlow extends StatelessWidget {
   const FlachGroundGlow({super.key, required this.glows, this.ground});
 
-  final List<RadialGradient> glows;
+  /// Painted in order over [ground]. Any gradient: Glas's ground, a linear
+  /// lift with an oval of light over it, is prepared the same way.
+  final List<Gradient> glows;
   final Color? ground;
 
   @override
@@ -185,7 +187,7 @@ class FlachGroundGlow extends StatelessWidget {
 class _PreparedGroundPainter extends CustomPainter {
   const _PreparedGroundPainter({required this.glows, required this.ground, required this.devicePixelRatio});
 
-  final List<RadialGradient> glows;
+  final List<Gradient> glows;
   final Color? ground;
   final double devicePixelRatio;
 
@@ -236,7 +238,7 @@ abstract final class PreparedGrounds {
   }
 
   static ui.Image pictureFor(
-    List<RadialGradient> glows, {
+    List<Gradient> glows, {
     required Color? ground,
     required Size size,
     required double devicePixelRatio,
@@ -277,7 +279,7 @@ abstract final class PreparedGrounds {
 class _PreparedGroundKey {
   const _PreparedGroundKey(this.glows, this.ground, this.width, this.height);
 
-  final List<RadialGradient> glows;
+  final List<Gradient> glows;
   final Color? ground;
   final int width;
   final int height;
@@ -297,7 +299,14 @@ class _PreparedGroundKey {
 /// [child] on the glass ground, where the theme is glass; [child] alone
 /// everywhere else.
 class GlassBackdrop extends StatelessWidget {
-  const GlassBackdrop({super.key, required this.child});
+  const GlassBackdrop({super.key, this.reuseRouteGround = false, required this.child});
+
+  /// For a widget that fills its route on its own, with nothing between it
+  /// and the route's ground (Plebz: the shell): where its route already lays
+  /// this ground right beneath, it lays none of its own. The pages are
+  /// see-through under the redesigns, so it would paint the very same pixels
+  /// over again — a full screen's worth on every frame.
+  final bool reuseRouteGround;
 
   final Widget child;
 
@@ -305,6 +314,17 @@ class GlassBackdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     final tk = Theme.of(context).extension<MonoTokens>();
     if (tk == null || !tk.glass) return child;
+    final route = ModalRoute.of(context);
+    if (reuseRouteGround) {
+      // Only its own route's: a ground on a route of a nested navigator is
+      // what covers the page beneath, and still paints.
+      final below = context.getInheritedWidgetOfExactType<_GlassGroundScope>();
+      if (below != null && below.route == route && (identical(below.tokens, tk) || below.tokens == tk)) return child;
+    }
+    return _GlassGroundScope(route: route, tokens: tk, child: _ground(tk));
+  }
+
+  Widget _ground(MonoTokens tk) {
     // Flat (Plebz): no gradient, only the accent's two faint lights — and the
     // same widgets on every ground, so switching it keeps the page under it.
     // Ground and lights come as one prepared picture ([FlachGroundGlow]),
@@ -319,14 +339,31 @@ class GlassBackdrop extends StatelessWidget {
       );
     }
     if (_plain(tk)) return ColoredBox(color: tk.bg, child: child);
-    return DecoratedBox(
-      decoration: BoxDecoration(gradient: glassBackdropGradient(tk)),
-      child: DecoratedBox(
-        decoration: BoxDecoration(gradient: glassBackdropGlow(tk)),
-        child: child,
-      ),
+    // Prepared once as well (Plebz): drawn live, the lift and its oval of
+    // light were two gradients the size of the screen worked out on every
+    // frame, under the shell and under every page — on a 32-bit Amlogic box
+    // about 28 ms of each frame's 40 (measured 2026-10-15), where Flach's
+    // prepared ground cost next to nothing.
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        FlachGroundGlow(glows: [glassBackdropGradient(tk), glassBackdropGlow(tk)]),
+        child,
+      ],
     );
   }
+}
+
+/// Which screen a [GlassBackdrop] painted its ground on, and in which
+/// colours — for one further up the tree to tell that it would paint it again.
+class _GlassGroundScope extends InheritedWidget {
+  const _GlassGroundScope({required this.route, required this.tokens, required super.child});
+
+  final ModalRoute<Object?>? route;
+  final MonoTokens tokens;
+
+  @override
+  bool updateShouldNotify(_GlassGroundScope oldWidget) => false;
 }
 
 /// A page transition that lays the page on the glass ground and otherwise

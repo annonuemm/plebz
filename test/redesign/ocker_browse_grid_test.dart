@@ -4,6 +4,7 @@ import 'package:plezy/focus/focus_theme.dart';
 import 'package:plezy/media/media_hub.dart';
 import 'package:plezy/redesign/ocker_browse_grid.dart';
 import 'package:plezy/redesign/ocker_poster_tile.dart';
+import 'package:plezy/redesign/ocker_skin.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
 
@@ -17,7 +18,7 @@ void main() {
     await SettingsService.getInstance();
   });
 
-  for (final variant in [AppThemeVariant.glas, AppThemeVariant.glas]) {
+  for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
     testWidgets('${variant.name}: a focused tile on the edge keeps all of its ring', (tester) async {
       tester.view.physicalSize = const Size(1920, 1080);
       tester.view.devicePixelRatio = 1;
@@ -55,13 +56,17 @@ void main() {
       expect(first.left, columnLeft + 1, reason: 'the first poster stands where it always stood');
       expect(first.top, columnTop + 1);
 
-      // What the focused tile paints: grown by the focus scale, ring outside.
+      // What the focused tile paints: grown by the poster focus scale, the
+      // ring outside it — a band of ground, then the ring, in both looks.
       final context = tester.element(find.byType(OckerPosterTile).first);
-      final growth = FocusTheme.focusScaleFor(context) - 1;
+      final growth = FocusTheme.posterFocusScaleFor(context) - 1;
+      final ring = (FocusTheme.flatRingGap + FocusTheme.flatRingWidth) * ockerScale(context);
+      // Only the picture grows — the caption under it stays put.
+      final poster = Rect.fromLTWH(first.left, first.top, first.width, first.width / OckerGridGeometry.aspectRatio);
       final painted = Rect.fromCenter(
-        center: first.center,
-        width: first.width * (1 + growth) + 2 * 1.75,
-        height: first.height * (1 + growth) + 2 * 1.75,
+        center: poster.center,
+        width: poster.width * (1 + growth) + 2 * ring,
+        height: poster.height * (1 + growth) + 2 * ring,
       );
       final clip = tester.getRect(find.byType(SingleChildScrollView));
       expect(clip.left, lessThanOrEqualTo(painted.left));
@@ -71,7 +76,7 @@ void main() {
       expect(fifth.top, first.top, reason: 'five across still');
       final fifthPainted = Rect.fromCenter(
         center: fifth.center,
-        width: fifth.width * (1 + growth) + 2 * 1.75,
+        width: fifth.width * (1 + growth) + 2 * ring,
         height: fifth.height,
       );
       expect(clip.right, greaterThanOrEqualTo(fifthPainted.right));

@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/services/plebz_prefs.dart' show GlasAccent;
 import 'package:plezy/services/settings_service.dart' show AppThemeVariant;
 import 'package:plezy/theme/glass_backdrop.dart';
 import 'package:plezy/theme/mono_theme.dart';
@@ -66,6 +67,64 @@ void main() {
       if (difference > largest) largest = difference;
     }
     expect(largest, lessThanOrEqualTo(2), reason: 'no more than the dither of a gradient');
+  });
+
+  testWidgets('Glas\'s ground, prepared, looks as its two gradients drawn live did', (tester) async {
+    for (final accent in [GlasAccent.grau, GlasAccent.eisblau, GlasAccent.rot]) {
+      final theme = monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: accent);
+      final tk = theme.extension<MonoTokens>()!;
+      final live = await pixelsOf(
+        tester,
+        DecoratedBox(
+          decoration: BoxDecoration(gradient: glassBackdropGradient(tk)),
+          child: DecoratedBox(decoration: BoxDecoration(gradient: glassBackdropGlow(tk))),
+        ),
+      );
+      final prepared = await pixelsOf(
+        tester,
+        Theme(
+          data: theme,
+          child: const GlassBackdrop(child: SizedBox.expand()),
+        ),
+      );
+
+      expect(prepared.length, live.length);
+      var largest = 0;
+      for (var i = 0; i < live.length; i++) {
+        final difference = (live[i] - prepared[i]).abs();
+        if (difference > largest) largest = difference;
+      }
+      expect(largest, lessThanOrEqualTo(2), reason: '${accent.name}: no more than the dither of a gradient');
+      expect(
+        find.byWidgetPredicate(
+          (w) => w is DecoratedBox && w.decoration is BoxDecoration && (w.decoration as BoxDecoration).gradient != null,
+        ),
+        findsNothing,
+        reason: '${accent.name}: no gradient worked out live on every frame',
+      );
+    }
+  });
+
+  testWidgets('a ground over the same ground looks as the one alone did', (tester) async {
+    for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+      final theme = monoTheme(dark: true, variant: variant);
+      final alone = await pixelsOf(
+        tester,
+        Theme(
+          data: theme,
+          child: const GlassBackdrop(child: SizedBox.expand()),
+        ),
+      );
+      final stacked = await pixelsOf(
+        tester,
+        Theme(
+          data: theme,
+          child: const GlassBackdrop(child: GlassBackdrop(reuseRouteGround: true, child: SizedBox.expand())),
+        ),
+      );
+      expect(stacked, alone, reason: variant.name);
+      expect(find.byType(FlachGroundGlow), findsOneWidget, reason: '${variant.name}: painted once');
+    }
   });
 
   testWidgets('a ground is prepared once and reused on every page and frame after', (tester) async {

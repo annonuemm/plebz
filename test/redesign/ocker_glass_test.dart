@@ -881,10 +881,10 @@ void main() {
           ),
         );
         await tester.pump(const Duration(seconds: 1));
-        final box = tester.widget<DecoratedBox>(
-          find.descendant(of: find.byType(GlassBackdrop), matching: find.byType(DecoratedBox)).first,
+        final ground = tester.widget<FlachGroundGlow>(
+          find.descendant(of: find.byType(GlassBackdrop), matching: find.byType(FlachGroundGlow)).first,
         );
-        return (box.decoration as BoxDecoration).gradient;
+        return ground.glows.first;
       }
 
       expect(await groundOf(GlasAccent.grau), neutralGlassBackdropGradient);
@@ -980,6 +980,37 @@ void main() {
       expect(flat, isEmpty, reason: 'nothing flat over it');
     });
 
+    testWidgets('a ground already lying under it on the same screen is not painted again', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          // The route lays its ground; the shell inside it would lay the same.
+          home: const GlassBackdrop(reuseRouteGround: true, child: Text('Seite')),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(FlachGroundGlow), findsOneWidget, reason: 'the route\'s ground, painted once');
+    });
+
+    testWidgets('a page on a navigator of its own still lays its ground over the one beneath', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          home: GlassBackdrop(
+            reuseRouteGround: true,
+            child: Navigator(onGenerateRoute: (_) => MaterialPageRoute<void>(builder: (_) => const Text('Innen'))),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.ancestor(of: find.text('Innen'), matching: find.byType(FlachGroundGlow)),
+        findsNothing,
+        reason: 'the ground is beside the page, under it',
+      );
+      expect(find.byType(FlachGroundGlow), findsNWidgets(2), reason: 'the outer screen\'s and the inner page\'s');
+    });
+
     testWidgets('a page pushed under glass lies on the gradient', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -990,10 +1021,10 @@ void main() {
       await tester.pumpAndSettle();
       final ground = find.ancestor(of: find.text('Seite'), matching: find.byType(GlassBackdrop));
       expect(ground, findsOneWidget);
-      final painted = tester.widget<DecoratedBox>(
-        find.descendant(of: ground, matching: find.byType(DecoratedBox)).first,
+      final painted = tester.widget<FlachGroundGlow>(
+        find.descendant(of: ground, matching: find.byType(FlachGroundGlow)),
       );
-      expect((painted.decoration as BoxDecoration).gradient, isA<LinearGradient>());
+      expect(painted.glows.first, isA<LinearGradient>());
     });
   });
 

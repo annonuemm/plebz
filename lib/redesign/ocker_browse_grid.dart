@@ -203,8 +203,10 @@ class OckerGridGeometry {
     // pixel the ring vanished on those sides, and the lit edge of "Glas" lost
     // exactly its brightest stretch, top left.
     final growth = FocusTheme.posterFocusScaleFor(context) - 1;
-    // "Flach" rings a poster further out: a band of ground, then the ring.
-    final ringReach = ockerFlat(context)
+    // Both redesigns ring a poster further out: a band of ground, then the
+    // ring (Glas took Flach's ring with the Apple look). Reckoned with the
+    // lit edge, Glas kept a point too little and lost the ring's top.
+    final ringReach = ockerGlass(context)
         ? (FocusTheme.flatRingGap + FocusTheme.flatRingWidth) * ockerScale(context)
         : _ringReach;
     final columns = ockerGridColumnsFor(context, columnWidth);
@@ -225,8 +227,8 @@ class OckerGridGeometry {
     );
   }
 
-  /// How far past a tile its focus ring reaches — the widest ring any
-  /// variant draws, "Glas"'s lit edge, with a pixel to spare.
+  /// How far past a tile its focus ring reaches outside the redesigns — the
+  /// lit edge, with a pixel to spare.
   static const _ringReach = 2.5;
 
   /// Posters to a row — see [ockerGridColumnsFor].

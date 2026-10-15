@@ -45,6 +45,7 @@ import 'widgets/plebz_start_animation.dart';
 import 'widgets/agent_control_scope.dart';
 import 'widgets/settings_builder.dart';
 import 'utils/platform_detector.dart';
+import 'utils/plebz_device.dart';
 import 'utils/pointer_scroll_axis.dart';
 import 'services/apple_tv_remote_touch_service.dart';
 import 'services/discord_rpc_service.dart';
@@ -901,6 +902,7 @@ Future<_StartupDependencies> _initializeStartup(SettingsService settings) async 
         TvDetectionService.getInstance(),
         DevicePerformance.getInstance(override: settings.read(SettingsService.visualEffects)),
         VideoDecodeCapabilities.getInstance(),
+        PlebzDevice.init(),
       ).wait;
     });
 

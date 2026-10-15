@@ -640,6 +640,8 @@
     "tunneledPlaybackLiveTvDescription": "Usually better off; the picture can freeze otherwise",
     "disableDolbyVision": "Turn Dolby Vision off",
     "disableDolbyVisionDescription": "Plays HDR10, for TVs without Dolby Vision",
+    "mpvOsdPictureOnly": "Keep HDR bars black",
+    "mpvOsdPictureOnlyDescription": "For boxes that show them gray; subtitles then never sit in the bars.",
     "layoutMode": "Layout",
     "layoutModeAuto": "Automatic",
     "layoutModeAutoDescription": "",

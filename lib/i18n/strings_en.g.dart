@@ -1875,6 +1875,12 @@ class Translations$settings$en {
 	/// en: 'Plays HDR10, for TVs without Dolby Vision'
 	String get disableDolbyVisionDescription => 'Plays HDR10, for TVs without Dolby Vision';
 
+	/// en: 'Keep HDR bars black'
+	String get mpvOsdPictureOnly => 'Keep HDR bars black';
+
+	/// en: 'For boxes that show them gray; subtitles then never sit in the bars.'
+	String get mpvOsdPictureOnlyDescription => 'For boxes that show them gray; subtitles then never sit in the bars.';
+
 	/// en: 'Layout'
 	String get layoutMode => 'Layout';
 
@@ -10191,6 +10197,8 @@ extension on Translations {
 			'settings.tunneledPlaybackLiveTvDescription' => 'Usually better off; the picture can freeze otherwise',
 			'settings.disableDolbyVision' => 'Turn Dolby Vision off',
 			'settings.disableDolbyVisionDescription' => 'Plays HDR10, for TVs without Dolby Vision',
+			'settings.mpvOsdPictureOnly' => 'Keep HDR bars black',
+			'settings.mpvOsdPictureOnlyDescription' => 'For boxes that show them gray; subtitles then never sit in the bars.',
 			'settings.layoutMode' => 'Layout',
 			'settings.layoutModeAuto' => 'Automatic',
 			'settings.layoutModeAutoDescription' => '',
@@ -10591,10 +10599,10 @@ extension on Translations {
 			'messages.noEpisodesFoundGeneral' => 'No episodes found',
 			'messages.episodesLoadFailed' => 'Couldn\'t load episodes',
 			'messages.noResultsFound' => 'No results found',
-			'messages.sleepTimerSet' => ({required Object label}) => 'Sleep timer set for ${label}',
-			'messages.noItemsAvailable' => 'No items available',
 			_ => null,
 		} ?? switch (path) {
+			'messages.sleepTimerSet' => ({required Object label}) => 'Sleep timer set for ${label}',
+			'messages.noItemsAvailable' => 'No items available',
 			'messages.failedToCreatePlayQueueNoItems' => 'Failed to create a play queue — no items',
 			'messages.failedPlayback' => ({required Object action, required Object error}) => 'Failed to ${action}: ${error}',
 			'messages.switchingToCompatiblePlayer' => 'Switching to compatible player...',
@@ -11105,10 +11113,10 @@ extension on Translations {
 			'explore.stats.dropped' => ({required Object n}) => '${n} dropped',
 			'explore.season.winter' => 'Winter',
 			'explore.season.spring' => 'Spring',
-			'explore.season.summer' => 'Summer',
-			'explore.season.fall' => 'Fall',
 			_ => null,
 		} ?? switch (path) {
+			'explore.season.summer' => 'Summer',
+			'explore.season.fall' => 'Fall',
 			'explore.season.withYear' => ({required Object season, required Object year}) => '${season} ${year}',
 			'explore.format.tv' => 'TV',
 			'explore.format.tvShort' => 'TV Short',
@@ -11619,10 +11627,10 @@ extension on Translations {
 			'companionRemote.session.serverRunningDescription' => 'Mobile devices on your network can connect to this app',
 			'companionRemote.session.serverStoppedDescription' => 'Start the server to allow mobile devices to connect',
 			'companionRemote.session.usePhoneToControl' => 'Use your mobile device to control this app',
-			'companionRemote.session.startServer' => 'Start Server',
-			'companionRemote.session.stopServer' => 'Stop Server',
 			_ => null,
 		} ?? switch (path) {
+			'companionRemote.session.startServer' => 'Start Server',
+			'companionRemote.session.stopServer' => 'Stop Server',
 			'companionRemote.session.minimize' => 'Minimize',
 			'companionRemote.session.manualAddressHint' => 'Manual connection address:',
 			'companionRemote.pairing.discoveryDescription' => 'Plebz devices with the same Plex account appear here',
@@ -12133,10 +12141,10 @@ extension on Translations {
 			'iptv.groupsTitle' => 'Choose groups',
 			'iptv.groupsChosenOf' => ({required Object chosen, required Object total}) => '${chosen} of ${total} chosen',
 			'iptv.groupsChosenWithChannels' => ({required Object chosen, required Object total, required Object channels}) => '${chosen} of ${total} chosen · ${channels} channels',
-			'iptv.groupsApply' => 'Apply',
-			'iptv.groupsAll' => 'Choose all',
 			_ => null,
 		} ?? switch (path) {
+			'iptv.groupsApply' => 'Apply',
+			'iptv.groupsAll' => 'Choose all',
 			'iptv.groupsNone' => 'Choose none',
 			'iptv.groupsWithout' => 'No group',
 			'iptv.groupsChannelCount' => ({required Object count}) => '${count} channels',

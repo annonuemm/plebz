@@ -640,6 +640,8 @@
     "tunneledPlaybackLiveTvDescription": "Meist besser aus, das Bild kann sonst einfrieren",
     "disableDolbyVision": "Dolby Vision ausschalten",
     "disableDolbyVisionDescription": "Spielt HDR10, für Fernseher ohne Dolby Vision",
+    "mpvOsdPictureOnly": "Balken bei HDR schwarz halten",
+    "mpvOsdPictureOnlyDescription": "Für Boxen, die sie grau zeigen; Untertitel liegen dann nie in den Balken.",
     "layoutMode": "Layout",
     "layoutModeAuto": "Automatisch",
     "layoutModeAutoDescription": "",

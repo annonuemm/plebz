@@ -1947,6 +1947,7 @@ class MpvPlayerCore private constructor(
         view.layoutParams = lp
         return@runOnMain
       }
+      if (layOutOsdPlane(osd, container, size)) return@runOnMain
       // Wait for Android to apply CENTER's integer rounding, including odd
       // negative overflow. Never publish requested sizes with old positions.
       if (view.isLayoutRequested || osd.isLayoutRequested) return@runOnMain
@@ -1960,6 +1961,48 @@ class MpvPlayerCore private constructor(
       ) ?: return@runOnMain
       publishVideoRect(rect)
     }
+  }
+
+  /**
+   * Plebz: the OSD plane over the picture only ([osdOverPictureOnly]) or over
+   * the whole container. True when its layout changed, so the caller waits
+   * for the next layout pass before publishing the rectangle.
+   *
+   * Over the picture only, the letterbox is left empty, as on ExoPlayer:
+   * [letterboxHole] punches the container out of the window, so neither the
+   * opaque fill mpv paints on this plane (mpv-build patch 0106) nor the
+   * container's black reaches the bars, and they scan out as the
+   * compositor's own background. That fill is for MediaTek boxes, which show
+   * that background gray in HDR/Dolby Vision; an Amlogic box (Homatics Box R
+   * Plus) shows it black but black graphics in the bars dark gray, in Dolby
+   * Vision and for some titles only (measured 2026-10-15: both the fill and
+   * the window's black were gray there). Subtitles then never sit in the
+   * bars: the published rectangle has no positive margins.
+   */
+  private fun layOutOsdPlane(osd: SurfaceView, container: View, picture: VideoRectPolicy.Size): Boolean {
+    letterboxHole?.let { hole ->
+      val visibility = if (osdOverPictureOnly) View.VISIBLE else View.GONE
+      if (hole.visibility != visibility) hole.visibility = visibility
+    }
+    val lp = osd.layoutParams as android.widget.FrameLayout.LayoutParams
+    val full = android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+    if (!osdOverPictureOnly) {
+      // Untouched unless this switch shrank it: full-size is how it was built.
+      if (lp.width == full && lp.height == full) return false
+      lp.width = full
+      lp.height = full
+      lp.gravity = android.view.Gravity.NO_GRAVITY
+      osd.layoutParams = lp
+      return true
+    }
+    val width = minOf(picture.width, container.width)
+    val height = minOf(picture.height, container.height)
+    if (lp.width == width && lp.height == height && lp.gravity == android.view.Gravity.CENTER) return false
+    lp.width = width
+    lp.height = height
+    lp.gravity = android.view.Gravity.CENTER
+    osd.layoutParams = lp
+    return true
   }
 
   private fun publishVideoRect(rect: VideoRectPolicy.Rect) {
@@ -2038,6 +2081,12 @@ class MpvPlayerCore private constructor(
    */
   @Volatile var followsVideoRect = false
 
+  /** Plebz: whether the OSD plane covers the picture only; see [layOutOsdPlane]. */
+  @Volatile private var osdOverPictureOnly = false
+
+  /** Plebz: the empty plane that keeps the letterbox clear; see [layOutOsdPlane]. */
+  private var letterboxHole: SurfaceView? = null
+
   /** The box, in window pixels: left, top, right, bottom. Null until reported. */
   private var viewport: IntArray? = null
 
@@ -2073,6 +2122,10 @@ class MpvPlayerCore private constructor(
     )
 
     surfaceContainer = PlayerSurfaceHost.createContainer(activity)
+    if (usesMediaCodecVo) {
+      letterboxHole = PlayerSurfaceHost.createLetterboxHole(activity)
+      surfaceContainer!!.addView(letterboxHole)
+    }
     surfaceView = PlayerSurfaceHost.createVideoSurface(activity, this@MpvPlayerCore)
     surfaceContainer!!.addView(surfaceView)
     if (usesMediaCodecVo) {
@@ -2748,6 +2801,15 @@ class MpvPlayerCore private constructor(
       return
     }
 
+    // Not an mpv property (Plebz): the OSD plane over the picture only; see
+    // [layOutOsdPlane].
+    if (name == "plebz-osd-picture-only") {
+      osdOverPictureOnly = value == "yes"
+      applyVideoRectLayout(force = true)
+      onComplete?.invoke(Result.success(Unit))
+      return
+    }
+
     if (name == "dv-conversion-mode") {
       applyDvConversionMode(value, onComplete)
       return
@@ -3310,6 +3372,7 @@ class MpvPlayerCore private constructor(
     surfaceContainer = null
     surfaceView = null
     osdSurfaceView = null
+    letterboxHole = null
     pendingOsdSurface = null
     attachedOsdSurface = null
     pendingVideoRectUpdate.set(null)

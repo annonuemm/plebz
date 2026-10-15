@@ -676,6 +676,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get tunneledPlaybackLiveTvDescription => 'Meist besser aus, das Bild kann sonst einfrieren';
 	@override String get disableDolbyVision => 'Dolby Vision ausschalten';
 	@override String get disableDolbyVisionDescription => 'Spielt HDR10, für Fernseher ohne Dolby Vision';
+	@override String get mpvOsdPictureOnly => 'Balken bei HDR schwarz halten';
+	@override String get mpvOsdPictureOnlyDescription => 'Für Boxen, die sie grau zeigen; Untertitel liegen dann nie in den Balken.';
 	@override String get layoutMode => 'Layout';
 	@override String get layoutModeAuto => 'Automatisch';
 	@override String get layoutModeTv => 'TV';
@@ -4405,6 +4407,8 @@ extension on TranslationsDe {
 			'settings.tunneledPlaybackLiveTvDescription' => 'Meist besser aus, das Bild kann sonst einfrieren',
 			'settings.disableDolbyVision' => 'Dolby Vision ausschalten',
 			'settings.disableDolbyVisionDescription' => 'Spielt HDR10, für Fernseher ohne Dolby Vision',
+			'settings.mpvOsdPictureOnly' => 'Balken bei HDR schwarz halten',
+			'settings.mpvOsdPictureOnlyDescription' => 'Für Boxen, die sie grau zeigen; Untertitel liegen dann nie in den Balken.',
 			'settings.layoutMode' => 'Layout',
 			'settings.layoutModeAuto' => 'Automatisch',
 			'settings.layoutModeTv' => 'TV',
@@ -4857,10 +4861,10 @@ extension on TranslationsDe {
 			'mpvConfig.presetName' => 'Name der Voreinstellung',
 			'mpvConfig.presetNameHint' => 'Namen für diese Voreinstellung eingeben',
 			'mpvConfig.loadPreset' => 'Laden',
-			'mpvConfig.deletePreset' => 'Löschen',
-			'mpvConfig.presetSaved' => 'Voreinstellung gespeichert',
 			_ => null,
 		} ?? switch (path) {
+			'mpvConfig.deletePreset' => 'Löschen',
+			'mpvConfig.presetSaved' => 'Voreinstellung gespeichert',
 			'mpvConfig.presetLoaded' => 'Voreinstellung geladen',
 			'mpvConfig.presetDeleted' => 'Voreinstellung gelöscht',
 			'mpvConfig.confirmDeletePreset' => 'Diese Voreinstellung wirklich löschen?',
@@ -5371,10 +5375,10 @@ extension on TranslationsDe {
 			'liveTv.unknownHub' => 'Unbekannt',
 			'liveTv.unknownError' => 'Unbekannter Fehler',
 			'liveTv.channelNumber' => ({required Object number}) => 'Kanal ${number}',
-			'liveTv.unknownChannel' => 'Unbekannter Kanal',
-			'liveTv.live' => 'LIVE',
 			_ => null,
 		} ?? switch (path) {
+			'liveTv.unknownChannel' => 'Unbekannter Kanal',
+			'liveTv.live' => 'LIVE',
 			'liveTv.reloadGuide' => 'TV-Programm neu laden',
 			'liveTv.searchGuide' => 'TV-Programm durchsuchen',
 			'liveTv.searchHint' => 'Kanäle & Sendungen suchen',
@@ -5885,10 +5889,10 @@ extension on TranslationsDe {
 			'videoSettings.audioOutputSpatial' => 'Räumliches Audio',
 			'videoSettings.audioOutputStereo' => 'Stereo',
 			'videoSettings.audioNormalization' => 'Lautstärke normalisieren',
-			'videoSettings.audioNormalizationDisablesPassthrough' => 'Dekodiert Audio zu PCM; Durchleitung ist aus, solange dies aktiv ist',
-			'videoSettings.audioNormalizationStereoMix' => 'Dekodiert Audio zu einem Stereomix; Durchleitung ist aus, solange dies aktiv ist',
 			_ => null,
 		} ?? switch (path) {
+			'videoSettings.audioNormalizationDisablesPassthrough' => 'Dekodiert Audio zu PCM; Durchleitung ist aus, solange dies aktiv ist',
+			'videoSettings.audioNormalizationStereoMix' => 'Dekodiert Audio zu einem Stereomix; Durchleitung ist aus, solange dies aktiv ist',
 			'performanceOverlay.color' => 'Farbe',
 			'performanceOverlay.performance' => 'Leistung',
 			'performanceOverlay.buffer' => 'Puffer',
@@ -6399,10 +6403,10 @@ extension on TranslationsDe {
 			'plebz.welcomeBody' => 'In ein paar Schritten eingerichtet: wie es aussieht, woher deine Filme, Serien und Sender kommen und welche Dienste dazugehören. Alles lässt sich später in den Einstellungen ändern.',
 			'plebz.getStarted' => 'Los geht\'s',
 			'plebz.lookTitle' => 'Aussehen',
-			'plebz.lookBody' => 'Wähle das Aussehen. Es ändert sich schon beim Auswählen, du siehst es also sofort.',
-			'plebz.next' => 'Weiter',
 			_ => null,
 		} ?? switch (path) {
+			'plebz.lookBody' => 'Wähle das Aussehen. Es ändert sich schon beim Auswählen, du siehst es also sofort.',
+			'plebz.next' => 'Weiter',
 			'plebz.iptvOnly' => 'Nur IPTV',
 			'plebz.defaultProfileName' => 'Zuhause',
 			'plebz.extrasTitle' => 'Fast fertig',

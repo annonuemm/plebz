@@ -13,6 +13,12 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.26.1 (Build 833)
+
+### Wiedergabe
+- Neu: „Balken bei HDR schwarz halten“ unter Einstellungen → Videowiedergabe → Video & Anzeige (nur mit mpv). Manche Boxen zeigen die schwarzen Balken über und unter dem Bild bei Dolby Vision grau. Mit dem Schalter bleiben sie schwarz, Untertitel stehen dann immer im Bild.
+- Auf Boxen mit Amlogic-Chip, etwa von Homatics, ist der Schalter von Haus aus an.
+
 ## 1.26.0 (Build 829)
 
 ### Wiedergabe

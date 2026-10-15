@@ -876,6 +876,7 @@ class MainActivity : FlutterActivity() {
       when (call.method) {
         "getTvDetection" -> result.success(getAndroidTvDetection())
         "getDeviceName" -> result.success(getDeviceName())
+        "isAmlogicSoc" -> result.success(SocVendor.isAmlogic())
         "getPerformanceSignals" -> result.success(getPerformanceSignals())
         // Read fresh on every call: a set switched off, an AV receiver in the
         // chain or a changed system setting all change the answer, and a

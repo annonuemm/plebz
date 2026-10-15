@@ -49,6 +49,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
         PlebzPrefs.matchDisplayResolution,
         SettingsService.audioChannelLimit,
         PlebzPrefs.disableDolbyVision,
+        PlebzPrefs.mpvOsdPictureOnly,
       ],
       builder: (context) {
         final svc = SettingsService.instance;
@@ -116,6 +117,8 @@ class PlaybackSettingsScreen extends StatelessWidget {
                 if (dolbyVisionSettled && !dolbyVisionOff) _dvConversionModeTile(),
                 // mpv-only: ExoPlayer always leaves the conversion to the device.
                 if (Platform.isAndroid && mpvInUse) _hdrSdrConversionTile(),
+                // mpv's subtitle plane over the picture only (Plebz).
+                if (Platform.isAndroid && mpvInUse) _mpvOsdPictureOnlyTile(),
                 // mpv-only (#2149): ExoPlayer has no filter chain, so the
                 // tile disappears while the ExoPlayer backend is active.
                 if (mpvInUse) _deinterlaceTile(),
@@ -642,6 +645,13 @@ class PlaybackSettingsScreen extends StatelessWidget {
     icon: Symbols.hdr_off_rounded,
     title: t.settings.disableDolbyVision,
     subtitle: t.settings.disableDolbyVisionDescription,
+  );
+
+  Widget _mpvOsdPictureOnlyTile() => SettingSwitchTile(
+    pref: PlebzPrefs.mpvOsdPictureOnly,
+    icon: Symbols.crop_landscape_rounded,
+    title: t.settings.mpvOsdPictureOnly,
+    subtitle: t.settings.mpvOsdPictureOnlyDescription,
   );
 
   Widget _dvConversionModeTile() => SettingSelectionTile<DvConversionModePreference>(

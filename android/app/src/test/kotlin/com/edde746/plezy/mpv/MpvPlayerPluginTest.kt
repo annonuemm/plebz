@@ -23,6 +23,7 @@ import com.edde746.plezy.libmpv.MpvPlayer
 import com.edde746.plezy.shared.AudioFocusManager
 import com.edde746.plezy.shared.FrameRateManager
 import com.edde746.plezy.shared.PlayerDelegate
+import com.edde746.plezy.shared.PlayerSurfaceHost
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
@@ -1217,6 +1218,48 @@ class MpvPlayerPluginTest {
     setCoreField(core, "videoDisplayHeight", 1000)
     applyAndLayoutVideoRect(core, container)
     awaitCondition { writes.contains("vo-mediacodec-video-rect" to "1001,701,325,0,675,701") }
+    core.dispose()
+  }
+
+  @Test
+  fun osdPictureOnlyShrinksThePlaneToThePictureAndBack() {
+    val writes = ConcurrentLinkedQueue<Pair<String, String>>()
+    val core = testVideoCore { name, value -> writes.add(name to value) }
+    val container = installVideoRectViews(core)
+    val hole = PlayerSurfaceHost.createLetterboxHole(getCoreField(core, "context") as Activity)
+    container.addView(hole, 0)
+    setCoreField(core, "letterboxHole", hole)
+    setCoreField(core, "videoDisplayWidth", 1000)
+    setCoreField(core, "videoDisplayHeight", 500)
+    assertEquals(View.GONE, hole.visibility)
+    setCoreField(core, "osdOverPictureOnly", true)
+
+    // Letterboxed: the plane covers the picture alone, so no bar to fill, and
+    // the empty plane under it keeps the whole container clear of the window.
+    applyAndLayoutVideoRect(core, container)
+    applyAndLayoutVideoRect(core, container)
+    awaitCondition { writes.contains("vo-mediacodec-video-rect" to "1001,500,0,0,1001,500") }
+    val osd = getCoreField(core, "osdSurfaceView") as SurfaceView
+    assertEquals(1001, osd.width)
+    assertEquals(500, osd.height)
+    assertEquals(View.VISIBLE, hole.visibility)
+    assertEquals(1001, hole.width)
+    assertEquals(701, hole.height)
+
+    // Cover: the plane stays within the screen, the picture overflows it.
+    setCoreField(core, "videoPanscan", 1f)
+    applyAndLayoutVideoRect(core, container)
+    applyAndLayoutVideoRect(core, container)
+    awaitCondition { writes.contains("vo-mediacodec-video-rect" to "1001,701,-200,0,1202,701") }
+
+    // Off again: back to the full container and its letterbox.
+    setCoreField(core, "videoPanscan", 0f)
+    setCoreField(core, "osdOverPictureOnly", false)
+    applyAndLayoutVideoRect(core, container)
+    applyAndLayoutVideoRect(core, container)
+    awaitCondition { writes.contains("vo-mediacodec-video-rect" to "1001,701,0,100,1001,600") }
+    assertEquals(701, osd.height)
+    assertEquals(View.GONE, hole.visibility)
     core.dispose()
   }
 

@@ -2029,6 +2029,9 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
       if (Platform.isAndroid && !useExoPlayer && handedOver == null) {
         final hdrSdrConversion = settingsService.read(SettingsService.hdrSdrConversion);
         await currentPlayer.setProperty('hdr-sdr-conversion', hdrSdrConversion.nativeValue);
+        // Not an mpv property: MpvPlayerCore sizes its subtitle plane (Plebz).
+        final osdPictureOnly = settingsService.read(PlebzPrefs.mpvOsdPictureOnly);
+        await currentPlayer.setProperty('plebz-osd-picture-only', osdPictureOnly ? 'yes' : 'no');
       }
       if (Platform.isIOS || Platform.isMacOS) {
         await currentPlayer.setProperty('dv-conversion-log', debugLoggingEnabled ? 'yes' : 'no');

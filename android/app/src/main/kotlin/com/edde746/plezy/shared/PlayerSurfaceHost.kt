@@ -90,6 +90,32 @@ internal object PlayerSurfaceHost {
     }
   }
 
+  /**
+   * Plebz: an empty full-size plane beneath the video surface, for mpv's
+   * OSD plane over the picture only (`MpvPlayerCore.layOutOsdPlane`).
+   *
+   * A below-window SurfaceView punches its bounds out of the window canvas
+   * whether or not it ever queues a buffer. This one is never drawn, so it
+   * leaves the letterbox empty, as ExoPlayer's full-size ASS plane does:
+   * the bars scan out as the compositor's own background instead of black
+   * graphics. An Amlogic box (Homatics Box R Plus) shows black graphics in
+   * the bars dark gray in Dolby Vision for some titles, its own background
+   * black; MediaTek boxes are the other way round (see [createOsdSurface]),
+   * so it stays behind a switch. Translucent, so Android hangs no black
+   * background layer under it. Gone until the switch shows it.
+   */
+  fun createLetterboxHole(activity: Activity): SurfaceView = SurfaceView(activity).apply {
+    layoutParams = FrameLayout.LayoutParams(
+      FrameLayout.LayoutParams.MATCH_PARENT,
+      FrameLayout.LayoutParams.MATCH_PARENT
+    )
+    holder.setFormat(PixelFormat.TRANSLUCENT)
+    setZOrderOnTop(false)
+    setZOrderMediaOverlay(false)
+    FlutterOverlayHelper.applyCompositionOrder(this, -2)
+    visibility = View.GONE
+  }
+
   fun attachToContent(activity: Activity, container: FrameLayout): ViewGroup {
     val contentView = activity.findViewById<ViewGroup>(android.R.id.content)
     contentView.addView(container, 0)

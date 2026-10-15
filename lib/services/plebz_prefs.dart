@@ -6,6 +6,7 @@ import '../media/watchlist_filter.dart';
 import '../media/year_filter.dart';
 import '../profiles/profile.dart';
 import '../utils/platform_detector.dart';
+import '../utils/plebz_device.dart';
 import 'base_shared_preferences_service.dart';
 import 'plebz_update_service.dart' show PlebzUpdateOffer;
 import 'recommendations_service.dart';
@@ -451,6 +452,13 @@ abstract final class PlebzPrefs {
   /// its HDR10 one. Profile 5 carries no base layer and is left alone.
   static const disableDolbyVision = BoolPref('disable_dolby_vision');
 
+  /// mpv on Android: the subtitle plane covers the picture only and the bars
+  /// stay empty, as on ExoPlayer, so they show the box's own black. mpv
+  /// otherwise paints them black, which an Amlogic box shows dark gray in
+  /// Dolby Vision for some titles, so it is on there by default (the user's
+  /// call, 2026-10-15). Subtitles then never sit in the bars.
+  static const mpvOsdPictureOnly = BoolPref('mpv_osd_picture_only', defaultValueProvider: PlebzDevice.isAmlogic);
+
   /// Live channels this device's hardware decoder showed no picture for, which
   /// therefore open in software here (see `live_software_decode.dart`).
   ///
@@ -635,6 +643,7 @@ abstract final class PlebzPrefs {
     matchContentFrameRateLiveTv,
     tunneledPlaybackLiveTv,
     disableDolbyVision,
+    mpvOsdPictureOnly,
     bestCopyPreference,
     remoteRedButton,
     remoteGreenButton,

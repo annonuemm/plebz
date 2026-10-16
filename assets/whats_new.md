@@ -13,6 +13,13 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.27.0 (Build 845)
+
+### Plebz Home
+- Plebz arbeitet jetzt mit Plebz Home zusammen, dem Startbildschirm für Android TV, der zu Plebz passt.
+- Auf dem Startbildschirm erscheinen Weiterschauen, Merkliste, Empfehlungen, Jetzt live und die aktuellen Spieltage der drei Ligen, im Design und in den Farben von Plebz.
+- Ein Titel aus Weiterschauen öffnet in Plebz seine Detailseite.
+
 ## 1.26.2 (Build 839)
 
 ### Darstellung

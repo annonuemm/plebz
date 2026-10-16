@@ -29,6 +29,7 @@ import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
 import com.edde746.plezy.car.CarRestrictionsMonitor
 import com.edde746.plezy.exoplayer.ExoPlayerPlugin
+import com.edde746.plezy.homerows.HomeRowsPlugin
 import com.edde746.plezy.mpv.MpvAudioPlayerPlugin
 import com.edde746.plezy.mpv.MpvPlayerPlugin
 import com.edde746.plezy.shared.AssistiveTechnologyMonitor
@@ -1011,6 +1012,8 @@ class MainActivity : FlutterActivity() {
     // Register Watch Next plugin and keep reference for deep link handling
     watchNextPlugin = WatchNextPlugin()
     flutterEngine.plugins.add(watchNextPlugin!!)
+    // Plebz: the home rows for a launcher signed with this app's key
+    flutterEngine.plugins.add(HomeRowsPlugin())
 
     MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PIP_CHANNEL).setMethodCallHandler { call, result ->
       when (call.method) {

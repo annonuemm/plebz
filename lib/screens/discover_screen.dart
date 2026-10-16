@@ -15,6 +15,11 @@ import 'live_now/live_now_loader.dart';
 import '../utils/live_tv_player_navigation.dart';
 import '../utils/live_tv_matching.dart';
 import '../services/live_tv_last_selection.dart';
+import '../services/home_rows_feed.dart';
+import '../utils/home_link.dart';
+import '../media/media_backend.dart';
+import '../media/media_kind.dart';
+import '../providers/catalog_sources_provider.dart';
 import '../navigation/navigation_tabs.dart';
 import '../services/sport/sport_repository.dart';
 import '../services/sport/sport_models.dart';
@@ -253,6 +258,9 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
   // ---------- "Jetzt live" ----------
 
+  /// Plebz: hands the start page's rows to a launcher ([HomeRowsFeed]).
+  HomeRowsFeed? _homeRowsFeed;
+
   LiveNowLoader? _liveNowLoader;
   SportBroadcastFinder? _liveNowFinder;
   LiveNowSnapshot _liveNow = LiveNowSnapshot.empty;
@@ -297,6 +305,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     } else {
       _liveNowTimer?.cancel();
       _liveNowTimer = null;
+      _homeRowsFeed?.takeLiveNow(LiveNowSnapshot.empty);
       setState(() {
         _liveNow = LiveNowSnapshot.empty;
         _liveNowHubCache = null;
@@ -339,6 +348,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     if (!mounted || !_liveNowWanted) return;
     final hub = liveNowHub(snapshot);
     final signature = [for (final item in hub.items) '${item.id}|${item.title}|${item.summary}'].join('\n');
+    _homeRowsFeed?.takeLiveNow(snapshot);
     setState(() {
       _liveNow = snapshot;
       if (signature != _liveNowSignature) {
@@ -375,6 +385,22 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       case null:
         return;
     }
+  }
+
+  /// Plebz: a launcher's "Jetzt live" tile was chosen — open its entry as
+  /// the tile here would, once the row has it.
+  void _onPendingLiveNow() {
+    final id = pendingLiveNowEntry.value;
+    if (id == null || !mounted) return;
+    unawaited(_openPendingLiveNow(id));
+  }
+
+  Future<void> _openPendingLiveNow(String id) async {
+    if (!_liveNow.byId.containsKey(id)) await _refreshLiveNow();
+    if (!mounted || pendingLiveNowEntry.value != id) return;
+    pendingLiveNowEntry.value = null;
+    if (!_liveNow.byId.containsKey(id)) return;
+    await _openLiveNow(MediaItem(id: id, backend: MediaBackend.plex, kind: MediaKind.unknown));
   }
 
   /// Behind the player about to open, Live TV comes forward on [channel]'s
@@ -576,8 +602,25 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     unawaited(_discover.load());
     _startAutoScroll();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _startLiveNow();
+      if (!mounted) return;
+      _startLiveNow();
+      pendingLiveNowEntry.addListener(_onPendingLiveNow);
+      _onPendingLiveNow();
+      final multiServer = context.read<MultiServerProvider?>();
+      if (multiServer != null) {
+        _homeRowsFeed = HomeRowsFeed(
+          discover: _discover,
+          multiServer: multiServer,
+          catalog: context.read<CatalogSourcesProvider?>(),
+        )..takeTheme(context);
+      }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _homeRowsFeed?.takeTheme(context);
   }
 
   /// Mirror provider changes into this state's UI concerns: rebuild, apply
@@ -689,6 +732,8 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   void dispose() {
     ProfileMenu.switching.removeListener(_onProfileSwitching);
     _discover.removeListener(_onDiscoverChanged);
+    _homeRowsFeed?.dispose();
+    pendingLiveNowEntry.removeListener(_onPendingLiveNow);
     WidgetsBinding.instance.removeObserver(this);
     // The rotation belongs to this screen's time on show, not to the
     // provider's lifetime — it outlives this widget.

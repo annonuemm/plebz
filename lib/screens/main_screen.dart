@@ -63,6 +63,8 @@ import '../services/fullscreen_state_manager.dart';
 import '../providers/companion_remote_provider.dart';
 import '../utils/desktop_window_padding.dart';
 import '../utils/live_tv_deep_link.dart';
+import '../utils/home_link.dart';
+import '../utils/media_navigation_helper.dart' show navigateToMediaItemDetails;
 import '../widgets/music/mini_player.dart';
 import '../widgets/navigation_label_fit.dart';
 import '../widgets/mobile_navigation_rail.dart';
@@ -1009,6 +1011,13 @@ class _MainScreenState extends State<MainScreen>
   Future<void> _handleShelfContentId(String contentId) async {
     if (!mounted) return;
 
+    // Plebz: the links a launcher's home-row tiles open arrive the same way.
+    final homeLink = HomeLink.tryParse(contentId);
+    if (homeLink != null) {
+      await _openHomeLink(homeLink);
+      return;
+    }
+
     // `plebz://live?...` links arrive through the same channel as shelf IDs.
     final liveLink = LiveTvDeepLink.tryParse(contentId);
     if (liveLink != null) {
@@ -1044,6 +1053,37 @@ class _MainScreenState extends State<MainScreen>
       unawaited(navigateToVideoPlayer(context, metadata: metadata));
     } catch (e) {
       appLogger.e('System shelf: failed to navigate to media', error: e);
+    }
+  }
+
+  /// Plebz: a place in the app a launcher's home-row tile asked for. Whatever
+  /// stands over the main screen gives way first.
+  Future<void> _openHomeLink(HomeLink link) async {
+    final ownRoute = ModalRoute.of(context);
+    if (ownRoute != null) Navigator.of(context).popUntil((route) => route == ownRoute);
+    switch (link) {
+      case PlebzWatchlistLink():
+        _selectTab(NavigationTabId.watchlist);
+      case PlebzSportLink():
+        _selectTab(NavigationTabId.sport);
+      case PlebzLiveNowLink(:final entryId):
+        _selectTab(NavigationTabId.discover);
+        pendingLiveNowEntry.value = entryId;
+      case PlebzOpenLink(:final contentId):
+        final parsed = SystemShelfService.parseContentId(contentId);
+        if (parsed == null) return;
+        final (serverId, ratingKey) = parsed;
+        final client = context.read<MultiServerProvider>().getClientForServer(serverId);
+        if (client == null) return;
+        try {
+          final metadata = await client.fetchItem(ratingKey);
+          if (metadata == null || !mounted) return;
+          // The page the start page opens for it: an episode lands where
+          // Continue Watching's "details" would take it.
+          unawaited(navigateToMediaItemDetails(context, metadata));
+        } catch (e) {
+          appLogger.e('Home link: failed to open the title', error: e);
+        }
     }
   }
 

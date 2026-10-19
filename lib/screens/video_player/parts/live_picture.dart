@@ -61,6 +61,12 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
     _live.markStreamTakenOverAtLiveEdge(session.captureBuffer, currentPlayer.state.position);
     _live.streamGeneration++;
     attempt.outcome.adoptPlayingFile();
+    final stream = _live.streamGeneration;
+    _liveStallGuard.armPlaying(
+      currentPlayer,
+      playing: currentPlayer.state.playing,
+      onStalled: (why) => unawaited(_onLiveStalled(currentPlayer, stream, why)),
+    );
     _firstFrame.markReady();
     _http503Watchdog.disarm();
     unawaited(_visualEffects.onFirstFrame());

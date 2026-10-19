@@ -5,6 +5,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../i18n/strings.g.dart';
 import '../../services/settings_service.dart';
+import '../../services/sport/sport_league_names.dart';
 import '../../services/sport/sport_models.dart';
 import '../../services/sport/sport_repository.dart';
 import '../../utils/app_logger.dart';
@@ -77,7 +78,9 @@ class SportFavouriteClubTile extends StatelessWidget {
   Future<List<(SportLeague, List<SportTeam>)>> _clubs() async {
     final repo = repository ?? SportRepository.instance;
     final result = <(SportLeague, List<SportTeam>)>[];
-    for (final league in SportLeague.values) {
+    // The German leagues only: a cup's clubs are theirs again, and a
+    // European cup's mostly abroad.
+    for (final league in SportLeague.values.where((league) => league.isDomestic)) {
       try {
         final now = await repo.current(league);
         if (now == null) continue;
@@ -96,9 +99,5 @@ class SportFavouriteClubTile extends StatelessWidget {
     return result;
   }
 
-  static String _leagueName(SportLeague league) => switch (league) {
-    SportLeague.bundesliga1 => t.sport.bundesliga1,
-    SportLeague.bundesliga2 => t.sport.bundesliga2,
-    SportLeague.liga3 => t.sport.liga3,
-  };
+  static String _leagueName(SportLeague league) => sportLeagueName(league);
 }

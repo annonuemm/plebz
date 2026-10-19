@@ -52,8 +52,22 @@ class TrackerProgressController extends ChangeNotifier {
   /// How soon after a change made here the tracker is asked again.
   static const Duration echoDelay = Duration(seconds: 30);
 
+  /// The same after a playback position. Playing leaves one every 30 s, and
+  /// each one moves the echo on: longer than that gap, the tracker is asked
+  /// once playback has stopped or paused, never while it runs.
+  static const Duration positionEchoDelay = Duration(seconds: 90);
+
   /// How old a server's id index may grow before it is asked again.
   static const Duration indexLifetime = Duration(hours: 1);
+
+  /// How long a server whose id index could not be read is left alone. Every
+  /// refresh asked it again at once, and a listing that runs into the
+  /// timeout cost minutes of download each time; the last index read stays
+  /// in use meanwhile.
+  static const Duration defaultIndexRetryDelay = Duration(minutes: 15);
+
+  @visibleForTesting
+  static Duration indexRetryDelay = defaultIndexRetryDelay;
 
   String? _profileId;
   SimklClient? _simkl;
@@ -62,6 +76,7 @@ class TrackerProgressController extends ChangeNotifier {
   TrackerWatchState _state = TrackerWatchState.empty;
   final Map<String, Map<String, ExternalIds>> _indexes = {};
   final Map<String, DateTime> _indexedAt = {};
+  final Map<String, DateTime> _indexFailedAt = {};
   final Map<String, LocalWatchPatch> _patches = {};
   Future<void>? _refreshing;
   Timer? _echoTimer;
@@ -177,6 +192,7 @@ class TrackerProgressController extends ChangeNotifier {
       _failedSyncs = 0;
       _indexes.clear();
       _indexedAt.clear();
+      _indexFailedAt.clear();
       _patches.clear();
       final files = TrackerWatchFiles(Directory(p.join((await rootDirectory()).path, _safe(profileId))));
       if (generation != _generation) return;
@@ -279,15 +295,26 @@ class TrackerProgressController extends ChangeNotifier {
     for (final MapEntry(key: serverId, value: client) in _servers.entries) {
       final at = _indexedAt[serverId];
       if (!full && at != null && clock.now().difference(at) < indexLifetime) continue;
+      final failedAt = _indexFailedAt[serverId];
+      if (!full && failedAt != null && clock.now().difference(failedAt) < indexRetryDelay) continue;
       try {
         final index = await client.fetchExternalIdIndex();
         if (generation != _generation) return;
-        _indexes[serverId] = index;
         _indexedAt[serverId] = clock.now();
+        _indexFailedAt.remove(serverId);
+        // The same ids again change nothing on screen: no reason to have
+        // every page fetch anew.
+        if (_sameIndex(_indexes[serverId], index)) continue;
+        _indexes[serverId] = index;
         changed = true;
         unawaited(files.writeIndex(serverId, index));
       } catch (error) {
-        appLogger.w('Tracker progress: ids of $serverId could not be read', error: error);
+        if (generation != _generation) return;
+        _indexFailedAt[serverId] = clock.now();
+        appLogger.w(
+          'Tracker progress: ids of $serverId could not be read, next try in ${indexRetryDelay.inMinutes} min',
+          error: error,
+        );
       }
     }
     final stale = clock.now().subtract(patchLifetime);
@@ -314,12 +341,37 @@ class TrackerProgressController extends ChangeNotifier {
     // before the tracker has it.
     unawaited(_files?.writePatches(Map.of(_patches)));
     _publish();
-    _echoAfter(echoDelay);
+    _echoAfter(watched == null ? positionEchoDelay : echoDelay);
   }
 
   void _echoAfter(Duration delay) {
     _echoTimer?.cancel();
-    _echoTimer = Timer(delay, () => unawaited(refresh()));
+    _echoDelay = delay;
+    _echoTimer = Timer(delay, () {
+      _echoDelay = null;
+      unawaited(refresh());
+    });
+  }
+
+  Duration? _echoDelay;
+
+  /// What the echo now waiting was set to wait; null when none waits.
+  @visibleForTesting
+  Duration? get debugEchoDelay => (_echoTimer?.isActive ?? false) ? _echoDelay : null;
+
+  static bool _sameIndex(Map<String, ExternalIds>? before, Map<String, ExternalIds> after) {
+    if (before == null || before.length != after.length) return false;
+    for (final MapEntry(key: itemId, value: ids) in after.entries) {
+      final was = before[itemId];
+      if (was == null ||
+          was.imdb != ids.imdb ||
+          was.tmdb != ids.tmdb ||
+          was.tvdb != ids.tvdb ||
+          was.anidb != ids.anidb) {
+        return false;
+      }
+    }
+    return true;
   }
 
   void _publish({bool contentChanged = false}) {
@@ -348,6 +400,7 @@ class TrackerProgressController extends ChangeNotifier {
     _state = TrackerWatchState.empty;
     _indexes.clear();
     _indexedAt.clear();
+    _indexFailedAt.clear();
     _patches.clear();
     ProgressRouting.instance
       ..onLocalChange = null
@@ -367,6 +420,7 @@ class TrackerProgressController extends ChangeNotifier {
     _deactivate();
     rootDirectory = _defaultRoot;
     retryDelays = defaultRetryDelays;
+    indexRetryDelay = defaultIndexRetryDelay;
   }
 }
 

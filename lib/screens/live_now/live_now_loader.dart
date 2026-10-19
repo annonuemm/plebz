@@ -5,6 +5,7 @@ import '../../models/livetv_channel.dart';
 import '../../models/livetv_program.dart';
 import '../../providers/iptv_sources_provider.dart';
 import '../../providers/multi_server_provider.dart';
+import '../../services/sport/sport_league_names.dart';
 import '../../services/sport/sport_models.dart';
 import '../../services/sport/sport_repository.dart';
 import '../../utils/app_logger.dart';
@@ -173,7 +174,7 @@ class LiveNowLoader {
 
   Future<Map<SportLeague, List<SportMatch>>> _games() async {
     final byLeague = <SportLeague, List<SportMatch>>{};
-    for (final league in SportLeague.values) {
+    for (final league in visibleSportLeagues()) {
       try {
         final current = await sport.current(league);
         if (current != null) byLeague[league] = current.matches;

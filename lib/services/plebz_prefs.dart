@@ -153,6 +153,12 @@ abstract final class PlebzPrefs {
   /// a box that stutters. The Apple TV always glides.
   static const smoothScroll = BoolPref('smooth_scroll', defaultValue: true);
 
+  /// The start screen dresses up for the season: a thunderstorm night at
+  /// Halloween, a lit garland at Christmas (see `plebz_season.dart`). On by
+  /// default, a switch for whoever wants the plain logo (the user's call,
+  /// 2026-10-19).
+  static const seasonalStartScreen = BoolPref('seasonal_start_screen', defaultValue: true);
+
   /// Under glass, the ground takes the colours of the Plex title holding focus
   /// — Plex's "UltraBlur". A test, off until switched on.
   static const glasUltraBlur = BoolPref('glas_ultra_blur', defaultValue: false);
@@ -249,6 +255,10 @@ abstract final class PlebzPrefs {
   /// and its name, for the settings row while the clubs are not loaded.
   static const sportFavouriteClub = IntPref('sport_favourite_club');
   static const sportFavouriteClubName = StringPref('sport_favourite_club_name', defaultValue: '');
+
+  /// Which competitions the Sport page shows and in which order, as
+  /// [SportLeagueLayout.encode] writes it; empty is the default arrangement.
+  static const sportLeagueLayout = StringPref('sport_league_layout', defaultValue: '');
 
   /// The "because you watched" row under Continue Watching.
   ///
@@ -459,6 +469,12 @@ abstract final class PlebzPrefs {
   /// call, 2026-10-15). Subtitles then never sit in the bars.
   static const mpvOsdPictureOnly = BoolPref('mpv_osd_picture_only', defaultValueProvider: PlebzDevice.isAmlogic);
 
+  /// After a skip back of up to thirty seconds, show subtitles until the
+  /// playhead is back where the skip started (Apple TV does the same). Off by
+  /// default: it changes what a viewer sees without asking (the user's call,
+  /// 2026-10-19). See `replay_captions.dart`.
+  static const replayCaptions = BoolPref('replay_captions');
+
   /// Live channels this device's hardware decoder showed no picture for, which
   /// therefore open in software here (see `live_software_decode.dart`).
   ///
@@ -644,6 +660,7 @@ abstract final class PlebzPrefs {
     tunneledPlaybackLiveTv,
     disableDolbyVision,
     mpvOsdPictureOnly,
+    replayCaptions,
     bestCopyPreference,
     remoteRedButton,
     remoteGreenButton,
@@ -656,6 +673,7 @@ abstract final class PlebzPrefs {
     showSportTab,
     sportFavouriteClub,
     sportFavouriteClubName,
+    sportLeagueLayout,
     tmdbLogosEnabled,
     showRecommendationsRow,
     showLiveNowRow,
@@ -681,6 +699,7 @@ abstract final class PlebzPrefs {
     glasFakeGlass,
     glasRailSymbolsPinned,
     smoothScroll,
+    seasonalStartScreen,
     showLibraryPlaylistsTab,
     showPlaybackTracksStatus,
     showHomeTitleLogos,

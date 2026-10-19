@@ -352,6 +352,49 @@ void main() {
     expect(find.text(t.explore.badge.minutesPerEpisode(n: 45)), findsNothing);
   });
 
+  testWidgets('a show seen in full drops the episode circle', (tester) async {
+    CatalogItem show({bool? watched}) => CatalogItem(
+      source: CatalogSourceId.plex,
+      kind: MediaKind.show,
+      title: 'Seen Show',
+      ids: const CatalogItemIds(tmdb: 1),
+      episodeCount: 62,
+      isWatched: watched,
+    );
+
+    await tester.pumpWidget(_catalogGridHarness(show(watched: true).toMediaItem()));
+    expect(find.byKey(const Key('catalog-episode-count')), findsNothing);
+    expect(find.text('62'), findsNothing);
+
+    for (final watched in [false, null]) {
+      await tester.pumpWidget(_catalogGridHarness(show(watched: watched).toMediaItem()));
+      expect(find.byKey(const Key('catalog-episode-count')), findsOneWidget, reason: 'isWatched: $watched');
+    }
+  });
+
+  testWidgets('the circle counts the episodes still to watch when the provider says how many were seen', (
+    tester,
+  ) async {
+    CatalogItem show({int? seen}) => CatalogItem(
+      source: CatalogSourceId.plex,
+      kind: MediaKind.show,
+      title: 'Started Show',
+      ids: const CatalogItemIds(tmdb: 1),
+      episodeCount: 30,
+      isWatched: false,
+      watchedEpisodeCount: seen,
+    );
+
+    await tester.pumpWidget(_catalogGridHarness(show(seen: 3).toMediaItem()));
+    expect(find.text('27'), findsOneWidget);
+
+    await tester.pumpWidget(_catalogGridHarness(show().toMediaItem()));
+    expect(find.text('30'), findsOneWidget, reason: 'without the seen count it stays the total');
+
+    await tester.pumpWidget(_catalogGridHarness(show(seen: 30).toMediaItem()));
+    expect(find.byKey(const Key('catalog-episode-count')), findsNothing);
+  });
+
   testWidgets('a movie gets no episode circle', (tester) async {
     final item = CatalogItem(
       source: CatalogSourceId.seerr,

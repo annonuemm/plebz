@@ -81,9 +81,12 @@ import '../services/display_mode_service.dart';
 import '../services/media_control_router.dart';
 import '../services/player_sync_offsets.dart';
 import '../services/scoped_player_prefs.dart';
+import '../services/iptv/iptv_live_tv_source.dart' show IptvPlaybackSession;
 import '../services/iptv/iptv_stream_probing.dart';
 import '../services/live_picture_handover.dart';
 import '../services/live_software_decode.dart';
+import '../services/live_stall_guard.dart';
+import '../services/live_variant_fallback.dart';
 import '../widgets/video_surface_hole.dart';
 import '../services/live_tv_last_selection.dart';
 import '../services/settings_service.dart';
@@ -91,6 +94,7 @@ import '../services/sleep_timer_service.dart';
 import '../services/subtitle_preference.dart';
 import '../services/track_manager.dart';
 import '../services/track_selection_service.dart';
+import '../services/replay_captions.dart';
 import '../services/ambient_lighting_service.dart';
 import '../services/video_filter_manager.dart';
 import '../services/video_volume_controller.dart';
@@ -936,6 +940,22 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     debounce: const Duration(milliseconds: 300),
   );
 
+  /// Captions on replay (Plebz): after a short skip back, subtitles show until
+  /// the playhead is back where the skip started. Never touches what the viewer
+  /// saved; their own choices close the window (see [ReplayCaptions]).
+  bool _subtitlesHiddenByViewer = false;
+  late final ReplayCaptions _replayCaptions = ReplayCaptions(
+    enabled: () => SettingsService.instanceOrNull?.read(PlebzPrefs.replayCaptions) ?? false,
+    // A transcode burns its subtitle into the picture, and live TV has no
+    // track list worth borrowing from.
+    eligible: () => !widget.isLive && !_isTranscoding && !_shuttingDown && player != null,
+    subtitlesHiddenByViewer: () => _subtitlesHiddenByViewer,
+    currentSubtitleId: () => player?.state.track.subtitle?.id,
+    pickTrack: _pickReplayCaptionTrack,
+    selectTrack: (track) async => await player?.selectSubtitleTrack(track),
+    setVisibility: (visible) async => await player?.setProperty('sub-visibility', visible ? 'yes' : 'no'),
+  );
+
   // Spurious-EOF recovery (#1520): a long pause can get the server-side
   // stream reaped or the idle socket killed; on resume the player drains its
   // cache and signals a clean EOF mid-file. Recovery reloads in place,
@@ -1252,7 +1272,8 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
 
   /// Collapse every waiter armed for the current open: the attempt's outcome
   /// (frame-rate startup gate, sidecar guard), the track manager's pending
-  /// automatic selection, the 503 watchdog and the live decode guard.
+  /// automatic selection, the 503 watchdog and the live decode and copy
+  /// guards.
   /// Idempotent. Called from the terminal player-error branches, shutdown,
   /// and dispose — before the player closes its streams, so nothing waits on
   /// a `Stream.first` that can only die with them.
@@ -1261,6 +1282,8 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
     unawaited(_trackManager?.invalidatePendingSelection());
     _http503Watchdog.disarm();
     _liveDecodeGuard.disarm();
+    _liveVariantFallback.disarm();
+    _liveStallGuard.disarm();
   }
 
   Future<void> _playWithPlaybackIntent(Player currentPlayer) {
@@ -2774,6 +2797,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
 
     _liveSeek.dispose();
     _relativeSkip.dispose();
+    unawaited(_replayCaptions.dispose());
     _live.cancelClockOpens();
 
     _playNextCancelFocusNode.dispose();
@@ -3052,6 +3076,20 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
   /// the next live open and in [_abortCurrentOpen].
   final LiveSoftwareDecodeGuard _liveDecodeGuard = LiveSoftwareDecodeGuard();
 
+  /// Watches the open of a merged channel's copy for one that never shows a
+  /// frame, and moves on to the next copy (Plebz); see
+  /// [LiveVariantFallbackGuard]. Disarmed by the next live open and in
+  /// [_abortCurrentOpen].
+  final LiveVariantFallbackGuard _liveVariantFallback = LiveVariantFallbackGuard();
+
+  /// Watches the live stream for a picture that stands still while playing,
+  /// and reopens it (Plebz); see [LiveStallGuard]. Re-armed by every live
+  /// open, disarmed by a time-shift and in [_abortCurrentOpen].
+  final LiveStallGuard _liveStallGuard = LiveStallGuard();
+
+  /// Automatic reopens in a row; a zap or a press on Play refills it.
+  final LiveStallReopenBudget _liveStallBudget = LiveStallReopenBudget();
+
   // OS Media Controls Integration
 
   /// Navigate to a specific queue item (called from QueueSheet)
@@ -3095,6 +3133,7 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
   }
 
   Future<void> _onSubtitleTrackChanged(SubtitleTrack track, {int? sourceStreamId}) async {
+    _replayCaptions.onViewerChoice();
     _rememberNativeSubtitleSelection(track, sourceStreamId: sourceStreamId);
     await _trackManager?.onSubtitleTrackSelectedByUser(track, sourceStreamId: sourceStreamId);
   }

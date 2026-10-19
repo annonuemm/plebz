@@ -54,6 +54,7 @@ extension _PlexVideoControlsTrackMethods on _PlexVideoControlsState {
     _setControlsState(() {
       _subtitlesVisible = visible;
     });
+    widget.onSubtitleVisibilityChanged?.call(visible);
 
     unawaited(() async {
       try {

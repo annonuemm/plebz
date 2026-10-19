@@ -133,9 +133,13 @@ bool _hasWords(String folded, List<String> phrases) {
   return phrases.any((phrase) => padded.contains(' $phrase '));
 }
 
-/// The league [folded] names, if any: "3. Liga", "2. Bundesliga" (or
-/// "2. Liga"), or plain "Bundesliga".
+/// The league [folded] names, if any: a cup by its name, "3. Liga",
+/// "2. Bundesliga" (or "2. Liga"), or plain "Bundesliga".
 SportLeague? _leagueNamedIn(String folded) {
+  // Folded as [sportFold] folds them: "league" loses its "ue" to "u".
+  if (_hasWords(folded, const ['champions leagu'])) return SportLeague.championsLeague;
+  if (_hasWords(folded, const ['europa leagu'])) return SportLeague.europaLeague;
+  if (_hasWords(folded, const ['dfb pokal', 'dfbpokal'])) return SportLeague.dfbPokal;
   if (_hasWords(folded, const ['3 liga', 'dritte liga', '3 fussball liga'])) return SportLeague.liga3;
   if (_hasWords(folded, const ['2 bundesliga', 'zweite bundesliga', '2 liga'])) return SportLeague.bundesliga2;
   if (_hasWords(folded, const ['bundesliga'])) return SportLeague.bundesliga1;
@@ -146,7 +150,7 @@ SportLeague? _leagueNamedIn(String folded) {
 /// needs telling: both clubs named only in the description. Football, not
 /// sport and not "live": "Sky Sport News" and "Sportschau live" mention the
 /// pairing without showing it. A genre tag or a Bundesliga channel counts.
-const _footballHints = ['bundesliga', 'liga', 'fussball', 'football', 'soccer', 'konferenz'];
+const _footballHints = ['bundesliga', 'liga', 'leagu', 'pokal', 'fussball', 'football', 'soccer', 'konferenz'];
 
 String _titleText(LiveTvProgram program) =>
     sportFold([program.title, ?program.subtitle, ?program.grandparentTitle, ?program.parentTitle].join(' '));
@@ -280,6 +284,11 @@ final _dazn = RegExp(r'(^| )dazn[0-9]*( |$)');
 /// * DAZN — the Bundesliga's Saturday Konferenz and its Sundays.
 /// * MagentaSport — every game of the 3. Liga.
 ///
+/// The cups (Plebz), 2024/25 to 2026/27: the Champions League on DAZN, with
+/// one game a week on Prime Video; the Europa League's free game of the week
+/// on Nitro (the rest streams on RTL+, which a playlist does not carry); the
+/// DFB-Pokal complete on Sky.
+///
 /// A league, not a kickoff: the list offers every channel that may carry the
 /// game, not a guess at the one that will.
 Set<SportLeague> sportBroadcasterLeagues(String channelName) {
@@ -287,12 +296,14 @@ Set<SportLeague> sportBroadcasterLeagues(String channelName) {
   if (_hasWords(folded, _otherSports)) return const {};
   final compact = folded.replaceAll(' ', '');
   if (compact.contains('magentasport')) return const {SportLeague.liga3};
-  if (_dazn.hasMatch(folded)) return const {SportLeague.bundesliga1};
+  if (_dazn.hasMatch(folded)) return const {SportLeague.bundesliga1, SportLeague.championsLeague};
+  if (compact.contains('primevideo') || compact.contains('amazonprime')) return const {SportLeague.championsLeague};
+  if (_hasWords(folded, const ['nitro'])) return const {SportLeague.europaLeague};
   final sky = _hasWords(folded, const ['sky']) || compact.contains('skysport') || compact.contains('skybundesliga');
   if (sky &&
       !_hasWords(folded, const ['sports', 'news']) &&
       (_hasWords(folded, const ['bundesliga', 'top event', 'mix']) || compact.contains('topevent'))) {
-    return const {SportLeague.bundesliga1, SportLeague.bundesliga2};
+    return const {SportLeague.bundesliga1, SportLeague.bundesliga2, SportLeague.dfbPokal};
   }
   return const {};
 }
@@ -314,8 +325,9 @@ List<SportBroadcast> sportLeagueChannels({
   bool carries(String name) {
     final named = _leagueNamedIn(sportFold(name));
     if (named == null) return false;
-    if (league == SportLeague.liga3) return named == SportLeague.liga3;
-    return named != SportLeague.liga3;
+    // A cup's group names the cup; a Bundesliga group serves both Bundesligen.
+    if (!league.isDomestic || league == SportLeague.liga3) return named == league;
+    return named == SportLeague.bundesliga1 || named == SportLeague.bundesliga2;
   }
 
   final byGroup = channels.where((channel) => carries(channel.lineup ?? '')).toList();

@@ -14,8 +14,7 @@ import '../../services/settings_service.dart';
 import '../../utils/dialogs.dart';
 import '../../utils/live_tv_group_label.dart';
 import '../../utils/platform_detector.dart';
-import '../../widgets/app_icon.dart';
-import '../../widgets/bottom_sheet_header.dart';
+import '../../widgets/management_list.dart';
 import '../../widgets/overlay_sheet.dart';
 
 /// One group as the management list shows it.
@@ -100,87 +99,6 @@ List<LiveTvChannel> liveTvChannelsInGroup(List<LiveTvChannel> channels, String g
       (channel: inGroup[i], rank: ranks[liveTvLayoutChannelKey(inGroup[i])] ?? (order.length + i)),
   ]..sort((a, b) => a.rank.compareTo(b.rank));
   return [for (final entry in ranked) entry.channel];
-}
-
-/// Shared chrome: the TV dialog and the bottom sheet differ only in framing.
-class _ManagementScaffold extends StatelessWidget {
-  const _ManagementScaffold({
-    required this.isDialog,
-    required this.title,
-    required this.icon,
-    required this.listFocusNode,
-    required this.onKeyEvent,
-    required this.child,
-    this.onBack,
-    this.onClose,
-  });
-
-  final bool isDialog;
-  final String title;
-  final IconData icon;
-  final FocusNode listFocusNode;
-  final KeyEventResult Function(FocusNode, KeyEvent) onKeyEvent;
-  final Widget child;
-
-  /// Plebz: a group's channels, opened from the groups, lead back to them
-  /// with an arrow of their own; their close closes the whole of it.
-  final VoidCallback? onBack;
-  final VoidCallback? onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    final body = Focus(
-      focusNode: listFocusNode,
-      descendantsAreFocusable: false,
-      autofocus: InputModeTracker.isKeyboardMode(context),
-      onKeyEvent: onKeyEvent,
-      child: child,
-    );
-
-    if (isDialog) {
-      return Dialog(
-        child: PopScope(
-          canPop: false,
-          // ignore: no-empty-block - required callback, blocks system back on Android TV
-          onPopInvokedWithResult: (didPop, result) {},
-          child: Scaffold(
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              leading: onBack == null
-                  ? null
-                  : IconButton(
-                      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                      icon: const AppIcon(Symbols.arrow_back_rounded, fill: 1),
-                      onPressed: onBack,
-                    ),
-              title: Row(
-                children: [
-                  if (onBack == null) ...[AppIcon(icon, fill: 1), const SizedBox(width: 12)],
-                  Expanded(child: Text(title)),
-                ],
-              ),
-              actions: [
-                IconButton(
-                  tooltip: t.common.close,
-                  icon: const AppIcon(Symbols.close_rounded, fill: 1),
-                  onPressed: onClose ?? () => Navigator.pop(context),
-                ),
-              ],
-            ),
-            body: body,
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      mainAxisSize: .min,
-      children: [
-        BottomSheetHeader(title: title, icon: onBack == null ? icon : null, onBack: onBack, onClose: onClose),
-        Flexible(child: body),
-      ],
-    );
-  }
 }
 
 class _GroupManagementList extends StatefulWidget {
@@ -284,7 +202,7 @@ class _GroupManagementListState extends State<_GroupManagementList>
     final layout = context.watch<LiveTvChannelLayoutProvider>().layout;
     final isKeyboardMode = InputModeTracker.isKeyboardMode(context);
 
-    return _ManagementScaffold(
+    return ManagementScaffold(
       isDialog: widget.isDialog,
       title: t.liveTv.manageChannels,
       icon: Symbols.tune_rounded,
@@ -300,7 +218,7 @@ class _GroupManagementListState extends State<_GroupManagementList>
         itemBuilder: (context, index) {
           final group = _groups[index];
           final isFocused = isKeyboardMode && index == focusedIndex;
-          return _ManagementTile(
+          return ManagementTile(
             key: ValueKey(group.key),
             index: index,
             title: group.label,
@@ -312,6 +230,9 @@ class _GroupManagementListState extends State<_GroupManagementList>
             isFocused: isFocused,
             isMoving: index == movingIndex,
             focusedColumn: isFocused ? focusedColumn : null,
+            showTooltip: t.liveTv.showInGuide,
+            hideTooltip: t.liveTv.hideFromGuide,
+            openTooltip: t.liveTv.manageChannels,
             onToggleHidden: () => _toggleHidden(group),
             onOpen: () => unawaited(_openChannels(group)),
           );
@@ -410,7 +331,7 @@ class _ChannelManagementListState extends State<_ChannelManagementList>
     final layout = context.watch<LiveTvChannelLayoutProvider>().layout;
     final isKeyboardMode = InputModeTracker.isKeyboardMode(context);
 
-    return _ManagementScaffold(
+    return ManagementScaffold(
       isDialog: widget.isDialog,
       title: widget.groupKey.isEmpty
           ? t.liveTv.manageChannels
@@ -434,7 +355,7 @@ class _ChannelManagementListState extends State<_ChannelManagementList>
         itemBuilder: (context, index) {
           final channel = _channels[index];
           final isFocused = isKeyboardMode && index == focusedIndex;
-          return _ManagementTile(
+          return ManagementTile(
             key: ValueKey(liveTvLayoutChannelKey(channel)),
             index: index,
             // The name the viewer gave it, as everywhere else; the sheet lists
@@ -446,106 +367,11 @@ class _ChannelManagementListState extends State<_ChannelManagementList>
             isFocused: isFocused,
             isMoving: index == movingIndex,
             focusedColumn: isFocused ? focusedColumn : null,
+            showTooltip: t.liveTv.showInGuide,
+            hideTooltip: t.liveTv.hideFromGuide,
             onToggleHidden: () => _toggleHidden(channel),
           );
         },
-      ),
-    );
-  }
-}
-
-/// One reorderable row: drag handle, label, a visibility toggle and — for a
-/// group — a way into its channels.
-class _ManagementTile extends StatelessWidget {
-  const _ManagementTile({
-    super.key,
-    required this.index,
-    required this.title,
-    required this.subtitle,
-    required this.leadingIcon,
-    required this.isHidden,
-    required this.isFocused,
-    required this.isMoving,
-    required this.focusedColumn,
-    required this.onToggleHidden,
-    this.onOpen,
-  });
-
-  final int index;
-  final String title;
-  final String? subtitle;
-  final IconData leadingIcon;
-  final bool isHidden;
-  final bool isFocused;
-  final bool isMoving;
-  final int? focusedColumn;
-  final VoidCallback onToggleHidden;
-  final VoidCallback? onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final tileColor = dpadReorderRowColor(context, isMoving: isMoving, isRowFocused: isFocused && focusedColumn == 0);
-
-    return Opacity(
-      opacity: isHidden ? 0.5 : 1.0,
-      child: DpadReorderRowMark(
-        isMoving: isMoving,
-        isRowFocused: isFocused && focusedColumn == 0,
-        child: ListTile(
-          tileColor: tileColor,
-          onTap: onOpen,
-          title: Text(title, maxLines: 1, overflow: .ellipsis),
-          subtitle: subtitle == null ? null : Text(subtitle!, maxLines: 1, overflow: .ellipsis),
-          leading: Row(
-            mainAxisSize: .min,
-            children: [
-              // The grip's box takes in the gap after it and the row's height, so a
-              // finger has more than the glyph to land on; nothing moves on screen.
-              ReorderableDragStartListener(
-                index: index,
-                child: ColoredBox(
-                  color: Colors.transparent,
-                  child: SizedBox(
-                    width: 32,
-                    height: 48,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: AppIcon(
-                        isMoving ? Symbols.swap_vert_rounded : Symbols.drag_indicator_rounded,
-                        fill: 1,
-                        color: isMoving ? colorScheme.primary : IconTheme.of(context).color?.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              AppIcon(leadingIcon, fill: 1),
-            ],
-          ),
-          trailing: Row(
-            mainAxisSize: .min,
-            children: [
-              DpadReorderButtonFocus(
-                isFocused: isFocused && focusedColumn == 1,
-                child: IconButton(
-                  icon: AppIcon(isHidden ? Symbols.visibility_off_rounded : Symbols.visibility_rounded, fill: 1),
-                  tooltip: isHidden ? t.liveTv.showInGuide : t.liveTv.hideFromGuide,
-                  onPressed: onToggleHidden,
-                ),
-              ),
-              if (onOpen != null)
-                DpadReorderButtonFocus(
-                  isFocused: isFocused && focusedColumn == 2,
-                  child: IconButton(
-                    icon: const AppIcon(Symbols.chevron_right_rounded, fill: 1),
-                    tooltip: t.liveTv.manageChannels,
-                    onPressed: onOpen,
-                  ),
-                ),
-            ],
-          ),
-        ),
       ),
     );
   }

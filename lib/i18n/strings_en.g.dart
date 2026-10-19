@@ -1659,6 +1659,12 @@ class Translations$settings$en {
 	/// en: 'Rows and posters glide instead of jumping'
 	String get smoothScrollDescription => 'Rows and posters glide instead of jumping';
 
+	/// en: 'Seasonal start screen'
+	String get seasonalStartScreen => 'Seasonal start screen';
+
+	/// en: 'Halloween from 17 to 31 October, Christmas from 1 to 26 December.'
+	String get seasonalStartScreenDescription => 'Halloween from 17 to 31 October, Christmas from 1 to 26 December.';
+
 	/// en: 'Logos on Home and Explore'
 	String get homeTitleLogos => 'Logos on Home and Explore';
 
@@ -1880,6 +1886,12 @@ class Translations$settings$en {
 
 	/// en: 'For boxes that show them gray; subtitles then never sit in the bars.'
 	String get mpvOsdPictureOnlyDescription => 'For boxes that show them gray; subtitles then never sit in the bars.';
+
+	/// en: 'Captions on replay'
+	String get replayCaptions => 'Captions on replay';
+
+	/// en: 'Shows them after a skip back, until you are back at that spot.'
+	String get replayCaptionsDescription => 'Shows them after a skip back, until you are back at that spot.';
 
 	/// en: 'Layout'
 	String get layoutMode => 'Layout';
@@ -7173,6 +7185,45 @@ class Translations$sport$en {
 
 	/// en: 'Relegation'
 	String get zoneRelegation => 'Relegation';
+
+	/// en: 'Champions League'
+	String get championsLeague => 'Champions League';
+
+	/// en: 'Europa League'
+	String get europaLeague => 'Europa League';
+
+	/// en: 'DFB-Pokal'
+	String get dfbPokal => 'DFB-Pokal';
+
+	/// en: 'Manage leagues'
+	String get manageLeagues => 'Manage leagues';
+
+	/// en: 'Matches'
+	String get fixtures => 'Matches';
+
+	/// en: 'Show'
+	String get showLeague => 'Show';
+
+	/// en: 'Hide'
+	String get hideLeague => 'Hide';
+
+	/// en: 'Round of 16'
+	String get zoneRoundOf16 => 'Round of 16';
+
+	/// en: 'Play-offs'
+	String get zoneKnockoutPlayoff => 'Play-offs';
+
+	/// en: 'Eliminated'
+	String get zoneEliminated => 'Eliminated';
+
+	/// en: 'a.e.t.'
+	String get afterExtraTime => 'a.e.t.';
+
+	/// en: '${score} on pens'
+	String onPenalties({required Object score}) => '${score} on pens';
+
+	/// en: 'Results often arrive a day or two late'
+	String get europaLeagueLate => 'Results often arrive a day or two late';
 }
 
 // Path: plebz
@@ -10099,6 +10150,8 @@ extension on Translations {
 			'settings.glasRailSymbolsDescription' => 'The navigation stays visible on the left',
 			'settings.smoothScroll' => 'Smooth scrolling',
 			'settings.smoothScrollDescription' => 'Rows and posters glide instead of jumping',
+			'settings.seasonalStartScreen' => 'Seasonal start screen',
+			'settings.seasonalStartScreenDescription' => 'Halloween from 17 to 31 October, Christmas from 1 to 26 December.',
 			'settings.homeTitleLogos' => 'Logos on Home and Explore',
 			'settings.homeTitleLogosDescription' => 'Title logos instead of text in the spotlight',
 			'settings.seerrCardEpisodeFacts' => 'Episode facts on Seerr posters',
@@ -10199,6 +10252,8 @@ extension on Translations {
 			'settings.disableDolbyVisionDescription' => 'Plays HDR10, for TVs without Dolby Vision',
 			'settings.mpvOsdPictureOnly' => 'Keep HDR bars black',
 			'settings.mpvOsdPictureOnlyDescription' => 'For boxes that show them gray; subtitles then never sit in the bars.',
+			'settings.replayCaptions' => 'Captions on replay',
+			'settings.replayCaptionsDescription' => 'Shows them after a skip back, until you are back at that spot.',
 			'settings.layoutMode' => 'Layout',
 			'settings.layoutModeAuto' => 'Automatic',
 			'settings.layoutModeAutoDescription' => '',
@@ -10595,12 +10650,12 @@ extension on Translations {
 			'messages.logoutConfirm' => 'Are you sure you want to log out?',
 			'messages.noSeasonsFound' => 'No seasons found',
 			'messages.seasonsLoadFailed' => 'Couldn\'t load seasons',
+			_ => null,
+		} ?? switch (path) {
 			'messages.noEpisodesFound' => 'No episodes found in first season',
 			'messages.noEpisodesFoundGeneral' => 'No episodes found',
 			'messages.episodesLoadFailed' => 'Couldn\'t load episodes',
 			'messages.noResultsFound' => 'No results found',
-			_ => null,
-		} ?? switch (path) {
 			'messages.sleepTimerSet' => ({required Object label}) => 'Sleep timer set for ${label}',
 			'messages.noItemsAvailable' => 'No items available',
 			'messages.failedToCreatePlayQueueNoItems' => 'Failed to create a play queue — no items',
@@ -11109,12 +11164,12 @@ extension on Translations {
 			'explore.stats.votes' => ({required Object n}) => '${n} votes',
 			'explore.stats.watching' => ({required Object n}) => '${n} watching it',
 			'explore.stats.completed' => ({required Object n}) => '${n} completed',
+			_ => null,
+		} ?? switch (path) {
 			'explore.stats.onHold' => ({required Object n}) => '${n} on hold',
 			'explore.stats.dropped' => ({required Object n}) => '${n} dropped',
 			'explore.season.winter' => 'Winter',
 			'explore.season.spring' => 'Spring',
-			_ => null,
-		} ?? switch (path) {
 			'explore.season.summer' => 'Summer',
 			'explore.season.fall' => 'Fall',
 			'explore.season.withYear' => ({required Object season, required Object year}) => '${season} ${year}',
@@ -11623,12 +11678,12 @@ extension on Translations {
 			'companionRemote.session.hostAddress' => 'Host Address',
 			'companionRemote.session.connected' => 'Connected',
 			'companionRemote.session.serverRunning' => 'Remote server active',
+			_ => null,
+		} ?? switch (path) {
 			'companionRemote.session.serverStopped' => 'Remote server stopped',
 			'companionRemote.session.serverRunningDescription' => 'Mobile devices on your network can connect to this app',
 			'companionRemote.session.serverStoppedDescription' => 'Start the server to allow mobile devices to connect',
 			'companionRemote.session.usePhoneToControl' => 'Use your mobile device to control this app',
-			_ => null,
-		} ?? switch (path) {
 			'companionRemote.session.startServer' => 'Start Server',
 			'companionRemote.session.stopServer' => 'Stop Server',
 			'companionRemote.session.minimize' => 'Minimize',
@@ -12137,12 +12192,12 @@ extension on Translations {
 			'iptv.groupsAllLoaded' => 'All groups are loaded',
 			'iptv.groupsSummary' => ({required Object count}) => '${count} chosen',
 			'iptv.groupsLoading' => 'Loading groups …',
+			_ => null,
+		} ?? switch (path) {
 			'iptv.groupsLoadFailed' => 'The groups could not be loaded. Are the address and login right?',
 			'iptv.groupsTitle' => 'Choose groups',
 			'iptv.groupsChosenOf' => ({required Object chosen, required Object total}) => '${chosen} of ${total} chosen',
 			'iptv.groupsChosenWithChannels' => ({required Object chosen, required Object total, required Object channels}) => '${chosen} of ${total} chosen · ${channels} channels',
-			_ => null,
-		} ?? switch (path) {
 			'iptv.groupsApply' => 'Apply',
 			'iptv.groupsAll' => 'Choose all',
 			'iptv.groupsNone' => 'Choose none',
@@ -12230,6 +12285,19 @@ extension on Translations {
 			'sport.zonePromotion' => 'Promotion',
 			'sport.zonePlayoff' => 'Play-off',
 			'sport.zoneRelegation' => 'Relegation',
+			'sport.championsLeague' => 'Champions League',
+			'sport.europaLeague' => 'Europa League',
+			'sport.dfbPokal' => 'DFB-Pokal',
+			'sport.manageLeagues' => 'Manage leagues',
+			'sport.fixtures' => 'Matches',
+			'sport.showLeague' => 'Show',
+			'sport.hideLeague' => 'Hide',
+			'sport.zoneRoundOf16' => 'Round of 16',
+			'sport.zoneKnockoutPlayoff' => 'Play-offs',
+			'sport.zoneEliminated' => 'Eliminated',
+			'sport.afterExtraTime' => 'a.e.t.',
+			'sport.onPenalties' => ({required Object score}) => '${score} on pens',
+			'sport.europaLeagueLate' => 'Results often arrive a day or two late',
 			'plebz.settingsGroupLook' => 'Look and playback',
 			'plebz.settingsGroupContent' => 'Content',
 			'plebz.settingsGroupApp' => 'App',

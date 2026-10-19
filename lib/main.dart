@@ -42,10 +42,12 @@ import 'services/settings_service.dart';
 import 'services/agent_control_service.dart';
 import 'services/tmdb/tmdb_fill_in_service.dart';
 import 'widgets/plebz_start_animation.dart';
+import 'widgets/plebz_season_scene.dart';
 import 'widgets/agent_control_scope.dart';
 import 'widgets/settings_builder.dart';
 import 'utils/platform_detector.dart';
 import 'utils/plebz_device.dart';
+import 'utils/plebz_season.dart';
 import 'utils/pointer_scroll_axis.dart';
 import 'services/apple_tv_remote_touch_service.dart';
 import 'services/discord_rpc_service.dart';
@@ -1883,13 +1885,21 @@ class _SetupScreenState extends State<SetupScreen> with MountedSetStateMixin {
   final Map<String, (String name, bool? connected)> _serverStatus = {};
 
   final GlobalKey<PlebzStartAnimationState> _startAnimation = GlobalKey();
+  final GlobalKey<PlebzSeasonSceneState> _seasonScene = GlobalKey();
+
+  /// Plebz: Halloween or Christmas on the start screen, settled once.
+  final PlebzSeason? _season = plebzStartSeason();
+  bool _seasonLeaving = false;
 
   /// Plebz: the start animation finishes its entrance, then steps back, before
-  /// the app comes in.
+  /// the app comes in; the season's scene fades with it — at Halloween as
+  /// lightning strikes the logo.
   Future<void> _leaveStartAnimation() async {
     final animation = _startAnimation.currentState;
     if (animation == null) return;
     await animation.introDone;
+    await _seasonScene.currentState?.strike();
+    if (_season != null && mounted) setState(() => _seasonLeaving = true);
     await _startAnimation.currentState?.leave();
   }
 
@@ -2247,43 +2257,60 @@ class _SetupScreenState extends State<SetupScreen> with MountedSetStateMixin {
   Widget build(BuildContext context) {
     // Plebz: the start animation, on black whatever the theme — like the
     // launcher icon and the TV banner. Its sheen is the loading indicator.
+    final season = _season;
     return ColoredBox(
       color: Colors.black,
-      child: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final stacked = constraints.maxWidth < constraints.maxHeight;
-            final markHeight = (constraints.biggest.shortestSide * (stacked ? 0.24 : 0.2)).clamp(56.0, 160.0);
-            final logo = PlebzStartAnimation(
-              key: _startAnimation,
-              markHeight: markHeight,
-              stacked: stacked,
-              colours: plebzMarkColours(context),
-            );
-            final status = Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [_buildStatusText(context), const SizedBox(height: 12), _buildServerStatusList(context)],
-            );
-            final logoHeight = PlebzStartAnimation.heightFor(markHeight, stacked: stacked);
-            // Below the logo there must be room for a few server rows; a car
-            // at a large interface scale or a phone in landscape has less, so
-            // there the two stack and scroll.
-            if (constraints.maxHeight / 2 - logoHeight / 2 < 180) {
-              return Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [logo, const SizedBox(height: 32), status]),
-                ),
-              );
-            }
-            return Stack(
-              children: [
-                Center(child: logo),
-                Positioned(left: 0, right: 0, top: constraints.maxHeight / 2 + logoHeight / 2 + 48, child: status),
-              ],
-            );
-          },
-        ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (season != null)
+            AnimatedOpacity(
+              opacity: _seasonLeaving ? 0 : 1,
+              duration: PlebzStartAnimationState.leaveDuration,
+              curve: Curves.easeIn,
+              child: PlebzSeasonScene(key: _seasonScene, season: season),
+            ),
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final stacked = constraints.maxWidth < constraints.maxHeight;
+                final markHeight = (constraints.biggest.shortestSide * (stacked ? 0.24 : 0.2)).clamp(56.0, 160.0);
+                final logo = PlebzStartAnimation(
+                  key: _startAnimation,
+                  markHeight: markHeight,
+                  stacked: stacked,
+                  colours: plebzMarkColours(context),
+                  season: season,
+                );
+                final status = Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [_buildStatusText(context), const SizedBox(height: 12), _buildServerStatusList(context)],
+                );
+                final logoHeight = PlebzStartAnimation.heightFor(markHeight, stacked: stacked);
+                // Below the logo there must be room for a few server rows; a car
+                // at a large interface scale or a phone in landscape has less, so
+                // there the two stack and scroll.
+                if (constraints.maxHeight / 2 - logoHeight / 2 < 180) {
+                  return Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [logo, const SizedBox(height: 32), status],
+                      ),
+                    ),
+                  );
+                }
+                return Stack(
+                  children: [
+                    Center(child: logo),
+                    Positioned(left: 0, right: 0, top: constraints.maxHeight / 2 + logoHeight / 2 + 48, child: status),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

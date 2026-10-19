@@ -280,6 +280,40 @@ void main() {
     });
   }
 
+  testWidgets('a sheet floating in the middle is rounded all round, an anchored one only away from its edge', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    Future<BorderRadius> radiusFor(Alignment alignment) async {
+      final controller = await _pumpIdleHost(tester);
+      unawaited(
+        controller.show<void>(
+          alignment: alignment,
+          builder: (_) => const BottomSheetPageScaffold(title: 'Small', child: _FixedRowList(rowCount: 2)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      // The sheet's own Material: the one that carries its rounding.
+      final material = tester.widget<Material>(
+        find
+            .byWidgetPredicate(
+              (widget) => widget is Material && (widget.borderRadius != null || widget.shape is RoundedRectangleBorder),
+            )
+            .first,
+      );
+      return (material.borderRadius ?? (material.shape as RoundedRectangleBorder).borderRadius) as BorderRadius;
+    }
+
+    final middle = await radiusFor(Alignment.center);
+    expect(middle.bottomLeft, middle.topLeft, reason: 'the sport match window: no square corners');
+    expect(middle.topLeft, isNot(Radius.zero));
+    final bottom = await radiusFor(Alignment.bottomCenter);
+    expect((bottom.topLeft == Radius.zero, bottom.bottomLeft), (false, Radius.zero));
+  });
+
   testWidgets('popping back to a shorter page eases the sheet down', (tester) async {
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1.0;

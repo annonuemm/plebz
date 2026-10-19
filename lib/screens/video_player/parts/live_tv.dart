@@ -59,6 +59,7 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
   /// unless one is already in flight.
   Future<void> _retryLiveStreamForPlayIntent() {
     if (_shuttingDown || _live.retrying) return Future.value();
+    _liveStallBudget.reset();
     _live.retrying = true;
     return _retryLiveStream();
   }
@@ -296,9 +297,11 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     bool isCurrent() => _isCurrentPlaybackGeneration(generation, currentPlayer);
 
     CaptureBuffer? recoveredCaptureBuffer;
+    LiveTvPlaybackSession? switched;
     await runLiveStreamRetry<LiveTvPlaybackSession>(
       recover: () => session.switchVariant(index),
       lookupStreamUrl: (recovered) {
+        switched = recovered;
         recoveredCaptureBuffer = recovered.captureBuffer;
         return recovered.streamUrlAt();
       },
@@ -306,7 +309,13 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
       open: (streamUrl) async {
         _live.markStreamRestartedAtLiveEdge(recoveredCaptureBuffer);
         final targetEpoch = recoveredCaptureBuffer == null ? null : _live.streamStartEpoch.round();
-        await _openLiveStream(currentPlayer, streamUrl, targetEpoch: targetEpoch, applyOptions: false);
+        await _openLiveStream(
+          currentPlayer,
+          streamUrl,
+          targetEpoch: targetEpoch,
+          applyOptions: false,
+          session: switched,
+        );
       },
       isCurrent: isCurrent,
       currentSession: () => _live.session,
@@ -399,9 +408,11 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     // video outranks keeping subtitles — a failed burn re-apply drops them.
     MediaSubtitleTrack? recoveredSubtitle;
     CaptureBuffer? recoveredCaptureBuffer;
+    LiveTvPlaybackSession? recoveredSession;
     final result = await runLiveStreamRetry<LiveTvPlaybackSession>(
       recover: () => session.recover(directStream: ds, directStreamAudio: dsa),
       lookupStreamUrl: (recovered) async {
+        recoveredSession = recovered;
         recoveredCaptureBuffer = recovered.captureBuffer;
         recoveredSubtitle = LiveTvSessionState.remapSubtitleSelection(recovered.subtitleTracks, _live.selectedSubtitle);
         if (recoveredSubtitle != null) {
@@ -416,7 +427,13 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
       open: (streamUrl) async {
         _live.markStreamRestartedAtLiveEdge(recoveredCaptureBuffer);
         final targetEpoch = recoveredCaptureBuffer == null ? null : _live.streamStartEpoch.round();
-        await _openLiveStream(currentPlayer, streamUrl, targetEpoch: targetEpoch, applyOptions: false);
+        await _openLiveStream(
+          currentPlayer,
+          streamUrl,
+          targetEpoch: targetEpoch,
+          applyOptions: false,
+          session: recoveredSession,
+        );
       },
       isCurrent: isCurrent,
       adoptSession: (recovered) {
@@ -480,6 +497,111 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     _liveDecodeGuard.armForOpen(player, onStuck: (channel) => unawaited(_reopenLiveInSoftware(player, channel)));
   }
 
+  /// Right before a live open: watch a merged channel's copy for one that
+  /// never shows a frame or plays an off-air clip, and move on to the next
+  /// copy (Plebz). Only at the live edge — an archive is reached through a
+  /// copy of its own, and is a file with a length.
+  void _armLiveVariantFallback(Player player, LiveTvPlaybackSession? session, {required bool timeShifted}) {
+    if (timeShifted || session == null) {
+      _liveVariantFallback.disarm();
+      return;
+    }
+    final stream = _live.streamGeneration;
+    _liveVariantFallback.armForOpen(
+      player,
+      session,
+      onStuck: (next) => _moveToNextLiveVariant(player, session, next, stream),
+    );
+  }
+
+  /// The copy [session] opened is not the channel ([LiveVariantFallbackGuard]):
+  /// play it over copy [next] instead. The open's own start or zap may not
+  /// have adopted [session] yet, so a moment is given for that; any newer
+  /// open replaced the stream and settles this.
+  void _moveToNextLiveVariant(
+    Player currentPlayer,
+    LiveTvPlaybackSession session,
+    int next,
+    int stream, {
+    int wait = 0,
+  }) {
+    if (!mounted || _shuttingDown || _isExiting.value || player != currentPlayer) return;
+    if (_live.streamGeneration != stream || _hasFatalPlaybackError) return;
+    if (!identical(_live.session, session) || _transitionGate.transition != PlaybackTransition.idle) {
+      if (wait >= 5) return;
+      Timer(
+        const Duration(seconds: 1),
+        () => _moveToNextLiveVariant(currentPlayer, session, next, stream, wait: wait + 1),
+      );
+      return;
+    }
+    unawaited(_switchLiveVariant(next));
+  }
+
+  /// Right before a live open: watch the stream for a picture that stands
+  /// still while playing, and reopen it (Plebz). Not a time-shifted open —
+  /// an archive is a file that really ends.
+  void _armLiveStallGuard(Player player, {required bool timeShifted}) {
+    if (timeShifted) {
+      _liveStallGuard.disarm();
+      return;
+    }
+    final stream = _live.streamGeneration;
+    _liveStallGuard.armForOpen(
+      player,
+      playing: player.state.playing,
+      onStalled: (why) => unawaited(_onLiveStalled(player, stream, why)),
+    );
+  }
+
+  /// The live stream [stream] stopped coming ([LiveStallGuard]). A playlist
+  /// channel is opened again on the same copy, as a zap away and back would;
+  /// a server's channel goes through its own recovery, which re-tunes it. A
+  /// channel that keeps stopping is left to the viewer after
+  /// [maxLiveStallReopens] tries: Play tries again.
+  Future<void> _onLiveStalled(Player currentPlayer, int stream, String why) async {
+    if (!mounted || _shuttingDown || _isExiting.value || player != currentPlayer) return;
+    if (_live.streamGeneration != stream || _hasFatalPlaybackError || _live.retrying) return;
+    final session = _live.session;
+    // A transition in flight opens a stream of its own, which is watched anew.
+    if (session == null || _transitionGate.transition != PlaybackTransition.idle) return;
+    if (!_liveStallBudget.take(DateTime.now())) {
+      appLogger.w('Live TV: stream $why again — leaving it to the viewer');
+      _live.retryFailed = true;
+      showGlobalErrorSnackBar(t.messages.liveStreamInterrupted);
+      return;
+    }
+    appLogger.w('Live TV: stream $why — reopening');
+    if (session is! IptvPlaybackSession) {
+      _live.retrying = true;
+      await _retryLiveStream();
+      return;
+    }
+    final channel = _currentLiveChannel;
+    final lease = _transitionGate.tryAcquire(PlaybackTransition.recoveringLive);
+    if (lease == null) return;
+    final generation = _transitionGate.generation;
+    bool isCurrent() =>
+        _isCurrentPlaybackGeneration(generation, currentPlayer) &&
+        _transitionGate.owns(lease, expected: PlaybackTransition.recoveringLive) &&
+        identical(_live.session, session);
+    try {
+      final streamUrl = await session.streamUrlAt();
+      if (streamUrl == null || !isCurrent()) return;
+      _live.markStreamRestartedAtLiveEdge(session.captureBuffer);
+      await _openLiveStream(
+        currentPlayer,
+        streamUrl,
+        targetEpoch: session.captureBuffer == null ? null : _live.streamStartEpoch.round(),
+        channel: channel,
+      );
+    } catch (e, stackTrace) {
+      appLogger.w('Live TV: reopening the stalled stream failed', error: e, stackTrace: stackTrace);
+    } finally {
+      _transitionGate.release(lease);
+    }
+  }
+
   /// The hardware decoder took [channel]'s stream and showed nothing
   /// ([LiveSoftwareDecodeGuard]): remember the channel on this device and open
   /// the same session's stream again, which now decodes in software. A zap or
@@ -537,13 +659,18 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
   }) async {
     if (_shuttingDown || !_launchCurrent) return false;
     _live.streamGeneration++;
-    final media = Media(streamUrl, headers: _liveMediaHeaders(_live.session));
+    // The session this stream belongs to: a zap, a recovery and a copy switch
+    // adopt theirs only after the open, and the headers are that copy's own.
+    final openSession = session ?? _live.session;
+    final media = Media(streamUrl, headers: _liveMediaHeaders(openSession));
     final playNow = play ?? automotivePlaybackAllowedNow();
     if (targetEpoch == null || player is! PlayerNative) {
       if (applyOptions) await _setLiveStreamOptions(player, session: session, channel: channel);
       if (_shuttingDown || !_launchCurrent) return false;
       onOpenStarted?.call();
       _armLiveDecodeGuard(player, timeShifted: timeShifted);
+      _armLiveVariantFallback(player, openSession, timeShifted: timeShifted);
+      _armLiveStallGuard(player, timeShifted: timeShifted);
       await player.open(media, play: playNow, isLive: true);
       return true;
     }
@@ -556,6 +683,8 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
       if (_shuttingDown || !_launchCurrent) return false;
       onOpenStarted?.call();
       _armLiveDecodeGuard(player, timeShifted: timeShifted);
+      _armLiveVariantFallback(player, openSession, timeShifted: timeShifted);
+      _armLiveStallGuard(player, timeShifted: timeShifted);
       sourceId = await player.open(media, play: playNow, isLive: true, startLivePlaylistFromBeginning: timeShifted);
     } catch (_) {
       _live.failClockOpen(clockGeneration);
@@ -871,6 +1000,7 @@ extension _VideoPlayerLiveTvMethods on VideoPlayerScreenState {
     if (newIndex < 0 || newIndex >= channels.length) return;
     final currentPlayer = player;
     if (currentPlayer == null) return;
+    _liveStallBudget.reset();
 
     // Zapping away from a failing channel must not wait out its recovery (a
     // re-tune can take the whole tune budget): the zap replaces that stream,

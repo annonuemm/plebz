@@ -17,12 +17,12 @@ import '../providers/catalog_sources_provider.dart';
 import '../providers/discover_provider.dart';
 import '../providers/multi_server_provider.dart';
 import '../screens/live_now/live_now_loader.dart';
-import '../screens/live_now/live_now_tile.dart' show liveNowLeagueName;
 import '../theme/mono_tokens.dart';
 import '../utils/app_logger.dart';
 import 'catalog/catalog_source.dart';
 import 'home_rows.dart';
 import 'plex_client.dart';
+import 'sport/sport_league_names.dart';
 import 'sport/sport_models.dart';
 import 'sport/sport_repository.dart';
 import 'settings_service.dart';
@@ -101,14 +101,18 @@ class HomeRowsFeed {
     try {
       final favourite = SettingsService.instanceOrNull?.read(PlebzPrefs.sportFavouriteClub);
       final now = DateTime.now();
+      final visible = visibleSportLeagues();
       for (final league in SportLeague.values) {
+        if (!visible.contains(league)) rows.publish(HomeRows.sportRow(league), sportLeagueName(league), const []);
+      }
+      for (final league in visible) {
         final current = await sport.current(league);
         if (_disposed) return;
         if (current == null) continue;
         final matches = [...current.matches]..sort((a, b) => a.kickoff.compareTo(b.kickoff));
         rows.publish(
           HomeRows.sportRow(league),
-          liveNowLeagueName(league),
+          sportLeagueName(league),
           [for (final match in matches) homeRowTileForMatch(match, now: now)],
           subtitle: homeRowsMatchdayLine(current.matchday, matches),
           selected:

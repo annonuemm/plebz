@@ -89,6 +89,87 @@ void main() {
     );
   });
 
+  test('Plex reads a large library in pages, not in one listing', () async {
+    final pages = <String>[];
+    final client = testPlexClient(
+      handler: (request) async {
+        final query = request.url.queryParameters;
+        if (request.url.path == '/library/sections') {
+          return _json({
+            'MediaContainer': {
+              'Directory': [
+                {'key': '1', 'type': 'movie', 'title': 'Filme'},
+              ],
+            },
+          });
+        }
+        final start = int.parse(query['X-Plex-Container-Start']!);
+        final size = int.parse(query['X-Plex-Container-Size']!);
+        pages.add('$start+$size');
+        const total = 1203;
+        final end = start + size > total ? total : start + size;
+        return _json({
+          'MediaContainer': {
+            'totalSize': total,
+            'Metadata': [
+              for (var i = start; i < end; i++)
+                {
+                  'ratingKey': '$i',
+                  'Guid': [
+                    {'id': 'tmdb://${1000 + i}'},
+                  ],
+                },
+            ],
+          },
+        });
+      },
+    );
+    addTearDown(client.close);
+
+    final index = await client.fetchExternalIdIndex();
+
+    expect(index, hasLength(1203));
+    expect(index['1202']!.tmdb, 2202);
+    expect(pages, ['0+500', '500+500', '1000+500']);
+  });
+
+  test('Plex stops at once when a server answers the whole library despite the paging', () async {
+    var listings = 0;
+    final client = testPlexClient(
+      handler: (request) async {
+        if (request.url.path == '/library/sections') {
+          return _json({
+            'MediaContainer': {
+              'Directory': [
+                {'key': '1', 'type': 'movie', 'title': 'Filme'},
+              ],
+            },
+          });
+        }
+        listings++;
+        return _json({
+          'MediaContainer': {
+            'Metadata': [
+              for (var i = 0; i < 700; i++)
+                {
+                  'ratingKey': '$i',
+                  'Guid': [
+                    {'id': 'tmdb://${1000 + i}'},
+                  ],
+                },
+            ],
+          },
+        });
+      },
+    );
+    addTearDown(client.close);
+
+    final index = await client.fetchExternalIdIndex();
+
+    expect(index, hasLength(700));
+    expect(listings, 1);
+  });
+
   test('Jellyfin names every film and series by its provider ids in one request', () async {
     final asked = <Uri>[];
     final client = testJellyfinClient(

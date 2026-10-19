@@ -18,6 +18,7 @@ import '../../services/settings_service.dart';
 import '../../services/sport/club_colours.dart';
 import '../../services/sport/sport_broadcast_matching.dart';
 import '../../services/sport/sport_crest_fallback.dart';
+import '../../services/sport/sport_league_names.dart';
 import '../../services/sport/sport_models.dart';
 import '../../services/sport/sport_repository.dart';
 import '../../theme/mono_tokens.dart';
@@ -113,7 +114,17 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
   /// already left cannot overwrite the one they moved to.
   int _generation = 0;
 
+  /// A European cup's 36 clubs need the page's width (Plebz): its table is a
+  /// view of its own, two columns side by side, which the bar switches to.
+  bool _showTable = false;
+
+  bool get _tableIsView => widget.league.hasTable && !widget.league.isDomestic;
+
+  /// The table beside or under the fixtures — a German league's.
+  bool get _tableBeside => widget.league.hasTable && widget.league.isDomestic;
+
   Timer? _liveTimer;
+  final _viewToggleNode = FocusNode(debugLabel: 'sport_view_toggle');
   final _matchdayNode = FocusNode(debugLabel: 'sport_matchday');
   final _previousNode = FocusNode(debugLabel: 'sport_matchday_previous');
   final _nextNode = FocusNode(debugLabel: 'sport_matchday_next');
@@ -138,6 +149,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
   @override
   void dispose() {
     _liveTimer?.cancel();
+    _viewToggleNode.dispose();
     _matchdayNode.dispose();
     _previousNode.dispose();
     _nextNode.dispose();
@@ -387,6 +399,9 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
           final wide =
               constraints.maxWidth >= 720 &&
               (look.ocker || !PlatformDetector.isMobile(context) || constraints.maxHeight >= 480);
+          // A cup (Plebz): its fixtures take the page's width — a European
+          // cup's table is a view of its own, the DFB-Pokal has none.
+          if (!_tableBeside) return _buildCupPage(look, constraints, wide: wide);
           if (!wide) {
             final bar = _buildMatchdayBar(look, compact: _isCompactBar(look, constraints.maxWidth));
             return Column(
@@ -470,6 +485,39 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     );
   }
 
+  /// A cup's page (Plebz): the bar, and under it the round's fixtures or —
+  /// for a European cup, switched in the bar — its table in two columns.
+  Widget _buildCupPage(SportLook look, BoxConstraints constraints, {required bool wide}) {
+    final bar = _buildMatchdayBar(look, compact: _isCompactBar(look, constraints.maxWidth));
+    final Widget body;
+    if (_showTable && _tableIsView) {
+      final twoColumns = constraints.maxWidth >= 760 * (look.ocker ? look.scale : 1);
+      final table = _SportTable(
+        rows: _table,
+        look: look,
+        highlight: const {},
+        league: widget.league,
+        fitHeight: wide,
+        splitAt: twoColumns ? (_table.length + 1) ~/ 2 : null,
+      );
+      body = wide ? table : SingleChildScrollView(padding: _listPadding(context), child: table);
+    } else {
+      body = _dayLoading || _matches.isEmpty
+          ? _buildFixturesPlaceholder(look)
+          : ListView(
+              padding: _listPadding(context),
+              children: _matchItems(look, compact: _isCompact(look, constraints.maxWidth)),
+            );
+    }
+    return Column(
+      children: [
+        bar,
+        SizedBox(height: look.gap),
+        Expanded(child: body),
+      ],
+    );
+  }
+
   Set<int> get _highlightedTeams {
     final match = _focusedMatch;
     return match == null ? const {} : {match.home.id, match.away.id};
@@ -522,6 +570,15 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     );
   }
 
+  /// What matchday [order] is called: "Spieltag 4", or a cup round's own name
+  /// ("Achtelfinale Hinspiele").
+  String _label(int order) {
+    final name =
+        _matchdays.where((day) => day.order == order).firstOrNull?.name ??
+        _matches.where((match) => match.matchday.order == order).firstOrNull?.matchday.name;
+    return sportMatchdayLabel(widget.league, order, name: name);
+  }
+
   /// "Fr., 9. Okt. – So., 11. Okt." — the days the matchday on show is played
   /// on, read off its fixtures. Null while they are loading.
   String? _dateRange(String locale) {
@@ -555,7 +612,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
             node: _previousNode,
             icon: Symbols.chevron_left_rounded,
             target: previous,
-            label: previous == null ? null : t.sport.matchday(n: previous),
+            label: previous == null ? null : _label(previous),
             onNavigateLeft: widget.onExitLeft ?? () {},
             onNavigateRight: _matchdayNode.requestFocus,
           ),
@@ -565,10 +622,11 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
             node: _nextNode,
             icon: Symbols.chevron_right_rounded,
             target: next,
-            label: next == null ? null : t.sport.matchday(n: next),
+            label: next == null ? null : _label(next),
             onNavigateLeft: _matchdayNode.requestFocus,
-            onNavigateRight: () {},
+            onNavigateRight: _tableIsView ? _viewToggleNode.requestFocus : () {},
           ),
+          if (_tableIsView) ...[SizedBox(width: 8 * look.scale), _buildViewToggle(look)],
         ],
       ),
     );
@@ -609,7 +667,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
             node: _previousNode,
             icon: Symbols.chevron_left_rounded,
             target: previous,
-            label: previous == null ? null : t.sport.matchday(n: previous),
+            label: previous == null ? null : _label(previous),
             onNavigateLeft: _matchdayNode.requestFocus,
             onNavigateRight: _nextNode.requestFocus,
           ),
@@ -620,11 +678,63 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
             node: _nextNode,
             icon: Symbols.chevron_right_rounded,
             target: next,
-            label: next == null ? null : t.sport.matchday(n: next),
+            label: next == null ? null : _label(next),
             onNavigateLeft: _previousNode.requestFocus,
-            onNavigateRight: () {},
+            onNavigateRight: _tableIsView ? _viewToggleNode.requestFocus : () {},
           ),
+          if (_tableIsView) ...[
+            SizedBox(width: (compact ? 8 : 10) * look.scale),
+            _buildViewToggle(look, compact: compact),
+          ],
         ],
+      ),
+    );
+  }
+
+  /// "Tabelle" over the fixtures, "Spiele" over the table (Plebz): a European
+  /// cup's two views, at the bar's right end. Shaped like the arrows beside
+  /// it — a plain plate in the standard look and Glas, a round-ended button
+  /// on Flach.
+  Widget _buildViewToggle(SportLook look, {bool compact = false}) {
+    final height = (compact ? 44 : (look.flat ? 54 : (look.ocker ? 64 : 48))) * look.scale;
+    final label = _showTable ? t.sport.fixtures : t.sport.table;
+    void toggle() => setState(() => _showTable = !_showTable);
+    return FocusableWrapper(
+      focusNode: _viewToggleNode,
+      borderRadius: look.flat ? height / 2 : look.tk.radiusSm,
+      useBackgroundFocus: true,
+      glassFocus: true,
+      semanticLabel: label,
+      onSelect: toggle,
+      onNavigateLeft: _nextNode.requestFocus,
+      onNavigateRight: () {},
+      onNavigateUp: widget.onExitUp,
+      onNavigateDown: _showTable ? () {} : _focusFirstMatch,
+      child: SportTap(
+        onTap: toggle,
+        child: Container(
+          height: height,
+          padding: EdgeInsets.symmetric(horizontal: (compact ? 14 : 20) * look.scale),
+          decoration: BoxDecoration(
+            color: look.flat ? look.ink(0.06) : null,
+            borderRadius: BorderRadius.circular(look.flat ? height / 2 : look.tk.radiusSm),
+          ),
+          child: Row(
+            mainAxisSize: .min,
+            children: [
+              AppIcon(
+                _showTable ? Symbols.sports_soccer_rounded : Symbols.table_rows_rounded,
+                size: height * (look.flat ? 0.4 : 0.42),
+                color: look.ink(0.85),
+              ),
+              SizedBox(width: 8 * look.scale),
+              Text(
+                label,
+                style: look.time.copyWith(color: look.ink(0.9), fontWeight: .w600),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -678,7 +788,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
   /// the header draws beside a destination that opens a list.
   Widget _buildMatchdayButton(SportLook look, {bool compact = false}) {
     final selected = _selected;
-    final label = selected == null ? '' : t.sport.matchday(n: selected);
+    final label = selected == null ? '' : _label(selected);
     final style = look.matchdayChip(current: true).copyWith(color: look.ink(1));
     final dates = _dateRange(LocaleSettings.currentLocale.intlLocaleName);
     final isCurrent = selected != null && selected == _currentMatchday;
@@ -847,7 +957,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
         for (final day in _matchdays)
           AppMenuItem<int>(
             value: day.order,
-            label: t.sport.matchday(n: day.order),
+            label: sportMatchdayLabel(widget.league, day.order, name: day.name),
             subtitle: day.order == _currentMatchday ? t.sport.current : null,
             selected: day.order == _selected,
           ),
@@ -927,8 +1037,11 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     // Both redesigns (Plebz): the line as a scoreboard — the clubs' colours at
     // its two ends, the score on a board of its own, a game on now lit up.
     final board = look.flat;
-    final homeWon = score != null && match.isFinished && score.home > score.away;
-    final awayWon = score != null && match.isFinished && score.away > score.home;
+    // A tie level after extra time is decided by its shoot-out.
+    final decider = match.penalties ?? score;
+    final homeWon = decider != null && match.isFinished && decider.home > decider.away;
+    final awayWon = decider != null && match.isFinished && decider.away > decider.home;
+    final note = sportScoreNote(match);
     // A phone's line under the redesigns (Plebz, the viewer's pick): the two
     // clubs one above the other, each with its colour, crest, full name and
     // goals — side by side a phone left their names a few letters each.
@@ -1021,7 +1134,27 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
                           // inverted, and the accent came out as its complement. In
                           // ink there, the score turns dark like the names beside it.
                           child: board
-                              ? _ScoreBoard(score: score, live: live, look: look)
+                              ? _ScoreBoard(score: score, live: live, look: look, note: note)
+                              : note != null
+                              ? FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Column(
+                                    mainAxisSize: .min,
+                                    children: [
+                                      Text(
+                                        '${score!.home} : ${score.away}',
+                                        style: look.score(strong: true).copyWith(color: look.ink(1)),
+                                      ),
+                                      Text(
+                                        note,
+                                        style: look.time.copyWith(
+                                          color: look.ink(0.55),
+                                          fontSize: look.time.fontSize! * 0.8,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
                               : Builder(
                                   builder: (context) => Text(
                                     score == null ? '–:–' : '${score.home} : ${score.away}',
@@ -1321,12 +1454,24 @@ class _ClubEdge extends StatelessWidget {
 /// black, in the live colour while the game is on, faint before it starts.
 /// Its own colours on Flach's white focus fill as well — a scoreboard stays
 /// one.
+/// How a cup tie was decided, under its score (Plebz): "n. V." after extra
+/// time, "4:3 i. E." after a shoot-out; null for anything else.
+String? sportScoreNote(SportMatch match) {
+  final penalties = match.penalties;
+  if (penalties != null) return t.sport.onPenalties(score: '${penalties.home}:${penalties.away}');
+  if (match.afterExtraTime && match.isFinished) return t.sport.afterExtraTime;
+  return null;
+}
+
 class _ScoreBoard extends StatelessWidget {
-  const _ScoreBoard({required this.score, required this.live, required this.look});
+  const _ScoreBoard({required this.score, required this.live, required this.look, this.note});
 
   final SportScore? score;
   final bool live;
   final SportLook look;
+
+  /// How a cup tie was decided ([sportScoreNote]).
+  final String? note;
 
   @override
   Widget build(BuildContext context) {
@@ -1341,11 +1486,25 @@ class _ScoreBoard extends StatelessWidget {
             border: Border.all(color: live ? look.live : Colors.white.withValues(alpha: 0.14)),
             borderRadius: BorderRadius.circular(8 * look.scale),
           ),
-          child: Text(
-            score == null ? '–:–' : '${score.home} : ${score.away}',
-            style: look
-                .score(strong: score != null)
-                .copyWith(color: live ? look.live : Colors.white.withValues(alpha: score == null ? 0.4 : 1)),
+          child: Column(
+            mainAxisSize: .min,
+            children: [
+              Text(
+                score == null ? '–:–' : '${score.home} : ${score.away}',
+                style: look
+                    .score(strong: score != null)
+                    .copyWith(color: live ? look.live : Colors.white.withValues(alpha: score == null ? 0.4 : 1)),
+              ),
+              if (note != null)
+                Text(
+                  note!,
+                  style: look.time.copyWith(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    fontSize: look.time.fontSize! * 0.75,
+                    height: 1.1,
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -1581,12 +1740,17 @@ class _SportTable extends StatelessWidget {
   /// Which league, for where its table's zones fall.
   final SportLeague league;
 
+  /// Where a long table breaks into a second column beside the first
+  /// (Plebz: a European cup's 36 clubs on a page of their own); null for one.
+  final int? splitAt;
+
   const _SportTable({
     required this.rows,
     required this.look,
     required this.highlight,
     required this.league,
     this.fitHeight = false,
+    this.splitAt,
   });
 
   @override
@@ -1634,6 +1798,11 @@ class _SportTable extends StatelessWidget {
       SportLeague.bundesliga2 => (2, 3, 3),
       // Promotion, the play-off; the drop.
       SportLeague.liga3 => (2, 3, 4),
+      // The league phase (Plebz): the round of sixteen, the knock-out
+      // play-offs, out.
+      SportLeague.championsLeague || SportLeague.europaLeague => (8, 24, count - 24),
+      // Knock-out only; it has no table.
+      SportLeague.dfbPokal => (0, 0, 0),
     };
     if (position <= top) return 0;
     if (position <= next) return 1;
@@ -1647,9 +1816,14 @@ class _SportTable extends StatelessWidget {
     _ => const Color(0xFFD9534F),
   };
 
-  String _zoneLabel(int zone) => switch (zone) {
-    0 => league == SportLeague.bundesliga1 ? t.sport.zoneChampionsLeague : t.sport.zonePromotion,
-    1 => league == SportLeague.bundesliga1 ? t.sport.zoneEurope : t.sport.zonePlayoff,
+  String _zoneLabel(int zone) => switch ((league, zone)) {
+    (SportLeague.championsLeague || SportLeague.europaLeague, 0) => t.sport.zoneRoundOf16,
+    (SportLeague.championsLeague || SportLeague.europaLeague, 1) => t.sport.zoneKnockoutPlayoff,
+    (SportLeague.championsLeague || SportLeague.europaLeague, _) => t.sport.zoneEliminated,
+    (SportLeague.bundesliga1, 0) => t.sport.zoneChampionsLeague,
+    (SportLeague.bundesliga1, 1) => t.sport.zoneEurope,
+    (_, 0) => t.sport.zonePromotion,
+    (_, 1) => t.sport.zonePlayoff,
     _ => t.sport.zoneRelegation,
   };
 
@@ -1698,12 +1872,7 @@ class _SportTable extends StatelessWidget {
     if (!fitHeight) {
       return Column(
         crossAxisAlignment: .start,
-        children: [
-          heading,
-          _headerRow(),
-          for (final row in rows) _row(row, (look.ocker ? 40 : 30) * look.scale),
-          if (look.flat) _legend(),
-        ],
+        children: [heading, _columns((look.ocker ? 40 : 30) * look.scale, natural: true), if (look.flat) _legend()],
       );
     }
     return LayoutBuilder(
@@ -1711,20 +1880,35 @@ class _SportTable extends StatelessWidget {
         final headingHeight = look.heading.fontSize! * 1.4 + look.gap / 2;
         final legendHeight = look.flat ? _legendStyle.fontSize! * 1.4 + look.gap * 0.6 : 0.0;
         final available = constraints.maxHeight - headingHeight - legendHeight;
-        final rowHeight = (available / (rows.length + 1)).clamp(18.0 * look.scale, (look.ocker ? 44 : 34) * look.scale);
+        final perColumn = splitAt == null ? rows.length : splitAt!.clamp(0, rows.length);
+        final rowHeight = (available / (perColumn + 1)).clamp(18.0 * look.scale, (look.ocker ? 44 : 34) * look.scale);
         return SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: .start,
-            children: [
-              heading,
-              _headerRow(height: rowHeight),
-              for (final row in rows) _row(row, rowHeight),
-              if (look.flat) _legend(),
-            ],
-          ),
+          child: Column(crossAxisAlignment: .start, children: [heading, _columns(rowHeight), if (look.flat) _legend()]),
         );
       },
+    );
+  }
+
+  /// The header and the rows: one column, or two side by side from
+  /// [splitAt] on, each under a header of its own.
+  Widget _columns(double rowHeight, {bool natural = false}) {
+    Widget column(List<SportTableRow> part) => Column(
+      crossAxisAlignment: .start,
+      children: [
+        _headerRow(height: natural ? null : rowHeight),
+        for (final row in part) _row(row, rowHeight),
+      ],
+    );
+    final split = splitAt;
+    if (split == null || split >= rows.length) return column(rows);
+    return Row(
+      crossAxisAlignment: .start,
+      children: [
+        Expanded(child: column(rows.sublist(0, split))),
+        SizedBox(width: look.gap * 2),
+        Expanded(child: column(rows.sublist(split))),
+      ],
     );
   }
 

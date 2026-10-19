@@ -23,6 +23,7 @@ extension _VideoPlayerCompanionRemoteMethods on VideoPlayerScreenState {
   /// that lands on Off has to be recorded here or the next episode inherits
   /// the choice this one started with.
   void _cycleSubtitleTrackNatively() {
+    _replayCaptions.onViewerChoice();
     final cycled = _trackManager?.cycleSubtitleTrack();
     if (cycled != null) _rememberNativeSubtitleSelection(cycled);
   }

@@ -756,9 +756,16 @@ class _OverlaySheetHostState extends State<OverlaySheetHost> with SingleTickerPr
     // hit testing never depends on the sheet child's just-invalidated layout.
     final slideDirection = isTop ? -1.0 : 1.0;
     final slideDistance = size.height;
-    final borderRadius = isTop
-        ? BorderRadius.vertical(bottom: Radius.circular(flatRadius(context, 16)))
-        : BorderRadius.vertical(top: Radius.circular(flatRadius(context, 16)));
+    // Plebz: a sheet floating in the middle (the sport match window, the
+    // detail's info) is rounded all round; one anchored to an edge stays
+    // square along that edge.
+    final radius = Radius.circular(flatRadius(context, 16));
+    final floating = _alignment.y > -1 && _alignment.y < 1;
+    final borderRadius = floating
+        ? BorderRadius.all(radius)
+        : isTop
+        ? BorderRadius.vertical(bottom: radius)
+        : BorderRadius.vertical(top: radius);
 
     final colorScheme = Theme.of(context).colorScheme;
     // The redesign separates with a hairline rather than with a box, and a

@@ -186,6 +186,13 @@ class AppearanceSettingsScreen extends StatelessWidget {
                 title: t.settings.smoothScroll,
                 subtitle: t.settings.smoothScrollDescription,
               ),
+            // Plebz: Halloween and Christmas on the start screen, every device.
+            SettingSwitchTile(
+              pref: PlebzPrefs.seasonalStartScreen,
+              icon: Symbols.celebration_rounded,
+              title: t.settings.seasonalStartScreen,
+              subtitle: t.settings.seasonalStartScreenDescription,
+            ),
             if (PlatformDetector.isAutomotive()) _displayScaleSelector(),
             // Plebz: on iPhone, iPad and Apple TV too — nothing is detected
             // there, but "reduced" chosen by hand still lightens the effects.

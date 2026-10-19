@@ -261,6 +261,11 @@ class CatalogItem {
   /// file everything under unwatched.
   final bool? isWatched;
 
+  /// Episodes of a show the signed-in user has seen, when the provider says
+  /// (Plex Discover's `viewedLeafCount`); null when it does not. With
+  /// [episodeCount] it gives the episodes still to watch.
+  final int? watchedEpisodeCount;
+
   /// Native-language or production title when it differs from [title].
   final String? originalTitle;
 
@@ -372,6 +377,7 @@ class CatalogItem {
     this.addedAt,
     this.userRating,
     this.isWatched,
+    this.watchedEpisodeCount,
     this.originalTitle,
     this.tagline,
     this.broadcastSeason,
@@ -466,6 +472,7 @@ class CatalogItem {
     userRating: userRating ?? detail.userRating,
     // Either body may carry the play state; whichever answered wins.
     isWatched: detail.isWatched ?? isWatched,
+    watchedEpisodeCount: detail.watchedEpisodeCount ?? watchedEpisodeCount,
     recommendationCount: recommendationCount ?? detail.recommendationCount,
     recommendationPercent: recommendationPercent ?? detail.recommendationPercent,
     background: detail.background ?? background,
@@ -577,6 +584,7 @@ class CatalogItem {
     if (background != null) 'background': background,
     if (cast != null) 'cast': [for (final c in cast!) c.toJson()],
     if (isWatched != null) 'isWatched': isWatched,
+    if (watchedEpisodeCount != null) 'watchedEpisodeCount': watchedEpisodeCount,
   };
 
   factory CatalogItem.fromJson(Map<String, Object?> json) => CatalogItem(
@@ -621,6 +629,7 @@ class CatalogItem {
     serverState: _decodeObject(json['serverState'], CatalogServerState.fromJson),
     releaseDate: _decodeDate(json['releaseDate']),
     isWatched: json['isWatched'] as bool?,
+    watchedEpisodeCount: json['watchedEpisodeCount'] as int?,
     physicalReleaseDate: _decodeDate(json['physicalReleaseDate']),
     endDate: _decodeDate(json['endDate']),
     addedAt: _decodeDate(json['addedAt']),

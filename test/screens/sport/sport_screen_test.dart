@@ -142,10 +142,11 @@ void main() {
       t.sport.bundesliga1,
       t.sport.bundesliga2,
       t.sport.liga3,
+      t.sport.manageLeagues,
       t.common.refresh,
     ]);
     expect(menu.items.first.selected, isTrue);
-    expect(menu.items.last.gapBefore, isTrue, reason: 'a gap divides the leagues from refresh');
+    expect(menu.items[3].gapBefore, isTrue, reason: 'a gap divides the leagues from what else the page has');
 
     menu.items[2].onSelect();
     await pumpUntil(tester, () => find.text('TSV 1860 München').evaluate().isNotEmpty);

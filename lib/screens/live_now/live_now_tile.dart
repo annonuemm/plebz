@@ -12,6 +12,7 @@ import '../../redesign/ocker_skin.dart';
 import '../../redesign/ocker_type.dart';
 import '../../services/sport/club_colours.dart';
 import '../sport/club_colour_ground.dart';
+import '../../services/sport/sport_league_names.dart';
 import '../../services/sport/sport_models.dart';
 import '../../theme/mono_tokens.dart';
 import '../../utils/provider_extensions.dart';
@@ -58,11 +59,7 @@ MediaItem _itemFor(LiveNowEntry entry) => switch (entry) {
   ),
 };
 
-String liveNowLeagueName(SportLeague league) => switch (league) {
-  SportLeague.bundesliga1 => t.sport.bundesliga1,
-  SportLeague.bundesliga2 => t.sport.bundesliga2,
-  SportLeague.liga3 => t.sport.liga3,
-};
+String liveNowLeagueName(SportLeague league) => sportLeagueName(league);
 
 /// "LIVE" for a game on now, "Heute 20:30" for one still to come.
 ///

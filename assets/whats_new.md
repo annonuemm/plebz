@@ -13,6 +13,35 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.28.0 (Build 855)
+
+### Simkl-Profile
+- Wichtig: Mit Profilen, die über Simkl laufen, konnte Plebz auf schwächeren Geräten wie dem Fire TV Stick so langsam werden, dass es kaum noch zu bedienen war, auch während der Wiedergabe. Das ist behoben: Plebz liest die Mediathek nicht mehr ständig neu ein und lässt einen langsamen Server in Ruhe.
+
+### Startbildschirm
+- Neu: Vom 17. bis 31. Oktober zeigt der Startbildschirm eine Gewitternacht mit Vollmond, Fledermäusen und Blitzen. Wenn alles geladen ist, verabschiedet er sich mit einem Blitzschlag.
+- Vom 1. bis 26. Dezember trägt das Logo eine Lichtergirlande mit Kugeln und Stern, dazu fällt Schnee.
+- Wer lieber das schlichte Logo sieht, schaltet das unter Einstellungen → Darstellung → „Startbildschirm zur Jahreszeit“ ab.
+
+### Sport
+- Neu: Champions League, Europa League und DFB-Pokal lassen sich dazuschalten.
+- Unter „Ligen verwalten“ wählst du, welche Wettbewerbe der Sport-Bereich zeigt und in welcher Reihenfolge.
+- Champions League und Europa League haben eine eigene Tabelle. Ergebnisse der Europa League kommen manchmal erst ein bis zwei Tage später.
+
+### Live-TV
+- Bleibt das Bild eines Senders stehen, öffnet Plebz ihn von selbst neu.
+- Bei „Gleiche Sender zusammenfassen“ wechselt Plebz von selbst zur nächsten Kopie, wenn eine Kopie nach fünf Sekunden kein Bild zeigt oder nur eine Pausentafel.
+
+### Wiedergabe
+- Neu: „Untertitel beim Zurückspringen“ unter Einstellungen → Videowiedergabe → Untertitel. Springst du ein paar Sekunden zurück, erscheinen Untertitel, bis die Stelle wieder erreicht ist. Von Haus aus ist der Schalter aus.
+
+### Merkliste
+- Die Zahl in der Ecke von Serienpostern zeigt jetzt die Folgen, die du noch nicht gesehen hast, sofern Plex das weiß. Sonst bleibt es die Gesamtzahl der Folgen.
+- Serien, die du ganz gesehen hast, zeigen keine Zahl mehr, sondern wieder den Gesehen-Haken.
+
+### Sonstiges
+- Fenster in der Bildschirmmitte, etwa das Spielfenster im Sport-Bereich, sind jetzt rundum abgerundet.
+
 ## 1.27.0 (Build 845)
 
 ### Plebz Home

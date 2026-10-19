@@ -4,21 +4,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/utils/plebz_season.dart';
 import 'package:plezy/widgets/plebz_start_animation.dart';
 
-Widget _host({required GlobalKey<PlebzStartAnimationState> key, bool still = false, bool stacked = false}) =>
-    MediaQuery(
-      data: MediaQueryData(size: const Size(960, 540), disableAnimations: still),
-      child: Directionality(
-        textDirection: TextDirection.ltr,
-        child: ColoredBox(
-          color: Colors.black,
-          child: Center(
-            child: PlebzStartAnimation(key: key, markHeight: 108, stacked: stacked),
-          ),
-        ),
+Widget _host({
+  required GlobalKey<PlebzStartAnimationState> key,
+  bool still = false,
+  bool stacked = false,
+  PlebzSeason? season,
+}) => MediaQuery(
+  data: MediaQueryData(size: const Size(960, 540), disableAnimations: still),
+  child: Directionality(
+    textDirection: TextDirection.ltr,
+    child: ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: PlebzStartAnimation(key: key, markHeight: 108, stacked: stacked, season: season),
       ),
-    );
+    ),
+  ),
+);
 
 void main() {
   testWidgets('the entrance ends once the name is out, then the logo can step back', (tester) async {
@@ -98,5 +103,37 @@ void main() {
       }
     }
     expect(await coloursIn(monoTheme(dark: true)), plebzLogoColours);
+  });
+
+  for (final season in PlebzSeason.values) {
+    testWidgets('in the ${season.name} season the logo keeps its entrance, its twinkle and its step back', (
+      tester,
+    ) async {
+      for (final stacked in [false, true]) {
+        final key = GlobalKey<PlebzStartAnimationState>();
+        await tester.pumpWidget(_host(key: key, stacked: stacked, season: season));
+        var introDone = false;
+        unawaited(key.currentState!.introDone.then((_) => introDone = true));
+        await tester.pump(PlebzStartAnimationState.introDuration);
+        await tester.pump(const Duration(seconds: 3));
+        expect(introDone, isTrue);
+        expect(tester.takeException(), isNull);
+        expect(tester.hasRunningAnimations, isTrue);
+
+        unawaited(key.currentState!.leave());
+        await tester.pump();
+        await tester.pump(PlebzStartAnimationState.leaveDuration + const Duration(milliseconds: 50));
+        expect(tester.hasRunningAnimations, isFalse, reason: 'the garland stops with the logo');
+        await tester.pumpWidget(const SizedBox());
+      }
+    });
+  }
+
+  testWidgets('a season stands still with animations switched off', (tester) async {
+    final key = GlobalKey<PlebzStartAnimationState>();
+    await tester.pumpWidget(_host(key: key, still: true, season: PlebzSeason.christmas));
+    await tester.pump();
+    expect(tester.hasRunningAnimations, isFalse);
+    expect(tester.takeException(), isNull);
   });
 }

@@ -521,6 +521,18 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
     return null;
   }
 
+  /// A count Discover puts on the item or under its UserState, [key] being
+  /// `leafCount` (a show's episodes) or `viewedLeafCount` (those the user has
+  /// seen); null when it says nothing.
+  static int? _leavesFrom(Map<String, dynamic> metadata, String key) {
+    final nested = metadata['UserState'] ?? metadata['userState'];
+    if (nested is Map) {
+      final fromNested = flexibleInt(nested[key]);
+      if (fromNested != null) return fromNested;
+    }
+    return flexibleInt(metadata[key]);
+  }
+
   CatalogItem? _toCatalogItem(Map<String, dynamic> metadata) {
     final kind = _kindFor(metadata['type']);
     final title = _nonEmptyString(metadata['title']);
@@ -571,6 +583,7 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
       source: CatalogSourceId.plex,
       kind: kind,
       isWatched: isWatched,
+      watchedEpisodeCount: kind == MediaKind.show ? _leavesFrom(metadata, 'viewedLeafCount') : null,
       title: title,
       year: flexibleInt(metadata['year']),
       overview: _overviewFor(metadata),
@@ -583,7 +596,7 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
                 ? CatalogAirStatus.airing
                 : CatalogAirStatus.ended
           : null,
-      episodeCount: kind == MediaKind.show ? flexibleInt(metadata['leafCount']) : null,
+      episodeCount: kind == MediaKind.show ? _leavesFrom(metadata, 'leafCount') : null,
       network: _nonEmptyString(metadata['studio'] ?? metadata['network']),
       ids: ids,
       posterUrl: _nonEmptyString(metadata['thumb']) ?? coverPoster ?? coverArt,

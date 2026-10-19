@@ -168,6 +168,7 @@ class PlaybackSettingsScreen extends StatelessWidget {
                   subtitle: t.settings.subtitleStylingDescription,
                   destinationBuilder: (_) => const SubtitleStylingScreen(),
                 ),
+                _replayCaptionsTile(),
               ],
             ),
 
@@ -645,6 +646,13 @@ class PlaybackSettingsScreen extends StatelessWidget {
     icon: Symbols.hdr_off_rounded,
     title: t.settings.disableDolbyVision,
     subtitle: t.settings.disableDolbyVisionDescription,
+  );
+
+  Widget _replayCaptionsTile() => SettingSwitchTile(
+    pref: PlebzPrefs.replayCaptions,
+    icon: Symbols.replay_10_rounded,
+    title: t.settings.replayCaptions,
+    subtitle: t.settings.replayCaptionsDescription,
   );
 
   Widget _mpvOsdPictureOnlyTile() => SettingSwitchTile(

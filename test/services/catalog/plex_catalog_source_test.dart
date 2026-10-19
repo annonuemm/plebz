@@ -151,6 +151,10 @@ void main() {
       expect(captured.url.queryParameters['includeUserState'], '1');
       expect(watched, {'Seen': true, 'Unseen': false, 'Show': true, 'Half': false});
       expect(page.items.first.toMediaItem().isWatched, isTrue, reason: 'the grids read the MediaItem, not the entry');
+      final half = page.items.firstWhere((item) => item.title == 'Half');
+      expect(half.episodeCount, 10);
+      expect(half.watchedEpisodeCount, 4, reason: 'the corner shows the six still to watch');
+      expect(page.items.first.watchedEpisodeCount, isNull, reason: 'a film counts no episodes');
     });
 
     test('a watchlist entry without play state stays unanswered rather than unwatched', () async {

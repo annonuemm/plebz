@@ -116,6 +116,15 @@ extension _VideoPlayerPlaybackServiceMethods on VideoPlayerScreenState {
 
     _playerStreamSubscriptions.add(currentPlayer.streams.playing.listen(_onPlayingStateChanged));
 
+    // A window opened on the outgoing player is not this one's.
+    _replayCaptions.onViewerChoice();
+    _playerStreamSubscriptions.add(currentPlayer.streams.position.listen(_replayCaptions.onPosition));
+    _playerStreamSubscriptions.add(
+      currentPlayer.streams.track.listen(
+        (selection) => _replayCaptions.onEngineSubtitleChanged(selection.subtitle?.id),
+      ),
+    );
+
     _playerStreamSubscriptions.add(
       currentPlayer.streams.completed.listen((done) {
         // completed=false means a file (re)loaded after a reconnect-seek or fresh

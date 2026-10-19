@@ -5,6 +5,7 @@ extension _VideoPlayerSeekingMethods on VideoPlayerScreenState {
     final currentPlayer = player;
     if (!mounted || _shuttingDown || currentPlayer == null) return;
     final target = clampSeekPosition(currentPlayer, position);
+    unawaited(_replayCaptions.onSeek(currentPlayer.state.position, target));
     // Declare intentional seeks before the delegate can unbind/reload at EOF.
     _activeWatchTogetherSession()?.onLocalSeek(target);
     await _performSeekPlayback(target);
@@ -72,6 +73,23 @@ extension _VideoPlayerSeekingMethods on VideoPlayerScreenState {
     );
     unawaited(_openStackedPartAt(next.start, reason: 'stacked part advance'));
     return true;
+  }
+
+  void _onSubtitleVisibilityChanged(bool visible) {
+    _subtitlesHiddenByViewer = !visible;
+    _replayCaptions.onViewerChoice();
+  }
+
+  /// The track captions on replay borrows when the viewer has none showing:
+  /// the profile's subtitle language, else the app's.
+  SubtitleTrack? _pickReplayCaptionTrack() {
+    final currentPlayer = player;
+    if (currentPlayer == null || !mounted) return null;
+    final profileLanguage = context.read<AccountPreferencesController>().activePreferences?.defaultSubtitleLanguage;
+    return pickReplayCaptionTrack(currentPlayer.state.tracks.subtitle, [
+      profileLanguage,
+      LocaleSettings.currentLocale.languageCode,
+    ], TrackSelectionService(metadata: _currentMetadata).languageMatches);
   }
 
   /// One skip step, as the viewer configured it.

@@ -200,16 +200,20 @@ void main() {
 
     test('knows the broadcasters by name, whatever the playlist puts around it', () {
       Set<SportLeague> leagues(String name) => sportBroadcasterLeagues(name);
-      const bundesligen = {SportLeague.bundesliga1, SportLeague.bundesliga2};
+      // Sky's Bundesliga channels carry the cup too.
+      const bundesligen = {SportLeague.bundesliga1, SportLeague.bundesliga2, SportLeague.dfbPokal};
+      const dazn = {SportLeague.bundesliga1, SportLeague.championsLeague};
 
       expect(leagues('Sky Sport Top Event'), bundesligen);
       expect(leagues('DE: SKY SPORT MIX FHD'), bundesligen);
       expect(leagues('Sky Sport Bundesliga 4 HD'), bundesligen);
       expect(leagues('Sky Bundesliga 1'), bundesligen, reason: 'the name Sky used before 2021');
-      expect(leagues('DAZN 1 HD'), {SportLeague.bundesliga1});
-      expect(leagues('DE: DAZN2'), {SportLeague.bundesliga1});
+      expect(leagues('DAZN 1 HD'), dazn);
+      expect(leagues('DE: DAZN2'), dazn);
       expect(leagues('MagentaSport 2'), {SportLeague.liga3});
       expect(leagues('Magenta Sport 3. Liga 1 FHD'), {SportLeague.liga3});
+      expect(leagues('Prime Video Sport'), {SportLeague.championsLeague});
+      expect(leagues('DE: NITRO HD'), {SportLeague.europaLeague});
     });
 
     test('but not their channels for news, other sports or other countries', () {

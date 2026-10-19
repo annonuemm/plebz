@@ -20,6 +20,7 @@ import '../../services/iptv/iptv_live_tv_source.dart' show IptvPlaybackSession;
 import '../../services/iptv/iptv_stream_probing.dart';
 import '../../services/live_picture_handover.dart';
 import '../../services/live_software_decode.dart';
+import '../../services/live_variant_fallback.dart';
 import '../../services/playback_coordinator.dart';
 import '../../services/settings_service.dart';
 import '../../theme/mono_tokens.dart';
@@ -105,6 +106,11 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
   /// shows a frame (Plebz); see [LiveSoftwareDecodeGuard].
   final LiveSoftwareDecodeGuard _decodeGuard = LiveSoftwareDecodeGuard();
 
+  /// Watches a merged channel's copy for one that never shows a frame or
+  /// plays an off-air clip, and moves the box on to the next copy (Plebz);
+  /// see [LiveVariantFallbackGuard].
+  final LiveVariantFallbackGuard _variantGuard = LiveVariantFallbackGuard();
+
   @override
   void initState() {
     super.initState();
@@ -162,6 +168,9 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     // decoder cannot show: the full screen opens the channel itself, and
     // watches its own open.
     if (_decodeGuard.isWatching) return null;
+    // Nor one whose copy may not be the channel: the full screen opens it
+    // itself and moves past it there.
+    if (_variantGuard.isWatching) return null;
     if (!LivePictureHandover.canMove(player, session)) return null;
     // Only a picture on the plane in its box is where the growing player
     // expects it.
@@ -213,6 +222,7 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     _generation++;
     _shownAfterHandover = null;
     _decodeGuard.disarm();
+    _variantGuard.disarm();
     final player = _player;
     final session = _session;
     _player = null;
@@ -352,7 +362,8 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       _decodeGuard
         ..prepare(channel, decodeMode)
         ..armForOpen(player, onStuck: (stuck) => unawaited(_restartInSoftware(stuck, generation)));
-      await player.open(Media(url, headers: session!.streamHeaders), play: true, isLive: true);
+      _variantGuard.armForOpen(player, session!, onStuck: (next) => unawaited(_openVariant(next, generation)));
+      await player.open(Media(url, headers: session.streamHeaders), play: true, isLive: true);
       if (!mounted || generation != _generation) return;
       appLogger.d('Guide preview: playing ${channel.displayName}');
       setState(() => _starting = false);
@@ -377,6 +388,34 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     await _stop();
     if (_disposed || !mounted || widget.channel?.key != channel.key) return;
     unawaited(_start(channel));
+  }
+
+  /// The copy the box opened is not the channel: play the channel over copy
+  /// [index] in the same player, decoded the way the first one was asked to.
+  Future<void> _openVariant(int index, int generation) async {
+    bool current() => !_disposed && mounted && generation == _generation;
+    final player = _player;
+    final session = _session;
+    final channel = widget.channel;
+    if (!current() || player == null || session == null || channel == null) return;
+    try {
+      final next = await session.switchVariant(index);
+      if (next == null || !current() || !identical(_player, player)) return;
+      final url = await next.streamUrlAt();
+      if (url == null || !current() || !identical(_player, player)) return;
+      final settings = await SettingsService.getInstance();
+      await applyLiveStreamProbing(player, next);
+      final decodeMode = await applyLiveDecodeMode(player, channel, settings: settings);
+      if (!current() || !identical(_player, player)) return;
+      _session = next;
+      _decodeGuard
+        ..prepare(channel, decodeMode)
+        ..armForOpen(player, onStuck: (stuck) => unawaited(_restartInSoftware(stuck, generation)));
+      _variantGuard.armForOpen(player, next, onStuck: (following) => unawaited(_openVariant(following, generation)));
+      await player.open(Media(url, headers: next.streamHeaders), play: true, isLive: true);
+    } catch (e, stackTrace) {
+      appLogger.w('Guide preview: could not open copy ${index + 1}', error: e, stackTrace: stackTrace);
+    }
   }
 
   /// Reads what the stream turned out to be, a few times over its first

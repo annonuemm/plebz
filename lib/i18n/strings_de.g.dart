@@ -608,6 +608,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get glasRailSymbolsDescription => 'Die Navigation bleibt links sichtbar';
 	@override String get smoothScroll => 'Weiches Scrollen';
 	@override String get smoothScrollDescription => 'Reihen und Poster gleiten statt zu springen';
+	@override String get seasonalStartScreen => 'Startbildschirm zur Jahreszeit';
+	@override String get seasonalStartScreenDescription => 'Halloween vom 17. bis 31. Oktober, Weihnachten vom 1. bis 26. Dezember.';
 	@override String get homeTitleLogos => 'Logos auf Start und Erkunden';
 	@override String get homeTitleLogosDescription => 'Titel-Logos statt Text im großen Bild';
 	@override String get seerrCardEpisodeFacts => 'Folgenangaben auf Seerr-Kacheln';
@@ -678,6 +680,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get disableDolbyVisionDescription => 'Spielt HDR10, für Fernseher ohne Dolby Vision';
 	@override String get mpvOsdPictureOnly => 'Balken bei HDR schwarz halten';
 	@override String get mpvOsdPictureOnlyDescription => 'Für Boxen, die sie grau zeigen; Untertitel liegen dann nie in den Balken.';
+	@override String get replayCaptions => 'Untertitel beim Zurückspringen';
+	@override String get replayCaptionsDescription => 'Zeigt sie nach einem Sprung zurück, bis die Stelle wieder erreicht ist.';
 	@override String get layoutMode => 'Layout';
 	@override String get layoutModeAuto => 'Automatisch';
 	@override String get layoutModeTv => 'TV';
@@ -2763,6 +2767,19 @@ class _Translations$sport$de extends Translations$sport$en {
 	@override String get zonePromotion => 'Aufstieg';
 	@override String get zonePlayoff => 'Relegation';
 	@override String get zoneRelegation => 'Abstieg';
+	@override String get championsLeague => 'Champions League';
+	@override String get europaLeague => 'Europa League';
+	@override String get dfbPokal => 'DFB-Pokal';
+	@override String get manageLeagues => 'Ligen verwalten';
+	@override String get fixtures => 'Spiele';
+	@override String get showLeague => 'Einblenden';
+	@override String get hideLeague => 'Ausblenden';
+	@override String get zoneRoundOf16 => 'Achtelfinale';
+	@override String get zoneKnockoutPlayoff => 'Playoffs';
+	@override String get zoneEliminated => 'Ausgeschieden';
+	@override String get afterExtraTime => 'n. V.';
+	@override String onPenalties({required Object score}) => '${score} i. E.';
+	@override String get europaLeagueLate => 'Ergebnisse kommen oft erst ein bis zwei Tage später';
 }
 
 // Path: plebz
@@ -4312,6 +4329,8 @@ extension on TranslationsDe {
 			'settings.glasRailSymbolsDescription' => 'Die Navigation bleibt links sichtbar',
 			'settings.smoothScroll' => 'Weiches Scrollen',
 			'settings.smoothScrollDescription' => 'Reihen und Poster gleiten statt zu springen',
+			'settings.seasonalStartScreen' => 'Startbildschirm zur Jahreszeit',
+			'settings.seasonalStartScreenDescription' => 'Halloween vom 17. bis 31. Oktober, Weihnachten vom 1. bis 26. Dezember.',
 			'settings.homeTitleLogos' => 'Logos auf Start und Erkunden',
 			'settings.homeTitleLogosDescription' => 'Titel-Logos statt Text im großen Bild',
 			'settings.seerrCardEpisodeFacts' => 'Folgenangaben auf Seerr-Kacheln',
@@ -4345,10 +4364,10 @@ extension on TranslationsDe {
 			'settings.hardwareTestLabels.displayMode' => 'Modus',
 			'settings.hardwareTestLabels.displayModes' => 'Bildschirmmodi',
 			'settings.hardwareTestLabels.hdrFormats' => 'HDR-Formate',
-			'settings.hardwareTestLabels.wideColour' => 'Erweiterter Farbraum',
-			'settings.hardwareTestLabels.peakBrightness' => 'Spitzenhelligkeit',
 			_ => null,
 		} ?? switch (path) {
+			'settings.hardwareTestLabels.wideColour' => 'Erweiterter Farbraum',
+			'settings.hardwareTestLabels.peakBrightness' => 'Spitzenhelligkeit',
 			'settings.hardwareTestLabels.audioOutput' => 'Ausgang',
 			'settings.hardwareTestLabels.channels' => 'Kanäle',
 			'settings.hardwareTestLabels.hardwareDecoder' => 'Hardware',
@@ -4409,6 +4428,8 @@ extension on TranslationsDe {
 			'settings.disableDolbyVisionDescription' => 'Spielt HDR10, für Fernseher ohne Dolby Vision',
 			'settings.mpvOsdPictureOnly' => 'Balken bei HDR schwarz halten',
 			'settings.mpvOsdPictureOnlyDescription' => 'Für Boxen, die sie grau zeigen; Untertitel liegen dann nie in den Balken.',
+			'settings.replayCaptions' => 'Untertitel beim Zurückspringen',
+			'settings.replayCaptionsDescription' => 'Zeigt sie nach einem Sprung zurück, bis die Stelle wieder erreicht ist.',
 			'settings.layoutMode' => 'Layout',
 			'settings.layoutModeAuto' => 'Automatisch',
 			'settings.layoutModeTv' => 'TV',
@@ -4857,12 +4878,12 @@ extension on TranslationsDe {
 			'mpvConfig.description' => 'Erweiterte Videoplayer-Einstellungen',
 			'mpvConfig.presets' => 'Voreinstellungen',
 			'mpvConfig.noPresets' => 'Keine gespeicherten Voreinstellungen',
+			_ => null,
+		} ?? switch (path) {
 			'mpvConfig.saveAsPreset' => 'Als Voreinstellung speichern …',
 			'mpvConfig.presetName' => 'Name der Voreinstellung',
 			'mpvConfig.presetNameHint' => 'Namen für diese Voreinstellung eingeben',
 			'mpvConfig.loadPreset' => 'Laden',
-			_ => null,
-		} ?? switch (path) {
 			'mpvConfig.deletePreset' => 'Löschen',
 			'mpvConfig.presetSaved' => 'Voreinstellung gespeichert',
 			'mpvConfig.presetLoaded' => 'Voreinstellung geladen',
@@ -5371,12 +5392,12 @@ extension on TranslationsDe {
 			'liveTv.serverNotConnected' => 'Der Live-TV-Server ist nicht verbunden.',
 			'liveTv.noPrograms' => 'Keine Programmdaten verfügbar',
 			'liveTv.liveStreamFailed' => 'Livestream fehlgeschlagen',
+			_ => null,
+		} ?? switch (path) {
 			'liveTv.unknownProgram' => 'Unbekannte Sendung',
 			'liveTv.unknownHub' => 'Unbekannt',
 			'liveTv.unknownError' => 'Unbekannter Fehler',
 			'liveTv.channelNumber' => ({required Object number}) => 'Kanal ${number}',
-			_ => null,
-		} ?? switch (path) {
 			'liveTv.unknownChannel' => 'Unbekannter Kanal',
 			'liveTv.live' => 'LIVE',
 			'liveTv.reloadGuide' => 'TV-Programm neu laden',
@@ -5885,12 +5906,12 @@ extension on TranslationsDe {
 			'videoSettings.performanceOverlay' => 'Leistungsanzeige',
 			'videoSettings.audioOutputDolbyAtmos' => 'Dolby Atmos',
 			'videoSettings.audioOutputDolbyAudio' => 'Dolby Audio',
+			_ => null,
+		} ?? switch (path) {
 			'videoSettings.audioOutputSurround' => 'Surround',
 			'videoSettings.audioOutputSpatial' => 'Räumliches Audio',
 			'videoSettings.audioOutputStereo' => 'Stereo',
 			'videoSettings.audioNormalization' => 'Lautstärke normalisieren',
-			_ => null,
-		} ?? switch (path) {
 			'videoSettings.audioNormalizationDisablesPassthrough' => 'Dekodiert Audio zu PCM; Durchleitung ist aus, solange dies aktiv ist',
 			'videoSettings.audioNormalizationStereoMix' => 'Dekodiert Audio zu einem Stereomix; Durchleitung ist aus, solange dies aktiv ist',
 			'performanceOverlay.color' => 'Farbe',
@@ -6391,6 +6412,21 @@ extension on TranslationsDe {
 			'sport.zonePromotion' => 'Aufstieg',
 			'sport.zonePlayoff' => 'Relegation',
 			'sport.zoneRelegation' => 'Abstieg',
+			'sport.championsLeague' => 'Champions League',
+			'sport.europaLeague' => 'Europa League',
+			'sport.dfbPokal' => 'DFB-Pokal',
+			'sport.manageLeagues' => 'Ligen verwalten',
+			'sport.fixtures' => 'Spiele',
+			'sport.showLeague' => 'Einblenden',
+			'sport.hideLeague' => 'Ausblenden',
+			'sport.zoneRoundOf16' => 'Achtelfinale',
+			_ => null,
+		} ?? switch (path) {
+			'sport.zoneKnockoutPlayoff' => 'Playoffs',
+			'sport.zoneEliminated' => 'Ausgeschieden',
+			'sport.afterExtraTime' => 'n. V.',
+			'sport.onPenalties' => ({required Object score}) => '${score} i. E.',
+			'sport.europaLeagueLate' => 'Ergebnisse kommen oft erst ein bis zwei Tage später',
 			'plebz.settingsGroupLook' => 'Aussehen und Wiedergabe',
 			'plebz.settingsGroupContent' => 'Inhalte',
 			'plebz.settingsGroupApp' => 'App',
@@ -6403,8 +6439,6 @@ extension on TranslationsDe {
 			'plebz.welcomeBody' => 'In ein paar Schritten eingerichtet: wie es aussieht, woher deine Filme, Serien und Sender kommen und welche Dienste dazugehören. Alles lässt sich später in den Einstellungen ändern.',
 			'plebz.getStarted' => 'Los geht\'s',
 			'plebz.lookTitle' => 'Aussehen',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.lookBody' => 'Wähle das Aussehen. Es ändert sich schon beim Auswählen, du siehst es also sofort.',
 			'plebz.next' => 'Weiter',
 			'plebz.iptvOnly' => 'Nur IPTV',

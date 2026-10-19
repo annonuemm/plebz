@@ -1392,14 +1392,20 @@ String? _catalogViewersBadge(CatalogAudience? audience) {
   };
 }
 
-/// How many episodes a show has, for the corner circle.
+/// How many episodes a show has, for the corner circle: those still to
+/// watch when the provider says how many the viewer has seen (Plex
+/// Discover), else all of them.
 ///
 /// Not the per-episode runtime alongside it: on a poster the total is the
 /// number that decides whether to start something, and a circle holds one.
+/// A show the viewer has seen in full carries none: the circle would cover
+/// its watched check (the user's call, 2026-10-19).
 int? _catalogEpisodeCount(CatalogItem? item) {
-  if (item == null || item.kind != MediaKind.show) return null;
+  if (item == null || item.kind != MediaKind.show || item.isWatched == true) return null;
   final episodeCount = item.episodeCount;
-  return episodeCount != null && episodeCount > 0 ? episodeCount : null;
+  if (episodeCount == null || episodeCount <= 0) return null;
+  final left = episodeCount - (item.watchedEpisodeCount ?? 0);
+  return left > 0 ? left : null;
 }
 
 /// Whether the poster carries the "on your server" check.

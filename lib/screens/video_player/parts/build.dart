@@ -328,6 +328,7 @@ extension _VideoPlayerBuildMethods on VideoPlayerScreenState {
                         onCycleSubtitleTrack: _cycleSubtitleTrack,
                         onAudioTrackChanged: _onAudioTrackChanged,
                         onSubtitleTrackChanged: _onSubtitleTrackChanged,
+                        onSubtitleVisibilityChanged: _onSubtitleVisibilityChanged,
                         onSecondarySubtitleTrackChanged: _onSecondarySubtitleTrackChanged,
                         onSeekRequested: _seekPlayback,
                         onRateRequested: _setPlaybackRate,

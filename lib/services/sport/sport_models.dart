@@ -1,15 +1,106 @@
-/// The three German leagues the Sport destination follows.
+/// The competitions the Sport destination can follow, in their default order.
 ///
-/// [shortcut] is OpenLigaDB's name for the league — the one part of every URL
-/// that changes between them.
+/// [shortcut] is OpenLigaDB's name for the competition — the one part of every
+/// URL that changes between them. The three German leagues are on by default;
+/// the European cups and the DFB-Pokal are switched on under "Ligen verwalten"
+/// ([SportLeagueLayout]).
 enum SportLeague {
   bundesliga1('bl1'),
   bundesliga2('bl2'),
-  liga3('bl3');
+  liga3('bl3'),
+  championsLeague('ucl'),
+
+  /// OpenLigaDB names the Europa League after its season — `uel` was
+  /// 2025/26's, abandoned in its knock-out rounds; `uel2026` is 2026/27's.
+  /// The next season needs the next name.
+  europaLeague('uel2026'),
+  dfbPokal('dfb');
 
   const SportLeague(this.shortcut);
 
   final String shortcut;
+
+  /// A German league, where every club plays every other: numbered matchdays,
+  /// a table with promotion and relegation, and the clubs a favourite is
+  /// chosen from.
+  bool get isDomestic => switch (this) {
+    bundesliga1 || bundesliga2 || liga3 => true,
+    championsLeague || europaLeague || dfbPokal => false,
+  };
+
+  /// Whether the competition has a table: the cup is knock-out only.
+  bool get hasTable => this != dfbPokal;
+
+  /// Shown unless the viewer hides it.
+  bool get shownByDefault => isDomestic;
+
+  static SportLeague? fromShortcut(String shortcut) {
+    for (final league in values) {
+      if (league.shortcut == shortcut) return league;
+    }
+    return null;
+  }
+}
+
+/// Which competitions the Sport destination shows, and in which order — what
+/// "Ligen verwalten" arranges. Stored as the order of every competition's
+/// shortcut and the set that is hidden; a competition the stored order does
+/// not know yet (a newer app) goes to the end, shown or hidden by its default.
+class SportLeagueLayout {
+  const SportLeagueLayout({required this.order, required this.hidden});
+
+  /// Every competition, in the viewer's order.
+  final List<SportLeague> order;
+  final Set<SportLeague> hidden;
+
+  static final SportLeagueLayout standard = SportLeagueLayout.decode('');
+
+  /// The ones on show, in order. Never empty: the last one cannot be hidden
+  /// ([withHidden]), and a stored layout that hides everything shows the first.
+  List<SportLeague> get visible {
+    final shown = [
+      for (final league in order)
+        if (!hidden.contains(league)) league,
+    ];
+    return shown.isEmpty ? [order.first] : shown;
+  }
+
+  bool isHidden(SportLeague league) => !visible.contains(league);
+
+  SportLeagueLayout withOrder(List<SportLeague> order) =>
+      SportLeagueLayout(order: List.unmodifiable(order), hidden: hidden);
+
+  /// [league] hidden or shown; hiding the last one on show is refused.
+  SportLeagueLayout withHidden(SportLeague league, bool hide) {
+    if (hide && visible.length == 1 && visible.single == league) return this;
+    final next = {...hidden};
+    hide ? next.add(league) : next.remove(league);
+    return SportLeagueLayout(order: order, hidden: Set.unmodifiable(next));
+  }
+
+  /// `bl1,bl2,-ucl,…` — the order, a minus before each hidden one.
+  String encode() => [for (final league in order) '${hidden.contains(league) ? '-' : ''}${league.shortcut}'].join(',');
+
+  static SportLeagueLayout decode(String stored) {
+    final order = <SportLeague>[];
+    final hidden = <SportLeague>{};
+    final known = <SportLeague>{};
+    for (final raw in stored.split(',')) {
+      final entry = raw.trim();
+      if (entry.isEmpty) continue;
+      final hide = entry.startsWith('-');
+      final league = SportLeague.fromShortcut(hide ? entry.substring(1) : entry);
+      if (league == null || !known.add(league)) continue;
+      order.add(league);
+      if (hide) hidden.add(league);
+    }
+    for (final league in SportLeague.values) {
+      if (known.contains(league)) continue;
+      order.add(league);
+      if (!league.shownByDefault) hidden.add(league);
+    }
+    return SportLeagueLayout(order: List.unmodifiable(order), hidden: Set.unmodifiable(hidden));
+  }
 }
 
 /// A club as a fixture or a table row names it.
@@ -177,8 +268,15 @@ class SportMatch {
   final SportTeam away;
   final bool isFinished;
 
-  /// The official result after ninety minutes, once there is one.
+  /// The official result once there is one: after extra time where the
+  /// game went into it (a cup tie), otherwise after ninety minutes.
   final SportScore? result;
+
+  /// A cup tie that went into extra time ([result] is the score after it).
+  final bool afterExtraTime;
+
+  /// The shoot-out's score, for a cup tie decided by one.
+  final SportScore? penalties;
   final SportScore? halftime;
   final List<SportGoal> goals;
   final String? stadium;
@@ -194,6 +292,8 @@ class SportMatch {
     required this.away,
     required this.isFinished,
     this.result,
+    this.afterExtraTime = false,
+    this.penalties,
     this.halftime,
     this.goals = const [],
     this.stadium,
@@ -214,6 +314,8 @@ class SportMatch {
     }
 
     SportScore? result;
+    SportScore? extraTime;
+    SportScore? penalties;
     SportScore? halftime;
     final results = raw['matchResults'];
     if (results is List) {
@@ -223,13 +325,18 @@ class SportMatch {
         final b = entry['pointsTeam2'];
         if (a is! int || b is! int) continue;
         // Type 1 is the half-time score, type 2 the result after ninety
-        // minutes. Anything else (extra time, penalties) does not occur in a
-        // league match.
+        // minutes; a cup tie adds type 3, the score after extra time (named
+        // "Nachspielzeit"), and type 5, the shoot-out. A league match has
+        // neither.
         switch (entry['resultTypeID']) {
           case 1:
             halftime = SportScore(a, b);
           case 2:
             result = SportScore(a, b);
+          case 3:
+            extraTime = SportScore(a, b);
+          case 5:
+            penalties = SportScore(a, b);
         }
       }
     }
@@ -252,7 +359,9 @@ class SportMatch {
       home: home,
       away: away,
       isFinished: raw['matchIsFinished'] == true,
-      result: result,
+      result: extraTime ?? result,
+      afterExtraTime: extraTime != null,
+      penalties: penalties,
       halftime: halftime,
       goals: goals,
       stadium: location is Map ? text(location['locationStadium']) : null,

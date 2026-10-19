@@ -586,6 +586,9 @@ class PlexVideoControls extends StatefulWidget {
   final VoidCallback? onCycleSubtitleTrack;
   final Function(AudioTrack)? onAudioTrackChanged;
   final Function(SubtitleTrack)? onSubtitleTrackChanged;
+
+  /// The viewer showed or hid subtitles with the CC control (Plebz: captions on replay).
+  final ValueChanged<bool>? onSubtitleVisibilityChanged;
   final Function(SubtitleTrack)? onSecondarySubtitleTrackChanged;
 
   /// Called for app-level seek requests so the owning screen can coordinate
@@ -771,6 +774,7 @@ class PlexVideoControls extends StatefulWidget {
     this.onCycleSubtitleTrack,
     this.onAudioTrackChanged,
     this.onSubtitleTrackChanged,
+    this.onSubtitleVisibilityChanged,
     this.onSecondarySubtitleTrackChanged,
     this.onSeekRequested,
     this.onRateRequested,

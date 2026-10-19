@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -9,6 +10,8 @@ import '../../mixins/refreshable.dart';
 import '../../mixins/tab_navigation_mixin.dart';
 import '../../redesign/ocker_skin.dart';
 import '../../redesign/ocker_submenu.dart';
+import '../../services/settings_service.dart';
+import '../../services/sport/sport_league_names.dart';
 import '../../services/sport/sport_models.dart';
 import '../../services/sport/sport_repository.dart';
 import '../../theme/mono_tokens.dart';
@@ -17,16 +20,19 @@ import '../../widgets/app_menu.dart';
 import '../../widgets/desktop_app_bar.dart';
 import '../../widgets/focusable_tab_chip.dart';
 import '../main_screen.dart';
+import 'sport_league_management_sheet.dart';
 import 'sport_league_view.dart';
 import 'sport_look.dart';
 import '../../redesign/ocker_glas_look.dart';
 
-/// The Sport destination: 1. Bundesliga, 2. Bundesliga and 3. Liga.
+/// The Sport destination: the German leagues, and the cups the viewer adds
+/// under "Ligen verwalten" (Plebz) — which ones and in which order is theirs
+/// ([SportLeagueLayout]).
 ///
 /// The two themes choose a league in the way each chooses everything else
 /// with a list behind it:
 ///
-/// - **Standard** puts the three leagues in a row of chips across the top, the
+/// - **Standard** puts the leagues in a row of chips across the top, the
 ///   way Downloads and the libraries lay out their sections. UP from the
 ///   content reaches them, LEFT reaches the side rail. The chips follow the
 ///   rule every chip row now has: walking moves the cursor, confirming opens.
@@ -46,33 +52,63 @@ class SportScreen extends StatefulWidget {
 
 class SportScreenState extends State<SportScreen>
     with TickerProviderStateMixin, TabNavigationMixin, FocusableTab, OckerSubmenuHost, ManualRefreshable {
-  static const _leagues = SportLeague.values;
+  /// The competitions on show, in the viewer's order.
+  List<SportLeague> _leagues = visibleSportLeagues();
+  String _storedLayout = '';
+  ValueListenable<String>? _layoutListenable;
 
-  final List<FocusNode> _chipNodes = [
-    for (final league in _leagues) FocusNode(debugLabel: 'sport_league_${league.shortcut}'),
-  ];
-  final List<GlobalKey<SportLeagueViewState>> _leagueKeys = [
-    for (final _ in _leagues) GlobalKey<SportLeagueViewState>(),
-  ];
+  final Map<SportLeague, FocusNode> _chipNodeOf = {};
+  final Map<SportLeague, GlobalKey<SportLeagueViewState>> _keyOf = {};
   final _actionBarKey = GlobalKey<FocusableActionBarState>();
 
+  FocusNode _chipNode(SportLeague league) =>
+      _chipNodeOf[league] ??= FocusNode(debugLabel: 'sport_league_${league.shortcut}');
+
+  GlobalKey<SportLeagueViewState> _keyFor(SportLeague league) => _keyOf[league] ??= GlobalKey<SportLeagueViewState>();
+
   @override
-  List<FocusNode> get tabChipFocusNodes => _chipNodes;
+  List<FocusNode> get tabChipFocusNodes => [for (final league in _leagues) _chipNode(league)];
 
   @override
   void initState() {
     super.initState();
     initTabNavigation();
+    _layoutListenable = SettingsService.instanceOrNull?.listenable(PlebzPrefs.sportLeagueLayout);
+    _storedLayout = _layoutListenable?.value ?? '';
+    _layoutListenable?.addListener(_onLayoutChanged);
   }
 
   @override
   void dispose() {
-    for (final node in _chipNodes) {
+    _layoutListenable?.removeListener(_onLayoutChanged);
+    for (final node in _chipNodeOf.values) {
       node.dispose();
     }
     disposeTabNavigation();
     super.dispose();
   }
+
+  /// "Ligen verwalten" changed which leagues are on show or their order: the
+  /// tabs follow, and the league on show stays on show where it still is.
+  void _onLayoutChanged() {
+    final stored = _layoutListenable?.value ?? '';
+    if (!mounted || stored == _storedLayout) return;
+    _storedLayout = stored;
+    final next = SportLeagueLayout.decode(stored).visible;
+    if (listEquals(next, _leagues)) return;
+    final showing = _leagues[tabController.index];
+    final index = next.indexOf(showing);
+    setState(() {
+      _leagues = next;
+      tabController
+        ..removeListener(onTabChanged)
+        ..dispose();
+      tabController = TabController(length: next.length, vsync: this, initialIndex: index < 0 ? 0 : index);
+      tabController.addListener(onTabChanged);
+    });
+  }
+
+  void _openLeagueManagement() => unawaited(showSportLeagueManagementSheet(context));
 
   @override
   void onTabChanged() {
@@ -83,13 +119,9 @@ class SportScreenState extends State<SportScreen>
     }
   }
 
-  static String _labelOf(SportLeague league) => switch (league) {
-    SportLeague.bundesliga1 => t.sport.bundesliga1,
-    SportLeague.bundesliga2 => t.sport.bundesliga2,
-    SportLeague.liga3 => t.sport.liga3,
-  };
+  static String _labelOf(SportLeague league) => sportLeagueName(league);
 
-  SportLeagueViewState? get _activeLeague => _leagueKeys[tabController.index].currentState;
+  SportLeagueViewState? get _activeLeague => _keyOf[_leagues[tabController.index]]?.currentState;
 
   /// Entering the destination: the league chip in the standard theme — where
   /// every tabbed screen puts the cursor first — and in the redesign, which
@@ -128,6 +160,7 @@ class SportScreenState extends State<SportScreen>
     for (var i = 0; i < _leagues.length; i++)
       AppMenuItem<int>(value: i, label: _labelOf(_leagues[i]), selected: i == tabController.index),
     const AppMenuDivider<int>(),
+    AppMenuItem<int>(value: -2, icon: Symbols.tune_rounded, label: t.sport.manageLeagues),
     // Refresh lives here for the same reason it does under "Erkunden":
     // the redesign draws no toolbar for this page, and a second place to
     // look for one row's worth of things would be one too many.
@@ -137,6 +170,10 @@ class SportScreenState extends State<SportScreen>
   void _onOckerMenuChosen(int chosen) {
     if (chosen == -1) {
       manualRefresh();
+      return;
+    }
+    if (chosen == -2) {
+      _openLeagueManagement();
       return;
     }
     setState(() => tabController.index = chosen);
@@ -153,7 +190,7 @@ class SportScreenState extends State<SportScreen>
     WidgetsBinding.instance.scheduleFrame();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || tabController.index != index) return;
-      final league = _leagueKeys[index].currentState;
+      final league = _keyOf[_leagues[index]]?.currentState;
       if (league != null) {
         league.focusFirstMatch();
       } else if (framesLeft > 0) {
@@ -176,7 +213,7 @@ class SportScreenState extends State<SportScreen>
       children: [
         for (var i = 0; i < _leagues.length; i++)
           SportLeagueView(
-            key: _leagueKeys[i],
+            key: _keyFor(_leagues[i]),
             league: _leagues[i],
             isActive: tabController.index == i,
             onExitUp: ocker ? _exitToNavigation : focusTabBar,
@@ -248,6 +285,12 @@ class SportScreenState extends State<SportScreen>
                 onNavigateLeft: () => getTabChipFocusNode(tabCount - 1).requestFocus(),
                 onNavigateDown: _focusCurrentLeague,
                 actions: [
+                  FocusableAction(
+                    icon: Symbols.tune_rounded,
+                    tooltip: t.sport.manageLeagues,
+                    debugLabel: 'sport_manage_leagues',
+                    onPressed: _openLeagueManagement,
+                  ),
                   FocusableAction(
                     icon: Symbols.refresh_rounded,
                     tooltip: t.common.refresh,

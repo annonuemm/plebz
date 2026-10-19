@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -20,11 +21,13 @@ class _Server implements ExternalIdIndexClient {
 
   Map<String, ExternalIds> index;
   int asked = 0;
+  bool down = false;
 
   @override
   Future<Map<String, ExternalIds>> fetchExternalIdIndex() async {
     asked++;
-    return index;
+    if (down) throw const SocketException('receive timed out');
+    return Map.of(index);
   }
 }
 
@@ -209,5 +212,69 @@ void main() {
     simkl.down = true;
     expect(await controller.syncNow(), isFalse);
     expect(controller.syncFailed, isTrue);
+  });
+
+  test('a server whose ids could not be read is left alone for a while, not asked at every refresh', () async {
+    server.down = true;
+    await bind();
+    expect(server.asked, 1);
+
+    await controller.refresh();
+    await controller.refresh();
+    expect(server.asked, 1, reason: 'a listing that ran into the timeout is not downloaded again at once');
+
+    TrackerProgressController.indexRetryDelay = Duration.zero;
+    server.down = false;
+    await controller.refresh();
+    expect(server.asked, 2);
+    expect(ProgressRouting.overlay(film).isWatched, isTrue);
+  });
+
+  test('"sync now" asks a server whose ids could not be read at once', () async {
+    server.down = true;
+    await bind();
+    server.down = false;
+
+    await controller.syncNow();
+
+    expect(server.asked, 2);
+  });
+
+  test('the same ids read again do not have every page fetch anew', () async {
+    await bind();
+    final revision = controller.revision.value;
+
+    await withClock(Clock.fixed(clock.now().add(const Duration(hours: 2))), controller.refresh);
+
+    expect(server.asked, 2, reason: 'the index had grown old and was read again');
+    expect(controller.revision.value, revision);
+
+    server.index = {...server.index, 'other': const ExternalIds(tmdb: 102)};
+    await withClock(Clock.fixed(clock.now().add(const Duration(hours: 4))), controller.refresh);
+
+    expect(server.asked, 3);
+    expect(controller.revision.value, greaterThan(revision));
+  });
+
+  test('playing does not have Simkl asked; stopping or a mark does', () async {
+    await bind();
+    final episode = testMediaItem(
+      id: 'e1',
+      serverId: 'plex',
+      kind: MediaKind.episode,
+      grandparentId: 'show',
+      parentIndex: 1,
+      index: 1,
+      durationMs: 1000000,
+    );
+
+    // Playback leaves a position every 30 s; each one moves the echo on, so
+    // it has to wait longer than that.
+    WatchStateNotifier().notifyProgress(item: episode, viewOffset: 300000, duration: 1000000);
+    expect(controller.debugEchoDelay, TrackerProgressController.positionEchoDelay);
+    expect(TrackerProgressController.positionEchoDelay, greaterThan(const Duration(seconds: 30)));
+
+    WatchStateNotifier().notifyWatched(item: other, isNowWatched: true);
+    expect(controller.debugEchoDelay, TrackerProgressController.echoDelay);
   });
 }

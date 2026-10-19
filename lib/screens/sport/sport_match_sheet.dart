@@ -11,13 +11,14 @@ import '../../i18n/app_locale_utils.dart';
 import '../../i18n/strings.g.dart';
 import '../../models/livetv_channel.dart';
 import '../../services/sport/sport_broadcast_matching.dart';
+import '../../services/sport/sport_league_names.dart';
 import '../../services/sport/sport_models.dart';
 import '../../utils/live_tv_matching.dart';
 import '../../widgets/app_icon.dart';
 import '../../widgets/overlay_sheet.dart';
 import '../../widgets/live_tv_channel_logo.dart';
 import 'sport_broadcast_finder.dart';
-import 'sport_league_view.dart' show SportCrest, SportTap;
+import 'sport_league_view.dart' show SportCrest, SportTap, sportScoreNote;
 import 'sport_look.dart';
 
 /// Starts [broadcast] — live, or from the archive at [startAtEpoch] — with
@@ -214,7 +215,7 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
     final locale = LocaleSettings.currentLocale.intlLocaleName;
 
     final eyebrow = [
-      t.sport.matchday(n: match.matchday.order),
+      sportMatchdayLabel(widget.league, match.matchday.order, name: match.matchday.name),
       DateFormat.MMMMEEEEd(locale).format(match.kickoff),
       DateFormat.Hm(locale).format(match.kickoff),
     ].join(' · ');
@@ -253,7 +254,7 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
                           ),
                           SizedBox(height: look.gap / 2),
                           Text(
-                            _state(match, now),
+                            [_state(match, now), ?sportScoreNote(match)].join(' · '),
                             textAlign: TextAlign.center,
                             style: look.time.copyWith(color: live ? look.live : look.ink(0.6)),
                           ),
@@ -326,11 +327,7 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
     ];
   }
 
-  static String _leagueName(SportLeague league) => switch (league) {
-    SportLeague.bundesliga1 => t.sport.bundesliga1,
-    SportLeague.bundesliga2 => t.sport.bundesliga2,
-    SportLeague.liga3 => t.sport.liga3,
-  };
+  static String _leagueName(SportLeague league) => sportLeagueName(league);
 
   /// What can be done with [broadcast] now: a programme on air is watched
   /// live and, where the archive has it, from its start; one still to come

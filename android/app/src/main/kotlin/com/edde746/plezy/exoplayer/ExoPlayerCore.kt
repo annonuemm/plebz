@@ -4402,6 +4402,10 @@ class ExoPlayerCore(private val activity: Activity) :
       "videoDroppedFrames" to player.videoDecoderCounters?.droppedBufferCount,
       "videoRenderedFrames" to player.videoDecoderCounters?.renderedOutputBufferCount,
       "videoResumeStallRecoveries" to resumeStallRecoveryCount,
+      // Whether the item's timeline still grows: a live HLS playlist does, a
+      // finished one (#EXT-X-ENDLIST — an IPTV provider's off-air clip) does
+      // not. Plebz reads it to tell the two apart.
+      "isDynamic" to player.isCurrentMediaItemDynamic,
       // ASS overlay swap timing (vsync-pinned; late = past the swap-time budget)
       "subSwapCount" to assSubtitleView?.swapCount,
       "subLateSwaps" to assSubtitleView?.lateSwapCount,

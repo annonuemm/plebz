@@ -168,9 +168,6 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     // decoder cannot show: the full screen opens the channel itself, and
     // watches its own open.
     if (_decodeGuard.isWatching) return null;
-    // Nor one whose copy may not be the channel: the full screen opens it
-    // itself and moves past it there.
-    if (_variantGuard.isWatching) return null;
     if (!LivePictureHandover.canMove(player, session)) return null;
     // Only a picture on the plane in its box is where the growing player
     // expects it.
@@ -187,7 +184,11 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       setState(() => _shownAfterHandover = null);
     });
     appLogger.d('Guide preview: handing ${channel.displayName} over to full screen');
-    return LivePictureHandover(player: player, session: session, channel: channel);
+    // A copy still being checked is handed over with its check: the full
+    // screen goes on with it rather than opening the channel afresh.
+    final copyWatchSince = _variantGuard.watchingSince;
+    _variantGuard.disarm();
+    return LivePictureHandover(player: player, session: session, channel: channel, copyWatchSince: copyWatchSince);
   }
 
   /// Takes up a picture the full-screen player gave back (Plebz): at once when
@@ -362,7 +363,12 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       _decodeGuard
         ..prepare(channel, decodeMode)
         ..armForOpen(player, onStuck: (stuck) => unawaited(_restartInSoftware(stuck, generation)));
-      _variantGuard.armForOpen(player, session!, onStuck: (next) => unawaited(_openVariant(next, generation)));
+      _variantGuard.armForOpen(
+        player,
+        session!,
+        onStuck: (next) => unawaited(_openVariant(next, generation)),
+        moveOnFailure: true,
+      );
       await player.open(Media(url, headers: session.streamHeaders), play: true, isLive: true);
       if (!mounted || generation != _generation) return;
       appLogger.d('Guide preview: playing ${channel.displayName}');
@@ -411,7 +417,12 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       _decodeGuard
         ..prepare(channel, decodeMode)
         ..armForOpen(player, onStuck: (stuck) => unawaited(_restartInSoftware(stuck, generation)));
-      _variantGuard.armForOpen(player, next, onStuck: (following) => unawaited(_openVariant(following, generation)));
+      _variantGuard.armForOpen(
+        player,
+        next,
+        onStuck: (following) => unawaited(_openVariant(following, generation)),
+        moveOnFailure: true,
+      );
       await player.open(Media(url, headers: next.streamHeaders), play: true, isLive: true);
     } catch (e, stackTrace) {
       appLogger.w('Guide preview: could not open copy ${index + 1}', error: e, stackTrace: stackTrace);

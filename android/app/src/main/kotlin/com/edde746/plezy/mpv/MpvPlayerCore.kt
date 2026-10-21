@@ -3066,6 +3066,9 @@ class MpvPlayerCore private constructor(
 
     val stats = mutableMapOf<String, Any?>(
       "playerType" to "mpv",
+      // The container, for ExoPlayer's mpv fallback to report: Plebz tells a
+      // provider's off-air clip (an MP4 at a live address) from a channel by it.
+      "file-format" to readProperty("file-format"),
       "video-codec" to readProperty("video-codec"),
       "video-params/w" to readProperty("video-params/w"),
       "video-params/h" to readProperty("video-params/h"),

@@ -22,11 +22,16 @@ import 'settings_service.dart';
 /// [LivePictureReturn]. Whoever holds one owns its
 /// player and session: it plays them on or [release]s them.
 class LivePictureHandover {
-  LivePictureHandover({required this.player, required this.session, required this.channel});
+  LivePictureHandover({required this.player, required this.session, required this.channel, this.copyWatchSince});
 
   final Player player;
   final LiveTvPlaybackSession session;
   final LiveTvChannel channel;
+
+  /// When the open of the copy playing began, while the preview was still
+  /// making sure that copy is the channel (`LiveVariantFallbackGuard`): the
+  /// full screen takes that watch up. Null when nothing was left to check.
+  final DateTime? copyWatchSince;
 
   /// The player can still be handed on.
   bool get isAlive => !player.disposed;

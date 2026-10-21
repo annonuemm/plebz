@@ -67,6 +67,17 @@ extension _VideoPlayerLivePictureMethods on VideoPlayerScreenState {
       playing: currentPlayer.state.playing,
       onStalled: (why) => unawaited(_onLiveStalled(currentPlayer, stream, why)),
     );
+    // A merged channel's copy the preview was still checking: the check goes
+    // on here, so a dead copy or an off-air clip still moves to the next one.
+    final copyWatchSince = picture.copyWatchSince;
+    if (copyWatchSince != null) {
+      _liveVariantFallback.watchPlaying(
+        currentPlayer,
+        session,
+        since: copyWatchSince,
+        onStuck: (next) => _moveToNextLiveVariant(currentPlayer, session, next, stream),
+      );
+    }
     _firstFrame.markReady();
     _http503Watchdog.disarm();
     unawaited(_visualEffects.onFirstFrame());

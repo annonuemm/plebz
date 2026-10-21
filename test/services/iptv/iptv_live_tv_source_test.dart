@@ -14,6 +14,7 @@ import 'package:plezy/services/iptv/iptv_disk_cache.dart';
 import 'package:plezy/services/iptv/iptv_guide_store.dart';
 import 'package:plezy/services/iptv/iptv_catchup.dart';
 import 'package:plezy/services/iptv/iptv_live_tv_source.dart';
+import 'package:plezy/services/live_variant_fallback.dart';
 import 'package:plezy/services/iptv/iptv_local_files.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:plezy/services/iptv/iptv_source.dart';
@@ -193,6 +194,9 @@ http.Response _ok(String body) => http.Response(body, 200);
 http.Response _okJson(Object body) => http.Response(jsonEncode(body), 200);
 
 void main() {
+  // A copy moved past is remembered process-wide; every test starts afresh.
+  setUp(LiveCopyMemory.resetForTest);
+
   group('a playlist from a local file', () {
     late Directory support;
     setUp(() async {
@@ -385,6 +389,19 @@ void main() {
       // Nothing left to try: the last one is re-opened rather than giving up.
       final again = await third.recover(directStream: false, directStreamAudio: false);
       expect(await again!.streamUrlAt(), 'http://provider/stream/ard3');
+    });
+
+    test('the next tune opens on the copy recovery last moved to', () async {
+      final source = _m3uSource(repeated(), mergeDuplicates: true);
+      addTearDown(source.close);
+      final channels = await source.fetchChannels();
+
+      final first = await source.startPlayback(channels.first.key);
+      await first!.recover(directStream: false, directStreamAudio: false);
+
+      final retuned = await source.startPlayback(channels.first.key);
+      expect(retuned!.variantIndex, 1);
+      expect(await retuned.streamUrlAt(), 'http://provider/stream/ard2');
     });
   });
 

@@ -34,6 +34,10 @@ extension _VideoPlayerErrorMethods on VideoPlayerScreenState {
       liveRetrying: _live.retrying,
       liveFallbackLevel: _live.fallbackLevel,
       liveRetryFailed: _live.retryFailed,
+      liveHasNextCopy: switch (_live.session) {
+        final session? => nextLiveVariant(session) != null,
+        null => false,
+      },
     );
 
     switch (action) {

@@ -10,6 +10,11 @@ import '../../models.dart';
 import '../player_base.dart';
 import '../video_rect_support.dart';
 
+/// The property [PlayerAndroid.getProperty] answers with whether the playing
+/// item's timeline still grows (`yes`/`no`), from ExoPlayer's own view of it
+/// (Plebz).
+const String liveTimelineDynamicProperty = 'plebz-live-dynamic';
+
 /// Android implementation using ExoPlayer with ASS subtitle support via libass-android.
 ///
 /// Implements [VideoRectTarget] so the surface can be placed where the widget
@@ -501,6 +506,17 @@ class PlayerAndroid extends PlayerBase implements VideoRectTarget, VideoTextureT
       case 'deinterlace-active':
         final stats = await getStats();
         return stats[name]?.toString();
+      // Whether the item's timeline still grows (Plebz): `no` for a finished
+      // HLS playlist, `yes` for a live one; null where the core cannot say.
+      // Only the mpv fallback knows the container (Plebz, off-air clips).
+      case 'file-format':
+        if (!_usingMpvFallback) return null;
+        final stats = await getStats();
+        return stats['file-format']?.toString();
+      case liveTimelineDynamicProperty:
+        final stats = await getStats();
+        final dynamic = stats['isDynamic'];
+        return dynamic is bool ? (dynamic ? 'yes' : 'no') : null;
       case 'width':
       case 'dwidth':
         final stats = await getStats();

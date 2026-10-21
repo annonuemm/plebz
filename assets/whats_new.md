@@ -13,6 +13,15 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.28.1 (Build 860)
+
+### Live-TV
+- Behoben: Bei „Gleiche Sender zusammenfassen“ wurde ein Sender beim Wechsel aus der Vorschau ins Vollbild neu geladen. Er geht jetzt wieder fließend ins Vollbild über.
+- Die Pausentafel eines Senders erkennt Plebz jetzt gleich beim Laden und springt sofort zur nächsten Kopie.
+- Ist eine Kopie ganz offline, probiert Plebz alle weiteren der Reihe nach, in der Vorschau und im Vollbild. Eine Fehlermeldung kommt erst, wenn keine Kopie mehr läuft.
+- Hat Plebz eine Kopie übersprungen, startet der Sender eine halbe Stunde lang gleich mit einer Kopie, die läuft.
+- Tipp: Wer „Gleiche Sender zusammenfassen“ nutzt, stellt unter Einstellungen → IPTV → „Player für IPTV“ am besten mpv ein. Mit ExoPlayer starten Sender bei manchen Anbietern langsamer, und der fließende Wechsel aus der Vorschau ins Vollbild klappt dort nicht.
+
 ## 1.28.0 (Build 855)
 
 ### Simkl-Profile

@@ -112,6 +112,11 @@ abstract class LiveTvPlaybackSession {
   /// Which of [variantLabels] is playing.
   int get variantIndex => 0;
 
+  /// What this channel's copies are remembered by when one of them turns out
+  /// not to be the channel (`LiveCopyMemory`, Plebz); null where there is a
+  /// single address.
+  String? get copyMemoryKey => null;
+
   /// A session on the variant at [index], or null when there is none to move
   /// to. The caller re-opens the stream from the session it gets back.
   Future<LiveTvPlaybackSession?> switchVariant(int index) async => null;

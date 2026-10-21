@@ -16,9 +16,14 @@ class _StreamPlayer implements Player {
   final durations = StreamController<Duration>.broadcast();
 
   @override
+  PlayerState state = const PlayerState();
+
+  final ended = StreamController<bool>.broadcast();
+
+  @override
   late final PlayerStreams streams = PlayerStreams(
     playing: const Stream.empty(),
-    completed: const Stream.empty(),
+    completed: ended.stream,
     buffering: const Stream.empty(),
     position: const Stream.empty(),
     duration: durations.stream,
@@ -53,6 +58,7 @@ class _StreamPlayer implements Player {
     primaryReady.close(),
     failed.close(),
     durations.close(),
+    ended.close(),
   ]);
 
   @override
@@ -68,7 +74,8 @@ IptvPlaybackSession _session({required int copies, int playing = 0}) => IptvPlay
 );
 
 /// A guard whose player names the file format [format].
-LiveVariantFallbackGuard _guard({String? format = 'mp4'}) => LiveVariantFallbackGuard(readFormat: (_) async => format);
+LiveVariantFallbackGuard _guard({String? format = 'mp4', bool? dynamic}) =>
+    LiveVariantFallbackGuard(readShape: (_) async => (format: format, dynamic: dynamic));
 
 void main() {
   group('nextLiveVariant', () {
@@ -176,6 +183,62 @@ void main() {
       });
     });
 
+    test('ExoPlayer: a finished HLS playlist is caught at its load, without a start-file', () {
+      fakeAsync((async) {
+        final stuck = <int>[];
+        _guard(format: null, dynamic: false).armForOpen(player, _session(copies: 3), onStuck: stuck.add);
+        player.loaded.add(null);
+        player.durations.add(const Duration(seconds: 10));
+        async.flushMicrotasks();
+        expect(stuck, [1]);
+      });
+    });
+
+    test('ExoPlayer: a growing HLS window is a channel', () {
+      fakeAsync((async) {
+        final stuck = <int>[];
+        _guard(format: null, dynamic: true).armForOpen(player, _session(copies: 3), onStuck: stuck.add);
+        // The test player's first frame counts after a start-file, as mpv's.
+        player.start();
+        player.loaded.add(null);
+        player.durations.add(const Duration(seconds: 30));
+        player.restarted.add(null);
+        async.elapse(const Duration(minutes: 2));
+        expect(stuck, isEmpty);
+      });
+    });
+
+    test('a copy whose stream ends soon after its open was a clip, whatever the player said', () {
+      fakeAsync((async) {
+        final stuck = <int>[];
+        final guard = _guard(format: 'hls')..armForOpen(player, _session(copies: 3), onStuck: stuck.add);
+        player.start();
+        player.durations.add(const Duration(seconds: 10));
+        player.restarted.add(null);
+        async.elapse(const Duration(seconds: 10));
+        expect(stuck, isEmpty);
+        expect(guard.isWatching, isTrue);
+
+        player.ended.add(true);
+        async.flushMicrotasks();
+        expect(stuck, [1]);
+      });
+    });
+
+    test('an end long after the open is left to the stall guard', () {
+      fakeAsync((async) {
+        final stuck = <int>[];
+        final guard = _guard(format: 'hls')..armForOpen(player, _session(copies: 3), onStuck: stuck.add);
+        player.start();
+        player.restarted.add(null);
+        async.elapse(LiveVariantFallbackGuard.offAirClipLimit);
+        expect(guard.isWatching, isFalse);
+        player.ended.add(true);
+        async.flushMicrotasks();
+        expect(stuck, isEmpty);
+      });
+    });
+
     test('an HLS channel reporting its playlist window is not a clip', () {
       fakeAsync((async) {
         final stuck = <int>[];
@@ -185,7 +248,7 @@ void main() {
           player.durations.add(Duration(milliseconds: ms));
         }
         player.restarted.add(null);
-        async.elapse(const Duration(seconds: 30));
+        async.elapse(const Duration(minutes: 2));
         expect(stuck, isEmpty);
         expect(guard.isWatching, isFalse);
       });
@@ -195,7 +258,7 @@ void main() {
       fakeAsync((async) {
         final stuck = <int>[];
         LiveVariantFallbackGuard(
-          readFormat: (_) async => throw StateError('no core'),
+          readShape: (_) async => throw StateError('no core'),
         ).armForOpen(player, _session(copies: 2), onStuck: stuck.add);
         player.start();
         player.durations.add(const Duration(seconds: 10));
@@ -206,14 +269,19 @@ void main() {
     });
 
     test('isOffAirClip', () {
-      expect(isOffAirClip(Duration.zero, 'mp4'), isFalse);
-      expect(isOffAirClip(const Duration(seconds: 10), 'mp4'), isTrue);
-      expect(isOffAirClip(const Duration(seconds: 10), 'mpegts'), isTrue);
-      expect(isOffAirClip(const Duration(seconds: 60), 'mov,mp4,m4a,3gp,3g2,mj2'), isTrue);
-      expect(isOffAirClip(const Duration(seconds: 61), 'mp4'), isFalse);
-      expect(isOffAirClip(const Duration(seconds: 4), 'hls'), isFalse);
-      expect(isOffAirClip(const Duration(seconds: 4), 'applehttp'), isFalse);
-      expect(isOffAirClip(const Duration(seconds: 10), null), isFalse);
+      LiveFileShape mpv(String? format) => (format: format, dynamic: null);
+      expect(isOffAirClip(Duration.zero, mpv('mp4')), isFalse);
+      expect(isOffAirClip(const Duration(seconds: 10), mpv('mp4')), isTrue);
+      expect(isOffAirClip(const Duration(seconds: 10), mpv('mpegts')), isTrue);
+      expect(isOffAirClip(const Duration(seconds: 60), mpv('mov,mp4,m4a,3gp,3g2,mj2')), isTrue);
+      expect(isOffAirClip(const Duration(seconds: 61), mpv('mp4')), isFalse);
+      expect(isOffAirClip(const Duration(seconds: 4), mpv('hls')), isFalse);
+      expect(isOffAirClip(const Duration(seconds: 4), mpv('applehttp')), isFalse);
+      expect(isOffAirClip(const Duration(seconds: 10), mpv(null)), isFalse);
+      // ExoPlayer: a finished HLS playlist is a clip, a growing one a channel.
+      expect(isOffAirClip(const Duration(seconds: 10), (format: null, dynamic: false)), isTrue);
+      expect(isOffAirClip(const Duration(seconds: 30), (format: null, dynamic: true)), isFalse);
+      expect(isOffAirClip(const Duration(seconds: 90), (format: null, dynamic: false)), isFalse);
     });
 
     test('a picture within the patience ends the watch', () {
@@ -226,11 +294,24 @@ void main() {
         async.flushMicrotasks();
         expect(guard.isWatching, isTrue, reason: 'the length is still listened for');
 
-        async.elapse(LiveVariantFallbackGuard.lengthGrace);
+        async.elapse(LiveVariantFallbackGuard.offAirClipLimit);
         expect(guard.isWatching, isFalse);
 
         async.elapse(const Duration(seconds: 30));
         expect(stuck, isEmpty);
+      });
+    });
+
+    test('without recovery of its own, a failed load moves on', () {
+      fakeAsync((async) {
+        final stuck = <int>[];
+        final guard = _guard()..armForOpen(player, _session(copies: 3), onStuck: stuck.add, moveOnFailure: true);
+        player.start();
+        async.elapse(const Duration(seconds: 1));
+        player.failed.add(null);
+        async.flushMicrotasks();
+        expect(stuck, [1]);
+        expect(guard.isWatching, isFalse);
       });
     });
 
@@ -278,6 +359,105 @@ void main() {
         guard.disarm();
         async.elapse(const Duration(seconds: 30));
         expect(stuck, [2]);
+      });
+    });
+  });
+
+  group('LiveVariantFallbackGuard.watchPlaying', () {
+    late _StreamPlayer player;
+
+    setUp(() => player = _StreamPlayer());
+    tearDown(() => player.close());
+
+    test('a copy handed over before its first frame keeps the time it had left', () {
+      fakeAsync((async) {
+        final stuck = <int>[];
+        // The guard reads the wall clock, which fake time does not move.
+        final since = DateTime.now().subtract(const Duration(seconds: 3));
+        final guard = _guard()..watchPlaying(player, _session(copies: 3), since: since, onStuck: stuck.add);
+        expect(guard.isWatching, isTrue);
+
+        async.elapse(const Duration(milliseconds: 1900));
+        expect(stuck, isEmpty);
+        async.elapse(const Duration(milliseconds: 200));
+        expect(stuck, [1]);
+      });
+    });
+
+    test('a handed-over copy that shows its first frame is let go', () {
+      fakeAsync((async) {
+        final stuck = <int>[];
+        final guard = _guard()..watchPlaying(player, _session(copies: 3), since: DateTime.now(), onStuck: stuck.add);
+        async.elapse(const Duration(seconds: 1));
+        player.restarted.add(null);
+        async.elapse(LiveVariantFallbackGuard.offAirClipLimit);
+        expect(guard.isWatching, isFalse);
+        async.elapse(const Duration(seconds: 30));
+        expect(stuck, isEmpty);
+      });
+    });
+
+    test('a handed-over copy already showing a picture is only checked for its length', () {
+      fakeAsync((async) {
+        final stuck = <int>[];
+        player.state = const PlayerState(hasRenderedFrame: true, duration: Duration(seconds: 10));
+        _guard().watchPlaying(player, _session(copies: 2), since: DateTime.now(), onStuck: stuck.add);
+        async.flushMicrotasks();
+        expect(stuck, [1], reason: 'the clip had already said how long it is');
+      });
+    });
+
+    test('a late length on a handed-over HLS copy is its window, not a clip', () {
+      fakeAsync((async) {
+        final stuck = <int>[];
+        player.state = const PlayerState(hasRenderedFrame: true);
+        _guard(format: 'hls').watchPlaying(player, _session(copies: 2), since: DateTime.now(), onStuck: stuck.add);
+        player.durations.add(const Duration(seconds: 4));
+        async.elapse(const Duration(seconds: 30));
+        expect(stuck, isEmpty);
+      });
+    });
+
+    test('a handed-over copy that already ended moves on at once', () {
+      final stuck = <int>[];
+      player.state = const PlayerState(hasRenderedFrame: true, completed: true);
+      _guard(format: 'hls').watchPlaying(player, _session(copies: 2), since: DateTime.now(), onStuck: stuck.add);
+      expect(stuck, [1]);
+    });
+
+    test('the last copy is not watched', () {
+      final guard = _guard()
+        ..watchPlaying(player, _session(copies: 2, playing: 1), since: DateTime.now(), onStuck: (_) {});
+      expect(guard.isWatching, isFalse);
+    });
+  });
+
+  group('LiveCopyMemory', () {
+    setUp(LiveCopyMemory.resetForTest);
+
+    test('a channel opens on the copy the guard last moved to, for half an hour', () {
+      final now = DateTime(2026, 10, 21, 18);
+      expect(LiveCopyMemory.startIndexFor('nitro', 6, now: now), 0);
+      LiveCopyMemory.remember('nitro', 1, now: now);
+      expect(LiveCopyMemory.startIndexFor('nitro', 6, now: now.add(const Duration(minutes: 29))), 1);
+      expect(LiveCopyMemory.startIndexFor('nitro', 6, now: now.add(const Duration(minutes: 31))), 0);
+    });
+
+    test('a remembered copy the playlist no longer has is forgotten', () {
+      LiveCopyMemory.remember('nitro', 4);
+      expect(LiveCopyMemory.startIndexFor('nitro', 3), 0);
+    });
+
+    test('the guard remembers where it moved a merged channel', () {
+      fakeAsync((async) {
+        final player = _StreamPlayer();
+        final session = _session(copies: 3);
+        _guard(format: 'hls').armForOpen(player, session, onStuck: (_) {});
+        player.start();
+        player.ended.add(true);
+        async.flushMicrotasks();
+        expect(LiveCopyMemory.startIndexFor(session.copyMemoryKey!, 3), 1);
+        unawaited(player.close());
       });
     });
   });

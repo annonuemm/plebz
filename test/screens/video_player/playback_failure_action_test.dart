@@ -9,6 +9,7 @@ PlaybackFailureAction resolve({
   bool liveRetrying = false,
   int liveFallbackLevel = 0,
   bool liveRetryFailed = false,
+  bool liveHasNextCopy = false,
 }) {
   return resolvePlaybackFailureAction(
     cause: cause,
@@ -17,6 +18,7 @@ PlaybackFailureAction resolve({
     liveRetrying: liveRetrying,
     liveFallbackLevel: liveFallbackLevel,
     liveRetryFailed: liveRetryFailed,
+    liveHasNextCopy: liveHasNextCopy,
   );
 }
 
@@ -153,5 +155,37 @@ void main() {
     expect(resolve(), PlaybackFailureAction.fatal);
     expect(resolve(statuses: {503}), PlaybackFailureAction.fatal);
     expect(resolve(cause: 'some-decoder-fault'), PlaybackFailureAction.fatal);
+  });
+
+  group('a merged channel with another copy left', () {
+    test('moves on past the ladder limit and past a server error', () {
+      expect(
+        resolve(isLive: true, liveHasNextCopy: true, liveFallbackLevel: maxLiveFallbackLevel, liveRetryFailed: true),
+        PlaybackFailureAction.liveRetry,
+      );
+      expect(resolve(isLive: true, liveHasNextCopy: true, statuses: {500}), PlaybackFailureAction.liveRetry);
+      expect(
+        resolve(isLive: true, liveHasNextCopy: true, cause: PlayerError.serverHttp500),
+        PlaybackFailureAction.liveRetry,
+      );
+    });
+
+    test('a retry in flight still owns the failure', () {
+      expect(resolve(isLive: true, liveHasNextCopy: true, liveRetrying: true), PlaybackFailureAction.ignore);
+    });
+
+    test('a device fault is not the copy', () {
+      expect(
+        resolve(isLive: true, liveHasNextCopy: true, cause: PlayerError.audioOutputFailed),
+        PlaybackFailureAction.fatal,
+      );
+    });
+
+    test('the last copy keeps the old ladder', () {
+      expect(
+        resolve(isLive: true, liveFallbackLevel: maxLiveFallbackLevel, liveRetryFailed: true),
+        PlaybackFailureAction.liveInterrupted,
+      );
+    });
   });
 }

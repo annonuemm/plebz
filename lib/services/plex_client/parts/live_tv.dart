@@ -1117,6 +1117,9 @@ class _PlexLiveTvPlaybackSession implements LiveTvPlaybackSession {
   int get variantIndex => 0;
 
   @override
+  String? get copyMemoryKey => null;
+
+  @override
   Future<LiveTvPlaybackSession?> switchVariant(int index) async => null;
 
   @override

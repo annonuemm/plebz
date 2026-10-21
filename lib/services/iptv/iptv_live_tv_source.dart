@@ -21,6 +21,7 @@ import '../../models/livetv_channel.dart';
 import '../../models/livetv_program.dart';
 import '../../utils/app_logger.dart';
 import '../favorite_channels_repository.dart';
+import '../live_variant_fallback.dart' show LiveCopyMemory;
 import 'iptv_catchup.dart';
 import 'iptv_disk_cache.dart';
 import 'iptv_local_files.dart';
@@ -803,6 +804,8 @@ class IptvLiveTvSource implements LiveTvSupport {
 
     return IptvPlaybackSession(
       variants: variants,
+      // A copy found lately not to be the channel is not opened again first.
+      variantIndex: LiveCopyMemory.startIndexFor(IptvPlaybackSession.memoryKeyFor(variants), variants.length),
       archiveVariantIndex: archiveIndex < 0 ? 0 : archiveIndex,
       program: await _currentProgramFor(channel),
       catchup: _catchupFor(channel, archiveKey: archiveKey ?? channel.key),
@@ -1302,6 +1305,14 @@ class IptvPlaybackSession implements LiveTvPlaybackSession {
   @override
   List<String> get variantLabels => variants.length > 1 ? [for (final variant in variants) variant.label] : const [];
 
+  /// The first copy's address stands for the whole channel: it is what the
+  /// merge put first, and it does not change while the playlist does not.
+  static String memoryKeyFor(List<({String url, Map<String, String> headers, String label})> variants) =>
+      variants.first.url;
+
+  @override
+  String? get copyMemoryKey => variants.length > 1 ? memoryKeyFor(variants) : null;
+
   @override
   Future<LiveTvPlaybackSession?> switchVariant(int index) async {
     if (index < 0 || index >= variants.length || index == variantIndex) return null;
@@ -1417,6 +1428,7 @@ class IptvPlaybackSession implements LiveTvPlaybackSession {
     final next = variantIndex + 1;
     if (next >= variants.length) return this;
     appLogger.i('IPTV: falling back to variant ${next + 1} of ${variants.length}');
+    LiveCopyMemory.remember(memoryKeyFor(variants), next);
     return IptvPlaybackSession(variants: variants, variantIndex: next, program: program, catchup: catchup, now: _now);
   }
 }

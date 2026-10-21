@@ -65,8 +65,17 @@ PlaybackFailureAction resolvePlaybackFailureAction({
   required bool liveRetrying,
   required int liveFallbackLevel,
   required bool liveRetryFailed,
+  bool liveHasNextCopy = false,
 }) {
   if (cause == PlayerError.audioOutputFailed) return PlaybackFailureAction.fatal;
+
+  // A merged playlist channel with a copy left to try (Plebz): whatever this
+  // copy's server answered, the next one is another server's answer, and the
+  // recovery moves there. The ladder's limit is for a server's degradation
+  // steps, not for a channel's copies.
+  if (isLive && liveHasNextCopy) {
+    return liveRetrying ? PlaybackFailureAction.ignore : PlaybackFailureAction.liveRetry;
+  }
 
   if (!isLive && fatalHttpStatuses.contains(403)) return PlaybackFailureAction.playbackNotAllowedDialog;
 

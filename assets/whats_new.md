@@ -13,6 +13,11 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.30.0 (Build 866)
+
+### Plebz Home
+- Die Reihen deiner Plebz-Startseite, etwa „Kürzlich hinzugefügt“ aus deinen Mediatheken, lassen sich jetzt auch in Plebz Home zeigen. Einschalten unter Einstellungen → Reihen in Plebz Home.
+
 ## 1.29.0 (Build 864)
 
 ### Wiedergabe

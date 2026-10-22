@@ -50,6 +50,9 @@ class HomeRowsFeed {
   static const Duration watchlistInterval = Duration(minutes: 15);
   static const int watchlistLimit = 20;
 
+  /// Titles per library row, as many as the watchlist sends.
+  static const int libraryLimit = 20;
+
   final DiscoverProvider discover;
   final MultiServerProvider multiServer;
   final CatalogSourcesProvider? catalog;
@@ -59,6 +62,7 @@ class HomeRowsFeed {
   String? _profile;
   List<MediaItem>? _seenOnDeck;
   MediaHub? _seenRecommendations;
+  List<MediaHub>? _seenShelves;
   DateTime? _watchlistAt;
   bool _watchlistLoading = false;
   bool _disposed = false;
@@ -136,6 +140,7 @@ class HomeRowsFeed {
       _profile = profile;
       _seenOnDeck = null;
       _seenRecommendations = null;
+      _seenShelves = null;
       _watchlistAt = null;
     }
     final hideSpoilers = SettingsService.instanceOrNull?.read(SettingsService.hideSpoilers) ?? false;
@@ -182,7 +187,41 @@ class HomeRowsFeed {
       });
     }
 
+    final shelves = [
+      for (final hub in discover.hubs)
+        if (hub.id != recommendationsHubId) hub,
+    ];
+    final seenShelves = _seenShelves;
+    if (seenShelves == null ||
+        seenShelves.length != shelves.length ||
+        shelves.indexed.any((entry) => !identical(entry.$2, seenShelves[entry.$1]))) {
+      _seenShelves = shelves;
+      _publishShelves(shelves, hideSpoilers: hideSpoilers, posterMode: posterMode);
+    }
+
     unawaited(refreshWatchlist());
+  }
+
+  /// The start page's library shelves as rows a launcher may switch on, in
+  /// the start page's order; a shelf gone from it takes its row along.
+  void _publishShelves(List<MediaHub> hubs, {required bool hideSpoilers, required EpisodePosterMode posterMode}) {
+    final shelves = homeRowsLibraryShelves(hubs);
+    final ids = {for (final shelf in shelves) shelf.id};
+    for (final id in rows.libraryRowIds.toList()) {
+      if (!ids.contains(id)) rows.publish(id, '', const []);
+    }
+    for (final (index, shelf) in shelves.indexed) {
+      rows.publish(
+        shelf.id,
+        shelf.title,
+        [
+          for (final item in shelf.hub.items.take(libraryLimit))
+            ?homeRowTileForItem(item, client: _clientOf(item), hideSpoilers: hideSpoilers, posterMode: posterMode),
+        ],
+        subtitle: shelf.subtitle,
+        order: index + 1,
+      );
+    }
   }
 
   /// The first page of the watchlist the Merkliste shows, unless it was read

@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../media/media_hub.dart';
 import '../media/media_item.dart';
 import '../media/media_item_types.dart';
 import '../media/media_kind.dart';
@@ -64,7 +65,7 @@ class HomeRows {
   bool get supported => _supported;
   final Duration debounce;
 
-  final Map<String, ({String title, List<HomeRowTile> tiles, String? subtitle, bool selected})> _rows = {};
+  final Map<String, ({String title, List<HomeRowTile> tiles, String? subtitle, bool selected, int order})> _rows = {};
   HomeRowsTheme? _theme;
   Timer? _timer;
 
@@ -73,16 +74,32 @@ class HomeRows {
 
   /// Replaces the row [id]; an empty [tiles] takes it away. [subtitle] says
   /// a word about the row (a league's matchday), [selected] marks the one of
-  /// a group to open on (the favourite club's league).
-  void publish(String id, String title, List<HomeRowTile> tiles, {String? subtitle, bool selected = false}) {
+  /// a group to open on (the favourite club's league). Rows outside
+  /// [rowOrder] stand by [order], then by id (the library rows keep the start
+  /// page's order).
+  void publish(
+    String id,
+    String title,
+    List<HomeRowTile> tiles, {
+    String? subtitle,
+    bool selected = false,
+    int order = 0,
+  }) {
     if (!_supported) return;
     if (tiles.isEmpty) {
       if (_rows.remove(id) == null) return;
     } else {
-      _rows[id] = (title: title, tiles: List.unmodifiable(tiles), subtitle: subtitle, selected: selected);
+      _rows[id] = (title: title, tiles: List.unmodifiable(tiles), subtitle: subtitle, selected: selected, order: order);
     }
     _schedule();
   }
+
+  /// The ids of the library rows published now.
+  Iterable<String> get libraryRowIds => _rows.keys.where((id) => id.startsWith(libraryRowPrefix));
+
+  /// The start page's shelves (a library's recently added, a server's own
+  /// rows) go out under ids of this prefix, for a launcher to offer.
+  static const String libraryRowPrefix = 'library:';
 
   /// The row of a league's current matchday, for a launcher's sport section.
   static String sportRow(SportLeague league) => 'sport:${league.shortcut}';
@@ -146,7 +163,10 @@ class HomeRows {
 
     final ids = [
       ...rowOrder.where(_rows.containsKey),
-      ...(_rows.keys.where((id) => !rowOrder.contains(id)).toList()..sort()),
+      ...(_rows.keys.where((id) => !rowOrder.contains(id)).toList()..sort((a, b) {
+        final byOrder = _rows[a]!.order.compareTo(_rows[b]!.order);
+        return byOrder != 0 ? byOrder : a.compareTo(b);
+      })),
     ];
     final body = <String, dynamic>{
       'theme': ?_theme?.toJson(),
@@ -382,6 +402,27 @@ String homeRowsMatchdayLine(int matchday, List<SportMatch> matches) {
 /// The id Continue Watching and the shelf links use for a title:
 /// `plezy_<server>_<item>` — see `SystemShelfService.parseContentId`.
 String homeRowsContentId(String serverId, String itemId) => 'plezy_${serverId}_$itemId';
+
+/// The start page's shelves a launcher may offer as rows: every one of
+/// [hubs] but Continue Watching, which goes out on its own. Each keeps an id
+/// across loads (its server, library and the hub's own key) and names its
+/// server when the shelves come from several.
+List<({String id, String title, String? subtitle, MediaHub hub})> homeRowsLibraryShelves(List<MediaHub> hubs) {
+  final shelves = [
+    for (final hub in hubs)
+      if (!hub.isContinueWatchingHub && hub.items.isNotEmpty) hub,
+  ];
+  final servers = {for (final hub in shelves) hub.serverId};
+  return [
+    for (final hub in shelves)
+      (
+        id: '${HomeRows.libraryRowPrefix}${hub.serverId ?? ''}|${hub.libraryId ?? ''}|${hub.id}',
+        title: hub.title,
+        subtitle: servers.length > 1 ? hub.serverName : null,
+        hub: hub,
+      ),
+  ];
+}
 
 /// A tile for a library title, or null when it has nothing to open.
 ///

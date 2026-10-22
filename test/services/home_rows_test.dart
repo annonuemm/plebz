@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:plezy/media/media_hub.dart';
 import 'package:plezy/media/media_kind.dart';
 import 'package:plezy/media/media_server_client.dart';
 import 'package:plezy/media/ultra_blur_colors.dart';
@@ -70,6 +71,16 @@ void main() {
       final key = image.split('/').last;
       expect(key, matches(RegExp(r'^[a-f0-9]{40}$')));
       expect(payload.sources[key], 'https://server.example/a.jpg?X-Plex-Token=secret');
+    });
+
+    test('library rows follow the fixed ones in the order they were given', () {
+      final home = rows()
+        ..publish('library:b', 'Neu in Serien', [tile('s')], order: 1)
+        ..publish('library:a', 'Neu in Filmen', [tile('f')], order: 2)
+        ..publish(HomeRows.continueRow, 'Weiterschauen', [tile('c')]);
+      final snapshot = jsonDecode(home.buildPayload().snapshot) as Map<String, dynamic>;
+      expect([for (final row in snapshot['rows'] as List) row['id']], ['continue', 'library:b', 'library:a']);
+      expect(home.libraryRowIds, unorderedEquals(['library:a', 'library:b']));
     });
 
     test('an empty row is taken away', () {
@@ -239,6 +250,34 @@ void main() {
       expect(tile.open, 'plebz://watchlist');
       expect(tile.image, 'https://images.example/dune.jpg');
       expect(homeRowTileForItem(catalog, client: null, resume: true), isNull, reason: 'nothing to play on');
+    });
+  });
+
+  group('library shelves', () {
+    MediaHub hub(String id, {String server = 'srv', String? library, int items = 1}) => MediaHub(
+      id: id,
+      title: 'Hub $id',
+      type: 'movie',
+      items: [for (var i = 0; i < items; i++) testMediaItem(id: '$id$i', title: 'T$i', serverId: server)],
+      libraryId: library,
+      serverId: server,
+      serverName: 'Server $server',
+    );
+
+    test('every shelf but Continue Watching and empty ones, under an id that names where it comes from', () {
+      final shelves = homeRowsLibraryShelves([
+        hub('continueWatching'),
+        hub('/hubs/sections/1/recentlyAdded', library: '1'),
+        hub('/hubs/empty', items: 0),
+      ]);
+      expect([for (final shelf in shelves) shelf.id], ['library:srv|1|/hubs/sections/1/recentlyAdded']);
+      expect(shelves.single.title, 'Hub /hubs/sections/1/recentlyAdded');
+      expect(shelves.single.subtitle, isNull, reason: 'one server needs no name');
+    });
+
+    test('shelves from several servers name theirs', () {
+      final shelves = homeRowsLibraryShelves([hub('a'), hub('b', server: 'other')]);
+      expect([for (final shelf in shelves) shelf.subtitle], ['Server srv', 'Server other']);
     });
   });
 

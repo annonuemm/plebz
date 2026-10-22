@@ -18,7 +18,7 @@ void main() {
     addTearDown(poster.dispose);
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach),
         home: Scaffold(
           body: OckerLibraryColumn(
             key: columnKey,
@@ -63,7 +63,7 @@ void main() {
     final columnKey = GlobalKey<OckerLibraryColumnState>();
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: Scaffold(
           body: OckerLibraryColumn(
             key: columnKey,

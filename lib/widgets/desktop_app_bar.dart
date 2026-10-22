@@ -23,6 +23,10 @@ class DesktopSliverAppBar extends StatelessWidget {
   final Widget? flexibleSpace;
   final PreferredSizeWidget? bottom;
 
+  /// Replaces the implied back arrow's [Navigator.maybePop], for a screen whose
+  /// [PopScope] routes a system back somewhere a tap on the arrow should not go.
+  final VoidCallback? onBackPressed;
+
   const DesktopSliverAppBar({
     super.key,
     this.title,
@@ -40,6 +44,7 @@ class DesktopSliverAppBar extends StatelessWidget {
     this.expandedHeight,
     this.flexibleSpace,
     this.bottom,
+    this.onBackPressed,
   });
 
   @override
@@ -80,10 +85,12 @@ class DesktopSliverAppBar extends StatelessWidget {
 
   /// [SliverAppBar]'s own implied back button bypasses the traffic-light padding,
   /// so imply it here and route it through [DesktopAppBarHelper] like any other leading.
+  /// Without [onBackPressed] it pops through [Navigator.maybePop] like a system back,
+  /// so a screen's [PopScope] (unsaved-changes prompts, in-flight saves) also covers it.
   Widget? _impliedLeading(BuildContext context) {
     if (leading != null || !automaticallyImplyLeading) return leading;
     if (!(ModalRoute.of(context)?.canPop ?? false)) return null;
-    return AppBarBackButton(style: BackButtonStyle.plain, onPressed: () => Navigator.of(context).pop());
+    return AppBarBackButton(style: BackButtonStyle.plain, onPressed: onBackPressed);
   }
 }
 
@@ -96,7 +103,17 @@ class CustomAppBar extends StatelessWidget {
   final bool pinned;
   final bool automaticallyImplyLeading;
 
-  const CustomAppBar({super.key, this.title, this.actions, this.pinned = false, this.automaticallyImplyLeading = true});
+  /// Replaces the implied back arrow's [Navigator.maybePop].
+  final VoidCallback? onBackPressed;
+
+  const CustomAppBar({
+    super.key,
+    this.title,
+    this.actions,
+    this.pinned = false,
+    this.automaticallyImplyLeading = true,
+    this.onBackPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +128,7 @@ class CustomAppBar extends StatelessWidget {
           actions: actions,
           pinned: pinned,
           automaticallyImplyLeading: automaticallyImplyLeading,
+          onBackPressed: onBackPressed,
         );
       },
     );

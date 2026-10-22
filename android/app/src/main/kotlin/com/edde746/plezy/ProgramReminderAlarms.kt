@@ -38,7 +38,7 @@ internal object ProgramReminderAlarms {
   const val ACTION_OPEN = "app.plebz.action.OPEN_PROGRAM_REMINDER"
   const val EXTRA_ID = "plebz.program_reminder_id"
 
-  /** Set by MainActivity between onStart and onStop. */
+  /** Set by PlezyActivity between onStart and onStop. */
   @Volatile
   var appInForeground = false
 
@@ -196,7 +196,7 @@ internal object ProgramReminderAlarms {
     val open = PendingIntent.getActivity(
       context,
       entry.id.hashCode(),
-      Intent(context, MainActivity::class.java)
+      Intent(context, PlezyActivity::class.java)
         .setAction(ACTION_OPEN)
         .putExtra(EXTRA_ID, entry.id)
         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP),

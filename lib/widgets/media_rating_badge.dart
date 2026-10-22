@@ -21,13 +21,22 @@ import 'settings_builder.dart';
 /// [FittedMetadataLine] measures badges with [inlineRatingBadgeWidth] to decide
 /// how many fit before it builds them, so a list that shrank later would be
 /// laid out against the wrong width.
-List<MediaRatingSource> mediaRatingsFor(MediaItem item, {MediaItem? fallbackItem}) {
+///
+/// [averaged] false leaves the mean to the caller, which merges more scores
+/// in first (the connected trackers') and then takes it with
+/// [averagedIfAsked].
+List<MediaRatingSource> mediaRatingsFor(MediaItem item, {MediaItem? fallbackItem, bool averaged = true}) {
   final ratings = _ratingsFor(item);
   final resolved = ratings.isNotEmpty || fallbackItem == null ? ratings : _ratingsFor(fallbackItem);
+  return averaged ? averagedIfAsked(resolved) : resolved;
+}
+
+/// [ratings] as one mean score where [PlebzPrefs.averageRatings] asks for it.
+List<MediaRatingSource> averagedIfAsked(List<MediaRatingSource> ratings) {
   // instanceOrNull: score lists are built during startup and in widget tests
   // that never boot settings; both mean "not averaged" rather than a crash.
   final average = SettingsService.instanceOrNull?.read(PlebzPrefs.averageRatings) ?? false;
-  return average ? averagedRatings(resolved) : resolved;
+  return average ? averagedRatings(ratings) : ratings;
 }
 
 /// Formatted value for [rating] — the brand badge's own formatting where the
@@ -238,7 +247,11 @@ Widget _buildContent({
         // A tight box at the viewBox's own aspect: identical to the svg's
         // natural fit at this height, but with a width that is known before
         // layout so fitted lines can measure a badge exactly (#1893).
-        SizedBox(width: size * info.iconAspect, height: size, child: SvgPicture.asset(info.assetPath))
+        SizedBox(
+          width: size * info.iconAspect,
+          height: size,
+          child: SvgPicture.asset(info.assetPath, theme: SvgTheme(currentColor: foreground)),
+        )
       else
         AppIcon(fallbackIcon, fill: 1, color: foreground, size: size),
       SizedBox(width: spacing ?? 4),

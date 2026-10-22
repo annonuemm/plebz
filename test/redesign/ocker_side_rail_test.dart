@@ -31,7 +31,7 @@ import '../test_helpers/prefs.dart';
 /// "Redesign – Glas": the redesign's screens beside its side rail — the
 /// describing column on the right, the libraries in a column that opens beside
 /// the page, and the focus paths to match.
-ThemeData _railTheme() => monoTheme(dark: true, variant: AppThemeVariant.glas);
+ThemeData _railTheme() => monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas);
 
 void main() {
   setUpAll(() {
@@ -147,7 +147,7 @@ void main() {
       Future<void> pump({required bool expanded, AppThemeVariant variant = AppThemeVariant.flach}) async {
         await tester.pumpWidget(
           MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: Scaffold(
               body: Align(
                 alignment: Alignment.topLeft,
@@ -869,7 +869,7 @@ void main() {
       var opened = true;
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           home: Builder(
             builder: (context) {
               opened = OckerLibraryColumnScope.open(context);

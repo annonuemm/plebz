@@ -39,7 +39,7 @@ void main() {
   Future<void> pumpLogo(WidgetTester tester, LiveTvChannel channel) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true),
+        theme: monoTheme(MonoPalette.dark),
         home: Scaffold(
           body: SizedBox(
             width: 120,
@@ -216,7 +216,7 @@ void main() {
     Future<OptimizedMediaImage> drawnFocused(WidgetTester tester, {required bool focused}) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach),
           home: Scaffold(
             body: OckerFlatFocusInk(
               invert: focused,

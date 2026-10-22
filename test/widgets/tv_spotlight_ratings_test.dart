@@ -33,7 +33,7 @@ Future<void> _pumpSpotlight(WidgetTester tester, MediaItem item, {AppThemeVarian
   await tester.pumpWidget(
     TranslationProvider(
       child: MaterialApp(
-        theme: variant == null ? null : monoTheme(dark: true, variant: variant),
+        theme: variant == null ? null : monoTheme(MonoPalette.dark, variant: variant),
         home: Scaffold(
           // TvSpotlightScaffold fills the screen with the background; a loose
           // Scaffold body would leave its bottom-anchored info block unbounded.

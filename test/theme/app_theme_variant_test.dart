@@ -9,7 +9,8 @@ import 'package:plezy/widgets/app_icon.dart';
 
 import '../test_helpers/prefs.dart';
 
-ThemeData _theme(AppThemeVariant variant, {bool dark = true}) => monoTheme(dark: dark, variant: variant);
+ThemeData _theme(AppThemeVariant variant, {bool dark = true}) =>
+    monoTheme((dark ? MonoPalette.dark : MonoPalette.light), variant: variant);
 
 MonoTokens _tokens(AppThemeVariant variant) => _theme(variant).extension<MonoTokens>()!;
 
@@ -113,7 +114,7 @@ void main() {
       expect(ocker.displayFontFamily, 'Inter');
       expect(ocker.uiFontFamily, 'Inter');
       expect(ocker.monoFontFamily, 'Inter');
-      expect(monoTheme(dark: true, variant: AppThemeVariant.glas).textTheme.bodyMedium?.fontFamily, 'Inter');
+      expect(monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas).textTheme.bodyMedium?.fontFamily, 'Inter');
     });
 
     test('on Apple devices is the system face, SF Pro; Standard stays on the platform one', () {
@@ -126,7 +127,7 @@ void main() {
         expect(tk.uiFontFamily, 'CupertinoSystemText', reason: variant.name);
         expect(tk.monoFontFamily, 'CupertinoSystemText', reason: variant.name);
         expect(
-          monoTheme(dark: true, variant: variant).textTheme.bodyMedium?.fontFamily,
+          monoTheme(MonoPalette.dark, variant: variant).textTheme.bodyMedium?.fontFamily,
           'CupertinoSystemText',
           reason: variant.name,
         );
@@ -181,7 +182,7 @@ void main() {
     test('stays dark when the app is set to light', () {
       // There is no light half to switch to: the styleguide specifies one
       // ground and one ink, and a light counterpart would have to be invented.
-      final light = monoTheme(dark: false, variant: AppThemeVariant.glas);
+      final light = monoTheme(MonoPalette.light, variant: AppThemeVariant.glas);
 
       expect(light.brightness, Brightness.dark);
       expect(light.extension<MonoTokens>()!.bg, glasPalette(GlasAccent.eisblau).bg);
@@ -189,10 +190,13 @@ void main() {
 
     test('goes pure black for OLED in every palette, and keeps its ink and its accent', () {
       for (final accent in GlasAccent.values) {
-        final own = monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: accent).extension<MonoTokens>()!;
+        final own = monoTheme(
+          MonoPalette.dark,
+          variant: AppThemeVariant.glas,
+          glasAccent: accent,
+        ).extension<MonoTokens>()!;
         final oled = monoTheme(
-          dark: true,
-          oled: true,
+          MonoPalette.oled,
           variant: AppThemeVariant.glas,
           glasAccent: accent,
         ).extension<MonoTokens>()!;
@@ -223,7 +227,7 @@ void main() {
       // hairline strokes, read across a room over a photograph. The title is
       // the one line that has to be legible first, so it is the interface
       // face at the one weight that survives the distance.
-      final text = monoTheme(dark: true, variant: AppThemeVariant.glas).textTheme;
+      final text = monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas).textTheme;
 
       for (final style in [text.displayLarge, text.displayMedium, text.displaySmall]) {
         expect(style?.fontWeight, FontWeight.w700);
@@ -238,7 +242,7 @@ void main() {
       // Null is the ordinary case and the right one: the style inherits
       // `ThemeData.fontFamily`, which the test above pins to Inter. What must
       // not appear is a *different* family named here.
-      final text = monoTheme(dark: true, variant: AppThemeVariant.glas).textTheme;
+      final text = monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas).textTheme;
 
       for (final style in [
         text.displayLarge,
@@ -255,7 +259,7 @@ void main() {
 
     test('leaves Standard on one family throughout', () {
       for (final variant in [AppThemeVariant.standard]) {
-        final text = monoTheme(dark: true, variant: variant).textTheme;
+        final text = monoTheme(MonoPalette.dark, variant: variant).textTheme;
         expect(text.displaySmall?.fontFamily, isNull, reason: '$variant');
         expect(text.displayMedium?.fontFamily, isNull, reason: '$variant');
       }
@@ -276,8 +280,8 @@ void main() {
       // They are merged onto the scale rather than written fresh: a literal
       // would drop the size and leave every title at whatever the enclosing
       // DefaultTextStyle happened to be.
-      final ocker = monoTheme(dark: true, variant: AppThemeVariant.glas).textTheme;
-      final standard = monoTheme(dark: true).textTheme;
+      final ocker = monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas).textTheme;
+      final standard = monoTheme(MonoPalette.dark).textTheme;
 
       expect(ocker.displaySmall?.fontSize, standard.displaySmall?.fontSize);
       expect(ocker.displayMedium?.fontSize, standard.displayMedium?.fontSize);
@@ -300,7 +304,7 @@ void main() {
         late double seen;
         await tester.pumpWidget(
           Theme(
-            data: monoTheme(dark: true, variant: variant),
+            data: monoTheme(MonoPalette.dark, variant: variant),
             child: Builder(
               builder: (context) {
                 seen = flatRadius(context, 12);
@@ -326,7 +330,7 @@ void main() {
         late List<BoxShadow> seen;
         await tester.pumpWidget(
           Theme(
-            data: monoTheme(dark: true, variant: variant),
+            data: monoTheme(MonoPalette.dark, variant: variant),
             child: Builder(
               builder: (context) {
                 seen = flatShadows(context, const [shadow]);

@@ -35,7 +35,7 @@ void main() {
     await tester.pumpWidget(
       InputModeTracker(
         child: MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           home: OverlaySheetHost(
             child: Builder(
               builder: (context) {

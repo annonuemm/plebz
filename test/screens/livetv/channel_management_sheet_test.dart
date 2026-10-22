@@ -108,7 +108,7 @@ void main() {
             child: ChangeNotifierProvider<LiveTvChannelLayoutProvider>.value(
               value: layout,
               child: MaterialApp(
-                theme: monoTheme(dark: true),
+                theme: monoTheme(MonoPalette.dark),
                 home: Scaffold(
                   body: Builder(
                     builder: (context) => TextButton(

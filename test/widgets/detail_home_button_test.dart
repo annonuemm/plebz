@@ -28,7 +28,7 @@ void main() {
     await tester.pumpWidget(
       InputModeTracker(
         child: MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: Navigator(
             key: key,
             onGenerateRoute: (_) => MaterialPageRoute<void>(builder: (_) => const Text('root')),

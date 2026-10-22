@@ -25,8 +25,8 @@ import 'package:plezy/widgets/media_rating_badge.dart';
 ///                + 5 separators × 50                        = 652 px total
 const _ratings = [
   MediaRatingSource(source: 'critic', value: 9.2),
-  MediaRatingSource(source: 'simkl', value: 7.4),
-  MediaRatingSource(source: 'mal', value: 6.4),
+  MediaRatingSource(source: 'audience', value: 7.4),
+  MediaRatingSource(source: '', value: 6.4),
 ];
 
 // Zero letter/word spacing: the ambient Material default otherwise merges in
@@ -232,6 +232,12 @@ void main() {
       ('rottenTomatoesAudience', 3.0), // spilled
       ('imdb', 7.4),
       ('tmdb', 6.4),
+      ('metacritic', 8.2),
+      ('letterboxd', 9.2),
+      ('trakt', 9.1),
+      ('simkl', 8.4),
+      ('mal', 8.6),
+      ('anilist', 8.5),
     ];
     for (final (source, value) in cases) {
       final info = ratingInfoForSource(source, value)!;
@@ -252,7 +258,7 @@ void main() {
     Future<FontWeight?> weightOf2019({required AppThemeVariant variant}) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: Scaffold(
             body: FittedMetadataLine(
               textStyle: _style.copyWith(fontWeight: FontWeight.w400),

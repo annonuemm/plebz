@@ -75,7 +75,7 @@ void main() {
 
   Future<void> pumpHost(WidgetTester tester) => tester.pumpWidget(
     TranslationProvider(
-      child: MaterialApp(theme: monoTheme(dark: true), home: const _Host()),
+      child: MaterialApp(theme: monoTheme(MonoPalette.dark), home: const _Host()),
     ),
   );
 
@@ -86,7 +86,7 @@ void main() {
     await tester.pumpWidget(
       TranslationProvider(
         child: MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: Builder(
             builder: (context) => TextButton(
               onPressed: () async {

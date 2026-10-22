@@ -117,7 +117,7 @@ void main() {
         tester.widgetList<OckerGlassFocusFill>(find.byType(OckerGlassFocusFill)).toList();
 
     testWidgets('marks the episode playing with a pane washed in the accent, not a white frame', (tester) async {
-      await pumpStrip(tester, monoTheme(dark: true, variant: AppThemeVariant.glas));
+      await pumpStrip(tester, monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas));
 
       expect(tester.widgetList<MediaSelectorThumbnail>(find.byType(MediaSelectorThumbnail)).map((m) => m.isCurrent), [
         false,
@@ -131,7 +131,7 @@ void main() {
     testWidgets('under Flach the focused item\'s words go dark on the white pane, the others stay light', (
       tester,
     ) async {
-      final key = await pumpStrip(tester, monoTheme(dark: true, variant: AppThemeVariant.flach));
+      final key = await pumpStrip(tester, monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach));
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown); // keyboard mode
       key.currentState!.requestInitialFocus();
       await tester.pumpAndSettle();
@@ -148,7 +148,7 @@ void main() {
     });
 
     testWidgets('focus is one bright pane, keeping the wash on the one playing', (tester) async {
-      final key = await pumpStrip(tester, monoTheme(dark: true, variant: AppThemeVariant.glas));
+      final key = await pumpStrip(tester, monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas));
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown); // keyboard mode
       key.currentState!.requestInitialFocus();
       await tester.pumpAndSettle();
@@ -161,7 +161,7 @@ void main() {
     });
 
     testWidgets('the other themes keep the white frame and no glass', (tester) async {
-      await pumpStrip(tester, monoTheme(dark: true, variant: AppThemeVariant.standard));
+      await pumpStrip(tester, monoTheme(MonoPalette.dark, variant: AppThemeVariant.standard));
 
       expect(tester.widgetList<MediaSelectorThumbnail>(find.byType(MediaSelectorThumbnail)).first.isCurrent, isTrue);
       expect(find.byType(OckerGlassFocusFill), findsNothing);

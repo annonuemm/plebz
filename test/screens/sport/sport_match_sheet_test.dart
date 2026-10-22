@@ -68,7 +68,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true),
+        theme: monoTheme(MonoPalette.dark),
         home: Scaffold(
           body: SportMatchDetail(
             match: match,

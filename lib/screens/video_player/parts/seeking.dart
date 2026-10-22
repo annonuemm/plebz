@@ -6,8 +6,9 @@ extension _VideoPlayerSeekingMethods on VideoPlayerScreenState {
     if (!mounted || _shuttingDown || currentPlayer == null) return;
     final target = clampSeekPosition(currentPlayer, position);
     unawaited(_replayCaptions.onSeek(currentPlayer.state.position, target));
-    // Declare intentional seeks before the delegate can unbind/reload at EOF.
-    _activeWatchTogetherSession()?.onLocalSeek(target);
+    // The user's seek: while a Watch Together room drives the player, the
+    // room seeks everyone and then the player through its adapter.
+    if (_followedRoom()?.seek(target) == true) return;
     await _performSeekPlayback(target);
   }
 

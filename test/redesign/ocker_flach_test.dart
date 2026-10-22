@@ -21,8 +21,8 @@ import 'package:plezy/widgets/plebz_start_animation.dart';
 import 'package:plezy/widgets/unwatched_count_badge.dart';
 
 ThemeData _flach({Color accent = const Color(0xFF00C2A8)}) =>
-    monoTheme(dark: true, variant: AppThemeVariant.flach, flachAccent: accent);
-ThemeData _glas() => monoTheme(dark: true, variant: AppThemeVariant.glas);
+    monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach, flachAccent: accent);
+ThemeData _glas() => monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas);
 
 void main() {
   test('Flach is the redesign, built like Glas and painted flat, in the accent the viewer picked', () {
@@ -468,13 +468,16 @@ void main() {
   group('the ground', () {
     test('off-black stands in for the design\'s own under both redesigns, and OLED wins over it', () {
       for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
-        MonoTokens tk({bool oled = false, Color? plain}) =>
-            monoTheme(dark: true, oled: oled, plainGround: plain, variant: variant).extension<MonoTokens>()!;
+        MonoTokens tk({bool oled = false, Color? plain}) => monoTheme(
+          (oled ? MonoPalette.oled : MonoPalette.dark),
+          plainGround: plain,
+          variant: variant,
+        ).extension<MonoTokens>()!;
         expect(tk(plain: redesignOffBlackGround).bg, redesignOffBlackGround, reason: variant.name);
         expect(tk(oled: true, plain: redesignOffBlackGround).bg, glasOledGround, reason: variant.name);
         expect(tk().bg, isNot(redesignOffBlackGround), reason: variant.name);
       }
-      final standard = monoTheme(dark: true, plainGround: redesignOffBlackGround).extension<MonoTokens>()!;
+      final standard = monoTheme(MonoPalette.dark, plainGround: redesignOffBlackGround).extension<MonoTokens>()!;
       expect(standard.bg, isNot(redesignOffBlackGround), reason: 'the standard design has its own dark');
     });
 
@@ -486,9 +489,9 @@ void main() {
       expect(glows.last.center, isA<Alignment>().having((a) => a.x > 0 && a.y > 0, 'bottom right', isTrue));
       expect(glows.first.colors.first.withValues(alpha: 1), own.accent.withValues(alpha: 1));
       for (final plain in [
-        monoTheme(dark: true, plainGround: redesignOffBlackGround, variant: AppThemeVariant.flach),
-        monoTheme(dark: true, plainGround: const Color(0xFF1E2A4A), variant: AppThemeVariant.flach),
-        monoTheme(dark: true, oled: true, variant: AppThemeVariant.flach),
+        monoTheme(MonoPalette.dark, plainGround: redesignOffBlackGround, variant: AppThemeVariant.flach),
+        monoTheme(MonoPalette.dark, plainGround: const Color(0xFF1E2A4A), variant: AppThemeVariant.flach),
+        monoTheme(MonoPalette.oled, variant: AppThemeVariant.flach),
         _glas(),
       ]) {
         expect(flachGroundGlows(plain.extension<MonoTokens>()!), isEmpty);
@@ -502,7 +505,7 @@ void main() {
         final ground = HSVColor.fromColor(preset.ground);
         expect(ground.value, inInclusiveRange(0.03, 0.16), reason: preset.id);
         final tk = monoTheme(
-          dark: true,
+          MonoPalette.dark,
           plainGround: preset.ground,
           variant: AppThemeVariant.flach,
           flachAccent: preset.accent,

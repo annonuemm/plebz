@@ -23,7 +23,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       TranslationProvider(
-        child: MaterialApp(theme: monoTheme(dark: true), home: const RemoteKeysScreen()),
+        child: MaterialApp(theme: monoTheme(MonoPalette.dark), home: const RemoteKeysScreen()),
       ),
     );
     await tester.pump();
@@ -50,7 +50,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       TranslationProvider(
-        child: MaterialApp(theme: monoTheme(dark: true), home: const RemoteKeysScreen()),
+        child: MaterialApp(theme: monoTheme(MonoPalette.dark), home: const RemoteKeysScreen()),
       ),
     );
     await tester.pumpAndSettle();

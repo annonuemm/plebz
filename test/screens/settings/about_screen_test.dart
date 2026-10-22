@@ -37,7 +37,7 @@ void main() {
     await tester.pumpWidget(
       TranslationProvider(
         child: MaterialApp(
-          theme: monoTheme(dark: true).copyWith(platform: TargetPlatform.android),
+          theme: monoTheme(MonoPalette.dark).copyWith(platform: TargetPlatform.android),
           home: const AboutScreen(),
         ),
       ),

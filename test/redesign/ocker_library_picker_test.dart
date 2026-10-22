@@ -35,7 +35,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: variant),
+        theme: monoTheme(MonoPalette.dark, variant: variant),
         home: Scaffold(
           // As the sheet host sets it: on glass, its rows' marks are glass.
           body: OckerOnGlass(

@@ -103,7 +103,7 @@ void main() {
     Future<void> pumpMarks(WidgetTester tester, {required AppThemeVariant variant, required bool focused}) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: Scaffold(
             body: DpadReorderRowMark(
               isMoving: false,

@@ -512,7 +512,7 @@ void main() {
     await tester.pumpWidget(
       InputModeTracker(
         child: MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach),
           home: Scaffold(
             body: OckerBrowsePage(
               title: 'Merkliste',
@@ -553,7 +553,7 @@ void main() {
     // right. The watchlist and a library's "Durchsuchen" each built their own,
     // and came out with posters of two sizes and shapes and a grid that began
     // in two places.
-    final theme = monoTheme(dark: true, variant: AppThemeVariant.glas);
+    final theme = monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas);
 
     ({Rect band, List<Rect> glyphs, List<Rect> posters, Rect panel, Rect location}) measure(WidgetTester tester) {
       final band = find.descendant(of: find.byType(OckerGridFilterBand), matching: find.byType(OckerGlassBand));

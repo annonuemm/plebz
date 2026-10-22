@@ -345,7 +345,6 @@ class _Translations$settings$ko extends Translations$settings$en {
 	@override String get videoPlayerNavigation => '비디오 플레이어 탐색';
 	@override String get videoPlayerNavigationDescription => '방향 키로 비디오 플레이어 컨트롤을 탐색합니다';
 	@override String get watchTogetherRelay => '함께 보기 릴레이';
-	@override String get watchTogetherRelayDescription => '사용자 지정 릴레이를 설정합니다. 모두 같은 서버를 사용해야 합니다.';
 	@override String get watchTogetherRelayHint => 'https://my-relay.example.com';
 	@override String get watchTogetherRelayInvalid => '올바른 HTTP 또는 HTTPS 릴레이 기본 URL을 입력하세요.';
 	@override String get crashReporting => '충돌 보고';
@@ -454,7 +453,7 @@ class _Translations$settings$ko extends Translations$settings$en {
 	@override String get tunneledPlaybackDescription => '비디오 터널링을 사용합니다. HDR 재생 시 검은 화면이 보이거나 움직임이 끊기면 비활성화하세요.';
 	@override String get audioPassthrough => '오디오 패스스루';
 	@override String get audioPassthroughDescription => 'Dolby/DTS 오디오를 재인코딩 없이 리시버나 TV로 전송하여 서라운드 사운드를 유지합니다. 소리가 나지 않으면 비활성화하세요.';
-	@override String get audioPassthroughDescriptionAppleTv => 'Dolby Digital Plus(Atmos 포함)에 Apple의 기본 Dolby 디코더를 사용합니다. DTS와 TrueHD는 계속 멀티채널 PCM으로 재생됩니다. 소리가 나지 않으면 비활성화하세요.';
+	@override String get audioPassthroughDescriptionApple => 'Dolby Digital Plus(Atmos 포함)에 Apple의 기본 Dolby 디코더를 사용합니다. DTS와 TrueHD는 계속 멀티채널 PCM으로 재생됩니다. 소리가 나지 않으면 비활성화하세요.';
 	@override String get audioPassthroughOverriddenByNormalization => '음량 정규화가 켜져 있는 동안 꺼짐';
 	@override String get downmixCenterBoost => '센터 채널 부스트';
 	@override String downmixCenterBoostValue({required Object db}) => '${db} dB';
@@ -1681,79 +1680,24 @@ class _Translations$watchTogether$ko extends Translations$watchTogether$en {
 	// Translations
 	@override String get title => '함께 보기';
 	@override String get description => '친구 및 가족과 콘텐츠를 동시에 시청하세요';
-	@override String get createSession => '세션 생성';
-	@override String get creating => '생성 중...';
-	@override String get joinSession => '세션 참여';
-	@override String get joining => '참가 중...';
-	@override String get controlMode => '제어 모드';
-	@override String get controlModeQuestion => '누가 재생을 제어할 수 있나요?';
-	@override String get hostOnly => '호스트만';
-	@override String get anyone => '누구나';
-	@override String get hostingSession => '세션 호스팅 중';
-	@override String get inSession => '세션 중';
-	@override String get sessionCode => '세션 코드';
+	@override String get recentRooms => '최근 참여한 방';
+	@override String get renameRoom => '방 이름 변경';
+	@override String get removeRoom => '제거';
 	@override String get openSessionControls => '함께 보기 세션 제어 열기';
-	@override String get copySessionCode => '세션 코드 복사';
+	@override String get youAreHost => '호스트입니다';
 	@override String get hostControlsPlayback => '호스트 재생 제어';
 	@override String get anyoneCanControl => '누구나 재생 제어 가능';
-	@override String get hostControls => '호스트 제어';
-	@override String get anyoneControls => '누구나 제어';
+	@override String get joinCurrentPlayback => '현재 재생 참여';
+	@override String get joinCurrentPlaybackDescription => '호스트가 현재 시청 중인 콘텐츠로 이동합니다';
 	@override String get participants => '참가자';
-	@override String get host => '호스트';
 	@override String get hostBadge => '호스트';
-	@override String get youAreHost => '호스트입니다';
 	@override String get makeHost => '호스트로 지정';
 	@override String get makeHostQuestion => '호스트를 이전하시겠습니까?';
 	@override String makeHostConfirm({required Object name}) => '${name}님이 재생을 제어하고 모든 참가자의 세션을 이끕니다.';
 	@override String get transfer => '이전';
-	@override String hostChangedTo({required Object name}) => '${name}님이 호스트가 되었습니다';
-	@override String get youAreNowHost => '이제 호스트입니다';
-	@override String hostTransferFailed({required Object name}) => '${name}님을 호스트로 지정할 수 없습니다';
-	@override String get watchingWithOthers => '다른 사람과 함께 시청 중';
-	@override String get endSession => '세션 종료';
-	@override String get leaveSession => '세션 나가기';
-	@override String get endSessionQuestion => '세션을 종료하시겠습니까?';
-	@override String get leaveSessionQuestion => '세션에서 나가시겠습니까?';
-	@override String get endSessionConfirm => '모든 참가자의 세션이 종료됩니다.';
-	@override String get leaveSessionConfirm => '세션에서 나가게 됩니다.';
-	@override String get endSessionConfirmOverlay => '모든 참가자의 함께 보기 세션이 종료됩니다.';
-	@override String get leaveSessionConfirmOverlay => '함께 보기 세션의 연결이 끊어집니다.';
-	@override String get end => '종료';
 	@override String get leave => '나가기';
-	@override String get syncing => '동기화 중...';
-	@override String get joinWatchSession => '시청 세션에 참여';
-	@override String get enterCodeHint => '5자리 코드 입력';
-	@override String get pasteFromClipboard => '클립보드에서 붙여넣기';
-	@override String get pleaseEnterCode => '세션 코드를 입력하세요';
-	@override String get codeMustBe5Chars => '세션 코드는 반드시 5자리여야 합니다';
-	@override String get joinInstructions => '참여하려면 호스트의 세션 코드를 입력하세요.';
-	@override String get failedToCreate => '세션 생성 실패';
-	@override String get failedToJoin => '세션 참여 실패';
-	@override String get sessionCodeCopied => '세션 코드가 클립보드에 복사되었습니다';
-	@override String get relayUnreachable => '릴레이 서버에 연결할 수 없습니다. ISP 차단으로 함께 보기를 사용하지 못할 수 있습니다.';
-	@override String get reconnectingToHost => '호스트에 재연결 중...';
-	@override String get currentPlayback => '현재 재생';
-	@override String get joinCurrentPlayback => '현재 재생 참여';
-	@override String get joinCurrentPlaybackDescription => '호스트가 현재 시청 중인 콘텐츠로 이동합니다';
-	@override String get failedToOpenCurrentPlayback => '현재 재생을 열 수 없습니다';
-	@override String participantJoined({required Object name}) => '${name}님이 참여했습니다';
-	@override String participantLeft({required Object name}) => '${name}님이 나갔습니다';
-	@override String participantPaused({required Object name}) => '${name}님이 일시정지했습니다';
-	@override String participantResumed({required Object name}) => '${name}님이 재생했습니다';
-	@override String participantSeeked({required Object name}) => '${name}님이 재생 위치를 변경했습니다';
-	@override String participantChangedSpeed({required Object name, required Object speed}) => '${name}님이 속도를 ${speed}(으)로 설정했습니다';
-	@override String participantBuffering({required Object name}) => '${name}님이 버퍼링 중입니다';
-	@override String participantNeedsUpdate({required Object name}) => '${name}님이 이전 버전의 앱을 사용 중입니다 — 동기화를 사용할 수 없습니다';
-	@override String resumingWithout({required Object name}) => '${name}님 없이 재생을 재개합니다';
-	@override String get waitingForParticipants => '다른 참가자의 로딩을 기다리는 중...';
-	@override String waitingForName({required Object name}) => '${name}님을 기다리는 중...';
-	@override String get recentRooms => '최근 참여한 방';
-	@override String get renameRoom => '방 이름 변경';
-	@override String get removeRoom => '제거';
-	@override String get guestSwitchUnavailable => '전환할 수 없음 — 동기화 서버를 사용할 수 없습니다';
-	@override String get guestSwitchFailed => '전환할 수 없음 — 이 서버에서 콘텐츠를 찾을 수 없습니다';
-	@override String get defaultDisplayName => '사용자';
-	@override late final _Translations$watchTogether$errors$ko errors = _Translations$watchTogether$errors$ko._(_root);
+	@override String get end => '종료';
+	@override late final _Translations$watchTogether$notices$ko notices = _Translations$watchTogether$notices$ko._(_root);
 }
 
 // Path: downloads
@@ -1933,7 +1877,6 @@ class _Translations$videoSettings$ko extends Translations$videoSettings$en {
 	@override String get audioOutputStereo => '스테레오';
 	@override String get audioNormalization => '음량 정규화';
 	@override String get audioNormalizationDisablesPassthrough => '오디오를 PCM으로 디코딩합니다. 켜져 있는 동안 패스스루가 꺼집니다';
-	@override String get audioNormalizationStereoMix => '오디오를 스테레오 믹스로 디코딩합니다. 켜져 있는 동안 패스스루가 꺼집니다';
 }
 
 // Path: performanceOverlay
@@ -2308,6 +2251,8 @@ class _Translations$common$ratingSource$ko extends Translations$common$ratingSou
 	@override String get trakt => 'Trakt';
 	@override String get rottenTomatoesCritic => 'Rotten Tomatoes 평론가';
 	@override String get rottenTomatoesAudience => 'Rotten Tomatoes 관객';
+	@override String get metacritic => 'Metacritic';
+	@override String get letterboxd => 'Letterboxd';
 }
 
 // Path: common.mediaKind
@@ -2787,18 +2732,20 @@ class _Translations$music$discography$ko extends Translations$music$discography$
 	@override String get compilations => '컴필레이션';
 }
 
-// Path: watchTogether.errors
-class _Translations$watchTogether$errors$ko extends Translations$watchTogether$errors$en {
-	_Translations$watchTogether$errors$ko._(TranslationsKo root) : this._root = root, super.internal(root);
+// Path: watchTogether.notices
+class _Translations$watchTogether$notices$ko extends Translations$watchTogether$notices$en {
+	_Translations$watchTogether$notices$ko._(TranslationsKo root) : this._root = root, super.internal(root);
 
 	final TranslationsKo _root; // ignore: unused_field
 
 	// Translations
-	@override String get timedOut => '릴레이 서버가 제시간에 응답하지 않았습니다';
-	@override String get connectionLost => '세션이 준비되기 전에 연결이 종료되었습니다';
-	@override String get invalidRelayResponse => '릴레이 서버가 예기치 않은 응답을 보냈습니다';
-	@override String get sessionEnded => '호스트가 세션을 종료했습니다';
-	@override String get sessionUnavailable => '이 세션을 재개할 수 없습니다. 방에 참여하거나 만들어 계속하세요.';
+	@override String paused({required Object name}) => '${name}님이 일시정지했습니다';
+	@override String changedSpeed({required Object name, required Object speed}) => '${name}님이 속도를 ${speed}(으)로 설정했습니다';
+	@override String waitingFor({required Object name}) => '${name}님을 기다리는 중...';
+	@override String hostChangedTo({required Object name}) => '${name}님이 호스트가 되었습니다';
+	@override String get youAreNowHost => '이제 호스트입니다';
+	@override String joined({required Object name}) => '${name}님이 참여했습니다';
+	@override String left({required Object name}) => '${name}님이 나갔습니다';
 }
 
 // Path: downloads.backgroundWarning
@@ -3100,6 +3047,8 @@ extension on TranslationsKo {
 			'common.ratingSource.trakt' => 'Trakt',
 			'common.ratingSource.rottenTomatoesCritic' => 'Rotten Tomatoes 평론가',
 			'common.ratingSource.rottenTomatoesAudience' => 'Rotten Tomatoes 관객',
+			'common.ratingSource.metacritic' => 'Metacritic',
+			'common.ratingSource.letterboxd' => 'Letterboxd',
 			'common.notAvailable' => 'N/A',
 			'common.url' => 'URL',
 			'common.letterKeys' => 'ABC',
@@ -3247,7 +3196,6 @@ extension on TranslationsKo {
 			'settings.videoPlayerNavigation' => '비디오 플레이어 탐색',
 			'settings.videoPlayerNavigationDescription' => '방향 키로 비디오 플레이어 컨트롤을 탐색합니다',
 			'settings.watchTogetherRelay' => '함께 보기 릴레이',
-			'settings.watchTogetherRelayDescription' => '사용자 지정 릴레이를 설정합니다. 모두 같은 서버를 사용해야 합니다.',
 			'settings.watchTogetherRelayHint' => 'https://my-relay.example.com',
 			'settings.watchTogetherRelayInvalid' => '올바른 HTTP 또는 HTTPS 릴레이 기본 URL을 입력하세요.',
 			'settings.crashReporting' => '충돌 보고',
@@ -3356,7 +3304,7 @@ extension on TranslationsKo {
 			'settings.tunneledPlaybackDescription' => '비디오 터널링을 사용합니다. HDR 재생 시 검은 화면이 보이거나 움직임이 끊기면 비활성화하세요.',
 			'settings.audioPassthrough' => '오디오 패스스루',
 			'settings.audioPassthroughDescription' => 'Dolby/DTS 오디오를 재인코딩 없이 리시버나 TV로 전송하여 서라운드 사운드를 유지합니다. 소리가 나지 않으면 비활성화하세요.',
-			'settings.audioPassthroughDescriptionAppleTv' => 'Dolby Digital Plus(Atmos 포함)에 Apple의 기본 Dolby 디코더를 사용합니다. DTS와 TrueHD는 계속 멀티채널 PCM으로 재생됩니다. 소리가 나지 않으면 비활성화하세요.',
+			'settings.audioPassthroughDescriptionApple' => 'Dolby Digital Plus(Atmos 포함)에 Apple의 기본 Dolby 디코더를 사용합니다. DTS와 TrueHD는 계속 멀티채널 PCM으로 재생됩니다. 소리가 나지 않으면 비활성화하세요.',
 			'settings.audioPassthroughOverriddenByNormalization' => '음량 정규화가 켜져 있는 동안 꺼짐',
 			'settings.downmixCenterBoost' => '센터 채널 부스트',
 			'settings.downmixCenterBoostValue' => ({required Object db}) => '${db} dB',
@@ -3536,9 +3484,9 @@ extension on TranslationsKo {
 			'fileInfo.language' => '언어',
 			'fileInfo.languageCode' => '언어 코드',
 			'fileInfo.streamTitle' => '트랙 제목',
-			'fileInfo.channels' => '채널',
 			_ => null,
 		} ?? switch (path) {
+			'fileInfo.channels' => '채널',
 			'fileInfo.sampleRate' => '샘플 레이트',
 			'fileInfo.spatialAudio' => '공간 오디오',
 			'fileInfo.textBased' => '텍스트 기반',
@@ -4050,9 +3998,9 @@ extension on TranslationsKo {
 			'libraries.emptyTrash' => '휴지통 비우기',
 			'libraries.emptyingTrash' => ({required Object title}) => '「${title}」의 휴지통을 비우고 있습니다...',
 			'libraries.trashEmptied' => ({required Object title}) => '「${title}」의 휴지통을 비웠습니다',
-			'libraries.failedToEmptyTrash' => ({required Object error}) => '휴지통 비우기 실패: ${error}',
 			_ => null,
 		} ?? switch (path) {
+			'libraries.failedToEmptyTrash' => ({required Object error}) => '휴지통 비우기 실패: ${error}',
 			'libraries.analyzing' => ({required Object title}) => '"${title}" 분석 중...',
 			'libraries.analysisStarted' => ({required Object title}) => '"${title}" 분석 시작됨',
 			'libraries.failedToAnalyze' => ({required Object error}) => '미디어 라이브러리 분석 실패: ${error}',
@@ -4493,85 +4441,30 @@ extension on TranslationsKo {
 			'music.discography.compilations' => '컴필레이션',
 			'watchTogether.title' => '함께 보기',
 			'watchTogether.description' => '친구 및 가족과 콘텐츠를 동시에 시청하세요',
-			'watchTogether.createSession' => '세션 생성',
-			'watchTogether.creating' => '생성 중...',
-			'watchTogether.joinSession' => '세션 참여',
-			'watchTogether.joining' => '참가 중...',
-			'watchTogether.controlMode' => '제어 모드',
-			'watchTogether.controlModeQuestion' => '누가 재생을 제어할 수 있나요?',
-			'watchTogether.hostOnly' => '호스트만',
-			'watchTogether.anyone' => '누구나',
-			'watchTogether.hostingSession' => '세션 호스팅 중',
-			'watchTogether.inSession' => '세션 중',
-			'watchTogether.sessionCode' => '세션 코드',
+			'watchTogether.recentRooms' => '최근 참여한 방',
+			'watchTogether.renameRoom' => '방 이름 변경',
+			'watchTogether.removeRoom' => '제거',
 			'watchTogether.openSessionControls' => '함께 보기 세션 제어 열기',
-			'watchTogether.copySessionCode' => '세션 코드 복사',
+			'watchTogether.youAreHost' => '호스트입니다',
 			'watchTogether.hostControlsPlayback' => '호스트 재생 제어',
 			'watchTogether.anyoneCanControl' => '누구나 재생 제어 가능',
-			'watchTogether.hostControls' => '호스트 제어',
-			'watchTogether.anyoneControls' => '누구나 제어',
+			'watchTogether.joinCurrentPlayback' => '현재 재생 참여',
+			'watchTogether.joinCurrentPlaybackDescription' => '호스트가 현재 시청 중인 콘텐츠로 이동합니다',
 			'watchTogether.participants' => '참가자',
-			'watchTogether.host' => '호스트',
 			'watchTogether.hostBadge' => '호스트',
-			'watchTogether.youAreHost' => '호스트입니다',
 			'watchTogether.makeHost' => '호스트로 지정',
 			'watchTogether.makeHostQuestion' => '호스트를 이전하시겠습니까?',
 			'watchTogether.makeHostConfirm' => ({required Object name}) => '${name}님이 재생을 제어하고 모든 참가자의 세션을 이끕니다.',
 			'watchTogether.transfer' => '이전',
-			'watchTogether.hostChangedTo' => ({required Object name}) => '${name}님이 호스트가 되었습니다',
-			'watchTogether.youAreNowHost' => '이제 호스트입니다',
-			'watchTogether.hostTransferFailed' => ({required Object name}) => '${name}님을 호스트로 지정할 수 없습니다',
-			'watchTogether.watchingWithOthers' => '다른 사람과 함께 시청 중',
-			'watchTogether.endSession' => '세션 종료',
-			'watchTogether.leaveSession' => '세션 나가기',
-			'watchTogether.endSessionQuestion' => '세션을 종료하시겠습니까?',
-			'watchTogether.leaveSessionQuestion' => '세션에서 나가시겠습니까?',
-			'watchTogether.endSessionConfirm' => '모든 참가자의 세션이 종료됩니다.',
-			'watchTogether.leaveSessionConfirm' => '세션에서 나가게 됩니다.',
-			'watchTogether.endSessionConfirmOverlay' => '모든 참가자의 함께 보기 세션이 종료됩니다.',
-			'watchTogether.leaveSessionConfirmOverlay' => '함께 보기 세션의 연결이 끊어집니다.',
-			'watchTogether.end' => '종료',
 			'watchTogether.leave' => '나가기',
-			'watchTogether.syncing' => '동기화 중...',
-			'watchTogether.joinWatchSession' => '시청 세션에 참여',
-			'watchTogether.enterCodeHint' => '5자리 코드 입력',
-			'watchTogether.pasteFromClipboard' => '클립보드에서 붙여넣기',
-			'watchTogether.pleaseEnterCode' => '세션 코드를 입력하세요',
-			'watchTogether.codeMustBe5Chars' => '세션 코드는 반드시 5자리여야 합니다',
-			'watchTogether.joinInstructions' => '참여하려면 호스트의 세션 코드를 입력하세요.',
-			'watchTogether.failedToCreate' => '세션 생성 실패',
-			'watchTogether.failedToJoin' => '세션 참여 실패',
-			'watchTogether.sessionCodeCopied' => '세션 코드가 클립보드에 복사되었습니다',
-			'watchTogether.relayUnreachable' => '릴레이 서버에 연결할 수 없습니다. ISP 차단으로 함께 보기를 사용하지 못할 수 있습니다.',
-			'watchTogether.reconnectingToHost' => '호스트에 재연결 중...',
-			'watchTogether.currentPlayback' => '현재 재생',
-			'watchTogether.joinCurrentPlayback' => '현재 재생 참여',
-			'watchTogether.joinCurrentPlaybackDescription' => '호스트가 현재 시청 중인 콘텐츠로 이동합니다',
-			'watchTogether.failedToOpenCurrentPlayback' => '현재 재생을 열 수 없습니다',
-			'watchTogether.participantJoined' => ({required Object name}) => '${name}님이 참여했습니다',
-			'watchTogether.participantLeft' => ({required Object name}) => '${name}님이 나갔습니다',
-			'watchTogether.participantPaused' => ({required Object name}) => '${name}님이 일시정지했습니다',
-			'watchTogether.participantResumed' => ({required Object name}) => '${name}님이 재생했습니다',
-			'watchTogether.participantSeeked' => ({required Object name}) => '${name}님이 재생 위치를 변경했습니다',
-			'watchTogether.participantChangedSpeed' => ({required Object name, required Object speed}) => '${name}님이 속도를 ${speed}(으)로 설정했습니다',
-			'watchTogether.participantBuffering' => ({required Object name}) => '${name}님이 버퍼링 중입니다',
-			'watchTogether.participantNeedsUpdate' => ({required Object name}) => '${name}님이 이전 버전의 앱을 사용 중입니다 — 동기화를 사용할 수 없습니다',
-			'watchTogether.resumingWithout' => ({required Object name}) => '${name}님 없이 재생을 재개합니다',
-			'watchTogether.waitingForParticipants' => '다른 참가자의 로딩을 기다리는 중...',
-			'watchTogether.waitingForName' => ({required Object name}) => '${name}님을 기다리는 중...',
-			'watchTogether.recentRooms' => '최근 참여한 방',
-			'watchTogether.renameRoom' => '방 이름 변경',
-			'watchTogether.removeRoom' => '제거',
-			'watchTogether.guestSwitchUnavailable' => '전환할 수 없음 — 동기화 서버를 사용할 수 없습니다',
-			'watchTogether.guestSwitchFailed' => '전환할 수 없음 — 이 서버에서 콘텐츠를 찾을 수 없습니다',
-			'watchTogether.defaultDisplayName' => '사용자',
-			_ => null,
-		} ?? switch (path) {
-			'watchTogether.errors.timedOut' => '릴레이 서버가 제시간에 응답하지 않았습니다',
-			'watchTogether.errors.connectionLost' => '세션이 준비되기 전에 연결이 종료되었습니다',
-			'watchTogether.errors.invalidRelayResponse' => '릴레이 서버가 예기치 않은 응답을 보냈습니다',
-			'watchTogether.errors.sessionEnded' => '호스트가 세션을 종료했습니다',
-			'watchTogether.errors.sessionUnavailable' => '이 세션을 재개할 수 없습니다. 방에 참여하거나 만들어 계속하세요.',
+			'watchTogether.end' => '종료',
+			'watchTogether.notices.paused' => ({required Object name}) => '${name}님이 일시정지했습니다',
+			'watchTogether.notices.changedSpeed' => ({required Object name, required Object speed}) => '${name}님이 속도를 ${speed}(으)로 설정했습니다',
+			'watchTogether.notices.waitingFor' => ({required Object name}) => '${name}님을 기다리는 중...',
+			'watchTogether.notices.hostChangedTo' => ({required Object name}) => '${name}님이 호스트가 되었습니다',
+			'watchTogether.notices.youAreNowHost' => '이제 호스트입니다',
+			'watchTogether.notices.joined' => ({required Object name}) => '${name}님이 참여했습니다',
+			'watchTogether.notices.left' => ({required Object name}) => '${name}님이 나갔습니다',
 			'downloads.title' => '다운로드',
 			'downloads.manage' => '관리',
 			'downloads.tvShows' => 'TV 프로그램',
@@ -4619,6 +4512,8 @@ extension on TranslationsKo {
 			'downloads.invalidEpisodeCount' => '올바른 에피소드 수를 입력하세요.',
 			'downloads.keepSynced' => '동기화 유지',
 			'downloads.downloadOnce' => '한 번만 다운로드',
+			_ => null,
+		} ?? switch (path) {
 			'downloads.keepNUnwatched' => ({required Object count}) => '미시청 ${count}개 유지',
 			'downloads.editSyncRule' => '동기화 규칙 편집',
 			'downloads.removeSyncRule' => '동기화 규칙 제거',
@@ -4798,7 +4693,6 @@ extension on TranslationsKo {
 			'videoSettings.audioOutputStereo' => '스테레오',
 			'videoSettings.audioNormalization' => '음량 정규화',
 			'videoSettings.audioNormalizationDisablesPassthrough' => '오디오를 PCM으로 디코딩합니다. 켜져 있는 동안 패스스루가 꺼집니다',
-			'videoSettings.audioNormalizationStereoMix' => '오디오를 스테레오 믹스로 디코딩합니다. 켜져 있는 동안 패스스루가 꺼집니다',
 			'performanceOverlay.color' => '색상',
 			'performanceOverlay.performance' => '성능',
 			'performanceOverlay.buffer' => '버퍼',
@@ -5079,8 +4973,6 @@ extension on TranslationsKo {
 			'addServer.invalidCredentials' => '사용자 이름 또는 비밀번호가 올바르지 않습니다',
 			'addServer.authResponseNotJson' => '인증 응답이 유효한 JSON이 아닙니다',
 			'addServer.authResponseIncomplete' => '서버의 로그인 응답이 불완전합니다',
-			_ => null,
-		} ?? switch (path) {
 			'addServer.quickConnectRejected' => '서버에서 Quick Connect를 거부했습니다',
 			'addServer.quickConnectNotJson' => 'Quick Connect 응답이 유효한 JSON이 아닙니다',
 			'addServer.quickConnectMissingFields' => 'Quick Connect 응답에 코드 또는 비밀 키가 없습니다',

@@ -26,7 +26,7 @@ void main() {
     late double scale;
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas).copyWith(platform: platform),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas).copyWith(platform: platform),
         home: Builder(
           builder: (context) {
             layout = isOckerLayout(context);
@@ -80,7 +80,7 @@ void main() {
     addTearDown(node.dispose);
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: Scaffold(
           body: Center(
             child: FocusableFilterChip(icon: Symbols.sort_rounded, label: 'Titel', onPressed: () {}, focusNode: node),
@@ -110,7 +110,7 @@ void main() {
   testWidgets('on a phone a tab is set at a reading size, so a library\'s three views fit across', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: Scaffold(
           body: FocusableTabChip(label: 'Sammlungen', isSelected: false, onSelect: () {}),
         ),
@@ -123,12 +123,12 @@ void main() {
     // Through ThemeData.fontFamily alone the geometry scale's styles, which do
     // not inherit, lost the family in the merge: list titles, settings and
     // dialogs fell to the platform's face.
-    final glass = monoTheme(dark: true, variant: AppThemeVariant.glas).textTheme;
+    final glass = monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas).textTheme;
     for (final style in [glass.bodyLarge, glass.bodyMedium, glass.titleMedium, glass.labelLarge, glass.headlineSmall]) {
       expect(style?.fontFamily, ockerUiFontFamily);
     }
     expect(
-      monoTheme(dark: true).textTheme.bodyLarge?.fontFamily,
+      monoTheme(MonoPalette.dark).textTheme.bodyLarge?.fontFamily,
       isNot(ockerUiFontFamily),
       reason: 'the original look keeps its own',
     );

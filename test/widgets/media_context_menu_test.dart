@@ -960,7 +960,7 @@ void main() {
               ChangeNotifierProvider<MusicPlaybackService>.value(value: music),
             ],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: Center(
                   child: MediaContextMenu(
@@ -1062,7 +1062,7 @@ void main() {
               ChangeNotifierProvider<PlaybackStateProvider>.value(value: playback),
             ],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: Center(
                   child: MediaContextMenu(
@@ -1127,7 +1127,7 @@ void main() {
               ChangeNotifierProvider<ActiveProfileProvider>.value(value: stack.active),
             ],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: Center(
                   child: MediaContextMenu(
@@ -1199,7 +1199,7 @@ void main() {
               ChangeNotifierProvider<ActiveProfileProvider>.value(value: stack.active),
             ],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: Center(
                   child: MediaContextMenu(
@@ -1276,7 +1276,7 @@ void main() {
             ],
             child: MaterialApp(
               navigatorKey: navigatorKey,
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: Center(
                   child: ValueListenableBuilder<bool>(
@@ -1847,7 +1847,7 @@ Future<GlobalKey<MediaContextMenuState>> _pumpPlexMovieMenu(
           ChangeNotifierProvider<ActiveProfileProvider>.value(value: stack.active),
         ],
         child: MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: Scaffold(body: Center(child: wrapMenu?.call(menu) ?? menu)),
         ),
       ),
@@ -2058,7 +2058,7 @@ Future<GlobalKey<MediaContextMenuState>> _pumpJellyfinItemMenu(
         ],
         child: MaterialApp(
           navigatorKey: navigatorKey,
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: onPushedRoute ? const Scaffold(body: Center(child: Text('home screen'))) : menuScreen,
         ),
       ),
@@ -2268,7 +2268,7 @@ Future<_SiblingMusicMenuHarness> _pumpSiblingMusicMenu(
     TranslationProvider(
       child: MaterialApp(
         navigatorKey: rootNavigatorKey,
-        theme: monoTheme(dark: true).copyWith(platform: TargetPlatform.macOS),
+        theme: monoTheme(MonoPalette.dark).copyWith(platform: TargetPlatform.macOS),
         home: MultiProvider(
           providers: [
             ChangeNotifierProvider<MultiServerProvider>.value(value: multiServerProvider),
@@ -2487,7 +2487,7 @@ _pumpWatchlistMenu(WidgetTester tester, {required List<CatalogSource> sources, L
           ChangeNotifierProvider<CatalogSourcesProvider>.value(value: catalogSources),
         ],
         child: MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: Scaffold(
             body: Center(
               child: MediaContextMenu(

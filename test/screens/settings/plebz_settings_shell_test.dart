@@ -83,7 +83,7 @@ void main() {
       TranslationProvider(
         child: InputModeTracker(
           child: MaterialApp(
-            theme: monoTheme(dark: true),
+            theme: monoTheme(MonoPalette.dark),
             home: Scaffold(
               body: PlebzSettingsShell(
                 key: key,
@@ -228,7 +228,7 @@ void main() {
       TranslationProvider(
         child: InputModeTracker(
           child: MaterialApp(
-            theme: monoTheme(dark: true),
+            theme: monoTheme(MonoPalette.dark),
             home: Builder(
               builder: (context) => Scaffold(
                 body: Center(
@@ -327,7 +327,7 @@ void main() {
       TranslationProvider(
         child: InputModeTracker(
           child: MaterialApp(
-            theme: monoTheme(dark: true),
+            theme: monoTheme(MonoPalette.dark),
             home: Scaffold(
               body: PlebzSettingsShell(
                 key: key,

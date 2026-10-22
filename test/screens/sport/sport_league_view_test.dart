@@ -123,7 +123,7 @@ void main() {
     await tester.pumpWidget(
       app(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: Scaffold(
             body: SportLeagueView(
               key: key,
@@ -159,7 +159,7 @@ void main() {
       addTearDown(inFront.dispose);
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: Scaffold(
             body: ValueListenableBuilder<bool>(
               valueListenable: inFront,
@@ -211,7 +211,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: Scaffold(
           body: SportLeagueView(
             key: key,
@@ -579,7 +579,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true),
+        theme: monoTheme(MonoPalette.dark),
         home: Scaffold(
           body: SportLeagueView(
             league: SportLeague.bundesliga1,
@@ -664,7 +664,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true),
+        theme: monoTheme(MonoPalette.dark),
         home: Scaffold(
           body: SportLeagueView(
             league: SportLeague.bundesliga1,

@@ -323,7 +323,7 @@ void main() {
       await tester.pumpWidget(
         TranslationProvider(
           child: MaterialApp(
-            theme: monoTheme(dark: true),
+            theme: monoTheme(MonoPalette.dark),
             home: Scaffold(
               body: Builder(
                 builder: (context) => TextButton(
@@ -452,7 +452,7 @@ void main() {
       await tester.pumpWidget(
         TranslationProvider(
           child: MaterialApp(
-            theme: monoTheme(dark: true),
+            theme: monoTheme(MonoPalette.dark),
             home: Scaffold(
               body: Builder(
                 builder: (context) => TextButton(
@@ -620,7 +620,7 @@ void main() {
       await tester.pumpWidget(
         TranslationProvider(
           child: MaterialApp(
-            theme: monoTheme(dark: true),
+            theme: monoTheme(MonoPalette.dark),
             home: Scaffold(
               body: Builder(
                 builder: (context) => TextButton(

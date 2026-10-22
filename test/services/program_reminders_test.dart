@@ -96,7 +96,7 @@ void main() {
     await tester.pumpWidget(
       TranslationProvider(
         child: MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: const ProgramReminderHost(child: Scaffold(body: Text('watching'))),
         ),
       ),
@@ -129,7 +129,7 @@ void main() {
     Future<void> pumpHost(WidgetTester tester) => tester.pumpWidget(
       TranslationProvider(
         child: MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: const ProgramReminderHost(child: Scaffold(body: Text('watching'))),
         ),
       ),
@@ -245,7 +245,7 @@ void main() {
     await tester.pumpWidget(
       TranslationProvider(
         child: MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: const ProgramReminderHost(child: Scaffold(body: Text('watching'))),
         ),
       ),

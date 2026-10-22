@@ -34,7 +34,7 @@ void main() {
       late bool square;
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: Builder(
             builder: (context) {
               artwork = artworkRadius(context);

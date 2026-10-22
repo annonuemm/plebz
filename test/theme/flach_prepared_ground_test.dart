@@ -18,7 +18,7 @@ void main() {
   tearDown(PreparedGrounds.debugReset);
 
   MonoTokens flach({Color? plain}) =>
-      monoTheme(dark: true, variant: AppThemeVariant.flach, plainGround: plain).extension<MonoTokens>()!;
+      monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach, plainGround: plain).extension<MonoTokens>()!;
 
   Future<Uint8List> pixelsOf(WidgetTester tester, Widget ground) async {
     final key = GlobalKey();
@@ -71,7 +71,7 @@ void main() {
 
   testWidgets('Glas\'s ground, prepared, looks as its two gradients drawn live did', (tester) async {
     for (final accent in [GlasAccent.grau, GlasAccent.eisblau, GlasAccent.rot]) {
-      final theme = monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: accent);
+      final theme = monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: accent);
       final tk = theme.extension<MonoTokens>()!;
       final live = await pixelsOf(
         tester,
@@ -107,7 +107,7 @@ void main() {
 
   testWidgets('a ground over the same ground looks as the one alone did', (tester) async {
     for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
-      final theme = monoTheme(dark: true, variant: variant);
+      final theme = monoTheme(MonoPalette.dark, variant: variant);
       final alone = await pixelsOf(
         tester,
         Theme(
@@ -128,7 +128,7 @@ void main() {
   });
 
   testWidgets('a ground is prepared once and reused on every page and frame after', (tester) async {
-    final theme = monoTheme(dark: true, variant: AppThemeVariant.flach);
+    final theme = monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach);
     Widget page(String name) => MaterialApp(
       theme: theme,
       home: GlassBackdrop(child: Text(name)),
@@ -143,7 +143,7 @@ void main() {
   });
 
   testWidgets('a plain ground has no lights and prepares nothing', (tester) async {
-    final theme = monoTheme(dark: true, variant: AppThemeVariant.flach, plainGround: redesignOffBlackGround);
+    final theme = monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach, plainGround: redesignOffBlackGround);
     expect(flachGroundGlows(flach(plain: redesignOffBlackGround)), isEmpty);
 
     await tester.pumpWidget(
@@ -160,7 +160,7 @@ void main() {
     var under = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach),
         home: Stack(
           children: [
             Positioned.fill(child: GestureDetector(onTap: () => under++)),

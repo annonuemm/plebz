@@ -89,12 +89,12 @@ void main() {
 
     test('the theme\'s styles too, and only under the redesigns', () {
       debugOckerAppleSystemFont = true;
-      final glas = monoTheme(dark: true, variant: AppThemeVariant.glas).textTheme;
+      final glas = monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas).textTheme;
       expect(glas.titleLarge?.fontFamily, appleSystemDisplayFamily);
       expect(glas.bodyLarge?.fontFamily, appleSystemTextFamily);
       expect(glas.bodyLarge?.letterSpacing, closeTo(appleTrackingEm(16) * 16, 1e-9));
 
-      final standard = monoTheme(dark: true, variant: AppThemeVariant.standard).textTheme;
+      final standard = monoTheme(MonoPalette.dark, variant: AppThemeVariant.standard).textTheme;
       expect(standard.titleLarge?.fontFamily, isNot(appleSystemDisplayFamily));
     });
   });
@@ -136,7 +136,7 @@ void main() {
 
   group('iPhone and iPad', () {
     Widget host(Widget child, {AppThemeVariant variant = AppThemeVariant.glas}) => MaterialApp(
-      theme: monoTheme(dark: true, variant: variant),
+      theme: monoTheme(MonoPalette.dark, variant: variant),
       home: Scaffold(body: child),
     );
 
@@ -401,7 +401,7 @@ void main() {
       late BuildContext captured;
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: Scaffold(
             body: Builder(
               builder: (context) {

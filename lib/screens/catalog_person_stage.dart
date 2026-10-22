@@ -48,6 +48,9 @@ class CatalogPersonStage extends StatefulWidget {
   final String name;
   final String? portraitUrl;
   final String? departmentsLine;
+
+  /// Birth and death in one line, for the shrunken header only: on the full
+  /// stage the fact card ([facts]) carries them.
   final String? lifeLine;
   final String? roleLine;
   final String? summary;
@@ -178,11 +181,10 @@ class CatalogPersonStageState extends State<CatalogPersonStage> {
                   ),
                 ),
                 SizedBox(height: 6 * s),
-                for (final text in [widget.departmentsLine, widget.lifeLine])
-                  if (text != null) ...[
-                    SizedBox(height: 14 * s),
-                    Text(text, maxLines: 1, overflow: .ellipsis, style: line),
-                  ],
+                if (widget.departmentsLine case final departments?) ...[
+                  SizedBox(height: 14 * s),
+                  Text(departments, maxLines: 1, overflow: .ellipsis, style: line),
+                ],
                 if (widget.roleLine case final role?) ...[
                   SizedBox(height: 14 * s),
                   Text(

@@ -58,7 +58,7 @@ void main() {
     final key = GlobalKey<SportScreenState>();
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: variant),
+        theme: monoTheme(MonoPalette.dark, variant: variant),
         home: MainScreenFocusScope(
           focusSidebar: onSidebar ?? () {},
           sideNavigationWidth: 0,

@@ -2445,6 +2445,7 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
           item,
           epoch: position.layoutEpoch!,
           keyboardMode: InputModeTracker.isKeyboardMode(context, listen: false),
+          isOnScreen: position.isOnScreen,
           build: () => _buildMediaCardItem(
             index,
             isFirstRow: position.isFirstRow,

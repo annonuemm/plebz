@@ -492,7 +492,10 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       await player.setProperty('dv-conversion-mode', dolbyVisionOff ? 'off' : dvConversionMode.nativeValue);
       if (player is PlayerAndroidMpv) {
         await player.setProperty('hdr-sdr-conversion', settings.read(SettingsService.hdrSdrConversion).nativeValue);
-        if (settings.read(SettingsService.deinterlace)) await player.setProperty('deinterlace', 'auto');
+        // Live TV deinterlaces plainly under Film too, as the player does.
+        if (settings.read(SettingsService.deinterlaceMode) != DeinterlaceMode.off) {
+          await player.setProperty('deinterlace', DeinterlaceMode.video.mpvValue);
+        }
       }
     } catch (e) {
       // The picture still plays; a full-screen take-over just inherits less.

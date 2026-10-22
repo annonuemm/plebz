@@ -24,11 +24,15 @@ void main() {
   testWidgets('only the Plebz palette puts the logo\'s gradient on the play buttons, OLED or not', (tester) async {
     for (final accent in GlasAccent.values) {
       for (final oled in [false, true]) {
-        final theme = monoTheme(dark: true, oled: oled, variant: AppThemeVariant.glas, glasAccent: accent);
+        final theme = monoTheme(
+          (oled ? MonoPalette.oled : MonoPalette.dark),
+          variant: AppThemeVariant.glas,
+          glasAccent: accent,
+        );
         expect(await _wearsGradient(tester, theme), accent == GlasAccent.plebz, reason: '${accent.name} oled=$oled');
       }
     }
-    expect(await _wearsGradient(tester, monoTheme(dark: true)), isFalse, reason: 'the original look');
+    expect(await _wearsGradient(tester, monoTheme(MonoPalette.dark)), isFalse, reason: 'the original look');
   });
 
   test('the Plebz palette is a near-black with the logo\'s violet, and its own', () {
@@ -45,7 +49,7 @@ void main() {
   ) async {
     Future<void> pump({required bool focused}) => tester.pumpWidget(
       Theme(
-        data: monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: GlasAccent.plebz),
+        data: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: GlasAccent.plebz),
         child: Directionality(
           textDirection: TextDirection.ltr,
           child: Center(

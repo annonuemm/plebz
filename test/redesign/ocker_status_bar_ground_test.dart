@@ -22,7 +22,7 @@ void main() {
     addTearDown(controller.dispose);
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: variant),
+        theme: monoTheme(MonoPalette.dark, variant: variant),
         home: Scaffold(
           body: OckerStatusBarGround(
             child: ListView.builder(
@@ -61,7 +61,7 @@ void main() {
     controller.jumpTo(400);
     await tester.pump();
     final colour = tester.widget<ColoredBox>(strip()).color;
-    expect(colour, tokensOf(monoTheme(dark: true, variant: AppThemeVariant.flach)).bg.withValues(alpha: 1));
+    expect(colour, tokensOf(monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach)).bg.withValues(alpha: 1));
     expect(tester.getSize(strip()).height, 30, reason: 'the status bar, no more');
   });
 

@@ -25,6 +25,8 @@ import 'package:plezy/widgets/library_copy_jump_button.dart';
 import 'package:plezy/widgets/app_menu.dart';
 import 'package:plezy/widgets/focusable_list_tile.dart';
 import 'package:plezy/widgets/overlay_sheet.dart';
+import 'package:plezy/services/supporter/supporter_mode.dart';
+import 'package:plezy/services/supporter/supporter_service.dart';
 
 import '../test_helpers/prefs.dart';
 
@@ -35,7 +37,7 @@ void main() {
 
   group('the theme', () {
     test('is the redesign, with glass', () {
-      final tk = tokensOf(monoTheme(dark: true, variant: AppThemeVariant.glas));
+      final tk = tokensOf(monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas));
 
       expect(isRedesignVariant(AppThemeVariant.glas), isTrue);
       expect(tk.redesignLayout, isTrue);
@@ -45,18 +47,18 @@ void main() {
 
     test('glass is its own: the other variants stay filled', () {
       for (final variant in AppThemeVariant.values.where((v) => !isRedesignVariant(v))) {
-        expect(tokensOf(monoTheme(dark: true, variant: variant)).glass, isFalse, reason: variant.name);
+        expect(tokensOf(monoTheme(MonoPalette.dark, variant: variant)).glass, isFalse, reason: variant.name);
       }
       // "Flach" keeps glass's structure and paints it flat (Plebz).
-      final flat = tokensOf(monoTheme(dark: true, variant: AppThemeVariant.flach));
+      final flat = tokensOf(monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach));
       expect((flat.glass, flat.flat), (true, true));
-      expect(tokensOf(monoTheme(dark: true, variant: AppThemeVariant.glas)).flat, isFalse);
+      expect(tokensOf(monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas)).flat, isFalse);
     });
 
     test('each accent brings its whole palette', () {
       for (final accent in GlasAccent.values) {
         final palette = glasPalette(accent);
-        final tk = tokensOf(monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: accent));
+        final tk = tokensOf(monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: accent));
         expect(tk.accent, palette.accent, reason: accent.name);
         expect(tk.bg, palette.bg, reason: accent.name);
         expect(tk.text, palette.text, reason: accent.name);
@@ -88,7 +90,7 @@ void main() {
 
     test('red stands on flat black, lit from below by red itself, never a reddish grey', () {
       final red = glasPalette(GlasAccent.rot);
-      final tk = tokensOf(monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: GlasAccent.rot));
+      final tk = tokensOf(monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: GlasAccent.rot));
       expect(glassBackdropGradient(tk).colors.toSet(), {red.bg}, reason: 'flat black');
       final glow = glassBackdropGlow(tk);
       expect((glow.center as Alignment).y, greaterThan(1), reason: 'rising from below the foot');
@@ -97,14 +99,16 @@ void main() {
       }
       expect(glow.colors.first.a, greaterThan(glow.colors.last.a));
       // The tinted palettes keep their wash.
-      final ice = tokensOf(monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: GlasAccent.eisblau));
+      final ice = tokensOf(monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: GlasAccent.eisblau));
       expect(glassBackdropGradient(ice).colors[2].b, greaterThan(glassBackdropGradient(ice).colors[2].r));
     });
 
     test('every palette rings a poster in white, with a little of its accent at the bottom right', () {
       for (final accent in GlasAccent.values) {
         final palette = glasPalette(accent);
-        final edge = tokensOf(monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: accent)).glassFocusEdge;
+        final edge = tokensOf(
+          monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: accent),
+        ).glassFocusEdge;
         expect(edge.lit, palette.text, reason: '${accent.name}: its white ink where the light falls');
         expect(edge.mid.withValues(alpha: 1), palette.text, reason: '${accent.name}: white round the most of it');
         expect(edge.mid.a, greaterThan(0.8), reason: '${accent.name}: not thinned to grey');
@@ -120,7 +124,7 @@ void main() {
     testWidgets('without Liquid Glass the chosen capsule is a flat wash, no sheen (Plebz)', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: GlasAccent.rot),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: GlasAccent.rot),
           home: const Center(
             child: SizedBox(
               width: 120,
@@ -148,7 +152,7 @@ void main() {
       Future<Color> chosenFill(GlasAccent accent, {bool bright = false}) async {
         await tester.pumpWidget(
           MaterialApp(
-            theme: monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: accent),
+            theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: accent),
             home: Center(
               child: SizedBox(
                 width: 120,
@@ -194,13 +198,13 @@ void main() {
 
     test('the accent does not reach the other variants', () {
       expect(
-        monoTheme(dark: true, variant: AppThemeVariant.standard, glasAccent: GlasAccent.mint),
-        same(monoTheme(dark: true, variant: AppThemeVariant.standard, glasAccent: GlasAccent.flieder)),
+        monoTheme(MonoPalette.dark, variant: AppThemeVariant.standard, glasAccent: GlasAccent.mint),
+        same(monoTheme(MonoPalette.dark, variant: AppThemeVariant.standard, glasAccent: GlasAccent.flieder)),
       );
     });
 
     test('stays dark whatever the light/dark switch says, as the redesign does', () {
-      final light = tokensOf(monoTheme(dark: false, variant: AppThemeVariant.glas, glasAccent: GlasAccent.mint));
+      final light = tokensOf(monoTheme(MonoPalette.light, variant: AppThemeVariant.glas, glasAccent: GlasAccent.mint));
       expect(light.bg, glasPalette(GlasAccent.mint).bg);
     });
   });
@@ -217,7 +221,9 @@ void main() {
       debugRedesignOfferedHere = true;
       addTearDown(() => debugRedesignOfferedHere = null);
 
-      final provider = ThemeProvider();
+      final provider = ThemeProvider(
+        supporter: SupporterService.forTesting(availability: SupporterAvailability.hidden),
+      );
       addTearDown(provider.dispose);
       await Future<void>.delayed(Duration.zero);
       expect(tokensOf(provider.darkTheme).accent, glasPalette(GlasAccent.eisblau).accent);
@@ -241,7 +247,7 @@ void main() {
     }) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: OverlaySheetHost(
             child: Scaffold(
               body: Builder(
@@ -315,7 +321,7 @@ void main() {
     const corner = BorderRadius.all(Radius.circular(18));
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: const Center(
           child: SizedBox(
             width: 200,
@@ -341,7 +347,7 @@ void main() {
     expect(layers.where((d) => d.color != null && d.borderRadius != null && d.gradient == null), hasLength(1));
     final pane = layers.firstWhere((d) => d.color != null);
     expect(pane.color!.a, greaterThan(0.6));
-    final ground = tokensOf(monoTheme(dark: true, variant: AppThemeVariant.glas)).bg;
+    final ground = tokensOf(monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas)).bg;
     expect(pane.color!.withValues(alpha: 1), ground);
   });
 
@@ -349,7 +355,7 @@ void main() {
     Future<void> pumpJump(WidgetTester tester, {required AppThemeVariant variant, required bool focused}) =>
         tester.pumpWidget(
           MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: Center(
               child: LibraryCopyJumpButton(copy: null, quality: null, showFocus: focused, onPressed: () {}),
             ),
@@ -359,7 +365,7 @@ void main() {
     testWidgets('lie bare on their row under glass, their ink brighter with focus', (tester) async {
       await pumpJump(tester, variant: AppThemeVariant.glas, focused: false);
       expect(find.byType(OckerGlassPlate), findsNothing);
-      final tk = tokensOf(monoTheme(dark: true, variant: AppThemeVariant.glas));
+      final tk = tokensOf(monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas));
       Color ink() => tester.widget<Text>(find.text(t.explore.comparingCopies)).style!.color!;
       expect(ink(), tk.ink(0.85));
 
@@ -373,7 +379,7 @@ void main() {
       late BuildContext captured;
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: Builder(
             builder: (context) {
               captured = context;
@@ -462,7 +468,7 @@ void main() {
 
     testWidgets('a focused card animates its edge in without an error', (tester) async {
       Widget card(bool focused) => MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: Center(
           child: Builder(
             builder: (context) => AnimatedContainer(
@@ -493,7 +499,7 @@ void main() {
     }) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: Scaffold(
             body: Padding(
               padding: const EdgeInsets.all(40),
@@ -552,7 +558,7 @@ void main() {
       Future<void> focusOn(int index) async {
         await tester.pumpWidget(
           MaterialApp(
-            theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+            theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
             home: Scaffold(
               body: Padding(
                 padding: const EdgeInsets.all(40),
@@ -598,7 +604,7 @@ void main() {
   testWidgets('under glass the one on show is a quiet capsule inside the band, not a rule', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: const Scaffold(
           body: Padding(
             padding: EdgeInsets.all(40),
@@ -626,7 +632,7 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: Scaffold(
               body: Center(
                 child: FocusableTabChip(label: 'Empfohlen', isSelected: true, onSelect: () {}),
@@ -635,7 +641,7 @@ void main() {
           ),
         );
         await tester.pump(const Duration(seconds: 1));
-        final accent = tokensOf(monoTheme(dark: true, variant: variant)).accent;
+        final accent = tokensOf(monoTheme(MonoPalette.dark, variant: variant)).accent;
         final rules = tester.widgetList<Container>(find.byType(Container)).where((c) => c.color == accent);
         final word = tester.getRect(find.text('Empfohlen'));
         final chip = tester.getRect(find.byType(FocusableTabChip));
@@ -655,7 +661,7 @@ void main() {
       addTearDown(node.dispose);
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           builder: (context, child) => InputModeTracker(child: child!),
           home: Center(
             child: FocusableWrapper(
@@ -688,7 +694,7 @@ void main() {
   testWidgets('Glas\'s band has no ground of its own (Plebz)', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: const Scaffold(
           body: TabChipStrip(
             children: [
@@ -710,7 +716,7 @@ void main() {
   testWidgets('the band and the capsule at its end are concentric: one margin all round', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach),
         home: const Scaffold(
           body: Padding(
             padding: EdgeInsets.all(40),
@@ -741,7 +747,7 @@ void main() {
       (tester) async {
         Future<void> ink(Color color) => tester.pumpWidget(
           MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: Center(
               child: OckerInk(
                 color: color,
@@ -772,7 +778,7 @@ void main() {
     addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
     Future<void> focusOn(int index) => tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: Scaffold(
           body: Padding(
             padding: const EdgeInsets.all(40),
@@ -816,7 +822,7 @@ void main() {
 
   group('the ground', () {
     test('under glass the pages carry a gradient; the others keep their colour', () {
-      final glass = monoTheme(dark: true, variant: AppThemeVariant.glas);
+      final glass = monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas);
       expect(glass.scaffoldBackgroundColor.a, 0, reason: 'clear, so the ground shows');
       // Clear ground rather than clear black: a scrim that gives it opacity
       // back fades into the palette, not into black.
@@ -827,11 +833,11 @@ void main() {
         reason: 'every page travels on the ground',
       );
       // "Flach" travels on the same ground, painted plain (Plebz).
-      final flat = monoTheme(dark: true, variant: AppThemeVariant.flach);
+      final flat = monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach);
       expect(flat.scaffoldBackgroundColor.a, 0);
       expect(flat.pageTransitionsTheme.builders.values, everyElement(isA<GlassBackdropTransitions>()));
       for (final variant in AppThemeVariant.values.where((v) => !isRedesignVariant(v))) {
-        final theme = monoTheme(dark: true, variant: variant);
+        final theme = monoTheme(MonoPalette.dark, variant: variant);
         expect(theme.scaffoldBackgroundColor, tokensOf(theme).bg, reason: variant.name);
         expect(theme.pageTransitionsTheme.builders.values.whereType<GlassBackdropTransitions>(), isEmpty);
       }
@@ -844,7 +850,7 @@ void main() {
       for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
         // A page of its own each time: a bar remembers being scrolled under.
         await tester.pumpWidget(const SizedBox.shrink());
-        final theme = monoTheme(dark: true, variant: variant);
+        final theme = monoTheme(MonoPalette.dark, variant: variant);
         final controller = ScrollController();
         addTearDown(controller.dispose);
         await tester.pumpWidget(
@@ -876,7 +882,7 @@ void main() {
       Future<Gradient?> groundOf(GlasAccent accent) async {
         await tester.pumpWidget(
           MaterialApp(
-            theme: monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: accent),
+            theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: accent),
             home: const GlassBackdrop(child: SizedBox.expand()),
           ),
         );
@@ -893,7 +899,7 @@ void main() {
 
     test('every accent stands on the same ground, in its own colour: flat above, light at half height', () {
       for (final accent in GlasAccent.values) {
-        final tk = tokensOf(monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: accent));
+        final tk = tokensOf(monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: accent));
         final ground = glassBackdropGradient(tk);
         expect(ground.colors.first, ground.colors[1], reason: '${accent.name}: flat across the top');
         // Red is black lit from below instead (its own test).
@@ -910,7 +916,7 @@ void main() {
 
     testWidgets('with OLED on the ground is black and flat, with no light on it, whatever the accent', (tester) async {
       for (final accent in GlasAccent.values) {
-        final theme = monoTheme(dark: true, oled: true, variant: AppThemeVariant.glas, glasAccent: accent);
+        final theme = monoTheme(MonoPalette.oled, variant: AppThemeVariant.glas, glasAccent: accent);
         final tk = tokensOf(theme);
         expect(glassBackdropGradient(tk).colors.toSet(), {const Color(0xFF000000)}, reason: accent.name);
         expect(glassBackdropGlow(tk).colors.every((c) => c.a == 0), isTrue, reason: '${accent.name}: no glow');
@@ -951,7 +957,7 @@ void main() {
       addTearDown(contentScope.dispose);
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           home: OckerRailShell(
             tabs: [
               NavigationTab(id: NavigationTabId.discover, onlineOnly: false, icon: Icons.home, getLabel: () => 'Start'),
@@ -983,7 +989,7 @@ void main() {
     testWidgets('a ground already lying under it on the same screen is not painted again', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           // The route lays its ground; the shell inside it would lay the same.
           home: const GlassBackdrop(reuseRouteGround: true, child: Text('Seite')),
         ),
@@ -995,7 +1001,7 @@ void main() {
     testWidgets('a page on a navigator of its own still lays its ground over the one beneath', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           home: GlassBackdrop(
             reuseRouteGround: true,
             child: Navigator(onGenerateRoute: (_) => MaterialPageRoute<void>(builder: (_) => const Text('Innen'))),
@@ -1014,7 +1020,7 @@ void main() {
     testWidgets('a page pushed under glass lies on the gradient', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           home: const Scaffold(body: Text('Seite')),
         ),
       );
@@ -1034,7 +1040,7 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: Scaffold(
               body: AppMenuList<int>(
                 entries: const [
@@ -1047,7 +1053,7 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        final accent = tokensOf(monoTheme(dark: true, variant: variant)).accent;
+        final accent = tokensOf(monoTheme(MonoPalette.dark, variant: variant)).accent;
         final rules = tester.widgetList<Container>(find.byType(Container)).where((c) => c.color == accent);
         if (variant == AppThemeVariant.glas) {
           expect(rules, isEmpty);
@@ -1065,7 +1071,7 @@ void main() {
     Future<Size> cell(bool focused) async {
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           home: Center(
             child: SizedBox(
               width: 100,
@@ -1119,7 +1125,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         navigatorKey: navigator,
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: const SizedBox.shrink(),
       ),
     );

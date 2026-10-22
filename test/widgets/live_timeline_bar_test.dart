@@ -31,7 +31,7 @@ void main() {
         tester,
         seeks: [],
         currentOffset: 60,
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: GlasAccent.mint),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: GlasAccent.mint),
       );
       final accent = glasPalette(GlasAccent.mint).accent;
       expect(
@@ -44,7 +44,7 @@ void main() {
     });
 
     testWidgets('and stays red in the other themes', (tester) async {
-      await _pumpTimeline(tester, seeks: [], currentOffset: 60, theme: monoTheme(dark: true));
+      await _pumpTimeline(tester, seeks: [], currentOffset: 60, theme: monoTheme(MonoPalette.dark));
       expect(
         bar(),
         paints

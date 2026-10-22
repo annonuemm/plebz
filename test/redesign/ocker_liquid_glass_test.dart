@@ -7,6 +7,8 @@ import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/liquid_glass.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/theme/mono_tokens.dart';
+import 'package:plezy/services/supporter/supporter_mode.dart';
+import 'package:plezy/services/supporter/supporter_service.dart';
 
 import '../test_helpers/prefs.dart';
 
@@ -32,7 +34,7 @@ void main() {
     Color? lightTint,
   }) => tester.pumpWidget(
     MaterialApp(
-      theme: monoTheme(dark: true, variant: variant),
+      theme: monoTheme(MonoPalette.dark, variant: variant),
       home: Center(
         child: SizedBox(
           width: 200,
@@ -146,7 +148,7 @@ void main() {
     expect(groundAlpha(tester), closeTo(ockerReadingGroundOpacity, 0.01), reason: 'nothing behind shows through sharp');
     // Lighter than the plain glass: a frost of white over the ground, as
     // Apple's glass gets from the picture behind it (the user's call).
-    final tk = monoTheme(dark: true, variant: AppThemeVariant.glas).extension<MonoTokens>()!;
+    final tk = monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas).extension<MonoTokens>()!;
     final ground = tester
         .widgetList<DecoratedBox>(
           find.ancestor(of: find.byKey(const Key('words')), matching: find.byType(DecoratedBox)),
@@ -202,7 +204,7 @@ void main() {
     OckerLiquidGlass.debugOfferedHere = false;
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: Align(
           alignment: Alignment.centerLeft,
           child: SizedBox(
@@ -275,7 +277,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: const Center(
           child: OckerGlassBand(overhang: EdgeInsets.all(6), child: Text('Filme')),
         ),
@@ -296,7 +298,7 @@ void main() {
     OckerLiquidGlass.setting.value = true;
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: const Center(
           child: SizedBox(
             width: 120,
@@ -318,7 +320,9 @@ void main() {
 
     test('keeps the switch in step with the setting', () async {
       final service = await SettingsService.getInstance();
-      final provider = ThemeProvider();
+      final provider = ThemeProvider(
+        supporter: SupporterService.forTesting(availability: SupporterAvailability.hidden),
+      );
       addTearDown(provider.dispose);
       await Future<void>.delayed(Duration.zero);
       expect(OckerLiquidGlass.setting.value, isFalse, reason: 'off by default');
@@ -339,7 +343,7 @@ void main() {
   });
 
   test('the lens follows the shape it lies in', () {
-    final tk = monoTheme(dark: true, variant: AppThemeVariant.glas).extension<MonoTokens>()!;
+    final tk = monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas).extension<MonoTokens>()!;
     expect(tk.glass, isTrue);
     expect(
       OckerLiquidGlass.lensThickness,

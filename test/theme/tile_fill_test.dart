@@ -13,7 +13,7 @@ import 'package:plezy/widgets/catalog_tile_cards.dart';
 /// the light around it — the "dark area behind" reported again and again.
 void main() {
   MonoTokens tokensOf(AppThemeVariant variant, {GlasAccent accent = GlasAccent.eisblau}) =>
-      monoTheme(dark: true, variant: variant, glasAccent: accent).extension<MonoTokens>()!;
+      monoTheme(MonoPalette.dark, variant: variant, glasAccent: accent).extension<MonoTokens>()!;
 
   test('under glass a tile is an ink wash, see-through, in every palette', () {
     for (final accent in GlasAccent.values) {
@@ -29,8 +29,8 @@ void main() {
   });
 
   test('a card under glass is a wash too, and stays opaque elsewhere', () {
-    expect(monoTheme(dark: true, variant: AppThemeVariant.glas).cardTheme.color!.a, lessThan(1));
-    expect(monoTheme(dark: true).cardTheme.color!.a, 1);
+    expect(monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas).cardTheme.color!.a, lessThan(1));
+    expect(monoTheme(MonoPalette.dark).cardTheme.color!.a, 1);
   });
 
   testWidgets('the genre and studio tiles paint the wash under glass', (tester) async {
@@ -38,7 +38,7 @@ void main() {
     for (final variant in AppThemeVariant.values) {
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: Scaffold(
             body: Column(
               children: [

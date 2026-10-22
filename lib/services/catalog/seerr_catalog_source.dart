@@ -118,7 +118,7 @@ class SeerrCatalogSource implements CatalogSource {
 
   /// One page of titles in a genre.
   Future<CatalogPage> genrePage(MediaKind kind, int genreId, {int page = 1}) async =>
-      _toPage(await client.getByGenre(_mediaTypeFor(kind), genreId, page: page));
+      _toPage(await client.getByGenre(_mediaTypeFor(kind), genreId, page: page), await _tmdbImageOrigin());
 
   /// One page of `/discover/movies` with filters — the row loaders of a
   /// studio or genre page build on this.
@@ -144,6 +144,7 @@ class SeerrCatalogSource implements CatalogSource {
       watchProviders: watchProviders,
       watchRegion: watchRegion,
     ),
+    await _tmdbImageOrigin(),
   );
 
   /// One page of `/discover/tv` with filters.
@@ -169,6 +170,7 @@ class SeerrCatalogSource implements CatalogSource {
       watchProviders: watchProviders,
       watchRegion: watchRegion,
     ),
+    await _tmdbImageOrigin(),
   );
 
   /// The streaming service ids this instance can filter by, for [region].
@@ -190,18 +192,18 @@ class SeerrCatalogSource implements CatalogSource {
 
   /// One page of a studio's films.
   Future<CatalogPage> studioPage(int studioId, {int page = 1}) async =>
-      _toPage(await client.getByStudio(studioId, page: page));
+      _toPage(await client.getByStudio(studioId, page: page), await _tmdbImageOrigin());
 
   /// One page of a network's series.
   Future<CatalogPage> networkPage(int networkId, {int page = 1}) async =>
-      _toPage(await client.getByNetwork(networkId, page: page));
+      _toPage(await client.getByNetwork(networkId, page: page), await _tmdbImageOrigin());
 
   static String _mediaTypeFor(MediaKind kind) => kind == MediaKind.movie ? 'movie' : 'tv';
 
   @override
   Future<CatalogPage> fetchRow(CatalogRowId row, {int page = 1, int limit = 25}) async {
     if (row == CatalogRowId.recentlyAdded) return _recentlyAddedPage(limit, page: page);
-    final res = await switch (row) {
+    final results = switch (row) {
       CatalogRowId.trending => client.getTrending(page: page),
       CatalogRowId.popularMovies => client.getPopularMovies(page: page),
       CatalogRowId.popularShows => client.getPopularTv(page: page),
@@ -218,15 +220,17 @@ class SeerrCatalogSource implements CatalogSource {
       CatalogRowId.airingAnime ||
       CatalogRowId.popularAnime => throw ArgumentError('Seerr does not serve ${row.name}'),
     };
-    return _toPage(res);
+    final origin = _tmdbImageOrigin();
+    return _toPage(await results, await origin);
   }
 
   @override
   Future<List<CatalogItem>> search(String query, {int limit = 30}) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return const [];
-    final page = await client.search(trimmed);
-    return (await _toPage(page)).items;
+    final results = client.search(trimmed);
+    final origin = _tmdbImageOrigin();
+    return (await _toPage(await results, await origin)).items;
   }
 
   @override
@@ -234,18 +238,19 @@ class SeerrCatalogSource implements CatalogSource {
     final tmdbId = item.ids.tmdb;
     if (tmdbId == null) return CatalogDetail(item: item);
 
-    // Start both retained calls before awaiting either. Each helper isolates
-    // its own failure so detail metadata and recommendations degrade
-    // independently.
+    // Start every call before awaiting any. Each helper isolates its own
+    // failure so detail metadata and recommendations degrade independently.
     final detailsFuture = _fetchDetails(item.kind, tmdbId);
-    final relatedFuture = _fetchRecommendations(item.kind, tmdbId, relatedLimit);
+    final relatedFuture = _fetchRecommendations(item.kind, tmdbId);
+    final originFuture = _tmdbImageOrigin();
     final details = await detailsFuture;
     final related = await relatedFuture;
+    final origin = await originFuture;
 
     return CatalogDetail(
-      item: details == null ? item : item.enrichedWith(_toDetailCatalogItem(details, item.kind)),
-      cast: details == null ? const [] : _toCast(details, castLimit),
-      related: related,
+      item: details == null ? item : item.enrichedWith(_toDetailCatalogItem(details, item.kind, origin)),
+      cast: details == null ? const [] : _toCast(details, castLimit, origin),
+      related: related == null ? const [] : (await _toPage(related, origin)).items.take(relatedLimit).toList(),
     );
   }
 
@@ -273,10 +278,10 @@ class SeerrCatalogSource implements CatalogSource {
   Future<void> removeFromWatchlist(MediaKind kind, CatalogItemIds ids, {String? title}) =>
       throw UnsupportedError('Seerr has no watchlist');
 
-  Future<CatalogPage> _toPage(SeerrPage<SeerrMedia> page) async {
+  Future<CatalogPage> _toPage(SeerrPage<SeerrMedia> page, String imageOrigin) async {
     final items = [
       for (final m in page.items)
-        if (m.displayTitle.isNotEmpty) _toCatalogItem(m),
+        if (m.displayTitle.isNotEmpty) _toCatalogItem(m, imageOrigin),
     ];
     return CatalogPage(items: await _withEpisodeFacts(items), hasMore: page.hasMore, totalResults: page.totalResults);
   }
@@ -354,7 +359,7 @@ class SeerrCatalogSource implements CatalogSource {
     return CatalogNextEpisode(airsAt: airsAt, episode: _positive(next?.episodeNumber));
   }
 
-  CatalogItem _toCatalogItem(SeerrMedia m) => CatalogItem(
+  CatalogItem _toCatalogItem(SeerrMedia m, String imageOrigin) => CatalogItem(
     source: CatalogSourceId.seerr,
     kind: m.isMovie ? MediaKind.movie : MediaKind.show,
     title: m.displayTitle,
@@ -363,10 +368,10 @@ class SeerrCatalogSource implements CatalogSource {
     rating: m.voteAverage,
     votes: m.voteCount,
     ids: CatalogItemIds(tmdb: m.id),
-    posterUrl: tmdbImageUrl(m.posterPath, 'w600_and_h900_bestv2'),
-    backdropUrl: tmdbImageUrl(m.backdropPath, 'w1920_and_h800_multi_faces'),
-    posterVariants: tmdbPosterVariants(m.posterPath),
-    backdropVariants: tmdbBackdropVariants(m.backdropPath),
+    posterUrl: _tmdbImageUrl(imageOrigin, m.posterPath, 'w600_and_h900_bestv2'),
+    backdropUrl: _tmdbImageUrl(imageOrigin, m.backdropPath, 'w1920_and_h800_multi_faces'),
+    posterVariants: _tmdbPosterVariants(imageOrigin, m.posterPath),
+    backdropVariants: _tmdbBackdropVariants(imageOrigin, m.backdropPath),
     serverState: _serverState(m.mediaInfo),
     releaseDate: _date(m.date),
     originalTitle: _originalTitle(m.displayOriginalTitle, m.displayTitle),
@@ -385,11 +390,13 @@ class SeerrCatalogSource implements CatalogSource {
   Future<CatalogPage> _recentlyAddedPage(int limit, {int page = 1}) async {
     if (page > 1) return const CatalogPage(items: [], hasMore: false);
     final refs = await client.getRecentlyAdded(take: limit);
+    final origin = await _tmdbImageOrigin();
     final resolved = await Future.wait([
       for (final ref in refs)
         _fetchDetails(ref.isMovie ? MediaKind.movie : MediaKind.show, ref.tmdbId).then(
-          (details) =>
-              details == null ? null : _toDetailCatalogItem(details, ref.isMovie ? MediaKind.movie : MediaKind.show),
+          (details) => details == null
+              ? null
+              : _toDetailCatalogItem(details, ref.isMovie ? MediaKind.movie : MediaKind.show, origin),
         ),
     ]);
     final items = [for (final item in resolved) ?item];
@@ -405,19 +412,31 @@ class SeerrCatalogSource implements CatalogSource {
     }
   }
 
-  Future<List<CatalogItem>> _fetchRecommendations(MediaKind kind, int tmdbId, int limit) async {
+  Future<SeerrPage<SeerrMedia>?> _fetchRecommendations(MediaKind kind, int tmdbId) async {
     try {
-      final page = kind == MediaKind.movie
+      return kind == MediaKind.movie
           ? await client.getMovieRecommendations(tmdbId)
           : await client.getTvRecommendations(tmdbId);
-      return (await _toPage(page)).items.take(limit).toList();
     } catch (error) {
       appLogger.w('Seerr: recommendations load failed for tmdb:$tmdbId', error: error);
-      return const [];
+      return null;
     }
   }
 
-  CatalogItem _toDetailCatalogItem(SeerrDetails details, MediaKind kind) => CatalogItem(
+  /// Origin for one load's artwork URLs: the instance's image proxy when its
+  /// admin enabled image caching, TMDB's CDN otherwise. Never throws —
+  /// unreadable public settings degrade to the CDN, what every instance
+  /// without image caching serves, and the next load retries them.
+  Future<String> _tmdbImageOrigin() async {
+    try {
+      return await client.tmdbImageProxyUrl() ?? _tmdbImageCdn;
+    } catch (error) {
+      appLogger.w('Seerr: public settings unavailable, loading artwork from TMDB directly', error: error);
+      return _tmdbImageCdn;
+    }
+  }
+
+  CatalogItem _toDetailCatalogItem(SeerrDetails details, MediaKind kind, String imageOrigin) => CatalogItem(
     source: CatalogSourceId.seerr,
     kind: kind,
     title: details.displayTitle,
@@ -440,10 +459,10 @@ class SeerrCatalogSource implements CatalogSource {
       imdb: _nonEmpty(details.imdbId) ?? _nonEmpty(details.externalIds?.imdbId),
       tvdb: _positive(details.externalIds?.tvdbId),
     ),
-    posterUrl: tmdbImageUrl(details.posterPath, 'w600_and_h900_bestv2'),
-    backdropUrl: tmdbImageUrl(details.backdropPath, 'w1920_and_h800_multi_faces'),
-    posterVariants: tmdbPosterVariants(details.posterPath),
-    backdropVariants: tmdbBackdropVariants(details.backdropPath),
+    posterUrl: _tmdbImageUrl(imageOrigin, details.posterPath, 'w600_and_h900_bestv2'),
+    backdropUrl: _tmdbImageUrl(imageOrigin, details.backdropPath, 'w1920_and_h800_multi_faces'),
+    posterVariants: _tmdbPosterVariants(imageOrigin, details.posterPath),
+    backdropVariants: _tmdbBackdropVariants(imageOrigin, details.backdropPath),
     serverState: _serverState(details.mediaInfo),
     releaseDate: _date(details.date),
     originalTitle: _originalTitle(details.displayOriginalTitle, details.displayTitle),
@@ -459,13 +478,13 @@ class SeerrCatalogSource implements CatalogSource {
     isAdult: kind == MediaKind.movie ? details.adult : null,
   );
 
-  List<CatalogCastMember> _toCast(SeerrDetails details, int limit) => [
+  List<CatalogCastMember> _toCast(SeerrDetails details, int limit, String imageOrigin) => [
     for (final member in (details.credits?.cast ?? const <SeerrCastMember>[]).take(limit))
       if (_nonEmpty(member.name) case final String name)
         CatalogCastMember(
           name: name,
           secondary: _nonEmpty(member.character),
-          imageUrl: tmdbImageUrl(member.profilePath, 'w300'),
+          imageUrl: _tmdbImageUrl(imageOrigin, member.profilePath, 'w300'),
         ),
   ];
 
@@ -748,33 +767,41 @@ class SeerrCatalogSource implements CatalogSource {
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
   }
 
-  static Map<int, String>? tmdbPosterVariants(String? path) {
+  static Map<int, String>? _tmdbPosterVariants(String origin, String? path) {
     if (path == null || path.isEmpty) return null;
     return {
-      92: tmdbImageUrl(path, 'w92')!,
-      154: tmdbImageUrl(path, 'w154')!,
-      185: tmdbImageUrl(path, 'w185')!,
-      342: tmdbImageUrl(path, 'w342')!,
-      500: tmdbImageUrl(path, 'w500')!,
-      600: tmdbImageUrl(path, 'w600_and_h900_bestv2')!,
-      780: tmdbImageUrl(path, 'w780')!,
+      92: _tmdbImageUrl(origin, path, 'w92')!,
+      154: _tmdbImageUrl(origin, path, 'w154')!,
+      185: _tmdbImageUrl(origin, path, 'w185')!,
+      342: _tmdbImageUrl(origin, path, 'w342')!,
+      500: _tmdbImageUrl(origin, path, 'w500')!,
+      600: _tmdbImageUrl(origin, path, 'w600_and_h900_bestv2')!,
+      780: _tmdbImageUrl(origin, path, 'w780')!,
     };
   }
 
-  static Map<int, String>? tmdbBackdropVariants(String? path) {
+  static Map<int, String>? _tmdbBackdropVariants(String origin, String? path) {
     if (path == null || path.isEmpty) return null;
     return {
-      300: tmdbImageUrl(path, 'w300')!,
-      780: tmdbImageUrl(path, 'w780')!,
-      1280: tmdbImageUrl(path, 'w1280')!,
-      1920: tmdbImageUrl(path, 'w1920_and_h800_multi_faces')!,
+      300: _tmdbImageUrl(origin, path, 'w300')!,
+      780: _tmdbImageUrl(origin, path, 'w780')!,
+      1280: _tmdbImageUrl(origin, path, 'w1280')!,
+      1920: _tmdbImageUrl(origin, path, 'w1920_and_h800_multi_faces')!,
     };
   }
 
-  /// Seerr serves TMDB relative paths (`/abc.jpg`); images come straight off
-  /// the TMDB CDN at the same sizes the Seerr web UI uses.
-  static String? tmdbImageUrl(String? path, String size) =>
-      path == null || path.isEmpty ? null : 'https://image.tmdb.org/t/p/$size$path';
+  /// TMDB's image CDN. Seerr's image proxy serves the same `/t/p/<size>/<file>`
+  /// paths under its own route.
+  static const _tmdbImageCdn = 'https://image.tmdb.org';
+
+  /// [path] at [size] on TMDB's CDN, for artwork drawn outside one load's
+  /// pages (the Explore genre tiles), which has no instance origin to hand.
+  static String? tmdbImageUrl(String? path, String size) => _tmdbImageUrl(_tmdbImageCdn, path, size);
+
+  /// Seerr serves TMDB relative paths (`/abc.jpg`), sized here as the Seerr
+  /// web UI sizes them.
+  static String? _tmdbImageUrl(String origin, String? path, String size) =>
+      path == null || path.isEmpty ? null : '$origin/t/p/$size$path';
 
   @override
   void dispose() {

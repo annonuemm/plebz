@@ -93,7 +93,7 @@ Future<({int Function() selects, int Function() backs, LibrariesProvider librari
             ChangeNotifierProvider<MultiServerProvider>.value(value: effectiveMultiServerProvider),
           ],
           child: MaterialApp(
-            theme: theme ?? monoTheme(dark: true),
+            theme: theme ?? monoTheme(MonoPalette.dark),
             home: Focus(
               onKeyEvent: (_, event) {
                 if (event is KeyDownEvent && event.logicalKey.isSelectKey) underlyingSelects++;
@@ -306,7 +306,7 @@ void main() {
       TvDetectionService.debugSetAppleTVOverride(true);
       debugRedesignOfferedHere = true;
       addTearDown(() => debugRedesignOfferedHere = null);
-      final theme = monoTheme(dark: true, variant: variant);
+      final theme = monoTheme(MonoPalette.dark, variant: variant);
       await _pumpLibraryManagementLauncher(
         tester,
         theme: theme,
@@ -360,7 +360,7 @@ void main() {
     addTearDown(() => debugRedesignOfferedHere = null);
     await _pumpLibraryManagementLauncher(
       tester,
-      theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+      theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
       libraries: [
         for (var i = 0; i < 3; i++)
           MediaLibrary(

@@ -49,7 +49,7 @@ void main() {
       ChangeNotifierProvider<MultiServerProvider>.value(
         value: servers,
         child: MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           home: Scaffold(
             body: Align(
               alignment: Alignment.topLeft,
@@ -136,7 +136,7 @@ void main() {
         ChangeNotifierProvider<MultiServerProvider>.value(
           value: servers,
           child: MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: Scaffold(
               body: Align(
                 alignment: Alignment.topLeft,

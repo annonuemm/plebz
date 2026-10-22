@@ -27,7 +27,7 @@ void main() {
     final key = GlobalKey<LiveGroupStripState>();
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: variant),
+        theme: monoTheme(MonoPalette.dark, variant: variant),
         home: Scaffold(
           body: Center(
             child: SizedBox(

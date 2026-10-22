@@ -234,7 +234,7 @@ Future<_FakeCatalogSourcesProvider> _pumpWatchlist(
           if (servers != null) ChangeNotifierProvider<MultiServerProvider>.value(value: servers),
         ],
         child: MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: MainScreenFocusScope(
             focusSidebar: onSidebar ?? () {},
             sideNavigationWidth: 0,
@@ -446,7 +446,7 @@ void main() {
             ChangeNotifierProvider<LibrariesProvider>.value(value: libraries),
           ],
           child: MaterialApp(
-            theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+            theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
             home: const WatchlistScreen(),
           ),
         ),

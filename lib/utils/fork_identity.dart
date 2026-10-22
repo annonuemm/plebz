@@ -15,7 +15,7 @@ const forkAppName = 'Plebz';
 /// (pubspec), so this is where the base is named — About shows it, and
 /// `scripts/publish_public.sh` puts it in every public commit. Set it at each
 /// upstream merge.
-const upstreamBaseVersion = '2.23.0';
+const upstreamBaseVersion = '2.24.0';
 
 /// Where Plebz publishes its releases, as "owner/repository" on GitHub.
 /// Releases carry the arm32 and arm64 APKs `scripts/build_apk.sh` names; an
@@ -40,10 +40,13 @@ bool? debugPlebzUpdatesAvailable;
 /// TMDB's required attribution, word for word, for apps that show its data.
 const tmdbAttributionNotice = 'This product uses the TMDB API but is not endorsed or certified by TMDB.';
 
-/// Watch Together, the log upload and Discord's poster all go through one
-/// host, `ice.plezy.app`, which belongs to Plezy's developer. This fork runs
-/// none of its own, so the three stay switched off rather than send viewers'
-/// sessions, logs and posters to someone else's server.
+/// The log upload and Discord's poster go through `ice.plezy.app`, which
+/// belongs to Plezy's developer. Watch Together runs on Open Watch Party relays
+/// since Plezy 2.24 (`*.relay.openwatch.party`, its relay list from
+/// `openwatch.party`), from the same developer's package; a room hands them the
+/// viewer's name and which file on which server plays. This fork runs none of
+/// its own, so the three stay switched off rather than send viewers' sessions,
+/// logs and posters to someone else's server.
 ///
 /// Getters rather than constants so the code they guard is not dead code.
 bool get watchTogetherAvailable => debugPlezyHostedServicesAvailable;

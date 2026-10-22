@@ -484,7 +484,7 @@ http://provider/stream/ard
               ChangeNotifierProvider<IptvSourcesProvider>.value(value: iptv),
             ],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: GuideTab(
                   channels: [
@@ -541,7 +541,7 @@ http://provider/stream/ard
           child: MultiProvider(
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(body: GuideTab(channels: [_channel()])),
             ),
           ),
@@ -576,7 +576,7 @@ http://provider/stream/ard
           child: MultiProvider(
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               builder: (context, child) => MediaQuery(
                 data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
                 child: child!,
@@ -651,7 +651,7 @@ http://provider/stream/ard
           child: MultiProvider(
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(body: GuideTab(channels: [_channel()])),
             ),
           ),
@@ -694,7 +694,7 @@ http://provider/stream/ard
           child: MultiProvider(
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: GuideTab(channels: [_channel()], onNavigateUp: () => leftUpwards++),
               ),
@@ -750,7 +750,7 @@ http://provider/stream/ard
           child: MultiProvider(
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: GuideTab(channels: [_channel()], onBack: () => left++, onOpenGroups: () => opened++),
               ),
@@ -802,7 +802,7 @@ http://provider/stream/ard
           child: MultiProvider(
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: GuideTab(channels: [_channel()], onNavigateUp: () => leftUpwards++),
               ),
@@ -860,7 +860,7 @@ http://provider/stream/ard
             child: MultiProvider(
               providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
               child: MaterialApp(
-                theme: monoTheme(dark: true),
+                theme: monoTheme(MonoPalette.dark),
                 home: Scaffold(
                   body: GuideTab(channels: channels, onNavigateUp: () => leftUpwards++),
                 ),
@@ -949,7 +949,7 @@ http://provider/stream/ard
           child: MultiProvider(
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: Builder(
                   builder: (context) => GuideTab(
@@ -1047,7 +1047,7 @@ http://provider/stream/ard
               child: MultiProvider(
                 providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
                 child: MaterialApp(
-                  theme: monoTheme(dark: true),
+                  theme: monoTheme(MonoPalette.dark),
                   home: Scaffold(
                     body: GuideTab(
                       channels: [channel],
@@ -1123,7 +1123,7 @@ http://provider/stream/ard
           child: MultiProvider(
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
-              theme: monoTheme(dark: true, variant: variant),
+              theme: monoTheme(MonoPalette.dark, variant: variant),
               home: Scaffold(
                 body: GuideTab(channels: [channel], onPlayChannel: (played) async => fullScreen.add(played.key)),
               ),
@@ -1160,7 +1160,7 @@ http://provider/stream/ard
     });
 
     testWidgets('the channel in the band is marked in the channel column', (tester) async {
-      final accent = monoTheme(dark: true).extension<MonoTokens>()!.accent;
+      final accent = monoTheme(MonoPalette.dark).extension<MonoTokens>()!.accent;
       Finder bar() => find.byWidgetPredicate((widget) => widget is Container && widget.color == accent);
 
       await pumpPhone(tester, const Size(390, 844));
@@ -1242,7 +1242,7 @@ http://provider/stream/ard
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
               navigatorKey: navigatorKey,
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: GuideTab(
                   channels: [channel],
@@ -1387,7 +1387,7 @@ http://provider/stream/ard
           child: MultiProvider(
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(body: GuideTab(channels: channels)),
             ),
           ),
@@ -1439,7 +1439,7 @@ http://provider/stream/ard
             child: MultiProvider(
               providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
               child: MaterialApp(
-                theme: monoTheme(dark: true),
+                theme: monoTheme(MonoPalette.dark),
                 home: Scaffold(
                   body: GuideTab(key: guideKey, channels: channels),
                 ),
@@ -1502,7 +1502,7 @@ http://provider/stream/ard
           child: MultiProvider(
             providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(body: GuideTab(channels: channels)),
             ),
           ),
@@ -1541,7 +1541,7 @@ http://provider/stream/ard
             child: MultiProvider(
               providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
               child: MaterialApp(
-                theme: monoTheme(dark: true, variant: variant),
+                theme: monoTheme(MonoPalette.dark, variant: variant),
                 home: Scaffold(body: GuideTab(channels: [_channel()])),
               ),
             ),
@@ -1636,7 +1636,7 @@ http://provider/stream/ard
               ChangeNotifierProvider<IptvSourcesProvider>.value(value: iptv),
             ],
             child: MaterialApp(
-              theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+              theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach),
               home: Scaffold(body: GuideTab(channels: [channel])),
             ),
           ),
@@ -1676,7 +1676,7 @@ http://provider/stream/ard
             child: MultiProvider(
               providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
               child: MaterialApp(
-                theme: monoTheme(dark: true),
+                theme: monoTheme(MonoPalette.dark),
                 home: Scaffold(body: GuideTab(channels: [_channel()])),
               ),
             ),
@@ -1778,7 +1778,7 @@ http://provider/stream/ard
               ChangeNotifierProvider<IptvSourcesProvider>.value(value: iptv),
             ],
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: GuideTab(
                   channels: [channel],
@@ -2113,7 +2113,7 @@ final class _GuideHarness {
           child: ChangeNotifierProvider<MultiServerProvider>.value(
             value: provider,
             child: MaterialApp(
-              theme: monoTheme(dark: true),
+              theme: monoTheme(MonoPalette.dark),
               home: Scaffold(
                 body: GuideTab(channels: channels, onToggleFavorite: onToggleFavorite, onChannelMenu: onChannelMenu),
               ),

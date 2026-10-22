@@ -3,6 +3,8 @@ import 'package:plezy/providers/theme_provider.dart';
 import 'package:plezy/services/settings_service.dart' as settings;
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/theme/mono_tokens.dart';
+import 'package:plezy/services/supporter/supporter_mode.dart';
+import 'package:plezy/services/supporter/supporter_service.dart';
 
 import '../test_helpers/prefs.dart';
 
@@ -51,7 +53,9 @@ void main() {
       final service = await settings.SettingsService.getInstance();
       await service.write(settings.PlebzPrefs.appThemeVariant, settings.AppThemeVariant.glas);
 
-      final provider = ThemeProvider();
+      final provider = ThemeProvider(
+        supporter: SupporterService.forTesting(availability: SupporterAvailability.hidden),
+      );
       await Future.delayed(Duration.zero);
 
       expect(provider.variant, settings.AppThemeVariant.standard);

@@ -194,11 +194,11 @@ void main() {
     addTearDown(visible.dispose);
     Widget banner() => VideoPlayerZapBanner(visible: visible, channelName: 'Das Erste HD', programTitle: 'Tagesschau');
 
-    await tester.pumpWidget(_wrapPrompt(banner(), theme: monoTheme(dark: true, variant: AppThemeVariant.glas)));
+    await tester.pumpWidget(_wrapPrompt(banner(), theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas)));
     expect(find.ancestor(of: find.text('Das Erste HD'), matching: find.byType(OckerGlass)), findsOneWidget);
     expect(find.ancestor(of: find.text('Tagesschau'), matching: find.byType(OckerGlass)), findsOneWidget);
 
-    await tester.pumpWidget(_wrapPrompt(banner(), theme: monoTheme(dark: true)));
+    await tester.pumpWidget(_wrapPrompt(banner(), theme: monoTheme(MonoPalette.dark)));
     // The app animates from one theme to the next.
     await tester.pumpAndSettle();
     expect(find.byType(OckerGlass), findsNothing);

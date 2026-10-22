@@ -10,6 +10,8 @@ import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/liquid_glass.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/utils/platform_detector.dart';
+import 'package:plezy/services/supporter/supporter_mode.dart';
+import 'package:plezy/services/supporter/supporter_service.dart';
 import 'package:provider/provider.dart';
 
 import '../../test_helpers/prefs.dart';
@@ -28,12 +30,14 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
 
-    final theme = ThemeProvider();
+    final supporter = SupporterService.forTesting(availability: SupporterAvailability.hidden);
+    addTearDown(supporter.dispose);
+    final theme = ThemeProvider(supporter: supporter);
     addTearDown(theme.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<ThemeProvider>.value(
         value: theme,
-        child: MaterialApp(theme: monoTheme(dark: true), home: const AppearanceSettingsScreen()),
+        child: MaterialApp(theme: monoTheme(MonoPalette.dark), home: const AppearanceSettingsScreen()),
       ),
     );
     await tester.pumpAndSettle();
@@ -71,12 +75,12 @@ void main() {
     debugRedesignOfferedHere = true;
     addTearDown(() => debugRedesignOfferedHere = null);
 
-    final theme = ThemeProvider();
+    final theme = ThemeProvider(supporter: SupporterService.forTesting(availability: SupporterAvailability.hidden));
     addTearDown(theme.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<ThemeProvider>.value(
         value: theme,
-        child: MaterialApp(theme: monoTheme(dark: true), home: const AppearanceSettingsScreen()),
+        child: MaterialApp(theme: monoTheme(MonoPalette.dark), home: const AppearanceSettingsScreen()),
       ),
     );
     await tester.pumpAndSettle();
@@ -103,12 +107,12 @@ void main() {
     debugRedesignOfferedHere = true;
     addTearDown(() => debugRedesignOfferedHere = null);
 
-    final theme = ThemeProvider();
+    final theme = ThemeProvider(supporter: SupporterService.forTesting(availability: SupporterAvailability.hidden));
     addTearDown(theme.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<ThemeProvider>.value(
         value: theme,
-        child: MaterialApp(theme: monoTheme(dark: true), home: const AppearanceSettingsScreen()),
+        child: MaterialApp(theme: monoTheme(MonoPalette.dark), home: const AppearanceSettingsScreen()),
       ),
     );
     await tester.pumpAndSettle();
@@ -130,12 +134,12 @@ void main() {
     debugRedesignOfferedHere = true;
     addTearDown(() => debugRedesignOfferedHere = null);
 
-    final theme = ThemeProvider();
+    final theme = ThemeProvider(supporter: SupporterService.forTesting(availability: SupporterAvailability.hidden));
     addTearDown(theme.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<ThemeProvider>.value(
         value: theme,
-        child: MaterialApp(theme: monoTheme(dark: true), home: const AppearanceSettingsScreen()),
+        child: MaterialApp(theme: monoTheme(MonoPalette.dark), home: const AppearanceSettingsScreen()),
       ),
     );
     await tester.pumpAndSettle();
@@ -159,14 +163,14 @@ void main() {
     debugRedesignOfferedHere = true;
     addTearDown(() => debugRedesignOfferedHere = null);
 
-    final theme = ThemeProvider();
+    final theme = ThemeProvider(supporter: SupporterService.forTesting(availability: SupporterAvailability.hidden));
     addTearDown(theme.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<ThemeProvider>.value(
         value: theme,
         child: TranslationProvider(
           child: MaterialApp(
-            theme: monoTheme(dark: true, variant: AppThemeVariant.flach),
+            theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach),
             home: const AppearanceSettingsScreen(),
           ),
         ),
@@ -203,13 +207,13 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
 
     Future<void> pumpWith(AppThemeVariant variant) async {
-      final theme = ThemeProvider();
+      final theme = ThemeProvider(supporter: SupporterService.forTesting(availability: SupporterAvailability.hidden));
       addTearDown(theme.dispose);
       await tester.pumpWidget(
         ChangeNotifierProvider<ThemeProvider>.value(
           value: theme,
           child: MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: const AppearanceSettingsScreen(),
           ),
         ),
@@ -252,7 +256,7 @@ void main() {
     addTearDown(sources.dispose);
 
     Future<void> pumpWith(AppThemeVariant variant) async {
-      final theme = ThemeProvider();
+      final theme = ThemeProvider(supporter: SupporterService.forTesting(availability: SupporterAvailability.hidden));
       addTearDown(theme.dispose);
       await tester.pumpWidget(
         MultiProvider(
@@ -261,7 +265,7 @@ void main() {
             ChangeNotifierProvider<CatalogSourcesProvider>.value(value: sources),
           ],
           child: MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: const AppearanceSettingsScreen(),
           ),
         ),
@@ -289,12 +293,12 @@ void main() {
     addTearDown(() => debugRedesignOfferedHere = null);
     await SettingsService.instanceOrNull!.write(PlebzPrefs.appThemeVariant, AppThemeVariant.glas);
 
-    final theme = ThemeProvider();
+    final theme = ThemeProvider(supporter: SupporterService.forTesting(availability: SupporterAvailability.hidden));
     addTearDown(theme.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<ThemeProvider>.value(
         value: theme,
-        child: MaterialApp(theme: monoTheme(dark: true), home: const AppearanceSettingsScreen()),
+        child: MaterialApp(theme: monoTheme(MonoPalette.dark), home: const AppearanceSettingsScreen()),
       ),
     );
     await tester.pumpAndSettle();

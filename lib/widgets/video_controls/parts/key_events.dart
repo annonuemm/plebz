@@ -5,7 +5,10 @@ extension _PlexVideoControlsKeyEventMethods on _PlexVideoControlsState {
     _keyboardService = await KeyboardShortcutsService.getInstance();
   }
 
+  // Both answer mpv's reply to the screenshot shortcut, which can land after
+  // the player has closed.
   void _showScreenshotToast() {
+    if (!mounted) return;
     widget.toastController.show(Symbols.photo_camera_rounded, t.videoControls.screenshotSaved);
   }
 
@@ -30,6 +33,11 @@ extension _PlexVideoControlsKeyEventMethods on _PlexVideoControlsState {
     _flushHiddenDirectionalSeek();
     (key == LogicalKeyboardKey.channelUp ? widget.onPrevious : widget.onNext)?.call();
     return KeyEventResult.handled;
+  }
+
+  void _showScreenshotFailed() {
+    if (!mounted) return;
+    showErrorSnackBar(context, t.videoControls.screenshotFailed);
   }
 
   /// Resolve the transport intent for a key event, or null when the key is not
@@ -266,6 +274,7 @@ extension _PlexVideoControlsKeyEventMethods on _PlexVideoControlsState {
       onNextEpisode: _abandoningBurst(widget.onNext),
       onPreviousEpisode: _abandoningBurst(widget.onPrevious),
       onScreenshot: _showScreenshotToast,
+      onScreenshotFailed: _showScreenshotFailed,
       onZoomIn: widget.onZoomIn,
       onZoomOut: widget.onZoomOut,
       onZoomReset: widget.onResetVideoZoom,

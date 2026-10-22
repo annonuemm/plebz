@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/utils/fork_identity.dart';
 
 /// Tripwires for upstream merges. Plezy's new texts bring its name back, and
 /// its new features may reach for its developer's host again; both should fail
@@ -39,11 +40,11 @@ void main() {
     // certificate list only names the host. A new entry here means an upstream
     // feature talks to Plezy's developer's server — gate it before shipping.
     const known = {
-      'lib/services/discord_rpc_service.dart': 1,
-      'lib/services/log_upload_service.dart': 1,
+      // One constant since Plezy 2.24, read by the log upload, Discord's
+      // poster and the trackers' OAuth proxy, each behind its switch.
+      'lib/services/plezy_server.dart': 1,
       'lib/utils/certificate_trust.dart': 1,
       'lib/utils/fork_identity.dart': 2,
-      'lib/watch_together/services/watch_together_relay_endpoint.dart': 1,
     };
     final found = <String, int>{};
     for (final file in Directory('lib').listSync(recursive: true).whereType<File>()) {
@@ -53,6 +54,13 @@ void main() {
     }
 
     expect(found, known);
+  });
+
+  test('Watch Together, and with it the Open Watch Party relays, stays off', () {
+    // Its relays (*.relay.openwatch.party) and relay list (openwatch.party)
+    // come from the openwatchparty package, so no file under lib/ names them;
+    // the switch is what keeps a room from ever being opened.
+    expect(watchTogetherAvailable, isFalse);
   });
 
   test('Sentry resolves to the no-op stand-in, and the SDK does not ship', () {

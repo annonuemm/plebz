@@ -66,7 +66,7 @@ void main() {
             ChangeNotifierProvider<CatalogSourcesProvider>(create: (_) => CatalogSourcesProvider()),
           ],
           child: MaterialApp(
-            theme: monoTheme(dark: true),
+            theme: monoTheme(MonoPalette.dark),
             home: SeerrShelfScreen(
               title: 'Netflix',
               shelves: [_shelf('all', 'Everything'), _shelf('movie:popular', 'Popular films')],

@@ -180,7 +180,7 @@ void main() {
         child: InputModeTracker(
           child: ChangeNotifierProvider<MultiServerProvider>.value(
             value: provider,
-            child: MaterialApp(theme: monoTheme(dark: true), home: const LiveTvScreen()),
+            child: MaterialApp(theme: monoTheme(MonoPalette.dark), home: const LiveTvScreen()),
           ),
         ),
       ),
@@ -937,7 +937,7 @@ Future<_LiveTvHarness> _pumpLiveTvScreen(
             ChangeNotifierProvider<LiveTvChannelLayoutProvider>.value(value: layout),
           ],
           child: MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: const LiveTvScreen(),
           ),
         ),

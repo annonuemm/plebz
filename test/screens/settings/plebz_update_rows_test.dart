@@ -31,7 +31,7 @@ void main() {
     await tester.pumpWidget(
       TranslationProvider(
         child: MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: Scaffold(
             body: SettingsBuilder(
               prefs: const [SettingsService.autoCheckUpdatesOnStartup],

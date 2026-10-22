@@ -51,7 +51,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: Scaffold(
           body: OckerPosterTile(
             item: testMediaItem(id: 'i$index', title: 'Titel'),
@@ -93,7 +93,7 @@ void main() {
       addTearDown(node.dispose);
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           home: Scaffold(
             body: OckerPosterTile(
               item: testMediaItem(

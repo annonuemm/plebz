@@ -13,6 +13,35 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.29.0 (Build 864)
+
+### Wiedergabe
+- Plex und Emby stürzen auf älteren TV-Boxen nicht mehr nach wenigen Sekunden ab.
+- 24-fps-Filme ruckeln auf 60-Hz-Fernsehern nicht mehr alle paar Sekunden. Auch auf MediaTek-Fernsehern und Projektoren mit Bewegungsglättung laufen sie ruhig.
+- Untertitelzeilen gehen nach dem Spulen oder einem Spurwechsel nicht mehr verloren.
+- „Lautstärke normalisieren“ stottert nicht mehr und lässt 5.1-Ton in 5.1.
+- „Abspann überspringen“ erscheint nicht mehr mitten im Film. Die Taste für den vorigen Titel startet einen Film von vorn.
+- Die im Player gewählte Tonausgabe bleibt für die nächsten Videos eingestellt.
+- Sony Bravia: Die nächste Folge behält HDR und Dolby Vision.
+- Neu: „Deinterlacing“ unter Einstellungen → Videowiedergabe hat einen Film-Modus für DVDs mit Filmen und Trickfilmen.
+
+### Live-TV
+- MPEG-2-Sender zeigen ein flüssiges Bild statt eines leeren oder stockenden.
+- Jellyfin und Emby: Der Guide zeigt die Beschreibung der Sendungen.
+
+### Server und Downloads
+- Plex: Poster und Hintergründe laden nicht mehr in Schüben fehlerhaft. Ein Server mit neuer Adresse verbindet sich wieder, ohne dass Plebz neu starten muss.
+- Jellyfin und Emby: Die Vorschaubilder beim Spulen sind wieder da. Die Reihen auf der Startseite folgen der Reihenfolge aus „Mediatheken verwalten“. Die Tonspurwahl nach Sprache war vertauscht, das ist behoben. Staffeln ohne eigenes Hintergrundbild zeigen das der Serie.
+- Emby: Die Suche in großen Mediatheken findet Personen und Filme, statt abzubrechen.
+- Große Downloads in einen eigenen Ordner laufen durch und machen nach einer Pause dort weiter, wo sie standen.
+
+### Außerdem
+- Personenseiten in der Mediathek zeigen Biografie, Geburts- und Sterbedatum und Geburtsort.
+- Fernseher: Blättern durch Reihen und Raster und das Öffnen von Detailseiten laufen auf schwächeren Boxen flüssiger.
+- Fernseher: Die Fernbedienung reagiert wieder, nachdem die Profilauswahl oder die PIN-Abfrage geschlossen wurde.
+- Handy und Tablet: Das Karussell auf der Startseite blendet weich über, Hintergrundbilder im Hochformat sind scharf.
+- Verschlüsselte Streams brauchen auf älteren Boxen weniger Rechenleistung.
+
 ## 1.28.1 (Build 860)
 
 ### Live-TV

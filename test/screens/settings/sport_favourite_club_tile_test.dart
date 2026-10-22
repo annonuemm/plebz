@@ -38,7 +38,7 @@ void main() {
   testWidgets('the favourite club is chosen from the league\'s clubs and named on its row', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true),
+        theme: monoTheme(MonoPalette.dark),
         home: Scaffold(body: SportFavouriteClubTile(repository: provider().repository())),
       ),
     );

@@ -214,7 +214,7 @@ void main() {
 
     Future<void> pumpOn(NavigationTabId tab) => tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: OckerRailShell(
           tabs: NavigationTab.getVisibleTabs(isOffline: false),
           selectedTab: tab,
@@ -260,7 +260,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: OckerRailShell(
           tabs: NavigationTab.getVisibleTabs(isOffline: false),
           selectedTab: NavigationTabId.discover,
@@ -309,7 +309,7 @@ void main() {
       await tester.pumpWidget(
         TranslationProvider(
           child: MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: Scaffold(
               body: SizedBox.expand(
                 child: colours ? UltraBlurScope(ambient: ambient, child: spotlight) : spotlight,

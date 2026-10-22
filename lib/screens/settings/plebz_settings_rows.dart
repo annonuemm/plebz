@@ -44,7 +44,10 @@ Widget plebzThemeModeRow({IconData icon = Symbols.dark_mode_rounded}) => Setting
           icon: icon,
           title: t.settings.theme,
           subtitleBuilder: themeModeLabel,
-          options: settings.ThemeMode.values.map((m) => DialogOption(value: m, title: themeModeLabel(m))).toList(),
+          options: settings.ThemeMode.values
+              .where((m) => !m.isSupporterPerk)
+              .map((m) => DialogOption(value: m, title: themeModeLabel(m)))
+              .toList(),
         ),
 );
 

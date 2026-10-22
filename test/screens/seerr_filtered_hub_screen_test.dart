@@ -60,7 +60,7 @@ void main() {
         child: MultiProvider(
           providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
           child: MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: Builder(
               builder: (context) => Scaffold(
                 body: Center(

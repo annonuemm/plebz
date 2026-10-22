@@ -23,7 +23,7 @@ void main() {
 
   Future<void> pump(WidgetTester tester, WatchedIndicator indicator) => tester.pumpWidget(
     MaterialApp(
-      theme: monoTheme(dark: true),
+      theme: monoTheme(MonoPalette.dark),
       home: SizedBox(width: 200, height: 300, child: indicator),
     ),
   );
@@ -87,7 +87,7 @@ void main() {
     testWidgets('floats inside the picture in both redesigns: white under Glas, the accent under Flach', (
       tester,
     ) async {
-      final glas = monoTheme(dark: true, variant: AppThemeVariant.glas);
+      final glas = monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas);
       final (glasBar, glasFill) = await barOn(tester, glas);
       expect(glasBar.left, closeTo(14, 0.5), reason: 'room from the side');
       expect(200 - glasBar.right, closeTo(14, 0.5));
@@ -95,14 +95,14 @@ void main() {
       expect(glasBar.height, 5);
       expect(glasFill, glas.extension<MonoTokens>()!.ink(1));
 
-      final flach = monoTheme(dark: true, variant: AppThemeVariant.flach);
+      final flach = monoTheme(MonoPalette.dark, variant: AppThemeVariant.flach);
       final (flachBar, flachFill) = await barOn(tester, flach);
       expect(flachBar, glasBar, reason: 'the same place in both');
       expect(flachFill, flach.extension<MonoTokens>()!.accent);
     });
 
     testWidgets('the standard design keeps it along the bottom edge', (tester) async {
-      final (bar, _) = await barOn(tester, monoTheme(dark: true));
+      final (bar, _) = await barOn(tester, monoTheme(MonoPalette.dark));
       expect(bar.left, 0);
       expect(bar.right, 200);
       expect(bar.bottom, 300);

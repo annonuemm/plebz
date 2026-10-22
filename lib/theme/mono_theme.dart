@@ -1,5 +1,7 @@
 import 'dart:io' show Platform;
 
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -211,6 +213,220 @@ FlachPreset? flachPresetById(String id) {
 /// accent's lights as the design's own ground does.
 bool isFlachPresetGround(Color ground) => flachPresets.any((preset) => preset.ground == ground);
 
+/// One of the six colours a [MonoPalette] holds. [id] is the key the custom
+/// theme persists the colour under.
+enum MonoPaletteSlot {
+  bg('bg'),
+  surface('surface'),
+  outline('outline'),
+  text('text'),
+  textMuted('textMuted'),
+  accent('accent');
+
+  const MonoPaletteSlot(this.id);
+
+  final String id;
+}
+
+/// [color] as `#AARRGGBB`, upper case.
+String colorToArgbHex(Color color) => '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
+
+final _hexColorPattern = RegExp(r'^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$');
+
+/// Parses `#RRGGBB` (opaque) or `#AARRGGBB`, with or without the `#`. Null
+/// for anything else.
+Color? tryParseHexColor(String input) {
+  final match = _hexColorPattern.firstMatch(input.trim());
+  if (match == null) return null;
+  final digits = match.group(1)!;
+  final value = int.parse(digits, radix: 16);
+  return Color(digits.length == 6 ? 0xFF000000 | value : value);
+}
+
+/// The six colours a theme is built from.
+///
+/// [accent] carries interactive and selected state; body text stays [text].
+/// Brightness follows [bg] and the colour drawn on [accent] is derived, so a
+/// palette states nothing else.
+@immutable
+class MonoPalette {
+  const MonoPalette({
+    required this.bg,
+    required this.surface,
+    required this.outline,
+    required this.text,
+    required this.textMuted,
+    required this.accent,
+  });
+
+  final Color bg;
+  final Color surface;
+  final Color outline;
+  final Color text;
+  final Color textMuted;
+
+  /// Primary, filled buttons, switches, sliders, progress, selection and the
+  /// focus ring. The built-ins set it to [text], which keeps them monochrome.
+  final Color accent;
+
+  // Neutral greys tuned for crisp contrast.
+  static const light = MonoPalette(
+    bg: Color(0xFFF7F7F8),
+    surface: Color(0xFFFFFFFF),
+    outline: Color(0x19000000),
+    text: Color(0xFF111111),
+    textMuted: Color(0x99111111),
+    accent: Color(0xFF111111),
+  );
+  static const dark = MonoPalette(
+    bg: Color(0xFF0E0F12),
+    surface: Color(0xFF15171C),
+    outline: Color(0x1FFFFFFF),
+    text: Color(0xFFEDEDED),
+    textMuted: Color(0x99EDEDED),
+    accent: Color(0xFFEDEDED),
+  );
+  static const oled = MonoPalette(
+    bg: Color(0xFF000000), // Pure black for OLED
+    surface: Color(0xFF0A0A0A),
+    outline: Color(0x1FFFFFFF),
+    text: Color(0xFFEDEDED),
+    textMuted: Color(0x99EDEDED),
+    accent: Color(0xFFEDEDED),
+  );
+
+  // Presets keep bg/surface low-chroma so artwork stays the loudest thing on
+  // screen; the character is in the tint and the accent. Every accent clears
+  // 4.5:1 against bg and surface, because primary is also used as text.
+
+  /// Warm charcoal with the brand orange.
+  static const ember = MonoPalette(
+    bg: Color(0xFF14110F),
+    surface: Color(0xFF1D1916),
+    outline: Color(0x1FF2EBE6),
+    text: Color(0xFFF2EBE6),
+    textMuted: Color(0xA3F2EBE6),
+    accent: Color(0xFFFF7E57),
+  );
+
+  /// Cool blue-grey with an ice-blue accent.
+  static const glacier = MonoPalette(
+    bg: Color(0xFF0E1319),
+    surface: Color(0xFF151C25),
+    outline: Color(0x1FE6EDF5),
+    text: Color(0xFFE6EDF5),
+    textMuted: Color(0xA3E6EDF5),
+    accent: Color(0xFF7CC4FF),
+  );
+
+  /// Green-black with a mint accent.
+  static const forest = MonoPalette(
+    bg: Color(0xFF0E1411),
+    surface: Color(0xFF151D18),
+    outline: Color(0x1FE5EFE8),
+    text: Color(0xFFE5EFE8),
+    textMuted: Color(0xA3E5EFE8),
+    accent: Color(0xFF6BD6A0),
+  );
+
+  /// Aubergine with an orchid accent.
+  static const plum = MonoPalette(
+    bg: Color(0xFF151118),
+    surface: Color(0xFF1E1823),
+    outline: Color(0x1FF0E9F4),
+    text: Color(0xFFF0E9F4),
+    textMuted: Color(0xA3F0E9F4),
+    accent: Color(0xFFE29BF0),
+  );
+
+  /// Warm off-white paper with a deep teal accent; the light preset.
+  static const paper = MonoPalette(
+    bg: Color(0xFFF3F0E9),
+    surface: Color(0xFFFBF9F4),
+    outline: Color(0x1F1F1C17),
+    text: Color(0xFF1F1C17),
+    textMuted: Color(0xAD1F1C17),
+    accent: Color(0xFF1F6B6B),
+  );
+
+  Brightness get brightness => ThemeData.estimateBrightnessForColor(bg);
+
+  /// [bg] or white, whichever contrasts more with [accent]. The pair is never
+  /// worse than [accent] against [bg], so an accent that reads on the page
+  /// keeps a readable label.
+  Color get onAccent {
+    const white = Color(0xFFFFFFFF);
+    final accentLuminance = accent.computeLuminance();
+    return _contrastRatio(accentLuminance, bg.computeLuminance()) >=
+            _contrastRatio(accentLuminance, white.computeLuminance())
+        ? bg
+        : white;
+  }
+
+  static double _contrastRatio(double a, double b) => (math.max(a, b) + 0.05) / (math.min(a, b) + 0.05);
+
+  /// WCAG 2 contrast ratio between two colours, ignoring alpha: composite a
+  /// translucent colour over its background first.
+  static double contrastRatio(Color a, Color b) => _contrastRatio(a.computeLuminance(), b.computeLuminance());
+
+  Color operator [](MonoPaletteSlot slot) => switch (slot) {
+    MonoPaletteSlot.bg => bg,
+    MonoPaletteSlot.surface => surface,
+    MonoPaletteSlot.outline => outline,
+    MonoPaletteSlot.text => text,
+    MonoPaletteSlot.textMuted => textMuted,
+    MonoPaletteSlot.accent => accent,
+  };
+
+  /// This palette with [slot] replaced by [color].
+  MonoPalette withColor(MonoPaletteSlot slot, Color color) => MonoPalette(
+    bg: slot == MonoPaletteSlot.bg ? color : bg,
+    surface: slot == MonoPaletteSlot.surface ? color : surface,
+    outline: slot == MonoPaletteSlot.outline ? color : outline,
+    text: slot == MonoPaletteSlot.text ? color : text,
+    textMuted: slot == MonoPaletteSlot.textMuted ? color : textMuted,
+    accent: slot == MonoPaletteSlot.accent ? color : accent,
+  );
+
+  /// `{"bg": "#AARRGGBB", …}`, keyed by [MonoPaletteSlot.id].
+  Map<String, String> toJson() => {for (final slot in MonoPaletteSlot.values) slot.id: colorToArgbHex(this[slot])};
+
+  /// Reads the [toJson] shape. Throws [FormatException] unless every slot
+  /// holds a hex colour, so a partial or corrupt value never yields a palette
+  /// mixing stored and made-up colours. Unknown keys are ignored.
+  factory MonoPalette.fromJson(Object? json) {
+    if (json is! Map) throw const FormatException('Expected a palette object');
+    Color read(MonoPaletteSlot slot) {
+      final value = json[slot.id];
+      final color = value is String ? tryParseHexColor(value) : null;
+      if (color == null) throw FormatException('Missing or invalid "${slot.id}" colour');
+      return color;
+    }
+
+    return MonoPalette(
+      bg: read(MonoPaletteSlot.bg),
+      surface: read(MonoPaletteSlot.surface),
+      outline: read(MonoPaletteSlot.outline),
+      text: read(MonoPaletteSlot.text),
+      textMuted: read(MonoPaletteSlot.textMuted),
+      accent: read(MonoPaletteSlot.accent),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is MonoPalette &&
+      other.bg == bg &&
+      other.surface == surface &&
+      other.outline == outline &&
+      other.text == text &&
+      other.textMuted == textMuted &&
+      other.accent == accent;
+
+  @override
+  int get hashCode => Object.hash(bg, surface, outline, text, textMuted, accent);
+}
+
 bool? _debugRedesignOffered;
 
 /// Whether this host offers the redesign at all.
@@ -252,8 +468,7 @@ AppThemeVariant supportedAppThemeVariant(AppThemeVariant variant) =>
 
 final Map<
   ({
-    bool dark,
-    bool oled,
+    MonoPalette palette,
     Color? plainGround,
     TargetPlatform platform,
     AppThemeVariant variant,
@@ -265,9 +480,8 @@ final Map<
 >
 _monoThemeCache = {};
 
-ThemeData monoTheme({
-  required bool dark,
-  bool oled = false,
+ThemeData monoTheme(
+  MonoPalette palette, {
   Color? plainGround,
   AppThemeVariant variant = AppThemeVariant.standard,
   GlasAccent glasAccent = GlasAccent.eisblau,
@@ -278,10 +492,9 @@ ThemeData monoTheme({
   // one. The glass accent only where it paints anything, so the other variants are
   // built once rather than once per accent.
   final key = (
-    dark: dark || oled,
-    oled: oled,
+    palette: palette,
     // Only where it paints anything: the redesigns, and not over OLED's black.
-    plainGround: oled || !isRedesignVariant(variant) ? null : plainGround,
+    plainGround: palette == MonoPalette.oled || !isRedesignVariant(variant) ? null : plainGround,
     platform: defaultTargetPlatform,
     variant: variant,
     glasAccent: variant == AppThemeVariant.glas ? glasAccent : null,
@@ -293,10 +506,9 @@ ThemeData monoTheme({
   if (cached != null) return cached;
 
   final theme = _buildMonoTheme(
-    dark: key.dark,
-    oled: key.oled,
-    plainGround: key.plainGround,
+    palette,
     platform: key.platform,
+    plainGround: key.plainGround,
     variant: key.variant,
     glasAccent: glasAccent,
     flachAccent: flachAccent,
@@ -305,14 +517,18 @@ ThemeData monoTheme({
   return theme;
 }
 
-ThemeData _buildMonoTheme({
-  required bool dark,
-  required bool oled,
-  required Color? plainGround,
+/// [monoTheme] without the cache, for a palette that changes every frame: the
+/// custom theme editor's live preview would otherwise keep every intermediate
+/// palette's theme alive.
+ThemeData monoThemeUncached(MonoPalette palette) => _buildMonoTheme(palette, platform: defaultTargetPlatform);
+
+ThemeData _buildMonoTheme(
+  MonoPalette palette, {
   required TargetPlatform platform,
-  required AppThemeVariant variant,
-  required GlasAccent glasAccent,
-  required Color flachAccent,
+  Color? plainGround,
+  AppThemeVariant variant = AppThemeVariant.standard,
+  GlasAccent glasAccent = GlasAccent.eisblau,
+  Color flachAccent = flachDefaultAccent,
 }) {
   // Which structure to build, and which of its two palettes to paint it in.
   // Its corner, its typeface and its want of shadows follow from the first;
@@ -321,8 +537,7 @@ ThemeData _buildMonoTheme({
   final flat = variant == AppThemeVariant.flach;
   final glas = flat ? (bg: flachGround, text: flachInk, accent: flachAccent) : glasPalette(glasAccent);
 
-  // neutral greys tuned for crisp contrast
-  final ({Color bg, Color surface, Color outline, Color text, Color textMuted}) c;
+  final MonoPalette c;
   if (redesign) {
     // **The redesign is a dark design and stays dark.** Its styleguide gives
     // one ground and one ink per palette and says outright that a value not in
@@ -334,45 +549,27 @@ ThemeData _buildMonoTheme({
     //
     // `surface` is the design's block fill (ink at 6%) already composited over
     // the ground, because Flutter surfaces are painted opaque.
-    final ground = oled ? glasOledGround : plainGround ?? glas.bg;
-    c = (
+    final ground = palette == MonoPalette.oled ? glasOledGround : plainGround ?? glas.bg;
+    c = MonoPalette(
       bg: ground,
       // The block fill composited over the ground.
       surface: Color.alphaBlend(glas.text.withValues(alpha: 0.06), ground),
       outline: glas.text.withValues(alpha: 0.12),
       text: glas.text,
       textMuted: glas.text.withValues(alpha: 0.72),
-    );
-  } else if (oled) {
-    c = (
-      bg: const Color(0xFF000000), // Pure black for OLED
-      surface: const Color(0xFF0A0A0A), // Very dark gray
-      outline: const Color(0x1FFFFFFF),
-      text: const Color(0xFFEDEDED),
-      textMuted: const Color(0x99EDEDED),
-    );
-  } else if (dark) {
-    c = (
-      bg: const Color(0xFF0E0F12),
-      surface: const Color(0xFF15171C),
-      outline: const Color(0x1FFFFFFF),
-      text: const Color(0xFFEDEDED),
-      textMuted: const Color(0x99EDEDED),
+      // Material's primary stays the ink; the loud accent is the tokens' own.
+      accent: glas.text,
     );
   } else {
-    c = (
-      bg: const Color(0xFFF7F7F8),
-      surface: const Color(0xFFFFFFFF),
-      outline: const Color(0x19000000),
-      text: const Color(0xFF111111),
-      textMuted: const Color(0x99111111),
-    );
+    c = palette;
   }
 
   // The redesign has no light half — see the palette above — so it reports
   // dark whatever the light/dark switch says, and every Material default that
   // branches on brightness lands on the side its colours were drawn for.
-  final isDark = redesign || dark || oled;
+  final brightness = redesign ? Brightness.dark : c.brightness;
+  final isDark = brightness == Brightness.dark;
+  final onAccent = redesign ? c.bg : c.onAccent;
   final clickableCursor = WidgetStateProperty.resolveWith<MouseCursor>(
     (states) => states.contains(WidgetState.disabled) ? MouseCursor.defer : SystemMouseCursors.click,
   );
@@ -400,11 +597,10 @@ ThemeData _buildMonoTheme({
     ),
     elevation: const WidgetStatePropertyAll(0),
     backgroundColor: WidgetStateProperty.resolveWith(
-      (states) => states.contains(WidgetState.disabled) ? c.text.withValues(alpha: 0.12) : c.text,
+      (states) => states.contains(WidgetState.disabled) ? c.text.withValues(alpha: 0.12) : c.accent,
     ),
     foregroundColor: WidgetStateProperty.resolveWith(
-      (states) =>
-          states.contains(WidgetState.disabled) ? c.text.withValues(alpha: 0.38) : (isDark ? c.bg : Colors.white),
+      (states) => states.contains(WidgetState.disabled) ? c.text.withValues(alpha: 0.38) : onAccent,
     ),
     shape: WidgetStatePropertyAll(redesign ? themeShape : const StadiumBorder()),
   );
@@ -421,15 +617,21 @@ ThemeData _buildMonoTheme({
     // One line reaches every unstyled piece of text in the app. Titles and
     // labels are lifted out of it deliberately, widget by widget.
     fontFamily: redesign ? ockerUiFontFamily : null,
-    brightness: isDark ? Brightness.dark : Brightness.light,
+    brightness: brightness,
     // Linux resolves UI text through fontconfig, which on a minimal desktop
     // may have no CJK font at all; the bundled subtitle fonts (pubspec
     // `fonts:`) cover it. Other platforms keep their native CJK fonts.
     fontFamilyFallback: platform == TargetPlatform.linux ? const ['Go Noto Current', 'Go Noto Current Hangul'] : null,
     colorScheme: ColorScheme(
-      brightness: isDark ? Brightness.dark : Brightness.light,
-      primary: c.text,
-      onPrimary: isDark ? c.bg : Colors.white,
+      brightness: brightness,
+      // Accent: everything Material derives from primary (switches, sliders,
+      // progress, checkboxes, text selection, text buttons, selected list
+      // tiles) plus the widgets that read primary for selection and focus.
+      primary: c.accent,
+      onPrimary: onAccent,
+      // Elevation tint stays on the neutral text colour so dialogs and menus
+      // keep the palette's surfaces rather than picking up the accent hue.
+      surfaceTint: c.text,
       secondary: c.text,
       onSecondary: c.bg,
       surface: c.surface,
@@ -567,7 +769,7 @@ ThemeData _buildMonoTheme({
       labelTextStyle: WidgetStatePropertyAll(TextStyle(color: c.textMuted, fontSize: 11)),
       iconTheme: WidgetStateProperty.resolveWith((states) {
         final active = states.contains(WidgetState.selected);
-        return IconThemeData(opacity: active ? 1 : 0.6, size: 22, color: c.text);
+        return IconThemeData(opacity: active ? 1 : 0.6, size: 22, color: active ? c.accent : c.text);
       }),
     ),
     // Floating snackbars auto-offset above the Scaffold's bottom NavigationBar,
@@ -635,7 +837,7 @@ ThemeData _buildMonoTheme({
         // Ocker's one loud colour, and it is loud in exactly three places:
         // progress, the now-line, and the active navigation entry. Focus rings
         // are deliberately *not* one of them — see [focusRing] below.
-        accent: redesign ? glas.accent : c.text,
+        accent: redesign ? glas.accent : c.accent,
         // Thirty per cent off the standard 2.5; Ocker goes to a hairline,
         // which is all a ring needs when it also has room around it.
         focusBorderWidth: redesign ? 1 : 2.5,

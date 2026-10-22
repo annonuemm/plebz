@@ -138,7 +138,7 @@ void main() {
       final hub = liveNowHub(snapshot);
       await tester.pumpWidget(
         MaterialApp(
-          theme: monoTheme(dark: true, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant),
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
             child: child!,
@@ -306,7 +306,7 @@ void main() {
     Widget host(LiveNowSnapshot snapshot, Widget child) => ChangeNotifierProvider<MultiServerProvider>(
       create: (_) => testMultiServerProvider(MultiServerManager()),
       child: MaterialApp(
-        theme: monoTheme(dark: true),
+        theme: monoTheme(MonoPalette.dark),
         home: Scaffold(
           body: LiveNowScope(snapshot: snapshot, child: child),
         ),

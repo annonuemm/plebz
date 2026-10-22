@@ -1,57 +1,8 @@
-diff --git a/patches/mbedtls/pool/0001-android-entropy-no-blocking.patch b/patches/mbedtls/pool/0001-android-entropy-no-blocking.patch
-new file mode 100644
-index 0000000..6d5373d
---- /dev/null
-+++ b/patches/mbedtls/pool/0001-android-entropy-no-blocking.patch
-@@ -0,0 +1,35 @@
-+diff --git a/include/mbedtls/platform.h b/include/mbedtls/platform.h
-+index f1ec997..7b9edb6 100644
-+--- a/include/mbedtls/platform.h
-++++ b/include/mbedtls/platform.h
-+@@ -395,8 +395,14 @@ int mbedtls_platform_set_exit(void (*exit_func)(int status));
-+ #endif
-+ 
-+ #if !defined(MBEDTLS_PLATFORM_DEV_RANDOM)
-++#if defined(__ANDROID__)
-++/* Android seeds urandom early and never blocks on it; /dev/random can block
-++ * on kernels before 5.6. Only reached when getrandom() is missing. */
-++#define MBEDTLS_PLATFORM_DEV_RANDOM "/dev/urandom"
-++#else
-+ #define MBEDTLS_PLATFORM_DEV_RANDOM "/dev/random"
-+ #endif
-++#endif
-+ 
-+ /* Arrange for mbedtls_platform_dev_random to always be visible to
-+  * Doxygen, because it's linked from the documentation of
-+diff --git a/library/entropy_poll.c b/library/entropy_poll.c
-+index 1c8a29d..5bf459e 100644
-+--- a/library/entropy_poll.c
-++++ b/library/entropy_poll.c
-+@@ -75,7 +75,10 @@ int mbedtls_platform_entropy_poll(void *data, unsigned char *output, size_t len,
-+  * Since there is no wrapper in the libc yet, use the generic syscall wrapper
-+  * available in GNU libc and compatible libc's (eg uClibc).
-+  */
-+-#if ((defined(__linux__) && defined(__GLIBC__)) || defined(__midipix__))
-++/* Android's bionic has the same generic syscall wrapper. Without this, it
-++ * fell through to MBEDTLS_PLATFORM_DEV_RANDOM, which blocks on the older
-++ * kernels many TV boxes run until enough entropy has been gathered. */
-++#if ((defined(__linux__) && (defined(__GLIBC__) || defined(__ANDROID__))) || defined(__midipix__))
-+ #include <unistd.h>
-+ #include <sys/syscall.h>
-+ #if defined(SYS_getrandom)
-diff --git a/patches/mbedtls/series.android b/patches/mbedtls/series.android
-new file mode 100644
-index 0000000..48bdda3
---- /dev/null
-+++ b/patches/mbedtls/series.android
-@@ -0,0 +1,2 @@
-+# Android: entropy from getrandom(), /dev/urandom as the fallback.
-+0001-android-entropy-no-blocking.patch
 diff --git a/versions.json b/versions.json
-index 5b9056b..ac3ac9d 100644
+index 844a360..0b94289 100644
 --- a/versions.json
 +++ b/versions.json
-@@ -35,11 +35,11 @@
+@@ -27,11 +27,11 @@
      },
      "ffmpeg": {
        "kind": "git",
@@ -67,23 +18,7 @@ index 5b9056b..ac3ac9d 100644
        "platforms": [
          "apple",
          "android",
-@@ -168,11 +168,11 @@
-     },
-     "mbedtls": {
-       "kind": "git",
--      "version": "3.6.5",
-+      "version": "3.6.7",
-       "url": "https://github.com/Mbed-TLS/mbedtls",
--      "ref": "v3.6.5",
--      "commit": "e185d7fd85499c8ce5ca2a54f5cf8fe7dbe3f8df",
--      "provenance": "Official Mbed-TLS GitHub annotated tag object d934b47669d1cc60c72caecae2ae2a45aea70c79 (v3.6.5) dereferences to this root commit; its gitlinks pin the mbedtls-framework submodule the android driver clones recursively. TODO(provenance): review the framework gitlink target before the next bump.",
-+      "ref": "v3.6.7",
-+      "commit": "068ff080b369adfac81509f9b57b2afabaf82dc5",
-+      "provenance": "Plebz: bumped from 3.6.5 for the TLS client fixes in 3.6.6/3.6.7 (CVE-2026-25834, CVE-2026-25832, CVE-2026-50581 and others); official Mbed-TLS GitHub annotated tag object da6a8c7b9b8e0c1e236deef2910642657db1a7ec (v3.6.7) dereferences to this root commit, resolved 2026-10-01 with git ls-remote; the android driver clones its mbedtls-framework gitlink recursively.",
-       "platforms": [
-         "android"
-       ],
-@@ -180,11 +180,11 @@
+@@ -156,11 +156,11 @@
      },
      "freetype": {
        "kind": "git",

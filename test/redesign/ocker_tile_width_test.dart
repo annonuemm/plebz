@@ -22,7 +22,7 @@ void main() {
       MediaQuery(
         data: MediaQueryData(size: size),
         child: Theme(
-          data: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          data: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           child: Builder(
             builder: (context) {
               result = ockerTileWidth(context);
@@ -76,7 +76,7 @@ void main() {
       MediaQuery(
         data: const MediaQueryData(size: viewport),
         child: Theme(
-          data: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          data: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           child: Builder(
             builder: (context) {
               final scale = ockerScale(context);

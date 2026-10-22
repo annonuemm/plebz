@@ -139,7 +139,7 @@ Future<void> _pumpRowWithSources(
           ChangeNotifierProvider<MultiServerProvider>.value(value: servers.provider),
         ],
         child: MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: Scaffold(
             body: ListView(
               children: [
@@ -165,7 +165,7 @@ Future<void> _pumpRowWithSources(
 Future<void> _pumpRow(WidgetTester tester) {
   return tester.pumpWidget(
     MaterialApp(
-      theme: monoTheme(dark: true),
+      theme: monoTheme(MonoPalette.dark),
       home: Scaffold(
         body: ListView(
           children: [

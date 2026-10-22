@@ -33,7 +33,7 @@ void main() {
       ChangeNotifierProvider<CompanionRemoteProvider>.value(
         value: provider,
         child: MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: const CompanionRemotePairingPrompt(child: Scaffold(body: Text('home'))),
         ),
       ),

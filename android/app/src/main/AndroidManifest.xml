@@ -33,6 +33,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="29" tools:node="replace" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove" />
+    <!-- Plebz: in_app_purchase (Supporter, off in this build) merges Play Billing in; the APK
+         takes neither its permission nor its query for the Play Store. -->
+    <uses-permission android:name="com.android.vending.BILLING" tools:node="remove" />
 
 
     <uses-feature android:name="android.software.leanback" android:required="false" />
@@ -64,8 +67,11 @@
         <!-- Driver-distraction state on Android Automotive OS. Optional: the platform library is
              absent on every other form factor, and CarRestrictionsMonitor falls back silently. -->
         <uses-library android:name="android.car" android:required="false" />
+        <!-- The activity itself has no launcher entry: the launcher components are the aliases
+             below, so the app icon can be switched by enabling one alias and disabling the rest.
+             Deep links stay here so they resolve whichever alias is enabled. -->
         <activity
-            android:name=".MainActivity"
+            android:name=".PlezyActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
@@ -81,11 +87,6 @@
             <meta-data
                 android:name="flutter_deeplinking_enabled"
                 android:value="false" />
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
-            </intent-filter>
             <!-- Deep link handler for Watch Next items -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -111,6 +112,28 @@
                 <data android:scheme="plebz" android:host="live"/>
             </intent-filter>
         </activity>
+        <!-- The default icon. Keep this component name forever: it was the launcher activity before
+             app icons became switchable, so every existing home-screen shortcut, TV favourite and
+             recent task points at it. The meta-data repeats the activity's because FlutterActivity
+             reads it from the component that launched it. -->
+        <activity-alias
+            android:name=".MainActivity"
+            android:exported="true"
+            android:targetActivity=".PlezyActivity">
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+            <meta-data
+                android:name="flutter_deeplinking_enabled"
+                android:value="false" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <!-- Plebz: no alternate icons. The .appicon.* aliases (AppIconChannel) stay out of the
+             APK on purpose; Plebz keeps its own logo. -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="app.plebz.fileprovider"
@@ -151,7 +174,7 @@
             </intent-filter>
         </receiver>
         <!-- Setting this stops FlutterLoader from appending its half-of-RAM default after
-             MainActivity's shell args, where it would override the low-RAM cap. MainActivity
+             PlezyActivity's shell args, where it would override the low-RAM cap. PlezyActivity
              always passes the per-device value; this one applies only if another engine
              initializes Flutter first. -->
         <meta-data
@@ -169,6 +192,10 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Plebz: Play Billing's own query for its service stays out with its permission. -->
+        <intent tools:node="remove">
+            <action android:name="com.android.vending.billing.InAppBillingService.BIND" />
+        </intent>
         <!-- Plebz: whether this box has the system's document picker. -->
         <intent>
             <action android:name="android.intent.action.OPEN_DOCUMENT" />

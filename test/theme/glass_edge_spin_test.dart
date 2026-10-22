@@ -14,7 +14,7 @@ void main() {
   /// A glass focus edge, showing or at rest, and nothing else on screen.
   Future<void> pumpEdge(WidgetTester tester, {bool focused = true, bool shown = true}) => tester.pumpWidget(
     MaterialApp(
-      theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+      theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
       home: Center(
         child: Offstage(
           offstage: !shown,

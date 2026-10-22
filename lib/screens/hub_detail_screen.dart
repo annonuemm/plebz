@@ -740,6 +740,7 @@ class HubDetailScreenState extends State<HubDetailScreen>
                 pinned: true,
                 automaticallyImplyLeading: !widget.isEmbedded,
                 actions: buildFocusableAppBarActions(),
+                onBackPressed: popFromAppBar,
               ),
               if (_errorMessage != null)
                 SliverErrorState(message: _errorMessage!, onRetry: _loadMoreItems)

@@ -72,7 +72,7 @@ void main() {
         child: ChangeNotifierProvider<MultiServerProvider>.value(
           value: multiServer,
           child: MaterialApp(
-            theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+            theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
             builder: (context, child) => InputModeTracker(child: child!),
             home: Scaffold(
               backgroundColor: Colors.transparent,

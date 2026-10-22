@@ -18,7 +18,7 @@ void main() {
     addTearDown(node.dispose);
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: Scaffold(
           body: Center(
             child: FocusableFilterChip(

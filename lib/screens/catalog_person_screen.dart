@@ -318,6 +318,7 @@ class _CatalogPersonScreenState extends State<CatalogPersonScreen>
     final onPlex = _others.length + _owned.where((title) => title.credit != null).length;
     return [
       if (person?.bornAt case final born?) (label: t.actor.born, value: format.format(born)),
+      if (person?.diedAt case final died?) (label: t.discover.person.died, value: format.format(died)),
       if (person?.birthPlace case final place?) (label: t.actor.birthPlace, value: place),
       if (knownFor != null) (label: t.actor.knownFor, value: _departmentLabel(knownFor) ?? knownFor),
       if (onPlex > 0) (label: t.actor.titlesOnPlex, value: '$onPlex'),

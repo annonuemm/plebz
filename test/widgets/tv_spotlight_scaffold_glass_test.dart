@@ -44,7 +44,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: variant),
+        theme: monoTheme(MonoPalette.dark, variant: variant),
         home: TvSpotlightScaffold(
           hubs: [hub('first'), hub('second')],
           spotlightListenable: spotlight,
@@ -71,7 +71,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
         home: UltraBlurScope(
           ambient: ambient,
           child: TvSpotlightScaffold(

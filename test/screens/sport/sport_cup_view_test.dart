@@ -90,7 +90,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: variant),
+        theme: monoTheme(MonoPalette.dark, variant: variant),
         home: MainScreenFocusScope(
           focusSidebar: () {},
           sideNavigationWidth: 0,

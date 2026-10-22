@@ -169,7 +169,7 @@ void main() {
             ChangeNotifierProvider<MultiServerProvider>.value(value: servers.provider),
           ],
           child: MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             home: const CatalogPersonScreen(
               name: 'Bryan Cranston',
               personId: 'pid',

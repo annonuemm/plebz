@@ -23,7 +23,7 @@ void main() {
       MediaQuery(
         data: MediaQueryData(size: size),
         child: Theme(
-          data: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          data: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           child: Builder(
             builder: (context) {
               result = read(context);

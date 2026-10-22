@@ -24,7 +24,7 @@ void main() {
     await tester.pumpWidget(
       TranslationProvider(
         child: MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: Builder(
             builder: (context) => TextButton(
               onPressed: () async {

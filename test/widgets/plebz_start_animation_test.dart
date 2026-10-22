@@ -94,7 +94,7 @@ void main() {
     }
 
     for (final accent in GlasAccent.values) {
-      final colours = await coloursIn(monoTheme(dark: true, variant: AppThemeVariant.glas, glasAccent: accent));
+      final colours = await coloursIn(monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas, glasAccent: accent));
       if (accent == GlasAccent.plebz) {
         expect(colours, plebzLogoColours);
       } else {
@@ -102,7 +102,7 @@ void main() {
         expect(colours[1], glasPalette(accent).accent, reason: accent.name);
       }
     }
-    expect(await coloursIn(monoTheme(dark: true)), plebzLogoColours);
+    expect(await coloursIn(monoTheme(MonoPalette.dark)), plebzLogoColours);
   });
 
   for (final season in PlebzSeason.values) {

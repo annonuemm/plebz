@@ -28,7 +28,7 @@ void main() {
     final key = GlobalKey<LiveChannelStripState>();
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(dark: true, variant: variant),
+        theme: monoTheme(MonoPalette.dark, variant: variant),
         home: Scaffold(
           body: Align(
             alignment: .bottomCenter,

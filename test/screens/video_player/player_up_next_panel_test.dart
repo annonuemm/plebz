@@ -49,7 +49,7 @@ void main() {
         child: MultiProvider(
           providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
           child: MaterialApp(
-            theme: monoTheme(dark: true, variant: variant),
+            theme: monoTheme(MonoPalette.dark, variant: variant),
             builder: (context, child) => InputModeTracker(child: child!),
             home: Scaffold(
               body: Stack(
@@ -133,7 +133,7 @@ void main() {
 
     Widget panel({required bool visible}) => TranslationProvider(
       child: MaterialApp(
-        theme: monoTheme(dark: true),
+        theme: monoTheme(MonoPalette.dark),
         home: Scaffold(
           body: PlayerUpNextPanel(
             visible: visible,
@@ -178,7 +178,7 @@ void main() {
 
     Widget panel({required bool visible}) => TranslationProvider(
       child: MaterialApp(
-        theme: monoTheme(dark: true),
+        theme: monoTheme(MonoPalette.dark),
         home: Scaffold(
           body: PlayerUpNextPanel(
             visible: visible,
@@ -226,7 +226,7 @@ void main() {
     await tester.pumpWidget(
       TranslationProvider(
         child: MaterialApp(
-          theme: monoTheme(dark: true),
+          theme: monoTheme(MonoPalette.dark),
           home: Scaffold(
             body: PlayerUpNextPanel(
               visible: true,

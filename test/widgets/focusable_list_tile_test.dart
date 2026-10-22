@@ -154,7 +154,7 @@ void main() {
     await tester.pumpWidget(
       InputModeTracker(
         child: MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           home: Scaffold(
             body: SettingsGroup(
               children: [FocusableListTile(focusNode: node, title: const Text('Sprache'), onTap: () {})],
@@ -186,7 +186,7 @@ void main() {
     await tester.pumpWidget(
       InputModeTracker(
         child: MaterialApp(
-          theme: monoTheme(dark: true, variant: AppThemeVariant.glas),
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
           home: Scaffold(
             body: SettingsGroup(
               children: [

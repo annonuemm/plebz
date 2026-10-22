@@ -215,7 +215,7 @@ void main() {
       TranslationProvider(
         child: ChangeNotifierProvider<IptvSourcesProvider>.value(
           value: provider,
-          child: MaterialApp(theme: monoTheme(dark: true), home: const IptvSettingsScreen()),
+          child: MaterialApp(theme: monoTheme(MonoPalette.dark), home: const IptvSettingsScreen()),
         ),
       ),
     );

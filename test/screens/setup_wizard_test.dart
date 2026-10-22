@@ -77,7 +77,7 @@ void main() {
             ChangeNotifierProvider<TrackersProvider>.value(value: trackers),
             if (iptv != null) ChangeNotifierProvider<IptvSourcesProvider>.value(value: iptv),
           ],
-          child: MaterialApp(theme: monoTheme(dark: true), home: home),
+          child: MaterialApp(theme: monoTheme(MonoPalette.dark), home: home),
         ),
       ),
     );

@@ -106,6 +106,27 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
     return _liveTvFor(source);
   }
 
+  /// Loads [sourceId]'s channels at once, for the word after saving it: how
+  /// many came (none when the playlist or login failed), and whether the
+  /// guide comes from the playlist itself. Null for a source not complete.
+  Future<({int channels, bool playlistGuide})?> loadChannelsOf(String sourceId) async {
+    final live = liveTvForSourceId(sourceId);
+    if (live == null) return null;
+    var count = 0;
+    try {
+      count = (await live.fetchChannels()).length;
+    } catch (error) {
+      appLogger.w('IPTV: channels of $sourceId could not be loaded', error: error);
+    }
+    // The list's rows say whether a guide comes along.
+    safeNotifyListeners();
+    return (channels: count, playlistGuide: live.usesPlaylistGuide);
+  }
+
+  /// Whether [sourceId]'s guide comes from its playlist, as far as it has
+  /// been read in this session.
+  bool usesPlaylistGuide(String sourceId) => _liveTvById[sourceId]?.usesPlaylistGuide ?? false;
+
   IptvLiveTvSource _liveTvFor(IptvSource source) => _liveTvById.putIfAbsent(source.id, () => _buildSource(source));
 
   /// Falls back to an unscoped slot when there is no active profile, the same

@@ -113,6 +113,29 @@ List<M3uEntry> parseM3u(String contents, {bool Function(String group)? keepGroup
   return entries;
 }
 
+/// The guide addresses a playlist names in its `#EXTM3U` line — `url-tvg`,
+/// `x-tvg-url` or `tvg-url`, each one address or several split by commas —
+/// in the order given, web addresses only.
+List<String> m3uGuideUrls(String contents) {
+  for (final rawLine in contents.split('\n')) {
+    final line = rawLine.trim();
+    if (line.isEmpty) continue;
+    if (!line.startsWith('#EXTM3U')) return const [];
+    final urls = <String>[];
+    for (final match in _attributePattern.allMatches(line)) {
+      final name = match.group(1)!.toLowerCase();
+      if (name != 'url-tvg' && name != 'x-tvg-url' && name != 'tvg-url') continue;
+      for (final part in match.group(2)!.split(',')) {
+        final url = part.trim();
+        final scheme = Uri.tryParse(url)?.scheme.toLowerCase();
+        if ((scheme == 'http' || scheme == 'https') && !urls.contains(url)) urls.add(url);
+      }
+    }
+    return urls;
+  }
+  return const [];
+}
+
 /// Every group of a playlist with how many entries it holds, in the order
 /// the playlist first names them — what choosing a source's groups is offered
 /// from. Read without building the entries.

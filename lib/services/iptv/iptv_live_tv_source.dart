@@ -249,6 +249,7 @@ class IptvLiveTvSource implements LiveTvSupport {
       _m3uHeadersByChannelKey
         ..clear()
         ..addAll(entry.streamHeaders);
+      _playlistGuideUrls = entry.playlistGuideUrls;
     }
     // The guide is no longer kept in this copy (Plebz): it lives in [_guide].
     // One stored before is not taken over; it is read again once.
@@ -292,6 +293,7 @@ class IptvLiveTvSource implements LiveTvSupport {
           streamUrls: Map.of(_m3uUrlByChannelKey),
           streamHeaders: {for (final entry in _m3uHeadersByChannelKey.entries) entry.key: Map.of(entry.value)},
           epgLogos: _epgLogos,
+          playlistGuideUrls: _playlistGuideUrls,
         ),
       ),
     );
@@ -401,6 +403,7 @@ class IptvLiveTvSource implements LiveTvSupport {
     // Only the chosen groups: the rest is never kept (see [IptvSource.groups]).
     final parsing = Stopwatch()..start();
     final entries = parseM3u(body, keepGroup: source.groups == null ? null : source.loadsGroup);
+    _playlistGuideUrls = m3uGuideUrls(body);
     _timing('playlist read', parsing, '${entries.length} channels');
     final channels = channelsFromM3u(
       entries,
@@ -585,7 +588,8 @@ class IptvLiveTvSource implements LiveTvSupport {
     final loading = Stopwatch()..start();
     switch (source.kind) {
       case IptvSourceKind.m3u:
-        await _loadXmltvGuides(channels, source.epgUrls, writer);
+        // The address the viewer gave wins; without one, the playlist's own.
+        await _loadXmltvGuides(channels, source.epgUrls.isNotEmpty ? source.epgUrls : _playlistGuideUrls, writer);
       case IptvSourceKind.xtream:
         await _loadXtreamSchedule(channels, writer);
     }
@@ -901,6 +905,15 @@ class IptvLiveTvSource implements LiveTvSupport {
   /// Channel key → the headers its playlist entry asked for, for the entries
   /// that named any.
   final Map<String, Map<String, String>> _m3uHeadersByChannelKey = {};
+
+  /// The guide addresses the playlist's `#EXTM3U` line names, used while the
+  /// source's own field is empty.
+  List<String> _playlistGuideUrls = const [];
+
+  /// Whether the guide comes from the playlist's own address: the source
+  /// names none, and its playlist (as last read) does.
+  bool get usesPlaylistGuide =>
+      source.kind == IptvSourceKind.m3u && source.epgUrls.isEmpty && _playlistGuideUrls.isNotEmpty;
 
   /// Channel key → what its playlist entry said about its archive.
   final Map<String, IptvCatchupInfo> _catchupByChannelKey = {};

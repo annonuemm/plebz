@@ -665,6 +665,46 @@ http://provider/stream/guarded
       expect(programs.single.channelIdentifier, 'das-erste.de');
     });
 
+    test("without an address of its own the source reads the playlist's guide", () async {
+      final requested = <String>[];
+      final source = _m3uSource(
+        MockClient((request) async {
+          requested.add(request.url.toString());
+          return _ok(
+            request.url.path.endsWith('.m3u')
+                ? _playlist.replaceFirst('#EXTM3U', '#EXTM3U url-tvg="http://provider/epg.xml"')
+                : _guide,
+          );
+        }),
+      );
+
+      final programs = await source.fetchSchedule();
+
+      expect(programs.single.title, 'Tagesschau');
+      expect(requested, contains('http://provider/epg.xml'));
+      expect(source.usesPlaylistGuide, isTrue);
+    });
+
+    test("an address of the viewer's own wins over the playlist's", () async {
+      final requested = <String>[];
+      final source = _m3uSource(
+        MockClient((request) async {
+          requested.add(request.url.toString());
+          return _ok(
+            request.url.path.endsWith('.m3u')
+                ? _playlist.replaceFirst('#EXTM3U', '#EXTM3U url-tvg="http://provider/playlist-epg.xml"')
+                : _guide,
+          );
+        }),
+        epgUrl: 'http://provider/epg.xml',
+      );
+
+      await source.fetchSchedule();
+
+      expect(requested, isNot(contains('http://provider/playlist-epg.xml')));
+      expect(source.usesPlaylistGuide, isFalse);
+    });
+
     test('a second guide fills the holes the first leaves', () async {
       const second = '''
 <tv>

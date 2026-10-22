@@ -187,6 +187,84 @@ void main() {
     expect(find.byType(IptvSourceEditScreen), findsOneWidget);
   });
 
+  group('leaving with changes not saved', () {
+    late List<IptvEditResult?> results;
+
+    /// The editor pushed over a page, as the IPTV page opens it, with what it
+    /// hands back.
+    Future<void> pumpPushed(WidgetTester tester) async {
+      TvDetectionService.debugSetAppleTVOverride(false);
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      results = [];
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) => TextButton(
+                onPressed: () async => results.add(
+                  await Navigator.of(context).push<IptvEditResult>(
+                    MaterialPageRoute(
+                      builder: (_) => const IptvSourceEditScreen(source: _existing, kind: IptvSourceKind.m3u),
+                    ),
+                  ),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> back(WidgetTester tester) async {
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('nothing changed: Back simply leaves', (tester) async {
+      await pumpPushed(tester);
+      await back(tester);
+
+      expect(find.byType(IptvSourceEditScreen), findsNothing);
+      expect(find.text(t.iptv.unsavedTitle), findsNothing);
+      expect(results, [null]);
+    });
+
+    testWidgets('a change asks first; Back out of the question stays, Verwerfen leaves', (tester) async {
+      await pumpPushed(tester);
+      await tester.enterText(find.byType(EditableText).first, 'Umbenannt');
+      await back(tester);
+
+      expect(find.text(t.iptv.unsavedTitle), findsOneWidget);
+      await back(tester);
+      expect(find.text(t.iptv.unsavedTitle), findsNothing);
+      expect(find.byType(IptvSourceEditScreen), findsOneWidget, reason: 'Back out of the question stays');
+
+      await back(tester);
+      await tester.tap(find.text(t.iptv.discardChanges));
+      await tester.pumpAndSettle();
+      expect(find.byType(IptvSourceEditScreen), findsNothing);
+      expect(results, [null], reason: 'nothing saved');
+    });
+
+    testWidgets('Speichern in the question saves what was typed', (tester) async {
+      await pumpPushed(tester);
+      await tester.enterText(find.byType(EditableText).first, 'Umbenannt');
+      await back(tester);
+
+      await tester.tap(find.descendant(of: find.byType(AlertDialog), matching: find.text(t.common.save)));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(IptvSourceEditScreen), findsNothing);
+      expect(results.single!.source.name, 'Umbenannt');
+    });
+  });
+
   testWidgets('typing answers the complaint', (tester) async {
     // Off the TV path on purpose: there the field is driven by the system's
     // own keyboard host, which a widget test cannot type into.

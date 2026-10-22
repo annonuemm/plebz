@@ -109,6 +109,21 @@ void main() {
     expect(await cache.read('src'), isNull);
   });
 
+  test("the playlist's own guide addresses come back with it", () async {
+    final stored = entry();
+    await cache.write(
+      'src',
+      IptvCacheEntry(
+        savedAt: stored.savedAt,
+        channels: stored.channels,
+        programs: const [],
+        playlistGuideUrls: const ['http://provider/epg.xml'],
+      ),
+    );
+
+    expect((await cache.read('src'))!.playlistGuideUrls, ['http://provider/epg.xml']);
+  });
+
   test('an empty source is not written at all', () async {
     await cache.write('src', IptvCacheEntry(savedAt: DateTime.now(), channels: const [], programs: const []));
 

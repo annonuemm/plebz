@@ -148,6 +148,24 @@ http://provider/stream/a|User-Agent=VLC
     });
   });
 
+  group('m3uGuideUrls', () {
+    test('reads every way providers name the guide, split at commas, web addresses only', () {
+      expect(
+        m3uGuideUrls(
+          '#EXTM3U url-tvg="http://a/epg.xml.gz, https://b/epg.xml" x-tvg-url="http://a/epg.xml.gz,ftp://c/e.xml"\n'
+          '#EXTINF:-1,One\nhttp://s/1\n',
+        ),
+        ['http://a/epg.xml.gz', 'https://b/epg.xml'],
+      );
+      expect(m3uGuideUrls('#EXTM3U tvg-url="http://a/g.xml"\n'), ['http://a/g.xml']);
+    });
+
+    test('a playlist that names none, or does not start with #EXTM3U, has none', () {
+      expect(m3uGuideUrls('#EXTM3U\n#EXTINF:-1 url-tvg="http://x/e.xml",One\nhttp://s/1\n'), isEmpty);
+      expect(m3uGuideUrls('#EXTINF:-1,One\nhttp://s/1\n'), isEmpty);
+    });
+  });
+
   group('channelsFromM3u', () {
     List<M3uEntry> entries(int count) => [
       for (var i = 0; i < count; i++) M3uEntry(url: 'http://p/$i', name: 'Channel $i', tvgId: 'id-$i'),

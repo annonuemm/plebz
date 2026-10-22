@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../focus/focusable_button.dart';
 import '../../focus/focusable_text_field.dart';
 import '../../services/settings_service.dart';
 import '../../i18n/strings.g.dart';
@@ -14,6 +16,8 @@ import '../../services/iptv/iptv_catchup.dart';
 import '../../services/iptv/iptv_local_files.dart';
 import '../../services/local_file_access.dart';
 import '../../utils/app_logger.dart';
+import '../../utils/dialogs.dart';
+import '../../widgets/dialog_action_button.dart';
 import '../../services/iptv/iptv_source.dart';
 import '../../utils/platform_detector.dart';
 import '../../utils/snackbar_helper.dart';
@@ -64,7 +68,7 @@ class IptvSettingsScreen extends StatelessWidget {
                         fill: 1,
                       ),
                       title: Text(source.name),
-                      subtitle: Text(_subtitleFor(source)),
+                      subtitle: Text(_subtitleFor(source, provider)),
                       trailing: const AppIcon(Symbols.chevron_right_rounded, fill: 1),
                       onTap: () => unawaited(_edit(context, source)),
                     ),
@@ -155,10 +159,13 @@ class IptvSettingsScreen extends StatelessWidget {
       days <= 1 ? t.iptv.refreshIntervalDaily : t.iptv.refreshIntervalDays(days: days);
 
   /// Says what a row is without repeating credentials back at the user.
-  String _subtitleFor(IptvSource source) {
+  String _subtitleFor(IptvSource source, IptvSourcesProvider provider) {
     if (!source.isComplete) return t.iptv.incomplete;
     return switch (source.kind) {
-      IptvSourceKind.m3u => source.epgUrls.isNotEmpty ? t.iptv.playlistWithGuide : t.iptv.playlistWithoutGuide,
+      IptvSourceKind.m3u =>
+        source.epgUrls.isNotEmpty || provider.usesPlaylistGuide(source.id)
+            ? t.iptv.playlistWithGuide
+            : t.iptv.playlistWithoutGuide,
       IptvSourceKind.xtream => source.baseUrl ?? '',
     };
   }
@@ -176,6 +183,22 @@ class IptvSettingsScreen extends StatelessWidget {
       return;
     }
     await provider.save(result.source);
+    if (!result.source.isComplete || !context.mounted) return;
+    // A word on whether it worked: the channels are loaded at once.
+    showAppSnackBar(context, t.iptv.channelsLoading, duration: const Duration(minutes: 1));
+    final loaded = await provider.loadChannelsOf(result.source.id);
+    if (!context.mounted || loaded == null) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    if (loaded.channels == 0) {
+      showErrorSnackBar(context, t.iptv.channelsNotLoaded);
+    } else {
+      showSuccessSnackBar(
+        context,
+        loaded.playlistGuide
+            ? t.iptv.channelsLoadedWithPlaylistGuide(count: loaded.channels)
+            : t.iptv.channelsLoaded(count: loaded.channels),
+      );
+    }
   }
 }
 
@@ -351,6 +374,51 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
     _baseUrl = TextEditingController(text: source?.baseUrl ?? '');
     _username = TextEditingController(text: source?.username ?? '');
     _password = TextEditingController(text: source?.password ?? '');
+    _savedDraft = _draft();
+  }
+
+  /// The form as it stood when it opened, to tell whether leaving it would
+  /// lose anything.
+  late final String _savedDraft;
+
+  /// Everything the form holds, in one string to compare.
+  String _draft() => jsonEncode([
+    for (final field in [_name, _playlistUrl, ..._epgUrls, _baseUrl, _username, _password, _catchupDays])
+      field.text.trim(),
+    _streamFormat.name,
+    _catchupMode.name,
+    _groups,
+  ]);
+
+  /// Back with changes not saved: save them, or let them go. Back out of the
+  /// question stays on the form.
+  Future<void> _onLeave() async {
+    if (_draft() == _savedDraft) {
+      Navigator.of(context).pop();
+      return;
+    }
+    final save = await showScopedDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(t.iptv.unsavedTitle),
+        content: Text(t.iptv.unsavedMessage),
+        actions: [
+          DialogActionButton(onPressed: () => Navigator.pop(dialogContext, false), label: t.iptv.discardChanges),
+          DialogActionButton(
+            autofocus: true,
+            onPressed: () => Navigator.pop(dialogContext, true),
+            label: t.common.save,
+            isPrimary: true,
+          ),
+        ],
+      ),
+    );
+    if (!mounted || save == null) return;
+    if (save) {
+      _save();
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -618,6 +686,16 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
   Widget build(BuildContext context) {
     final existing = widget.source;
 
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(_onLeave());
+      },
+      child: _buildForm(context, existing),
+    );
+  }
+
+  Widget _buildForm(BuildContext context, IptvSource? existing) {
     return FocusedScrollScaffold(
       title: Text(existing == null ? t.iptv.addTitle : t.iptv.editTitle),
       slivers: [
@@ -748,12 +826,20 @@ class _IptvSourceEditScreenState extends State<IptvSourceEditScreen> {
                   const SizedBox(height: 16),
                   ..._buildCatchupFields(context),
                   const SizedBox(height: 24),
-                  FilledButton(onPressed: _save, child: Text(t.common.save)),
+                  // In the app's focus ring: the button's own focus shade
+                  // barely showed on a light accent.
+                  FocusableButton(
+                    onPressed: _save,
+                    child: FilledButton(onPressed: _save, child: Text(t.common.save)),
+                  ),
                   if (existing != null) ...[
                     const SizedBox(height: 8),
-                    TextButton(
+                    FocusableButton(
                       onPressed: () => Navigator.of(context).pop(IptvEditResult(existing, deleted: true)),
-                      child: Text(t.iptv.removeSource),
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(IptvEditResult(existing, deleted: true)),
+                        child: Text(t.iptv.removeSource),
+                      ),
                     ),
                   ],
                 ],

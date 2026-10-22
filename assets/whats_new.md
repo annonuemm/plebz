@@ -13,6 +13,14 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.31.0 (Build 869)
+
+### IPTV
+- Bleibt bei einer M3U-Playlist die Programm-Adresse leer, nimmt Plebz die Adresse, die der Anbieter in der Playlist mitliefert.
+- Nach dem Speichern einer Quelle lädt Plebz die Sender sofort und sagt, wie viele es sind – oder dass keine geladen werden konnten.
+- Wer das Formular mit ungespeicherten Änderungen verlässt, wird gefragt, ob sie gespeichert oder verworfen werden sollen.
+- Fernseher: Der Knopf „Speichern“ ist mit der Fernbedienung deutlicher markiert.
+
 ## 1.30.0 (Build 866)
 
 ### Plebz Home

@@ -12,12 +12,12 @@ const _m3u = IptvSource(id: 'a', name: 'Mein IPTV', kind: IptvSourceKind.m3u, pl
 
 const _incomplete = IptvSource(id: 'b', name: 'Halb fertig', kind: IptvSourceKind.m3u);
 
-IptvSourcesProvider _provider({String profileId = 'profile-1'}) {
+IptvSourcesProvider _provider({String profileId = 'profile-1', String playlist = '#EXTM3U', int status = 200}) {
   final provider = IptvSourcesProvider(
     profileId: profileId,
     // Never let a test reach the network.
     buildSource: (source) =>
-        IptvLiveTvSource(source, httpClient: MockClient((_) async => http.Response('#EXTM3U', 200))),
+        IptvLiveTvSource(source, httpClient: MockClient((_) async => http.Response(playlist, status))),
   );
   addTearDown(provider.dispose);
   return provider;
@@ -47,6 +47,26 @@ void main() {
 
     expect(reopened.sources.single.id, 'a');
     expect(reopened.sources.single.playlistUrl, 'http://provider/list.m3u');
+  });
+
+  test('after saving, the channels are counted and the playlist guide is noticed', () async {
+    final provider = _provider(
+      playlist: '#EXTM3U url-tvg="http://provider/epg.xml"\n#EXTINF:-1 tvg-id="ard",Das Erste\nhttp://provider/ard\n',
+    );
+    await provider.save(_m3u);
+
+    final loaded = await provider.loadChannelsOf('a');
+
+    expect(loaded, (channels: 1, playlistGuide: true));
+    expect(provider.usesPlaylistGuide('a'), isTrue);
+  });
+
+  test('a playlist that cannot be read counts no channels', () async {
+    final provider = _provider(playlist: 'gone', status: 404);
+    await provider.save(_m3u);
+
+    expect(await provider.loadChannelsOf('a'), (channels: 0, playlistGuide: false));
+    expect(await provider.loadChannelsOf('b'), isNull, reason: 'no such source');
   });
 
   test('saving the same id replaces rather than duplicates', () async {

@@ -31,6 +31,10 @@ class IptvCacheEntry {
   /// once more to learn them.
   final Map<String, String>? epgLogos;
 
+  /// The guide addresses the playlist names itself, for a source whose own
+  /// field is empty.
+  final List<String> playlistGuideUrls;
+
   const IptvCacheEntry({
     required this.savedAt,
     required this.channels,
@@ -39,6 +43,7 @@ class IptvCacheEntry {
     this.streamHeaders = const {},
     this.guideCoverage,
     this.epgLogos,
+    this.playlistGuideUrls = const [],
   });
 
   bool get isEmpty => channels.isEmpty && programs.isEmpty;
@@ -164,6 +169,7 @@ String _encodeEntry(IptvCacheEntry entry) => jsonEncode({
   'streamHeaders': entry.streamHeaders,
   if (entry.guideCoverage case final coverage?) 'guideCoverage': coverage.toList(),
   'epgLogos': ?entry.epgLogos,
+  if (entry.playlistGuideUrls.isNotEmpty) 'playlistGuideUrls': entry.playlistGuideUrls,
 });
 
 IptvCacheEntry? _decodeEntry(String raw) {
@@ -196,6 +202,11 @@ IptvCacheEntry? _decodeEntry(String raw) {
                 if (header.value is String) header.key: header.value as String,
             },
     },
+    playlistGuideUrls: [
+      if (decoded['playlistGuideUrls'] case final List<dynamic> urls)
+        for (final url in urls)
+          if (url is String) url,
+    ],
     epgLogos: switch (decoded['epgLogos']) {
       final Map<String, dynamic> logos => {
         for (final entry in logos.entries)

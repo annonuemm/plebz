@@ -2935,7 +2935,7 @@
     "nameLabel": "Name",
     "playlistLabel": "Playlist-Adresse",
     "guideLabel": "Programm-Adresse (XMLTV)",
-    "guideHelper": "Optional. XMLTV als .xml, .gz oder .xz. Ohne sie laufen die Sender, zeigen aber kein Programm.",
+    "guideHelper": "Optional. XMLTV als .xml, .gz oder .xz. Leer gelassen nimmt Plebz die Adresse aus der Playlist, falls sie eine nennt.",
     "guideLabelNumbered": "Programm-Adresse ${number}",
     "addGuide": "Weitere Programmliste",
     "removeGuide": "Programmliste entfernen",
@@ -2995,7 +2995,14 @@
     "groupsNone": "Keine auswählen",
     "groupsWithout": "Ohne Gruppe",
     "groupsChannelCount": "${count} Sender",
-    "groupsNew": "neu"
+    "groupsNew": "neu",
+    "channelsLoading": "Sender werden geladen …",
+    "channelsLoaded": "${count} Sender geladen",
+    "channelsLoadedWithPlaylistGuide": "${count} Sender geladen, Programm aus der Playlist",
+    "channelsNotLoaded": "Keine Sender geladen. Stimmen Adresse und Zugangsdaten?",
+    "unsavedTitle": "Änderungen speichern?",
+    "unsavedMessage": "Du hast Angaben geändert, die noch nicht gespeichert sind.",
+    "discardChanges": "Verwerfen"
   },
   "trailerStage": {
     "title": "Trailerbühne",

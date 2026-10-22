@@ -2557,7 +2557,7 @@ class _Translations$iptv$de extends Translations$iptv$en {
 	@override String get nameLabel => 'Name';
 	@override String get playlistLabel => 'Playlist-Adresse';
 	@override String get guideLabel => 'Programm-Adresse (XMLTV)';
-	@override String get guideHelper => 'Optional. XMLTV als .xml, .gz oder .xz. Ohne sie laufen die Sender, zeigen aber kein Programm.';
+	@override String get guideHelper => 'Optional. XMLTV als .xml, .gz oder .xz. Leer gelassen nimmt Plebz die Adresse aus der Playlist, falls sie eine nennt.';
 	@override String guideLabelNumbered({required Object number}) => 'Programm-Adresse ${number}';
 	@override String get addGuide => 'Weitere Programmliste';
 	@override String get removeGuide => 'Programmliste entfernen';
@@ -2616,6 +2616,13 @@ class _Translations$iptv$de extends Translations$iptv$en {
 	@override String get groupsWithout => 'Ohne Gruppe';
 	@override String groupsChannelCount({required Object count}) => '${count} Sender';
 	@override String get groupsNew => 'neu';
+	@override String get channelsLoading => 'Sender werden geladen …';
+	@override String channelsLoaded({required Object count}) => '${count} Sender geladen';
+	@override String channelsLoadedWithPlaylistGuide({required Object count}) => '${count} Sender geladen, Programm aus der Playlist';
+	@override String get channelsNotLoaded => 'Keine Sender geladen. Stimmen Adresse und Zugangsdaten?';
+	@override String get unsavedTitle => 'Änderungen speichern?';
+	@override String get unsavedMessage => 'Du hast Angaben geändert, die noch nicht gespeichert sind.';
+	@override String get discardChanges => 'Verwerfen';
 }
 
 // Path: trailerStage
@@ -6202,7 +6209,7 @@ extension on TranslationsDe {
 			'iptv.nameLabel' => 'Name',
 			'iptv.playlistLabel' => 'Playlist-Adresse',
 			'iptv.guideLabel' => 'Programm-Adresse (XMLTV)',
-			'iptv.guideHelper' => 'Optional. XMLTV als .xml, .gz oder .xz. Ohne sie laufen die Sender, zeigen aber kein Programm.',
+			'iptv.guideHelper' => 'Optional. XMLTV als .xml, .gz oder .xz. Leer gelassen nimmt Plebz die Adresse aus der Playlist, falls sie eine nennt.',
 			'iptv.guideLabelNumbered' => ({required Object number}) => 'Programm-Adresse ${number}',
 			'iptv.addGuide' => 'Weitere Programmliste',
 			'iptv.removeGuide' => 'Programmliste entfernen',
@@ -6261,6 +6268,13 @@ extension on TranslationsDe {
 			'iptv.groupsWithout' => 'Ohne Gruppe',
 			'iptv.groupsChannelCount' => ({required Object count}) => '${count} Sender',
 			'iptv.groupsNew' => 'neu',
+			'iptv.channelsLoading' => 'Sender werden geladen …',
+			'iptv.channelsLoaded' => ({required Object count}) => '${count} Sender geladen',
+			'iptv.channelsLoadedWithPlaylistGuide' => ({required Object count}) => '${count} Sender geladen, Programm aus der Playlist',
+			'iptv.channelsNotLoaded' => 'Keine Sender geladen. Stimmen Adresse und Zugangsdaten?',
+			'iptv.unsavedTitle' => 'Änderungen speichern?',
+			'iptv.unsavedMessage' => 'Du hast Angaben geändert, die noch nicht gespeichert sind.',
+			'iptv.discardChanges' => 'Verwerfen',
 			'trailerStage.title' => 'Trailerbühne',
 			'trailerStage.mood' => 'Worauf hast du heute Lust?',
 			'trailerStage.kind' => 'Art',
@@ -6383,6 +6397,8 @@ extension on TranslationsDe {
 			'plebz.setupAgain' => 'Einrichtung erneut starten',
 			'plebz.setupAgainDescription' => 'Aussehen, Quellen und Dienste, Schritt für Schritt',
 			'plebz.updateAvailableTitle' => 'Update verfügbar',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.updateAvailableBody' => ({required Object release}) => '${release} ist bereit zur Installation. Deine Einstellungen und Anmeldungen bleiben erhalten.',
 			'plebz.updateNow' => 'Aktualisieren',
 			'plebz.later' => 'Später',
@@ -6390,8 +6406,6 @@ extension on TranslationsDe {
 			'plebz.checking' => 'Suche nach Updates …',
 			'plebz.checkFailed' => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.',
 			'plebz.updatedTitle' => 'Plebz wurde aktualisiert',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.updatedBody' => ({required Object version, required Object build}) => 'Du nutzt jetzt Plebz ${version} (Build ${build}).',
 			'plebz.checkForUpdates' => 'Nach Updates suchen',
 			'plebz.checkOnStartup' => 'Beim Start nach Updates suchen',

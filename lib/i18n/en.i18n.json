@@ -2935,7 +2935,7 @@
     "nameLabel": "Name",
     "playlistLabel": "Playlist URL",
     "guideLabel": "Guide URL (XMLTV)",
-    "guideHelper": "Optional. XMLTV as .xml, .gz or .xz. Without it channels play but show no programme.",
+    "guideHelper": "Optional. XMLTV as .xml, .gz or .xz. Left empty, Plebz uses the address the playlist names, if any.",
     "guideLabelNumbered": "Guide URL ${number}",
     "addGuide": "Add another guide",
     "removeGuide": "Remove guide",
@@ -2995,7 +2995,14 @@
     "groupsNone": "Choose none",
     "groupsWithout": "No group",
     "groupsChannelCount": "${count} channels",
-    "groupsNew": "new"
+    "groupsNew": "new",
+    "channelsLoading": "Loading channels …",
+    "channelsLoaded": "${count} channels loaded",
+    "channelsLoadedWithPlaylistGuide": "${count} channels loaded, guide from the playlist",
+    "channelsNotLoaded": "No channels loaded. Are the address and login right?",
+    "unsavedTitle": "Save changes?",
+    "unsavedMessage": "Some details you changed are not saved yet.",
+    "discardChanges": "Discard"
   },
   "trailerStage": {
     "title": "Trailer stage",

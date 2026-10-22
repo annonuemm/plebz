@@ -7069,8 +7069,8 @@ class Translations$iptv$en {
 	/// en: 'Guide URL (XMLTV)'
 	String get guideLabel => 'Guide URL (XMLTV)';
 
-	/// en: 'Optional. XMLTV as .xml, .gz or .xz. Without it channels play but show no programme.'
-	String get guideHelper => 'Optional. XMLTV as .xml, .gz or .xz. Without it channels play but show no programme.';
+	/// en: 'Optional. XMLTV as .xml, .gz or .xz. Left empty, Plebz uses the address the playlist names, if any.'
+	String get guideHelper => 'Optional. XMLTV as .xml, .gz or .xz. Left empty, Plebz uses the address the playlist names, if any.';
 
 	/// en: 'Guide URL ${number}'
 	String guideLabelNumbered({required Object number}) => 'Guide URL ${number}';
@@ -7251,6 +7251,27 @@ class Translations$iptv$en {
 
 	/// en: 'new'
 	String get groupsNew => 'new';
+
+	/// en: 'Loading channels …'
+	String get channelsLoading => 'Loading channels …';
+
+	/// en: '${count} channels loaded'
+	String channelsLoaded({required Object count}) => '${count} channels loaded';
+
+	/// en: '${count} channels loaded, guide from the playlist'
+	String channelsLoadedWithPlaylistGuide({required Object count}) => '${count} channels loaded, guide from the playlist';
+
+	/// en: 'No channels loaded. Are the address and login right?'
+	String get channelsNotLoaded => 'No channels loaded. Are the address and login right?';
+
+	/// en: 'Save changes?'
+	String get unsavedTitle => 'Save changes?';
+
+	/// en: 'Some details you changed are not saved yet.'
+	String get unsavedMessage => 'Some details you changed are not saved yet.';
+
+	/// en: 'Discard'
+	String get discardChanges => 'Discard';
 }
 
 // Path: trailerStage
@@ -12967,7 +12988,7 @@ extension on Translations {
 			'iptv.nameLabel' => 'Name',
 			'iptv.playlistLabel' => 'Playlist URL',
 			'iptv.guideLabel' => 'Guide URL (XMLTV)',
-			'iptv.guideHelper' => 'Optional. XMLTV as .xml, .gz or .xz. Without it channels play but show no programme.',
+			'iptv.guideHelper' => 'Optional. XMLTV as .xml, .gz or .xz. Left empty, Plebz uses the address the playlist names, if any.',
 			'iptv.guideLabelNumbered' => ({required Object number}) => 'Guide URL ${number}',
 			'iptv.addGuide' => 'Add another guide',
 			'iptv.removeGuide' => 'Remove guide',
@@ -13028,6 +13049,13 @@ extension on Translations {
 			'iptv.groupsWithout' => 'No group',
 			'iptv.groupsChannelCount' => ({required Object count}) => '${count} channels',
 			'iptv.groupsNew' => 'new',
+			'iptv.channelsLoading' => 'Loading channels …',
+			'iptv.channelsLoaded' => ({required Object count}) => '${count} channels loaded',
+			'iptv.channelsLoadedWithPlaylistGuide' => ({required Object count}) => '${count} channels loaded, guide from the playlist',
+			'iptv.channelsNotLoaded' => 'No channels loaded. Are the address and login right?',
+			'iptv.unsavedTitle' => 'Save changes?',
+			'iptv.unsavedMessage' => 'Some details you changed are not saved yet.',
+			'iptv.discardChanges' => 'Discard',
 			'trailerStage.title' => 'Trailer stage',
 			'trailerStage.mood' => 'What are you in the mood for?',
 			'trailerStage.kind' => 'Kind',

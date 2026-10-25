@@ -1080,6 +1080,13 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
       );
     }
 
+    // Plebz: Back on a later title first returns to the row's first one; only
+    // there does it go on to [TvBrowseRail.onBack] or past the rail.
+    if (key.isBackKey && _isPastRowStart && FocusTheme.backReturnsToRowStart()) {
+      _hasUserInteracted = true;
+      return handleBackKeyAction(event, _returnToRowStart);
+    }
+
     if (widget.onBack != null) {
       final backResult = handleBackKeyAction(event, widget.onBack!);
       if (backResult != KeyEventResult.ignored) {
@@ -1131,6 +1138,20 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     }
 
     return KeyEventResult.ignored;
+  }
+
+  /// Whether the selection stands past the active row's first title (a
+  /// leading options slot counts as before it).
+  bool get _isPastRowStart {
+    final hub = _activeHub;
+    return hub != null && _itemIndex > _defaultSlotFor(hub);
+  }
+
+  /// Back's first step: the active row's first title, scrolled into view.
+  void _returnToRowStart() {
+    final hub = _activeHub;
+    if (hub == null) return;
+    _moveItem(_defaultSlotFor(hub) - _itemIndex);
   }
 
   void _moveItem(int delta) {

@@ -81,6 +81,12 @@ class FocusTheme {
       ? const Duration(milliseconds: 500)
       : const Duration(milliseconds: 150);
 
+  /// Plebz: whether Back on a row's later title first returns to the row's
+  /// first one ([PlebzPrefs.backToRowStart]). Televisions only: a phone or a
+  /// tablet keeps Back as it is.
+  static bool backReturnsToRowStart() =>
+      PlatformDetector.isTV() && (SettingsService.instanceOrNull?.read(PlebzPrefs.backToRowStart) ?? true);
+
   /// [radii] overrides [borderRadius] when per-corner radii are needed
   /// (M3E grouped cards: large outer / small inner corners).
   static BoxDecoration focusDecoration(

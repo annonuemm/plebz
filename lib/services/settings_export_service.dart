@@ -23,6 +23,8 @@ import 'file_picker_service.dart';
 import 'iptv/iptv_source.dart' show iptvSealedFields;
 import '../connection/connection.dart';
 import '../media/media_backend.dart';
+import '../profiles/profile.dart';
+import '../profiles/profile_connection.dart';
 import 'sensitive_prefs.dart';
 import 'settings_service.dart';
 import 'storage_service.dart';
@@ -35,7 +37,20 @@ class ImportResult {
   /// Servers restored from a full backup. Zero for a settings-only file,
   /// which carries none.
   final int connectionsImported;
-  const ImportResult({required this.keysImported, required this.keysSkipped, this.connectionsImported = 0});
+
+  /// The app's own profiles a full backup brought back.
+  final int profilesImported;
+
+  /// The profile that was active where the backup was made, when it is one
+  /// the restore can switch to.
+  final String? activeProfileId;
+  const ImportResult({
+    required this.keysImported,
+    required this.keysSkipped,
+    this.connectionsImported = 0,
+    this.profilesImported = 0,
+    this.activeProfileId,
+  });
 }
 
 class SettingsExportException implements Exception {
@@ -257,6 +272,130 @@ class SettingsExportService {
       'prefs': prefsOut,
     };
   }
+
+  /// Every profile's own settings, keyed by its prefs scope.
+  ///
+  /// [buildExportMap] carries the active profile's only. A full backup takes
+  /// them all, so each profile comes back with its own libraries, IPTV
+  /// sources and Seerr sign-in instead of the active one's copied over it.
+  static Map<String, Map<String, dynamic>> buildProfileSettings(
+    SharedPreferencesWithCache prefs, {
+    bool withCredentials = false,
+  }) {
+    final scopes = <String>{for (final key in prefs.keys) ?_scopeOfKey(key)};
+    final out = <String, Map<String, dynamic>>{};
+    for (final scope in scopes) {
+      final exported = buildExportMap(prefs, currentUserUuid: scope, withCredentials: withCredentials);
+      final own = _userScopedOnly(exported['prefs'] as Map<String, dynamic>, withCredentials: withCredentials);
+      if (own.isNotEmpty) out[scope] = own;
+    }
+    return out;
+  }
+
+  /// `user_{scope}_{key}` → scope. A scope is a local profile id
+  /// (`local-{uuid}`) or a Plex Home user uuid; neither holds an underscore.
+  static String? _scopeOfKey(String key) {
+    if (!key.startsWith(_userPrefixRoot)) return null;
+    final rest = key.substring(_userPrefixRoot.length);
+    final end = rest.indexOf('_');
+    return end > 0 ? rest.substring(0, end) : null;
+  }
+
+  static bool _isScope(String scope) => scope.isNotEmpty && !scope.contains('_');
+
+  static Map<String, dynamic> _userScopedOnly(Map<dynamic, dynamic> entries, {required bool withCredentials}) => {
+    for (final entry in entries.entries)
+      if (_policyFor(entry.key.toString(), withCredentials: withCredentials)?.userScoped == true)
+        entry.key.toString(): entry.value,
+  };
+
+  /// The app's own profiles. Plex Home users are not among them: Plex keeps
+  /// those and hands them back with the restored account.
+  static List<Map<String, Object?>> buildProfileEntries(List<Profile> profiles) => [
+    for (final profile in profiles)
+      if (profile.isLocal)
+        {
+          'id': profile.id,
+          'displayName': profile.displayName,
+          'avatarThumbUrl': profile.avatarThumbUrl,
+          'config': profile.toConfigJson(),
+          'sortOrder': profile.sortOrder,
+          'createdAt': profile.createdAt.millisecondsSinceEpoch,
+        },
+  ];
+
+  /// Which profile reaches which server, and as whom.
+  ///
+  /// A Plex row leaves its token behind: it is a Home-user token this device
+  /// minted, and the profile mints its own from the restored account on first
+  /// use. A Jellyfin or Emby row's token is the server sign-in, which travels
+  /// with the connection anyway. Rows of a server not in the backup stay out.
+  static List<Map<String, Object?>> buildProfileConnectionEntries(
+    List<ProfileConnection> rows,
+    List<Connection> connections,
+  ) {
+    final kinds = {for (final connection in connections) connection.id: connection.kind};
+    return [
+      for (final row in rows)
+        if (kinds[row.connectionId] case final kind?)
+          {
+            'profileId': row.profileId,
+            'connectionId': row.connectionId,
+            'userIdentifier': row.userIdentifier,
+            'isDefault': row.isDefault,
+            if (kind != MediaBackend.plex && row.hasToken) 'userToken': row.userToken,
+          },
+    ];
+  }
+
+  static List<Profile> _profilesFrom(Object? raw) {
+    if (raw is! List) return const [];
+    final out = <Profile>[];
+    for (final entry in raw) {
+      if (entry is! Map) continue;
+      final id = entry['id'];
+      final name = entry['displayName'];
+      final createdAt = entry['createdAt'];
+      if (id is! String || id.isEmpty || !_isScope(id) || name is! String || name.trim().isEmpty) continue;
+      final config = entry['config'];
+      final avatar = entry['avatarThumbUrl'];
+      final sortOrder = entry['sortOrder'];
+      try {
+        out.add(
+          Profile.fromRow(
+            id: id,
+            kind: ProfileKind.local.id,
+            displayName: name,
+            avatarThumbUrl: avatar is String ? avatar : null,
+            json: config is Map ? config.cast<String, Object?>() : const {},
+            sortOrder: sortOrder is int ? sortOrder : 0,
+            createdAt: createdAt is int ? DateTime.fromMillisecondsSinceEpoch(createdAt) : DateTime.now(),
+            lastUsedAt: null,
+          ),
+        );
+      } catch (error) {
+        appLogger.w('Backup: profile $id could not be read', error: error);
+      }
+    }
+    return out;
+  }
+
+  static List<ProfileConnection> _profileConnectionsFrom(Object? raw) => [
+    if (raw is List)
+      for (final entry in raw)
+        if (entry is Map &&
+            entry['profileId'] is String &&
+            entry['connectionId'] is String &&
+            entry['userIdentifier'] is String)
+          ProfileConnection(
+            profileId: entry['profileId'] as String,
+            connectionId: entry['connectionId'] as String,
+            userToken: entry['userToken'] is String ? entry['userToken'] as String : null,
+            userIdentifier: entry['userIdentifier'] as String,
+            isDefault: entry['isDefault'] == true,
+            tokenAcquiredAt: entry['userToken'] is String ? DateTime.now() : null,
+          ),
+  ];
 
   /// Takes the Seerr password out of this device's vault and puts it in the
   /// backup as itself.
@@ -703,6 +842,8 @@ class SettingsExportService {
   static Future<String?> exportBackupToFile({
     required String password,
     required Future<List<Connection>> Function() readConnections,
+    Future<List<Profile>> Function()? readProfiles,
+    Future<List<ProfileConnection>> Function()? readProfileConnections,
   }) async {
     if (password.isEmpty) {
       throw const SettingsExportException('A backup needs a password');
@@ -723,7 +864,20 @@ class SettingsExportService {
       withCredentials: true,
     );
     await revealSecretsForExport(payload['prefs']! as Map<String, dynamic>);
-    payload['connections'] = buildConnectionEntries(await readConnections());
+    final connections = await readConnections();
+    payload['connections'] = buildConnectionEntries(connections);
+    // Every profile, not just the one in use: a family's profiles are the
+    // setup, and restoring one of them is half a restore.
+    final profileSettings = buildProfileSettings(prefs, withCredentials: true);
+    for (final section in profileSettings.values) {
+      await revealSecretsForExport(section);
+    }
+    payload['profileSettings'] = profileSettings;
+    if (readProfiles != null) payload['profiles'] = buildProfileEntries(await readProfiles());
+    if (readProfileConnections != null) {
+      payload['profileConnections'] = buildProfileConnectionEntries(await readProfileConnections(), connections);
+    }
+    payload['activeProfileId'] = storage.getActiveProfileId();
 
     // The envelope stays readable so the import can tell a backup from a
     // settings file, and say "wrong password" instead of "broken file".
@@ -732,7 +886,7 @@ class SettingsExportService {
       'appVersion': appVersion,
       'exportedAt': DateTime.now().toUtc().toIso8601String(),
       'platform': Platform.operatingSystem,
-      'contains': const ['settings', 'servers', 'iptv'],
+      'contains': const ['settings', 'servers', 'iptv', 'profiles'],
       ...await BackupCrypto.encrypt(jsonEncode(payload), password),
     };
 
@@ -873,6 +1027,8 @@ class SettingsExportService {
     String path, {
     Future<String?> Function()? askPassword,
     Future<void> Function(Connection connection)? writeConnection,
+    Future<void> Function(Profile profile)? writeProfile,
+    Future<void> Function(ProfileConnection row)? writeProfileConnection,
   }) async {
     final String contents;
     try {
@@ -880,12 +1036,20 @@ class SettingsExportService {
     } on FileSystemException {
       throw const InvalidExportFileException('Could not read the selected file');
     }
-    return _applyContents(contents, askPassword: askPassword, writeConnection: writeConnection);
+    return _applyContents(
+      contents,
+      askPassword: askPassword,
+      writeConnection: writeConnection,
+      writeProfile: writeProfile,
+      writeProfileConnection: writeProfileConnection,
+    );
   }
 
   static Future<ImportResult?> importFromFile({
     Future<String?> Function()? askPassword,
     Future<void> Function(Connection connection)? writeConnection,
+    Future<void> Function(Profile profile)? writeProfile,
+    Future<void> Function(ProfileConnection row)? writeProfileConnection,
   }) async {
     final storage = await StorageService.getInstance();
     final uuid = storage.activeUserScope();
@@ -915,7 +1079,13 @@ class SettingsExportService {
       throw const InvalidExportFileException('Could not read the selected file');
     }
 
-    return _applyContents(contents, askPassword: askPassword, writeConnection: writeConnection);
+    return _applyContents(
+      contents,
+      askPassword: askPassword,
+      writeConnection: writeConnection,
+      writeProfile: writeProfile,
+      writeProfileConnection: writeProfileConnection,
+    );
   }
 
   /// The half of an import that does not care where the bytes came from.
@@ -923,6 +1093,8 @@ class SettingsExportService {
     String contents, {
     Future<String?> Function()? askPassword,
     Future<void> Function(Connection connection)? writeConnection,
+    Future<void> Function(Profile profile)? writeProfile,
+    Future<void> Function(ProfileConnection row)? writeProfileConnection,
   }) async {
     final storage = await StorageService.getInstance();
     final uuid = storage.activeUserScope();
@@ -945,6 +1117,10 @@ class SettingsExportService {
     // is applied as before.
     var withCredentials = false;
     List<Object?> connections = const [];
+    Map<String, dynamic> profileSettings = const {};
+    var profiles = const <Profile>[];
+    var profileRows = const <ProfileConnection>[];
+    String? activeProfileId;
     if (data['encryption'] != null) {
       final password = await askPassword?.call();
       if (password == null) return null;
@@ -964,23 +1140,85 @@ class SettingsExportService {
       if (data['prefs'] case final Map<String, dynamic> restored) await protectSecretsForImport(restored);
       final raw = data['connections'];
       if (raw is List) connections = raw;
+      if (data['profileSettings'] case final Map<String, dynamic> scoped) {
+        for (final section in scoped.values) {
+          if (section is Map<String, dynamic>) await protectSecretsForImport(section);
+        }
+        profileSettings = scoped;
+      }
+      profiles = _profilesFrom(data['profiles']);
+      profileRows = _profileConnectionsFrom(data['profileConnections']);
+      if (data['activeProfileId'] case final String id when id.isNotEmpty) activeProfileId = id;
+    }
+
+    // A backup with every profile's settings brings the active one's back
+    // under its own profile too. Laying them over the profile in use here as
+    // well would hand this device's profile a copy of someone else's.
+    final rawPrefs = data['prefs'];
+    if (profileSettings.isNotEmpty && rawPrefs is Map) {
+      data = {
+        ...data,
+        'prefs': {
+          for (final entry in rawPrefs.entries)
+            if (_policyFor(entry.key.toString(), withCredentials: true)?.userScoped != true) entry.key: entry.value,
+        },
+      };
     }
 
     final settings = await SettingsService.getInstance();
     final result = await applyImportMap(data, settings.prefs, currentUserUuid: uuid, withCredentials: withCredentials);
+    var keysImported = result.keysImported;
+    var keysSkipped = result.keysSkipped;
+    for (final MapEntry(key: scope, value: section) in profileSettings.entries) {
+      if (section is! Map || !_isScope(scope)) continue;
+      final own = _userScopedOnly(section, withCredentials: true);
+      final scoped = await applyImportMap(
+        {'formatVersion': data['formatVersion'], 'prefs': own},
+        settings.prefs,
+        currentUserUuid: scope,
+        withCredentials: true,
+      );
+      keysImported += scoped.keysImported;
+      keysSkipped += scoped.keysSkipped + section.length - own.length;
+    }
     // A sealed value read back from the file is opened into memory again.
     await PlebzPrefs.tmdbApiKey.load(settings);
     // The app's own watchlist titles are held in memory once read.
     LocalWatchlist.reloadAll();
-    if (connections.isEmpty || writeConnection == null) return result;
 
-    // Servers last: the settings are in place by the time the app reloads its
-    // connections, so a restore never leaves it reading half of each.
-    final restored = await applyConnections(connections, writeConnection);
+    // Servers after the settings: they are in place by the time the app
+    // reloads its connections, so a restore never leaves it reading half of
+    // each. Profiles after the servers, whose rows they point at.
+    final restored = connections.isEmpty || writeConnection == null
+        ? 0
+        : await applyConnections(connections, writeConnection);
+    var profilesRestored = 0;
+    if (writeProfile != null) {
+      for (final profile in profiles) {
+        try {
+          await writeProfile(profile);
+          profilesRestored++;
+        } catch (error, stackTrace) {
+          appLogger.w('Backup: restoring profile ${profile.id} failed', error: error, stackTrace: stackTrace);
+        }
+      }
+    }
+    if (writeProfileConnection != null) {
+      for (final row in profileRows) {
+        try {
+          await writeProfileConnection(row);
+        } catch (error) {
+          // A server that did not come back takes its rows with it.
+          appLogger.w('Backup: profile ${row.profileId} could not reach ${row.connectionId}', error: error);
+        }
+      }
+    }
     return ImportResult(
-      keysImported: result.keysImported,
-      keysSkipped: result.keysSkipped,
+      keysImported: keysImported,
+      keysSkipped: keysSkipped,
       connectionsImported: restored,
+      profilesImported: profilesRestored,
+      activeProfileId: activeProfileId,
     );
   }
 }

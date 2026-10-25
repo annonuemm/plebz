@@ -337,6 +337,12 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
     );
     if (selectResult != KeyEventResult.ignored) return selectResult;
 
+    // Plebz: Back on a later title first returns to the row's first one (on
+    // a television); only there does it go on to [HubSection.onBack].
+    if (key.isBackKey && _focusedIndex > 0 && FocusTheme.backReturnsToRowStart()) {
+      return handleBackKeyAction(event, _returnToRowStart);
+    }
+
     if (widget.onBack != null) {
       final backResult = handleBackKeyAction(event, widget.onBack!);
       if (backResult != KeyEventResult.ignored) {
@@ -402,6 +408,14 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
     }
 
     return KeyEventResult.ignored;
+  }
+
+  void _returnToRowStart() {
+    if (!mounted || _focusedIndex == 0) return;
+    setState(() => _focusedIndex = 0);
+    widget.focusMemory.setForHub(_focusMemoryKey, 0);
+    _notifyFocusedItemChanged();
+    _scrollToIndex(0);
   }
 
   /// GlobalKeys for MediaCards to access their state (for context menu)

@@ -46,7 +46,8 @@ class GeneralSettingsScreen extends StatelessWidget {
               ),
             ],
           ),
-        // The fork's own: which keyboard opens for typing on a television.
+        // The fork's own: which keyboard opens for typing on a television, and
+        // where Back goes from a row's later titles.
         if (PlatformDetector.isTV())
           SettingsGroup(
             title: t.settings.input,
@@ -56,6 +57,12 @@ class GeneralSettingsScreen extends StatelessWidget {
                 icon: Symbols.keyboard_rounded,
                 title: t.settings.useSystemTvKeyboard,
                 subtitle: t.settings.useSystemTvKeyboardDescription,
+              ),
+              SettingSwitchTile(
+                pref: PlebzPrefs.backToRowStart,
+                icon: Symbols.first_page_rounded,
+                title: t.settings.backToRowStart,
+                subtitle: t.settings.backToRowStartDescription,
               ),
             ],
           ),

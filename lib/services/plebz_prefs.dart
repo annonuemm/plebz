@@ -153,6 +153,12 @@ abstract final class PlebzPrefs {
   /// a box that stutters. The Apple TV always glides.
   static const smoothScroll = BoolPref('smooth_scroll', defaultValue: true);
 
+  /// On the television, in every row: Back on a later title first returns to
+  /// the row's first one, as Prime Video does; only Back there does what it
+  /// always did (the side navigation, or leaving a detail page). On by default
+  /// (the user's call, 2026-10-25); off for Plezy's one-press Back.
+  static const backToRowStart = BoolPref('back_to_row_start', defaultValue: true);
+
   /// The start screen dresses up for the season: a thunderstorm night at
   /// Halloween, a lit garland at Christmas (see `plebz_season.dart`). On by
   /// default, a switch for whoever wants the plain logo (the user's call,
@@ -699,6 +705,7 @@ abstract final class PlebzPrefs {
     glasFakeGlass,
     glasRailSymbolsPinned,
     smoothScroll,
+    backToRowStart,
     seasonalStartScreen,
     showLibraryPlaylistsTab,
     showPlaybackTracksStatus,

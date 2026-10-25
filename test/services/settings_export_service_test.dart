@@ -10,6 +10,8 @@ import 'package:plezy/models/audio_channel_limit.dart';
 import 'package:plezy/models/shader_preset.dart';
 import 'package:plezy/connection/connection.dart';
 import 'package:plezy/models/seerr/seerr_session.dart';
+import 'package:plezy/profiles/profile.dart';
+import 'package:plezy/profiles/profile_connection.dart';
 import 'package:plezy/services/credential_vault.dart';
 import 'package:plezy/services/base_shared_preferences_service.dart';
 import 'package:plezy/services/file_picker_service.dart';
@@ -1166,7 +1168,7 @@ void main() {
       final written = utf8.decode(picker.lastSaveBytes!);
       expect(written, isNot(contains('geheim')), reason: 'the file is sealed, not merely zipped');
       expect(written, isNot(contains('token-abc')));
-      expect(jsonDecode(written), containsPair('contains', ['settings', 'servers', 'iptv']));
+      expect(jsonDecode(written), containsPair('contains', ['settings', 'servers', 'iptv', 'profiles']));
 
       // Now the other device: nothing of this installation left behind.
       await prefs.remove('user_profile-a_iptv_sources');
@@ -1192,6 +1194,157 @@ void main() {
       );
       expect(opened.json, {'name': 'Anbieter', 'password': 'geheim'});
       expect(prefs.getBool('enable_hdr'), isTrue);
+    });
+
+    test('a backup brings every profile back, each with its own settings', () async {
+      await seedActiveProfile();
+      final prefs = await BaseSharedPreferencesService.sharedCache();
+      await prefs.setString('user_profile-a_iptv_sources', '[{"name":"A","password":"anna-geheim"}]');
+      await prefs.setString('user_local-b_iptv_sources', '[{"name":"B","password":"bea-geheim"}]');
+      await prefs.setString('user_local-b_hidden_libraries', '["7"]');
+      picker.saveResult = '/tmp/plesy-backup.json';
+      final plex = PlexAccountConnection(
+        id: 'plex-1',
+        accountToken: 'account-token',
+        clientIdentifier: 'client-1',
+        accountLabel: 'alice',
+        createdAt: DateTime(2026, 1, 2),
+      );
+
+      await SettingsExportService.exportBackupToFile(
+        password: 'pw',
+        readConnections: () async => [_jellyfin(id: 'jf-1'), plex],
+        readProfiles: () async => [
+          Profile.local(id: 'local-b', displayName: 'Bea', pinHash: 'hash-b', sortOrder: 2, createdAt: DateTime(2026)),
+          Profile.plexHome(id: 'plex-home-plex-1-abc', displayName: 'Plex Home', createdAt: DateTime(2026)),
+        ],
+        readProfileConnections: () async => const [
+          ProfileConnection(
+            profileId: 'local-b',
+            connectionId: 'jf-1',
+            userToken: 'jf-token-b',
+            userIdentifier: 'user-1',
+            isDefault: true,
+          ),
+          ProfileConnection(
+            profileId: 'local-b',
+            connectionId: 'plex-1',
+            userToken: 'home-token-b',
+            userIdentifier: 'home-b',
+          ),
+          ProfileConnection(profileId: 'local-b', connectionId: 'not-in-backup', userIdentifier: 'x'),
+        ],
+      );
+      final written = utf8.decode(picker.lastSaveBytes!);
+      expect(written, isNot(contains('bea-geheim')));
+      expect(written, isNot(contains('jf-token-b')));
+
+      // The television: a profile of its own, none of the phone's left.
+      for (final key in prefs.keys.where((key) => key.startsWith('user_')).toList()) {
+        await prefs.remove(key);
+      }
+      await prefs.setString('active_app_profile_id', 'tv-own');
+      final directory = await Directory.systemTemp.createTemp('plesy-backup-profiles-');
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File(p.join(directory.path, 'plesy-backup-20261025.json'));
+      await file.writeAsBytes(picker.lastSaveBytes!);
+      final profiles = <Profile>[];
+      final rows = <ProfileConnection>[];
+
+      final result = await SettingsExportService.importFromPath(
+        file.path,
+        askPassword: () async => 'pw',
+        writeConnection: (_) async {},
+        writeProfile: (profile) async => profiles.add(profile),
+        writeProfileConnection: (row) async => rows.add(row),
+      );
+
+      expect(result!.profilesImported, 1);
+      expect(result.activeProfileId, 'profile-a');
+      final bea = profiles.single;
+      expect((bea.id, bea.displayName, bea.pinHash, bea.sortOrder, bea.isLocal), ('local-b', 'Bea', 'hash-b', 2, true));
+
+      expect(rows, hasLength(2), reason: 'a row whose server is not in the backup stays out');
+      final jellyfinRow = rows.singleWhere((row) => row.connectionId == 'jf-1');
+      expect(
+        (jellyfinRow.userToken, jellyfinRow.userIdentifier, jellyfinRow.isDefault),
+        ('jf-token-b', 'user-1', true),
+      );
+      final plexRow = rows.singleWhere((row) => row.connectionId == 'plex-1');
+      expect(plexRow.userToken, isNull, reason: 'the profile mints its own Plex Home token on first use');
+      expect(plexRow.userIdentifier, 'home-b');
+
+      Future<Map<String, Object?>> sourceOf(String scope) async {
+        final raw = prefs.getString('user_${scope}_iptv_sources')!;
+        expect(raw, isNot(contains('geheim')), reason: 'sealed again on this device');
+        final source = Map<String, Object?>.from((jsonDecode(raw) as List).single as Map);
+        return (await CredentialFields.reveal(source, iptvSealedFields)).json;
+      }
+
+      expect(await sourceOf('profile-a'), {'name': 'A', 'password': 'anna-geheim'});
+      expect(await sourceOf('local-b'), {'name': 'B', 'password': 'bea-geheim'});
+      expect(prefs.getString('user_local-b_hidden_libraries'), '["7"]');
+      expect(
+        prefs.getString('user_tv-own_iptv_sources'),
+        isNull,
+        reason: "this device's own profile is not handed a copy of the phone's",
+      );
+    });
+
+    Future<String> writeBackup(Map<String, Object?> payload) async {
+      final envelope = {
+        'formatVersion': SettingsExportService.formatVersion,
+        ...await BackupCrypto.encrypt(jsonEncode(payload), 'pw'),
+      };
+      final directory = await Directory.systemTemp.createTemp('plesy-backup-shape-');
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File(p.join(directory.path, 'plesy-backup-20261025.json'));
+      await file.writeAsString(jsonEncode(envelope));
+      return file.path;
+    }
+
+    test('a backup from before profiles travelled lands on the profile doing the restoring', () async {
+      await seedActiveProfile();
+      final path = await writeBackup({
+        'formatVersion': SettingsExportService.formatVersion,
+        'prefs': {
+          'iptv_sources': {'type': 'string', 'value': '[{"name":"Alt"}]'},
+        },
+      });
+
+      final result = await SettingsExportService.importFromPath(
+        path,
+        askPassword: () async => 'pw',
+        writeProfile: (_) async => fail('an old backup has no profiles'),
+      );
+
+      final prefs = await BaseSharedPreferencesService.sharedCache();
+      expect(prefs.getString('user_profile-a_iptv_sources'), '[{"name":"Alt"}]');
+      expect((result!.profilesImported, result.activeProfileId), (0, null));
+    });
+
+    test('a profile section reaches only its own profile settings', () async {
+      await seedActiveProfile();
+      final path = await writeBackup({
+        'formatVersion': SettingsExportService.formatVersion,
+        'prefs': <String, Object?>{},
+        'profileSettings': {
+          'local-b': {
+            'enable_hdr': {'type': 'bool', 'value': false},
+            'hidden_libraries': {'type': 'string', 'value': '["1"]'},
+          },
+          'bad_scope': {
+            'hidden_libraries': {'type': 'string', 'value': '["2"]'},
+          },
+        },
+      });
+
+      await SettingsExportService.importFromPath(path, askPassword: () async => 'pw');
+
+      final prefs = await BaseSharedPreferencesService.sharedCache();
+      expect(prefs.getBool('enable_hdr'), isTrue, reason: 'a device setting inside a profile section is ignored');
+      expect(prefs.getString('user_local-b_hidden_libraries'), '["1"]');
+      expect(prefs.keys.where((key) => key.contains('bad')), isEmpty);
     });
 
     test('the shared Download folder of every volume comes first', () async {

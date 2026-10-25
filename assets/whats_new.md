@@ -13,6 +13,16 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.32.0 (Build 872)
+
+### Bedienung
+- Fernseher: In einer Reihe springt Zurück erst an den Anfang der Reihe. Ein zweites Zurück öffnet wie gewohnt die Seitenleiste. Abschaltbar unter Einstellungen → Allgemein → „Zurück zum Reihenanfang“.
+
+### Sicherung
+- Die vollständige Sicherung nimmt jetzt alle Profile mit, jedes mit seinen eigenen Einstellungen, IPTV-Quellen und Servern. Nach dem Wiederherstellen öffnet Plebz das Profil, das beim Sichern aktiv war.
+- Simkl muss danach in jedem Profil neu verbunden werden.
+- Sicherungen aus älteren Versionen enthalten nur ein Profil. Für alle Profile einfach eine neue Sicherung erstellen.
+
 ## 1.31.0 (Build 869)
 
 ### IPTV

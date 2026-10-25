@@ -1555,6 +1555,12 @@ class Translations$settings$en {
 	/// en: 'Turn off if it doesn't appear'
 	String get useSystemTvKeyboardDescription => 'Turn off if it doesn\'t appear';
 
+	/// en: 'Back to row start'
+	String get backToRowStart => 'Back to row start';
+
+	/// en: 'First to the first title, then as usual'
+	String get backToRowStartDescription => 'First to the first title, then as usual';
+
 	/// en: 'Recommendation row'
 	String get showRecommendationsRow => 'Recommendation row';
 
@@ -1959,6 +1965,9 @@ class Translations$settings$en {
 
 	/// en: 'Backup restored: ${n} servers'
 	String importBackupSuccess({required Object n}) => 'Backup restored: ${n} servers';
+
+	/// en: 'Backup restored: ${n} servers, ${profiles} profiles'
+	String importBackupSuccessProfiles({required Object n, required Object profiles}) => 'Backup restored: ${n} servers, ${profiles} profiles';
 
 	/// en: '"Up next" panel'
 	String get showUpNextPanel => '"Up next" panel';
@@ -10804,6 +10813,8 @@ extension on Translations {
 			'settings.useSystemTvKeyboardDescription' => 'Turn off if it doesn\'t appear',
 			_ => null,
 		} ?? switch (path) {
+			'settings.backToRowStart' => 'Back to row start',
+			'settings.backToRowStartDescription' => 'First to the first title, then as usual',
 			'settings.showRecommendationsRow' => 'Recommendation row',
 			'settings.showRecommendationsRowDescription' => 'Only titles from your servers',
 			'settings.resetRecommendations' => 'Reset recommendations',
@@ -10965,6 +10976,7 @@ extension on Translations {
 			'settings.backupNoFilesTitle' => 'No backup found',
 			'settings.backupNoFilesMessage' => ({required Object paths}) => 'Put the backup file into one of these folders and try again:\n\n${paths}',
 			'settings.importBackupSuccess' => ({required Object n}) => 'Backup restored: ${n} servers',
+			'settings.importBackupSuccessProfiles' => ({required Object n, required Object profiles}) => 'Backup restored: ${n} servers, ${profiles} profiles',
 			'settings.showUpNextPanel' => '"Up next" panel',
 			'settings.showUpNextPanelDescription' => 'Near the end of an episode, with a countdown',
 			'settings.endOfEpisodeStyle' => 'At the end of an episode',
@@ -11313,11 +11325,11 @@ extension on Translations {
 			'videoControls.tracksButton' => 'Audio & Subtitles',
 			'videoControls.chaptersButton' => 'Chapters',
 			'videoControls.versionQualityButton' => 'Version & Quality',
+			_ => null,
+		} ?? switch (path) {
 			'videoControls.versionColumnHeader' => 'Version',
 			'videoControls.qualityColumnHeader' => 'Quality',
 			'videoControls.qualityOriginal' => 'Original',
-			_ => null,
-		} ?? switch (path) {
 			'videoControls.qualityPresetLabel' => ({required Object resolution, required Object bitrate}) => '${resolution}p ${bitrate} Mbps',
 			'videoControls.transcodeUnavailableFallback' => 'Transcoding unavailable — playing original quality',
 			'videoControls.subtitleUnavailableFallback' => 'Selected subtitles could not be loaded — continuing without subtitles',
@@ -11827,11 +11839,11 @@ extension on Translations {
 			'startup.showDetails' => 'Show details',
 			'startup.hideDetails' => 'Hide details',
 			'startup.copyDetails' => 'Copy details',
+			_ => null,
+		} ?? switch (path) {
 			'startup.detailsCopied' => 'Details copied to clipboard',
 			'startup.uploadDetails' => 'Upload details',
 			'startup.repairStorage' => 'Repair storage',
-			_ => null,
-		} ?? switch (path) {
 			'startup.repairTitle' => 'Repair stored data?',
 			'startup.repairBodyCommon' => 'Plebz\'s settings file is damaged and cannot be read. Repairing resets every setting to its default.',
 			'startup.repairBodyOneCredential' => 'One saved sign-in is damaged and cannot be read. Repairing removes just that one; your other settings are left alone.',
@@ -12341,11 +12353,11 @@ extension on Translations {
 			'watchTogether.notices.startedMedia' => ({required Object name, required Object title}) => '${name} started ${title}',
 			'watchTogether.notices.mediaStarted' => ({required Object title}) => 'Now playing ${title}',
 			'watchTogether.notices.stoppedMedia' => ({required Object name}) => '${name} stopped the video',
+			_ => null,
+		} ?? switch (path) {
 			'watchTogether.notices.mediaStopped' => 'The video stopped',
 			'watchTogether.notices.waitingFor' => ({required Object name}) => 'Waiting for ${name}...',
 			'watchTogether.notices.waitingForSomeone' => 'Waiting for someone to catch up...',
-			_ => null,
-		} ?? switch (path) {
 			'watchTogether.notices.finished' => 'Finished',
 			'watchTogether.notices.hostChangedTo' => ({required Object name}) => '${name} is now the host',
 			'watchTogether.notices.youAreNowHost' => 'You are now the host',
@@ -12855,11 +12867,11 @@ extension on Translations {
 			'seerr.shelfUpcomingShows' => 'Coming soon',
 			'seerr.shelfTopRatedShows' => 'Best rated series',
 			'seerr.shelfAvailableMovies' => 'Something new for a change - Films',
+			_ => null,
+		} ?? switch (path) {
 			'seerr.shelfAvailableShows' => 'Something new for a change - Series',
 			'seerr.shelfEverything' => 'Everything',
 			'services.title' => 'Services',
-			_ => null,
-		} ?? switch (path) {
 			'services.hubSubtitle' => 'Request new titles and fill in logos and descriptions.',
 			'services.integrations' => 'Integrations',
 			'services.notConnected' => 'Not connected',

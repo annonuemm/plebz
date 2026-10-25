@@ -27,6 +27,9 @@ import '../../services/saf_storage_service.dart';
 import 'package:path/path.dart' as p;
 
 import '../../connection/connection_registry.dart';
+import '../../profiles/profile_activation.dart';
+import '../../profiles/profile_connection_registry.dart';
+import '../../profiles/profile_registry.dart';
 import '../../media/year_filter.dart';
 import '../../services/local_file_access.dart';
 import '../../services/settings_export_service.dart';
@@ -1012,6 +1015,8 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
 
   Future<void> _handleExportBackup() async {
     final registry = context.read<ConnectionRegistry>();
+    final profiles = context.read<ProfileRegistry>();
+    final profileConnections = context.read<ProfileConnectionRegistry>();
     final password = await _askNewBackupPassword();
     if (password == null || !mounted) return;
 
@@ -1019,7 +1024,12 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
       context,
       operation: 'Backup export',
       body: () async {
-        final path = await SettingsExportService.exportBackupToFile(password: password, readConnections: registry.list);
+        final path = await SettingsExportService.exportBackupToFile(
+          password: password,
+          readConnections: registry.list,
+          readProfiles: profiles.list,
+          readProfileConnections: profileConnections.listAll,
+        );
         if (!mounted || path == null) return;
         await _reportBackupLocation(path);
       },
@@ -1047,6 +1057,8 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
 
   /// Picks a backup the way the platform allows, then restores from it.
   Future<ImportResult?> _runImport(ConnectionRegistry registry) {
+    final profiles = context.read<ProfileRegistry>();
+    final profileConnections = context.read<ProfileConnectionRegistry>();
     Future<String?> askPassword() => showTextInputDialog(
       context,
       title: t.settings.backupPasswordTitle,
@@ -1055,36 +1067,41 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
     );
 
     if (_usesFilePicker) {
-      return SettingsExportService.importFromFile(askPassword: askPassword, writeConnection: registry.upsert);
+      return SettingsExportService.importFromFile(
+        askPassword: askPassword,
+        writeConnection: registry.upsert,
+        writeProfile: profiles.upsert,
+        writeProfileConnection: profileConnections.upsert,
+      );
     }
-    return _importOnTelevision(askPassword: askPassword, registry: registry);
+    return _importOnTelevision(
+      (path) => SettingsExportService.importFromPath(
+        path,
+        askPassword: askPassword,
+        writeConnection: registry.upsert,
+        writeProfile: profiles.upsert,
+        writeProfileConnection: profileConnections.upsert,
+      ),
+    );
   }
 
   /// On a television the backup is chosen wherever it lies — the box's own
   /// picker, or the app's browser where there is none. Only without either
   /// (the file access declined) does it fall back to the known folders.
-  Future<ImportResult?> _importOnTelevision({
-    required Future<String?> Function() askPassword,
-    required ConnectionRegistry registry,
-  }) async {
+  Future<ImportResult?> _importOnTelevision(Future<ImportResult?> Function(String path) restore) async {
     final chosen = await LocalFileAccess.pickFile(
       context,
       extensions: const {SettingsExportService.fileExtension},
       title: t.settings.backupPickTitle,
     );
     if (!mounted) return null;
-    if (chosen != null) {
-      return SettingsExportService.importFromPath(chosen, askPassword: askPassword, writeConnection: registry.upsert);
-    }
+    if (chosen != null) return restore(chosen);
     if (await LocalFileAccess.hasSystemPicker() || await LocalFileAccess.hasFileAccess()) return null;
     if (!mounted) return null;
-    return _importFromKnownFolder(askPassword: askPassword, registry: registry);
+    return _importFromKnownFolder(restore);
   }
 
-  Future<ImportResult?> _importFromKnownFolder({
-    required Future<String?> Function() askPassword,
-    required ConnectionRegistry registry,
-  }) async {
+  Future<ImportResult?> _importFromKnownFolder(Future<ImportResult?> Function(String path) restore) async {
     final files = await SettingsExportService.findBackups();
     if (!mounted) return null;
     if (files.isEmpty) {
@@ -1106,7 +1123,19 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
       ],
     );
     if (chosen == null || !mounted) return null;
-    return SettingsExportService.importFromPath(chosen, askPassword: askPassword, writeConnection: registry.upsert);
+    return restore(chosen);
+  }
+
+  /// After a restore, carry on as the profile that was in use where the
+  /// backup was made. The restored profiles would otherwise sit unnoticed in
+  /// the picker while this device stays on the one it started with.
+  Future<void> _switchToRestoredProfile(String profileId) async {
+    final activeProfiles = context.read<ActiveProfileProvider>();
+    await activeProfiles.reloadFromStorage();
+    if (!mounted || activeProfiles.activeId == profileId) return;
+    final profile = activeProfiles.profiles.where((profile) => profile.id == profileId).firstOrNull;
+    if (profile == null) return;
+    await switchProfileFromUi(context, profile);
   }
 
   Future<void> _showImportSettingsDialog() async {
@@ -1161,10 +1190,16 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
           } else {
             showSuccessSnackBar(
               context,
-              result.connectionsImported > 0
+              result.profilesImported > 0
+                  ? t.settings.importBackupSuccessProfiles(
+                      n: result.connectionsImported,
+                      profiles: result.profilesImported,
+                    )
+                  : result.connectionsImported > 0
                   ? t.settings.importBackupSuccess(n: result.connectionsImported)
                   : t.settings.importSettingsSuccess,
             );
+            if (result.activeProfileId case final profileId?) await _switchToRestoredProfile(profileId);
           }
         } on WrongBackupPasswordException {
           if (mounted) showErrorSnackBar(context, t.settings.backupPasswordWrong);

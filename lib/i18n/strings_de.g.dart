@@ -536,6 +536,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get exportDialogTitle => 'Plebz-Einstellungen exportieren';
 	@override String get useSystemTvKeyboard => 'Tastatur des Geräts';
 	@override String get useSystemTvKeyboardDescription => 'Ausschalten, wenn sie nicht aufgeht';
+	@override String get backToRowStart => 'Zurück zum Reihenanfang';
+	@override String get backToRowStartDescription => 'Erst zum ersten Titel, dann wie gewohnt';
 	@override String get showRecommendationsRow => 'Empfehlungsreihe';
 	@override String get showRecommendationsRowDescription => 'Nur mit Titeln von deinen Servern';
 	@override String get resetRecommendations => 'Empfehlungen zurücksetzen';
@@ -667,6 +669,7 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get backupNoFilesTitle => 'Keine Sicherung gefunden';
 	@override String backupNoFilesMessage({required Object paths}) => 'Lege die Sicherungsdatei in einen dieser Ordner und versuche es erneut:\n\n${paths}';
 	@override String importBackupSuccess({required Object n}) => 'Sicherung wiederhergestellt: ${n} Server';
+	@override String importBackupSuccessProfiles({required Object n, required Object profiles}) => 'Sicherung wiederhergestellt: ${n} Server, ${profiles} Profile';
 	@override String get showUpNextPanel => 'Fenster „Als nächstes“';
 	@override String get showUpNextPanelDescription => 'Gegen Ende der Folge, mit Countdown';
 	@override String get endOfEpisodeStyle => 'Am Ende einer Folge';
@@ -4236,6 +4239,8 @@ extension on TranslationsDe {
 			'settings.exportDialogTitle' => 'Plebz-Einstellungen exportieren',
 			'settings.useSystemTvKeyboard' => 'Tastatur des Geräts',
 			'settings.useSystemTvKeyboardDescription' => 'Ausschalten, wenn sie nicht aufgeht',
+			'settings.backToRowStart' => 'Zurück zum Reihenanfang',
+			'settings.backToRowStartDescription' => 'Erst zum ersten Titel, dann wie gewohnt',
 			'settings.showRecommendationsRow' => 'Empfehlungsreihe',
 			'settings.showRecommendationsRowDescription' => 'Nur mit Titeln von deinen Servern',
 			'settings.resetRecommendations' => 'Empfehlungen zurücksetzen',
@@ -4339,10 +4344,10 @@ extension on TranslationsDe {
 			'settings.hardwareTestSections.device' => 'Gerät',
 			'settings.hardwareTestSections.display' => 'Bildschirm',
 			'settings.hardwareTestSections.colour' => 'Farbe & HDR',
-			'settings.hardwareTestSections.audio' => 'Ton',
-			'settings.hardwareTestSections.video' => 'Video-Decoder',
 			_ => null,
 		} ?? switch (path) {
+			'settings.hardwareTestSections.audio' => 'Ton',
+			'settings.hardwareTestSections.video' => 'Video-Decoder',
 			'settings.hardwareTestLabels.model' => 'Modell',
 			'settings.hardwareTestLabels.system' => 'System',
 			'settings.hardwareTestLabels.architecture' => 'Architektur',
@@ -4394,6 +4399,7 @@ extension on TranslationsDe {
 			'settings.backupNoFilesTitle' => 'Keine Sicherung gefunden',
 			'settings.backupNoFilesMessage' => ({required Object paths}) => 'Lege die Sicherungsdatei in einen dieser Ordner und versuche es erneut:\n\n${paths}',
 			'settings.importBackupSuccess' => ({required Object n}) => 'Sicherung wiederhergestellt: ${n} Server',
+			'settings.importBackupSuccessProfiles' => ({required Object n, required Object profiles}) => 'Sicherung wiederhergestellt: ${n} Server, ${profiles} Profile',
 			'settings.showUpNextPanel' => 'Fenster „Als nächstes“',
 			'settings.showUpNextPanelDescription' => 'Gegen Ende der Folge, mit Countdown',
 			'settings.endOfEpisodeStyle' => 'Am Ende einer Folge',
@@ -4852,11 +4858,11 @@ extension on TranslationsDe {
 			'subtitlingStyling.overrideForce' => 'Erzwingen',
 			'subtitlingStyling.overrideStrip' => 'Formatierung entfernen',
 			'subtitlingStyling.positionTop' => 'Oben',
+			_ => null,
+		} ?? switch (path) {
 			'subtitlingStyling.positionBottom' => 'Unten',
 			'subtitlingStyling.useMargins' => 'Auch außerhalb des Bildes',
 			'subtitlingStyling.anchorToScreen' => 'Im schwarzen Balken unten',
-			_ => null,
-		} ?? switch (path) {
 			'subtitlingStyling.bold' => 'Fett',
 			'subtitlingStyling.italic' => 'Kursiv',
 			'subtitlingStyling.renderResolution' => 'Render-Auflösung',
@@ -5366,11 +5372,11 @@ extension on TranslationsDe {
 			'explore.watchlistKeptLocallyNoIds' => 'In Plebz gemerkt: Der Server hat für diesen Titel keine externen IDs, darum bleibt er auf diesem Gerät.',
 			'watchlist.typeFilter' => 'Anzeigen',
 			'watchlist.statusFilter' => 'Status',
+			_ => null,
+		} ?? switch (path) {
 			'watchlist.allTypes' => 'Filme und Serien',
 			'watchlist.moviesOnly' => 'Nur Filme',
 			'watchlist.showsOnly' => 'Nur Serien',
-			_ => null,
-		} ?? switch (path) {
 			'watchlist.typeAll' => 'Alle',
 			'watchlist.typeMovies' => 'Filme',
 			'watchlist.typeShows' => 'Serien',
@@ -5880,11 +5886,11 @@ extension on TranslationsDe {
 			'performanceOverlay.avSync' => 'A/V-Sync',
 			'performanceOverlay.dropped' => 'Verworfen',
 			'performanceOverlay.dvRpus' => 'DV-RPUs',
+			_ => null,
+		} ?? switch (path) {
 			'performanceOverlay.dvRpuAverage' => 'DV-RPU Ø',
 			'performanceOverlay.dvSampleAverage' => 'DV-Sample Ø',
 			'performanceOverlay.maxLuma' => 'Max. Luma',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.minLuma' => 'Min. Luma',
 			'performanceOverlay.maxCll' => 'MaxCLL',
 			'performanceOverlay.maxFall' => 'MaxFALL',
@@ -6394,11 +6400,11 @@ extension on TranslationsDe {
 			'plebz.profilesHintConnectFirst' => 'Verbinde unten unter Dienste zuerst Simkl für dieses Profil.',
 			'plebz.addSourceFirst' => 'Füge zuerst eine Quelle hinzu: einen Server oder eine IPTV-Playlist.',
 			'plebz.finish' => 'Fertig',
+			_ => null,
+		} ?? switch (path) {
 			'plebz.setupAgain' => 'Einrichtung erneut starten',
 			'plebz.setupAgainDescription' => 'Aussehen, Quellen und Dienste, Schritt für Schritt',
 			'plebz.updateAvailableTitle' => 'Update verfügbar',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.updateAvailableBody' => ({required Object release}) => '${release} ist bereit zur Installation. Deine Einstellungen und Anmeldungen bleiben erhalten.',
 			'plebz.updateNow' => 'Aktualisieren',
 			'plebz.later' => 'Später',

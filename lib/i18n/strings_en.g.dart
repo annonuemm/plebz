@@ -7687,8 +7687,8 @@ class Translations$plebz$en {
 	/// en: 'Plebz was updated'
 	String get updatedTitle => 'Plebz was updated';
 
-	/// en: 'You are now on Plebz ${version} (Build ${build}).'
-	String updatedBody({required Object version, required Object build}) => 'You are now on Plebz ${version} (Build ${build}).';
+	/// en: 'You are now on Plebz ${version}.'
+	String updatedBody({required Object version}) => 'You are now on Plebz ${version}.';
 
 	/// en: 'Check for updates'
 	String get checkForUpdates => 'Check for updates';
@@ -13197,7 +13197,7 @@ extension on Translations {
 			'plebz.checking' => 'Checking for updates…',
 			'plebz.checkFailed' => 'GitHub could not be reached. The reason is under "View logs".',
 			'plebz.updatedTitle' => 'Plebz was updated',
-			'plebz.updatedBody' => ({required Object version, required Object build}) => 'You are now on Plebz ${version} (Build ${build}).',
+			'plebz.updatedBody' => ({required Object version}) => 'You are now on Plebz ${version}.',
 			'plebz.checkForUpdates' => 'Check for updates',
 			'plebz.checkForUpdatesDescription' => '',
 			'plebz.checkOnStartup' => 'Check for updates at start',

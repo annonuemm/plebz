@@ -376,6 +376,7 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get importSettingsInvalidFile => 'Diese Datei ist kein gültiger Plebz-Einstellungsexport';
 	@override String get importSettingsNoUser => 'Vor dem Import bitte anmelden';
 	@override String get shortcutsReset => 'Tastenkürzel auf Standard zurückgesetzt';
+	@override String get resetShortcutsConfirm => 'Deine eigenen Tastenkürzel werden durch die Standardbelegung ersetzt. Fortfahren?';
 	@override String get about => 'Über';
 	@override String get aboutDescription => 'App-Informationen und Lizenzen';
 	@override String get updates => 'Updates';
@@ -450,6 +451,14 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get audioPassthroughDescriptionApple => 'Dolby Digital Plus und Atmos über Apples Decoder – aus, wenn kein Ton kommt';
 	@override String get audioPassthroughDescriptionAppleSpatial => 'Dolby über Apples Decoder, ab iOS/tvOS 26 TrueHD Atmos und DTS:X räumlich – aus, wenn kein Ton kommt';
 	@override String get audioPassthroughOverriddenByNormalization => 'Aus, solange die Lautstärkenormalisierung aktiv ist';
+	@override String get audioChannelLimit => 'Audiokanäle';
+	@override String get audioChannelLimitDescription => 'Mischt den Ton für Anlagen herunter, die nicht alle Kanäle wiedergeben';
+	@override String get audioChannelLimitOriginal => 'Original';
+	@override String get audioChannelLimitOriginalDescription => 'Spielt alle Kanäle der Tonspur';
+	@override String get audioChannelLimitSurround51 => 'Bis 5.1';
+	@override String get audioChannelLimitSurround51Description => 'Mischt 7.1 auf 5.1 herunter, Passthrough bleibt unberührt';
+	@override String get audioChannelLimitStereo => 'Stereo';
+	@override String get audioChannelLimitStereoDescription => 'Mischt auf zwei Kanäle herunter und schaltet Passthrough ab';
 	@override String get downmixCenterBoost => 'Center-Kanal lauter';
 	@override String downmixCenterBoostValue({required Object db}) => '${db} dB';
 	@override String get downmixCenterBoostLabel => 'Verstärkung (dB)';
@@ -724,6 +733,7 @@ class _Translations$search$de extends Translations$search$en {
 	@override String get tryDifferentTerm => 'Anderen Suchbegriff versuchen';
 	@override String get searchYourMedia => 'In den eigenen Medien suchen';
 	@override String get enterTitleActorOrKeyword => 'Titel, Schauspieler oder Stichwort eingeben';
+	@override String get people => 'Personen';
 }
 
 // Path: hotkeys
@@ -1063,6 +1073,7 @@ class _Translations$videoControls$de extends Translations$videoControls$en {
 	@override String get pipActive => 'Wiedergabe im Bild-in-Bild-Modus';
 	@override String get pipFailed => 'Bild-in-Bild konnte nicht gestartet werden';
 	@override String get screenshotSaved => 'Screenshot gespeichert';
+	@override String get screenshotFailed => 'Bildschirmfoto fehlgeschlagen';
 	@override String zoomPercent({required Object percent}) => 'Zoom ${percent}%';
 	@override String volumePercent({required Object percent}) => 'Lautstärke ${percent}%';
 	@override late final _Translations$videoControls$pipErrors$de pipErrors = _Translations$videoControls$pipErrors$de._(_root);
@@ -1272,6 +1283,8 @@ class _Translations$profiles$de extends Translations$profiles$en {
 	@override String get signOut => 'Abmelden';
 	@override String get signOutPlexTitle => 'Von Plex abmelden?';
 	@override String signOutPlexMessage({required Object displayName}) => '${displayName} und alle Plex Home-Benutzer entfernen? Du kannst dich jederzeit wieder anmelden.';
+	@override String get signOutPlexDeleteDownloads => 'Downloads auch löschen';
+	@override String get signOutPlexDeleteDownloadsDescription => 'Sonst bleiben sie auf dem Gerät und kommen bei der nächsten Anmeldung zurück.';
 	@override String get signedOutPlex => 'Von Plex abgemeldet.';
 	@override String get signOutFailed => 'Abmeldung fehlgeschlagen.';
 	@override String get sectionTitle => 'Profile';
@@ -1513,6 +1526,7 @@ class _Translations$libraries$de extends Translations$libraries$en {
 	@override late final _Translations$libraries$groupings$de groupings = _Translations$libraries$groupings$de._(_root);
 	@override late final _Translations$libraries$filterCategories$de filterCategories = _Translations$libraries$filterCategories$de._(_root);
 	@override late final _Translations$libraries$sortLabels$de sortLabels = _Translations$libraries$sortLabels$de._(_root);
+	@override late final _Translations$libraries$advancedFilters$de advancedFilters = _Translations$libraries$advancedFilters$de._(_root);
 }
 
 // Path: about
@@ -2786,7 +2800,7 @@ class _Translations$plebz$de extends Translations$plebz$en {
 	@override String get checking => 'Suche nach Updates …';
 	@override String get checkFailed => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.';
 	@override String get updatedTitle => 'Plebz wurde aktualisiert';
-	@override String updatedBody({required Object version, required Object build}) => 'Du nutzt jetzt Plebz ${version} (Build ${build}).';
+	@override String updatedBody({required Object version}) => 'Du nutzt jetzt Plebz ${version}.';
 	@override String get checkForUpdates => 'Nach Updates suchen';
 	@override String get checkOnStartup => 'Beim Start nach Updates suchen';
 	@override String get checkOnStartupDescription => 'GitHub sieht dabei deine IP-Adresse';
@@ -3206,6 +3220,7 @@ class _Translations$libraries$filterCategories$de extends Translations$libraries
 	@override String get unwatched => 'Ungesehene';
 	@override String get unplayed => 'Nicht abgespielt';
 	@override String get favorites => 'Favoriten';
+	@override String get filePath => 'Dateipfad';
 }
 
 // Path: libraries.sortLabels
@@ -3238,6 +3253,41 @@ class _Translations$libraries$sortLabels$de extends Translations$libraries$sortL
 	@override String get dateDownloaded => 'Heruntergeladen am';
 	@override String get size => 'Größe';
 	@override String get library => 'Mediathek';
+}
+
+// Path: libraries.advancedFilters
+class _Translations$libraries$advancedFilters$de extends Translations$libraries$advancedFilters$en {
+	_Translations$libraries$advancedFilters$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get include => 'Einschließen';
+	@override String get exclude => 'Ausschließen';
+	@override String get any => 'Beliebig';
+	@override String get yes => 'Ja';
+	@override String get no => 'Nein';
+	@override String not({required Object value}) => 'Nicht ${value}';
+	@override String valueCount({required Object count}) => '${count} ausgewählt';
+	@override String valueCountExcluded({required Object count}) => '${count} ausgeschlossen';
+	@override String get searchValues => 'Werte durchsuchen';
+	@override String get noValues => 'Keine Werte';
+	@override String get matchContains => 'Enthält';
+	@override String get matchNotContains => 'Enthält nicht';
+	@override String get matchIs => 'Ist';
+	@override String get matchIsNot => 'Ist nicht';
+	@override String get matchBeginsWith => 'Beginnt mit';
+	@override String get matchEndsWith => 'Endet mit';
+	@override String get textHint => 'Text eingeben';
+	@override String get from => 'Von';
+	@override String get to => 'Bis';
+	@override String range({required Object from, required Object to}) => '${from} bis ${to}';
+	@override String atLeast({required Object value}) => 'Ab ${value}';
+	@override String atMost({required Object value}) => 'Bis ${value}';
+	@override String dateLastDays({required Object count}) => 'Letzte ${count} Tage';
+	@override String get dateLastYear => 'Letztes Jahr';
+	@override String dateOlderThanDays({required Object count}) => 'Älter als ${count} Tage';
+	@override String get dateOlderThanYear => 'Älter als ein Jahr';
 }
 
 // Path: explore.rows
@@ -3395,6 +3445,7 @@ class _Translations$explore$creditRole$de extends Translations$explore$creditRol
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override String get actor => 'Darsteller';
 	@override String get director => 'Regisseur';
 	@override String get writer => 'Autor';
 	@override String get producer => 'Produzent';
@@ -4079,6 +4130,7 @@ extension on TranslationsDe {
 			'settings.importSettingsInvalidFile' => 'Diese Datei ist kein gültiger Plebz-Einstellungsexport',
 			'settings.importSettingsNoUser' => 'Vor dem Import bitte anmelden',
 			'settings.shortcutsReset' => 'Tastenkürzel auf Standard zurückgesetzt',
+			'settings.resetShortcutsConfirm' => 'Deine eigenen Tastenkürzel werden durch die Standardbelegung ersetzt. Fortfahren?',
 			'settings.about' => 'Über',
 			'settings.aboutDescription' => 'App-Informationen und Lizenzen',
 			'settings.updates' => 'Updates',
@@ -4153,6 +4205,14 @@ extension on TranslationsDe {
 			'settings.audioPassthroughDescriptionApple' => 'Dolby Digital Plus und Atmos über Apples Decoder – aus, wenn kein Ton kommt',
 			'settings.audioPassthroughDescriptionAppleSpatial' => 'Dolby über Apples Decoder, ab iOS/tvOS 26 TrueHD Atmos und DTS:X räumlich – aus, wenn kein Ton kommt',
 			'settings.audioPassthroughOverriddenByNormalization' => 'Aus, solange die Lautstärkenormalisierung aktiv ist',
+			'settings.audioChannelLimit' => 'Audiokanäle',
+			'settings.audioChannelLimitDescription' => 'Mischt den Ton für Anlagen herunter, die nicht alle Kanäle wiedergeben',
+			'settings.audioChannelLimitOriginal' => 'Original',
+			'settings.audioChannelLimitOriginalDescription' => 'Spielt alle Kanäle der Tonspur',
+			'settings.audioChannelLimitSurround51' => 'Bis 5.1',
+			'settings.audioChannelLimitSurround51Description' => 'Mischt 7.1 auf 5.1 herunter, Passthrough bleibt unberührt',
+			'settings.audioChannelLimitStereo' => 'Stereo',
+			'settings.audioChannelLimitStereoDescription' => 'Mischt auf zwei Kanäle herunter und schaltet Passthrough ab',
 			'settings.downmixCenterBoost' => 'Center-Kanal lauter',
 			'settings.downmixCenterBoostValue' => ({required Object db}) => '${db} dB',
 			'settings.downmixCenterBoostLabel' => 'Verstärkung (dB)',
@@ -4335,6 +4395,8 @@ extension on TranslationsDe {
 			'settings.showWatchTogetherAction' => 'Knopf „Gemeinsam ansehen“',
 			'settings.showCompanionRemoteAction' => 'Knopf „Fernbedienung“',
 			'settings.showServerActivitiesAction' => 'Knopf „Serveraktivität“',
+			_ => null,
+		} ?? switch (path) {
 			'settings.hideHomeActionsUntilFocus' => 'Werkzeugleiste erst bei Fokus',
 			'settings.showDownloadAction' => 'Download-Knopf',
 			'settings.showDownloadActionDescription' => 'Auf Film- und Folgenseiten, sonst im ⋮-Menü',
@@ -4344,8 +4406,6 @@ extension on TranslationsDe {
 			'settings.hardwareTestSections.device' => 'Gerät',
 			'settings.hardwareTestSections.display' => 'Bildschirm',
 			'settings.hardwareTestSections.colour' => 'Farbe & HDR',
-			_ => null,
-		} ?? switch (path) {
 			'settings.hardwareTestSections.audio' => 'Ton',
 			'settings.hardwareTestSections.video' => 'Video-Decoder',
 			'settings.hardwareTestLabels.model' => 'Modell',
@@ -4445,6 +4505,7 @@ extension on TranslationsDe {
 			'search.tryDifferentTerm' => 'Anderen Suchbegriff versuchen',
 			'search.searchYourMedia' => 'In den eigenen Medien suchen',
 			'search.enterTitleActorOrKeyword' => 'Titel, Schauspieler oder Stichwort eingeben',
+			'search.people' => 'Personen',
 			'hotkeys.setShortcutFor' => ({required Object actionName}) => 'Tastenkürzel festlegen für ${actionName}',
 			'hotkeys.clearShortcut' => 'Kürzel löschen',
 			'hotkeys.noShortcutSet' => 'Kein Tastenkürzel festgelegt',
@@ -4727,6 +4788,7 @@ extension on TranslationsDe {
 			'videoControls.pipActive' => 'Wiedergabe im Bild-in-Bild-Modus',
 			'videoControls.pipFailed' => 'Bild-in-Bild konnte nicht gestartet werden',
 			'videoControls.screenshotSaved' => 'Screenshot gespeichert',
+			'videoControls.screenshotFailed' => 'Bildschirmfoto fehlgeschlagen',
 			'videoControls.zoomPercent' => ({required Object percent}) => 'Zoom ${percent}%',
 			'videoControls.volumePercent' => ({required Object percent}) => 'Lautstärke ${percent}%',
 			'videoControls.pipErrors.androidVersion' => 'Erfordert Android 8.0 oder neuer',
@@ -4847,6 +4909,8 @@ extension on TranslationsDe {
 			'subtitlingStyling.border' => 'Rahmen',
 			'subtitlingStyling.background' => 'Hintergrund',
 			'subtitlingStyling.fontSize' => 'Schriftgröße',
+			_ => null,
+		} ?? switch (path) {
 			'subtitlingStyling.textColor' => 'Textfarbe',
 			'subtitlingStyling.borderSize' => 'Rahmengröße',
 			'subtitlingStyling.borderColor' => 'Rahmenfarbe',
@@ -4858,8 +4922,6 @@ extension on TranslationsDe {
 			'subtitlingStyling.overrideForce' => 'Erzwingen',
 			'subtitlingStyling.overrideStrip' => 'Formatierung entfernen',
 			'subtitlingStyling.positionTop' => 'Oben',
-			_ => null,
-		} ?? switch (path) {
 			'subtitlingStyling.positionBottom' => 'Unten',
 			'subtitlingStyling.useMargins' => 'Auch außerhalb des Bildes',
 			'subtitlingStyling.anchorToScreen' => 'Im schwarzen Balken unten',
@@ -4897,6 +4959,8 @@ extension on TranslationsDe {
 			'profiles.signOut' => 'Abmelden',
 			'profiles.signOutPlexTitle' => 'Von Plex abmelden?',
 			'profiles.signOutPlexMessage' => ({required Object displayName}) => '${displayName} und alle Plex Home-Benutzer entfernen? Du kannst dich jederzeit wieder anmelden.',
+			'profiles.signOutPlexDeleteDownloads' => 'Downloads auch löschen',
+			'profiles.signOutPlexDeleteDownloadsDescription' => 'Sonst bleiben sie auf dem Gerät und kommen bei der nächsten Anmeldung zurück.',
 			'profiles.signedOutPlex' => 'Von Plex abgemeldet.',
 			'profiles.signOutFailed' => 'Abmeldung fehlgeschlagen.',
 			'profiles.sectionTitle' => 'Profile',
@@ -5132,6 +5196,7 @@ extension on TranslationsDe {
 			'libraries.filterCategories.unwatched' => 'Ungesehene',
 			'libraries.filterCategories.unplayed' => 'Nicht abgespielt',
 			'libraries.filterCategories.favorites' => 'Favoriten',
+			'libraries.filterCategories.filePath' => 'Dateipfad',
 			'libraries.sortLabels.title' => 'Titel',
 			'libraries.sortLabels.dateAdded' => 'Hinzugefügt am',
 			'libraries.sortLabels.releaseDate' => 'Erscheinungsdatum',
@@ -5155,6 +5220,32 @@ extension on TranslationsDe {
 			'libraries.sortLabels.dateDownloaded' => 'Heruntergeladen am',
 			'libraries.sortLabels.size' => 'Größe',
 			'libraries.sortLabels.library' => 'Mediathek',
+			'libraries.advancedFilters.include' => 'Einschließen',
+			'libraries.advancedFilters.exclude' => 'Ausschließen',
+			'libraries.advancedFilters.any' => 'Beliebig',
+			'libraries.advancedFilters.yes' => 'Ja',
+			'libraries.advancedFilters.no' => 'Nein',
+			'libraries.advancedFilters.not' => ({required Object value}) => 'Nicht ${value}',
+			'libraries.advancedFilters.valueCount' => ({required Object count}) => '${count} ausgewählt',
+			'libraries.advancedFilters.valueCountExcluded' => ({required Object count}) => '${count} ausgeschlossen',
+			'libraries.advancedFilters.searchValues' => 'Werte durchsuchen',
+			'libraries.advancedFilters.noValues' => 'Keine Werte',
+			'libraries.advancedFilters.matchContains' => 'Enthält',
+			'libraries.advancedFilters.matchNotContains' => 'Enthält nicht',
+			'libraries.advancedFilters.matchIs' => 'Ist',
+			'libraries.advancedFilters.matchIsNot' => 'Ist nicht',
+			'libraries.advancedFilters.matchBeginsWith' => 'Beginnt mit',
+			'libraries.advancedFilters.matchEndsWith' => 'Endet mit',
+			'libraries.advancedFilters.textHint' => 'Text eingeben',
+			'libraries.advancedFilters.from' => 'Von',
+			'libraries.advancedFilters.to' => 'Bis',
+			'libraries.advancedFilters.range' => ({required Object from, required Object to}) => '${from} bis ${to}',
+			'libraries.advancedFilters.atLeast' => ({required Object value}) => 'Ab ${value}',
+			'libraries.advancedFilters.atMost' => ({required Object value}) => 'Bis ${value}',
+			'libraries.advancedFilters.dateLastDays' => ({required Object count}) => 'Letzte ${count} Tage',
+			'libraries.advancedFilters.dateLastYear' => 'Letztes Jahr',
+			'libraries.advancedFilters.dateOlderThanDays' => ({required Object count}) => 'Älter als ${count} Tage',
+			'libraries.advancedFilters.dateOlderThanYear' => 'Älter als ein Jahr',
 			'about.title' => 'Über',
 			'about.openSourceLicenses' => 'Open-Source-Lizenzen',
 			'about.versionLabel' => ({required Object version}) => 'Version ${version}',
@@ -5319,6 +5410,7 @@ extension on TranslationsDe {
 			'explore.sourceMaterial.webComic' => 'Webcomic',
 			'explore.sourceMaterial.musicRelease' => 'Musik',
 			'explore.sourceMaterial.otherMedia' => 'Sonstiges',
+			'explore.creditRole.actor' => 'Darsteller',
 			'explore.creditRole.director' => 'Regisseur',
 			'explore.creditRole.writer' => 'Autor',
 			'explore.creditRole.producer' => 'Produzent',
@@ -5331,6 +5423,8 @@ extension on TranslationsDe {
 			'explore.relation.alternativeVersion' => 'Alternative Version',
 			'explore.relation.summary' => 'Zusammenfassung',
 			'explore.relation.parentStory' => 'Hauptgeschichte',
+			_ => null,
+		} ?? switch (path) {
 			'explore.relation.adaptation' => 'Adaption',
 			'explore.relation.other' => 'Verwandt',
 			'explore.broadcast' => ({required Object day, required Object time}) => 'Läuft ${day} um ${time}',
@@ -5372,8 +5466,6 @@ extension on TranslationsDe {
 			'explore.watchlistKeptLocallyNoIds' => 'In Plebz gemerkt: Der Server hat für diesen Titel keine externen IDs, darum bleibt er auf diesem Gerät.',
 			'watchlist.typeFilter' => 'Anzeigen',
 			'watchlist.statusFilter' => 'Status',
-			_ => null,
-		} ?? switch (path) {
 			'watchlist.allTypes' => 'Filme und Serien',
 			'watchlist.moviesOnly' => 'Nur Filme',
 			'watchlist.showsOnly' => 'Nur Serien',
@@ -5845,6 +5937,8 @@ extension on TranslationsDe {
 			'videoSettings.hdrToneMappingCompositorDescription' => 'Die HDR-Metadaten der Quelle durchreichen und vom Desktop-Compositor anpassen lassen.',
 			'videoSettings.hdrToneMappingPlayer' => 'Player',
 			'videoSettings.hdrToneMappingPlayerDescription' => 'Im Player an die maximale Helligkeit des Displays anpassen und das Ergebnis anschließend an den Compositor melden.',
+			_ => null,
+		} ?? switch (path) {
 			'videoSettings.hdrToneMappingFailed' => 'Das HDR-Tone-Mapping konnte nicht geändert werden – der vorherige Modus ist weiterhin aktiv.',
 			'videoSettings.audioOutput' => 'Audioausgabe',
 			'videoSettings.performanceOverlay' => 'Leistungsanzeige',
@@ -5886,8 +5980,6 @@ extension on TranslationsDe {
 			'performanceOverlay.avSync' => 'A/V-Sync',
 			'performanceOverlay.dropped' => 'Verworfen',
 			'performanceOverlay.dvRpus' => 'DV-RPUs',
-			_ => null,
-		} ?? switch (path) {
 			'performanceOverlay.dvRpuAverage' => 'DV-RPU Ø',
 			'performanceOverlay.dvSampleAverage' => 'DV-Sample Ø',
 			'performanceOverlay.maxLuma' => 'Max. Luma',
@@ -6359,6 +6451,8 @@ extension on TranslationsDe {
 			'sport.yesterday' => 'Gestern',
 			'sport.zoneChampionsLeague' => 'Champions League',
 			'sport.zoneEurope' => 'Europa',
+			_ => null,
+		} ?? switch (path) {
 			'sport.zonePromotion' => 'Aufstieg',
 			'sport.zonePlayoff' => 'Relegation',
 			'sport.zoneRelegation' => 'Abstieg',
@@ -6400,8 +6494,6 @@ extension on TranslationsDe {
 			'plebz.profilesHintConnectFirst' => 'Verbinde unten unter Dienste zuerst Simkl für dieses Profil.',
 			'plebz.addSourceFirst' => 'Füge zuerst eine Quelle hinzu: einen Server oder eine IPTV-Playlist.',
 			'plebz.finish' => 'Fertig',
-			_ => null,
-		} ?? switch (path) {
 			'plebz.setupAgain' => 'Einrichtung erneut starten',
 			'plebz.setupAgainDescription' => 'Aussehen, Quellen und Dienste, Schritt für Schritt',
 			'plebz.updateAvailableTitle' => 'Update verfügbar',
@@ -6412,7 +6504,7 @@ extension on TranslationsDe {
 			'plebz.checking' => 'Suche nach Updates …',
 			'plebz.checkFailed' => 'GitHub war nicht erreichbar. Den Grund findest du unter „Protokolle anzeigen“.',
 			'plebz.updatedTitle' => 'Plebz wurde aktualisiert',
-			'plebz.updatedBody' => ({required Object version, required Object build}) => 'Du nutzt jetzt Plebz ${version} (Build ${build}).',
+			'plebz.updatedBody' => ({required Object version}) => 'Du nutzt jetzt Plebz ${version}.',
 			'plebz.checkForUpdates' => 'Nach Updates suchen',
 			'plebz.checkOnStartup' => 'Beim Start nach Updates suchen',
 			'plebz.checkOnStartupDescription' => 'GitHub sieht dabei deine IP-Adresse',

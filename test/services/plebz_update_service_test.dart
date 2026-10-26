@@ -640,14 +640,16 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    String body(int build) => t.plebz.updatedBody(version: '1.1.0', build: build);
+    // The version alone: a build number is never shown to the viewer.
+    String body() => t.plebz.updatedBody(version: '1.1.0');
 
     testWidgets('the first start of a newer build says which one is installed', (tester) async {
       await SettingsService.instance.write(PlebzPrefs.plebzLastSeenBuild, 557);
       await start(tester, build: 558);
 
       expect(find.text(t.plebz.updatedTitle), findsOneWidget);
-      expect(find.text(body(558)), findsOneWidget);
+      expect(find.text(body()), findsOneWidget);
+      expect(find.textContaining('558'), findsNothing, reason: 'the version, never the build number');
       expect(SettingsService.instance.read(PlebzPrefs.plebzLastSeenBuild), 558);
     });
 
@@ -668,7 +670,7 @@ void main() {
 '''),
       );
 
-      expect(find.textContaining(body(558)), findsOneWidget);
+      expect(find.textContaining(body()), findsOneWidget);
       expect(find.textContaining('Installed now'), findsOneWidget);
       expect(find.textContaining('Skipped'), findsOneWidget);
       expect(find.textContaining('Seen before'), findsNothing);

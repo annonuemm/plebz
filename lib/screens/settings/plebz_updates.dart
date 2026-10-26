@@ -53,7 +53,7 @@ Future<void> maybeShowPlebzUpdatedNotice(
     title: t.plebz.updatedTitle,
     span: plebzWhatsNewSpan(
       notes,
-      lead: t.plebz.updatedBody(version: current.version, build: current.build),
+      lead: t.plebz.updatedBody(version: current.version),
     ),
   );
 }

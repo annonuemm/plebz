@@ -454,6 +454,9 @@ void main() {
     );
     await tester.pump();
     expect(find.byType(OckerPosterTile), findsNothing, reason: 'still loading');
+    // Still loading is not "nothing here" (Plebz, audit 2026-10-26).
+    expect(find.text(t.hubDetail.noItemsFound), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
     // What choosing the destination does.
     tester.state<WatchlistScreenState>(find.byType(WatchlistScreen)).focusActiveTabIfReady();

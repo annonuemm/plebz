@@ -7,6 +7,7 @@ import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/screens/settings/plebz_settings_shell.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/theme/mono_tokens.dart';
 import 'package:plezy/widgets/app_bar_back_button.dart';
 import 'package:plezy/widgets/focusable_list_tile.dart';
 import 'package:plezy/widgets/setting_tile.dart';
@@ -73,6 +74,7 @@ void main() {
     WidgetTester tester, {
     Size size = const Size(1280, 720),
     VoidCallback? onExitLeft,
+    AppThemeVariant? variant,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -83,7 +85,7 @@ void main() {
       TranslationProvider(
         child: InputModeTracker(
           child: MaterialApp(
-            theme: monoTheme(MonoPalette.dark),
+            theme: variant == null ? monoTheme(MonoPalette.dark) : monoTheme(MonoPalette.dark, variant: variant),
             home: Scaffold(
               body: PlebzSettingsShell(
                 key: key,
@@ -206,6 +208,21 @@ void main() {
     await tester.pump();
     expect(left, 1);
   });
+
+  for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+    testWidgets('a group heading reads like the headings on the page in ${variant.name} (Plebz)', (tester) async {
+      await pumpShell(tester, variant: variant);
+      // A theme swap animates; let it land before reading the style.
+      await tester.pump(const Duration(seconds: 1));
+
+      final heading = tester.widget<Text>(find.text('Group one'));
+      final context = tester.element(find.text('Group one'));
+      final pageHeading = Theme.of(context).textTheme.labelLarge!;
+      expect(heading.style!.fontSize, pageHeading.fontSize);
+      expect(heading.style!.fontWeight, FontWeight.w600);
+      expect(heading.style!.color, tokens(context).textMuted);
+    });
+  }
 
   testWidgets('a click on a topic shows it without moving into it', (tester) async {
     await pumpShell(tester);

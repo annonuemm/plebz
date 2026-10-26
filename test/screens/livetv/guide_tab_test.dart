@@ -552,6 +552,27 @@ http://provider/stream/ard
     await tester.pump(const Duration(milliseconds: 300));
   }
 
+  testWidgets('a channel without programmes says so where the guide is scrolled to, not under the channels (Plebz)', (
+    tester,
+  ) async {
+    await pumpDesktopGuide(tester, const Size(1280, 720));
+    final words = find.text(t.liveTv.noPrograms);
+    final grid = find.ancestor(
+      of: words,
+      matching: find.byWidgetPredicate(
+        (w) => w is Scrollable && axisDirectionToAxis(w.axisDirection) == Axis.horizontal,
+      ),
+    );
+    final scrollable = tester.state<ScrollableState>(grid.first);
+
+    // Hours on, as the guide stands once it has scrolled to now.
+    scrollable.position.jumpTo(scrollable.position.maxScrollExtent / 2);
+    await tester.pump();
+
+    expect(tester.getRect(words).left, greaterThanOrEqualTo(tester.getRect(grid.first).left));
+    expect(tester.getRect(words).right, lessThanOrEqualTo(tester.getRect(grid.first).right));
+  });
+
   group('a phone keeps rows tall enough for a block\'s three lines (Plebz)', () {
     Future<double> rowHeightOnPhone(WidgetTester tester, Size size, {double textScale = 1}) async {
       resetSharedPreferencesForTest();

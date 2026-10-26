@@ -13,6 +13,18 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.32.1 (Build 877)
+
+### Darstellung
+- Die Gruppenüberschriften in den Einstellungen sind größer und besser lesbar.
+- Fernseher: Bei aufgeklappten Mediatheken liegt „Einstellungen“ in der Seitenleiste nicht mehr über dem Profilnamen.
+- Live-TV: „Keine Programmdaten verfügbar“ ist im Programmführer nicht mehr abgeschnitten.
+- Die Merkliste zeigt beim Laden einen Ladekreis statt kurz „Keine Elemente gefunden“.
+- Handy und Tablet: Die Startseite heißt oben jetzt „Start“, wie unten in der Leiste.
+
+### Texte
+- Rund 40 Stellen, die noch auf Englisch waren, sind jetzt deutsch, etwa „Audiokanäle“ unter Wiedergabe und die erweiterten Filter in den Mediatheken.
+
 ## 1.32.0 (Build 872)
 
 ### Bedienung

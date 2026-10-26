@@ -406,18 +406,20 @@ class OckerSideRailState extends State<OckerSideRail> {
           Positioned(
             left: 0,
             right: 0,
-            // "Flach": the list keeps between the mark and the profile row,
-            // and the rows fade out at its two edges when it is scrolled —
-            // a destination's open rows ran on behind both (the viewer's
-            // call). The fade lies in padding of its own, so a list at rest
-            // stands exactly where it did.
-            top: tk.flat ? top - _flatListFade * scale : top,
+            // "Flach", and Glas on a television: the list keeps between the
+            // head and the profile row, and the rows fade out at its two
+            // edges when it is scrolled — a destination's open rows ran on
+            // behind both (the viewer's call; under Glas the libraries' rows
+            // put "Einstellungen" over the profile's name, audit 2026-10-26).
+            // The fade lies in padding of its own, so a list at rest stands
+            // exactly where it did.
+            top: withProfile ? top - _flatListFade * scale : top,
             bottom: withProfile ? _flatProfileBottom * scale + safeBottom + geometry.rowHeight : 0,
             child: _FlatListEdges(
-              fade: tk.flat ? _flatListFade * scale : 0,
+              fade: withProfile ? _flatListFade * scale : 0,
               child: SingleChildScrollView(
-                clipBehavior: tk.flat ? Clip.hardEdge : Clip.none,
-                padding: tk.flat ? EdgeInsets.symmetric(vertical: _flatListFade * scale) : null,
+                clipBehavior: withProfile ? Clip.hardEdge : Clip.none,
+                padding: withProfile ? EdgeInsets.symmetric(vertical: _flatListFade * scale) : null,
                 child: Column(
                   crossAxisAlignment: .start,
                   children: [

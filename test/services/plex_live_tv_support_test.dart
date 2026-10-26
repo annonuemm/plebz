@@ -15,6 +15,8 @@ import 'package:plezy/models/plex/plex_config.dart';
 import 'package:plezy/services/plex_api_cache.dart';
 import 'package:plezy/services/plex_client.dart';
 import 'package:plezy/utils/active_client_scope.dart';
+import 'package:plezy/utils/app_logger.dart';
+import 'package:logger/logger.dart' show Level;
 
 import '../test_helpers/http_fixtures.dart';
 
@@ -215,6 +217,20 @@ void main() {
     expect(dvrs.single.lineupTitle, 'Antenna');
     expect(dvrs.single.channelMappings.single.channelKey, 'ch-1');
     expect(dvrs.single.channelMappings.single.enabled, isTrue);
+  });
+
+  test('a server that keeps Live TV to itself answers 403 without an error in the log (Plebz)', () async {
+    final client = makeClient((request) async => http.Response('', 403));
+    addTearDown(client.close);
+    MemoryLogOutput.clearLogs();
+
+    await expectLater(client.liveTvDvr!.fetchDvrs(), throwsA(isA<MediaServerHttpException>()));
+
+    expect(
+      MemoryLogOutput.getLogs().where((entry) => entry.level == Level.error),
+      isEmpty,
+      reason: 'expected on a shared server; the caller still sees the exception',
+    );
   });
 
   test('subscription template parses settings and URL-encoded enum labels', () async {

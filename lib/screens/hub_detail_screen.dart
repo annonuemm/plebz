@@ -690,7 +690,14 @@ class HubDetailScreenState extends State<HubDetailScreen>
         showCount: !widget.isEmbedded,
         location: widget.ockerLocation,
         filters: buildFocusableAppBarActions(),
-        emptyState: Center(child: Text(_items.isEmpty ? t.hubDetail.noItemsFound : t.libraries.noItemsMatchFilters)),
+        // Plebz: still loading is not "nothing here" — the watchlist on a slow
+        // server said so for seconds before its titles came (audit
+        // 2026-10-26). The original look's list draws the same spinner.
+        emptyState: Center(
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : Text(_items.isEmpty ? t.hubDetail.noItemsFound : t.libraries.noItemsMatchFilters),
+        ),
         onPlay: (_, item) => unawaited(
           navigateToMediaItem(
             context,

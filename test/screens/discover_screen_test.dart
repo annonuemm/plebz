@@ -738,7 +738,9 @@ void main() {
 
   testWidgets('the home clock is TV-only chrome', (tester) async {
     await _pumpDiscoverShell(tester, isTv: false);
-    expect(find.text(t.discover.title), findsOneWidget);
+    // Named as its tab is (Plebz), not "Discover" over a tab called "Home".
+    expect(find.text(t.common.home), findsOneWidget);
+    expect(find.text(t.discover.title), findsNothing);
     expect(
       find.byType(SystemClock),
       findsNothing,

@@ -20,6 +20,7 @@ import 'package:plezy/redesign/ocker_side_rail.dart';
 import 'package:plezy/redesign/ocker_skin.dart';
 import 'package:plezy/redesign/ocker_submenu.dart';
 import 'package:plezy/services/settings_service.dart';
+import 'package:plezy/utils/platform_detector.dart';
 import 'package:plezy/theme/liquid_glass.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/widgets/app_icon.dart';
@@ -204,6 +205,18 @@ void main() {
       // Glas keeps its profile in the start page's header.
       await pump(expanded: true, variant: AppThemeVariant.glas);
       expect(find.byKey(OckerSideRail.profileKey), findsNothing);
+
+      // Glas on a television has the profile at the foot as well, and keeps
+      // its list above it too: a library's open rows put "Einstellungen" over
+      // the profile's name (audit 2026-10-26).
+      TvDetectionService.debugSetAppleTVOverride(true);
+      addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+      await pump(expanded: true, variant: AppThemeVariant.glas);
+      expect(find.byKey(OckerSideRail.profileKey), findsOneWidget);
+      final glasList = tester.widget<SingleChildScrollView>(
+        find.descendant(of: find.byType(OckerSideRail), matching: find.byType(SingleChildScrollView)),
+      );
+      expect(glasList.clipBehavior, Clip.hardEdge);
     });
 
     testWidgets('the ends stop rather than wrap', (tester) async {

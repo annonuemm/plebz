@@ -6,7 +6,6 @@ import '../../focus/dpad_navigator.dart';
 import '../../focus/input_mode_tracker.dart';
 import '../../focus/key_event_utils.dart';
 import '../../redesign/ocker_skin.dart';
-import '../../redesign/ocker_type.dart';
 import '../../theme/mono_tokens.dart';
 import '../../utils/platform_detector.dart';
 import '../../widgets/app_bar_back_button.dart';
@@ -514,13 +513,15 @@ class _ColumnHeading extends StatelessWidget {
         child: Text(title, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: tokens(context).textMuted)),
       );
     }
-    final type = OckerType.of(context);
+    // Set as the pane's own section headings beside it ([SettingsSectionHeader]):
+    // the source label it wore read as a footnote from the sofa (the user's
+    // call, 2026-10-26).
     final scale = ockerScale(context);
     return Padding(
-      padding: EdgeInsets.fromLTRB(22, 20 * scale, 16, 8 * scale),
+      padding: EdgeInsets.fromLTRB(22, 24 * scale, 16, 8 * scale),
       child: Text(
-        type.headingCase(title),
-        style: type.sourceLabel.copyWith(color: tokens(context).ink(0.45)),
+        title,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: tokens(context).textMuted, fontWeight: .w600),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),

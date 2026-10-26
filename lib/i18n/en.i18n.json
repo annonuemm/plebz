@@ -3147,7 +3147,7 @@
     "checking": "Checking for updates…",
     "checkFailed": "GitHub could not be reached. The reason is under \"View logs\".",
     "updatedTitle": "Plebz was updated",
-    "updatedBody": "You are now on Plebz ${version} (Build ${build}).",
+    "updatedBody": "You are now on Plebz ${version}.",
     "checkForUpdates": "Check for updates",
     "checkForUpdatesDescription": "",
     "checkOnStartup": "Check for updates at start",

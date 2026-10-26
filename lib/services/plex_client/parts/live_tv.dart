@@ -172,7 +172,9 @@ mixin _PlexLiveTvClientMethods on _PlexClientInternals implements LiveTvSupport,
   /// Get all DVR devices configured on this server
   @override
   Future<List<LiveTvDvr>> fetchDvrs() async {
-    return _wrapListApiCall<LiveTvDvr>(() => _http.get('/livetv/dvrs'), (response) {
+    try {
+      final response = await _http.get('/livetv/dvrs');
+      throwIfHttpError(response);
       final container = _getMediaContainer(response);
       if (container != null && container['Dvr'] != null) {
         final rootMappings = container['ChannelMapping'];
@@ -183,7 +185,18 @@ mixin _PlexLiveTvClientMethods on _PlexClientInternals implements LiveTvSupport,
         }).toList();
       }
       return [];
-    }, 'Failed to get DVRs');
+    } catch (e, st) {
+      // Plebz: a shared server whose owner keeps Live TV to themselves answers
+      // 403 on every start. Expected, so a note rather than an error — it
+      // stood twice in every log a viewer sent (audit 2026-10-26). Callers see
+      // the same exception as before.
+      if (e is MediaServerHttpException && e.statusCode == 403) {
+        appLogger.d('No Live TV access on this server (HTTP 403)');
+      } else {
+        appLogger.e('Failed to get DVRs', error: e, stackTrace: st);
+      }
+      rethrow;
+    }
   }
 
   /// Check if this server has at least one DVR configured

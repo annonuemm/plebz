@@ -1907,15 +1907,24 @@ class GuideTabState extends State<GuideTab>
           child: Material(
             color: Color.alphaBlend(tk.surface.withValues(alpha: 0.5), tk.bg),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(tk.radiusXs)),
-            // Plebz: at the start of the row, not in its middle — the row runs
-            // the whole day, so its middle lay hours off to the right and the
-            // words came out cut at the edge of the screen.
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: Padding(
-                padding: const EdgeInsetsDirectional.only(start: 12),
-                child: Text(t.liveTv.noPrograms, style: theme.textTheme.bodySmall?.copyWith(color: tk.textMuted)),
-              ),
+            // Plebz: at the start of what is in view, not in the row's middle
+            // or at its start — the row runs the whole day, so its middle lay
+            // hours off to the right, and its start lay under the channels
+            // once the guide had scrolled to now ("e Programmdaten", audit
+            // 2026-10-26). The words follow the scroll as a title does.
+            child: ListenableBuilder(
+              listenable: _gridHorizontalController,
+              builder: (context, child) {
+                final scrollOffset = _gridHorizontalController.hasClients ? _gridHorizontalController.offset : 0.0;
+                return Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Padding(
+                    padding: EdgeInsetsDirectional.only(start: 12 + scrollOffset),
+                    child: child,
+                  ),
+                );
+              },
+              child: Text(t.liveTv.noPrograms, style: theme.textTheme.bodySmall?.copyWith(color: tk.textMuted)),
             ),
           ),
         ),

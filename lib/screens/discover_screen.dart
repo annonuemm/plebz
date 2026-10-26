@@ -1059,7 +1059,10 @@ class _DiscoverScreenState extends State<DiscoverScreen>
         children: [
           if (!PlatformDetector.isTV())
             Text(
-              t.discover.title,
+              // Plebz: the tab's own name. "Entdecken" over a tab called
+              // "Start", beside "Erkunden", was three names for two places
+              // (audit 2026-10-26).
+              t.common.home,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(color: foregroundColor, fontWeight: .bold),
             ),
           const Spacer(),

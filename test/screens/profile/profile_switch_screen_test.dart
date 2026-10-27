@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/utils/fork_identity.dart' show debugLinkEntriesShown;
 import 'package:plezy/connection/connection.dart';
 import 'package:plezy/connection/connection_registry.dart';
 import 'package:plezy/database/app_database.dart';
@@ -22,9 +23,11 @@ import 'package:plezy/screens/profile/pin_entry_dialog.dart';
 import 'package:plezy/screens/profile/profile_detail_screen.dart';
 import 'package:plezy/screens/profile/profile_switch_screen.dart';
 import 'package:plezy/services/settings_service.dart';
+import 'package:plezy/services/deep_links/deep_link.dart';
 import 'package:plezy/services/storage_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/utils/platform_detector.dart';
+import 'package:plezy/widgets/deep_link_dialog.dart';
 import 'package:provider/provider.dart';
 
 import '../../test_helpers/prefs.dart';
@@ -94,6 +97,52 @@ void main() {
 
     expect(find.text(t.profiles.manage), findsOneWidget);
     expect(find.text(t.profiles.delete), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('Plebz leaves Show profile link out of the tile menu', (tester) async {
+    final owner = Profile.local(id: 'local-owner', displayName: 'Owner', createdAt: DateTime(2026, 1, 1));
+    await _pumpPicker(tester, profiles: [owner], connections: const []);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(find.text(t.profiles.manage), findsOneWidget);
+    expect(find.text(t.deepLinks.showProfileLink), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('D-pad reaches Show profile link in the tile menu and opens the profile link', (tester) async {
+    // Plebz leaves the entry out (fork_identity.dart); this runs it switched on.
+    debugLinkEntriesShown = true;
+    addTearDown(() => debugLinkEntriesShown = false);
+    final owner = Profile.local(id: 'local-owner', displayName: 'Owner', createdAt: DateTime(2026, 1, 1));
+    await _pumpPicker(tester, profiles: [owner], connections: const []);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    // The menu opens on Manage; Show profile link is the next entry.
+    expect(find.text(t.deepLinks.showProfileLink), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ProfileLinkDialog), findsOneWidget);
+    const link = 'plebz://open?profile=local-owner';
+    expect(find.text(link), findsOneWidget);
+    final parsed = DeepLink.tryParse(link);
+    expect(parsed, isA<OpenLink>());
+    expect(resolveLinkProfile([owner], parsed!.profile!), owner);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
@@ -274,6 +323,8 @@ void main() {
   });
 
   testWidgets('names the Plex Home user and the account together, not the account alone', (tester) async {
+    // The account half only tells profiles apart once a second account is
+    // signed in; see the single-account tests below.
     await _pumpPicker(
       tester,
       profiles: [
@@ -285,7 +336,10 @@ void main() {
           createdAt: DateTime(2026, 1, 1),
         ),
       ],
-      connections: [_plexAccount('Bob')],
+      connections: [
+        _plexAccount('Bob'),
+        _plexAccount('Dana', id: 'plex-account-2'),
+      ],
     );
 
     expect(find.text('Alice'), findsOneWidget);
@@ -303,7 +357,10 @@ void main() {
     await _pumpPicker(
       tester,
       profiles: [Profile.local(id: 'local-alice', displayName: 'Alice', createdAt: DateTime(2026, 1, 1))],
-      connections: [_plexAccount('Bob')],
+      connections: [
+        _plexAccount('Bob'),
+        _plexAccount('Dana', id: 'plex-account-2'),
+      ],
       profileConnections: const [
         ProfileConnection(
           profileId: 'local-alice',
@@ -319,6 +376,51 @@ void main() {
       _relationChip(tester, tile: _tileFor('Alice'), first: 'Charlie', second: 'Bob'),
       t.profiles.plexAccountUserChip(user: 'Charlie', account: 'Bob'),
     );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('with one Plex account, a Plex Home tile shows only its own name', (tester) async {
+    await _pumpPicker(
+      tester,
+      profiles: [
+        Profile.plexHome(
+          id: 'home-alice',
+          displayName: 'Alice',
+          parentConnectionId: 'plex-account',
+          plexHomeUserUuid: 'alice-uuid',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      ],
+      connections: [_plexAccount('Bob')],
+    );
+
+    expect(find.textContaining('Bob'), findsNothing, reason: '"Alice via Bob" would repeat under every tile');
+    expect(find.text(t.profiles.noConnections), findsNothing, reason: 'the profile does have a connection');
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+  });
+
+  testWidgets('with one Plex account, a borrowed Home user is named without the account', (tester) async {
+    await _pumpPicker(
+      tester,
+      profiles: [Profile.local(id: 'local-alice', displayName: 'Alice', createdAt: DateTime(2026, 1, 1))],
+      connections: [_plexAccount('Bob')],
+      profileConnections: const [
+        ProfileConnection(
+          profileId: 'local-alice',
+          connectionId: 'plex-account',
+          userToken: 'borrowed-token',
+          userIdentifier: 'charlie-uuid',
+        ),
+      ],
+      homeUsers: [_homeUser('charlie-uuid', 'Charlie')],
+    );
+
+    expect(find.descendant(of: _tileFor('Alice'), matching: find.text('Charlie')), findsOneWidget);
+    expect(find.textContaining('Bob'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
@@ -366,7 +468,10 @@ void main() {
           createdAt: DateTime(2026, 1, 1),
         ),
       ],
-      connections: [_plexAccount('Bob')],
+      connections: [
+        _plexAccount('Bob'),
+        _plexAccount('Dana', id: 'plex-account-2'),
+      ],
     );
 
     final label = _relationChip(tester, tile: _tileFor('Alice'), first: 'Alice', second: 'Bob');
@@ -593,9 +698,9 @@ Future<void> _pumpPicker(
   if (settle) await tester.pumpAndSettle();
 }
 
-PlexAccountConnection _plexAccount(String accountLabel) {
+PlexAccountConnection _plexAccount(String accountLabel, {String id = 'plex-account'}) {
   return PlexAccountConnection(
-    id: 'plex-account',
+    id: id,
     accountToken: 'token',
     clientIdentifier: 'client',
     accountLabel: accountLabel,

@@ -42,7 +42,7 @@ const String kVideoPlayerRouteName = '/video_player';
 /// native channel and must leave before another playback can take ownership.
 class VideoPlayerRoute extends PageRouteBuilder<bool> {
   /// [joinsWatchTogether]: the player can take part in a Watch Together
-  /// room (streamed video on demand, not a download or Live TV).
+  /// room (video on demand, streamed or downloaded; not Live TV).
   ///
   /// [pictureFrom] is where a live picture handed over by the guide's preview
   /// sits, in the navigator's coordinates: the player grows out of it instead
@@ -520,7 +520,7 @@ Future<bool?> navigateToVideoPlayer(
     }
 
     final route = VideoPlayerRoute(
-      joinsWatchTogether: !isOffline,
+      joinsWatchTogether: true,
       builder: (_) => VideoPlayerScreen(
         metadata: metadata,
         preferredAudioTrack: preferredAudioTrack,

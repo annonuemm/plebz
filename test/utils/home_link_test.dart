@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/services/deep_links/deep_link.dart';
 import 'package:plezy/utils/home_link.dart';
 
 void main() {
@@ -19,5 +20,35 @@ void main() {
     expect(HomeLink.tryParse('plebz://now?id='), isNull);
     expect(HomeLink.tryParse('https://open?content_id=x'), isNull);
     expect(HomeLink.tryParse('plezy_srv_42'), isNull);
+  });
+
+  group('in the one link grammar (Plezy 2.25)', () {
+    test('a tile link reaches the main screen as a HomeTileLink', () {
+      final open = DeepLink.tryParse('plebz://open?content_id=plezy_srv_42');
+      expect(open, isA<HomeTileLink>());
+      expect(((open! as HomeTileLink).link as PlebzOpenLink).contentId, 'plezy_srv_42');
+      expect((DeepLink.tryParse('plebz://watchlist')! as HomeTileLink).link, isA<PlebzWatchlistLink>());
+      expect((DeepLink.tryParse('plebz://sport')! as HomeTileLink).link, isA<PlebzSportLink>());
+      expect(((DeepLink.tryParse('plebz://now?id=x')! as HomeTileLink).link as PlebzLiveNowLink).entryId, 'x');
+    });
+
+    test('a bare open stays upstream\'s, and a tile link keeps a named profile', () {
+      expect(DeepLink.tryParse('plebz://open'), isA<OpenLink>());
+      expect(DeepLink.tryParse('plebz://sport?profile=Kids')!.profile, 'Kids');
+    });
+
+    test('written back, a tile link reads the same', () {
+      for (final url in [
+        'plebz://open?content_id=plezy_srv_42',
+        'plebz://watchlist',
+        'plebz://sport',
+        'plebz://now?id=x',
+      ]) {
+        final link = DeepLink.tryParse(url)! as HomeTileLink;
+        final again = DeepLink.tryParse(link.toUri().toString())! as HomeTileLink;
+        expect(again.link.runtimeType, link.link.runtimeType, reason: url);
+        expect(again.toUri(), link.toUri(), reason: url);
+      }
+    });
   });
 }

@@ -13,6 +13,33 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.33.0 (Build 878)
+
+### Wiedergabe
+- Intro und Abspann werden auch bei Dateien erkannt, deren Kapitel nur nummeriert sind. „Intro überspringen“ und die Endkarte kommen dadurch öfter an der richtigen Stelle.
+- Plex: Serien laufen in der richtigen Reihenfolge weiter, auch wenn einzelne Folgen falsche Ausstrahlungsdaten haben.
+- Nach einer Pause fehlt beim Weiterspielen kein Stück Ton mehr.
+- Ton über den Receiver startet nach einer Umschaltung der Bildfrequenz zuverlässiger.
+- „Lautstärke normalisieren“ läuft auf mehr Geräten ohne Aussetzer.
+- Die Audio-Synchronisation lässt sich in 10-ms-Schritten einstellen.
+- Beim Ziehen der Lautstärke steht die Prozentzahl daneben.
+- Die Leistungsanzeige zeigt, ob direkt abgespielt oder umgewandelt wird.
+
+### Bedienung
+- Fernseher: Nach einer fertigen Folge steht der Fokus in „Weiterschauen“ auf der nächsten Folge.
+- Nach dem Wechsel des Profils fehlt der Fokus nicht mehr.
+- „Erkunden“ lässt sich unter „Beim Start öffnen“ wählen.
+- Handy im Querformat: Inhalte bleiben neben der Kamera-Aussparung frei.
+
+### Jellyfin
+- Titel lassen sich über das Menü zu Playlists hinzufügen, Admins auch zu Sammlungen.
+- Admins können eine Mediathek nach neuen Dateien durchsuchen lassen.
+
+### Außerdem
+- Ein Download, der in der Benachrichtigung abgebrochen wird, startet nicht mehr von vorn.
+- Poster werden in dichten Rastern nicht mehr oben und unten abgeschnitten.
+- Viele Texte, die noch englisch waren, sind übersetzt.
+
 ## 1.32.1 (Build 877)
 
 ### Darstellung

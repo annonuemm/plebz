@@ -197,11 +197,17 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
   Widget _buildContent(BuildContext sheetContext, {required bool hasLibraries}) {
     return Scaffold(
       body: OckerOnGlass(
-        child: PlebzSettingsShell(
-          key: _shellKey,
-          title: t.settings.title,
-          sections: _sections(sheetContext, hasLibraries: hasLibraries),
-          onExitLeft: _navigateToSidebar,
+        // Horizontal-only SafeArea: both columns clear a landscape notch or
+        // iPhone Duo's portrait sensor column.
+        child: SafeArea(
+          top: false,
+          bottom: false,
+          child: PlebzSettingsShell(
+            key: _shellKey,
+            title: t.settings.title,
+            sections: _sections(sheetContext, hasLibraries: hasLibraries),
+            onExitLeft: _navigateToSidebar,
+          ),
         ),
       ),
     );

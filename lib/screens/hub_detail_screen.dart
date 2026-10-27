@@ -38,7 +38,6 @@ import '../redesign/ocker_browse_page.dart';
 import '../redesign/ocker_skin.dart';
 import '../widgets/focusable_tab_chip.dart';
 import '../utils/media_navigation_helper.dart';
-import '../redesign/ocker_glas_look.dart';
 
 /// Screen to display full content of a recommendation hub
 class HubDetailScreen extends StatefulWidget {
@@ -144,6 +143,7 @@ class HubDetailScreenState extends State<HubDetailScreen>
   String? _errorMessage;
   bool _replaceContinuationItems = false;
   bool _usesPaginatedLoader = false;
+  bool _nextHubPageCheckScheduled = false;
 
   late final ContinuationPaginationCoordinator<MediaItem> _continuation = ContinuationPaginationCoordinator<MediaItem>(
     loadPage: _fetchContinuationPage,
@@ -561,13 +561,21 @@ class HubDetailScreenState extends State<HubDetailScreen>
   /// and by now the metrics describe what is actually on screen.
   void _handleScrolled() {
     _autoFillPages = 0;
-    _maybeLoadNextHubPage();
+    _scheduleNextHubPageCheck();
   }
 
+  /// Checks for the next page once this frame is laid out. The scroll position
+  /// can move before layout catches up with freshly appended items (a fling
+  /// tick at the start of a frame, a drag while a page lands); measuring the
+  /// extent then reads the previous end and fetches a page the user has not
+  /// reached.
   void _scheduleNextHubPageCheck() {
+    if (_nextHubPageCheckScheduled) return;
     if (_autoFillPages >= _autoFillPageLimit) return;
     _autoFillPages++;
+    _nextHubPageCheckScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _nextHubPageCheckScheduled = false;
       if (mounted) _maybeLoadNextHubPage();
     });
   }
@@ -734,130 +742,134 @@ class HubDetailScreenState extends State<HubDetailScreen>
         },
         child: Scaffold(
           key: _overlayChildKey,
-          body: CustomScrollView(
-            primary: true,
-            // Unclipped so a focused card's glow can reach past the
-            // viewport's edge — except under "Ocker", which has no glow: its
-            // focus ring is a hairline 5 px out, and leaving the view unclipped
-            // there only lets the top row paint over the chrome above it.
-            clipBehavior: isOcker(context) ? Clip.hardEdge : Clip.none,
-            slivers: [
-              CustomAppBar(
-                title: widget.titleOverride ?? Text(widget.hub.title),
-                pinned: true,
-                automaticallyImplyLeading: !widget.isEmbedded,
-                actions: buildFocusableAppBarActions(),
-                onBackPressed: popFromAppBar,
-              ),
-              if (_errorMessage != null)
-                SliverErrorState(message: _errorMessage!, onRetry: _loadMoreItems)
-              else if (_filteredItems.isEmpty && _isLoading)
-                LoadingIndicatorBox.sliver
-              else if (_filteredItems.isEmpty)
-                SliverFillRemaining(
-                  child: Center(
-                    // "Nothing here" and "nothing left after filtering" are
-                    // different answers, and only the second one tells the
-                    // viewer what to undo.
-                    child: Text(_items.isEmpty ? t.hubDetail.noItemsFound : t.libraries.noItemsMatchFilters),
+          // Horizontal-only SafeArea: the grid clears a landscape notch or
+          // iPhone Duo's portrait sensor column.
+          body: SafeArea(
+            top: false,
+            bottom: false,
+            child: CustomScrollView(
+              primary: true,
+              // Unclipped so a focused card's glow can reach past the
+              // viewport's edge — except under "Ocker", which has no glow: its
+              // focus ring is a hairline 5 px out, and leaving the view unclipped
+              // there only lets the top row paint over the chrome above it.
+              clipBehavior: isOcker(context) ? Clip.hardEdge : Clip.none,
+              slivers: [
+                CustomAppBar(
+                  title: widget.titleOverride ?? Text(widget.hub.title),
+                  pinned: true,
+                  automaticallyImplyLeading: !widget.isEmbedded,
+                  actions: buildFocusableAppBarActions(),
+                  onBackPressed: popFromAppBar,
+                ),
+                if (_errorMessage != null)
+                  SliverErrorState(message: _errorMessage!, onRetry: _loadMoreItems)
+                else if (_filteredItems.isEmpty && _isLoading)
+                  LoadingIndicatorBox.sliver
+                else if (_filteredItems.isEmpty)
+                  SliverFillRemaining(
+                    child: Center(
+                      // "Nothing here" and "nothing left after filtering" are
+                      // different answers, and only the second one tells the
+                      // viewer what to undo.
+                      child: Text(_items.isEmpty ? t.hubDetail.noItemsFound : t.libraries.noItemsMatchFilters),
+                    ),
+                  )
+                else
+                  SettingsBuilder(
+                    prefs: const [
+                      SettingsService.viewMode,
+                      SettingsService.episodePosterMode,
+                      SettingsService.libraryDensity,
+                      SettingsService.tvFullCardLayout,
+                    ],
+                    builder: (context) {
+                      final svc = SettingsService.instance;
+                      final viewMode = svc.read(SettingsService.viewMode);
+                      final episodePosterMode = svc.read(SettingsService.episodePosterMode);
+                      final libraryDensity = svc.read(SettingsService.libraryDensity);
+                      final fullCardLayout = PlatformDetector.isTV() && svc.read(SettingsService.tvFullCardLayout);
+
+                      final hasEpisodes = _filteredItems.any((item) => item.usesWideAspectRatio(episodePosterMode));
+                      final hasNonEpisodes = _filteredItems.any((item) => !item.usesWideAspectRatio(episodePosterMode));
+
+                      final isMixedHub = hasEpisodes && hasNonEpisodes;
+
+                      final isEpisodeOnlyHub = hasEpisodes && !hasNonEpisodes;
+
+                      final useWideLayout =
+                          episodePosterMode == EpisodePosterMode.episodeThumbnail && (isEpisodeOnlyHub || isMixedHub);
+
+                      final isSquareHub =
+                          _filteredItems.isNotEmpty &&
+                          _filteredItems.every((item) => item.cardShape(episodePosterMode) == CardShape.square);
+
+                      return MediaCardSliverLayout(
+                        viewMode: viewMode,
+                        itemCount: _filteredItems.length,
+                        findChildIndexCallback: (key) {
+                          final id = (key as ValueKey<String>).value;
+                          final index = _filteredItems.indexWhere((item) => item.globalKey == id);
+                          return index < 0 ? null : index;
+                        },
+                        density: libraryDensity,
+                        padding: const EdgeInsets.all(8),
+                        useWideAspectRatio: useWideLayout,
+                        fullBleedImage: fullCardLayout,
+                        shape: isSquareHub ? CardShape.square : null,
+                        itemBuilder: (context, position) {
+                          final index = position.index;
+                          final item = _filteredItems[index];
+                          final focusNode = _focusNodeForIndex(index);
+
+                          return FocusableMediaCard(
+                            // Keyed by item, not by slot: a re-sort must move
+                            // the element with its item instead of silently
+                            // updating it with a different one. Aggregated
+                            // hubs mix servers, so the id alone can collide.
+                            key: Key(item.globalKey),
+                            focusNode: focusNode,
+                            item: item,
+                            disableScale: position.disableScale,
+                            onRefresh: _handleItemRefresh,
+                            onRemoveFromContinueWatching: widget.isInContinueWatching
+                                ? _handleRemoveFromContinueWatching
+                                : null,
+                            isInContinueWatching: widget.isInContinueWatching,
+                            usesContinueWatchingAction: widget.usesContinueWatchingAction,
+                            onNavigateUp: position.isFirstRow ? navigateToAppBar : null,
+                            onNavigateDown:
+                                _pageLoadError != null && position.index >= position.itemCount - position.columnCount
+                                ? _continuationRetryFocusNode.requestFocus
+                                : null,
+                            onNavigateLeft: position.isGrid && position.isFirstColumn
+                                ? (widget.isEmbedded ? () => MainScreenFocusScope.focusSidebarOf(context) : () {})
+                                : null,
+                            onBack: handleBackFromContent,
+                            onFocusChange: (hasFocus) => _handleGridItemFocusChange(
+                              index,
+                              hasFocus,
+                              isLastRow: position.index >= position.itemCount - position.columnCount,
+                            ),
+                            mixedHubContext: isMixedHub,
+                            fullBleedImage: fullCardLayout && position.isGrid,
+                          );
+                        },
+                      );
+                    },
                   ),
-                )
-              else
-                SettingsBuilder(
-                  prefs: const [
-                    SettingsService.viewMode,
-                    SettingsService.episodePosterMode,
-                    SettingsService.libraryDensity,
-                    SettingsService.tvFullCardLayout,
-                  ],
-                  builder: (context) {
-                    final svc = SettingsService.instance;
-                    final viewMode = svc.read(SettingsService.viewMode);
-                    final episodePosterMode = svc.read(SettingsService.episodePosterMode);
-                    final libraryDensity = svc.read(SettingsService.libraryDensity);
-                    final fullCardLayout = PlatformDetector.isTV() && svc.read(SettingsService.tvFullCardLayout);
-
-                    final hasEpisodes = _filteredItems.any((item) => item.usesWideAspectRatio(episodePosterMode));
-                    final hasNonEpisodes = _filteredItems.any((item) => !item.usesWideAspectRatio(episodePosterMode));
-
-                    final isMixedHub = hasEpisodes && hasNonEpisodes;
-
-                    final isEpisodeOnlyHub = hasEpisodes && !hasNonEpisodes;
-
-                    final useWideLayout =
-                        episodePosterMode == EpisodePosterMode.episodeThumbnail && (isEpisodeOnlyHub || isMixedHub);
-
-                    final isSquareHub =
-                        _filteredItems.isNotEmpty &&
-                        _filteredItems.every((item) => item.cardShape(episodePosterMode) == CardShape.square);
-
-                    return MediaCardSliverLayout(
-                      viewMode: viewMode,
-                      itemCount: _filteredItems.length,
-                      findChildIndexCallback: (key) {
-                        final id = (key as ValueKey<String>).value;
-                        final index = _filteredItems.indexWhere((item) => item.globalKey == id);
-                        return index < 0 ? null : index;
-                      },
-                      density: libraryDensity,
-                      // Plebz: past Glas's floating rail in landscape on
-                      // Apple's handhelds.
-                      padding: EdgeInsets.fromLTRB(8 + ockerFloatingStartInset(context), 8, 8, 8),
-                      useWideAspectRatio: useWideLayout,
-                      fullBleedImage: fullCardLayout,
-                      shape: isSquareHub ? CardShape.square : null,
-                      itemBuilder: (context, position) {
-                        final index = position.index;
-                        final item = _filteredItems[index];
-                        final focusNode = _focusNodeForIndex(index);
-
-                        return FocusableMediaCard(
-                          // Keyed by item, not by slot: a re-sort must move
-                          // the element with its item instead of silently
-                          // updating it with a different one. Aggregated
-                          // hubs mix servers, so the id alone can collide.
-                          key: Key(item.globalKey),
-                          focusNode: focusNode,
-                          item: item,
-                          disableScale: position.disableScale,
-                          onRefresh: _handleItemRefresh,
-                          onRemoveFromContinueWatching: widget.isInContinueWatching
-                              ? _handleRemoveFromContinueWatching
-                              : null,
-                          isInContinueWatching: widget.isInContinueWatching,
-                          usesContinueWatchingAction: widget.usesContinueWatchingAction,
-                          onNavigateUp: position.isFirstRow ? navigateToAppBar : null,
-                          onNavigateDown:
-                              _pageLoadError != null && position.index >= position.itemCount - position.columnCount
-                              ? _continuationRetryFocusNode.requestFocus
-                              : null,
-                          onNavigateLeft: position.isGrid && position.isFirstColumn
-                              ? (widget.isEmbedded ? () => MainScreenFocusScope.focusSidebarOf(context) : () {})
-                              : null,
-                          onBack: handleBackFromContent,
-                          onFocusChange: (hasFocus) => _handleGridItemFocusChange(
-                            index,
-                            hasFocus,
-                            isLastRow: position.index >= position.itemCount - position.columnCount,
-                          ),
-                          mixedHubContext: isMixedHub,
-                          fullBleedImage: fullCardLayout && position.isGrid,
-                        );
-                      },
-                    );
-                  },
-                ),
-              if (_filteredItems.isNotEmpty && (_isLoadingPage || _pageLoadError != null))
-                ContinuationStatusSliver(
-                  error: _pageLoadError,
-                  onRetry: _retryHubContinuation,
-                  retryFocusNode: _continuationRetryFocusNode,
-                  errorContext: widget.hub.title,
-                  onNavigateUp: () => _focusNodeForIndex(_filteredItems.length - 1).requestFocus(),
-                  onBack: handleBackFromContent,
-                ),
-              const SliverSystemBottomInset(),
-            ],
+                if (_filteredItems.isNotEmpty && (_isLoadingPage || _pageLoadError != null))
+                  ContinuationStatusSliver(
+                    error: _pageLoadError,
+                    onRetry: _retryHubContinuation,
+                    retryFocusNode: _continuationRetryFocusNode,
+                    errorContext: widget.hub.title,
+                    onNavigateUp: () => _focusNodeForIndex(_filteredItems.length - 1).requestFocus(),
+                    onBack: handleBackFromContent,
+                  ),
+                const SliverSystemBottomInset(),
+              ],
+            ),
           ),
         ),
       ),

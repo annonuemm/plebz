@@ -96,15 +96,6 @@ class GeneralSettingsScreen extends StatelessWidget {
     );
   }
 
-  // Sections offered as a startup destination, in display order. Live TV is
-  // always listed; if no server provides it, startup falls back to Home.
-  static const _startupSectionOptions = [
-    NavigationTabId.discover,
-    NavigationTabId.libraries,
-    NavigationTabId.liveTv,
-    NavigationTabId.search,
-  ];
-
   String _startupSectionLabel(NavigationTabId id) => allNavigationTabs.firstWhere((t) => t.id == id).getLabel();
 
   Widget _startupSectionSelector() => SettingSelectionTile<NavigationTabId>(
@@ -112,7 +103,7 @@ class GeneralSettingsScreen extends StatelessWidget {
     icon: Symbols.start_rounded,
     title: t.settings.startupSection,
     subtitleBuilder: _startupSectionLabel,
-    options: _startupSectionOptions.map((id) => DialogOption(value: id, title: _startupSectionLabel(id))).toList(),
+    options: startupSectionTabs.map((id) => DialogOption(value: id, title: _startupSectionLabel(id))).toList(),
   );
 
   String _getLanguageDisplayName(AppLocale locale) {

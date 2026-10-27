@@ -4,7 +4,7 @@ The Android build plays through mpv-build's mpv-android library: one AAR with
 libmpv, FFmpeg and the JNI glue, named with its key and sha256 checksum in
 `mpv-build.lock.json`. It is built from
 [edde746/mpv-build](https://github.com/edde746/mpv-build) at commit
-`582f6d6e748a87a1536bf5cdad0af97b75725ffb` with
+`3b9f38affe3c4171f8e6bc47331feffd3d13be1d` with
 [`mpv-build.patch`](mpv-build.patch) applied, which moves some dependency
 versions forward. The AAR is not published.
 
@@ -16,7 +16,7 @@ tools its `platforms/android/include/download-sdk.sh` lists:
 ```bash
 git clone https://github.com/edde746/mpv-build.git
 cd mpv-build
-git checkout 582f6d6e748a87a1536bf5cdad0af97b75725ffb
+git checkout 3b9f38affe3c4171f8e6bc47331feffd3d13be1d
 git apply /path/to/plebz/native/mpv-build.patch
 cd platforms/android
 export MPV_ANDROID_SDK=/path/to/android-sdk

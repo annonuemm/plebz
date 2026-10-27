@@ -62,13 +62,17 @@ import '../widgets/companion_remote/pairing_code_prompt.dart';
 import '../services/fullscreen_state_manager.dart';
 import '../providers/companion_remote_provider.dart';
 import '../utils/desktop_window_padding.dart';
-import '../utils/live_tv_deep_link.dart';
+import '../services/deep_links/deep_link.dart';
+import '../services/deep_links/deep_link_launcher.dart';
+import '../services/deep_links/deep_link_service.dart';
+import '../services/system_shelf_service.dart';
 import '../utils/home_link.dart';
 import '../utils/media_navigation_helper.dart' show navigateToMediaItemDetails;
 import '../widgets/music/mini_player.dart';
 import '../widgets/navigation_label_fit.dart';
 import '../widgets/mobile_navigation_rail.dart';
 import '../widgets/side_navigation_rail.dart';
+import '../focus/covered_route_focus_boundary.dart';
 import '../focus/dpad_navigator.dart';
 import '../focus/key_event_utils.dart';
 import 'discover_screen.dart';
@@ -85,7 +89,6 @@ import 'settings/settings_screen.dart';
 import 'profile/profile_switch_screen.dart';
 import 'video_player_screen.dart';
 import 'profile/profile_teardown.dart';
-import '../services/system_shelf_service.dart';
 import '../watch_together/watch_together.dart';
 import '../redesign/ocker_glas_look.dart';
 import '../redesign/ocker_floating_tab_bar.dart';
@@ -444,9 +447,10 @@ class _MainScreenState extends State<MainScreen>
   /// Last selected online tab (restored when coming back online after an offline fallback)
   NavigationTabId? _lastOnlineTabId;
 
-  /// A preferred startup section (e.g. Live TV) that wasn't visible yet at cold
-  /// start because servers bind asynchronously. Applied once it becomes
-  /// available (see [_handleLiveTvChanged]); cleared on any explicit selection.
+  /// A preferred startup section (Live TV or Explore) that wasn't visible yet
+  /// at cold start because servers bind and catalog sources hydrate
+  /// asynchronously. Applied once it becomes available (see
+  /// [_applyPendingStartupTab]); cleared on any explicit selection.
   NavigationTabId? _pendingStartupTab;
 
   /// Whether we auto-switched to Downloads because the previous tab was unavailable offline
@@ -642,7 +646,6 @@ class _MainScreenState extends State<MainScreen>
     // Set up Watch Together callbacks immediately (must be synchronous to catch early messages)
     if (!_isOffline) {
       _setupWatchTogetherCallback();
-      _setupSystemShelfDeepLink();
     }
 
     // Wire profile binder + tracker bootstrap (skip in offline mode)
@@ -695,10 +698,15 @@ class _MainScreenState extends State<MainScreen>
         }
       }
 
+      // Links act once the profile is settled and its preferences are loaded.
+      _attachDeepLinks();
+
       // Focus content initially (replaces autofocus which caused focus stealing issues)
-      // Skip if profile selection is on top — it manages its own focus.
+      // Skip if profile selection is on top — it manages its own focus. A
+      // session remounted under the root picker (another profile chosen)
+      // gets this claim when the picker pops instead of losing it (#2817).
       if (!_isSidebarFocused && !_isShowingProfileSelection) {
-        _contentFocusScope.requestFocus();
+        CoveredRouteFocusBoundary.requestInitialFocus(context, _contentFocusScope);
       }
 
       _updateTvosMenuPassthrough();
@@ -914,6 +922,9 @@ class _MainScreenState extends State<MainScreen>
   Future<void> _pushProfileSelection() async {
     _isShowingProfileSelection = true;
     _setTvosMenuPassthrough(false);
+    // A link waits for the viewer's choice; a different profile acts on it
+    // in its own session.
+    _detachDeepLinks();
     await Navigator.of(
       context,
       rootNavigator: true,
@@ -921,6 +932,28 @@ class _MainScreenState extends State<MainScreen>
     if (!mounted) return;
     _isShowingProfileSelection = false;
     _updateTvosMenuPassthrough();
+    _attachDeepLinks();
+  }
+
+  DeepLinkSession? _deepLinkSession;
+
+  /// Acts on `plebz://` links for this profile session ([DeepLinkService]).
+  void _attachDeepLinks() {
+    if (!mounted || _isShowingProfileSelection) return;
+    final session = _deepLinkSession ??= DeepLinkSession(
+      profileId: context.read<ActiveProfileProvider>().activeId,
+      launch: (link) async {
+        if (!mounted) return;
+        // Plebz: a launcher home-row tile's link opens a place in the app.
+        if (link is HomeTileLink) return _openHomeLink(link.link);
+        await launchDeepLink(context, link, isOffline: _isOffline);
+      },
+    );
+    DeepLinkService.instance.attach(session);
+  }
+
+  void _detachDeepLinks() {
+    if (_deepLinkSession case final session?) DeepLinkService.instance.detach(session);
   }
 
   Future<void> _checkForUpdatesOnStartup() async {
@@ -962,78 +995,6 @@ class _MainScreenState extends State<MainScreen>
       watchTogether.navigatorOpener = _navigateToWatchTogetherMedia;
     } catch (e) {
       appLogger.w('Could not set up Watch Together callback', error: e);
-    }
-  }
-
-  /// Set up launcher shelf deep link handling for Android TV and tvOS taps.
-  void _setupSystemShelfDeepLink() {
-    if (!Platform.isAndroid && !PlatformDetector.isAppleTV()) return;
-
-    final systemShelf = SystemShelfService();
-
-    // Listen for deep links when app is already running (warm start)
-    systemShelf.onShelfItemTap = (contentId) {
-      appLogger.d('System shelf tap: $contentId');
-      _handleShelfContentId(contentId);
-    };
-    _systemShelfTapCallback = systemShelf.onShelfItemTap;
-
-    // Check for pending deep link from cold start
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final contentId = await systemShelf.getInitialDeepLink();
-      if (contentId != null && mounted) {
-        appLogger.d('System shelf initial deep link: $contentId');
-        unawaited(_handleShelfContentId(contentId));
-      }
-    });
-  }
-
-  /// Handle a launcher shelf content ID by fetching metadata and starting playback.
-  Future<void> _handleShelfContentId(String contentId) async {
-    if (!mounted) return;
-
-    // Plebz: the links a launcher's home-row tiles open arrive the same way.
-    final homeLink = HomeLink.tryParse(contentId);
-    if (homeLink != null) {
-      await _openHomeLink(homeLink);
-      return;
-    }
-
-    // `plebz://live?...` links arrive through the same channel as shelf IDs.
-    final liveLink = LiveTvDeepLink.tryParse(contentId);
-    if (liveLink != null) {
-      try {
-        await liveLink.launch(context, context.read<MultiServerProvider>());
-      } catch (e) {
-        appLogger.e('Live TV deep link failed', error: e);
-      }
-      return;
-    }
-
-    final parsed = SystemShelfService.parseContentId(contentId);
-    if (parsed == null) {
-      appLogger.w('System shelf: invalid content ID: $contentId');
-      return;
-    }
-
-    final (serverId, ratingKey) = parsed;
-
-    try {
-      final multiServer = context.read<MultiServerProvider>();
-      final client = multiServer.getClientForServer(serverId);
-
-      if (client == null) {
-        appLogger.w('System shelf: server $serverId not available');
-        return;
-      }
-
-      final metadata = await client.fetchItem(ratingKey);
-
-      if (metadata == null || !mounted) return;
-
-      unawaited(navigateToVideoPlayer(context, metadata: metadata));
-    } catch (e) {
-      appLogger.e('System shelf: failed to navigate to media', error: e);
     }
   }
 
@@ -1082,7 +1043,6 @@ class _MainScreenState extends State<MainScreen>
 
   bool _companionRemoteSetup = false;
   WatchTogetherProvider? _watchTogether;
-  ValueChanged<String>? _systemShelfTapCallback;
 
   @override
   void didChangeDependencies() {
@@ -1262,11 +1222,8 @@ class _MainScreenState extends State<MainScreen>
         receiver.navigationOwner = null;
       }
     }
-    final shelfCallback = _systemShelfTapCallback;
-    final systemShelf = SystemShelfService();
-    if (shelfCallback != null && identical(systemShelf.onShelfItemTap, shelfCallback)) {
-      systemShelf.onShelfItemTap = null;
-    }
+    // A replacement MainScreen may already have attached its session.
+    _detachDeepLinks();
 
     super.dispose();
   }
@@ -1369,6 +1326,8 @@ class _MainScreenState extends State<MainScreen>
     if (!mounted) return;
 
     if (!context.read<ActiveProfileProvider>().requiresSelectionOnOpen(settingsService)) return;
+    // The link that brought the app forward names the profile to open.
+    if (DeepLinkService.instance.selectsProfile) return;
 
     await _pushProfileSelection();
   }
@@ -1507,10 +1466,13 @@ class _MainScreenState extends State<MainScreen>
     _lastHasLiveTv = hasLiveTv;
 
     _handleTabAvailabilityChanged();
+    _applyPendingStartupTab();
+  }
 
-    // A preferred startup section (only Live TV can be deferred) just became
-    // available — switch to it via _selectTab so it gets the usual visibility
-    // and focus handling. _selectTab clears _pendingStartupTab.
+  /// A deferred startup section just became available — switch to it via
+  /// _selectTab so it gets the usual visibility and focus handling.
+  /// _selectTab clears _pendingStartupTab.
+  void _applyPendingStartupTab() {
     final pending = _pendingStartupTab;
     if (pending != null && _getVisibleTabs(_isOffline).any((t) => t.id == pending)) {
       _selectTab(pending);
@@ -1527,6 +1489,7 @@ class _MainScreenState extends State<MainScreen>
     _lastHasWatchlist = hasWatchlist;
 
     _handleTabAvailabilityChanged();
+    _applyPendingStartupTab();
   }
 
   void _handleOfflineStatusChanged() {

@@ -2142,6 +2142,10 @@ class GuideTabState extends State<GuideTab>
                               ),
                               const SizedBox(width: 4),
                             ],
+                            if (program.premiere == true) ...[
+                              StatusPill(label: t.liveTv.premiereBadge, color: titleColor, dense: true),
+                              const SizedBox(width: 5),
+                            ],
                             Expanded(
                               child: Text(
                                 program.grandparentTitle ?? program.title,

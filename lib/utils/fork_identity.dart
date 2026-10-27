@@ -15,7 +15,7 @@ const forkAppName = 'Plebz';
 /// (pubspec), so this is where the base is named — About shows it, and
 /// `scripts/publish_public.sh` puts it in every public commit. Set it at each
 /// upstream merge.
-const upstreamBaseVersion = '2.24.0';
+const upstreamBaseVersion = '2.25.0';
 
 /// Where Plebz publishes its releases, as "owner/repository" on GitHub.
 /// Releases carry the arm32 and arm64 APKs `scripts/build_apk.sh` names; an
@@ -65,6 +65,16 @@ bool debugDiscordRichPresenceAvailable = false;
 /// Lets upstream's tests keep exercising the code behind those three switches.
 @visibleForTesting
 bool debugPlezyHostedServicesAvailable = false;
+
+/// Plezy 2.25's "Show link" entries in a title's menu and the profile
+/// switcher (a `plebz://` link with a QR code, for home automations): left out
+/// at the user's word (2026-10-27), one more entry on every title for something
+/// not used here. The links themselves work regardless.
+bool get linkEntriesShown => debugLinkEntriesShown;
+
+/// Lets upstream's tests keep exercising the link entries.
+@visibleForTesting
+bool debugLinkEntriesShown = false;
 
 /// MyAnimeList and AniList sign in through the same host's OAuth proxy
 /// (`ice.plezy.app/auth`), and MAL identifies itself with the app id Plezy

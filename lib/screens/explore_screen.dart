@@ -630,8 +630,13 @@ class ExploreScreenState extends State<ExploreScreen>
     return Scaffold(
       // Plebz: the bar floats away as the page scrolls; under the redesign the
       // status bar then gets a strip of ground ([OckerStatusBarGround]).
+      // Horizontal-only SafeArea, as on Search: the field, shelves, and
+      // results clear a landscape notch or iPhone Duo's portrait sensor column.
       body: OckerStatusBarGround(
-        child: RefreshIndicator(onRefresh: _handleRefresh, child: content),
+        child: RefreshIndicator(
+          onRefresh: _handleRefresh,
+          child: SafeArea(top: false, bottom: false, child: content),
+        ),
       ),
     );
   }

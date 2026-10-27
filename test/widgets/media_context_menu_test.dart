@@ -7,6 +7,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/utils/fork_identity.dart' show debugLinkEntriesShown;
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -39,6 +40,7 @@ import 'package:plezy/providers/offline_mode_provider.dart';
 import 'package:plezy/providers/playback_state_provider.dart';
 import 'package:plezy/screens/music/album_detail_screen.dart';
 import 'package:plezy/screens/music/artist_detail_screen.dart';
+import 'package:plezy/services/deep_links/deep_link.dart';
 import 'package:plezy/services/download_manager_service.dart';
 import 'package:plezy/services/download_storage_service.dart';
 import 'package:plezy/services/jellyfin_client.dart';
@@ -55,6 +57,7 @@ import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/utils/media_server_http_client.dart';
 import 'package:plezy/utils/media_server_timeouts.dart';
 import 'package:plezy/utils/platform_detector.dart';
+import 'package:plezy/widgets/deep_link_dialog.dart';
 import 'package:plezy/widgets/file_info_bottom_sheet.dart';
 import 'package:plezy/widgets/media_context_menu.dart';
 import 'package:plezy/widgets/tag_edit_dialog.dart';
@@ -454,6 +457,66 @@ void main() {
     });
   });
 
+  group('MediaContextMenu add to (MediaBrowser, #2356)', () {
+    Future<http.Response> playlistServer(http.Request request, List<http.Request> posts) async {
+      if (request.method == 'POST') {
+        posts.add(request);
+        return http.Response('', 204);
+      }
+      if (request.url.queryParameters['IncludeItemTypes'] == 'Playlist') {
+        return jsonResponse({
+          'Items': [
+            {'Id': 'pl-1', 'Name': 'Road trip', 'Type': 'Playlist', 'MediaType': 'Video'},
+          ],
+          'TotalRecordCount': 1,
+        });
+      }
+      return _canDeleteResponse('movie-1', false);
+    }
+
+    testWidgets('a non-admin goes straight to the playlist picker and adds the item', (tester) async {
+      final posts = <http.Request>[];
+      final menuKey = await _pumpJellyfinMovieMenu(
+        tester,
+        isAdministrator: false,
+        handler: (request) => playlistServer(request, posts),
+      );
+
+      await _openMenu(tester, menuKey);
+      await tester.tap(find.text(t.common.addTo));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(t.collections.collection),
+        findsNothing,
+        reason: 'the server refuses non-admin collection edits',
+      );
+      expect(find.text(t.playlists.selectPlaylist), findsOneWidget);
+
+      await tester.tap(find.text('Road trip'));
+      await tester.pumpAndSettle();
+
+      expect(posts, hasLength(1));
+      expect(posts.single.url.path, '/Playlists/pl-1/Items');
+      expect(posts.single.url.queryParameters['Ids'], 'movie-1');
+    });
+
+    testWidgets('an admin chooses between playlist and collection', (tester) async {
+      final menuKey = await _pumpJellyfinMovieMenu(
+        tester,
+        isAdministrator: true,
+        handler: (request) => playlistServer(request, []),
+      );
+
+      await _openMenu(tester, menuKey);
+      await tester.tap(find.text(t.common.addTo));
+      await tester.pumpAndSettle();
+
+      expect(find.text(t.playlists.playlist), findsOneWidget);
+      expect(find.text(t.collections.collection), findsOneWidget);
+    });
+  });
+
   group('MediaContextMenu delete confirmation', () {
     testWidgets('names the episode, never the show, at every step (issue #1781)', (tester) async {
       final menuKey = await _pumpJellyfinItemMenu(
@@ -469,7 +532,7 @@ void main() {
       expect(find.text(t.mediaMenu.deleteEpisodeFromServer), findsOneWidget);
       expect(find.text(t.mediaMenu.deleteShowFromServer), findsNothing);
 
-      await tester.tap(find.text(t.mediaMenu.deleteEpisodeFromServer));
+      await _tapMenuEntry(tester, t.mediaMenu.deleteEpisodeFromServer);
       await tester.pumpAndSettle();
 
       final dialog = find.byType(AlertDialog);
@@ -506,7 +569,7 @@ void main() {
       expect(find.text(t.mediaMenu.deleteShowFromServer), findsOneWidget);
       expect(find.text(t.mediaMenu.deleteEpisodeFromServer), findsNothing);
 
-      await tester.tap(find.text(t.mediaMenu.deleteShowFromServer));
+      await _tapMenuEntry(tester, t.mediaMenu.deleteShowFromServer);
       await tester.pumpAndSettle();
 
       final dialog = find.byType(AlertDialog);
@@ -531,7 +594,7 @@ void main() {
       );
 
       await _openMenu(tester, menuKey);
-      await tester.tap(find.text(t.mediaMenu.deleteEpisodeFromServer));
+      await _tapMenuEntry(tester, t.mediaMenu.deleteEpisodeFromServer);
       await tester.pumpAndSettle();
       await tester.tap(find.text(t.common.cancel));
       await tester.pumpAndSettle();
@@ -580,7 +643,7 @@ void main() {
       );
 
       await _openMenu(tester, menuKey);
-      await tester.tap(find.text(t.mediaMenu.deleteEpisodeFromServer));
+      await _tapMenuEntry(tester, t.mediaMenu.deleteEpisodeFromServer);
       await tester.pumpAndSettle();
 
       expect(find.textContaining(t.mediaMenu.deleteSharedFileHeading(n: 1)), findsOneWidget);
@@ -610,7 +673,7 @@ void main() {
       );
 
       await _openMenu(tester, menuKey);
-      await tester.tap(find.text(t.mediaMenu.deleteEpisodeFromServer));
+      await _tapMenuEntry(tester, t.mediaMenu.deleteEpisodeFromServer);
       await tester.pumpAndSettle();
 
       expect(find.textContaining(t.mediaMenu.deleteSharedFileHeading(n: 7)), findsOneWidget);
@@ -644,7 +707,7 @@ void main() {
       );
 
       await _openMenu(tester, menuKey);
-      await tester.tap(find.text(t.mediaMenu.deleteEpisodeFromServer));
+      await _tapMenuEntry(tester, t.mediaMenu.deleteEpisodeFromServer);
       await tester.pump();
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
@@ -693,7 +756,7 @@ void main() {
       );
 
       await _openMenu(tester, menuKey);
-      await tester.tap(find.text(t.mediaMenu.deleteEpisodeFromServer));
+      await _tapMenuEntry(tester, t.mediaMenu.deleteEpisodeFromServer);
       await tester.pumpAndSettle();
 
       expect(find.textContaining(t.mediaMenu.deleteMultiPartWarning(n: 2)), findsOneWidget);
@@ -720,7 +783,7 @@ void main() {
       );
 
       await _openMenu(tester, menuKey);
-      await tester.tap(find.text(t.mediaMenu.deleteEpisodeFromServer));
+      await _tapMenuEntry(tester, t.mediaMenu.deleteEpisodeFromServer);
       await tester.pumpAndSettle();
 
       final dialog = find.byType(AlertDialog);
@@ -764,7 +827,7 @@ void main() {
       );
 
       await _openMenu(tester, menuKey);
-      await tester.tap(find.text(t.mediaMenu.deleteEpisodeFromServer));
+      await _tapMenuEntry(tester, t.mediaMenu.deleteEpisodeFromServer);
       await tester.pumpAndSettle();
 
       final dialog = find.byType(AlertDialog);
@@ -792,7 +855,7 @@ void main() {
       );
 
       await _openMenu(tester, menuKey);
-      await tester.tap(find.text(t.mediaMenu.deleteEpisodeFromServer));
+      await _tapMenuEntry(tester, t.mediaMenu.deleteEpisodeFromServer);
       await tester.pumpAndSettle();
 
       expect(find.textContaining(t.mediaMenu.deleteSharedFileHeading(n: 1)), findsOneWidget);
@@ -809,7 +872,7 @@ void main() {
       );
 
       await _openMenu(tester, menuKey);
-      await tester.tap(find.text(t.mediaMenu.deleteEpisodeFromServer));
+      await _tapMenuEntry(tester, t.mediaMenu.deleteEpisodeFromServer);
       await tester.pumpAndSettle();
 
       expect(find.text(t.mediaMenu.deleteScopeUnverifiedProbeFailed), findsOneWidget);
@@ -833,6 +896,76 @@ void main() {
       expect(supportsMetadataEdit(client, MediaKind.show), isTrue);
       expect(supportsMetadataEdit(client, MediaKind.track), isFalse);
     });
+  });
+
+  group('MediaContextMenu show link', () {
+    // Plebz leaves the entry out (fork_identity.dart); these run it switched on.
+    setUp(() => debugLinkEntriesShown = true);
+    tearDown(() => debugLinkEntriesShown = false);
+
+    testWidgets('Plebz offers no link entry unless it is switched on', (tester) async {
+      debugLinkEntriesShown = false;
+      final item = testMediaItem(id: 'item-1', backend: MediaBackend.plex, kind: MediaKind.movie, serverId: 'plex-1');
+      final menuKey = await _pumpPlexMovieMenu(tester, const [], item: item);
+      menuKey.currentState!.showContextMenu(tester.element(find.text('picker target')));
+      await tester.pumpAndSettle();
+
+      expect(find.text(t.deepLinks.showLink), findsNothing);
+    });
+
+    Future<void> openPlexMenu(WidgetTester tester, MediaKind kind, {String? guid}) async {
+      final item = testMediaItem(id: 'item-1', backend: MediaBackend.plex, kind: kind, guid: guid, serverId: 'plex-1');
+      final menuKey = await _pumpPlexMovieMenu(tester, const [], item: item);
+      menuKey.currentState!.showContextMenu(tester.element(find.text('picker target')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('opens the link dialog for a Plex movie', (tester) async {
+      await openPlexMenu(tester, MediaKind.movie, guid: 'plex://movie/5d776825880197001ec967c2');
+      await tester.tap(find.text(t.deepLinks.showLink));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ItemLinkDialog), findsOneWidget);
+      // The test server knows no catalogue ids, so the Plex GUID names the movie.
+      const link = 'plebz://play?type=movie&plex=5d776825880197001ec967c2';
+      expect(find.text(link), findsOneWidget);
+      expect(
+        (DeepLink.tryParse(link)! as PlayLink).target,
+        const CatalogPlayTarget(kind: MediaKind.movie, plexHash: '5d776825880197001ec967c2'),
+      );
+    });
+
+    for (final kind in [MediaKind.movie, MediaKind.show, MediaKind.episode]) {
+      testWidgets('is offered on a Plex ${kind.name}', (tester) async {
+        await openPlexMenu(tester, kind);
+
+        expect(find.text(t.deepLinks.showLink), findsOneWidget);
+      });
+    }
+
+    for (final backend in [MediaBackend.jellyfin, MediaBackend.emby]) {
+      for (final kind in [MediaKind.movie, MediaKind.show, MediaKind.episode]) {
+        testWidgets('is offered on a ${backend.name} ${kind.name}', (tester) async {
+          final menuKey = await _pumpJellyfinItemMenu(
+            tester,
+            isAdministrator: false,
+            handler: (_) async => _canDeleteResponse('item-1', true),
+            item: testMediaItem(id: 'item-1', backend: backend, kind: kind, serverId: 'srv-1'),
+          );
+          await _openMenu(tester, menuKey);
+
+          expect(find.text(t.deepLinks.showLink), findsOneWidget);
+        });
+      }
+    }
+
+    for (final kind in [MediaKind.album, MediaKind.track, MediaKind.collection]) {
+      testWidgets('is not offered on a Plex ${kind.name}', (tester) async {
+        await openPlexMenu(tester, kind);
+
+        expect(find.text(t.deepLinks.showLink), findsNothing);
+      });
+    }
   });
 
   group('MediaContextMenu quick tag', () {
@@ -1775,6 +1908,7 @@ Future<GlobalKey<MediaContextMenuState>> _pumpPlexMovieMenu(
   WidgetTester tester,
   List<({String id, String title})> playlists, {
   Widget Function(Widget menu)? wrapMenu,
+  MediaItem? item,
 }) async {
   LocaleSettings.setLocaleSync(AppLocale.en);
   TvDetectionService.debugSetAppleTVOverride(true);
@@ -1827,16 +1961,17 @@ Future<GlobalKey<MediaContextMenuState>> _pumpPlexMovieMenu(
   });
 
   final menuKey = GlobalKey<MediaContextMenuState>();
-  final item = testMediaItem(
-    id: 'movie-1',
-    backend: MediaBackend.plex,
-    kind: MediaKind.movie,
-    title: 'Movie',
-    serverId: 'plex-1',
-  );
   final menu = MediaContextMenu(
     key: menuKey,
-    item: item,
+    item:
+        item ??
+        testMediaItem(
+          id: 'movie-1',
+          backend: MediaBackend.plex,
+          kind: MediaKind.movie,
+          title: 'Movie',
+          serverId: 'plex-1',
+        ),
     child: const SizedBox(width: 120, height: 80, child: Text('picker target')),
   );
   await tester.pumpWidget(
@@ -1973,10 +2108,19 @@ Future<http.Response> Function(http.Request) _deleteFlowHandler({
 
 Future<void> _confirmDelete(WidgetTester tester, GlobalKey<MediaContextMenuState> menuKey, String confirmLabel) async {
   await _openMenu(tester, menuKey);
-  await tester.tap(find.text(t.mediaMenu.deleteEpisodeFromServer));
+  await _tapMenuEntry(tester, t.mediaMenu.deleteEpisodeFromServer);
   await tester.pumpAndSettle();
   await tester.tap(find.text(confirmLabel));
   await tester.pumpAndSettle();
+}
+
+/// Taps a menu row, scrolling the menu first: Delete is the last row and sits
+/// below the fold of an 800x600 test window, as it does on a short screen.
+Future<void> _tapMenuEntry(WidgetTester tester, String label) async {
+  final entry = find.text(label);
+  await tester.ensureVisible(entry);
+  await tester.pumpAndSettle();
+  await tester.tap(entry);
 }
 
 Future<GlobalKey<MediaContextMenuState>> _pumpJellyfinMovieMenu(

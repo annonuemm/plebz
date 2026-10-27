@@ -45,7 +45,6 @@ import '../../redesign/ocker_panel_frame.dart';
 import '../../redesign/ocker_submenu.dart';
 import '../../utils/provider_extensions.dart';
 import '../../redesign/ocker_side_rail.dart';
-import '../../redesign/ocker_glas_look.dart';
 
 enum LibraryTabType { recommended, browse, collections, playlists }
 
@@ -1137,25 +1136,30 @@ class _LibrariesScreenState extends State<LibrariesScreen>
                   SliverToBoxAdapter(
                     child: Container(
                       color: Theme.of(context).scaffoldBackgroundColor,
-                      // Plebz: past Glas's floating rail in landscape on
-                      // Apple's handhelds.
-                      padding: EdgeInsets.fromLTRB(16 + ockerFloatingStartInset(context), 4, 16, 4),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            for (int i = 0; i < _visibleTabs.length; i++) ...[
-                              if (i > 0) const SizedBox(width: 8),
-                              buildTabChip(
-                                _getTabLabel(_visibleTabs[i]),
-                                i,
-                                onSelectWhenActive: _focusCurrentTab,
-                                onNavigateDown: _focusCurrentTabFromTabBar,
-                                onNavigateToActions: () => _actionBarKey.currentState?.requestFocusOnFirst(),
-                                onNavigateUp: () => _actionBarKey.currentState?.requestFocusOnFirst(),
-                              ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      // Horizontal-only SafeArea: the strip's background
+                      // stays full-bleed; its chips clear a landscape notch
+                      // or iPhone Duo's portrait sensor column.
+                      child: SafeArea(
+                        top: false,
+                        bottom: false,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              for (int i = 0; i < _visibleTabs.length; i++) ...[
+                                if (i > 0) const SizedBox(width: 8),
+                                buildTabChip(
+                                  _getTabLabel(_visibleTabs[i]),
+                                  i,
+                                  onSelectWhenActive: _focusCurrentTab,
+                                  onNavigateDown: _focusCurrentTabFromTabBar,
+                                  onNavigateToActions: () => _actionBarKey.currentState?.requestFocusOnFirst(),
+                                  onNavigateUp: () => _actionBarKey.currentState?.requestFocusOnFirst(),
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ),
                     ),

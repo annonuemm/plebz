@@ -40,11 +40,14 @@ class TranslationsDe extends Translations with BaseTranslations<AppLocale, Trans
 
 	// Translations
 	@override late final _Translations$app$de app = _Translations$app$de._(_root);
+	@override late final _Translations$appIcon$de appIcon = _Translations$appIcon$de._(_root);
 	@override late final _Translations$auth$de auth = _Translations$auth$de._(_root);
 	@override late final _Translations$common$de common = _Translations$common$de._(_root);
 	@override late final _Translations$screens$de screens = _Translations$screens$de._(_root);
 	@override late final _Translations$update$de update = _Translations$update$de._(_root);
+	@override late final _Translations$supporter$de supporter = _Translations$supporter$de._(_root);
 	@override late final _Translations$settings$de settings = _Translations$settings$de._(_root);
+	@override late final _Translations$themeEditor$de themeEditor = _Translations$themeEditor$de._(_root);
 	@override late final _Translations$search$de search = _Translations$search$de._(_root);
 	@override late final _Translations$hotkeys$de hotkeys = _Translations$hotkeys$de._(_root);
 	@override late final _Translations$fileInfo$de fileInfo = _Translations$fileInfo$de._(_root);
@@ -91,6 +94,7 @@ class TranslationsDe extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$seerr$de seerr = _Translations$seerr$de._(_root);
 	@override late final _Translations$services$de services = _Translations$services$de._(_root);
 	@override late final _Translations$addServer$de addServer = _Translations$addServer$de._(_root);
+	@override late final _Translations$deepLinks$de deepLinks = _Translations$deepLinks$de._(_root);
 	@override late final _Translations$iptv$de iptv = _Translations$iptv$de._(_root);
 	@override late final _Translations$trailerStage$de trailerStage = _Translations$trailerStage$de._(_root);
 	@override late final _Translations$actor$de actor = _Translations$actor$de._(_root);
@@ -109,6 +113,24 @@ class _Translations$app$de extends Translations$app$en {
 
 	// Translations
 	@override String get title => 'Plebz';
+}
+
+// Path: appIcon
+class _Translations$appIcon$de extends Translations$appIcon$en {
+	_Translations$appIcon$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'App-Symbol';
+	@override String get defaultIcon => 'Standard';
+	@override String get current => 'Aktuelles Symbol';
+	@override String get locked => 'Supporter-Vorteil';
+	@override String get lockedHint => 'Alternative Symbole sind ein Supporter-Vorteil.';
+	@override String get changeFailed => 'App-Symbol konnte nicht geändert werden';
+	@override String get launcherHint => 'Das neue Symbol erscheint auf deinem Startbildschirm, sobald du Plebz verlässt.';
+	@override String get tvLauncherHint => 'Das neue Banner erscheint, sobald du Plebz verlässt.';
+	@override late final _Translations$appIcon$names$de names = _Translations$appIcon$names$de._(_root);
 }
 
 // Path: auth
@@ -229,6 +251,33 @@ class _Translations$update$de extends Translations$update$en {
 	@override String get checkFailed => 'Fehler bei der Updateprüfung';
 }
 
+// Path: supporter
+class _Translations$supporter$de extends Translations$supporter$en {
+	_Translations$supporter$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get title => 'Plebz Supporter';
+	@override String get intro => 'Ein einmaliger Kauf, der die Entwicklung von Plebz unterstützt und kosmetische Extras freischaltet:';
+	@override String get presetThemes => 'Design-Vorlagen';
+	@override String get presetThemesDescription => 'Glut, Gletscher, Wald, Pflaume und Papier';
+	@override String get customTheme => 'Eigenes Design';
+	@override String get customThemeDescription => 'Wähle jede Farbe selbst';
+	@override String get appIcons => 'App-Symbole';
+	@override String get appIconsDescription => 'Wähle ein alternatives Plebz-Symbol';
+	@override String buy({required Object price}) => 'Für ${price} kaufen';
+	@override String get loadingPrice => 'Preis wird geladen …';
+	@override String get restore => 'Käufe wiederherstellen';
+	@override String get pending => 'Dein Kauf wartet auf Zahlung oder Genehmigung. Die Extras werden freigeschaltet, sobald der Store ihn abschließt.';
+	@override String get thankYouTitle => 'Danke, dass du Plebz unterstützt';
+	@override String get thankYouBody => 'Deine Supporter-Extras sind freigeschaltet.';
+	@override String get tileSubtitle => 'Designs und App-Symbole mit einem einmaligen Kauf freischalten';
+	@override String get tileSubtitleThemesOnly => 'Designs mit einem einmaligen Kauf freischalten';
+	@override String get tileUnlocked => 'Danke für deine Unterstützung';
+	@override late final _Translations$supporter$errors$de errors = _Translations$supporter$errors$de._(_root);
+}
+
 // Path: settings
 class _Translations$settings$de extends Translations$settings$en {
 	_Translations$settings$de._(TranslationsDe root) : this._root = root, super.internal(root);
@@ -251,12 +300,17 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get secondsLabel => 'Sekunden';
 	@override String get minutesLabel => 'Minuten';
 	@override String get secondsShort => 's';
-	@override String get minutesShort => 'm';
+	@override String get minutesShort => 'min';
 	@override String durationHint({required Object min, required Object max}) => 'Dauer eingeben (${min}-${max})';
 	@override String get systemTheme => 'System';
 	@override String get lightTheme => 'Hell';
 	@override String get darkTheme => 'Dunkel';
 	@override String get oledTheme => 'OLED';
+	@override String get emberTheme => 'Glut';
+	@override String get glacierTheme => 'Gletscher';
+	@override String get forestTheme => 'Wald';
+	@override String get plumTheme => 'Pflaume';
+	@override String get paperTheme => 'Papier';
 	@override String get libraryDensity => 'Darstellungsdichte der Mediathek';
 	@override String get displayScale => 'Skalierung';
 	@override String get compact => 'Kompakt';
@@ -720,6 +774,42 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get backupPickTitle => 'Sicherung wählen';
 }
 
+// Path: themeEditor
+class _Translations$themeEditor$de extends Translations$themeEditor$en {
+	_Translations$themeEditor$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get builtIn => 'Integriert';
+	@override String get presets => 'Vorlagen';
+	@override String get custom => 'Benutzerdefiniert';
+	@override String get customEmpty => 'Noch nicht erstellt';
+	@override String get editCustom => 'Eigenes Design bearbeiten';
+	@override String get editCustomDescription => 'Jede Farbe selbst wählen';
+	@override String get locked => 'Mit Supporter freischalten';
+	@override String get savedLocked => 'Gespeichert – wird mit Supporter freigeschaltet';
+	@override String get title => 'Eigenes Design';
+	@override String get startFrom => 'Basierend auf';
+	@override String get startFromDescription => 'Alle Farben aus einem anderen Design übernehmen';
+	@override String get colors => 'Farben';
+	@override String get preview => 'Vorschau';
+	@override late final _Translations$themeEditor$slots$de slots = _Translations$themeEditor$slots$de._(_root);
+	@override String get opacity => 'Deckkraft';
+	@override String get hexHint => '#RRGGBB oder #AARRGGBB';
+	@override String get fromOtherThemes => 'Aus anderen Designs';
+	@override String swatchLabel({required Object theme, required Object color}) => '${theme}: ${color}';
+	@override late final _Translations$themeEditor$contrast$de contrast = _Translations$themeEditor$contrast$de._(_root);
+	@override String lowContrast({required Object pair, required Object ratio, required Object minimum}) => '${pair}: ${ratio}:1, unter den empfohlenen ${minimum}:1';
+	@override String get discardTitle => 'Änderungen verwerfen?';
+	@override String get discardMessage => 'Deine nicht gespeicherten Farbänderungen gehen verloren.';
+	@override String get discard => 'Verwerfen';
+	@override String previewCardTitle({required Object number}) => 'Folge ${number}';
+	@override String previewCardSubtitle({required Object minutes}) => 'Noch ${minutes} Min.';
+	@override String get previewSwitch => 'Autoplay';
+	@override String get previewMutedText => 'So sieht Sekundärtext aus';
+}
+
 // Path: search
 class _Translations$search$de extends Translations$search$en {
 	_Translations$search$de._(TranslationsDe root) : this._root = root, super.internal(root);
@@ -870,7 +960,7 @@ class _Translations$fileInfo$de extends Translations$fileInfo$en {
 	@override String get flagSelected => 'Ausgewählt';
 	@override String get flagExternal => 'Extern';
 	@override String get flagHearingImpaired => 'Für Hörgeschädigte';
-	@override String get flagDub => 'Dub';
+	@override String get flagDub => 'Synchronfassung';
 	@override String get flagOriginal => 'Original';
 	@override String get channelsMono => 'Mono';
 	@override String dolbyVisionProfile({required Object profile}) => 'Profil ${profile}';
@@ -1748,6 +1838,7 @@ class _Translations$liveTv$de extends Translations$liveTv$en {
 	@override String channelNumber({required Object number}) => 'Kanal ${number}';
 	@override String get unknownChannel => 'Unbekannter Kanal';
 	@override String get live => 'LIVE';
+	@override String get premiereBadge => 'NEU';
 	@override String get reloadGuide => 'TV-Programm neu laden';
 	@override String get searchGuide => 'TV-Programm durchsuchen';
 	@override String get searchHint => 'Kanäle & Sendungen suchen';
@@ -1963,24 +2054,113 @@ class _Translations$watchTogether$de extends Translations$watchTogether$en {
 	// Translations
 	@override String get title => 'Gemeinsam Schauen';
 	@override String get description => 'Inhalte synchron mit Freunden und Familie schauen';
+	@override String get createRoom => 'Raum erstellen';
+	@override String get creatingRoom => 'Raum wird erstellt …';
+	@override String get joinRoom => 'Raum beitreten';
+	@override String get joiningRoom => 'Beitritt zum Raum …';
+	@override String get connecting => 'Verbindung wird hergestellt …';
+	@override String get relayPublic => 'Räume nutzen die öffentlichen Relays von Open Watch Party.';
+	@override String relayCustom({required Object url}) => 'Räume nutzen dein Relay unter ${url}.';
 	@override String get recentRooms => 'Zuletzt verwendete Räume';
+	@override String get roomActions => 'Raumaktionen';
 	@override String get renameRoom => 'Raum umbenennen';
 	@override String get removeRoom => 'Entfernen';
+	@override String get enterRoomCode => 'Gib den 6-stelligen Code vom Host ein.';
+	@override String get roomCode => 'Raumcode';
+	@override String get paste => 'Einfügen';
+	@override String get noCodeInClipboard => 'Die Zwischenablage enthält keinen Raumcode';
+	@override String get copyCode => 'Code kopieren';
+	@override String get codeCopied => 'Raumcode kopiert';
+	@override String get shareInvite => 'Einladung teilen';
+	@override String get inviteCopied => 'Einladung kopiert. Füge sie in eine Nachricht ein.';
+	@override String inviteMessage({required Object code}) => 'Komm in meinen Raum für Gemeinsam Schauen in Plebz: Öffne „Gemeinsam Schauen“, wähle „Raum beitreten“ und gib ${code} ein.';
 	@override String get openSessionControls => 'Sitzungssteuerung für Gemeinsam Schauen öffnen';
+	@override String get reconnecting => 'Verbindung wird wiederhergestellt …';
+	@override String get reconnectingDescription => 'Die Verbindung wurde unterbrochen. Du trittst dem Raum automatisch wieder bei.';
+	@override String get connected => 'Verbunden';
+	@override String get disconnected => 'Getrennt';
 	@override String get youAreHost => 'Du bist der Host';
+	@override String hostedBy({required Object name}) => 'Gehostet von ${name}';
 	@override String get hostControlsPlayback => 'Host steuert die Wiedergabe';
 	@override String get anyoneCanControl => 'Alle können die Wiedergabe steuern';
+	@override String get roomLocked => 'Raum gesperrt';
+	@override String get nowPlaying => 'Wird wiedergegeben';
+	@override String get nothingPlaying => 'Es läuft nichts';
+	@override String get nothingPlayingHost => 'Spiele etwas aus einer beliebigen Mediathek ab, um es mit dem Raum zu teilen.';
+	@override String get nothingPlayingGuest => 'Wenn der Host etwas abspielt, wird es hier geöffnet.';
+	@override String get notShareable => 'Für dieses Video gibt es keinen Katalogtreffer, daher können es nur Personen mit Zugriff auf denselben Server abspielen.';
+	@override String get searching => 'Dieses Video wird in deinen Mediatheken gesucht …';
+	@override String get yourCopy => 'Deine Kopie';
+	@override String get sharingYourCopy => 'Du teilst deine Kopie';
+	@override String playingOtherLength({required Object difference}) => 'Deine Kopie wird abgespielt (${difference})';
+	@override String get mismatchTitle => 'Deine Kopie hat eine andere Länge';
+	@override String mismatchDescription({required Object difference}) => 'Deine am besten passende Kopie ist ${difference} als das Video im Raum. Möglicherweise ist es eine andere Schnittfassung oder Version.';
+	@override String get playAnyway => 'Trotzdem abspielen';
+	@override String get chooseAnotherCopy => 'Andere Kopie wählen';
+	@override String get dontPlay => 'Nicht abspielen';
+	@override String get unavailableTitle => 'Du hast dieses Video nicht';
+	@override String get unavailableDescription => 'Plebz hat es nicht in deinen Mediatheken gefunden. Wähle selbst eine Kopie oder suche erneut.';
+	@override String get chooseCopy => 'Kopie wählen';
+	@override String get searchAgain => 'Erneut suchen';
+	@override String get noCandidates => 'Keine Kopien in deinen Mediatheken gefunden.';
+	@override String get choiceFailed => 'Diese Kopie konnte nicht für den Raum abgespielt werden';
+	@override String lengthLonger({required Object duration}) => '${duration} länger';
+	@override String lengthShorter({required Object duration}) => '${duration} kürzer';
+	@override String get lengthSame => 'Gleiche Länge';
+	@override String get lengthUnknown => 'Länge unbekannt';
 	@override String get joinCurrentPlayback => 'Aktueller Wiedergabe beitreten';
 	@override String get joinCurrentPlaybackDescription => 'Zu dem Inhalt wechseln, den der Host gerade ansieht';
+	@override String get stopMedia => 'Video für alle stoppen';
+	@override String get syncOffset => 'Zeitversatz';
+	@override String get syncOffsetDescription => 'Verschiebe dein Video, wenn es dem Raum voraus ist oder hinterherhinkt.';
+	@override String offsetHint({required Object difference}) => 'Deine Kopie ist ${difference} als das Video im Raum.';
+	@override String applyDifference({required Object offset}) => '${offset} übernehmen';
+	@override String get offsetMinusSecond => '-1 s';
+	@override String get offsetMinusTenth => '-100 ms';
+	@override String get offsetPlusTenth => '+100 ms';
+	@override String get offsetPlusSecond => '+1 s';
 	@override String get participants => 'Teilnehmer';
+	@override String participantCount({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n,
+		one: '${n} Teilnehmer',
+		other: '${n} Teilnehmer',
+	);
 	@override String get hostBadge => 'HOST';
+	@override String nameYou({required Object name}) => '${name} (du)';
+	@override String get playerIdle => 'Inaktiv';
+	@override String get playerLoading => 'Lädt';
+	@override String get playerReady => 'Bereit';
+	@override String get playerBuffering => 'Puffert';
+	@override String get matchSearching => 'Sucht';
+	@override String get matchMatched => 'Hat das Video';
+	@override String get matchMismatched => 'Andere Länge';
+	@override String get matchUnavailable => 'Hat das Video nicht';
+	@override String participantOffset({required Object offset}) => 'Versatz ${offset}';
 	@override String get makeHost => 'Zum Host machen';
 	@override String get makeHostQuestion => 'Host übertragen?';
 	@override String makeHostConfirm({required Object name}) => '${name} steuert dann die Wiedergabe und die Sitzung für alle.';
 	@override String get transfer => 'Übertragen';
+	@override String get removeParticipant => 'Aus dem Raum entfernen';
+	@override String removeParticipantQuestion({required Object name}) => '${name} entfernen?';
+	@override String removeParticipantConfirm({required Object name}) => '${name} wird aus dem Raum entfernt und kann mit dem Code erneut beitreten, sofern du den Raum nicht sperrst.';
+	@override String get remove => 'Entfernen';
+	@override String get roomSettings => 'Raumeinstellungen';
+	@override String get letEveryoneControl => 'Alle dürfen die Wiedergabe steuern';
+	@override String get lockRoom => 'Raum sperren';
+	@override String get lockRoomDescription => 'Niemand Neues kann beitreten';
+	@override String get leaveRoom => 'Raum verlassen';
+	@override String get leaveRoomQuestion => 'Raum verlassen?';
+	@override String get leaveRoomConfirm => 'Du kannst mit dem Raumcode erneut beitreten.';
 	@override String get leave => 'Verlassen';
+	@override String get endRoom => 'Raum beenden';
+	@override String get endRoomQuestion => 'Raum beenden?';
+	@override String get endRoomConfirm => 'Damit wird der Raum für alle beendet.';
 	@override String get end => 'Beenden';
+	@override String get playBlockedTitle => 'Wiedergabe wurde nicht gestartet';
+	@override String get playBlockedDescription => 'Drücke auf Abspielen, um gemeinsam mit dem Raum zu schauen.';
 	@override late final _Translations$watchTogether$notices$de notices = _Translations$watchTogether$notices$de._(_root);
+	@override late final _Translations$watchTogether$ended$de ended = _Translations$watchTogether$ended$de._(_root);
+	@override late final _Translations$watchTogether$errors$de errors = _Translations$watchTogether$errors$de._(_root);
+	@override String untitledEpisode({required Object number}) => 'Folge ${number}';
 }
 
 // Path: downloads
@@ -2215,6 +2395,7 @@ class _Translations$performanceOverlay$de extends Translations$performanceOverla
 	@override String get cacheLimit => 'Cache-Limit';
 	@override String get speed => 'Geschwindigkeit';
 	@override String get player => 'Player';
+	@override String get playMethod => 'Wiedergabeart';
 	@override String get memory => 'Speicher';
 	@override String get uiFps => 'UI-FPS';
 	@override String get fps => 'FPS';
@@ -2554,6 +2735,32 @@ class _Translations$addServer$de extends Translations$addServer$en {
 	@override String get plainHttpTitle => 'Unverschlüsselte Verbindung';
 	@override String plainHttpMessage({required Object host}) => '${host} ist nur über unverschlüsseltes HTTP erreichbar und liegt nicht in deinem Heimnetz. Passwort und Zugangsschlüssel würden lesbar durchs Internet gehen. Besser ist HTTPS, etwa über einen Reverse Proxy.';
 	@override String get plainHttpContinue => 'Trotzdem verbinden';
+}
+
+// Path: deepLinks
+class _Translations$deepLinks$de extends Translations$deepLinks$en {
+	_Translations$deepLinks$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get invalid => 'Dieser Plebz-Link ist ungültig.';
+	@override String profileNotFound({required Object profile}) => 'Kein Profil passt zu „${profile}“.';
+	@override String get serverUnavailable => 'Der Server für diesen Link ist nicht erreichbar.';
+	@override String get notFound => 'Der Titel ist in deinen Mediatheken nicht zu finden.';
+	@override String get unsupportedItem => 'Dieser Link lässt sich nicht abspielen.';
+	@override String get noLiveTv => 'Für diesen Link gibt es keinen Live-TV-Server.';
+	@override String channelNotFound({required Object channel}) => 'Sender „${channel}“ nicht gefunden.';
+	@override String get showLink => 'Link anzeigen';
+	@override String get showProfileLink => 'Profil-Link anzeigen';
+	@override String get dialogTitle => 'Link';
+	@override String get showHint => 'Der Link spielt die nächste Folge. Mit &mode=shuffle läuft die Serie gemischt.';
+	@override String get movieHint => 'Der Link spielt den Film.';
+	@override String get episodeHint => 'Der Link spielt diese Folge.';
+	@override String get profileHint => 'Der Link wechselt zu diesem Profil.';
+	@override String openAsProfile({required Object name}) => 'Als ${name} öffnen';
+	@override String get copy => 'Kopieren';
+	@override String get copied => 'Link kopiert';
 }
 
 // Path: iptv
@@ -2939,6 +3146,38 @@ class _Translations$remoteKeys$de extends Translations$remoteKeys$en {
 	@override late final _Translations$remoteKeys$functions$de functions = _Translations$remoteKeys$functions$de._(_root);
 }
 
+// Path: appIcon.names
+class _Translations$appIcon$names$de extends Translations$appIcon$names$en {
+	_Translations$appIcon$names$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get midnight => 'Mitternacht';
+	@override String get ember => 'Glut';
+	@override String get paper => 'Papier';
+	@override String get oled => 'OLED';
+	@override String get line => 'Linie';
+	@override String get ocean => 'Ozean';
+	@override String get ultraviolet => 'Ultraviolett';
+	@override String get matcha => 'Matcha';
+	@override String get sunset => 'Abendrot';
+	@override String get gold => 'Gold';
+	@override String get titanium => 'Titan';
+	@override String get glass => 'Glas';
+	@override String get crt => 'CRT';
+	@override String get vhs => 'VHS';
+	@override String get synthwave => 'Synthwave';
+	@override String get pixel => 'Pixel';
+	@override String get neon => 'Neon';
+	@override String get sticker => 'Sticker';
+	@override String get ticket => 'Ticket';
+	@override String get pop => 'Pop';
+	@override String get strata => 'Schichten';
+	@override String get facet => 'Facette';
+	@override String get tilde => 'Tilde';
+}
+
 // Path: common.ratingSource
 class _Translations$common$ratingSource$de extends Translations$common$ratingSource$en {
 	_Translations$common$ratingSource$de._(TranslationsDe root) : this._root = root, super.internal(root);
@@ -2981,6 +3220,21 @@ class _Translations$common$mediaKind$de extends Translations$common$mediaKind$en
 	@override String get clip => 'Clip';
 	@override String get photo => 'Foto';
 	@override String get folder => 'Ordner';
+}
+
+// Path: supporter.errors
+class _Translations$supporter$errors$de extends Translations$supporter$errors$en {
+	_Translations$supporter$errors$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get storeUnavailable => 'Käufe sind nicht verfügbar. Prüfe, ob du im Store angemeldet bist und Käufe auf diesem Gerät erlaubt sind.';
+	@override String get productNotFound => 'Der Supporter-Kauf ist in deinem Store derzeit nicht verfügbar.';
+	@override String get productQueryFailed => 'Der Preis konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.';
+	@override String get purchaseFailed => 'Der Kauf wurde nicht abgeschlossen. Versuche es erneut.';
+	@override String get restoreFailed => 'Der Store ist nicht erreichbar, daher konnte dein Kauf nicht wiederhergestellt werden. Versuche es erneut.';
+	@override String get nothingToRestore => 'Für dieses Store-Konto wurde kein Supporter-Kauf gefunden.';
 }
 
 // Path: settings.hardwareTestSections
@@ -3026,6 +3280,37 @@ class _Translations$settings$hardwareTestLabels$de extends Translations$settings
 	@override String get none => 'keine';
 	@override String get yes => 'ja';
 	@override String get no => 'nein';
+}
+
+// Path: themeEditor.slots
+class _Translations$themeEditor$slots$de extends Translations$themeEditor$slots$en {
+	_Translations$themeEditor$slots$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get bg => 'Hintergrund';
+	@override String get surface => 'Oberfläche';
+	@override String get outline => 'Kontur';
+	@override String get text => 'Text';
+	@override String get textMuted => 'Sekundärtext';
+	@override String get accent => 'Akzent';
+}
+
+// Path: themeEditor.contrast
+class _Translations$themeEditor$contrast$de extends Translations$themeEditor$contrast$en {
+	_Translations$themeEditor$contrast$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get textOnBg => 'Text auf Hintergrund';
+	@override String get textOnSurface => 'Text auf Oberfläche';
+	@override String get textMutedOnBg => 'Sekundärtext auf Hintergrund';
+	@override String get textMutedOnSurface => 'Sekundärtext auf Oberfläche';
+	@override String get accentOnBg => 'Akzent auf Hintergrund';
+	@override String get accentOnSurface => 'Akzent auf Oberfläche';
+	@override String get labelOnAccent => 'Schaltflächentext auf Akzent';
 }
 
 // Path: hotkeys.actions
@@ -3551,13 +3836,68 @@ class _Translations$watchTogether$notices$de extends Translations$watchTogether$
 	final TranslationsDe _root; // ignore: unused_field
 
 	// Translations
+	@override String pressedPlay({required Object name}) => '${name} hat auf Abspielen gedrückt';
+	@override String get playbackStarted => 'Wiedergabe gestartet';
 	@override String paused({required Object name}) => '${name} hat pausiert';
+	@override String get playbackPaused => 'Wiedergabe pausiert';
+	@override String jumpedTo({required Object name, required Object position}) => '${name} ist zu ${position} gesprungen';
+	@override String roomJumpedTo({required Object position}) => 'Zu ${position} gesprungen';
 	@override String changedSpeed({required Object name, required Object speed}) => '${name} hat die Geschwindigkeit auf ${speed} gesetzt';
+	@override String speedChanged({required Object speed}) => 'Geschwindigkeit auf ${speed} gesetzt';
+	@override String startedMedia({required Object name, required Object title}) => '${name} hat ${title} gestartet';
+	@override String mediaStarted({required Object title}) => 'Jetzt läuft ${title}';
+	@override String stoppedMedia({required Object name}) => '${name} hat das Video gestoppt';
+	@override String get mediaStopped => 'Das Video wurde gestoppt';
 	@override String waitingFor({required Object name}) => 'Warten auf ${name} …';
+	@override String get waitingForSomeone => 'Warten, bis alle aufgeholt haben …';
+	@override String get finished => 'Beendet';
 	@override String hostChangedTo({required Object name}) => '${name} ist jetzt der Host';
 	@override String get youAreNowHost => 'Du bist jetzt der Host';
 	@override String joined({required Object name}) => '${name} ist beigetreten';
 	@override String left({required Object name}) => '${name} hat die Sitzung verlassen';
+	@override String get controlRefused => 'Nur der Host kann die Wiedergabe steuern';
+	@override String get searchFailed => 'Einige Server konnten nicht nach dem Video des Raums durchsucht werden';
+	@override String get playBlocked => 'Zum Starten auf Abspielen drücken';
+	@override String get shareFailed => 'Dieses Video konnte nicht mit dem Raum geteilt werden';
+	@override String get downloadNotShared => 'Downloads werden nicht mit dem Raum geteilt, solange ihr Server offline ist';
+	@override String get openFailed => 'Das Video des Raums konnte nicht geöffnet werden';
+}
+
+// Path: watchTogether.ended
+class _Translations$watchTogether$ended$de extends Translations$watchTogether$ended$en {
+	_Translations$watchTogether$ended$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get ended => 'Der Host hat den Raum beendet';
+	@override String get kicked => 'Du wurdest aus dem Raum entfernt';
+	@override String get expired => 'Der Raum ist abgelaufen';
+	@override String get replaced => 'Du bist diesem Raum auf einem anderen Gerät beigetreten';
+	@override String get lost => 'Verbindung zum Raum verloren';
+}
+
+// Path: watchTogether.errors
+class _Translations$watchTogether$errors$de extends Translations$watchTogether$errors$en {
+	_Translations$watchTogether$errors$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get invalidCode => 'Das ist kein Raumcode. Codes bestehen aus 6 Buchstaben und Ziffern, ohne 0, 1, I, L oder O.';
+	@override String get roomNotFound => 'Es gibt keinen Raum mit diesem Code. Möglicherweise wurde er beendet.';
+	@override String get roomFull => 'Dieser Raum ist voll.';
+	@override String get roomLocked => 'Der Host hat diesen Raum gesperrt.';
+	@override String get relayFull => 'Gemeinsam Schauen ist gerade ausgelastet. Versuche es später erneut.';
+	@override String get unreachable => 'Das Relay für Gemeinsam Schauen ist nicht erreichbar. Prüfe deine Verbindung.';
+	@override String get rateLimited => 'Zu viele Versuche. Warte einen Moment und versuche es erneut.';
+	@override String get clientBlocked => 'Diese Version von Plebz kann das Relay nicht verwenden. Aktualisiere die App.';
+	@override String get forbidden => 'Das kann nur der Host.';
+	@override String get notInRoom => 'Du bist in keinem Raum.';
+	@override String get alreadyInRoom => 'Du bist bereits in einem Raum.';
+	@override String get resumeFailed => 'Erneuter Beitritt zum Raum fehlgeschlagen.';
+	@override String get unsupported => 'Das Relay unterstützt das nicht.';
+	@override String get generic => 'Etwas ist schiefgelaufen. Versuche es erneut.';
 }
 
 // Path: downloads.backgroundWarning
@@ -3884,6 +4224,37 @@ extension on TranslationsDe {
 	dynamic _flatMapFunction(String path) {
 		return switch (path) {
 			'app.title' => 'Plebz',
+			'appIcon.title' => 'App-Symbol',
+			'appIcon.defaultIcon' => 'Standard',
+			'appIcon.current' => 'Aktuelles Symbol',
+			'appIcon.locked' => 'Supporter-Vorteil',
+			'appIcon.lockedHint' => 'Alternative Symbole sind ein Supporter-Vorteil.',
+			'appIcon.changeFailed' => 'App-Symbol konnte nicht geändert werden',
+			'appIcon.launcherHint' => 'Das neue Symbol erscheint auf deinem Startbildschirm, sobald du Plebz verlässt.',
+			'appIcon.tvLauncherHint' => 'Das neue Banner erscheint, sobald du Plebz verlässt.',
+			'appIcon.names.midnight' => 'Mitternacht',
+			'appIcon.names.ember' => 'Glut',
+			'appIcon.names.paper' => 'Papier',
+			'appIcon.names.oled' => 'OLED',
+			'appIcon.names.line' => 'Linie',
+			'appIcon.names.ocean' => 'Ozean',
+			'appIcon.names.ultraviolet' => 'Ultraviolett',
+			'appIcon.names.matcha' => 'Matcha',
+			'appIcon.names.sunset' => 'Abendrot',
+			'appIcon.names.gold' => 'Gold',
+			'appIcon.names.titanium' => 'Titan',
+			'appIcon.names.glass' => 'Glas',
+			'appIcon.names.crt' => 'CRT',
+			'appIcon.names.vhs' => 'VHS',
+			'appIcon.names.synthwave' => 'Synthwave',
+			'appIcon.names.pixel' => 'Pixel',
+			'appIcon.names.neon' => 'Neon',
+			'appIcon.names.sticker' => 'Sticker',
+			'appIcon.names.ticket' => 'Ticket',
+			'appIcon.names.pop' => 'Pop',
+			'appIcon.names.strata' => 'Schichten',
+			'appIcon.names.facet' => 'Facette',
+			'appIcon.names.tilde' => 'Tilde',
 			'auth.signInWithPlex' => 'Mit Plex anmelden',
 			'auth.showQRCode' => 'QR-Code anzeigen',
 			'auth.authenticate' => 'Authentifizieren',
@@ -3990,6 +4361,29 @@ extension on TranslationsDe {
 			'update.viewRelease' => 'Versionshinweise anzeigen',
 			'update.latestVersion' => 'Aktuellste Version installiert',
 			'update.checkFailed' => 'Fehler bei der Updateprüfung',
+			'supporter.title' => 'Plebz Supporter',
+			'supporter.intro' => 'Ein einmaliger Kauf, der die Entwicklung von Plebz unterstützt und kosmetische Extras freischaltet:',
+			'supporter.presetThemes' => 'Design-Vorlagen',
+			'supporter.presetThemesDescription' => 'Glut, Gletscher, Wald, Pflaume und Papier',
+			'supporter.customTheme' => 'Eigenes Design',
+			'supporter.customThemeDescription' => 'Wähle jede Farbe selbst',
+			'supporter.appIcons' => 'App-Symbole',
+			'supporter.appIconsDescription' => 'Wähle ein alternatives Plebz-Symbol',
+			'supporter.buy' => ({required Object price}) => 'Für ${price} kaufen',
+			'supporter.loadingPrice' => 'Preis wird geladen …',
+			'supporter.restore' => 'Käufe wiederherstellen',
+			'supporter.pending' => 'Dein Kauf wartet auf Zahlung oder Genehmigung. Die Extras werden freigeschaltet, sobald der Store ihn abschließt.',
+			'supporter.thankYouTitle' => 'Danke, dass du Plebz unterstützt',
+			'supporter.thankYouBody' => 'Deine Supporter-Extras sind freigeschaltet.',
+			'supporter.tileSubtitle' => 'Designs und App-Symbole mit einem einmaligen Kauf freischalten',
+			'supporter.tileSubtitleThemesOnly' => 'Designs mit einem einmaligen Kauf freischalten',
+			'supporter.tileUnlocked' => 'Danke für deine Unterstützung',
+			'supporter.errors.storeUnavailable' => 'Käufe sind nicht verfügbar. Prüfe, ob du im Store angemeldet bist und Käufe auf diesem Gerät erlaubt sind.',
+			'supporter.errors.productNotFound' => 'Der Supporter-Kauf ist in deinem Store derzeit nicht verfügbar.',
+			'supporter.errors.productQueryFailed' => 'Der Preis konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut.',
+			'supporter.errors.purchaseFailed' => 'Der Kauf wurde nicht abgeschlossen. Versuche es erneut.',
+			'supporter.errors.restoreFailed' => 'Der Store ist nicht erreichbar, daher konnte dein Kauf nicht wiederhergestellt werden. Versuche es erneut.',
+			'supporter.errors.nothingToRestore' => 'Für dieses Store-Konto wurde kein Supporter-Kauf gefunden.',
 			'settings.title' => 'Einstellungen',
 			'settings.supportDeveloper' => 'Plezy unterstützen',
 			'settings.supportDeveloperDescription' => 'Per Liberapay spenden, um die Entwicklung zu fördern',
@@ -4005,12 +4399,17 @@ extension on TranslationsDe {
 			'settings.secondsLabel' => 'Sekunden',
 			'settings.minutesLabel' => 'Minuten',
 			'settings.secondsShort' => 's',
-			'settings.minutesShort' => 'm',
+			'settings.minutesShort' => 'min',
 			'settings.durationHint' => ({required Object min, required Object max}) => 'Dauer eingeben (${min}-${max})',
 			'settings.systemTheme' => 'System',
 			'settings.lightTheme' => 'Hell',
 			'settings.darkTheme' => 'Dunkel',
 			'settings.oledTheme' => 'OLED',
+			'settings.emberTheme' => 'Glut',
+			'settings.glacierTheme' => 'Gletscher',
+			'settings.forestTheme' => 'Wald',
+			'settings.plumTheme' => 'Pflaume',
+			'settings.paperTheme' => 'Papier',
 			'settings.libraryDensity' => 'Darstellungsdichte der Mediathek',
 			'settings.displayScale' => 'Skalierung',
 			'settings.compact' => 'Kompakt',
@@ -4336,6 +4735,8 @@ extension on TranslationsDe {
 			'settings.flachPresetGlut' => 'Glut',
 			'settings.flachPresetMitternacht' => 'Mitternacht',
 			'settings.flachPresetKirschbluete' => 'Kirschblüte',
+			_ => null,
+		} ?? switch (path) {
 			'settings.flachPresetAmethyst' => 'Amethyst',
 			'settings.flachPresetBernstein' => 'Bernstein',
 			'settings.flachPresetSafran' => 'Safran',
@@ -4395,8 +4796,6 @@ extension on TranslationsDe {
 			'settings.showWatchTogetherAction' => 'Knopf „Gemeinsam ansehen“',
 			'settings.showCompanionRemoteAction' => 'Knopf „Fernbedienung“',
 			'settings.showServerActivitiesAction' => 'Knopf „Serveraktivität“',
-			_ => null,
-		} ?? switch (path) {
 			'settings.hideHomeActionsUntilFocus' => 'Werkzeugleiste erst bei Fokus',
 			'settings.showDownloadAction' => 'Download-Knopf',
 			'settings.showDownloadActionDescription' => 'Auf Film- und Folgenseiten, sonst im ⋮-Menü',
@@ -4499,6 +4898,44 @@ extension on TranslationsDe {
 			'settings.showActorFilmography' => 'Vollständige Filmografie',
 			'settings.showActorFilmographyDescription' => 'Auch Titel, die du nicht hast (braucht TMDB)',
 			'settings.backupPickTitle' => 'Sicherung wählen',
+			'themeEditor.builtIn' => 'Integriert',
+			'themeEditor.presets' => 'Vorlagen',
+			'themeEditor.custom' => 'Benutzerdefiniert',
+			'themeEditor.customEmpty' => 'Noch nicht erstellt',
+			'themeEditor.editCustom' => 'Eigenes Design bearbeiten',
+			'themeEditor.editCustomDescription' => 'Jede Farbe selbst wählen',
+			'themeEditor.locked' => 'Mit Supporter freischalten',
+			'themeEditor.savedLocked' => 'Gespeichert – wird mit Supporter freigeschaltet',
+			'themeEditor.title' => 'Eigenes Design',
+			'themeEditor.startFrom' => 'Basierend auf',
+			'themeEditor.startFromDescription' => 'Alle Farben aus einem anderen Design übernehmen',
+			'themeEditor.colors' => 'Farben',
+			'themeEditor.preview' => 'Vorschau',
+			'themeEditor.slots.bg' => 'Hintergrund',
+			'themeEditor.slots.surface' => 'Oberfläche',
+			'themeEditor.slots.outline' => 'Kontur',
+			'themeEditor.slots.text' => 'Text',
+			'themeEditor.slots.textMuted' => 'Sekundärtext',
+			'themeEditor.slots.accent' => 'Akzent',
+			'themeEditor.opacity' => 'Deckkraft',
+			'themeEditor.hexHint' => '#RRGGBB oder #AARRGGBB',
+			'themeEditor.fromOtherThemes' => 'Aus anderen Designs',
+			'themeEditor.swatchLabel' => ({required Object theme, required Object color}) => '${theme}: ${color}',
+			'themeEditor.contrast.textOnBg' => 'Text auf Hintergrund',
+			'themeEditor.contrast.textOnSurface' => 'Text auf Oberfläche',
+			'themeEditor.contrast.textMutedOnBg' => 'Sekundärtext auf Hintergrund',
+			'themeEditor.contrast.textMutedOnSurface' => 'Sekundärtext auf Oberfläche',
+			'themeEditor.contrast.accentOnBg' => 'Akzent auf Hintergrund',
+			'themeEditor.contrast.accentOnSurface' => 'Akzent auf Oberfläche',
+			'themeEditor.contrast.labelOnAccent' => 'Schaltflächentext auf Akzent',
+			'themeEditor.lowContrast' => ({required Object pair, required Object ratio, required Object minimum}) => '${pair}: ${ratio}:1, unter den empfohlenen ${minimum}:1',
+			'themeEditor.discardTitle' => 'Änderungen verwerfen?',
+			'themeEditor.discardMessage' => 'Deine nicht gespeicherten Farbänderungen gehen verloren.',
+			'themeEditor.discard' => 'Verwerfen',
+			'themeEditor.previewCardTitle' => ({required Object number}) => 'Folge ${number}',
+			'themeEditor.previewCardSubtitle' => ({required Object minutes}) => 'Noch ${minutes} Min.',
+			'themeEditor.previewSwitch' => 'Autoplay',
+			'themeEditor.previewMutedText' => 'So sieht Sekundärtext aus',
 			'search.hint' => 'Filme, Serien und Musik suchen …',
 			'search.notInYourLibraries' => 'Nicht in deinen Mediatheken',
 			'search.copiesFound' => ({required Object count}) => '${count} Kopien',
@@ -4648,7 +5085,7 @@ extension on TranslationsDe {
 			'fileInfo.flagSelected' => 'Ausgewählt',
 			'fileInfo.flagExternal' => 'Extern',
 			'fileInfo.flagHearingImpaired' => 'Für Hörgeschädigte',
-			'fileInfo.flagDub' => 'Dub',
+			'fileInfo.flagDub' => 'Synchronfassung',
 			'fileInfo.flagOriginal' => 'Original',
 			'fileInfo.channelsMono' => 'Mono',
 			'fileInfo.dolbyVisionProfile' => ({required Object profile}) => 'Profil ${profile}',
@@ -4812,6 +5249,8 @@ extension on TranslationsDe {
 			'videoControls.subtitleDownloadFailed' => 'Untertitel konnte nicht heruntergeladen werden',
 			'videoControls.searchLanguages' => 'Sprachen suchen...',
 			'videoControls.skipIntro' => 'Intro überspringen',
+			_ => null,
+		} ?? switch (path) {
 			'videoControls.skipCredits' => 'Abspann überspringen',
 			'videoControls.nextEpisode' => 'Nächste Episode',
 			'videoControls.subtitleTrack' => ({required Object n}) => 'Spur ${n}',
@@ -4909,8 +5348,6 @@ extension on TranslationsDe {
 			'subtitlingStyling.border' => 'Rahmen',
 			'subtitlingStyling.background' => 'Hintergrund',
 			'subtitlingStyling.fontSize' => 'Schriftgröße',
-			_ => null,
-		} ?? switch (path) {
 			'subtitlingStyling.textColor' => 'Textfarbe',
 			'subtitlingStyling.borderSize' => 'Rahmengröße',
 			'subtitlingStyling.borderColor' => 'Rahmenfarbe',
@@ -5326,6 +5763,8 @@ extension on TranslationsDe {
 			'explore.status.airing' => 'Laufend',
 			'explore.status.ended' => 'Beendet',
 			'explore.status.canceled' => 'Abgesetzt',
+			_ => null,
+		} ?? switch (path) {
 			'explore.status.upcoming' => 'Demnächst',
 			'explore.episodeCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Folge', other: '${n} Folgen', ), 
 			'explore.cast' => 'Besetzung',
@@ -5423,8 +5862,6 @@ extension on TranslationsDe {
 			'explore.relation.alternativeVersion' => 'Alternative Version',
 			'explore.relation.summary' => 'Zusammenfassung',
 			'explore.relation.parentStory' => 'Hauptgeschichte',
-			_ => null,
-		} ?? switch (path) {
 			'explore.relation.adaptation' => 'Adaption',
 			'explore.relation.other' => 'Verwandt',
 			'explore.broadcast' => ({required Object day, required Object time}) => 'Läuft ${day} um ${time}',
@@ -5489,6 +5926,7 @@ extension on TranslationsDe {
 			'liveTv.channelNumber' => ({required Object number}) => 'Kanal ${number}',
 			'liveTv.unknownChannel' => 'Unbekannter Kanal',
 			'liveTv.live' => 'LIVE',
+			'liveTv.premiereBadge' => 'NEU',
 			'liveTv.reloadGuide' => 'TV-Programm neu laden',
 			'liveTv.searchGuide' => 'TV-Programm durchsuchen',
 			'liveTv.searchHint' => 'Kanäle & Sendungen suchen',
@@ -5674,30 +6112,151 @@ extension on TranslationsDe {
 			'music.discography.compilations' => 'Kompilationen',
 			'watchTogether.title' => 'Gemeinsam Schauen',
 			'watchTogether.description' => 'Inhalte synchron mit Freunden und Familie schauen',
+			'watchTogether.createRoom' => 'Raum erstellen',
+			'watchTogether.creatingRoom' => 'Raum wird erstellt …',
+			'watchTogether.joinRoom' => 'Raum beitreten',
+			'watchTogether.joiningRoom' => 'Beitritt zum Raum …',
+			'watchTogether.connecting' => 'Verbindung wird hergestellt …',
+			'watchTogether.relayPublic' => 'Räume nutzen die öffentlichen Relays von Open Watch Party.',
+			'watchTogether.relayCustom' => ({required Object url}) => 'Räume nutzen dein Relay unter ${url}.',
 			'watchTogether.recentRooms' => 'Zuletzt verwendete Räume',
+			'watchTogether.roomActions' => 'Raumaktionen',
 			'watchTogether.renameRoom' => 'Raum umbenennen',
 			'watchTogether.removeRoom' => 'Entfernen',
+			'watchTogether.enterRoomCode' => 'Gib den 6-stelligen Code vom Host ein.',
+			'watchTogether.roomCode' => 'Raumcode',
+			'watchTogether.paste' => 'Einfügen',
+			'watchTogether.noCodeInClipboard' => 'Die Zwischenablage enthält keinen Raumcode',
+			'watchTogether.copyCode' => 'Code kopieren',
+			'watchTogether.codeCopied' => 'Raumcode kopiert',
+			'watchTogether.shareInvite' => 'Einladung teilen',
+			'watchTogether.inviteCopied' => 'Einladung kopiert. Füge sie in eine Nachricht ein.',
+			'watchTogether.inviteMessage' => ({required Object code}) => 'Komm in meinen Raum für Gemeinsam Schauen in Plebz: Öffne „Gemeinsam Schauen“, wähle „Raum beitreten“ und gib ${code} ein.',
 			'watchTogether.openSessionControls' => 'Sitzungssteuerung für Gemeinsam Schauen öffnen',
+			'watchTogether.reconnecting' => 'Verbindung wird wiederhergestellt …',
+			'watchTogether.reconnectingDescription' => 'Die Verbindung wurde unterbrochen. Du trittst dem Raum automatisch wieder bei.',
+			'watchTogether.connected' => 'Verbunden',
+			'watchTogether.disconnected' => 'Getrennt',
 			'watchTogether.youAreHost' => 'Du bist der Host',
+			'watchTogether.hostedBy' => ({required Object name}) => 'Gehostet von ${name}',
 			'watchTogether.hostControlsPlayback' => 'Host steuert die Wiedergabe',
 			'watchTogether.anyoneCanControl' => 'Alle können die Wiedergabe steuern',
+			'watchTogether.roomLocked' => 'Raum gesperrt',
+			'watchTogether.nowPlaying' => 'Wird wiedergegeben',
+			'watchTogether.nothingPlaying' => 'Es läuft nichts',
+			'watchTogether.nothingPlayingHost' => 'Spiele etwas aus einer beliebigen Mediathek ab, um es mit dem Raum zu teilen.',
+			'watchTogether.nothingPlayingGuest' => 'Wenn der Host etwas abspielt, wird es hier geöffnet.',
+			'watchTogether.notShareable' => 'Für dieses Video gibt es keinen Katalogtreffer, daher können es nur Personen mit Zugriff auf denselben Server abspielen.',
+			'watchTogether.searching' => 'Dieses Video wird in deinen Mediatheken gesucht …',
+			'watchTogether.yourCopy' => 'Deine Kopie',
+			'watchTogether.sharingYourCopy' => 'Du teilst deine Kopie',
+			'watchTogether.playingOtherLength' => ({required Object difference}) => 'Deine Kopie wird abgespielt (${difference})',
+			'watchTogether.mismatchTitle' => 'Deine Kopie hat eine andere Länge',
+			'watchTogether.mismatchDescription' => ({required Object difference}) => 'Deine am besten passende Kopie ist ${difference} als das Video im Raum. Möglicherweise ist es eine andere Schnittfassung oder Version.',
+			'watchTogether.playAnyway' => 'Trotzdem abspielen',
+			'watchTogether.chooseAnotherCopy' => 'Andere Kopie wählen',
+			'watchTogether.dontPlay' => 'Nicht abspielen',
+			'watchTogether.unavailableTitle' => 'Du hast dieses Video nicht',
+			'watchTogether.unavailableDescription' => 'Plebz hat es nicht in deinen Mediatheken gefunden. Wähle selbst eine Kopie oder suche erneut.',
+			'watchTogether.chooseCopy' => 'Kopie wählen',
+			'watchTogether.searchAgain' => 'Erneut suchen',
+			'watchTogether.noCandidates' => 'Keine Kopien in deinen Mediatheken gefunden.',
+			'watchTogether.choiceFailed' => 'Diese Kopie konnte nicht für den Raum abgespielt werden',
+			'watchTogether.lengthLonger' => ({required Object duration}) => '${duration} länger',
+			'watchTogether.lengthShorter' => ({required Object duration}) => '${duration} kürzer',
+			'watchTogether.lengthSame' => 'Gleiche Länge',
+			'watchTogether.lengthUnknown' => 'Länge unbekannt',
 			'watchTogether.joinCurrentPlayback' => 'Aktueller Wiedergabe beitreten',
 			'watchTogether.joinCurrentPlaybackDescription' => 'Zu dem Inhalt wechseln, den der Host gerade ansieht',
+			'watchTogether.stopMedia' => 'Video für alle stoppen',
+			'watchTogether.syncOffset' => 'Zeitversatz',
+			'watchTogether.syncOffsetDescription' => 'Verschiebe dein Video, wenn es dem Raum voraus ist oder hinterherhinkt.',
+			'watchTogether.offsetHint' => ({required Object difference}) => 'Deine Kopie ist ${difference} als das Video im Raum.',
+			'watchTogether.applyDifference' => ({required Object offset}) => '${offset} übernehmen',
+			'watchTogether.offsetMinusSecond' => '-1 s',
+			'watchTogether.offsetMinusTenth' => '-100 ms',
+			'watchTogether.offsetPlusTenth' => '+100 ms',
+			'watchTogether.offsetPlusSecond' => '+1 s',
 			'watchTogether.participants' => 'Teilnehmer',
+			'watchTogether.participantCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Teilnehmer', other: '${n} Teilnehmer', ), 
 			'watchTogether.hostBadge' => 'HOST',
+			'watchTogether.nameYou' => ({required Object name}) => '${name} (du)',
+			'watchTogether.playerIdle' => 'Inaktiv',
+			'watchTogether.playerLoading' => 'Lädt',
+			'watchTogether.playerReady' => 'Bereit',
+			'watchTogether.playerBuffering' => 'Puffert',
+			'watchTogether.matchSearching' => 'Sucht',
+			'watchTogether.matchMatched' => 'Hat das Video',
+			'watchTogether.matchMismatched' => 'Andere Länge',
+			'watchTogether.matchUnavailable' => 'Hat das Video nicht',
+			'watchTogether.participantOffset' => ({required Object offset}) => 'Versatz ${offset}',
 			'watchTogether.makeHost' => 'Zum Host machen',
 			'watchTogether.makeHostQuestion' => 'Host übertragen?',
 			'watchTogether.makeHostConfirm' => ({required Object name}) => '${name} steuert dann die Wiedergabe und die Sitzung für alle.',
 			'watchTogether.transfer' => 'Übertragen',
+			'watchTogether.removeParticipant' => 'Aus dem Raum entfernen',
+			'watchTogether.removeParticipantQuestion' => ({required Object name}) => '${name} entfernen?',
+			'watchTogether.removeParticipantConfirm' => ({required Object name}) => '${name} wird aus dem Raum entfernt und kann mit dem Code erneut beitreten, sofern du den Raum nicht sperrst.',
+			'watchTogether.remove' => 'Entfernen',
+			'watchTogether.roomSettings' => 'Raumeinstellungen',
+			'watchTogether.letEveryoneControl' => 'Alle dürfen die Wiedergabe steuern',
+			'watchTogether.lockRoom' => 'Raum sperren',
+			'watchTogether.lockRoomDescription' => 'Niemand Neues kann beitreten',
+			'watchTogether.leaveRoom' => 'Raum verlassen',
+			'watchTogether.leaveRoomQuestion' => 'Raum verlassen?',
+			'watchTogether.leaveRoomConfirm' => 'Du kannst mit dem Raumcode erneut beitreten.',
 			'watchTogether.leave' => 'Verlassen',
+			'watchTogether.endRoom' => 'Raum beenden',
+			'watchTogether.endRoomQuestion' => 'Raum beenden?',
+			'watchTogether.endRoomConfirm' => 'Damit wird der Raum für alle beendet.',
 			'watchTogether.end' => 'Beenden',
+			'watchTogether.playBlockedTitle' => 'Wiedergabe wurde nicht gestartet',
+			'watchTogether.playBlockedDescription' => 'Drücke auf Abspielen, um gemeinsam mit dem Raum zu schauen.',
+			'watchTogether.notices.pressedPlay' => ({required Object name}) => '${name} hat auf Abspielen gedrückt',
+			'watchTogether.notices.playbackStarted' => 'Wiedergabe gestartet',
 			'watchTogether.notices.paused' => ({required Object name}) => '${name} hat pausiert',
+			'watchTogether.notices.playbackPaused' => 'Wiedergabe pausiert',
+			'watchTogether.notices.jumpedTo' => ({required Object name, required Object position}) => '${name} ist zu ${position} gesprungen',
+			'watchTogether.notices.roomJumpedTo' => ({required Object position}) => 'Zu ${position} gesprungen',
 			'watchTogether.notices.changedSpeed' => ({required Object name, required Object speed}) => '${name} hat die Geschwindigkeit auf ${speed} gesetzt',
+			'watchTogether.notices.speedChanged' => ({required Object speed}) => 'Geschwindigkeit auf ${speed} gesetzt',
+			'watchTogether.notices.startedMedia' => ({required Object name, required Object title}) => '${name} hat ${title} gestartet',
+			'watchTogether.notices.mediaStarted' => ({required Object title}) => 'Jetzt läuft ${title}',
+			'watchTogether.notices.stoppedMedia' => ({required Object name}) => '${name} hat das Video gestoppt',
+			'watchTogether.notices.mediaStopped' => 'Das Video wurde gestoppt',
 			'watchTogether.notices.waitingFor' => ({required Object name}) => 'Warten auf ${name} …',
+			'watchTogether.notices.waitingForSomeone' => 'Warten, bis alle aufgeholt haben …',
+			'watchTogether.notices.finished' => 'Beendet',
 			'watchTogether.notices.hostChangedTo' => ({required Object name}) => '${name} ist jetzt der Host',
 			'watchTogether.notices.youAreNowHost' => 'Du bist jetzt der Host',
 			'watchTogether.notices.joined' => ({required Object name}) => '${name} ist beigetreten',
 			'watchTogether.notices.left' => ({required Object name}) => '${name} hat die Sitzung verlassen',
+			'watchTogether.notices.controlRefused' => 'Nur der Host kann die Wiedergabe steuern',
+			'watchTogether.notices.searchFailed' => 'Einige Server konnten nicht nach dem Video des Raums durchsucht werden',
+			'watchTogether.notices.playBlocked' => 'Zum Starten auf Abspielen drücken',
+			'watchTogether.notices.shareFailed' => 'Dieses Video konnte nicht mit dem Raum geteilt werden',
+			'watchTogether.notices.downloadNotShared' => 'Downloads werden nicht mit dem Raum geteilt, solange ihr Server offline ist',
+			'watchTogether.notices.openFailed' => 'Das Video des Raums konnte nicht geöffnet werden',
+			'watchTogether.ended.ended' => 'Der Host hat den Raum beendet',
+			'watchTogether.ended.kicked' => 'Du wurdest aus dem Raum entfernt',
+			'watchTogether.ended.expired' => 'Der Raum ist abgelaufen',
+			'watchTogether.ended.replaced' => 'Du bist diesem Raum auf einem anderen Gerät beigetreten',
+			'watchTogether.ended.lost' => 'Verbindung zum Raum verloren',
+			'watchTogether.errors.invalidCode' => 'Das ist kein Raumcode. Codes bestehen aus 6 Buchstaben und Ziffern, ohne 0, 1, I, L oder O.',
+			'watchTogether.errors.roomNotFound' => 'Es gibt keinen Raum mit diesem Code. Möglicherweise wurde er beendet.',
+			'watchTogether.errors.roomFull' => 'Dieser Raum ist voll.',
+			'watchTogether.errors.roomLocked' => 'Der Host hat diesen Raum gesperrt.',
+			'watchTogether.errors.relayFull' => 'Gemeinsam Schauen ist gerade ausgelastet. Versuche es später erneut.',
+			'watchTogether.errors.unreachable' => 'Das Relay für Gemeinsam Schauen ist nicht erreichbar. Prüfe deine Verbindung.',
+			'watchTogether.errors.rateLimited' => 'Zu viele Versuche. Warte einen Moment und versuche es erneut.',
+			'watchTogether.errors.clientBlocked' => 'Diese Version von Plebz kann das Relay nicht verwenden. Aktualisiere die App.',
+			'watchTogether.errors.forbidden' => 'Das kann nur der Host.',
+			'watchTogether.errors.notInRoom' => 'Du bist in keinem Raum.',
+			'watchTogether.errors.alreadyInRoom' => 'Du bist bereits in einem Raum.',
+			'watchTogether.errors.resumeFailed' => 'Erneuter Beitritt zum Raum fehlgeschlagen.',
+			'watchTogether.errors.unsupported' => 'Das Relay unterstützt das nicht.',
+			'watchTogether.errors.generic' => 'Etwas ist schiefgelaufen. Versuche es erneut.',
+			'watchTogether.untitledEpisode' => ({required Object number}) => 'Folge ${number}',
 			'downloads.title' => 'Downloads',
 			'downloads.manage' => 'Verwalten',
 			'downloads.tvShows' => 'Serien',
@@ -5718,6 +6277,8 @@ extension on TranslationsDe {
 			'downloads.downloadDeleted' => 'Download gelöscht',
 			'downloads.deleteConfirm' => ({required Object title}) => '"${title}" von diesem Gerät löschen?',
 			'downloads.deleteCollectionDownloads' => 'Downloads löschen',
+			_ => null,
+		} ?? switch (path) {
 			'downloads.deleteCollectionDownloadsConfirm' => ({required Object title}) => 'Alle Downloads aus „${title}“ von diesem Gerät löschen?',
 			'downloads.collectionDownloadsDeleted' => 'Downloads gelöscht',
 			'downloads.cancelledDownloadTitle' => 'Abgebrochener Download',
@@ -5937,8 +6498,6 @@ extension on TranslationsDe {
 			'videoSettings.hdrToneMappingCompositorDescription' => 'Die HDR-Metadaten der Quelle durchreichen und vom Desktop-Compositor anpassen lassen.',
 			'videoSettings.hdrToneMappingPlayer' => 'Player',
 			'videoSettings.hdrToneMappingPlayerDescription' => 'Im Player an die maximale Helligkeit des Displays anpassen und das Ergebnis anschließend an den Compositor melden.',
-			_ => null,
-		} ?? switch (path) {
 			'videoSettings.hdrToneMappingFailed' => 'Das HDR-Tone-Mapping konnte nicht geändert werden – der vorherige Modus ist weiterhin aktiv.',
 			'videoSettings.audioOutput' => 'Audioausgabe',
 			'videoSettings.performanceOverlay' => 'Leistungsanzeige',
@@ -5990,6 +6549,7 @@ extension on TranslationsDe {
 			'performanceOverlay.cacheLimit' => 'Cache-Limit',
 			'performanceOverlay.speed' => 'Geschwindigkeit',
 			'performanceOverlay.player' => 'Player',
+			'performanceOverlay.playMethod' => 'Wiedergabeart',
 			'performanceOverlay.memory' => 'Speicher',
 			'performanceOverlay.uiFps' => 'UI-FPS',
 			'performanceOverlay.fps' => 'FPS',
@@ -6231,6 +6791,8 @@ extension on TranslationsDe {
 			'services.libraryFilter.modeHintWhitelist' => 'Nur die unten markierten Mediatheken synchronisieren.',
 			'services.libraryFilter.libraries' => 'Mediatheken',
 			'services.libraryFilter.noLibraries' => 'Keine Mediatheken verfügbar',
+			_ => null,
+		} ?? switch (path) {
 			'services.tmdb.title' => 'TMDB',
 			'services.tmdb.hubSubtitle' => 'Ergänzt Logos und Beschreibungen',
 			'services.tmdb.enabled' => 'Fehlendes von TMDB ergänzen',
@@ -6296,6 +6858,23 @@ extension on TranslationsDe {
 			'addServer.plainHttpTitle' => 'Unverschlüsselte Verbindung',
 			'addServer.plainHttpMessage' => ({required Object host}) => '${host} ist nur über unverschlüsseltes HTTP erreichbar und liegt nicht in deinem Heimnetz. Passwort und Zugangsschlüssel würden lesbar durchs Internet gehen. Besser ist HTTPS, etwa über einen Reverse Proxy.',
 			'addServer.plainHttpContinue' => 'Trotzdem verbinden',
+			'deepLinks.invalid' => 'Dieser Plebz-Link ist ungültig.',
+			'deepLinks.profileNotFound' => ({required Object profile}) => 'Kein Profil passt zu „${profile}“.',
+			'deepLinks.serverUnavailable' => 'Der Server für diesen Link ist nicht erreichbar.',
+			'deepLinks.notFound' => 'Der Titel ist in deinen Mediatheken nicht zu finden.',
+			'deepLinks.unsupportedItem' => 'Dieser Link lässt sich nicht abspielen.',
+			'deepLinks.noLiveTv' => 'Für diesen Link gibt es keinen Live-TV-Server.',
+			'deepLinks.channelNotFound' => ({required Object channel}) => 'Sender „${channel}“ nicht gefunden.',
+			'deepLinks.showLink' => 'Link anzeigen',
+			'deepLinks.showProfileLink' => 'Profil-Link anzeigen',
+			'deepLinks.dialogTitle' => 'Link',
+			'deepLinks.showHint' => 'Der Link spielt die nächste Folge. Mit &mode=shuffle läuft die Serie gemischt.',
+			'deepLinks.movieHint' => 'Der Link spielt den Film.',
+			'deepLinks.episodeHint' => 'Der Link spielt diese Folge.',
+			'deepLinks.profileHint' => 'Der Link wechselt zu diesem Profil.',
+			'deepLinks.openAsProfile' => ({required Object name}) => 'Als ${name} öffnen',
+			'deepLinks.copy' => 'Kopieren',
+			'deepLinks.copied' => 'Link kopiert',
 			'iptv.title' => 'IPTV',
 			'iptv.hubSubtitle' => 'Playlists und Xtream-Zugänge für Live TV – ohne Aufnahme',
 			'iptv.addPlaylist' => 'M3U-Playlist hinzufügen',
@@ -6451,8 +7030,6 @@ extension on TranslationsDe {
 			'sport.yesterday' => 'Gestern',
 			'sport.zoneChampionsLeague' => 'Champions League',
 			'sport.zoneEurope' => 'Europa',
-			_ => null,
-		} ?? switch (path) {
 			'sport.zonePromotion' => 'Aufstieg',
 			'sport.zonePlayoff' => 'Relegation',
 			'sport.zoneRelegation' => 'Abstieg',

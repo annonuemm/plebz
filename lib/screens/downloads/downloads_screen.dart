@@ -232,8 +232,11 @@ class DownloadsScreenState extends State<DownloadsScreen>
             ],
           ),
           SliverFillRemaining(
-            child: OckerClearOfRail(
-              // Plebz: clear of Glas's floating rail in landscape on Apple's handhelds.
+            // Horizontal-only SafeArea: chips and rows clear a landscape
+            // notch or iPhone Duo's portrait sensor column.
+            child: SafeArea(
+              top: false,
+              bottom: false,
               child: Column(
                 children: [
                   // Only while something is actually queued or transferring —

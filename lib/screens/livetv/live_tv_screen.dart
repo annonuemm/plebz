@@ -1146,7 +1146,9 @@ class _LiveTvScreenState extends State<LiveTvScreen>
           ),
         ]),
       ),
-      body: _buildLiveTvBody(useSideNav),
+      // Horizontal-only SafeArea: chips, guide, and lists clear a landscape
+      // notch or iPhone Duo's portrait sensor column.
+      body: SafeArea(top: false, bottom: false, child: _buildLiveTvBody(useSideNav)),
     );
   }
 

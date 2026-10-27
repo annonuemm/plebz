@@ -95,6 +95,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$seerr$en seerr = Translations$seerr$en.internal(_root);
 	late final Translations$services$en services = Translations$services$en.internal(_root);
 	late final Translations$addServer$en addServer = Translations$addServer$en.internal(_root);
+	late final Translations$deepLinks$en deepLinks = Translations$deepLinks$en.internal(_root);
 	late final Translations$iptv$en iptv = Translations$iptv$en.internal(_root);
 	late final Translations$trailerStage$en trailerStage = Translations$trailerStage$en.internal(_root);
 	late final Translations$actor$en actor = Translations$actor$en.internal(_root);
@@ -4692,6 +4693,9 @@ class Translations$liveTv$en {
 	/// en: 'LIVE'
 	String get live => 'LIVE';
 
+	/// en: 'NEW'
+	String get premiereBadge => 'NEW';
+
 	/// en: 'Reload Guide'
 	String get reloadGuide => 'Reload Guide';
 
@@ -6170,6 +6174,9 @@ class Translations$performanceOverlay$en {
 	/// en: 'Player'
 	String get player => 'Player';
 
+	/// en: 'Play Method'
+	String get playMethod => 'Play Method';
+
 	/// en: 'Memory'
 	String get memory => 'Memory';
 
@@ -7035,6 +7042,66 @@ class Translations$addServer$en {
 
 	/// en: 'Connect anyway'
 	String get plainHttpContinue => 'Connect anyway';
+}
+
+// Path: deepLinks
+class Translations$deepLinks$en {
+	Translations$deepLinks$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'This Plebz link isn't valid.'
+	String get invalid => 'This Plebz link isn\'t valid.';
+
+	/// en: 'No profile matches "${profile}".'
+	String profileNotFound({required Object profile}) => 'No profile matches "${profile}".';
+
+	/// en: 'Couldn't reach the server for this link.'
+	String get serverUnavailable => 'Couldn\'t reach the server for this link.';
+
+	/// en: 'Couldn't find this title in your libraries.'
+	String get notFound => 'Couldn\'t find this title in your libraries.';
+
+	/// en: 'This link can't be played.'
+	String get unsupportedItem => 'This link can\'t be played.';
+
+	/// en: 'No Live TV server is available for this link.'
+	String get noLiveTv => 'No Live TV server is available for this link.';
+
+	/// en: 'Couldn't find channel "${channel}".'
+	String channelNotFound({required Object channel}) => 'Couldn\'t find channel "${channel}".';
+
+	/// en: 'Show link'
+	String get showLink => 'Show link';
+
+	/// en: 'Show profile link'
+	String get showProfileLink => 'Show profile link';
+
+	/// en: 'Link'
+	String get dialogTitle => 'Link';
+
+	/// en: 'Opening this link plays the next episode. Add &mode=shuffle to play the show on shuffle.'
+	String get showHint => 'Opening this link plays the next episode. Add &mode=shuffle to play the show on shuffle.';
+
+	/// en: 'Opening this link plays the movie.'
+	String get movieHint => 'Opening this link plays the movie.';
+
+	/// en: 'Opening this link plays this episode.'
+	String get episodeHint => 'Opening this link plays this episode.';
+
+	/// en: 'Opening this link switches to this profile.'
+	String get profileHint => 'Opening this link switches to this profile.';
+
+	/// en: 'Open as ${name}'
+	String openAsProfile({required Object name}) => 'Open as ${name}';
+
+	/// en: 'Copy'
+	String get copy => 'Copy';
+
+	/// en: 'Link copied'
+	String get copied => 'Link copied';
 }
 
 // Path: iptv
@@ -9552,8 +9619,8 @@ class Translations$watchTogether$notices$en {
 	/// en: 'Couldn't share this video with the room'
 	String get shareFailed => 'Couldn\'t share this video with the room';
 
-	/// en: 'Downloaded videos aren't shared with the room'
-	String get notShared => 'Downloaded videos aren\'t shared with the room';
+	/// en: 'Downloads aren't shared with the room while their server is offline'
+	String get downloadNotShared => 'Downloads aren\'t shared with the room while their server is offline';
 
 	/// en: 'Couldn't open the room's video'
 	String get openFailed => 'Couldn\'t open the room\'s video';
@@ -12057,6 +12124,7 @@ extension on Translations {
 			'liveTv.channelNumber' => ({required Object number}) => 'Channel ${number}',
 			'liveTv.unknownChannel' => 'Unknown channel',
 			'liveTv.live' => 'LIVE',
+			'liveTv.premiereBadge' => 'NEW',
 			'liveTv.reloadGuide' => 'Reload Guide',
 			'liveTv.searchGuide' => 'Search Guide',
 			'liveTv.searchHint' => 'Search channels & programs',
@@ -12352,9 +12420,9 @@ extension on Translations {
 			'watchTogether.notices.speedChanged' => ({required Object speed}) => 'Speed set to ${speed}',
 			'watchTogether.notices.startedMedia' => ({required Object name, required Object title}) => '${name} started ${title}',
 			'watchTogether.notices.mediaStarted' => ({required Object title}) => 'Now playing ${title}',
-			'watchTogether.notices.stoppedMedia' => ({required Object name}) => '${name} stopped the video',
 			_ => null,
 		} ?? switch (path) {
+			'watchTogether.notices.stoppedMedia' => ({required Object name}) => '${name} stopped the video',
 			'watchTogether.notices.mediaStopped' => 'The video stopped',
 			'watchTogether.notices.waitingFor' => ({required Object name}) => 'Waiting for ${name}...',
 			'watchTogether.notices.waitingForSomeone' => 'Waiting for someone to catch up...',
@@ -12367,7 +12435,7 @@ extension on Translations {
 			'watchTogether.notices.searchFailed' => 'Some servers couldn\'t be searched for the room\'s video',
 			'watchTogether.notices.playBlocked' => 'Press play to start',
 			'watchTogether.notices.shareFailed' => 'Couldn\'t share this video with the room',
-			'watchTogether.notices.notShared' => 'Downloaded videos aren\'t shared with the room',
+			'watchTogether.notices.downloadNotShared' => 'Downloads aren\'t shared with the room while their server is offline',
 			'watchTogether.notices.openFailed' => 'Couldn\'t open the room\'s video',
 			'watchTogether.ended.ended' => 'The host ended the room',
 			'watchTogether.ended.kicked' => 'You were removed from the room',
@@ -12679,6 +12747,7 @@ extension on Translations {
 			'performanceOverlay.cacheLimit' => 'Cache Limit',
 			'performanceOverlay.speed' => 'Speed',
 			'performanceOverlay.player' => 'Player',
+			'performanceOverlay.playMethod' => 'Play Method',
 			'performanceOverlay.memory' => 'Memory',
 			'performanceOverlay.uiFps' => 'UI FPS',
 			'performanceOverlay.fps' => 'FPS',
@@ -12865,10 +12934,10 @@ extension on Translations {
 			'seerr.shelfPopularShows' => 'Popular series',
 			'seerr.shelfRecentShows' => 'New series',
 			'seerr.shelfUpcomingShows' => 'Coming soon',
-			'seerr.shelfTopRatedShows' => 'Best rated series',
-			'seerr.shelfAvailableMovies' => 'Something new for a change - Films',
 			_ => null,
 		} ?? switch (path) {
+			'seerr.shelfTopRatedShows' => 'Best rated series',
+			'seerr.shelfAvailableMovies' => 'Something new for a change - Films',
 			'seerr.shelfAvailableShows' => 'Something new for a change - Series',
 			'seerr.shelfEverything' => 'Everything',
 			'services.title' => 'Services',
@@ -12989,6 +13058,23 @@ extension on Translations {
 			'addServer.plainHttpTitle' => 'Unencrypted connection',
 			'addServer.plainHttpMessage' => ({required Object host}) => '${host} is only reachable over unencrypted HTTP and is not in your home network. Your password and access token would cross the internet readable. HTTPS is better, for example through a reverse proxy.',
 			'addServer.plainHttpContinue' => 'Connect anyway',
+			'deepLinks.invalid' => 'This Plebz link isn\'t valid.',
+			'deepLinks.profileNotFound' => ({required Object profile}) => 'No profile matches "${profile}".',
+			'deepLinks.serverUnavailable' => 'Couldn\'t reach the server for this link.',
+			'deepLinks.notFound' => 'Couldn\'t find this title in your libraries.',
+			'deepLinks.unsupportedItem' => 'This link can\'t be played.',
+			'deepLinks.noLiveTv' => 'No Live TV server is available for this link.',
+			'deepLinks.channelNotFound' => ({required Object channel}) => 'Couldn\'t find channel "${channel}".',
+			'deepLinks.showLink' => 'Show link',
+			'deepLinks.showProfileLink' => 'Show profile link',
+			'deepLinks.dialogTitle' => 'Link',
+			'deepLinks.showHint' => 'Opening this link plays the next episode. Add &mode=shuffle to play the show on shuffle.',
+			'deepLinks.movieHint' => 'Opening this link plays the movie.',
+			'deepLinks.episodeHint' => 'Opening this link plays this episode.',
+			'deepLinks.profileHint' => 'Opening this link switches to this profile.',
+			'deepLinks.openAsProfile' => ({required Object name}) => 'Open as ${name}',
+			'deepLinks.copy' => 'Copy',
+			'deepLinks.copied' => 'Link copied',
 			'iptv.title' => 'IPTV',
 			'iptv.hubSubtitle' => 'Playlists and Xtream panels for Live TV – no recording',
 			'iptv.addPlaylist' => 'Add M3U playlist',

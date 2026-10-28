@@ -101,6 +101,10 @@ class _StoredPreferenceValue {
   const _StoredPreferenceValue({required this.existed, required this.value});
 }
 
+/// Saves an export on a television where the viewer chooses: answers with
+/// the path written, or null when they turned back (Plebz).
+typedef TelevisionSaver = Future<String?> Function(String fileName, Uint8List bytes);
+
 /// Serializes / restores user-facing SharedPreferences to a JSON file.
 ///
 /// Only preferences in the closed portable registry are exported. User-scoped
@@ -795,7 +799,7 @@ class SettingsExportService {
     final y = padNumber(now.year, 4);
     final m = padNumber(now.month, 2);
     final d = padNumber(now.day, 2);
-    return '${backup ? 'plesy-backup' : 'plezy-settings'}-$y$m$d.$fileExtension';
+    return '${backup ? 'plebz-backup' : 'plezy-settings'}-$y$m$d.$fileExtension';
   }
 
   /// Serializes the current user's settings and writes them to a location of
@@ -803,7 +807,11 @@ class SettingsExportService {
   /// cancelled the picker.
   ///
   /// Platform and filesystem failures retain their original exception types.
-  static Future<String?> exportToFile() async {
+  ///
+  /// On a television [saveOnTelevision] saves the file where the viewer
+  /// chooses (and answers with its path, or null when they turned back);
+  /// without it the file goes to the first of [backupDirectories] that takes it.
+  static Future<String?> exportToFile({TelevisionSaver? saveOnTelevision}) async {
     final prefs = (await SettingsService.getInstance()).prefs;
     final storage = await StorageService.getInstance();
     String appVersion = '';
@@ -819,10 +827,10 @@ class SettingsExportService {
     final bytes = Uint8List.fromList(utf8.encode(jsonString));
     final fileName = await _defaultFileName();
 
-    // Android TV has no document picker — write to the app docs dir and let
-    // the caller surface the path.
+    // Android TV has no document picker — the caller's browser chooses the
+    // folder, or the known folders take the file and the caller surfaces the path.
     if (Platform.isAndroid && PlatformDetector.isTV()) {
-      return _writeToAppDocuments(fileName, bytes);
+      return saveOnTelevision != null ? saveOnTelevision(fileName, bytes) : saveToKnownFolder(fileName, bytes);
     }
 
     return FilePickerService.instance.saveFile(
@@ -838,9 +846,11 @@ class SettingsExportService {
   /// sources with their arrangement, and the servers with their tokens —
   /// encrypted with [password].
   ///
-  /// Returns the saved path, or null if the user cancelled the picker.
+  /// Returns the saved path, or null if the user cancelled the picker. On a
+  /// television see [exportToFile] for [saveOnTelevision].
   static Future<String?> exportBackupToFile({
     required String password,
+    TelevisionSaver? saveOnTelevision,
     required Future<List<Connection>> Function() readConnections,
     Future<List<Profile>> Function()? readProfiles,
     Future<List<ProfileConnection>> Function()? readProfileConnections,
@@ -894,7 +904,7 @@ class SettingsExportService {
     final fileName = await _defaultFileName(backup: true);
 
     if (Platform.isAndroid && PlatformDetector.isTV()) {
-      return _writeToAppDocuments(fileName, bytes);
+      return saveOnTelevision != null ? saveOnTelevision(fileName, bytes) : saveToKnownFolder(fileName, bytes);
     }
     return FilePickerService.instance.saveFile(
       dialogTitle: t.settings.exportBackupDialogTitle,
@@ -964,6 +974,8 @@ class SettingsExportService {
     return [for (final root in roots.toList().reversed) p.join(root, 'Download')];
   }
 
+  static const _backupNamePrefixes = ['plebz-backup', 'plesy-backup', 'plezy-settings'];
+
   /// Backups lying in [backupDirectories], newest first.
   static Future<List<File>> findBackups() async {
     final found = <File>[];
@@ -974,7 +986,8 @@ class SettingsExportService {
         for (final entity in dir.listSync()) {
           final name = p.basename(entity.path);
           if (entity is! File || !name.endsWith('.$fileExtension')) continue;
-          if (!name.startsWith('plesy-backup') && !name.startsWith('plezy-settings')) continue;
+          // plesy-backup: the name before the fork became Plebz.
+          if (!_backupNamePrefixes.any(name.startsWith)) continue;
           if (seen.add(entity.path)) found.add(entity);
         }
       } catch (error) {
@@ -985,7 +998,9 @@ class SettingsExportService {
     return found;
   }
 
-  static Future<String> _writeToAppDocuments(String fileName, Uint8List bytes) async =>
+  /// Saves without asking where: the first of [backupDirectories] that takes
+  /// the file. What a television does when no folder can be chosen.
+  static Future<String> saveToKnownFolder(String fileName, Uint8List bytes) async =>
       writeToFirstWritable(await backupDirectories(), fileName, bytes);
 
   /// Writes to the first of [dirs] that accepts the file, and answers with

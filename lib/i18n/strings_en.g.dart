@@ -7880,6 +7880,12 @@ class Translations$localFiles$en {
 
 	/// en: 'No folders here and no files of type ${types}.'
 	String nothingHere({required Object types}) => 'No folders here and no files of type ${types}.';
+
+	/// en: 'Save here'
+	String get saveHere => 'Save here';
+
+	/// en: 'Plebz cannot save in this folder. Choose another one.'
+	String get saveFailed => 'Plebz cannot save in this folder. Choose another one.';
 }
 
 // Path: ambient
@@ -13394,6 +13400,8 @@ extension on Translations {
 			'localFiles.noVolumes' => 'No storage found.',
 			'localFiles.unreadable' => 'This folder cannot be read.',
 			'localFiles.nothingHere' => ({required Object types}) => 'No folders here and no files of type ${types}.',
+			'localFiles.saveHere' => 'Save here',
+			'localFiles.saveFailed' => 'Plebz cannot save in this folder. Choose another one.',
 			'ambient.settingTitle' => 'Screensaver',
 			'ambient.settingDescription' => 'Choose Plebz as the screensaver in Android\'s settings.',
 			'ambient.inAppTitle' => 'Screensaver in Plebz',

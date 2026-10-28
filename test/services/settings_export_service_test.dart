@@ -1156,15 +1156,15 @@ void main() {
       await seedActiveProfile();
       final prefs = await BaseSharedPreferencesService.sharedCache();
       await prefs.setString('user_profile-a_iptv_sources', '[{"name":"Anbieter","password":"geheim"}]');
-      picker.saveResult = '/tmp/plesy-backup.json';
+      picker.saveResult = '/tmp/plebz-backup.json';
 
       final path = await SettingsExportService.exportBackupToFile(
         password: 'ein gutes passwort',
         readConnections: () async => [_jellyfin(id: 'jf-1')],
       );
 
-      expect(path, '/tmp/plesy-backup.json');
-      expect(picker.lastSaveName, matches(RegExp(r'^plesy-backup-\d{8}\.json$')));
+      expect(path, '/tmp/plebz-backup.json');
+      expect(picker.lastSaveName, matches(RegExp(r'^plebz-backup-\d{8}\.json$')));
       final written = utf8.decode(picker.lastSaveBytes!);
       expect(written, isNot(contains('geheim')), reason: 'the file is sealed, not merely zipped');
       expect(written, isNot(contains('token-abc')));
@@ -1202,7 +1202,7 @@ void main() {
       await prefs.setString('user_profile-a_iptv_sources', '[{"name":"A","password":"anna-geheim"}]');
       await prefs.setString('user_local-b_iptv_sources', '[{"name":"B","password":"bea-geheim"}]');
       await prefs.setString('user_local-b_hidden_libraries', '["7"]');
-      picker.saveResult = '/tmp/plesy-backup.json';
+      picker.saveResult = '/tmp/plebz-backup.json';
       final plex = PlexAccountConnection(
         id: 'plex-1',
         accountToken: 'account-token',
@@ -1406,7 +1406,7 @@ void main() {
       await seedActiveProfile();
       final prefs = await BaseSharedPreferencesService.sharedCache();
       await prefs.setString('user_profile-a_iptv_sources', '[{"name":"Anbieter"}]');
-      picker.saveResult = '/tmp/plesy-backup.json';
+      picker.saveResult = '/tmp/plebz-backup.json';
       await SettingsExportService.exportBackupToFile(
         password: 'pw',
         readConnections: () async => [_jellyfin(id: 'jf-1')],
@@ -1440,7 +1440,7 @@ void main() {
 
     test('the wrong password is refused, and nothing is written', () async {
       await seedActiveProfile();
-      picker.saveResult = '/tmp/plesy-backup.json';
+      picker.saveResult = '/tmp/plebz-backup.json';
       await SettingsExportService.exportBackupToFile(
         password: 'richtig',
         readConnections: () async => [_jellyfin(id: 'jf-1')],
@@ -1465,7 +1465,7 @@ void main() {
 
     test('cancelling the password prompt cancels the restore', () async {
       await seedActiveProfile();
-      picker.saveResult = '/tmp/plesy-backup.json';
+      picker.saveResult = '/tmp/plebz-backup.json';
       await SettingsExportService.exportBackupToFile(password: 'pw', readConnections: () async => const []);
       picker.pickResult = FilePickerResult([
         PlatformFile(name: 'backup.json', size: picker.lastSaveBytes!.length, bytes: picker.lastSaveBytes),

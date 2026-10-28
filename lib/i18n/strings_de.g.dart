@@ -3056,6 +3056,8 @@ class _Translations$localFiles$de extends Translations$localFiles$en {
 	@override String get noVolumes => 'Kein Speicher gefunden.';
 	@override String get unreadable => 'Dieser Ordner lässt sich nicht lesen.';
 	@override String nothingHere({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.';
+	@override String get saveHere => 'Hier speichern';
+	@override String get saveFailed => 'In diesem Ordner kann Plebz nicht speichern. Wähle einen anderen.';
 }
 
 // Path: ambient
@@ -7154,6 +7156,8 @@ extension on TranslationsDe {
 			'localFiles.noVolumes' => 'Kein Speicher gefunden.',
 			'localFiles.unreadable' => 'Dieser Ordner lässt sich nicht lesen.',
 			'localFiles.nothingHere' => ({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.',
+			'localFiles.saveHere' => 'Hier speichern',
+			'localFiles.saveFailed' => 'In diesem Ordner kann Plebz nicht speichern. Wähle einen anderen.',
 			'ambient.settingTitle' => 'Bildschirmschoner',
 			'ambient.settingDescription' => 'In den Android-Einstellungen „Plebz“ als Bildschirmschoner wählen.',
 			'ambient.inAppTitle' => 'Bildschirmschoner in Plebz',

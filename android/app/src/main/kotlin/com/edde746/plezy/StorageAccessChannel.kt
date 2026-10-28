@@ -38,16 +38,29 @@ internal class StorageAccessChannel(private val activity: Activity) {
   private fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
     when (call.method) {
       "hasDocumentPicker" -> result.success(hasDocumentPicker())
+      "hasDocumentSaver" -> result.success(hasDocumentSaver())
       "hasFileAccess" -> result.success(hasFileAccess())
+      "hasWriteAccess" -> result.success(hasWriteAccess())
       "requestFileAccess" -> result.success(requestFileAccess())
       "storageRoots" -> result.success(storageRoots())
       else -> result.notImplemented()
     }
   }
 
-  private fun hasDocumentPicker(): Boolean {
-    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
-    return intent.resolveActivity(activity.packageManager) != null
+  private fun hasDocumentPicker(): Boolean = handlesDocuments(Intent.ACTION_OPEN_DOCUMENT)
+
+  private fun hasDocumentSaver(): Boolean = handlesDocuments(Intent.ACTION_CREATE_DOCUMENT)
+
+  /**
+   * Whether a real document UI answers [action]. Android TV builds ship
+   * `frameworkpackagestubs`, whose DocumentsStub takes the intent and closes at
+   * once with "not supported" — it resolves, but nothing can be chosen.
+   */
+  private fun handlesDocuments(action: String): Boolean {
+    val intent = Intent(action).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*")
+    return activity.packageManager
+      .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
+      .any { !isStub(it.activityInfo.packageName) }
   }
 
   private fun hasFileAccess(): Boolean =
@@ -57,6 +70,16 @@ internal class StorageAccessChannel(private val activity: Activity) {
       activity.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
     }
 
+  private fun isStub(packageName: String): Boolean = packageName.endsWith(".frameworkpackagestubs")
+
+  /** Before Android 11 writing is a permission of its own; from 11 on all files access covers it. */
+  private fun hasWriteAccess(): Boolean =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      Environment.isExternalStorageManager()
+    } else {
+      activity.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    }
+
   /**
    * Opens the grant. False when this box has no screen for it — some Android
    * TV builds leave the "all files access" page out, and then only adb can
@@ -64,7 +87,11 @@ internal class StorageAccessChannel(private val activity: Activity) {
    */
   private fun requestFileAccess(): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-      activity.requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), LEGACY_PERMISSION_REQUEST)
+      // Both at once: they share one prompt, and a backup is saved as well as read.
+      activity.requestPermissions(
+        arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE),
+        LEGACY_PERMISSION_REQUEST
+      )
       return true
     }
     val forThisApp = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)

@@ -27,12 +27,13 @@
     <!-- Explicitly remove media permissions that media_kit may add -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" tools:node="remove" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:node="remove" />
-    <!-- Plebz: choosing a local file (an M3U playlist, a backup) on boxes
-         without the system's document picker. Asked for only then, and only
-         by the user's own action. -->
+    <!-- Plebz: choosing a local file (an M3U playlist, a backup) and a folder to
+         save a backup in, on boxes without the system's document picker. Asked
+         for only then, and only by the user's own action. Android 10 also needs
+         requestLegacyExternalStorage on the application for plain file paths. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="29" tools:node="replace" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" tools:node="replace" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove" />
     <!-- Plebz: in_app_purchase (Supporter, off in this build) merges Play Billing in; the APK
          takes neither its permission nor its query for the Play Store. -->
     <uses-permission android:name="com.android.vending.BILLING" tools:node="remove" />
@@ -63,7 +64,8 @@
         android:largeHeap="true"
         android:networkSecurityConfig="@xml/network_security_config"
         android:usesCleartextTraffic="true"
-        android:allowBackup="false">
+        android:allowBackup="false"
+        android:requestLegacyExternalStorage="true">
         <!-- Driver-distraction state on Android Automotive OS. Optional: the platform library is
              absent on every other form factor, and CarRestrictionsMonitor falls back silently. -->
         <uses-library android:name="android.car" android:required="false" />
@@ -210,9 +212,13 @@
         <intent tools:node="remove">
             <action android:name="com.android.vending.billing.InAppBillingService.BIND" />
         </intent>
-        <!-- Plebz: whether this box has the system's document picker. -->
+        <!-- Plebz: whether this box has the system's document picker, and whether it saves. -->
         <intent>
             <action android:name="android.intent.action.OPEN_DOCUMENT" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.CREATE_DOCUMENT" />
             <data android:mimeType="*/*" />
         </intent>
         <intent>

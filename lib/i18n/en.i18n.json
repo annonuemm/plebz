@@ -3210,7 +3210,9 @@
     "up": "Up one level",
     "noVolumes": "No storage found.",
     "unreadable": "This folder cannot be read.",
-    "nothingHere": "No folders here and no files of type ${types}."
+    "nothingHere": "No folders here and no files of type ${types}.",
+    "saveHere": "Save here",
+    "saveFailed": "Plebz cannot save in this folder. Choose another one."
   },
   "ambient": {
     "settingTitle": "Screensaver",

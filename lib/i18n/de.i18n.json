@@ -3210,7 +3210,9 @@
     "up": "Eine Ebene höher",
     "noVolumes": "Kein Speicher gefunden.",
     "unreadable": "Dieser Ordner lässt sich nicht lesen.",
-    "nothingHere": "Hier liegen keine Ordner und keine Dateien vom Typ ${types}."
+    "nothingHere": "Hier liegen keine Ordner und keine Dateien vom Typ ${types}.",
+    "saveHere": "Hier speichern",
+    "saveFailed": "In diesem Ordner kann Plebz nicht speichern. Wähle einen anderen."
   },
   "ambient": {
     "settingTitle": "Bildschirmschoner",

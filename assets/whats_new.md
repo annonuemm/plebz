@@ -13,6 +13,13 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.35.0 (Build 887)
+
+### Sicherung
+- Auf dem Fernseher suchst du jetzt selbst aus, in welchem Ordner eine Sicherung gespeichert wird, bei „Vollständige Sicherung“ und bei „Einstellungen exportieren“. Ordner öffnen, dann „Hier speichern“ wählen. Steckt ein USB-Stick, beginnt die Auswahl dort.
+- Auf manchen Android-TV- und Google-TV-Geräten passierte beim Öffnen oder Speichern einer Datei nichts, weil das Gerät nur so tat, als hätte es eine Dateiauswahl. Plebz nimmt dort jetzt seinen eigenen Dateibrowser.
+- Die Sicherungsdatei heißt jetzt „plebz-backup-…“. Ältere Sicherungen lassen sich weiter öffnen.
+
 ## 1.34.0 (Build 884)
 
 ### Bildschirmschoner

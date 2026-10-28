@@ -983,9 +983,23 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
       context,
       operation: 'Settings export',
       body: () async {
-        final path = await (widget.settingsExporter ?? SettingsExportService.exportToFile)();
+        var automatic = false;
+        final exporter =
+            widget.settingsExporter ??
+            () => SettingsExportService.exportToFile(
+              saveOnTelevision: (name, bytes) async {
+                final saved = await _saveOnTelevision(name, bytes, t.settings.exportDialogTitle);
+                automatic = saved?.automatic ?? false;
+                return saved?.path;
+              },
+            );
+        final path = await exporter();
         if (!mounted || path == null) return;
-        showSuccessSnackBar(context, t.settings.exportSettingsSuccess);
+        if (automatic) {
+          await _reportBackupLocation(path);
+        } else {
+          showSuccessSnackBar(context, t.settings.exportSettingsSuccess);
+        }
       },
     );
   }
@@ -1030,32 +1044,59 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
       context,
       operation: 'Backup export',
       body: () async {
+        var automatic = false;
         final path = await SettingsExportService.exportBackupToFile(
           password: password,
+          saveOnTelevision: (name, bytes) async {
+            final saved = await _saveOnTelevision(name, bytes, t.settings.exportBackupDialogTitle);
+            automatic = saved?.automatic ?? false;
+            return saved?.path;
+          },
           readConnections: registry.list,
           readProfiles: profiles.list,
           readProfileConnections: profileConnections.listAll,
         );
         if (!mounted || path == null) return;
-        await _reportBackupLocation(path);
+        if (automatic) {
+          await _reportBackupLocation(path);
+        } else {
+          showSuccessSnackBar(context, t.settings.exportBackupSuccess);
+        }
       },
     );
   }
 
-  /// Where the file went. On a television that is the whole point of the
-  /// export — without the path there is nothing to copy — so it is a dialog
-  /// that waits, not a message that fades.
-  Future<void> _reportBackupLocation(String path) async {
-    if (!_usesFilePicker) {
-      await showFullTextDialog(
-        context,
-        title: t.settings.backupTvLocationTitle,
-        text: t.settings.backupTvLocationMessage(path: path),
-      );
-      return;
-    }
-    showSuccessSnackBar(context, t.settings.exportBackupSuccess);
+  /// On a television the viewer chooses the folder — the box's own picker, or
+  /// the app's browser where there is none. Only without either (the file
+  /// access declined) does the file go to the known folders, and then
+  /// [automatic] says so: the viewer has to be told where it went.
+  Future<({String path, bool automatic})?> _saveOnTelevision(String fileName, Uint8List bytes, String title) async {
+    if (!mounted) return null;
+    final save = await LocalFileAccess.saveFile(
+      context,
+      fileName: fileName,
+      bytes: bytes,
+      extension: SettingsExportService.fileExtension,
+      title: title,
+    );
+    return switch (save.outcome) {
+      LocalSaveOutcome.saved => (path: save.path!, automatic: false),
+      LocalSaveOutcome.cancelled => null,
+      LocalSaveOutcome.unavailable => (
+        path: await SettingsExportService.saveToKnownFolder(fileName, bytes),
+        automatic: true,
+      ),
+    };
   }
+
+  /// Where a file went that Plebz placed itself. On a television that is the
+  /// whole point of the export — without the path there is nothing to copy —
+  /// so it is a dialog that waits, not a message that fades.
+  Future<void> _reportBackupLocation(String path) => showFullTextDialog(
+    context,
+    title: t.settings.backupTvLocationTitle,
+    text: t.settings.backupTvLocationMessage(path: path),
+  );
 
   /// True where the system offers a document picker. Android TV and tvOS do
   /// not; a desktop forced into TV mode still does.

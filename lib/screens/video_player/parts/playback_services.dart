@@ -804,6 +804,43 @@ extension _VideoPlayerPlaybackServiceMethods on VideoPlayerScreenState {
     );
   }
 
+  /// Plebz: tells the screensaver what is paused, for the scene it starts with
+  /// (Android); OK there plays on. Live TV and a finished item have nothing to
+  /// come back to.
+  void _publishAmbientPause(bool isPlaying) {
+    final currentPlayer = player;
+    if (isPlaying ||
+        currentPlayer == null ||
+        !_isPlayerInitialized ||
+        currentPlayer.state.completed ||
+        _shuttingDown ||
+        widget.isLive) {
+      AmbientFeed.instance.setPaused(null);
+      return;
+    }
+    final item = _currentMetadata;
+    final episode = item.isEpisode && item.grandparentTitle != null;
+    final left = currentPlayer.state.duration - currentPlayer.state.position;
+    final client = _isOfflinePlayback ? null : _getMediaServerClient(context);
+    final art = item.heroArtCandidates(containerAspectRatio: 16 / 9).firstOrNull ?? item.artPath;
+    AmbientFeed.instance.setPaused(
+      AmbientPause(
+        title: episode ? item.grandparentTitle! : (item.title ?? ''),
+        subtitle: episode
+            ? [?formatSeasonEpisodeLabel(item.parentIndex, item.index), ?item.title].join(' · ')
+            : item.year?.toString(),
+        remaining: left >= const Duration(minutes: 1)
+            ? t.ambient.remaining(duration: formatDurationTextual(left.inMilliseconds))
+            : null,
+        image: homeRowsImageAddress(art, client, width: 1920, height: 1080),
+      ),
+      onResume: () async {
+        final resumed = player;
+        if (resumed != null && mounted) await _playWithPlaybackIntent(resumed);
+      },
+    );
+  }
+
   void _onPlayingStateChanged(bool isPlaying) {
     if (!isPlaying) {
       _lastPlaybackPauseAt = DateTime.now();
@@ -845,6 +882,7 @@ extension _VideoPlayerPlaybackServiceMethods on VideoPlayerScreenState {
     // advances, and a lock taken there keeps a finished item lit until
     // someone comes back.
     unawaited(_wakelockController.setEnabled(isPlaying && !(player?.state.completed ?? false)));
+    _publishAmbientPause(isPlaying);
 
     if (isPlaying) {
       // Force a texture refresh on resume to unstick stale frames

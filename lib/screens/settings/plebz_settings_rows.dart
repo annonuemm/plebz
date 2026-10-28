@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../i18n/strings.g.dart';
+import '../../services/ambient/ambient_feed.dart';
+import '../../services/ambient/ambient_in_app.dart';
 import '../../services/settings_service.dart' hide ThemeMode;
 import '../../services/settings_service.dart' as settings show ThemeMode;
 import '../../services/settings_mutation_service.dart';
@@ -352,3 +356,54 @@ String _glasAccentDescription(GlasAccent value) => switch (value) {
   GlasAccent.rot => t.settings.glasAccentRotDescription,
   GlasAccent.plebz => t.settings.glasAccentPlebzDescription,
 };
+
+/// Plebz's screensaver: Android chooses it on its own settings page, and this
+/// row takes the viewer there. Left out where the device has no such page.
+class AmbientScreensaverTile extends StatelessWidget {
+  const AmbientScreensaverTile({super.key});
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<bool>(
+    future: AmbientFeed.instance.settingsAvailable(),
+    builder: (context, available) => available.data == true
+        ? SettingNavigationTile(
+            icon: Symbols.wallpaper_rounded,
+            title: t.ambient.settingTitle,
+            subtitle: t.ambient.settingDescription,
+            trailingIcon: Symbols.open_in_new_rounded,
+            onTap: () => unawaited(AmbientFeed.instance.openSettings()),
+          )
+        : const SizedBox.shrink(),
+  );
+}
+
+/// The app's own screensaver, for TVs that offer no screensaver choice: the
+/// switch and, while it is on, how long the app waits. Android TV only.
+List<Widget> ambientInAppRows() => [
+  if (AmbientInApp.instance.supported) ...[
+    SettingSwitchTile(
+      pref: PlebzPrefs.ambientInApp,
+      icon: Symbols.slideshow_rounded,
+      title: t.ambient.inAppTitle,
+      subtitle: t.ambient.inAppDescription,
+    ),
+    SettingValueBuilder<bool>(
+      pref: PlebzPrefs.ambientInApp,
+      builder: (context, on, _) => on
+          ? SettingSelectionTile<int>(
+              pref: PlebzPrefs.ambientInAppMinutes,
+              icon: Symbols.timer_rounded,
+              title: t.ambient.inAppDelay,
+              subtitleBuilder: (minutes) => t.ambient.minutes(n: minutes),
+              options: [
+                for (final minutes in AmbientInApp.minuteChoices)
+                  DialogOption(
+                    value: minutes,
+                    title: t.ambient.minutes(n: minutes),
+                  ),
+              ],
+            )
+          : const SizedBox.shrink(),
+    ),
+  ],
+];

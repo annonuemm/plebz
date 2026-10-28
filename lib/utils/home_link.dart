@@ -8,6 +8,8 @@ import 'package:flutter/foundation.dart';
 /// * `plebz://sport` — Sport
 /// * `plebz://now?id=<entry>` — what the "Jetzt live" tile with that id does
 ///   on the start page: tune the channel, or the game's channel or window
+/// * `plebz://reminder?key=<key>` — the channel of a guide reminder (the
+///   screensaver's "Erinnerung gesetzt")
 sealed class HomeLink {
   const HomeLink();
 
@@ -34,6 +36,10 @@ sealed class HomeLink {
         final id? => PlebzLiveNowLink(id),
         null => null,
       },
+      'reminder' => switch (query('key')) {
+        final key? => PlebzReminderLink(key),
+        null => null,
+      },
       _ => null,
     };
   }
@@ -57,6 +63,13 @@ final class PlebzLiveNowLink extends HomeLink {
   const PlebzLiveNowLink(this.entryId);
 
   final String entryId;
+}
+
+final class PlebzReminderLink extends HomeLink {
+  const PlebzReminderLink(this.key);
+
+  /// [ProgramReminder.key].
+  final String key;
 }
 
 /// The "Jetzt live" entry a link asked for, waiting for the start page to

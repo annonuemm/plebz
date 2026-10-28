@@ -38,8 +38,9 @@ import 'sport/sport_models.dart';
 /// over as keys: the addresses behind them carry server credentials and stay
 /// in the app, which fetches the pictures itself.
 ///
-/// Android only; elsewhere every call does nothing.
-class HomeRows {
+/// Android only; elsewhere every call does nothing. The screensaver
+/// (`AmbientFeed`) listens and builds its scenes from the same rows.
+class HomeRows extends ChangeNotifier {
   HomeRows({
     this.channel = const MethodChannel('app.plebz/home_rows'),
     bool? supported,
@@ -92,7 +93,23 @@ class HomeRows {
       _rows[id] = (title: title, tiles: List.unmodifiable(tiles), subtitle: subtitle, selected: selected, order: order);
     }
     _schedule();
+    notifyListeners();
   }
+
+  /// The rows as they stand, in the snapshot's order.
+  List<({String id, String title, String? subtitle, bool selected, List<HomeRowTile> tiles})> get rows => [
+    for (final id in _orderedIds())
+      (
+        id: id,
+        title: _rows[id]!.title,
+        subtitle: _rows[id]!.subtitle,
+        selected: _rows[id]!.selected,
+        tiles: _rows[id]!.tiles,
+      ),
+  ];
+
+  /// The look last handed in by [setTheme].
+  HomeRowsTheme? get theme => _theme;
 
   /// The ids of the library rows published now.
   Iterable<String> get libraryRowIds => _rows.keys.where((id) => id.startsWith(libraryRowPrefix));
@@ -109,6 +126,7 @@ class HomeRows {
     if (!_supported || theme == _theme) return;
     _theme = theme;
     _schedule();
+    notifyListeners();
   }
 
   /// Empties the snapshot — on a change of profile, before the next one's rows.
@@ -118,6 +136,7 @@ class HomeRows {
     _timer = null;
     _rows.clear();
     _lastSnapshot = null;
+    notifyListeners();
     try {
       await channel.invokeMethod<bool>('clear');
     } catch (e) {
@@ -161,13 +180,7 @@ class HomeRows {
       return 'content://app.plebz.homerows/art/$key';
     }
 
-    final ids = [
-      ...rowOrder.where(_rows.containsKey),
-      ...(_rows.keys.where((id) => !rowOrder.contains(id)).toList()..sort((a, b) {
-        final byOrder = _rows[a]!.order.compareTo(_rows[b]!.order);
-        return byOrder != 0 ? byOrder : a.compareTo(b);
-      })),
-    ];
+    final ids = _orderedIds();
     final body = <String, dynamic>{
       'theme': ?_theme?.toJson(),
       'rows': [
@@ -189,6 +202,14 @@ class HomeRows {
     });
     return (snapshot: snapshot, sources: sources, content: content);
   }
+
+  List<String> _orderedIds() => [
+    ...rowOrder.where(_rows.containsKey),
+    ...(_rows.keys.where((id) => !rowOrder.contains(id)).toList()..sort((a, b) {
+      final byOrder = _rows[a]!.order.compareTo(_rows[b]!.order);
+      return byOrder != 0 ? byOrder : a.compareTo(b);
+    })),
+  ];
 
   @visibleForTesting
   void debugReset() {
@@ -291,6 +312,8 @@ class HomeRowTile {
     this.facts = const [],
     this.badge,
     this.colours,
+    this.ambientImage,
+    this.addedAt,
   });
 
   final String id;
@@ -330,6 +353,11 @@ class HomeRowTile {
   /// The four corner colours Plex derives from the title's artwork, for a
   /// ground in its colours (the start page's "Hintergrund in Posterfarben").
   final UltraBlurColors? colours;
+
+  /// For the screensaver only, never in the launcher's snapshot: the title's
+  /// wide picture at screen size, and when it came into the library.
+  final String? ambientImage;
+  final DateTime? addedAt;
 
   Map<String, dynamic> toJson(String? Function(String? address) art) => {
     'id': id,
@@ -469,6 +497,10 @@ HomeRowTile? homeRowTileForItem(
       ? item.spoilerSafeArt
       : item.heroArtCandidates(containerAspectRatio: 16 / 9).firstOrNull ?? item.artPath;
   final backdrop = _address(backdropPath, client, width: 1280, height: 720);
+  final ambientPath = spoiler
+      ? item.spoilerSafeArt
+      : item.heroArtCandidates(containerAspectRatio: 16 / 9).firstOrNull ?? item.artPath;
+  final addedAt = item.addedAt;
 
   final episode = item.kind == MediaKind.episode && item.grandparentTitle != null;
   final duration = item.durationMs ?? 0;
@@ -487,6 +519,8 @@ HomeRowTile? homeRowTileForItem(
     facts: resume ? _spotlightFacts(item) : const [],
     badge: resume && item.contentRating != null ? formatContentRating(item.contentRating!) : null,
     colours: colours,
+    ambientImage: _address(ambientPath, client, width: 1920, height: 1080),
+    addedAt: addedAt == null ? null : DateTime.fromMillisecondsSinceEpoch(addedAt * 1000),
   );
 }
 
@@ -572,6 +606,10 @@ String? _channelLogo(LiveTvChannel channel, MediaServerClient? Function(String s
   }
   return null;
 }
+
+/// [path] as an address the app can fetch, for the screensaver's pause scene.
+String? homeRowsImageAddress(String? path, MediaServerClient? client, {required int width, required int height}) =>
+    _address(path, client, width: width, height: height);
 
 /// [path] as an address the app can fetch: as it is when it is one already,
 /// through [client] when it is a server's path, null otherwise.

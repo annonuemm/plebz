@@ -165,6 +165,15 @@ abstract final class PlebzPrefs {
   /// 2026-10-19).
   static const seasonalStartScreen = BoolPref('seasonal_start_screen', defaultValue: true);
 
+  /// The app shows its own screensaver over itself after [ambientInAppMinutes]
+  /// without input — for TV devices with no screensaver choice of their own
+  /// (the user's call, 2026-10-27: an addition beside Android's slot, off by
+  /// default).
+  static const ambientInApp = BoolPref('ambient_in_app');
+
+  /// How long the app waits, without input, before its own screensaver.
+  static const ambientInAppMinutes = IntPref('ambient_in_app_minutes', defaultValue: 5);
+
   /// Under glass, the ground takes the colours of the Plex title holding focus
   /// — Plex's "UltraBlur". A test, off until switched on.
   static const glasUltraBlur = BoolPref('glas_ultra_blur', defaultValue: false);

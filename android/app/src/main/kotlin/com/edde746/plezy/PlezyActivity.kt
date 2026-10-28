@@ -27,6 +27,8 @@ import android.view.inputmethod.InputConnection
 import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
+import com.edde746.plezy.ambient.AmbientInApp
+import com.edde746.plezy.ambient.AmbientPlugin
 import com.edde746.plezy.car.CarRestrictionsMonitor
 import com.edde746.plezy.deeplink.DeepLinkPlugin
 import com.edde746.plezy.exoplayer.ExoPlayerPlugin
@@ -538,6 +540,8 @@ class PlezyActivity : FlutterActivity() {
     val content = findViewById<ViewGroup>(android.R.id.content)
     val wrapper = object : FrameLayout(this) {
       override fun dispatchKeyEventPreIme(event: KeyEvent): Boolean {
+        // Plebz: the app's own screensaver, while it shows, takes the keys first.
+        if (AmbientInApp.interceptKey(event)) return true
         if (isDpadKeyCode(event.keyCode)) {
           logTextInputDiag { "preIme received ${describeKeyEvent(event)} ${describeImeState()}" }
         }
@@ -610,6 +614,8 @@ class PlezyActivity : FlutterActivity() {
   }
 
   override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+    // Plebz: keys the pre-IME path above does not see (Back, media keys).
+    if (AmbientInApp.interceptKey(event)) return true
     if (isDpadKeyCode(event.keyCode)) {
       logTextInputDiag { "activity.dispatchKeyEvent before ${describeKeyEvent(event)} ${describeImeState()}" }
     }
@@ -1032,6 +1038,8 @@ class PlezyActivity : FlutterActivity() {
     flutterEngine.plugins.add(deepLinkPlugin)
     // Plebz: the home rows for a launcher signed with this app's key
     flutterEngine.plugins.add(HomeRowsPlugin())
+    // Plebz: the screensaver's scenes and the paused title
+    flutterEngine.plugins.add(AmbientPlugin())
 
     MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PIP_CHANNEL).setMethodCallHandler { call, result ->
       when (call.method) {

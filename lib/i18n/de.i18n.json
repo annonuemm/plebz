@@ -3212,6 +3212,35 @@
     "unreadable": "Dieser Ordner lässt sich nicht lesen.",
     "nothingHere": "Hier liegen keine Ordner und keine Dateien vom Typ ${types}."
   },
+  "ambient": {
+    "settingTitle": "Bildschirmschoner",
+    "settingDescription": "In den Android-Einstellungen „Plebz“ als Bildschirmschoner wählen.",
+    "inAppTitle": "Bildschirmschoner in Plebz",
+    "inAppDescription": "Zeigt ihn, solange Plebz offen ist.",
+    "inAppDelay": "Starten nach",
+    "minutes": {
+      "one": "${n} Minute",
+      "other": "${n} Minuten"
+    },
+    "paused": "Pausiert",
+    "okResumes": "OK spielt weiter",
+    "remaining": "noch ${duration}",
+    "continueWatching": "Weiterschauen",
+    "fromLibrary": "Aus deiner Bibliothek",
+    "fromWatchlist": "Von deiner Merkliste",
+    "newSinceYesterday": "Neu seit gestern",
+    "newMovies": {
+      "one": "${n} Film",
+      "other": "${n} Filme"
+    },
+    "newSeries": {
+      "one": "Neues aus ${n} Serie",
+      "other": "Neues aus ${n} Serien"
+    },
+    "sportToday": "Heute im Sport",
+    "reminderSet": "Erinnerung gesetzt",
+    "onNow": "Läuft gerade"
+  },
   "reminders": {
     "add": "Erinnern",
     "remove": "Erinnerung entfernen",

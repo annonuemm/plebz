@@ -101,6 +101,7 @@ class TranslationsDe extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$sport$de sport = _Translations$sport$de._(_root);
 	@override late final _Translations$plebz$de plebz = _Translations$plebz$de._(_root);
 	@override late final _Translations$localFiles$de localFiles = _Translations$localFiles$de._(_root);
+	@override late final _Translations$ambient$de ambient = _Translations$ambient$de._(_root);
 	@override late final _Translations$reminders$de reminders = _Translations$reminders$de._(_root);
 	@override late final _Translations$remoteKeys$de remoteKeys = _Translations$remoteKeys$de._(_root);
 }
@@ -3055,6 +3056,42 @@ class _Translations$localFiles$de extends Translations$localFiles$en {
 	@override String get noVolumes => 'Kein Speicher gefunden.';
 	@override String get unreadable => 'Dieser Ordner lässt sich nicht lesen.';
 	@override String nothingHere({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.';
+}
+
+// Path: ambient
+class _Translations$ambient$de extends Translations$ambient$en {
+	_Translations$ambient$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get settingTitle => 'Bildschirmschoner';
+	@override String get settingDescription => 'In den Android-Einstellungen „Plebz“ als Bildschirmschoner wählen.';
+	@override String get inAppTitle => 'Bildschirmschoner in Plebz';
+	@override String get inAppDescription => 'Zeigt ihn, solange Plebz offen ist.';
+	@override String get inAppDelay => 'Starten nach';
+	@override String minutes({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n,
+		one: '${n} Minute',
+		other: '${n} Minuten',
+	);
+	@override String get paused => 'Pausiert';
+	@override String get okResumes => 'OK spielt weiter';
+	@override String remaining({required Object duration}) => 'noch ${duration}';
+	@override String get continueWatching => 'Weiterschauen';
+	@override String get fromLibrary => 'Aus deiner Bibliothek';
+	@override String get fromWatchlist => 'Von deiner Merkliste';
+	@override String get newSinceYesterday => 'Neu seit gestern';
+	@override String newMovies({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n,
+		one: '${n} Film',
+		other: '${n} Filme',
+	);
+	@override String newSeries({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n,
+		one: 'Neues aus ${n} Serie',
+		other: 'Neues aus ${n} Serien',
+	);
+	@override String get sportToday => 'Heute im Sport';
+	@override String get reminderSet => 'Erinnerung gesetzt';
+	@override String get onNow => 'Läuft gerade';
 }
 
 // Path: reminders
@@ -7117,6 +7154,24 @@ extension on TranslationsDe {
 			'localFiles.noVolumes' => 'Kein Speicher gefunden.',
 			'localFiles.unreadable' => 'Dieser Ordner lässt sich nicht lesen.',
 			'localFiles.nothingHere' => ({required Object types}) => 'Hier liegen keine Ordner und keine Dateien vom Typ ${types}.',
+			'ambient.settingTitle' => 'Bildschirmschoner',
+			'ambient.settingDescription' => 'In den Android-Einstellungen „Plebz“ als Bildschirmschoner wählen.',
+			'ambient.inAppTitle' => 'Bildschirmschoner in Plebz',
+			'ambient.inAppDescription' => 'Zeigt ihn, solange Plebz offen ist.',
+			'ambient.inAppDelay' => 'Starten nach',
+			'ambient.minutes' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Minute', other: '${n} Minuten', ), 
+			'ambient.paused' => 'Pausiert',
+			'ambient.okResumes' => 'OK spielt weiter',
+			'ambient.remaining' => ({required Object duration}) => 'noch ${duration}',
+			'ambient.continueWatching' => 'Weiterschauen',
+			'ambient.fromLibrary' => 'Aus deiner Bibliothek',
+			'ambient.fromWatchlist' => 'Von deiner Merkliste',
+			'ambient.newSinceYesterday' => 'Neu seit gestern',
+			'ambient.newMovies' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Film', other: '${n} Filme', ), 
+			'ambient.newSeries' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: 'Neues aus ${n} Serie', other: 'Neues aus ${n} Serien', ), 
+			'ambient.sportToday' => 'Heute im Sport',
+			'ambient.reminderSet' => 'Erinnerung gesetzt',
+			'ambient.onNow' => 'Läuft gerade',
 			'reminders.add' => 'Erinnern',
 			'reminders.remove' => 'Erinnerung entfernen',
 			'reminders.added' => 'Erinnerung gesetzt – Plebz meldet sich kurz vor Beginn.',

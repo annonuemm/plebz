@@ -103,16 +103,29 @@
                 <data android:host="live"/>
                 <data android:host="external-player"/>
             </intent-filter>
-            <!-- Plebz: the links only a home-row tile opens (watchlist, sport, now). Not
-                 BROWSABLE: a web page cannot fire them, only an app's intent. -->
+            <!-- Plebz: the links only a home-row tile or the screensaver opens (watchlist,
+                 sport, now, reminder). Not BROWSABLE: a web page cannot fire them, only an
+                 app's intent. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:scheme="plebz" android:host="watchlist"/>
                 <data android:host="sport"/>
                 <data android:host="now"/>
+                <data android:host="reminder"/>
             </intent-filter>
         </activity>
+        <!-- Plebz Ambient: the screensaver Android lists under its screensaver settings. -->
+        <service
+            android:name="com.edde746.plezy.ambient.PlebzAmbientDream"
+            android:exported="true"
+            android:label="Plebz"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </service>
         <!-- The default icon. Keep this component name forever: it was the launcher activity before
              app icons became switchable, so every existing home-screen shortcut, TV favourite and
              recent task points at it. The meta-data repeats the activity's because FlutterActivity

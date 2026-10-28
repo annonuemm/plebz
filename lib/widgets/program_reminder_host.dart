@@ -192,35 +192,43 @@ class _ProgramReminderHostState extends State<ProgramReminderHost> with WidgetsB
     });
   }
 
-  /// To the reminder's channel, the way the home screen's live row goes there:
-  /// the guide handed the channel, the player opened over it.
-  Future<void> _tune(ProgramReminder reminder) async {
-    final multiServer = context.read<MultiServerProvider?>();
-    final finder = SportBroadcastFinder.maybeOf(context);
-    if (multiServer == null || finder == null) return;
-    final channels = await finder.channels();
-    if (!mounted) return;
-    final channel = channels.firstWhereOrNull((c) => liveTvChannelScopeKey(c) == reminder.channelScopeKey);
-    if (channel == null) {
-      showErrorSnackBar(context, t.reminders.channelGone(channel: reminder.channelTitle));
-      return;
-    }
-    LiveTvLastSelection.instance.handOff(
-      channelKey: liveTvChannelScopeKey(channel),
-      group: liveTvNonEmpty(channel.lineup),
-    );
-    MainScreenTabSwitcher.selectTabOf(context, NavigationTabId.liveTv);
-    await navigateToLiveTv(
-      context,
-      multiServer: multiServer,
-      channel: channel,
-      channels: channels,
-      group: liveTvNonEmpty(channel.lineup),
-    );
-  }
+  Future<void> _tune(ProgramReminder reminder) => tuneProgramReminder(context, reminder);
 
   @override
   Widget build(BuildContext context) => widget.child;
+}
+
+/// To the reminder's channel, the way the home screen's live row goes there:
+/// the guide handed the channel, the player opened over it. Also what the
+/// screensaver's reminder scene asks for (`plebz://reminder`), where the main
+/// screen passes its own [showLiveTvTab].
+Future<void> tuneProgramReminder(BuildContext context, ProgramReminder reminder, {VoidCallback? showLiveTvTab}) async {
+  final multiServer = context.read<MultiServerProvider?>();
+  final finder = SportBroadcastFinder.maybeOf(context);
+  if (multiServer == null || finder == null) return;
+  final channels = await finder.channels();
+  if (!context.mounted) return;
+  final channel = channels.firstWhereOrNull((c) => liveTvChannelScopeKey(c) == reminder.channelScopeKey);
+  if (channel == null) {
+    showErrorSnackBar(context, t.reminders.channelGone(channel: reminder.channelTitle));
+    return;
+  }
+  LiveTvLastSelection.instance.handOff(
+    channelKey: liveTvChannelScopeKey(channel),
+    group: liveTvNonEmpty(channel.lineup),
+  );
+  if (showLiveTvTab != null) {
+    showLiveTvTab();
+  } else {
+    MainScreenTabSwitcher.selectTabOf(context, NavigationTabId.liveTv);
+  }
+  await navigateToLiveTv(
+    context,
+    multiServer: multiServer,
+    channel: channel,
+    channels: channels,
+    group: liveTvNonEmpty(channel.lineup),
+  );
 }
 
 class _ReminderDialog extends StatelessWidget {

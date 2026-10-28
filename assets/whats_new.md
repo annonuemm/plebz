@@ -13,6 +13,16 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.34.0 (Build 884)
+
+### Bildschirmschoner
+- Plebz hat jetzt einen eigenen Bildschirmschoner. Er zeigt abwechselnd Weiterschauen, Neues seit gestern, Titel aus Mediathek und Merkliste, die Spiele des Tages und Erinnerungen an Sendungen, dazu Uhrzeit und eine Zeile mit dem, was heute ansteht.
+- Ist ein Film pausiert, beginnt er mit diesem Titel, und OK spielt weiter. Sonst öffnet OK den gezeigten Titel.
+- Ab 23 Uhr wird das Bild dunkel und zeigt nur noch die Uhr.
+- Alles wandert ständig ein Stück, damit sich auf OLED-Fernsehern nichts einbrennt.
+- Wo das Gerät eine Auswahl hat, führt Einstellungen → Darstellung → „Bildschirmschoner“ dorthin. Dort „Plebz“ wählen.
+- Neuere Android-TV- und Google-TV-Geräte haben keine Auswahl. Dort „Bildschirmschoner in Plebz“ einschalten: Er erscheint nach der gewählten Zeit, solange Plebz geöffnet ist.
+
 ## 1.33.0 (Build 878)
 
 ### Wiedergabe

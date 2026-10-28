@@ -91,6 +91,9 @@ import '../services/live_variant_fallback.dart';
 import '../widgets/video_surface_hole.dart';
 import '../services/live_tv_last_selection.dart';
 import '../services/settings_service.dart';
+import '../services/ambient/ambient_feed.dart';
+import '../services/home_rows.dart' show homeRowsImageAddress;
+import '../utils/formatters.dart' show formatDurationTextual, formatSeasonEpisodeLabel;
 import '../services/sleep_timer_service.dart';
 import '../services/subtitle_preference.dart';
 import '../services/track_manager.dart';
@@ -2700,6 +2703,8 @@ class VideoPlayerScreenState extends State<VideoPlayerScreen>
 
   @override
   void dispose() {
+    // Plebz: nothing paused for the screensaver once the player is gone.
+    AmbientFeed.instance.setPaused(null);
     PlaybackCoordinator.instance.unregisterVideoSession(
       _shutdownVideo,
       retirement: () async {

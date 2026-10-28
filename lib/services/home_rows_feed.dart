@@ -19,6 +19,8 @@ import '../providers/multi_server_provider.dart';
 import '../screens/live_now/live_now_loader.dart';
 import '../theme/mono_tokens.dart';
 import '../utils/app_logger.dart';
+import 'ambient/ambient_feed.dart';
+import 'ambient/ambient_in_app.dart';
 import 'catalog/catalog_source.dart';
 import 'home_rows.dart';
 import 'plex_client.dart';
@@ -45,6 +47,9 @@ class HomeRowsFeed {
        sport = sport ?? SportRepository.instance {
     discover.addListener(_onDiscoverChanged);
     _onDiscoverChanged();
+    // The screensaver builds its scenes from the same rows.
+    AmbientFeed.instance.start();
+    AmbientInApp.instance.start();
   }
 
   static const Duration watchlistInterval = Duration(minutes: 15);

@@ -3212,6 +3212,35 @@
     "unreadable": "This folder cannot be read.",
     "nothingHere": "No folders here and no files of type ${types}."
   },
+  "ambient": {
+    "settingTitle": "Screensaver",
+    "settingDescription": "Choose Plebz as the screensaver in Android's settings.",
+    "inAppTitle": "Screensaver in Plebz",
+    "inAppDescription": "Shows it while Plebz is open.",
+    "inAppDelay": "Start after",
+    "minutes": {
+      "one": "${n} minute",
+      "other": "${n} minutes"
+    },
+    "paused": "Paused",
+    "okResumes": "OK resumes",
+    "remaining": "${duration} left",
+    "continueWatching": "Continue watching",
+    "fromLibrary": "From your library",
+    "fromWatchlist": "On your watchlist",
+    "newSinceYesterday": "New since yesterday",
+    "newMovies": {
+      "one": "${n} film",
+      "other": "${n} films"
+    },
+    "newSeries": {
+      "one": "new from ${n} series",
+      "other": "new from ${n} series"
+    },
+    "sportToday": "Today in sport",
+    "reminderSet": "Reminder set",
+    "onNow": "On now"
+  },
   "reminders": {
     "add": "Remind me",
     "remove": "Remove reminder",

@@ -102,6 +102,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$sport$en sport = Translations$sport$en.internal(_root);
 	late final Translations$plebz$en plebz = Translations$plebz$en.internal(_root);
 	late final Translations$localFiles$en localFiles = Translations$localFiles$en.internal(_root);
+	late final Translations$ambient$en ambient = Translations$ambient$en.internal(_root);
 	late final Translations$reminders$en reminders = Translations$reminders$en.internal(_root);
 	late final Translations$remoteKeys$en remoteKeys = Translations$remoteKeys$en.internal(_root);
 }
@@ -7881,6 +7882,78 @@ class Translations$localFiles$en {
 	String nothingHere({required Object types}) => 'No folders here and no files of type ${types}.';
 }
 
+// Path: ambient
+class Translations$ambient$en {
+	Translations$ambient$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'Screensaver'
+	String get settingTitle => 'Screensaver';
+
+	/// en: 'Choose Plebz as the screensaver in Android's settings.'
+	String get settingDescription => 'Choose Plebz as the screensaver in Android\'s settings.';
+
+	/// en: 'Screensaver in Plebz'
+	String get inAppTitle => 'Screensaver in Plebz';
+
+	/// en: 'Shows it while Plebz is open.'
+	String get inAppDescription => 'Shows it while Plebz is open.';
+
+	/// en: 'Start after'
+	String get inAppDelay => 'Start after';
+
+	/// en: '(one) {${n} minute} (other) {${n} minutes}'
+	String minutes({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: '${n} minute',
+		other: '${n} minutes',
+	);
+
+	/// en: 'Paused'
+	String get paused => 'Paused';
+
+	/// en: 'OK resumes'
+	String get okResumes => 'OK resumes';
+
+	/// en: '${duration} left'
+	String remaining({required Object duration}) => '${duration} left';
+
+	/// en: 'Continue watching'
+	String get continueWatching => 'Continue watching';
+
+	/// en: 'From your library'
+	String get fromLibrary => 'From your library';
+
+	/// en: 'On your watchlist'
+	String get fromWatchlist => 'On your watchlist';
+
+	/// en: 'New since yesterday'
+	String get newSinceYesterday => 'New since yesterday';
+
+	/// en: '(one) {${n} film} (other) {${n} films}'
+	String newMovies({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: '${n} film',
+		other: '${n} films',
+	);
+
+	/// en: '(one) {new from ${n} series} (other) {new from ${n} series}'
+	String newSeries({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n,
+		one: 'new from ${n} series',
+		other: 'new from ${n} series',
+	);
+
+	/// en: 'Today in sport'
+	String get sportToday => 'Today in sport';
+
+	/// en: 'Reminder set'
+	String get reminderSet => 'Reminder set';
+
+	/// en: 'On now'
+	String get onNow => 'On now';
+}
+
 // Path: reminders
 class Translations$reminders$en {
 	Translations$reminders$en.internal(this._root);
@@ -13321,6 +13394,24 @@ extension on Translations {
 			'localFiles.noVolumes' => 'No storage found.',
 			'localFiles.unreadable' => 'This folder cannot be read.',
 			'localFiles.nothingHere' => ({required Object types}) => 'No folders here and no files of type ${types}.',
+			'ambient.settingTitle' => 'Screensaver',
+			'ambient.settingDescription' => 'Choose Plebz as the screensaver in Android\'s settings.',
+			'ambient.inAppTitle' => 'Screensaver in Plebz',
+			'ambient.inAppDescription' => 'Shows it while Plebz is open.',
+			'ambient.inAppDelay' => 'Start after',
+			'ambient.minutes' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '${n} minute', other: '${n} minutes', ), 
+			'ambient.paused' => 'Paused',
+			'ambient.okResumes' => 'OK resumes',
+			'ambient.remaining' => ({required Object duration}) => '${duration} left',
+			'ambient.continueWatching' => 'Continue watching',
+			'ambient.fromLibrary' => 'From your library',
+			'ambient.fromWatchlist' => 'On your watchlist',
+			'ambient.newSinceYesterday' => 'New since yesterday',
+			'ambient.newMovies' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '${n} film', other: '${n} films', ), 
+			'ambient.newSeries' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: 'new from ${n} series', other: 'new from ${n} series', ), 
+			'ambient.sportToday' => 'Today in sport',
+			'ambient.reminderSet' => 'Reminder set',
+			'ambient.onNow' => 'On now',
 			'reminders.add' => 'Remind me',
 			'reminders.remove' => 'Remove reminder',
 			'reminders.added' => 'Reminder set – Plebz will tell you just before it starts.',

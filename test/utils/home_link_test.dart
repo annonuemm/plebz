@@ -11,6 +11,11 @@ void main() {
       (HomeLink.tryParse('plebz://now?id=live_now%3Agame%3Abl1%3A9') as PlebzLiveNowLink).entryId,
       'live_now:game:bl1:9',
     );
+    expect(
+      (HomeLink.tryParse('plebz://reminder?key=iptv%7Ca%7C7%7C1761592500') as PlebzReminderLink).key,
+      'iptv|a|7|1761592500',
+    );
+    expect(HomeLink.tryParse('plebz://reminder'), isNull, reason: 'no reminder named');
   });
 
   test('anything else is left to its own handler, or to nobody', () {
@@ -43,6 +48,7 @@ void main() {
         'plebz://watchlist',
         'plebz://sport',
         'plebz://now?id=x',
+        'plebz://reminder?key=k',
       ]) {
         final link = DeepLink.tryParse(url)! as HomeTileLink;
         final again = DeepLink.tryParse(link.toUri().toString())! as HomeTileLink;

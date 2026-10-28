@@ -25,7 +25,7 @@ import '../../widgets/settings_page.dart';
 import '../../widgets/settings_builder.dart';
 import '../../widgets/settings_section.dart';
 import '../../redesign/ocker_skin.dart' show isOckerLayout;
-import 'plebz_settings_rows.dart' show flachColourTiles, plebzThemeModeRow;
+import 'plebz_settings_rows.dart' show AmbientScreensaverTile, ambientInAppRows, flachColourTiles, plebzThemeModeRow;
 import 'settings_utils.dart';
 import 'sport_favourite_club_tile.dart';
 import '../../utils/fork_identity.dart';
@@ -201,6 +201,10 @@ class AppearanceSettingsScreen extends StatelessWidget {
               title: t.settings.seasonalStartScreen,
               subtitle: t.settings.seasonalStartScreenDescription,
             ),
+            // Plebz: the way to Android's screensaver choice, where it shows.
+            const AmbientScreensaverTile(),
+            // Plebz: the app's own screensaver, for TVs without that choice.
+            ...ambientInAppRows(),
             if (PlatformDetector.isAutomotive()) _displayScaleSelector(),
             // Plebz: on iPhone, iPad and Apple TV too — nothing is detected
             // there, but "reduced" chosen by hand still lightens the effects.

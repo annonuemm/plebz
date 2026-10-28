@@ -5,13 +5,10 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import java.io.File
 import java.io.FileNotFoundException
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -28,10 +25,6 @@ class HomeRowsProvider : ContentProvider() {
   companion object {
     const val AUTHORITY = "app.plebz.homerows"
     val ROWS_URI: Uri = Uri.parse("content://$AUTHORITY/rows")
-    private const val MAX_ART_BYTES = 4 * 1024 * 1024
-    private const val TIMEOUT_MS = 10_000
-    private const val MAX_REDIRECTS = 3
-
     internal fun store(context: Context) =
       HomeRowsStore(File(context.noBackupFilesDir, "home_rows"), File(context.cacheDir, "home_rows_art"))
   }
@@ -64,7 +57,7 @@ class HomeRowsProvider : ContentProvider() {
     val file = store.artFile(key) ?: throw FileNotFoundException(uri.toString())
     if (!file.isFile) {
       synchronized(fetchLocks.getOrPut(key) { Any() }) {
-        if (!file.isFile) fetch(store.source(key) ?: throw FileNotFoundException(uri.toString()), file)
+        if (!file.isFile) ArtworkFetch.fetch(store.source(key) ?: throw FileNotFoundException(uri.toString()), file)
       }
     }
     return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
@@ -79,56 +72,4 @@ class HomeRowsProvider : ContentProvider() {
   override fun insert(uri: Uri, values: ContentValues?): Uri? = null
   override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<out String>?): Int = 0
   override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int = 0
-
-  /** Downloads [address] into [target], keeping it only when it is a whole, decodable image. */
-  private fun fetch(address: String, target: File) {
-    target.parentFile?.mkdirs()
-    val staging = File(target.parentFile, "${target.name}.tmp")
-    try {
-      var url = URL(address)
-      var redirects = 0
-      while (true) {
-        val connection = url.openConnection() as HttpURLConnection
-        connection.connectTimeout = TIMEOUT_MS
-        connection.readTimeout = TIMEOUT_MS
-        connection.instanceFollowRedirects = false
-        try {
-          val status = connection.responseCode
-          if (status in 300..399 && redirects < MAX_REDIRECTS) {
-            val location = connection.getHeaderField("Location") ?: throw FileNotFoundException(address)
-            url = URL(url, location)
-            redirects++
-            continue
-          }
-          if (status != HttpURLConnection.HTTP_OK) throw FileNotFoundException("HTTP $status")
-          connection.inputStream.use { input ->
-            staging.outputStream().use { output ->
-              val buffer = ByteArray(16 * 1024)
-              var total = 0
-              while (true) {
-                val read = input.read(buffer)
-                if (read < 0) break
-                total += read
-                if (total > MAX_ART_BYTES) throw FileNotFoundException("Artwork too large")
-                output.write(buffer, 0, read)
-              }
-            }
-          }
-        } finally {
-          connection.disconnect()
-        }
-        break
-      }
-      val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-      BitmapFactory.decodeFile(staging.path, bounds)
-      if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw FileNotFoundException("Not an image")
-      if (!staging.renameTo(target)) throw FileNotFoundException("Could not keep artwork")
-    } catch (e: FileNotFoundException) {
-      throw e
-    } catch (e: Exception) {
-      throw FileNotFoundException(e.message ?: "Artwork unavailable")
-    } finally {
-      staging.delete()
-    }
-  }
 }

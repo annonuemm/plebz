@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../focus/input_mode_tracker.dart';
 import '../../models/companion_remote/remote_command.dart';
+import '../ambient/ambient_in_app.dart';
 import '../../utils/app_logger.dart';
 import '../../utils/key_event_simulator.dart';
 
@@ -60,6 +61,8 @@ class CompanionRemoteReceiver {
     if (_isViewerInput(command.type)) {
       InputModeTracker.reportNonPointerInput();
       scheduleFrameIfIdle();
+      // Plebz: input from the phone counts as the remote's would.
+      AmbientInApp.instance.noteActivity();
     }
 
     if (playerOwner == null && _isTransport(command.type) && (musicTransport?.call(command.type) ?? false)) return;

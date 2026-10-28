@@ -46,8 +46,8 @@ sealed class DeepLink {
       return null;
     }
     final profile = _param(params, 'profile');
-    // Plebz: the links a launcher's home-row tile opens (`open` with a
-    // content id, `watchlist`, `sport`, `now`).
+    // Plebz: the links a launcher's home-row tile or the screensaver opens
+    // (`open` with a content id, `watchlist`, `sport`, `now`, `reminder`).
     if (HomeLink.tryParse(uri.toString()) case final home?) return HomeTileLink(home, profile: profile);
     return switch (uri.host.toLowerCase()) {
       OpenLink.host => OpenLink(profile: profile),
@@ -314,6 +314,7 @@ final class HomeTileLink extends DeepLink {
     PlebzWatchlistLink() => DeepLink._uri('watchlist', _profileParam),
     PlebzSportLink() => DeepLink._uri('sport', _profileParam),
     PlebzLiveNowLink(:final entryId) => DeepLink._uri('now', {'id': entryId, ..._profileParam}),
+    PlebzReminderLink(:final key) => DeepLink._uri('reminder', {'key': key, ..._profileParam}),
   };
 }
 

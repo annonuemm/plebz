@@ -65,6 +65,7 @@ import '../utils/desktop_window_padding.dart';
 import '../services/deep_links/deep_link.dart';
 import '../services/deep_links/deep_link_launcher.dart';
 import '../services/deep_links/deep_link_service.dart';
+import '../services/program_reminders.dart';
 import '../services/system_shelf_service.dart';
 import '../utils/home_link.dart';
 import '../utils/media_navigation_helper.dart' show navigateToMediaItemDetails;
@@ -1011,6 +1012,12 @@ class _MainScreenState extends State<MainScreen>
       case PlebzLiveNowLink(:final entryId):
         _selectTab(NavigationTabId.discover);
         pendingLiveNowEntry.value = entryId;
+      case PlebzReminderLink(:final key):
+        final reminders = ProgramReminders.instance;
+        await reminders.ensureLoaded();
+        final reminder = reminders.entries.where((entry) => entry.key == key).firstOrNull;
+        if (reminder == null || !mounted) return;
+        await tuneProgramReminder(context, reminder, showLiveTvTab: () => _selectTab(NavigationTabId.liveTv));
       case PlebzOpenLink(:final contentId):
         final parsed = SystemShelfService.parseContentId(contentId);
         if (parsed == null) return;

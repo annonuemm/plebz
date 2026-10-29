@@ -59,6 +59,16 @@ class TrackerWatchFiles {
   Future<void> writeIndex(String serverId, Map<String, ExternalIds> index) =>
       _write(_indexFile(serverId), {for (final MapEntry(:key, :value) in index.entries) key: value.toJson()});
 
+  File _indexMarksFile(String serverId) => File(p.join(directory.path, 'ids_${_safe(serverId)}_read.json'));
+
+  /// When [serverId]'s id index was last read; null before the first read
+  /// that kept it.
+  Future<IndexReadMarks?> readIndexMarks(String serverId) async =>
+      IndexReadMarks.fromJson(await _read(_indexMarksFile(serverId)));
+
+  Future<void> writeIndexMarks(String serverId, IndexReadMarks marks) =>
+      _write(_indexMarksFile(serverId), marks.toJson());
+
   /// Everything of this profile's gone — for a profile handed back to its
   /// server.
   Future<void> clear() async {
@@ -98,5 +108,32 @@ class TrackerWatchFiles {
     } catch (error) {
       appLogger.w('Tracker watch files: could not write ${file.path}', error: error);
     }
+  }
+}
+
+/// When a server's id index was last read, at all and whole, and the newest
+/// title it held (fork addition) — so a start within the index's lifetime
+/// asks the server nothing, and a later one only for what was added since.
+class IndexReadMarks {
+  const IndexReadMarks({required this.readAt, required this.wholeAt, this.newest});
+
+  final DateTime readAt;
+  final DateTime wholeAt;
+
+  /// When that title was added, in the server's own clock (Unix seconds).
+  final int? newest;
+
+  Map<String, Object?> toJson() => {
+    'readAt': readAt.toIso8601String(),
+    'wholeAt': wholeAt.toIso8601String(),
+    'newest': newest,
+  };
+
+  static IndexReadMarks? fromJson(Object? raw) {
+    if (raw is! Map) return null;
+    final readAt = raw['readAt'] is String ? DateTime.tryParse(raw['readAt'] as String) : null;
+    final wholeAt = raw['wholeAt'] is String ? DateTime.tryParse(raw['wholeAt'] as String) : null;
+    if (readAt == null || wholeAt == null) return null;
+    return IndexReadMarks(readAt: readAt, wholeAt: wholeAt, newest: (raw['newest'] as num?)?.toInt());
   }
 }

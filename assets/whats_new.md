@@ -13,6 +13,22 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.36.0 (Build 890)
+
+### Startseite
+- Neu: Anbieter-Reihen. Auf Wunsch zeigt die Startseite eine Reihe pro Streamingdienst, etwa Netflix, Prime Video, Disney+, HBO Max und Apple TV, mit den Filmen und Serien von deinen eigenen Servern, die von diesem Dienst stammen.
+- Einschalten unter Einstellungen → Darstellung → Startseite → „Anbieter-Reihen“. Dort wählst du die Dienste und ihre Reihenfolge (auch Paramount+, Sky, MagentaTV, RTL+, Joyn und andere) und ob die Reihen ganz oben, unter den Empfehlungen oder ganz unten stehen.
+- Die Auswahl wechselt alle paar Stunden. „Alle“ öffnet sämtliche Titel eines Dienstes.
+- Grundlage sind die Angaben deiner Server zu Sender und Studio. Bei Serien klappt das zuverlässig, bei Filmen fehlt die Angabe manchmal.
+
+### Live-TV
+- Senderliste und TV-Programm sind beim Start sofort da, auch während sie neu geladen werden. Das Neuladen läuft im Hintergrund, die neue Liste kommt erst, wenn sie komplett ist. Bisher gab es solange nur einen Ladebalken.
+- „Jetzt aktualisieren“ in den IPTV-Einstellungen leert vorher nichts mehr.
+- Ist der Anbieter nicht erreichbar, bleibt die bisherige Liste und spielt weiter.
+
+### Simkl
+- Profile mit „Fortschritt über Simkl“ laden bei großen Plex-Bibliotheken deutlich schneller. „Weiterschauen“ ist eher da, und beim Start wird nicht mehr jedes Mal die ganze Bibliothek gelesen.
+
 ## 1.35.0 (Build 887)
 
 ### Sicherung

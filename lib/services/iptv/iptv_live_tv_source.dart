@@ -54,11 +54,15 @@ class IptvLiveTvSource implements LiveTvSupport {
     bool Function()? mergeDuplicates,
     Future<LiveTvChannelLayout> Function()? channelLayout,
     void Function()? onLogosLearned,
+    void Function()? onChannelsReplaced,
+    void Function()? onGuideReplaced,
     DateTime Function() now = DateTime.now,
     int maxResponseBytes = defaultMaxResponseBytes,
   }) : _mergeDuplicates = mergeDuplicates,
        _channelLayout = channelLayout,
        _onLogosLearned = onLogosLearned,
+       _onChannelsReplaced = onChannelsReplaced,
+       _onGuideReplaced = onGuideReplaced,
        _http = httpClient ?? http.Client(),
        _ownsHttpClient = httpClient == null,
        _favorites = favorites,
@@ -118,6 +122,35 @@ class IptvLiveTvSource implements LiveTvSupport {
   /// arrives after the channels, which are on screen by then.
   final void Function()? _onLogosLearned;
 
+  /// Told when a playlist or guide read behind the one on screen took its
+  /// place (Plebz): nobody was waiting for it, so whoever shows the channels
+  /// or programmes has to be told to take them again.
+  final void Function()? _onChannelsReplaced;
+  final void Function()? _onGuideReplaced;
+
+  /// How long a reading behind the scenes that brought nothing waits before
+  /// the next one. Every screen asks for the channels, "Jetzt live" once a
+  /// minute: without the pause, a provider that is down would be asked for
+  /// its whole playlist on every one of those calls.
+  static const backgroundRetryPause = Duration(minutes: 15);
+  DateTime? _channelsRetryAt;
+  DateTime? _guideRetryAt;
+
+  /// Bumped by [invalidate]: a reading that began before it belongs to a
+  /// source that is gone (other address, other groups) and must not land.
+  int _generation = 0;
+
+  /// The readings behind the scenes still running, for a test to wait on.
+  Future<void> _background = Future<void>.value();
+
+  @visibleForTesting
+  Future<void> get pendingRefresh => _background;
+
+  void _runInBackground(Future<void> work) {
+    final before = _background;
+    _background = Future.wait([before, work.catchError((Object _) {})]).then((_) {});
+  }
+
   /// Merged channel key → its variants in playlist order, first one first.
   /// Rebuilt with every channel read; empty for a channel with no siblings.
   final Map<String, List<String>> _variantsByChannelKey = {};
@@ -170,8 +203,11 @@ class IptvLiveTvSource implements LiveTvSupport {
     // The stored copy goes with it: a refresh the user asked for must not be
     // answered from disk on the next call.
     _diskRestore = Future<void>.value();
+    _generation++;
     _channelsLoading = null;
     _scheduleLoading = null;
+    _channelsRetryAt = null;
+    _guideRetryAt = null;
     unawaited(_diskCache?.clear(source.id) ?? Future<void>.value());
     _m3uUrlByChannelKey.clear();
     _m3uHeadersByChannelKey.clear();
@@ -226,17 +262,16 @@ class IptvLiveTvSource implements LiveTvSupport {
       appLogger.i('IPTV ${source.name}: nothing stored, the playlist and guide will be fetched');
       return;
     }
+    // Past the interval the copy is still the one shown (Plebz): it keeps its
+    // stamp, so the first read sees it expired and fetches the new one behind
+    // it. Dropping it here left the viewer with a loading bar, no channels
+    // and nothing to play until the whole playlist had downloaded again.
     final maxAge = _diskCacheMaxAge?.call() ?? const Duration(days: 1);
     final age = _now().difference(entry.savedAt);
-    if (age >= maxAge) {
-      appLogger.i(
-        'IPTV ${source.name}: the stored copy is ${_ageLabel(age)} old, past the ${maxAge.inDays}-day interval — fetching',
-      );
-      return;
-    }
     appLogger.i(
       'IPTV ${source.name}: restored ${entry.channels.length} channels and ${entry.programs.length} '
-      'programmes stored ${_ageLabel(age)} ago',
+      'programmes stored ${_ageLabel(age)} ago'
+      '${age >= maxAge ? ', past the ${maxAge.inDays}-day interval — shown while it is fetched again' : ''}',
     );
 
     if (entry.epgLogos case final logos?) _epgLogos = logos;
@@ -309,13 +344,51 @@ class IptvLiveTvSource implements LiveTvSupport {
     // short session TTL: a user who asked for weekly refreshes did not ask to
     // re-download every half hour.
     final ttl = maxAge == null || maxAge < _channelCacheTtl ? _channelCacheTtl : maxAge;
-    if (cached != null && fetchedAt != null && _now().difference(fetchedAt) < ttl) {
-      return _withEpgLogos(_merged(cached));
+    if (cached != null && fetchedAt != null) {
+      final expired = _now().difference(fetchedAt) >= ttl;
+      // An expired list in hand is still the answer (Plebz), as TiviMate
+      // does it: the new one is fetched behind it and takes its place once
+      // it is whole. An empty one is no list to show; that one is waited for.
+      if (!expired) return _withEpgLogos(_merged(cached));
+      if (cached.isNotEmpty) {
+        _refreshChannelsInBackground();
+        return _withEpgLogos(_merged(cached));
+      }
     }
 
-    return _withEpgLogos(
-      _merged(await (_channelsLoading ??= _downloadChannels().whenComplete(() => _channelsLoading = null))),
+    return _withEpgLogos(_merged(await _sharedChannelDownload()));
+  }
+
+  Future<List<LiveTvChannel>> _sharedChannelDownload() =>
+      _channelsLoading ??= _downloadChannels().whenComplete(() => _channelsLoading = null);
+
+  /// Fetch the playlist behind the list on screen, unless a reading is
+  /// already under way or the last one brought nothing a moment ago.
+  void _refreshChannelsInBackground() {
+    if (_channelsLoading != null) return;
+    final retryAt = _channelsRetryAt;
+    if (retryAt != null && _now().isBefore(retryAt)) return;
+    _runInBackground(
+      _refreshChannels().then((replaced) {
+        if (replaced) _onChannelsReplaced?.call();
+      }),
     );
+  }
+
+  /// The playlist read again, the list in hand served until the new one is
+  /// whole — and kept outright when the reading brought nothing: a provider
+  /// down for an hour must not cost the viewer the channels they had. True
+  /// when the list was replaced.
+  Future<bool> _refreshChannels() async {
+    final before = _channels;
+    try {
+      await _sharedChannelDownload();
+    } catch (error, stackTrace) {
+      appLogger.w('IPTV ${source.name}: the playlist could not be read again', error: error, stackTrace: stackTrace);
+    }
+    final replaced = !identical(_channels, before);
+    _channelsRetryAt = replaced ? null : _now().add(backgroundRetryPause);
+    return replaced;
   }
 
   /// [channel] with the guide's logo: as its logo where its own entry names
@@ -334,10 +407,19 @@ class IptvLiveTvSource implements LiveTvSupport {
       _epgLogos.isEmpty ? channels : [for (final channel in channels) withEpgLogo(channel)];
 
   Future<List<LiveTvChannel>> _downloadChannels() async {
+    final generation = _generation;
     final channels = switch (source.kind) {
-      IptvSourceKind.m3u => await _fetchM3uChannels(),
+      IptvSourceKind.m3u => await _fetchM3uChannels(generation),
       IptvSourceKind.xtream => await _fetchXtreamChannels(),
     };
+    // Dropped by a refresh by hand or a changed source meanwhile: what came
+    // back belongs to the source as it was.
+    if (generation != _generation) return channels;
+    final held = _channels;
+    if (channels.isEmpty && held != null && held.isNotEmpty) {
+      appLogger.w('IPTV ${source.name}: the playlist came back empty; keeping the ${held.length} channels in hand');
+      return held;
+    }
     _channels = channels;
     _channelsFetchedAt = _now();
     unawaited(_saveToDisk());
@@ -394,7 +476,7 @@ class IptvLiveTvSource implements LiveTvSupport {
     return merged;
   }
 
-  Future<List<LiveTvChannel>> _fetchM3uChannels() async {
+  Future<List<LiveTvChannel>> _fetchM3uChannels(int generation) async {
     final url = source.playlistUrl;
     if (url == null || url.isEmpty) return const [];
     final body = await _get(url);
@@ -403,7 +485,6 @@ class IptvLiveTvSource implements LiveTvSupport {
     // Only the chosen groups: the rest is never kept (see [IptvSource.groups]).
     final parsing = Stopwatch()..start();
     final entries = parseM3u(body, keepGroup: source.groups == null ? null : source.loadsGroup);
-    _playlistGuideUrls = m3uGuideUrls(body);
     _timing('playlist read', parsing, '${entries.length} channels');
     final channels = channelsFromM3u(
       entries,
@@ -412,6 +493,11 @@ class IptvLiveTvSource implements LiveTvSupport {
       catchupMode: source.catchupMode,
       sourceCatchupDays: source.catchupDays,
     );
+    // The addresses below are what the list in hand plays (Plebz). A reading
+    // that will not take its place — an error page served as the playlist,
+    // a source dropped meanwhile — must leave them alone.
+    if (generation != _generation || (channels.isEmpty && (_channels?.isNotEmpty ?? false))) return const [];
+    _playlistGuideUrls = m3uGuideUrls(body);
     // The channel key is derived from the entry, not from its URL, so the
     // stream address has to be remembered here — it is the only thing that can
     // be played later.
@@ -490,13 +576,16 @@ class IptvLiveTvSource implements LiveTvSupport {
     final ttl = maxAge == null || maxAge < _guideCacheTtl ? _guideCacheTtl : maxAge;
     // A channel shown again since the guide was read has nothing in it.
     final covered = held?.coverage?.containsAll(wanted) ?? true;
-    final isFresh = held != null && _now().difference(held.fetchedAt) < ttl && covered;
-    if (!isFresh) {
+    if (held == null || !covered) {
       await (_scheduleLoading ??= _readGuides(
         shown,
         wanted,
         keepHeldOnFailure: false,
       ).whenComplete(() => _scheduleLoading = null));
+    } else if (_now().difference(held.fetchedAt) >= ttl) {
+      // Expired, it is still the guide shown (Plebz); the new one is read
+      // behind it, like the playlist.
+      _refreshGuideInBackground();
     }
 
     final state = _guideState;
@@ -537,6 +626,17 @@ class IptvLiveTvSource implements LiveTvSupport {
   /// playlist downloading again for a guide nobody asked to change.
   Future<bool> refreshGuide() async {
     await _restoreFromDisk();
+    // A playlist on its way is waited for: the guide is matched against its
+    // channels, and one read for the old list would be read again for the
+    // new one at the next call.
+    final playlist = _channelsLoading;
+    if (playlist != null) {
+      try {
+        await playlist;
+      } catch (_) {
+        // The list in hand stays; the guide is read for that.
+      }
+    }
     final shown = await _shownChannels();
     final wanted = {for (final channel in shown) channel.key};
     final before = _guideState;
@@ -545,7 +645,39 @@ class IptvLiveTvSource implements LiveTvSupport {
       wanted,
       keepHeldOnFailure: true,
     ).whenComplete(() => _scheduleLoading = null));
-    return !identical(_guideState, before);
+    final replaced = !identical(_guideState, before);
+    _guideRetryAt = replaced ? null : _now().add(backgroundRetryPause);
+    return replaced;
+  }
+
+  /// Read the guide behind the one on screen, unless a reading is already
+  /// under way or the last one brought nothing a moment ago.
+  void _refreshGuideInBackground() {
+    if (_scheduleLoading != null || _guideRefreshing != null) return;
+    final retryAt = _guideRetryAt;
+    if (retryAt != null && _now().isBefore(retryAt)) return;
+    final refreshing = _guideRefreshing = refreshGuide().then((replaced) {
+      if (replaced) _onGuideReplaced?.call();
+    });
+    _runInBackground(refreshing.whenComplete(() => _guideRefreshing = null));
+  }
+
+  /// The guide reading [_refreshGuideInBackground] started, set at once:
+  /// [refreshGuide] claims [_scheduleLoading] only after the playlist and the
+  /// channel list, and the guide, "Jetzt live" and Sport all ask in between.
+  Future<void>? _guideRefreshing;
+
+  /// "Jetzt aktualisieren" (Plebz): the playlist and then the guide read
+  /// again while the ones in hand stay on screen, each taking its place once
+  /// whole, and each kept when its reading brings nothing. True when
+  /// anything new came.
+  Future<bool> refreshNow() async {
+    await _restoreFromDisk();
+    final channels = await _refreshChannels();
+    if (channels) _onChannelsReplaced?.call();
+    final guide = await refreshGuide();
+    if (guide) _onGuideReplaced?.call();
+    return channels || guide;
   }
 
   /// Read the guides into a new generation of [_guide], programme by

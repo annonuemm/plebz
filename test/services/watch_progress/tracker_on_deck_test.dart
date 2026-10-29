@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:clock/clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -15,6 +16,7 @@ import 'package:plezy/services/watch_progress/external_id_index_client.dart';
 import 'package:plezy/services/watch_progress/progress_routing.dart';
 import 'package:plezy/services/watch_progress/tracker_progress_controller.dart';
 import 'package:plezy/utils/external_ids.dart';
+import 'package:plezy/utils/watch_state_notifier.dart';
 
 import '../../test_helpers/media_items.dart';
 
@@ -26,8 +28,11 @@ class _Server implements MediaServerClient, ExternalIdIndexClient {
   @override
   ServerId get serverId => ServerId('plex');
 
+  int episodeLookups = 0;
+
   @override
-  Future<Map<String, ExternalIds>> fetchExternalIdIndex() async => {'4k-show': const ExternalIds(tvdb: 900)};
+  Future<ExternalIdIndexRead> fetchExternalIdIndex({int? addedSince}) async =>
+      const ExternalIdIndexRead({'4k-show': ExternalIds(tvdb: 900)}, complete: true);
 
   @override
   Future<ExternalIds> fetchExternalIds(String itemId) async {
@@ -42,6 +47,7 @@ class _Server implements MediaServerClient, ExternalIdIndexClient {
     int? size,
     Object? abort,
   }) async {
+    episodeLookups++;
     final items = [
       for (var number = 1; number <= 5; number++)
         testMediaItem(
@@ -133,5 +139,30 @@ void main() {
 
     await controller.onDeckFor(server, hdShow);
     expect(server.asked, ['hd-show'], reason: 'known now, not asked again');
+  });
+
+  test('a series\' episodes are read once for its page and Continue Watching alike', () async {
+    final server = _Server();
+    final simkl = _simkl();
+    addTearDown(simkl.dispose);
+    await controller.bind(profileId: 'anna', trackerLed: true, simkl: simkl, servers: {'plex': server});
+    final show = testMediaItem(id: '4k-show', serverId: 'plex', kind: MediaKind.show);
+
+    final next = await controller.onDeckFor(server, show);
+    final rows = await controller.continueWatchingFor(server, count: 5)!;
+
+    expect(next?.id, '4k-show-e3');
+    expect(rows.map((row) => row.id), ['4k-show-e3']);
+    expect(server.episodeLookups, 1);
+
+    // A mark made here shows on the kept list too.
+    expect(next?.isWatched, isFalse);
+    WatchStateNotifier().notifyWatched(item: next!, isNowWatched: true);
+    expect((await controller.onDeckFor(server, show))?.isWatched, isTrue);
+    expect(server.episodeLookups, 1);
+
+    final later = clock.now().add(TrackerProgressController.episodeListLifetime + const Duration(minutes: 1));
+    await withClock(Clock.fixed(later), () => controller.onDeckFor(server, show));
+    expect(server.episodeLookups, 2, reason: 'an old list is read again');
   });
 }

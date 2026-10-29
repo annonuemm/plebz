@@ -21,6 +21,7 @@ import '../theme/mono_tokens.dart';
 import '../utils/app_logger.dart';
 import 'ambient/ambient_feed.dart';
 import 'ambient/ambient_in_app.dart';
+import 'brand_rows_service.dart';
 import 'catalog/catalog_source.dart';
 import 'home_rows.dart';
 import 'plex_client.dart';
@@ -192,9 +193,11 @@ class HomeRowsFeed {
       });
     }
 
+    // Brand rows (Plebz) are not the libraries' own shelves; a launcher is
+    // offered those alone.
     final shelves = [
       for (final hub in discover.hubs)
-        if (hub.id != recommendationsHubId) hub,
+        if (hub.id != recommendationsHubId && !isBrandRowHub(hub)) hub,
     ];
     final seenShelves = _seenShelves;
     if (seenShelves == null ||

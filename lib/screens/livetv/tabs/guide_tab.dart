@@ -282,6 +282,10 @@ class GuideTabState extends State<GuideTab>
   _GuideZone _focusZone = _GuideZone.timeNav;
   int _timeNavIndex = 1; // 0=left arrow, 1=day picker, 2=right arrow
   int _gridChannelIndex = 0;
+
+  /// Set by [GuideTabChannels.keepCursorOnNextList] for the one list that
+  /// follows (Plebz).
+  bool _keepCursorOnNextList = false;
   int _gridColumn = 0; // 0=channel, 1=program
   bool _hasFocus = false;
   final ValueNotifier<_GuideFocusSnapshot> _focusSnapshot = ValueNotifier((
@@ -523,7 +527,10 @@ class GuideTabState extends State<GuideTab>
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.channels, widget.channels)) {
       _programsByChannelScope = _indexProgramsByChannel(_programs, widget.channels);
+      // Plebz: a list replaced under the cursor keeps it on its channel.
+      if (_keepCursorOnNextList) _keepCursorChannel(oldWidget.channels);
     }
+    _keepCursorOnNextList = false;
     if (widget.channels.isNotEmpty && _gridChannelIndex >= widget.channels.length) {
       _gridChannelIndex = widget.channels.length - 1;
       WidgetsBinding.instance.addPostFrameCallback((_) {

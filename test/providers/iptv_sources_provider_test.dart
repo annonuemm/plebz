@@ -49,6 +49,34 @@ void main() {
     expect(reopened.sources.single.playlistUrl, 'http://provider/list.m3u');
   });
 
+  test('refreshing by hand keeps the channels on show, and says when nothing came', () async {
+    var status = 200;
+    final provider = IptvSourcesProvider(
+      profileId: 'profile-1',
+      buildSource: (source) => IptvLiveTvSource(
+        source,
+        httpClient: MockClient(
+          (_) async => http.Response(
+            status == 200 ? '#EXTM3U\n#EXTINF:-1 tvg-id="ard",Das Erste\nhttp://provider/ard\n' : 'down',
+            status,
+          ),
+        ),
+      ),
+    );
+    addTearDown(provider.dispose);
+    await provider.save(_m3u);
+    final live = provider.liveTvForSourceId('a')!;
+    expect(await live.fetchChannels(), hasLength(1));
+
+    expect(await provider.refreshAll(), isTrue);
+
+    status = 503;
+    expect(await provider.refreshAll(), isFalse);
+    // Before, the button dropped the stored copies first: Live TV showed a
+    // loading bar, and with the provider down nothing at all.
+    expect(await live.fetchChannels(), hasLength(1));
+  });
+
   test('after saving, the channels are counted and the playlist guide is noticed', () async {
     final provider = _provider(
       playlist: '#EXTM3U url-tvg="http://provider/epg.xml"\n#EXTINF:-1 tvg-id="ard",Das Erste\nhttp://provider/ard\n',

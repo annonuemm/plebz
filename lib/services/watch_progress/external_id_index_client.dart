@@ -9,5 +9,25 @@ import '../../utils/external_ids.dart';
 abstract interface class ExternalIdIndexClient {
   /// The server's films and series by item id, each with the ids it knows.
   /// Titles without any of the three ids are left out.
-  Future<Map<String, ExternalIds>> fetchExternalIdIndex();
+  ///
+  /// With [addedSince] — the [ExternalIdIndexRead.newest] of an earlier
+  /// read — only the titles added after it, where the server can list those;
+  /// [ExternalIdIndexRead.complete] says which of the two the answer is.
+  Future<ExternalIdIndexRead> fetchExternalIdIndex({int? addedSince});
+}
+
+/// One answer of [ExternalIdIndexClient.fetchExternalIdIndex] (fork addition).
+class ExternalIdIndexRead {
+  const ExternalIdIndexRead(this.ids, {required this.complete, this.newest});
+
+  final Map<String, ExternalIds> ids;
+
+  /// Whether [ids] is the server's whole index; false when it holds only what
+  /// was added since, to be laid over the index already known.
+  final bool complete;
+
+  /// When the newest title read was added, in the server's own clock (Unix
+  /// seconds): what the next read asks for additions since. Null when the
+  /// server named no such time.
+  final int? newest;
 }

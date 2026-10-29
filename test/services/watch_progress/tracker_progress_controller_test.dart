@@ -23,11 +23,23 @@ class _Server implements ExternalIdIndexClient {
   int asked = 0;
   bool down = false;
 
+  /// What each read asked for additions since; null for a whole read.
+  final sinces = <int?>[];
+
+  /// When the newest title was added; while null, the server names no time
+  /// and is always read whole.
+  int? newest;
+
+  /// What a read of additions answers.
+  Map<String, ExternalIds> added = const {};
+
   @override
-  Future<Map<String, ExternalIds>> fetchExternalIdIndex() async {
+  Future<ExternalIdIndexRead> fetchExternalIdIndex({int? addedSince}) async {
     asked++;
+    sinces.add(addedSince);
     if (down) throw const SocketException('receive timed out');
-    return Map.of(index);
+    if (addedSince != null) return ExternalIdIndexRead(Map.of(added), complete: false, newest: newest);
+    return ExternalIdIndexRead(Map.of(index), complete: true, newest: newest);
   }
 }
 
@@ -254,6 +266,64 @@ void main() {
 
     expect(server.asked, 3);
     expect(controller.revision.value, greaterThan(revision));
+  });
+
+  Future<void> restart() async {
+    await controller.debugFlush();
+    controller.debugReset();
+    controller.rootDirectory = () async => root;
+  }
+
+  test('a start within the index\'s lifetime asks the server nothing', () async {
+    await bind();
+    await restart();
+
+    await bind();
+
+    expect(server.asked, 1, reason: 'the index kept on disk is still fresh');
+    expect(ProgressRouting.overlay(film).isWatched, isTrue);
+  });
+
+  test('a later start asks only for what was added since; a week on, the whole index again', () async {
+    server.newest = 1000;
+    await bind();
+    await restart();
+    server.added = {'other': const ExternalIds(tmdb: 102)};
+    server.newest = 1500;
+
+    await withClock(Clock.fixed(clock.now().add(const Duration(hours: 2))), bind);
+
+    expect(server.sinces, [null, 1000]);
+    expect(controller.idsOf('plex', 'film')?.tmdb, 101, reason: 'what was known stays');
+    expect(controller.idsOf('plex', 'other')?.tmdb, 102);
+
+    await withClock(Clock.fixed(clock.now().add(const Duration(hours: 4))), controller.refresh);
+    expect(server.sinces.last, 1500, reason: 'from the newest title read since');
+
+    await withClock(Clock.fixed(clock.now().add(const Duration(days: 8))), controller.refresh);
+    expect(server.sinces.last, isNull);
+  });
+
+  test('"sync now" reads every index whole', () async {
+    server.newest = 1000;
+    await bind();
+
+    await controller.syncNow();
+
+    expect(server.sinces, [null, null]);
+  });
+
+  test('a server that comes online after the start begins from its kept index', () async {
+    await bind();
+    await restart();
+    final client = simkl.client();
+    addTearDown(client.dispose);
+
+    await controller.bind(profileId: 'anna', trackerLed: true, simkl: client, servers: const {});
+    await controller.bind(profileId: 'anna', trackerLed: true, simkl: client, servers: {'plex': server});
+
+    expect(server.asked, 1, reason: 'not read whole again for coming online late');
+    expect(ProgressRouting.overlay(film).isWatched, isTrue);
   });
 
   test('playing does not have Simkl asked; stopping or a mark does', () async {

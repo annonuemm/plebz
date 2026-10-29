@@ -107,6 +107,8 @@ IptvLiveTvSource _m3uSource(
   bool mergeDuplicates = false,
   LiveTvChannelLayout Function()? layout,
   int maxResponseBytes = IptvLiveTvSource.defaultMaxResponseBytes,
+  void Function()? onChannelsReplaced,
+  void Function()? onGuideReplaced,
 }) => IptvLiveTvSource(
   IptvSource(
     id: 'src',
@@ -124,6 +126,8 @@ IptvLiveTvSource _m3uSource(
   mergeDuplicates: () => mergeDuplicates,
   channelLayout: layout == null ? null : () async => layout(),
   maxResponseBytes: maxResponseBytes,
+  onChannelsReplaced: onChannelsReplaced,
+  onGuideReplaced: onGuideReplaced,
 );
 
 /// A playlist whose one entry keeps a five-day archive in the query form.
@@ -427,13 +431,18 @@ void main() {
     });
 
     /// A fresh source over the same store, the way a restart brings one up.
-    IptvLiveTvSource restart(MockClient client, {Duration maxAge = const Duration(days: 1)}) => _m3uSource(
+    IptvLiveTvSource restart(
+      MockClient client, {
+      Duration maxAge = const Duration(days: 1),
+      void Function()? onChannelsReplaced,
+    }) => _m3uSource(
       client,
       epgUrl: 'http://provider/epg.xml',
       now: () => now,
       diskCache: cache,
       guideStore: guides,
       diskCacheMaxAge: () => maxAge,
+      onChannelsReplaced: onChannelsReplaced,
     );
 
     test('a restart reads the stored copy instead of the network', () async {
@@ -535,11 +544,12 @@ void main() {
       expect(stored!.programs.single.title, 'later');
     });
 
-    test('past the interval it fetches again', () async {
+    test('past the interval the stored copy is shown at once, and the new one fetched behind it', () async {
       var requests = 0;
+      var playlist = _playlist;
       MockClient counting() => MockClient((request) async {
         requests++;
-        return _ok(request.url.path.endsWith('.m3u') ? _playlist : _guide);
+        return _ok(request.url.path.endsWith('.m3u') ? playlist : _guide);
       });
 
       final first = restart(counting());
@@ -549,12 +559,142 @@ void main() {
       final afterFirst = requests;
 
       now = now.add(const Duration(days: 2));
-      final second = restart(counting());
-      await second.fetchChannels();
+      // The provider renamed a channel meanwhile.
+      playlist = _playlist.replaceFirst(',Kein EPG', ',Ohne EPG');
+      var replaced = 0;
+      final second = restart(counting(), onChannelsReplaced: () => replaced++);
+      final shown = await second.fetchChannels();
+      // Before: nothing until the whole playlist had downloaded again — a
+      // loading bar and no channel to start.
+      expect(shown.map((channel) => channel.title), ['Das Erste HD', 'Kein EPG']);
+
+      await second.pendingRefresh;
       await second.pendingDiskWrite;
+      expect(requests, greaterThan(afterFirst));
+      expect(replaced, 1, reason: 'whoever shows the channels is told to take the new list');
+      expect((await second.fetchChannels()).map((channel) => channel.title), ['Das Erste HD', 'Ohne EPG']);
       second.close();
 
-      expect(requests, greaterThan(afterFirst));
+      final third = restart(counting());
+      expect((await third.fetchChannels()).map((channel) => channel.title), ['Das Erste HD', 'Ohne EPG']);
+      await third.pendingRefresh;
+      await third.pendingDiskWrite;
+      third.close();
+    });
+
+    test('past the interval, a provider that answers nothing leaves the stored copy playing', () async {
+      final first = restart(MockClient((request) async => _ok(request.url.path.endsWith('.m3u') ? _playlist : _guide)));
+      await first.fetchChannels();
+      await first.pendingDiskWrite;
+      first.close();
+
+      now = now.add(const Duration(days: 2));
+      var requests = 0;
+      var replaced = 0;
+      final second = restart(
+        MockClient((request) async {
+          requests++;
+          return http.Response('down', 503);
+        }),
+        onChannelsReplaced: () => replaced++,
+      );
+      await second.fetchChannels();
+      await second.pendingRefresh;
+      await second.pendingDiskWrite;
+
+      final channels = await second.fetchChannels();
+      expect(channels, hasLength(2), reason: 'an empty answer must not take the place of the list in hand');
+      expect(replaced, 0);
+      expect(await (await second.startPlayback(channels.first.key))!.streamUrlAt(), 'http://provider/stream/ard');
+
+      // And it is not asked for the whole playlist again on every call.
+      final asked = requests;
+      await second.fetchChannels();
+      await second.pendingRefresh;
+      expect(requests, asked);
+
+      now = now.add(IptvLiveTvSource.backgroundRetryPause + const Duration(minutes: 1));
+      await second.fetchChannels();
+      await second.pendingRefresh;
+      await second.pendingDiskWrite;
+      expect(requests, greaterThan(asked), reason: 'after the pause it tries again');
+      second.close();
+    });
+
+    test('an error page served as the playlist keeps the addresses of the list in hand', () async {
+      final first = restart(MockClient((request) async => _ok(request.url.path.endsWith('.m3u') ? _playlist : _guide)));
+      await first.fetchChannels();
+      await first.pendingDiskWrite;
+      first.close();
+
+      now = now.add(const Duration(days: 2));
+      final second = restart(MockClient((request) async => _ok('<html>Wartungsarbeiten</html>')));
+      await second.fetchChannels();
+      await second.pendingRefresh;
+      await second.pendingDiskWrite;
+
+      final channels = await second.fetchChannels();
+      expect(channels, hasLength(2));
+      expect(await (await second.startPlayback(channels.first.key))!.streamUrlAt(), 'http://provider/stream/ard');
+      second.close();
+    });
+
+    test('a refresh by hand keeps the list and guide on show until the new ones are whole', () async {
+      Completer<void>? gate;
+      var replaced = 0;
+      final source = _m3uSource(
+        MockClient((request) async {
+          await gate?.future;
+          return _ok(request.url.path.endsWith('.m3u') ? _playlist : _guide);
+        }),
+        epgUrl: 'http://provider/epg.xml',
+        now: () => now,
+        diskCache: cache,
+        guideStore: guides,
+        diskCacheMaxAge: () => const Duration(days: 1),
+        onChannelsReplaced: () => replaced++,
+      );
+      await source.fetchChannels();
+      await source.fetchSchedule();
+      await source.pendingDiskWrite;
+
+      gate = Completer<void>();
+      final refreshing = source.refreshNow();
+      expect(await source.fetchChannels(), hasLength(2), reason: 'still on show while the new one downloads');
+      expect(await source.fetchSchedule(), isNotEmpty);
+
+      gate.complete();
+      expect(await refreshing, isTrue);
+      expect(replaced, 1);
+      expect(await source.fetchChannels(), hasLength(2));
+      expect(await source.fetchSchedule(), isNotEmpty);
+      await source.pendingDiskWrite;
+      source.close();
+    });
+
+    test('a refresh by hand that brings nothing keeps both and says so', () async {
+      var down = false;
+      final source = _m3uSource(
+        MockClient((request) async {
+          if (down) return http.Response('down', 503);
+          return _ok(request.url.path.endsWith('.m3u') ? _playlist : _guide);
+        }),
+        epgUrl: 'http://provider/epg.xml',
+        now: () => now,
+        diskCache: cache,
+        guideStore: guides,
+        diskCacheMaxAge: () => const Duration(days: 1),
+      );
+      await source.fetchChannels();
+      await source.fetchSchedule();
+      await source.pendingDiskWrite;
+
+      down = true;
+      expect(await source.refreshNow(), isFalse);
+      expect(await source.fetchChannels(), hasLength(2));
+      expect(await source.fetchSchedule(), isNotEmpty);
+      await source.pendingDiskWrite;
+      source.close();
     });
 
     test('a refresh by hand drops the stored copy', () async {
@@ -814,6 +954,7 @@ http://provider/stream/guarded
       // The regression this guards: stamping only the first read expires the
       // cache permanently, so every later call re-downloads the guide.
       var guideRequests = 0;
+      var guideReplaced = 0;
       var now = DateTime(2024, 5, 4, 20);
       final source = _m3uSource(
         MockClient((request) async {
@@ -823,6 +964,7 @@ http://provider/stream/guarded
         }),
         epgUrl: 'http://provider/epg.xml',
         now: () => now,
+        onGuideReplaced: () => guideReplaced++,
       );
 
       await source.fetchSchedule();
@@ -830,11 +972,25 @@ http://provider/stream/guarded
       expect(guideRequests, 1);
 
       now = now.add(const Duration(hours: 3));
-      await source.fetchSchedule();
+      expect(
+        await source.fetchSchedule(),
+        isNotEmpty,
+        reason: 'an expired guide is still the one shown while the new one is read behind it',
+      );
+      await source.pendingRefresh;
       expect(guideRequests, 2);
+      expect(guideReplaced, 1, reason: 'whoever shows the programmes is told to take them again');
 
       await source.fetchSchedule();
+      await source.pendingRefresh;
       expect(guideRequests, 2, reason: 'the re-read must restart the cache window');
+
+      // Callers arriving together at an expired guide share one reading.
+      now = now.add(const Duration(hours: 3));
+      await Future.wait([source.fetchSchedule(), source.fetchSchedule(), source.fetchSchedule()]);
+      await source.pendingRefresh;
+      expect(guideRequests, 3);
+      expect(guideReplaced, 2, reason: 'one word for one new guide, not one per caller');
     });
 
     test('a gzipped guide is unpacked before it is read', () async {

@@ -1608,6 +1608,33 @@ class Translations$settings$en {
 	/// en: 'Emby only'
 	String get recommendationsSourceEmby => 'Emby only';
 
+	/// en: 'Streaming service rows'
+	String get showBrandRows => 'Streaming service rows';
+
+	/// en: 'Netflix, Prime and more, with titles from your servers'
+	String get showBrandRowsDescription => 'Netflix, Prime and more, with titles from your servers';
+
+	/// en: 'Choose services'
+	String get brandRowsPick => 'Choose services';
+
+	/// en: 'Place on the home screen'
+	String get brandRowsPosition => 'Place on the home screen';
+
+	/// en: 'At the top'
+	String get brandRowsPositionTop => 'At the top';
+
+	/// en: 'Below recommendations'
+	String get brandRowsPositionAfterRecommendations => 'Below recommendations';
+
+	/// en: 'At the bottom'
+	String get brandRowsPositionBottom => 'At the bottom';
+
+	/// en: 'Show service'
+	String get brandRowsShow => 'Show service';
+
+	/// en: 'Hide service'
+	String get brandRowsHide => 'Hide service';
+
 	/// en: 'Design'
 	String get appThemeVariant => 'Design';
 
@@ -7194,8 +7221,11 @@ class Translations$iptv$en {
 	/// en: ''
 	String get refreshNowDescription => '';
 
-	/// en: 'Playlist and guide will be fetched again'
-	String get refreshNowDone => 'Playlist and guide will be fetched again';
+	/// en: 'Playlist and guide are being fetched again in the background'
+	String get refreshNowDone => 'Playlist and guide are being fetched again in the background';
+
+	/// en: 'Refresh failed; the current list stays'
+	String get refreshNowFailed => 'Refresh failed; the current list stays';
 
 	/// en: 'Reload automatically'
 	String get refreshIntervalLabel => 'Reload automatically';
@@ -10976,6 +11006,15 @@ extension on Translations {
 			'settings.recommendationsSourcePlex' => 'Plex only',
 			'settings.recommendationsSourceJellyfin' => 'Jellyfin only',
 			'settings.recommendationsSourceEmby' => 'Emby only',
+			'settings.showBrandRows' => 'Streaming service rows',
+			'settings.showBrandRowsDescription' => 'Netflix, Prime and more, with titles from your servers',
+			'settings.brandRowsPick' => 'Choose services',
+			'settings.brandRowsPosition' => 'Place on the home screen',
+			'settings.brandRowsPositionTop' => 'At the top',
+			'settings.brandRowsPositionAfterRecommendations' => 'Below recommendations',
+			'settings.brandRowsPositionBottom' => 'At the bottom',
+			'settings.brandRowsShow' => 'Show service',
+			'settings.brandRowsHide' => 'Hide service',
 			'settings.appThemeVariant' => 'Design',
 			'settings.appThemeVariantStandard' => 'Original',
 			'settings.appThemeVariantStandardDescription' => '',
@@ -11462,6 +11501,8 @@ extension on Translations {
 			'videoControls.seekBackwardButton' => ({required Object seconds}) => 'Seek backward ${seconds} seconds',
 			'videoControls.seekForwardButton' => ({required Object seconds}) => 'Seek forward ${seconds} seconds',
 			'videoControls.previousButton' => 'Previous episode',
+			_ => null,
+		} ?? switch (path) {
 			'videoControls.nextButton' => 'Next episode',
 			'videoControls.previousChapterButton' => 'Previous chapter',
 			'videoControls.nextChapterButton' => 'Next chapter',
@@ -11471,8 +11512,6 @@ extension on Translations {
 			'videoControls.tracksButton' => 'Audio & Subtitles',
 			'videoControls.chaptersButton' => 'Chapters',
 			'videoControls.versionQualityButton' => 'Version & Quality',
-			_ => null,
-		} ?? switch (path) {
 			'videoControls.versionColumnHeader' => 'Version',
 			'videoControls.qualityColumnHeader' => 'Quality',
 			'videoControls.qualityOriginal' => 'Original',
@@ -11976,6 +12015,8 @@ extension on Translations {
 			'hubDetail.rating' => 'Rating',
 			'hubDetail.noItemsFound' => 'No items found',
 			'logs.clearLogs' => 'Clear Logs',
+			_ => null,
+		} ?? switch (path) {
 			'logs.copyLogs' => 'Copy Logs',
 			'logs.uploadLogs' => 'Upload Logs',
 			'startup.failedTitle' => 'Plebz could not start',
@@ -11985,8 +12026,6 @@ extension on Translations {
 			'startup.showDetails' => 'Show details',
 			'startup.hideDetails' => 'Hide details',
 			'startup.copyDetails' => 'Copy details',
-			_ => null,
-		} ?? switch (path) {
 			'startup.detailsCopied' => 'Details copied to clipboard',
 			'startup.uploadDetails' => 'Upload details',
 			'startup.repairStorage' => 'Repair storage',
@@ -12490,6 +12529,8 @@ extension on Translations {
 			'watchTogether.playBlockedTitle' => 'Playback didn\'t start',
 			'watchTogether.playBlockedDescription' => 'Press play to start watching with the room.',
 			'watchTogether.notices.pressedPlay' => ({required Object name}) => '${name} pressed play',
+			_ => null,
+		} ?? switch (path) {
 			'watchTogether.notices.playbackStarted' => 'Playback started',
 			'watchTogether.notices.paused' => ({required Object name}) => '${name} paused',
 			'watchTogether.notices.playbackPaused' => 'Playback paused',
@@ -12499,8 +12540,6 @@ extension on Translations {
 			'watchTogether.notices.speedChanged' => ({required Object speed}) => 'Speed set to ${speed}',
 			'watchTogether.notices.startedMedia' => ({required Object name, required Object title}) => '${name} started ${title}',
 			'watchTogether.notices.mediaStarted' => ({required Object title}) => 'Now playing ${title}',
-			_ => null,
-		} ?? switch (path) {
 			'watchTogether.notices.stoppedMedia' => ({required Object name}) => '${name} stopped the video',
 			'watchTogether.notices.mediaStopped' => 'The video stopped',
 			'watchTogether.notices.waitingFor' => ({required Object name}) => 'Waiting for ${name}...',
@@ -13004,6 +13043,8 @@ extension on Translations {
 			'seerr.sessionRejectedAfterReauth' => 'The session was rejected after signing in again',
 			'seerr.permissionDenied' => 'Seerr denied this action: your account no longer has the required permission',
 			'seerr.permissionRevoked' => 'You no longer have permission to request this',
+			_ => null,
+		} ?? switch (path) {
 			'seerr.stillInCinemas' => 'A film still showing in cinemas has nothing to download yet — the request would sit open until its release. Better to wait until it is out.',
 			'seerr.signInRejectedWithReason' => ({required Object reason}) => 'Sign-in was rejected: ${reason}',
 			'seerr.shelfPopularMovies' => 'Popular films',
@@ -13013,8 +13054,6 @@ extension on Translations {
 			'seerr.shelfPopularShows' => 'Popular series',
 			'seerr.shelfRecentShows' => 'New series',
 			'seerr.shelfUpcomingShows' => 'Coming soon',
-			_ => null,
-		} ?? switch (path) {
 			'seerr.shelfTopRatedShows' => 'Best rated series',
 			'seerr.shelfAvailableMovies' => 'Something new for a change - Films',
 			'seerr.shelfAvailableShows' => 'Something new for a change - Series',
@@ -13181,7 +13220,8 @@ extension on Translations {
 			'iptv.brightenDarkLogosDescription' => '',
 			'iptv.refreshNowLabel' => 'Refresh now',
 			'iptv.refreshNowDescription' => '',
-			'iptv.refreshNowDone' => 'Playlist and guide will be fetched again',
+			'iptv.refreshNowDone' => 'Playlist and guide are being fetched again in the background',
+			'iptv.refreshNowFailed' => 'Refresh failed; the current list stays',
 			'iptv.refreshIntervalLabel' => 'Reload automatically',
 			'iptv.refreshIntervalDescription' => 'How long the channel list and guide are kept before they are fetched again. A manual refresh reloads at once.',
 			'iptv.refreshIntervalDaily' => 'Daily',

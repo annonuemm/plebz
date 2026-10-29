@@ -15,6 +15,7 @@ import 'package:plezy/providers/discover_provider.dart';
 import 'package:plezy/providers/hidden_libraries_provider.dart';
 import 'package:plezy/providers/libraries_provider.dart';
 import 'package:plezy/providers/multi_server_provider.dart';
+import 'package:plezy/services/brand_rows_service.dart';
 import 'package:plezy/services/hidden_continue_watching_store.dart';
 import 'package:plezy/services/data_aggregation_service.dart';
 import 'package:plezy/services/library_events/library_event_service.dart';
@@ -22,6 +23,7 @@ import 'package:plezy/services/multi_server_manager.dart';
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/services/recommendation_feedback_store.dart';
 import 'package:plezy/services/recommendations_service.dart';
+import 'package:plezy/services/streaming_brands.dart';
 import 'package:plezy/services/watch_progress/tracker_progress_controller.dart';
 import 'package:plezy/utils/deletion_notifier.dart';
 import 'package:plezy/utils/watch_state_notifier.dart';
@@ -214,6 +216,39 @@ class _FakeRecommendations extends RecommendationsService {
   }
 }
 
+/// Brand rows on demand: [result] per brand, counted.
+class _FakeBrandRows extends BrandRowsService {
+  _FakeBrandRows(super.serverManager);
+
+  Map<StreamingBrand, List<MediaItem>> result = const {};
+  List<MediaItem> everything = const [];
+  int calls = 0;
+  List<StreamingBrand> lastBrands = const [];
+  List<MediaLibrary> lastLibraries = const [];
+
+  @override
+  Future<List<BrandRow>> rows({
+    required List<MediaLibrary> libraries,
+    required List<StreamingBrand> brands,
+    DateTime Function() now = DateTime.now,
+  }) async {
+    calls++;
+    lastBrands = brands;
+    lastLibraries = libraries;
+    return [
+      for (final brand in brands)
+        if (result[brand] case final items? when items.isNotEmpty) (brand: brand, items: items, more: true),
+    ];
+  }
+
+  @override
+  Future<List<MediaItem>> all({
+    required StreamingBrand brand,
+    required List<MediaLibrary> libraries,
+    DateTime Function() now = DateTime.now,
+  }) async => everything;
+}
+
 class _PushChannel implements LibraryEventChannel {
   final _events = StreamController<LibraryChangeEvent>.broadcast();
 
@@ -243,6 +278,7 @@ void main() {
   late LibrariesProvider libraries;
   late DiscoverProvider provider;
   late _FakeRecommendations recommendations;
+  late _FakeBrandRows brandRows;
   late List<(String, List<MediaItem>)> shelfSyncs;
   bool isBinding = false;
   bool playbackActive = false;
@@ -267,6 +303,7 @@ void main() {
     await hiddenLibraries.ensureInitialized();
     libraries = LibrariesProvider();
     recommendations = _FakeRecommendations(manager);
+    brandRows = _FakeBrandRows(manager);
     provider = DiscoverProvider(
       multiServer,
       hiddenLibraries,
@@ -274,6 +311,7 @@ void main() {
       profileId: 'profile-a',
       isProfileBinding: () => isBinding,
       recommendations: recommendations,
+      brandRows: brandRows,
       isRefreshBlocked: () => playbackActive,
       now: () => currentTime,
       syncSystemShelf: (owner, items) async => shelfSyncs.add((owner, List<MediaItem>.of(items))),
@@ -426,6 +464,145 @@ void main() {
       await settings.write(PlebzPrefs.showRecommendationsRow, false);
       await pumpEventQueue();
       expect(provider.hubs.where((hub) => hub.title == t.discover.recommendedForYou), isEmpty);
+    });
+  });
+
+  group('brand rows', () {
+    List<String> titles() => [for (final hub in provider.hubs) hub.title];
+
+    Future<void> switchOn() async {
+      final settings = await SettingsService.getInstance();
+      await settings.write(PlebzPrefs.showBrandRows, true);
+      await pumpEventQueue();
+    }
+
+    test('off by default: no row and no request', () async {
+      brandRows.result = {
+        StreamingBrand.netflix: [_item('n1', kind: MediaKind.show)],
+      };
+      await provider.load();
+      await pumpEventQueue();
+
+      expect(brandRows.calls, 0);
+      expect(provider.hubs.where(isBrandRowHub), isEmpty);
+    });
+
+    test('switched on, one row per service with titles, under the recommendations', () async {
+      aggregation.hubsResult = () => [MediaHub(id: 'h1', title: 'Movies', type: 'movie', items: [], size: 0)];
+      recommendations.result = [_item('suggested')];
+      brandRows.result = {
+        StreamingBrand.netflix: [_item('n1', kind: MediaKind.show)],
+        StreamingBrand.prime: [_item('p1', kind: MediaKind.movie)],
+      };
+      await switchOn();
+      await provider.load();
+      await pumpEventQueue();
+
+      expect(titles(), [t.discover.recommendedForYou, 'Netflix', 'Prime Video', 'Movies']);
+      expect(brandRows.lastBrands, BrandRowsLayout.standard.visible, reason: 'the standard services, in order');
+    });
+
+    test('the chosen place moves the block without asking the servers again', () async {
+      aggregation.hubsResult = () => [MediaHub(id: 'h1', title: 'Movies', type: 'movie', items: [], size: 0)];
+      recommendations.result = [_item('suggested')];
+      brandRows.result = {
+        StreamingBrand.netflix: [_item('n1', kind: MediaKind.show)],
+      };
+      await switchOn();
+      await provider.load();
+      await pumpEventQueue();
+      final callsBefore = brandRows.calls;
+      final settings = await SettingsService.getInstance();
+
+      await settings.write(PlebzPrefs.brandRowsPosition, BrandRowsPosition.top);
+      await pumpEventQueue();
+      expect(titles(), ['Netflix', t.discover.recommendedForYou, 'Movies']);
+
+      await settings.write(PlebzPrefs.brandRowsPosition, BrandRowsPosition.bottom);
+      await pumpEventQueue();
+      expect(titles(), [t.discover.recommendedForYou, 'Movies', 'Netflix']);
+      expect(brandRows.calls, callsBefore);
+    });
+
+    test('a service with nothing is no row', () async {
+      brandRows.result = {
+        StreamingBrand.netflix: [_item('n1', kind: MediaKind.show)],
+      };
+      await switchOn();
+      await provider.load();
+      await pumpEventQueue();
+
+      expect(provider.hubs.where(isBrandRowHub).map((hub) => hub.title), ['Netflix']);
+    });
+
+    test('another pass in the same period keeps the rows as they are', () async {
+      // The servers answer in random order: reading again would reshuffle a
+      // row the viewer may be walking along.
+      brandRows.result = {
+        StreamingBrand.netflix: [_item('n1', kind: MediaKind.show)],
+      };
+      await switchOn();
+      await provider.load();
+      await pumpEventQueue();
+      final callsBefore = brandRows.calls;
+
+      await provider.refreshNow();
+      await pumpEventQueue();
+      expect(brandRows.calls, callsBefore);
+
+      currentTime = currentTime.add(RecommendationsService.rotationPeriod);
+      provider.refreshRecommendationsIfStale();
+      await pumpEventQueue();
+      expect(brandRows.calls, callsBefore + 1, reason: 'a new period reads them again');
+    });
+
+    test('a changed arrangement reads them again, and off takes them away', () async {
+      brandRows.result = {
+        StreamingBrand.netflix: [_item('n1', kind: MediaKind.show)],
+        StreamingBrand.sky: [_item('s1', kind: MediaKind.show)],
+      };
+      await switchOn();
+      await provider.load();
+      await pumpEventQueue();
+      expect(provider.hubs.where(isBrandRowHub).map((hub) => hub.title), ['Netflix'], reason: 'Sky is off by default');
+
+      final settings = await SettingsService.getInstance();
+      final withSky = BrandRowsLayout.standard.withHidden(StreamingBrand.sky, false);
+      await settings.write(PlebzPrefs.brandRowsLayout, withSky.encode());
+      await pumpEventQueue();
+      expect(provider.hubs.where(isBrandRowHub).map((hub) => hub.title), ['Netflix', 'Sky']);
+
+      await settings.write(PlebzPrefs.showBrandRows, false);
+      await pumpEventQueue();
+      expect(provider.hubs.where(isBrandRowHub), isEmpty);
+    });
+
+    test('hidden libraries are left out', () async {
+      MediaLibrary lib(String id) => MediaLibrary(id: id, backend: MediaBackend.plex, title: id, serverId: 'server_1');
+      await libraries.updateLibraryOrder([lib('lib-1'), lib('lib-2')]);
+      await hiddenLibraries.hideLibrary(lib('lib-2').globalKey);
+      await switchOn();
+      await provider.load();
+      await pumpEventQueue();
+
+      expect(brandRows.lastLibraries.map((library) => library.id), ['lib-1']);
+    });
+
+    test('"Alle" reads every title of the brand; other rows get no loader', () async {
+      brandRows.result = {
+        StreamingBrand.netflix: [_item('n1', kind: MediaKind.show)],
+      };
+      brandRows.everything = [_item('n1', kind: MediaKind.show), _item('n2', kind: MediaKind.show)];
+      await switchOn();
+      await provider.load();
+      await pumpEventQueue();
+
+      final row = provider.hubs.firstWhere(isBrandRowHub);
+      expect(row.more, isTrue);
+      final loader = provider.brandRowLoader(row);
+      expect(loader, isNotNull);
+      expect((await loader!()).map((item) => item.id), ['n1', 'n2']);
+      expect(provider.brandRowLoader(_hub('h1')), isNull);
     });
   });
 

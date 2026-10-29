@@ -21,6 +21,8 @@ import '../utils/deletion_notifier.dart';
 import '../utils/media_event_keys.dart';
 import '../utils/global_key_utils.dart';
 import '../i18n/strings.g.dart';
+import '../services/brand_rows_service.dart';
+import '../services/streaming_brands.dart';
 import '../services/recommendation_feedback_store.dart';
 import '../services/recommendations_service.dart';
 import '../utils/media_hub_ordering.dart';
@@ -103,6 +105,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     required this.isProfileBinding,
     WatchStateStore? watchStateStore,
     RecommendationsService? recommendations,
+    BrandRowsService? brandRows,
     DateTime Function()? now,
     bool Function()? isRefreshBlocked,
     this.libraryEventDebounce = const Duration(seconds: 3),
@@ -114,6 +117,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     // ignore: prefer_initializing_formals
   }) : _watchStateStore = watchStateStore,
        _recommendationsService = recommendations,
+       _brandRowsServiceOverride = brandRows,
        _now = now ?? DateTime.now,
        _isRefreshBlocked = isRefreshBlocked ?? _neverBlocked,
        _syncSystemShelfOverride = syncSystemShelf,
@@ -145,6 +149,17 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     for (final setting in _recommendationSettings) {
       setting.addListener(_onRecommendationSettingsChanged);
     }
+    // The brand rows follow their switch and arrangement the same way.
+    _brandRowSettings = [
+      ?settings?.listenable(PlebzPrefs.showBrandRows),
+      ?settings?.listenable(PlebzPrefs.brandRowsLayout),
+    ];
+    for (final setting in _brandRowSettings) {
+      setting.addListener(_onBrandRowSettingsChanged);
+    }
+    // Their place is read in [hubs]; moving them needs no request.
+    _brandRowsPositionSetting = settings?.listenable(PlebzPrefs.brandRowsPosition);
+    _brandRowsPositionSetting?.addListener(safeNotifyListeners);
     _hiddenLibraries.addListener(_onHiddenLibrariesChanged);
     _lastSeenLibraryOrderKeys = _libraryOrderKeys();
     _libraries.addListener(_onLibrariesChanged);
@@ -280,6 +295,28 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     unawaited(_loadRecommendations());
   }
 
+  /// The brand rows (Plebz): one per streaming service the viewer picked,
+  /// with the titles of their own servers that name it. Empty while switched
+  /// off, unloaded, or when no service has anything.
+  List<MediaHub> _brandRows = const [];
+
+  /// What the rows on screen were read for — the period, the services, the
+  /// libraries. A pass that would read the same is skipped: the servers
+  /// answer in random order, so reading again would reshuffle a row the
+  /// viewer may be walking along.
+  String? _brandRowsReadFor;
+  int _brandRowsGeneration = 0;
+  final BrandRowsService? _brandRowsServiceOverride;
+  late final BrandRowsService _brandRowsService =
+      _brandRowsServiceOverride ?? BrandRowsService(_multiServer.serverManager);
+  List<Listenable> _brandRowSettings = const [];
+  Listenable? _brandRowsPositionSetting;
+
+  void _onBrandRowSettingsChanged() {
+    if (isDisposed) return;
+    unawaited(_loadBrandRows(force: true));
+  }
+
   bool _hasMoreContinueWatching = false;
   DiscoverLoadState _onDeckState = DiscoverLoadState.initial;
   DiscoverLoadState _hubsState = DiscoverLoadState.initial;
@@ -330,7 +367,11 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
   /// the server assembled it. A row left with nothing is dropped, since a
   /// heading over an empty strip says only that something went wrong.
   List<MediaHub> get hubs {
-    final all = [?_recommendations, ..._hubs];
+    final all = switch (SettingsService.instanceOrNull?.read(PlebzPrefs.brandRowsPosition)) {
+      BrandRowsPosition.top => [..._brandRows, ?_recommendations, ..._hubs],
+      BrandRowsPosition.bottom => [?_recommendations, ..._hubs, ..._brandRows],
+      _ => [?_recommendations, ..._brandRows, ..._hubs],
+    };
     final settings = SettingsService.instanceOrNull;
     if (settings == null) return all;
     final movies = settings.movieYearRangeBeyondLibraries;
@@ -611,6 +652,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
       // After the page is up, never before it: the row is a courtesy, and a
       // slow server must not hold back the rows the viewer came for.
       unawaited(_loadRecommendations());
+      unawaited(_loadBrandRows());
       _loadedHubServerIds = _authoritativeSucceededServerIds(
         fetchedHubs.succeededServerIds,
         fetchedHubs.failedServerIds,
@@ -877,6 +919,64 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     if (!isDisposed) unawaited(_loadRecommendations());
   }
 
+  /// Read the brand rows, unless what they would be read for is what the
+  /// rows on screen were read for. [force] reads them anyway — the viewer
+  /// just changed which services they want.
+  ///
+  /// Failure is silence, as for the recommendation row: a brand with nothing
+  /// is no row, and nothing else on the page waits for these.
+  Future<void> _loadBrandRows({bool force = false}) async {
+    final settings = SettingsService.instanceOrNull;
+    if (!(settings?.read(PlebzPrefs.showBrandRows) ?? false)) {
+      ++_brandRowsGeneration;
+      _brandRowsReadFor = null;
+      if (_brandRows.isNotEmpty) {
+        _brandRows = const [];
+        safeNotifyListeners();
+      }
+      return;
+    }
+    // A profile switch rewires the servers first; the pass after it reads
+    // the rows with the new profile's clients.
+    if (isProfileBinding()) return;
+    final brands = brandRowsLayout().visible;
+    final hidden = _hiddenLibraries.hiddenLibraryKeys;
+    final libraries = [
+      for (final library in _libraries.libraries)
+        if (!hidden.contains(library.globalKey)) library,
+    ];
+    final readFor = [
+      RecommendationsService.rotationAt(_now()),
+      for (final brand in brands) brand.shortcut,
+      for (final library in libraries) library.globalKey,
+    ].join('|');
+    if (!force && readFor == _brandRowsReadFor) return;
+    _brandRowsReadFor = readFor;
+    final generation = ++_brandRowsGeneration;
+    try {
+      final rows = await _brandRowsService.rows(libraries: libraries, brands: brands, now: _now);
+      if (isDisposed || generation != _brandRowsGeneration) return;
+      _brandRows = [for (final row in rows) brandRowHub(row)];
+      safeNotifyListeners();
+    } catch (error, stackTrace) {
+      if (generation == _brandRowsGeneration) _brandRowsReadFor = null;
+      appLogger.d('DiscoverProvider: brand rows failed', error: error, stackTrace: stackTrace);
+    }
+  }
+
+  /// "Alle" for a brand row: every title of the brand, by name. Null for any
+  /// other hub.
+  Future<List<MediaItem>> Function()? brandRowLoader(MediaHub hub) {
+    final brand = brandOfHub(hub);
+    if (brand == null) return null;
+    final hidden = _hiddenLibraries.hiddenLibraryKeys;
+    final libraries = [
+      for (final library in _libraries.libraries)
+        if (!hidden.contains(library.globalKey)) library,
+    ];
+    return () => _brandRowsService.all(brand: brand, libraries: libraries, now: _now);
+  }
+
   /// Whether to keep a timer running that reads the row again when its period
   /// turns over.
   ///
@@ -897,6 +997,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     _recommendationsRotationTimer = Timer(period - elapsed + const Duration(seconds: 1), () {
       if (isDisposed) return;
       unawaited(_loadRecommendations());
+      unawaited(_loadBrandRows());
       watchRecommendationsRotation(true);
     });
   }
@@ -910,7 +1011,10 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
   /// Refresh the row if its period has passed. Cheap and safe to call on every
   /// return to the home screen.
   void refreshRecommendationsIfStale() {
-    if (isDisposed || !recommendationsRotationIsStale) return;
+    if (isDisposed) return;
+    // Skipped inside when nothing it reads for has changed.
+    unawaited(_loadBrandRows());
+    if (!recommendationsRotationIsStale) return;
     unawaited(_loadRecommendations());
   }
 
@@ -1251,7 +1355,10 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     // the home rows can land before the library list does, and the row was
     // then read out of no libraries at all and stayed away until the next
     // page load. Once the rows are in, a changed list reads it again.
-    if (_hubsState == DiscoverLoadState.loaded) unawaited(_loadRecommendations());
+    if (_hubsState == DiscoverLoadState.loaded) {
+      unawaited(_loadRecommendations());
+      unawaited(_loadBrandRows());
+    }
     if (_hubs.isEmpty) return;
 
     final sortedHubs = List<MediaHub>.from(_hubs);
@@ -1363,6 +1470,10 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     for (final setting in _recommendationSettings) {
       setting.removeListener(_onRecommendationSettingsChanged);
     }
+    for (final setting in _brandRowSettings) {
+      setting.removeListener(_onBrandRowSettingsChanged);
+    }
+    _brandRowsPositionSetting?.removeListener(safeNotifyListeners);
     _loadCoordinator.dispose();
     _pendingSystemShelfItems = null;
     super.dispose();

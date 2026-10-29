@@ -15,7 +15,6 @@ import '../utils/app_logger.dart';
 import 'multi_server_manager.dart';
 import 'plex_client.dart';
 import 'plex_constants.dart';
-import 'watch_progress/tracker_library_query.dart';
 import 'watch_progress/tracker_progress_controller.dart';
 
 /// Which servers the recommendation row is allowed to draw on.
@@ -275,7 +274,9 @@ class RecommendationsService {
       return (seeds: const <MediaItem>[], dealtWith: const <String>{});
     }
 
-    final pages = await Future.wait([for (final library in candidates) _recentlyTouched(library)]);
+    final pages = TrackerProgressController.instance.isActive
+        ? await _trackerRecentlyWatched(candidates)
+        : await Future.wait([for (final library in candidates) _recentlyTouched(library)]);
 
     final favourites = <MediaItem>[];
     final rated = <MediaItem>[];
@@ -338,23 +339,44 @@ class RecommendationsService {
   /// in the next.
   static List<MediaItem> _shuffled(List<MediaItem> items, int seed) => [...items]..shuffle(math.Random(seed));
 
+  /// A tracker-led profile's own viewing, not the shared account's (fork
+  /// addition): the titles its tracker names last, one list per server, kept
+  /// to [libraries]. Sorting a library by the profile's viewing meant reading
+  /// it whole, each of them, at every pass.
+  Future<List<List<MediaItem>>> _trackerRecentlyWatched(List<MediaLibrary> libraries) async {
+    final byServer = <String, ({MediaServerClient client, Set<String> libraryIds})>{};
+    for (final library in libraries) {
+      final client = _clientFor(library);
+      if (client == null) continue;
+      (byServer[client.serverId] ??= (client: client, libraryIds: <String>{})).libraryIds.add(library.id);
+    }
+    return Future.wait([
+      for (final (:client, :libraryIds) in byServer.values)
+        () async {
+          try {
+            final titles = await TrackerProgressController.instance.recentlyWatchedOn(client) ?? const <MediaItem>[];
+            // A Jellyfin item names no library: it is its server's, and the
+            // server is in scope.
+            return [
+              for (final item in titles)
+                if (item.libraryId == null || libraryIds.contains(item.libraryId)) item,
+            ];
+          } catch (error, stackTrace) {
+            appLogger.d(
+              'Recommendations: recent titles failed on ${client.serverId}',
+              error: error,
+              stackTrace: stackTrace,
+            );
+            return const <MediaItem>[];
+          }
+        }(),
+    ]);
+  }
+
   Future<List<MediaItem>> _recentlyTouched(MediaLibrary library) async {
     final client = _clientFor(library);
     if (client == null) return const [];
     try {
-      // A tracker-led profile's own viewing, not the shared account's
-      // (fork addition).
-      if (TrackerProgressController.instance.isActive) {
-        final page = await client.fetchLibraryPageForProfile(
-          library.id,
-          query: const LibraryQuery(
-            limit: seedScanLimit,
-            sort: LibrarySort(field: 'lastViewedAt'),
-          ),
-          libraryKind: library.kind,
-        );
-        return page.items;
-      }
       if (client is PlexClient) {
         // Plex is asked without collections. The browse path asks for them,
         // and a library set to hide the items of a collection behind it then

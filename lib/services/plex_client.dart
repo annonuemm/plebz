@@ -87,6 +87,7 @@ import 'track_selection_service.dart';
 import 'video_decode_capabilities.dart';
 import 'watch_progress/external_id_index_client.dart';
 import 'watch_progress/progress_routing.dart';
+import 'watch_progress/tracker_episode_list_client.dart';
 
 part 'plex_client/parts/live_tv.dart';
 part 'plex_client/parts/playlists.dart';

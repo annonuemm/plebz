@@ -25,6 +25,7 @@ import '../../widgets/settings_page.dart';
 import '../../widgets/settings_builder.dart';
 import '../../widgets/settings_section.dart';
 import '../../redesign/ocker_skin.dart' show isOckerLayout;
+import 'brand_rows_settings.dart' show brandRowsSettingsRows;
 import 'plebz_settings_rows.dart' show AmbientScreensaverTile, ambientInAppRows, flachColourTiles, plebzThemeModeRow;
 import 'settings_utils.dart';
 import 'sport_favourite_club_tile.dart';
@@ -436,6 +437,8 @@ class AppearanceSettingsScreen extends StatelessWidget {
                     )
                   : const SizedBox.shrink(),
             ),
+            // Rows per streaming service (Plebz).
+            ...brandRowsSettingsRows(),
           ],
         ),
 

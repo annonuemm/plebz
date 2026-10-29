@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:plezy/database/app_database.dart';
+import 'package:plezy/media/media_kind.dart';
 import 'package:plezy/services/jellyfin_api_cache.dart';
 import 'package:plezy/services/plex_api_cache.dart';
 import 'package:plezy/utils/external_ids.dart';
@@ -72,8 +73,10 @@ void main() {
     );
     addTearDown(client.close);
 
-    final index = await client.fetchExternalIdIndex();
+    final read = await client.fetchExternalIdIndex();
+    final index = read.ids;
 
+    expect(read.complete, isTrue);
     expect(index.keys, unorderedEquals(['10', '11', '20']));
     expect(index['10']!.tmdb, 110);
     expect(index['11']!.imdb, 'tt011');
@@ -126,7 +129,7 @@ void main() {
     );
     addTearDown(client.close);
 
-    final index = await client.fetchExternalIdIndex();
+    final index = (await client.fetchExternalIdIndex()).ids;
 
     expect(index, hasLength(1203));
     expect(index['1202']!.tmdb, 2202);
@@ -164,10 +167,135 @@ void main() {
     );
     addTearDown(client.close);
 
-    final index = await client.fetchExternalIdIndex();
+    final index = (await client.fetchExternalIdIndex()).ids;
 
     expect(index, hasLength(700));
     expect(listings, 1);
+  });
+
+  http.Response sections() => _json({
+    'MediaContainer': {
+      'Directory': [
+        {'key': '1', 'type': 'movie', 'title': 'Filme'},
+      ],
+    },
+  });
+
+  Map<String, Object> row(String key, int addedAt) => {
+    'ratingKey': key,
+    'addedAt': addedAt,
+    'Guid': [
+      {'id': 'tmdb://1$key'},
+    ],
+  };
+
+  test('Plex is asked only for what was added since the last read', () async {
+    final asked = <Uri>[];
+    final client = testPlexClient(
+      handler: (request) async {
+        asked.add(request.url);
+        if (request.url.path == '/library/sections') return sections();
+        return _json({
+          'MediaContainer': {
+            'Metadata': [row('30', 2000)],
+          },
+        });
+      },
+    );
+    addTearDown(client.close);
+
+    final read = await client.fetchExternalIdIndex(addedSince: 1000);
+
+    expect(read.complete, isFalse);
+    expect(read.ids.keys, ['30']);
+    expect(read.newest, 2000);
+    final listing = asked.singleWhere((uri) => uri.path.endsWith('/all'));
+    expect(listing.queryParameters['includeGuids'], '1');
+    expect(
+      int.parse(listing.queryParameters['addedAt>>']!),
+      lessThan(1000),
+      reason: 'a little before the last read, so nothing added in the same second is missed',
+    );
+  });
+
+  test('Plex is read whole where the server ignores what was added since', () async {
+    final asked = <Uri>[];
+    final client = testPlexClient(
+      handler: (request) async {
+        asked.add(request.url);
+        if (request.url.path == '/library/sections') return sections();
+        return _json({
+          'MediaContainer': {
+            'Metadata': [row('1', 10), row('30', 2000)],
+          },
+        });
+      },
+    );
+    addTearDown(client.close);
+
+    final read = await client.fetchExternalIdIndex(addedSince: 1000);
+
+    expect(read.complete, isTrue);
+    expect(read.ids.keys, unorderedEquals(['1', '30']));
+    expect(read.newest, 2000);
+    final listings = asked.where((uri) => uri.path.endsWith('/all')).toList();
+    expect(listings, hasLength(2), reason: 'the listing since, then the whole one');
+    expect(listings.last.queryParameters.containsKey('addedAt>>'), isFalse);
+  });
+
+  test('Plex is read whole where the server refuses what was added since', () async {
+    final client = testPlexClient(
+      handler: (request) async {
+        if (request.url.path == '/library/sections') return sections();
+        if (request.url.queryParameters.containsKey('addedAt>>')) return http.Response('', 400);
+        return _json({
+          'MediaContainer': {
+            'Metadata': [row('1', 10)],
+          },
+        });
+      },
+    );
+    addTearDown(client.close);
+
+    final read = await client.fetchExternalIdIndex(addedSince: 1000);
+
+    expect(read.complete, isTrue);
+    expect(read.ids.keys, ['1']);
+  });
+
+  test('Plex lists a series\' episodes without their audio and subtitle tracks', () async {
+    final asked = <Uri>[];
+    final client = testPlexClient(
+      handler: (request) async {
+        asked.add(request.url);
+        return _json({
+          'MediaContainer': {
+            'librarySectionID': 2,
+            'Metadata': [
+              for (var number = 1; number <= 2; number++)
+                {
+                  'ratingKey': 'e$number',
+                  'type': 'episode',
+                  'title': 'Folge $number',
+                  'grandparentRatingKey': '77',
+                  'parentIndex': 1,
+                  'index': number,
+                },
+            ],
+          },
+        });
+      },
+    );
+    addTearDown(client.close);
+
+    final episodes = await client.fetchEpisodesWithoutStreams('77');
+
+    expect(episodes.map((episode) => episode.id), ['e1', 'e2']);
+    expect(episodes.first.kind, MediaKind.episode);
+    expect(episodes.first.libraryId, '2');
+    expect(asked.single.path, '/library/metadata/77/grandchildren');
+    expect(asked.single.queryParameters.containsKey('includeStreams'), isFalse);
+    expect(asked.single.queryParameters['X-Plex-Container-Size'], '2000');
   });
 
   test('Jellyfin names every film and series by its provider ids in one request', () async {
@@ -192,7 +320,7 @@ void main() {
     );
     addTearDown(client.close);
 
-    final index = await client.fetchExternalIdIndex();
+    final index = (await client.fetchExternalIdIndex()).ids;
 
     expect(index, hasLength(2));
     expect(index['film'], isA<ExternalIds>().having((ids) => ids.tmdb, 'tmdb', 110));

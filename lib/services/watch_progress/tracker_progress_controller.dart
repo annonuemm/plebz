@@ -57,8 +57,19 @@ class TrackerProgressController extends ChangeNotifier {
   /// once playback has stopped or paused, never while it runs.
   static const Duration positionEchoDelay = Duration(seconds: 90);
 
-  /// How old a server's id index may grow before it is asked again.
+  /// How old a server's id index may grow before it is asked again. Kept on
+  /// disk with the index, so a start within it asks the server nothing.
   static const Duration indexLifetime = Duration(hours: 1);
+
+  /// How old the last whole read of a server's ids may grow; in between, the
+  /// server is asked only for what was added since. A big library read whole
+  /// took a minute of requests on every start. Titles gone from the server
+  /// and matches corrected there wait for the next whole read.
+  static const Duration wholeIndexLifetime = Duration(days: 7);
+
+  /// How long a series' episode list is reused: the passes at start, the
+  /// library tab and the series' page then share one request.
+  static const Duration episodeListLifetime = Duration(minutes: 10);
 
   /// How long a server whose id index could not be read is left alone. Every
   /// refresh asked it again at once, and a listing that runs into the
@@ -76,7 +87,14 @@ class TrackerProgressController extends ChangeNotifier {
   TrackerWatchState _state = TrackerWatchState.empty;
   final Map<String, Map<String, ExternalIds>> _indexes = {};
   final Map<String, DateTime> _indexedAt = {};
+  final Map<String, DateTime> _indexWholeAt = {};
+  final Map<String, int> _indexNewest = {};
   final Map<String, DateTime> _indexFailedAt = {};
+
+  /// The servers whose index this profile has looked for on disk already.
+  final Set<String> _indexesRead = {};
+  final Map<String, ({DateTime at, Future<List<MediaItem>> episodes})> _episodeLists = {};
+  final Map<String, ({int stamp, Future<List<MediaItem>> titles})> _recentTitles = {};
   final Map<String, LocalWatchPatch> _patches = {};
   Future<void>? _refreshing;
   Timer? _echoTimer;
@@ -108,6 +126,7 @@ class TrackerProgressController extends ChangeNotifier {
     final rows = TrackerContinueWatching(
       state: _state,
       index: _indexes[client.serverId] ?? const {},
+      episodesOf: _episodesOf,
     ).fetch(client, count: count, excludedLibraryIds: excludedLibraryIds);
     _continueWatching[key] = (stamp: _changeStamp, at: clock.now(), rows: rows);
     rows.catchError((Object _) {
@@ -135,11 +154,57 @@ class TrackerProgressController extends ChangeNotifier {
       return await TrackerContinueWatching(
         state: _state,
         index: _indexes[client.serverId] ?? const {},
+        episodesOf: _episodesOf,
       ).nextEpisodeOf(client, item.id);
     } catch (error) {
       appLogger.d('Tracker progress: next episode of ${item.id} unknown', error: error);
       return null;
     }
+  }
+
+  /// [showId]'s episodes on [client]'s server, read at most once per
+  /// [episodeListLifetime] and laid over with this profile's state anew each
+  /// time, so what was watched since shows.
+  Future<List<MediaItem>> _episodesOf(MediaServerClient client, String showId) {
+    final key = '${client.serverId}|$showId';
+    final kept = _episodeLists[key];
+    final Future<List<MediaItem>> list;
+    if (kept != null && clock.now().difference(kept.at) < episodeListLifetime) {
+      list = kept.episodes;
+    } else {
+      list = TrackerContinueWatching.loadEpisodes(client, showId);
+      _episodeLists[key] = (at: clock.now(), episodes: list);
+      list.then<void>(
+        (_) {},
+        onError: (Object _) {
+          // A failed read is not kept; the next pass asks again.
+          if (identical(_episodeLists[key]?.episodes, list)) _episodeLists.remove(key);
+        },
+      );
+    }
+    return list.then((episodes) => [for (final episode in episodes) ProgressRouting.overlay(episode)]);
+  }
+
+  /// The films and series this profile watched last on [client]'s server,
+  /// newest first — what the recommendation row reasons from — or null while
+  /// the server keeps the profile's progress. One answer per change.
+  Future<List<MediaItem>>? recentlyWatchedOn(MediaServerClient client) {
+    if (!isActive) return null;
+    final key = client.serverId;
+    final kept = _recentTitles[key];
+    if (kept != null && kept.stamp == _changeStamp) return kept.titles;
+    final titles = TrackerContinueWatching(
+      state: _state,
+      index: _indexes[client.serverId] ?? const {},
+    ).recentlyWatched(client);
+    _recentTitles[key] = (stamp: _changeStamp, titles: titles);
+    titles.then<void>(
+      (_) {},
+      onError: (Object _) {
+        if (identical(_recentTitles[key]?.titles, titles)) _recentTitles.remove(key);
+      },
+    );
+    return titles;
   }
 
   /// Makes sure the ids of [itemId] on [client]'s server are known, asking
@@ -190,9 +255,7 @@ class TrackerProgressController extends ChangeNotifier {
       _lastSyncAt = null;
       _syncFailed = false;
       _failedSyncs = 0;
-      _indexes.clear();
-      _indexedAt.clear();
-      _indexFailedAt.clear();
+      _clearIndexes();
       _patches.clear();
       final files = TrackerWatchFiles(Directory(p.join((await rootDirectory()).path, _safe(profileId))));
       if (generation != _generation) return;
@@ -200,15 +263,72 @@ class TrackerProgressController extends ChangeNotifier {
       ProgressRouting.instance.onLocalChange = _noteLocalChange;
       _publish();
       final state = await files.readState();
-      final indexes = {for (final serverId in _servers.keys) serverId: await files.readIndex(serverId)};
       final patches = await files.readPatches();
       if (generation != _generation) return;
       _state = state;
-      _indexes.addAll(indexes);
       _patches.addAll(patches);
+      await _readKeptIndexes();
+      if (generation != _generation) return;
+      _publish(contentChanged: true);
+    } else if (await _readKeptIndexes()) {
       _publish(contentChanged: true);
     }
     await refresh();
+  }
+
+  /// Reads the id index kept on disk for each server this profile has not
+  /// looked for one yet — at a profile's first bind, and for a server that
+  /// came online since, which would otherwise be read whole at every start.
+  /// True when one was found. One read after another; a refresh waits for
+  /// them, so a server is not read whole while its kept index is on its way.
+  Future<bool> _readKeptIndexes() => _keptIndexReads = _keptIndexReads.then((_) => _readKeptIndexesNow());
+
+  Future<bool> _keptIndexReads = Future.value(false);
+
+  Future<bool> _readKeptIndexesNow() async {
+    final files = _files;
+    if (files == null) return false;
+    final generation = _generation;
+    final fresh = [
+      for (final serverId in _servers.keys)
+        if (_indexesRead.add(serverId)) serverId,
+    ];
+    final Map<String, ({Map<String, ExternalIds> ids, IndexReadMarks? marks})> kept;
+    try {
+      kept = {
+        for (final serverId in fresh)
+          serverId: (ids: await files.readIndex(serverId), marks: await files.readIndexMarks(serverId)),
+      };
+    } catch (error) {
+      // Only a head start: without it the servers are read as before.
+      appLogger.w('Tracker progress: kept id indexes unreadable', error: error);
+      return false;
+    }
+    if (generation != _generation) return false;
+    var found = false;
+    for (final MapEntry(key: serverId, value: (:ids, :marks)) in kept.entries) {
+      if (ids.isEmpty || _indexes.containsKey(serverId)) continue;
+      _indexes[serverId] = ids;
+      found = true;
+      // An index kept without its read times (an older version wrote it) is
+      // read whole once more.
+      if (marks == null) continue;
+      _indexedAt[serverId] = marks.readAt;
+      _indexWholeAt[serverId] = marks.wholeAt;
+      if (marks.newest case final newest?) _indexNewest[serverId] = newest;
+    }
+    return found;
+  }
+
+  void _clearIndexes() {
+    _indexes.clear();
+    _indexedAt.clear();
+    _indexWholeAt.clear();
+    _indexNewest.clear();
+    _indexFailedAt.clear();
+    _indexesRead.clear();
+    _episodeLists.clear();
+    _recentTitles.clear();
   }
 
   /// Ask Simkl what changed, and each server for its ids where they have
@@ -221,6 +341,7 @@ class TrackerProgressController extends ChangeNotifier {
   Future<bool> syncNow() async {
     await _refreshing;
     if (!isActive) return false;
+    _episodeLists.clear();
     await (_refreshing = _refresh(full: true).whenComplete(() => _refreshing = null));
     return isActive && !_syncFailed;
   }
@@ -292,22 +413,48 @@ class TrackerProgressController extends ChangeNotifier {
       _scheduleRetry();
       appLogger.w('Tracker progress: Simkl sync failed (attempt $_failedSyncs), trying again later', error: error);
     }
+    await _keptIndexReads;
+    if (generation != _generation) return;
     for (final MapEntry(key: serverId, value: client) in _servers.entries) {
       final at = _indexedAt[serverId];
       if (!full && at != null && clock.now().difference(at) < indexLifetime) continue;
       final failedAt = _indexFailedAt[serverId];
       if (!full && failedAt != null && clock.now().difference(failedAt) < indexRetryDelay) continue;
       try {
-        final index = await client.fetchExternalIdIndex();
+        final known = _indexes[serverId];
+        final wholeAt = _indexWholeAt[serverId];
+        final addedSince =
+            full || known == null || wholeAt == null || clock.now().difference(wholeAt) >= wholeIndexLifetime
+            ? null
+            : _indexNewest[serverId];
+        final read = await client.fetchExternalIdIndex(addedSince: addedSince);
         if (generation != _generation) return;
-        _indexedAt[serverId] = clock.now();
+        final now = clock.now();
+        _indexedAt[serverId] = now;
         _indexFailedAt.remove(serverId);
+        if (read.complete) {
+          _indexWholeAt[serverId] = now;
+          _indexNewest.remove(serverId);
+        }
+        final newest = read.newest;
+        if (newest != null && newest > (_indexNewest[serverId] ?? 0)) _indexNewest[serverId] = newest;
+        final index = read.complete ? read.ids : {...?known, ...read.ids};
+        if (!read.complete) {
+          appLogger.d('Tracker progress: ${read.ids.length} titles added on $serverId since the last read');
+        }
         // The same ids again change nothing on screen: no reason to have
         // every page fetch anew.
-        if (_sameIndex(_indexes[serverId], index)) continue;
-        _indexes[serverId] = index;
-        changed = true;
-        unawaited(files.writeIndex(serverId, index));
+        if (!_sameIndex(known, index)) {
+          _indexes[serverId] = index;
+          changed = true;
+          unawaited(files.writeIndex(serverId, index));
+        }
+        unawaited(
+          files.writeIndexMarks(
+            serverId,
+            IndexReadMarks(readAt: now, wholeAt: _indexWholeAt[serverId] ?? now, newest: _indexNewest[serverId]),
+          ),
+        );
       } catch (error) {
         if (generation != _generation) return;
         _indexFailedAt[serverId] = clock.now();
@@ -398,9 +545,8 @@ class TrackerProgressController extends ChangeNotifier {
     _servers = const {};
     _files = null;
     _state = TrackerWatchState.empty;
-    _indexes.clear();
-    _indexedAt.clear();
-    _indexFailedAt.clear();
+    _clearIndexes();
+    _continueWatching.clear();
     _patches.clear();
     ProgressRouting.instance
       ..onLocalChange = null

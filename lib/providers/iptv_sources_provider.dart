@@ -32,7 +32,14 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
     LiveTvChannelLayoutProvider? channelLayout,
   }) {
     _buildSource =
-        buildSource ?? ((source) => _defaultSource(source, channelLayout, onLogosLearned: _bumpEpgLogoRevision));
+        buildSource ??
+        ((source) => _defaultSource(
+          source,
+          channelLayout,
+          onLogosLearned: _bumpEpgLogoRevision,
+          onChannelsReplaced: _bumpChannelsRevision,
+          onGuideReplaced: _bumpGuideRevision,
+        ));
     _loading = _load();
   }
 
@@ -47,6 +54,23 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
 
   void _bumpEpgLogoRevision() {
     if (!isDisposed) _epgLogoRevision.value++;
+  }
+
+  /// Bumped when a source's playlist or guide, read again behind the one on
+  /// screen, took its place (Plebz). Nobody was waiting for that reading, so
+  /// whoever shows the channels or the programmes listens and takes them
+  /// again — quietly, the cursor where it was.
+  final ValueNotifier<int> _channelsRevision = ValueNotifier(0);
+  final ValueNotifier<int> _guideRevision = ValueNotifier(0);
+  ValueListenable<int> get channelsRevision => _channelsRevision;
+  ValueListenable<int> get guideRevision => _guideRevision;
+
+  void _bumpChannelsRevision() {
+    if (!isDisposed) _channelsRevision.value++;
+  }
+
+  void _bumpGuideRevision() {
+    if (!isDisposed) _guideRevision.value++;
   }
 
   /// [channel] with the logo its source's guide gives it, where it has none.
@@ -66,6 +90,8 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
     IptvSource source,
     LiveTvChannelLayoutProvider? channelLayout, {
     void Function()? onLogosLearned,
+    void Function()? onChannelsReplaced,
+    void Function()? onGuideReplaced,
   }) => IptvLiveTvSource(
     source,
     diskCache: IptvDiskCache(),
@@ -80,6 +106,8 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
             return channelLayout.layout;
           },
     onLogosLearned: onLogosLearned,
+    onChannelsReplaced: onChannelsReplaced,
+    onGuideReplaced: onGuideReplaced,
   );
 
   List<IptvSource> _sources = const [];
@@ -257,12 +285,16 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
     return results.any((read) => read);
   }
 
-  /// Drop cached playlists and guides so the next read hits the network.
-  void refreshAll() {
-    for (final source in _liveTvById.values) {
-      source.invalidate();
-    }
+  /// "Jetzt aktualisieren": every source's playlist and guide read again
+  /// while the ones in hand stay on screen — see
+  /// [IptvLiveTvSource.refreshNow]. Dropping them first, as this once did,
+  /// left Live TV with a loading bar and nothing to play until everything
+  /// had downloaded again. False when no source brought anything new.
+  Future<bool> refreshAll() async {
+    await ensureLoaded();
+    final results = await Future.wait([for (final source in liveTvSources) source.refreshNow()]);
     safeNotifyListeners();
+    return results.any((read) => read);
   }
 
   @override
@@ -272,6 +304,8 @@ class IptvSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMi
     }
     _liveTvById.clear();
     _epgLogoRevision.dispose();
+    _channelsRevision.dispose();
+    _guideRevision.dispose();
     super.dispose();
   }
 }

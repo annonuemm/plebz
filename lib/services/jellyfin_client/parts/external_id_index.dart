@@ -3,8 +3,10 @@ part of '../../jellyfin_client.dart';
 /// The ids of every film and series on the server, for a tracker-led profile
 /// (fork addition; see [ExternalIdIndexClient]).
 mixin _JellyfinExternalIdIndexMethods on _JellyfinClientInternals implements ExternalIdIndexClient {
+  /// One request for the whole server: read whole every time, [addedSince]
+  /// or not.
   @override
-  Future<Map<String, ExternalIds>> fetchExternalIdIndex() async {
+  Future<ExternalIdIndexRead> fetchExternalIdIndex({int? addedSince}) async {
     final response = await _http.get(
       '/Items',
       queryParameters: {
@@ -20,7 +22,7 @@ mixin _JellyfinExternalIdIndexMethods on _JellyfinClientInternals implements Ext
     final data = response.data;
     final rows = data is Map ? data['Items'] : null;
     final index = <String, ExternalIds>{};
-    if (rows is! List) return index;
+    if (rows is! List) return ExternalIdIndexRead(index, complete: true);
     for (final row in rows) {
       if (row is! Map) continue;
       final id = row['Id'];
@@ -29,6 +31,6 @@ mixin _JellyfinExternalIdIndexMethods on _JellyfinClientInternals implements Ext
       final ids = ExternalIds.fromJellyfinProviderIds(providerIds);
       if (ids.hasCatalogIds) index[id] = ids;
     }
-    return index;
+    return ExternalIdIndexRead(index, complete: true);
   }
 }

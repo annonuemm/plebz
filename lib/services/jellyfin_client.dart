@@ -86,6 +86,7 @@ import 'track_selection_service.dart';
 import 'video_decode_capabilities.dart';
 import '../mpv/mpv.dart';
 import '../utils/codec_utils.dart';
+import 'studio_browse_client.dart';
 import 'watch_progress/external_id_index_client.dart';
 import 'watch_progress/progress_routing.dart';
 
@@ -102,6 +103,7 @@ part 'jellyfin_client/parts/live_tv_dvr.dart';
 part 'jellyfin_client/parts/images_downloads.dart';
 part 'jellyfin_client/parts/metadata_edit.dart';
 part 'jellyfin_client/parts/external_id_index.dart';
+part 'jellyfin_client/parts/studios.dart';
 
 /// Canonical declarations of the [JellyfinClient] internals that the `part`
 /// mixins call into.
@@ -297,7 +299,8 @@ class JellyfinClient
         _JellyfinLiveTvMethods,
         _JellyfinImageDownloadMethods,
         _JellyfinMetadataEditMethods,
-        _JellyfinExternalIdIndexMethods
+        _JellyfinExternalIdIndexMethods,
+        _JellyfinStudioMethods
     implements
         MediaServerClient,
         SeasonEpisodePagingClient,

@@ -1,9 +1,16 @@
+import 'dart:async';
+import 'dart:collection';
+
 import '../../media/media_item.dart';
 import '../../media/media_kind.dart';
 import '../../media/media_server_client.dart';
 import '../../utils/app_logger.dart';
 import '../../utils/external_ids.dart';
+import 'tracker_episode_list_client.dart';
 import 'tracker_watch_state.dart';
+
+/// A series' episodes on a server; see [TrackerContinueWatching.loadEpisodes].
+typedef EpisodeLists = Future<List<MediaItem>> Function(MediaServerClient client, String showId);
 
 /// Continue Watching for a tracker-led profile, from what its tracker says
 /// (fork addition) — the server's own list belongs to whoever shares the
@@ -17,8 +24,12 @@ import 'tracker_watch_state.dart';
 /// Each is found on [client]'s server through its ids ([index]), and fetched
 /// from there, so it carries the server's artwork and files and — through
 /// the item mappers — the tracker's state.
+///
+/// Also the titles watched last ([recentlyWatched]), which the
+/// recommendation row reasons from.
 class TrackerContinueWatching {
-  TrackerContinueWatching({required this.state, required this.index}) {
+  TrackerContinueWatching({required this.state, required this.index, EpisodeLists? episodesOf})
+    : _episodesOf = episodesOf ?? loadEpisodes {
     for (final MapEntry(key: itemId, value: ids) in index.entries) {
       for (final key in _idKeys(ids)) {
         (_itemsById[key] ??= []).add(itemId);
@@ -28,10 +39,18 @@ class TrackerContinueWatching {
 
   final TrackerWatchState state;
   final Map<String, ExternalIds> index;
+  final EpisodeLists _episodesOf;
   final Map<String, List<String>> _itemsById = {};
 
   /// How many series are looked at for a next episode: each costs a request.
   static const int seriesLimit = 20;
+
+  /// How many requests run at once. One after another, twenty series' lists
+  /// held the home page for a minute on a big server.
+  static const int parallelLookups = 4;
+
+  /// How many titles [recentlyWatched] names at most.
+  static const int recentLimit = 30;
 
   static List<String> _idKeys(ExternalIds ids) => [
     if (ids.imdb case final imdb? when imdb.isNotEmpty) 'imdb:$imdb',
@@ -58,8 +77,10 @@ class TrackerContinueWatching {
     final limit = count ?? 20;
     final rows = <MediaItem>[];
     final seriesDone = <String>{};
+    final gate = _Gate(parallelLookups);
     final episodesOf = <String, Future<List<MediaItem>>>{};
-    Future<List<MediaItem>> episodes(String showId) => episodesOf[showId] ??= _episodes(client, showId);
+    Future<List<MediaItem>> episodes(String showId) =>
+        episodesOf[showId] ??= gate.run(() => _episodesOf(client, showId));
 
     bool add(MediaItem? item, DateTime at) {
       if (item == null || rows.length >= limit) return false;
@@ -70,6 +91,21 @@ class TrackerContinueWatching {
     }
 
     final paused = [...state.playback]..sort((a, b) => b.pausedAt.compareTo(a.pausedAt));
+    final watching = state.shows.where((show) => show.lastWatchedAt != null && show.watched.isNotEmpty).toList()
+      ..sort((a, b) => b.lastWatchedAt!.compareTo(a.lastWatchedAt!));
+
+    // Every series looked at below is asked for up front, a few at a time,
+    // at most one per row the list can take; each is awaited in turn below.
+    final ahead = <String>{
+      for (final session in paused)
+        if (session.isEpisode) ?_itemsFor(session.ids).firstOrNull,
+      for (final show in watching.take(seriesLimit)) ?_itemsFor(show.ids).firstOrNull,
+    };
+    for (final showId in ahead.take(limit)) {
+      // A failure is met where the list is used.
+      unawaited(episodes(showId).then<void>((_) {}, onError: (Object _) {}));
+    }
+
     for (final session in paused) {
       if (rows.length >= limit) break;
       try {
@@ -94,8 +130,6 @@ class TrackerContinueWatching {
       }
     }
 
-    final watching = state.shows.where((show) => show.lastWatchedAt != null && show.watched.isNotEmpty).toList()
-      ..sort((a, b) => b.lastWatchedAt!.compareTo(a.lastWatchedAt!));
     for (final show in watching.take(seriesLimit)) {
       if (rows.length >= limit) break;
       try {
@@ -126,7 +160,7 @@ class TrackerContinueWatching {
       ..sort((a, b) => b.pausedAt.compareTo(a.pausedAt));
     final show = state.show(ids);
     if (paused.isEmpty && show == null) return null;
-    final list = await _episodes(client, showId);
+    final list = await _episodesOf(client, showId);
     for (final session in paused) {
       for (final episode in list) {
         if (episode.parentIndex == session.season && episode.index == session.episode) return episode;
@@ -161,11 +195,85 @@ class TrackerContinueWatching {
     return null;
   }
 
-  static Future<List<MediaItem>> _episodes(MediaServerClient client, String showId) async {
-    final page = await client.fetchPlayableDescendantsPage(showId, start: 0, size: 2000);
+  /// The films and series this profile watched or left paused last that
+  /// [client]'s server holds, newest first, at most [limit] — found through
+  /// the tracker's dates and the server's ids, so no library has to be read
+  /// whole and sorted to know them.
+  Future<List<MediaItem>> recentlyWatched(MediaServerClient client, {int limit = recentLimit}) async {
+    final dated = <({DateTime at, ExternalIds ids, MediaKind kind})>[
+      for (final movie in state.movies)
+        if (movie.watchedAt case final at?) (at: at, ids: movie.ids, kind: MediaKind.movie),
+      for (final show in state.shows)
+        if (show.lastWatchedAt case final at?) (at: at, ids: show.ids, kind: MediaKind.show),
+      // A paused episode names its series.
+      for (final session in state.playback)
+        (at: session.pausedAt, ids: session.ids, kind: session.isEpisode ? MediaKind.show : MediaKind.movie),
+    ]..sort((a, b) => b.at.compareTo(a.at));
+
+    // A film and a series may share a TMDB number: each item is kept only
+    // when it turns out to be what the tracker named.
+    final wanted = <String, MediaKind>{};
+    for (final title in dated) {
+      if (wanted.length >= limit) break;
+      for (final itemId in _itemsFor(title.ids)) {
+        wanted.putIfAbsent(itemId, () => title.kind);
+      }
+    }
+
+    final gate = _Gate(parallelLookups);
+    final fetched = await Future.wait([
+      for (final MapEntry(key: itemId, value: kind) in wanted.entries.take(limit))
+        gate.run(() async {
+          try {
+            final item = await client.fetchItem(itemId);
+            return item?.kind == kind ? item : null;
+          } catch (error) {
+            appLogger.d('Tracker recent titles: $itemId could not be fetched', error: error);
+            return null;
+          }
+        }),
+    ]);
+    return [for (final item in fetched) ?item];
+  }
+
+  /// A series' episodes, as lightly as [client] can list them.
+  static Future<List<MediaItem>> loadEpisodes(MediaServerClient client, String showId) async {
+    final items = client is TrackerEpisodeListClient
+        ? await (client as TrackerEpisodeListClient).fetchEpisodesWithoutStreams(showId)
+        : (await client.fetchPlayableDescendantsPage(showId, start: 0, size: 2000)).items;
     return [
-      for (final item in page.items)
+      for (final item in items)
         if (item.kind == MediaKind.episode) item,
     ];
+  }
+}
+
+/// Lets at most [width] tasks run at once; the rest wait their turn in the
+/// order they came.
+class _Gate {
+  _Gate(this.width);
+
+  final int width;
+  int _running = 0;
+  final Queue<Completer<void>> _waiting = Queue();
+
+  Future<T> run<T>(Future<T> Function() task) async {
+    if (_running < width) {
+      _running++;
+    } else {
+      final turn = Completer<void>();
+      _waiting.add(turn);
+      // The slot of a task that ends is handed straight on.
+      await turn.future;
+    }
+    try {
+      return await task();
+    } finally {
+      if (_waiting.isNotEmpty) {
+        _waiting.removeFirst().complete();
+      } else {
+        _running--;
+      }
+    }
   }
 }

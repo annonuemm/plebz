@@ -216,6 +216,29 @@ class _LiveTvScreenState extends State<LiveTvScreen>
     _applyChannelLayout();
   }
 
+  /// A playlist read again behind the list on screen took its place (Plebz).
+  /// Taken in quietly: no loading bar, no cursor sent anywhere, no message —
+  /// the viewer is meant not to notice. A pass already running may have read
+  /// the old list, so this one runs after it.
+  void _takeReplacedIptvChannels() {
+    if (!mounted) return;
+    final running = _channelsLoadFuture;
+    if (running == null) {
+      unawaited(_loadChannels(quiet: true));
+      return;
+    }
+    unawaited(
+      running.whenComplete(() {
+        if (mounted) unawaited(_loadChannels(quiet: true));
+      }),
+    );
+  }
+
+  /// The same for a guide read again behind the one on screen.
+  void _takeReplacedIptvGuide() {
+    if (mounted) _guideTabKey.currentState?.reloadPrograms();
+  }
+
   /// [setState] for the fork's members in `live_tv_screen_groups.dart`: an
   /// extension is not a subclass, so it may not call the protected original.
   void _setState(VoidCallback fn) => setState(fn);
@@ -310,8 +333,12 @@ class _LiveTvScreenState extends State<LiveTvScreen>
     final iptvProvider = context.read<IptvSourcesProvider?>();
     if (iptvProvider != _iptvProvider) {
       _iptvProvider?.epgLogoRevision.removeListener(_applyEpgLogos);
+      _iptvProvider?.channelsRevision.removeListener(_takeReplacedIptvChannels);
+      _iptvProvider?.guideRevision.removeListener(_takeReplacedIptvGuide);
       _iptvProvider = iptvProvider;
       _iptvProvider?.epgLogoRevision.addListener(_applyEpgLogos);
+      _iptvProvider?.channelsRevision.addListener(_takeReplacedIptvChannels);
+      _iptvProvider?.guideRevision.addListener(_takeReplacedIptvGuide);
     }
   }
 
@@ -321,6 +348,8 @@ class _LiveTvScreenState extends State<LiveTvScreen>
     LiveTvLastSelection.instance.removeListener(_adoptPlayerSelection);
     _layoutProvider?.removeListener(_onChannelLayoutChanged);
     _iptvProvider?.epgLogoRevision.removeListener(_applyEpgLogos);
+    _iptvProvider?.channelsRevision.removeListener(_takeReplacedIptvChannels);
+    _iptvProvider?.guideRevision.removeListener(_takeReplacedIptvGuide);
     for (final node in _groupChipFocusNodes.values) {
       node.dispose();
     }
@@ -553,23 +582,29 @@ class _LiveTvScreenState extends State<LiveTvScreen>
     return liveTvNonEmpty(serverInfo.lineup);
   }
 
-  Future<void> _loadChannels() {
+  Future<void> _loadChannels({bool quiet = false}) {
     final inFlight = _channelsLoadFuture;
     if (inFlight != null) return inFlight;
     late final Future<void> load;
-    load = _loadChannelsOnce().whenComplete(() {
+    load = _loadChannelsOnce(quiet: quiet).whenComplete(() {
       if (identical(_channelsLoadFuture, load)) _channelsLoadFuture = null;
     });
     _channelsLoadFuture = load;
     return load;
   }
 
-  Future<void> _loadChannelsOnce() async {
+  /// [quiet] (Plebz): a list taken in behind the one on screen — the
+  /// channels stay while it loads, a failure keeps them without a word, and
+  /// the cursor stays where the viewer left it.
+  Future<void> _loadChannelsOnce({bool quiet = false}) async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    quiet = quiet && _loadedChannels.isNotEmpty;
+    if (!quiet) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
     try {
       final multiServer = context.read<MultiServerProvider>();
@@ -704,7 +739,7 @@ class _LiveTvScreenState extends State<LiveTvScreen>
           _isLoading = false;
           if (!keepChannels) _error = message;
         });
-        if (keepChannels) showErrorSnackBar(context, message);
+        if (keepChannels && !quiet) showErrorSnackBar(context, message);
         return;
       }
 
@@ -718,6 +753,7 @@ class _LiveTvScreenState extends State<LiveTvScreen>
 
       appLogger.d('Live TV: loaded ${allChannels.length} channels');
 
+      if (quiet) _guideTabKey.currentState?.keepCursorOnNextList();
       setState(() {
         _loadedChannels = allChannels;
         _notifySidebar();
@@ -747,14 +783,15 @@ class _LiveTvScreenState extends State<LiveTvScreen>
         }),
       );
 
-      if (allChannels.isNotEmpty && PlatformDetector.shouldUseSideNavigation(context)) {
+      if (!quiet && allChannels.isNotEmpty && PlatformDetector.shouldUseSideNavigation(context)) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) _focusCurrentTab();
         });
       }
     } catch (e, stackTrace) {
       final message = localizedLoadErrorMessage(e, stackTrace, context: t.liveTv.title);
-      if (mounted) {
+      // A quiet pass keeps the list it was to replace.
+      if (mounted && !quiet) {
         setState(() {
           _isLoading = false;
           _error = message;

@@ -1491,6 +1491,81 @@ http://provider/stream/ard
     expect(find.text('Zweite 1').hitTestable(), findsOneWidget);
   });
 
+  testWidgets('a list read again keeps the cursor on its channel (Plebz)', (tester) async {
+    // A playlist read again behind the guide takes its place under the
+    // cursor. A channel added above it must not slide the viewer onto a
+    // neighbour; a group switch is another list and keeps the row.
+    resetSharedPreferencesForTest();
+    SettingsService.resetForTesting();
+    await SettingsService.getInstance();
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+    GuidePreviewPlayerState.debugSuppressPlayback = true;
+    addTearDown(() => GuidePreviewPlayerState.debugSuppressPlayback = false);
+
+    final multiServer = testMultiServerProvider(MultiServerManager());
+    addTearDown(multiServer.dispose);
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1280, 600);
+    addTearDown(() {
+      tester.view.resetDevicePixelRatio();
+      tester.view.resetPhysicalSize();
+    });
+
+    LiveTvChannel channel(int i) =>
+        LiveTvChannel(key: 'channel/$i', identifier: 'station-$i', callSign: 'CH$i', serverId: 'server-a');
+    final list = ValueNotifier([for (var i = 1; i <= 4; i++) channel(i)]);
+    addTearDown(list.dispose);
+    final guideKey = GlobalKey<GuideTabState>();
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: InputModeTracker(
+          child: MultiProvider(
+            providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
+            child: MaterialApp(
+              theme: monoTheme(MonoPalette.dark),
+              home: Scaffold(
+                body: ValueListenableBuilder<List<LiveTvChannel>>(
+                  valueListenable: list,
+                  builder: (_, channels, _) => GuideTab(key: guideKey, channels: channels),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    tester
+        .widget<Focus>(
+          find.byWidgetPredicate((widget) => widget is Focus && widget.focusNode?.debugLabel == 'guide_tab'),
+        )
+        .focusNode!
+        .requestFocus();
+    await tester.pump();
+    for (var i = 0; i < 3; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+    }
+    final guide = guideKey.currentState!;
+    final row = guide.debugCursorChannelIndex;
+    final watched = list.value[row].key;
+
+    guide.keepCursorOnNextList();
+    list.value = [channel(0), ...list.value];
+    await tester.pump();
+    await tester.pump();
+    expect(list.value[guide.debugCursorChannelIndex].key, watched, reason: 'still on the channel it was on');
+
+    final followed = guide.debugCursorChannelIndex;
+    list.value = [channel(7), channel(8), ...list.value];
+    await tester.pump();
+    await tester.pump();
+    expect(guide.debugCursorChannelIndex, followed, reason: 'without the word, a new list keeps the row');
+  });
+
   testWidgets('a past programme still in the archive is not greyed out', (tester) async {
     // The whole marking: the grid already dims the past to mean "nothing to
     // get here", and an archive makes that false for some cells. Taking the

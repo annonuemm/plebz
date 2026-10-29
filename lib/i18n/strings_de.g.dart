@@ -617,6 +617,15 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get recommendationsSourcePlex => 'Nur Plex';
 	@override String get recommendationsSourceJellyfin => 'Nur Jellyfin';
 	@override String get recommendationsSourceEmby => 'Nur Emby';
+	@override String get showBrandRows => 'Anbieter-Reihen';
+	@override String get showBrandRowsDescription => 'Netflix, Prime und andere mit Titeln von deinen Servern';
+	@override String get brandRowsPick => 'Anbieter auswählen';
+	@override String get brandRowsPosition => 'Platz auf der Startseite';
+	@override String get brandRowsPositionTop => 'Ganz oben';
+	@override String get brandRowsPositionAfterRecommendations => 'Unter den Empfehlungen';
+	@override String get brandRowsPositionBottom => 'Ganz unten';
+	@override String get brandRowsShow => 'Anbieter zeigen';
+	@override String get brandRowsHide => 'Anbieter ausblenden';
 	@override String get appThemeVariant => 'Design';
 	@override String get appThemeVariantStandard => 'Original';
 	@override String get showLibraryPlaylistsTab => 'Reiter „Wiedergabelisten“';
@@ -2796,7 +2805,8 @@ class _Translations$iptv$de extends Translations$iptv$en {
 	@override String get publicLogoFallbackDescription => 'GitHub sieht, welche Logos abgefragt werden';
 	@override String get brightenDarkLogosLabel => 'Dunkle Senderlogos aufhellen';
 	@override String get refreshNowLabel => 'Jetzt aktualisieren';
-	@override String get refreshNowDone => 'Playlist und Programm werden neu geladen';
+	@override String get refreshNowDone => 'Playlist und Programm werden im Hintergrund neu geladen';
+	@override String get refreshNowFailed => 'Aktualisieren fehlgeschlagen, die bisherige Liste bleibt';
 	@override String get refreshIntervalLabel => 'Automatisch neu laden';
 	@override String get refreshIntervalDescription => 'Wie lange Senderliste und Programmführer gespeichert bleiben, bevor sie neu geladen werden. Ein Aktualisieren von Hand lädt sofort neu.';
 	@override String get refreshIntervalDaily => 'Täglich';
@@ -4754,6 +4764,15 @@ extension on TranslationsDe {
 			'settings.recommendationsSourcePlex' => 'Nur Plex',
 			'settings.recommendationsSourceJellyfin' => 'Nur Jellyfin',
 			'settings.recommendationsSourceEmby' => 'Nur Emby',
+			'settings.showBrandRows' => 'Anbieter-Reihen',
+			'settings.showBrandRowsDescription' => 'Netflix, Prime und andere mit Titeln von deinen Servern',
+			'settings.brandRowsPick' => 'Anbieter auswählen',
+			'settings.brandRowsPosition' => 'Platz auf der Startseite',
+			'settings.brandRowsPositionTop' => 'Ganz oben',
+			'settings.brandRowsPositionAfterRecommendations' => 'Unter den Empfehlungen',
+			'settings.brandRowsPositionBottom' => 'Ganz unten',
+			'settings.brandRowsShow' => 'Anbieter zeigen',
+			'settings.brandRowsHide' => 'Anbieter ausblenden',
 			'settings.appThemeVariant' => 'Design',
 			'settings.appThemeVariantStandard' => 'Original',
 			'settings.showLibraryPlaylistsTab' => 'Reiter „Wiedergabelisten“',
@@ -4765,6 +4784,8 @@ extension on TranslationsDe {
 			'settings.appThemeVariantFlach' => 'Redesign – Flach',
 			'settings.appThemeVariantFlachDescription' => 'Wie Glas, aber flach, mit weißem Fokus',
 			'settings.flachAccent' => 'Akzentfarbe',
+			_ => null,
+		} ?? switch (path) {
 			'settings.flachAccentDescription' => 'Für Fortschritt, gewählte Seite und Filter',
 			'settings.flachPreset' => 'Farbprofil',
 			'settings.flachPresetCustom' => 'Eigene',
@@ -4774,8 +4795,6 @@ extension on TranslationsDe {
 			'settings.flachPresetGlut' => 'Glut',
 			'settings.flachPresetMitternacht' => 'Mitternacht',
 			'settings.flachPresetKirschbluete' => 'Kirschblüte',
-			_ => null,
-		} ?? switch (path) {
 			'settings.flachPresetAmethyst' => 'Amethyst',
 			'settings.flachPresetBernstein' => 'Bernstein',
 			'settings.flachPresetSafran' => 'Safran',
@@ -5279,6 +5298,8 @@ extension on TranslationsDe {
 			'videoControls.noChaptersAvailable' => 'Keine Kapitel verfügbar',
 			'videoControls.queue' => 'Warteschlange',
 			'videoControls.noQueueItems' => 'Keine Elemente in der Warteschlange',
+			_ => null,
+		} ?? switch (path) {
 			'videoControls.noAudioDevicesAvailable' => 'Keine Audiogeräte verfügbar',
 			'videoControls.searchSubtitles' => 'Untertitel suchen',
 			'videoControls.language' => 'Sprache',
@@ -5288,8 +5309,6 @@ extension on TranslationsDe {
 			'videoControls.subtitleDownloadFailed' => 'Untertitel konnte nicht heruntergeladen werden',
 			'videoControls.searchLanguages' => 'Sprachen suchen...',
 			'videoControls.skipIntro' => 'Intro überspringen',
-			_ => null,
-		} ?? switch (path) {
 			'videoControls.skipCredits' => 'Abspann überspringen',
 			'videoControls.nextEpisode' => 'Nächste Episode',
 			'videoControls.subtitleTrack' => ({required Object n}) => 'Spur ${n}',
@@ -5793,6 +5812,8 @@ extension on TranslationsDe {
 			'explore.rows.airingAnime' => 'Beste derzeit laufende Anime',
 			'explore.rows.popularAnime' => 'Beliebteste Anime',
 			'explore.rows.trending' => 'Angesagt',
+			_ => null,
+		} ?? switch (path) {
 			'explore.rows.upcomingMovies' => 'Kommende Filme',
 			'explore.rows.upcomingShows' => 'Kommende Serien',
 			'explore.rows.genres' => 'Genres',
@@ -5802,8 +5823,6 @@ extension on TranslationsDe {
 			'explore.status.airing' => 'Laufend',
 			'explore.status.ended' => 'Beendet',
 			'explore.status.canceled' => 'Abgesetzt',
-			_ => null,
-		} ?? switch (path) {
 			'explore.status.upcoming' => 'Demnächst',
 			'explore.episodeCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Folge', other: '${n} Folgen', ), 
 			'explore.cast' => 'Besetzung',
@@ -6307,6 +6326,8 @@ extension on TranslationsDe {
 			'downloads.downloadNow' => 'Herunterladen',
 			'downloads.deleteDownload' => 'Download löschen',
 			'downloads.retryDownload' => 'Download wiederholen',
+			_ => null,
+		} ?? switch (path) {
 			'downloads.downloadQueued' => 'Download in Warteschlange',
 			'downloads.downloadResumed' => 'Download fortgesetzt',
 			'downloads.serverErrorBitrate' => 'Serverfehler: Datei überschreitet möglicherweise das Remote-Bitrate-Limit',
@@ -6316,8 +6337,6 @@ extension on TranslationsDe {
 			'downloads.downloadDeleted' => 'Download gelöscht',
 			'downloads.deleteConfirm' => ({required Object title}) => '"${title}" von diesem Gerät löschen?',
 			'downloads.deleteCollectionDownloads' => 'Downloads löschen',
-			_ => null,
-		} ?? switch (path) {
 			'downloads.deleteCollectionDownloadsConfirm' => ({required Object title}) => 'Alle Downloads aus „${title}“ von diesem Gerät löschen?',
 			'downloads.collectionDownloadsDeleted' => 'Downloads gelöscht',
 			'downloads.cancelledDownloadTitle' => 'Abgebrochener Download',
@@ -6821,6 +6840,8 @@ extension on TranslationsDe {
 			'services.libraryFilter.title' => 'Mediatheksfilter',
 			'services.libraryFilter.subtitleAllSyncing' => 'Alle Mediatheken werden synchronisiert',
 			'services.libraryFilter.subtitleNoneSyncing' => 'Nichts wird synchronisiert',
+			_ => null,
+		} ?? switch (path) {
 			'services.libraryFilter.subtitleBlocked' => ({required Object count}) => '${count} ausgeschlossen',
 			'services.libraryFilter.subtitleAllowed' => ({required Object count}) => '${count} zugelassen',
 			'services.libraryFilter.mode' => 'Filtermodus',
@@ -6830,8 +6851,6 @@ extension on TranslationsDe {
 			'services.libraryFilter.modeHintWhitelist' => 'Nur die unten markierten Mediatheken synchronisieren.',
 			'services.libraryFilter.libraries' => 'Mediatheken',
 			'services.libraryFilter.noLibraries' => 'Keine Mediatheken verfügbar',
-			_ => null,
-		} ?? switch (path) {
 			'services.tmdb.title' => 'TMDB',
 			'services.tmdb.hubSubtitle' => 'Ergänzt Logos und Beschreibungen',
 			'services.tmdb.enabled' => 'Fehlendes von TMDB ergänzen',
@@ -6939,7 +6958,8 @@ extension on TranslationsDe {
 			'iptv.publicLogoFallbackDescription' => 'GitHub sieht, welche Logos abgefragt werden',
 			'iptv.brightenDarkLogosLabel' => 'Dunkle Senderlogos aufhellen',
 			'iptv.refreshNowLabel' => 'Jetzt aktualisieren',
-			'iptv.refreshNowDone' => 'Playlist und Programm werden neu geladen',
+			'iptv.refreshNowDone' => 'Playlist und Programm werden im Hintergrund neu geladen',
+			'iptv.refreshNowFailed' => 'Aktualisieren fehlgeschlagen, die bisherige Liste bleibt',
 			'iptv.refreshIntervalLabel' => 'Automatisch neu laden',
 			'iptv.refreshIntervalDescription' => 'Wie lange Senderliste und Programmführer gespeichert bleiben, bevor sie neu geladen werden. Ein Aktualisieren von Hand lädt sofort neu.',
 			'iptv.refreshIntervalDaily' => 'Täglich',

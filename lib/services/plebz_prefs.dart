@@ -12,6 +12,7 @@ import 'plebz_update_service.dart' show PlebzUpdateOffer;
 import 'recommendations_service.dart';
 import 'sensitive_prefs.dart';
 import 'settings_service.dart';
+import 'streaming_brands.dart';
 
 /// Which visual language the app wears. Same screens, same paths, same
 /// functions — only the surface differs.
@@ -286,6 +287,23 @@ abstract final class PlebzPrefs {
   /// favourite channels with what is on them. Off, the home screen neither
   /// shows it nor loads the guide and fixtures behind it.
   static const showLiveNowRow = BoolPref('show_live_now_row', defaultValue: true);
+
+  /// The brand rows on the home screen: per streaming service, the titles of
+  /// the viewer's own servers that name it as network or studio
+  /// (`BrandRowsService`). Off by default: a row per service is a lot of
+  /// home screen to add unasked.
+  static const showBrandRows = BoolPref('show_brand_rows', defaultValue: false);
+
+  /// Which services get a row and in which order, encoded by
+  /// [BrandRowsLayout.encode]; empty is the standard arrangement.
+  static const brandRowsLayout = StringPref('brand_rows_layout', defaultValue: '');
+
+  /// Where the brand rows stand on the home screen.
+  static const brandRowsPosition = EnumPref<BrandRowsPosition>(
+    'brand_rows_position',
+    values: BrandRowsPosition.values,
+    defaultValue: BrandRowsPosition.afterRecommendations,
+  );
 
   /// Which servers the recommendation row draws on. Only meaningful while
   /// [showRecommendationsRow] is on.
@@ -693,6 +711,9 @@ abstract final class PlebzPrefs {
     showRecommendationsRow,
     showLiveNowRow,
     recommendationsSource,
+    showBrandRows,
+    brandRowsLayout,
+    brandRowsPosition,
     useSystemTvKeyboard,
     showActorFilmography,
     seerrCardEpisodeFacts,

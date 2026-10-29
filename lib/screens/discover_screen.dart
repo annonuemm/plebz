@@ -1344,6 +1344,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                       menuLeadingEntriesFor: _hubs[i].id == recommendationsHubId
                           ? (item) => _recommendationMenuEntries(_hubs[i], item)
                           : null,
+                      loadMoreItems: _discover.brandRowLoader(_hubs[i]),
                     ),
                   ),
 
@@ -1438,7 +1439,10 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       // Watching is assembled here, across servers, so it is handed over
       // whole. Everything else is read a page at a time — see
       // TvBrowseRail._navigateToHubDetail.
-      loadMoreItems: (hub) => hub.id == 'continue_watching' ? _discover.loadAllContinueWatching : null,
+      // A brand row (Plebz) is assembled here as well, from every library
+      // that has the brand.
+      loadMoreItems: (hub) =>
+          hub.id == 'continue_watching' ? _discover.loadAllContinueWatching : _discover.brandRowLoader(hub),
       // A "Jetzt live" tile tunes or opens a game rather than a detail page.
       onActivateItem: (hub, item) {
         if (hub.id != liveNowHubId) return false;

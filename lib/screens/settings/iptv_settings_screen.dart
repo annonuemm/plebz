@@ -115,15 +115,20 @@ class IptvSettingsScreen extends StatelessWidget {
                   ),
                   // The interval above answers "how often at the latest"; a
                   // provider that changed its line-up this morning is the case
-                  // it cannot answer. Dropping the stored copies is the whole
-                  // of it — the next read finds nothing on disk and fetches.
+                  // it cannot answer. Read in the background (Plebz): Live TV
+                  // keeps what it shows until the new copies are whole, and
+                  // keeps it outright when nothing came.
                   FocusableListTile(
                     leading: const AppIcon(Symbols.refresh_rounded, fill: 1),
                     title: Text(t.iptv.refreshNowLabel),
                     subtitle: settingSubtitle(t.iptv.refreshNowDescription),
                     onTap: () {
-                      provider.refreshAll();
                       showSuccessSnackBar(context, t.iptv.refreshNowDone);
+                      unawaited(
+                        provider.refreshAll().then((read) {
+                          if (!read && context.mounted) showErrorSnackBar(context, t.iptv.refreshNowFailed);
+                        }),
+                      );
                     },
                   ),
                 ],

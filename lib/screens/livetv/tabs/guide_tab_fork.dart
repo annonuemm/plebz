@@ -185,6 +185,27 @@ extension _GuideTabFork on GuideTabState {
 
   /// What the last preview said about its stream belongs to that stream, so
   /// it goes with it; the new one reports its own once it plays.
+  /// The channel list was replaced under the cursor — a playlist read again
+  /// behind the guide took its place. The cursor follows its channel rather
+  /// than its row: a channel added or dropped above it would otherwise slide
+  /// the viewer onto a neighbour without a key pressed.
+  void _keepCursorChannel(List<LiveTvChannel> before) {
+    if (_gridChannelIndex < 0 || _gridChannelIndex >= before.length) return;
+    final key = liveTvChannelScopeKey(before[_gridChannelIndex]);
+    if (_gridChannelIndex < widget.channels.length &&
+        liveTvChannelScopeKey(widget.channels[_gridChannelIndex]) == key) {
+      return;
+    }
+    final index = widget.channels.indexWhere((channel) => liveTvChannelScopeKey(channel) == key);
+    if (index < 0) return;
+    _gridChannelIndex = index;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _publishFocusSnapshot();
+      _scrollToChannel(index);
+    });
+  }
+
   void _setPreviewChannel(LiveTvChannel? channel) {
     _previewStreamInfo.value = null;
     _setState(() => _previewChannel = channel);
@@ -924,6 +945,11 @@ extension GuideTabChannels on GuideTabState {
     });
     _scrollToChannel(index);
   }
+
+  /// The next channel list is the same list read again, not another one
+  /// (Plebz): the cursor stays on its channel wherever that lands. A group
+  /// switch is another list, and starts from the top as before.
+  void keepCursorOnNextList() => _keepCursorOnNextList = true;
 
   /// Ask every source for the programmes again — for channels shown again,
   /// whose IPTV guide was not read while they were hidden.

@@ -97,6 +97,7 @@ class Translations with BaseTranslations<AppLocale, Translations> {
 	late final Translations$addServer$en addServer = Translations$addServer$en.internal(_root);
 	late final Translations$deepLinks$en deepLinks = Translations$deepLinks$en.internal(_root);
 	late final Translations$iptv$en iptv = Translations$iptv$en.internal(_root);
+	late final Translations$friends$en friends = Translations$friends$en.internal(_root);
 	late final Translations$trailerStage$en trailerStage = Translations$trailerStage$en.internal(_root);
 	late final Translations$actor$en actor = Translations$actor$en.internal(_root);
 	late final Translations$sport$en sport = Translations$sport$en.internal(_root);
@@ -1613,6 +1614,12 @@ class Translations$settings$en {
 
 	/// en: 'Netflix, Prime and more, with titles from your servers'
 	String get showBrandRowsDescription => 'Netflix, Prime and more, with titles from your servers';
+
+	/// en: 'What friends are watching'
+	String get showFriendsActivity => 'What friends are watching';
+
+	/// en: 'Shows what your Plex friends have watched'
+	String get showFriendsActivityDescription => 'Shows what your Plex friends have watched';
 
 	/// en: 'Choose services'
 	String get brandRowsPick => 'Choose services';
@@ -7381,6 +7388,48 @@ class Translations$iptv$en {
 	String get discardChanges => 'Discard';
 }
 
+// Path: friends
+class Translations$friends$en {
+	Translations$friends$en.internal(this._root);
+
+	final Translations _root; // ignore: unused_field
+
+	// Translations
+
+	/// en: 'What friends are watching'
+	String get rowTitle => 'What friends are watching';
+
+	/// en: 'Friends'
+	String get pageTitle => 'Friends';
+
+	/// en: 'Watched by'
+	String get watchedBy => 'Watched by';
+
+	/// en: 'All'
+	String get all => 'All';
+
+	/// en: 'today'
+	String get today => 'today';
+
+	/// en: 'yesterday'
+	String get yesterday => 'yesterday';
+
+	/// en: 'Today'
+	String get sectionToday => 'Today';
+
+	/// en: 'This week'
+	String get sectionWeek => 'This week';
+
+	/// en: 'Earlier'
+	String get sectionEarlier => 'Earlier';
+
+	/// en: 'Your friends haven't shared anything yet.'
+	String get empty => 'Your friends haven\'t shared anything yet.';
+
+	/// en: '+$count'
+	String more({required Object count}) => '+${count}';
+}
+
 // Path: trailerStage
 class Translations$trailerStage$en {
 	Translations$trailerStage$en.internal(this._root);
@@ -11008,6 +11057,8 @@ extension on Translations {
 			'settings.recommendationsSourceEmby' => 'Emby only',
 			'settings.showBrandRows' => 'Streaming service rows',
 			'settings.showBrandRowsDescription' => 'Netflix, Prime and more, with titles from your servers',
+			'settings.showFriendsActivity' => 'What friends are watching',
+			'settings.showFriendsActivityDescription' => 'Shows what your Plex friends have watched',
 			'settings.brandRowsPick' => 'Choose services',
 			'settings.brandRowsPosition' => 'Place on the home screen',
 			'settings.brandRowsPositionTop' => 'At the top',
@@ -11499,10 +11550,10 @@ extension on Translations {
 			'videoControls.showPlaybackControls' => 'Show playback controls',
 			'videoControls.hidePlaybackControls' => 'Hide playback controls',
 			'videoControls.seekBackwardButton' => ({required Object seconds}) => 'Seek backward ${seconds} seconds',
-			'videoControls.seekForwardButton' => ({required Object seconds}) => 'Seek forward ${seconds} seconds',
-			'videoControls.previousButton' => 'Previous episode',
 			_ => null,
 		} ?? switch (path) {
+			'videoControls.seekForwardButton' => ({required Object seconds}) => 'Seek forward ${seconds} seconds',
+			'videoControls.previousButton' => 'Previous episode',
 			'videoControls.nextButton' => 'Next episode',
 			'videoControls.previousChapterButton' => 'Previous chapter',
 			'videoControls.nextChapterButton' => 'Next chapter',
@@ -12013,10 +12064,10 @@ extension on Translations {
 			'hubDetail.releaseYear' => 'Release Year',
 			'hubDetail.dateAdded' => 'Date Added',
 			'hubDetail.rating' => 'Rating',
-			'hubDetail.noItemsFound' => 'No items found',
-			'logs.clearLogs' => 'Clear Logs',
 			_ => null,
 		} ?? switch (path) {
+			'hubDetail.noItemsFound' => 'No items found',
+			'logs.clearLogs' => 'Clear Logs',
 			'logs.copyLogs' => 'Copy Logs',
 			'logs.uploadLogs' => 'Upload Logs',
 			'startup.failedTitle' => 'Plebz could not start',
@@ -12527,10 +12578,10 @@ extension on Translations {
 			'watchTogether.endRoomConfirm' => 'This ends the room for everyone.',
 			'watchTogether.end' => 'End',
 			'watchTogether.playBlockedTitle' => 'Playback didn\'t start',
-			'watchTogether.playBlockedDescription' => 'Press play to start watching with the room.',
-			'watchTogether.notices.pressedPlay' => ({required Object name}) => '${name} pressed play',
 			_ => null,
 		} ?? switch (path) {
+			'watchTogether.playBlockedDescription' => 'Press play to start watching with the room.',
+			'watchTogether.notices.pressedPlay' => ({required Object name}) => '${name} pressed play',
 			'watchTogether.notices.playbackStarted' => 'Playback started',
 			'watchTogether.notices.paused' => ({required Object name}) => '${name} paused',
 			'watchTogether.notices.playbackPaused' => 'Playback paused',
@@ -13041,10 +13092,10 @@ extension on Translations {
 			'seerr.freshCookieRejected' => 'Seerr rejected the new session cookie',
 			'seerr.noUserInformation' => 'Seerr did not return user information',
 			'seerr.sessionRejectedAfterReauth' => 'The session was rejected after signing in again',
-			'seerr.permissionDenied' => 'Seerr denied this action: your account no longer has the required permission',
-			'seerr.permissionRevoked' => 'You no longer have permission to request this',
 			_ => null,
 		} ?? switch (path) {
+			'seerr.permissionDenied' => 'Seerr denied this action: your account no longer has the required permission',
+			'seerr.permissionRevoked' => 'You no longer have permission to request this',
 			'seerr.stillInCinemas' => 'A film still showing in cinemas has nothing to download yet — the request would sit open until its release. Better to wait until it is out.',
 			'seerr.signInRejectedWithReason' => ({required Object reason}) => 'Sign-in was rejected: ${reason}',
 			'seerr.shelfPopularMovies' => 'Popular films',
@@ -13273,6 +13324,17 @@ extension on Translations {
 			'iptv.unsavedTitle' => 'Save changes?',
 			'iptv.unsavedMessage' => 'Some details you changed are not saved yet.',
 			'iptv.discardChanges' => 'Discard',
+			'friends.rowTitle' => 'What friends are watching',
+			'friends.pageTitle' => 'Friends',
+			'friends.watchedBy' => 'Watched by',
+			'friends.all' => 'All',
+			'friends.today' => 'today',
+			'friends.yesterday' => 'yesterday',
+			'friends.sectionToday' => 'Today',
+			'friends.sectionWeek' => 'This week',
+			'friends.sectionEarlier' => 'Earlier',
+			'friends.empty' => 'Your friends haven\'t shared anything yet.',
+			'friends.more' => ({required Object count}) => '+${count}',
 			'trailerStage.title' => 'Trailer stage',
 			'trailerStage.mood' => 'What are you in the mood for?',
 			'trailerStage.kind' => 'Kind',

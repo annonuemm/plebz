@@ -415,6 +415,16 @@ class PlexCatalogSource with CatalogWatchlistMachinery implements CatalogSource,
     return credits;
   }
 
+  /// One title by its Discover rating key, as Explore shows it — for the
+  /// titles friends watched (Plebz), which arrive as bare ids. Null when
+  /// Discover does not know it.
+  Future<CatalogItem?> fetchItem(String ratingKey) async {
+    final metadata = await _client.getMetadata(ratingKey);
+    if (metadata == null) return null;
+    final localized = await _localizedRecord(ratingKey);
+    return _toCatalogItem(PlexDiscoverClient.withLocalizedText(metadata, localized));
+  }
+
   Future<Map<String, dynamic>?> _loadDetailMetadata(String ratingKey) async {
     try {
       return await _client.getMetadata(ratingKey);

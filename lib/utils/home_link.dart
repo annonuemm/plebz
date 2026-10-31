@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 ///   on the start page: tune the channel, or the game's channel or window
 /// * `plebz://reminder?key=<key>` — the channel of a guide reminder (the
 ///   screensaver's "Erinnerung gesetzt")
+/// * `plebz://profiles` — the choice of profile
 sealed class HomeLink {
   const HomeLink();
 
@@ -40,6 +41,7 @@ sealed class HomeLink {
         final key? => PlebzReminderLink(key),
         null => null,
       },
+      'profiles' => const PlebzProfilesLink(),
       _ => null,
     };
   }
@@ -70,6 +72,10 @@ final class PlebzReminderLink extends HomeLink {
 
   /// [ProgramReminder.key].
   final String key;
+}
+
+final class PlebzProfilesLink extends HomeLink {
+  const PlebzProfilesLink();
 }
 
 /// The "Jetzt live" entry a link asked for, waiting for the start page to

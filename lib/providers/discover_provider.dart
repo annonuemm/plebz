@@ -25,6 +25,7 @@ import '../services/brand_rows_service.dart';
 import '../services/streaming_brands.dart';
 import '../services/recommendation_feedback_store.dart';
 import '../services/recommendations_service.dart';
+import '../services/friends/friends_activity.dart';
 import '../utils/media_hub_ordering.dart';
 import '../utils/watch_state_notifier.dart';
 import '../utils/library_content_notifier.dart';
@@ -85,6 +86,12 @@ DiscoverRefreshOutcome _refreshOutcome({
 /// The id of the home screen's recommendation row.
 const recommendationsHubId = 'plesy:recommendations';
 
+/// The id of the home screen's "what friends are watching" row (Plebz).
+const friendsHubId = 'plebz:friends';
+
+/// How many titles the friends row shows.
+const friendsRowLimit = 20;
+
 class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin {
   /// Preview row caps at 20; one extra item is fetched as a probe so
   /// [hasMoreContinueWatching] can show the "more" affordance without a
@@ -106,6 +113,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     WatchStateStore? watchStateStore,
     RecommendationsService? recommendations,
     BrandRowsService? brandRows,
+    FriendsActivity? friends,
     DateTime Function()? now,
     bool Function()? isRefreshBlocked,
     this.libraryEventDebounce = const Duration(seconds: 3),
@@ -118,6 +126,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
   }) : _watchStateStore = watchStateStore,
        _recommendationsService = recommendations,
        _brandRowsServiceOverride = brandRows,
+       _friends = friends ?? FriendsActivity.instance,
        _now = now ?? DateTime.now,
        _isRefreshBlocked = isRefreshBlocked ?? _neverBlocked,
        _syncSystemShelfOverride = syncSystemShelf,
@@ -160,6 +169,10 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     // Their place is read in [hubs]; moving them needs no request.
     _brandRowsPositionSetting = settings?.listenable(PlebzPrefs.brandRowsPosition);
     _brandRowsPositionSetting?.addListener(safeNotifyListeners);
+    // What friends watched: its own switch, and the feed as it arrives.
+    _friendsSetting = settings?.listenable(PlebzPrefs.showFriendsActivity);
+    _friendsSetting?.addListener(_onFriendsChanged);
+    _friends.addListener(_onFriendsChanged);
     _hiddenLibraries.addListener(_onHiddenLibrariesChanged);
     _lastSeenLibraryOrderKeys = _libraryOrderKeys();
     _libraries.addListener(_onLibrariesChanged);
@@ -307,6 +320,37 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
   String? _brandRowsReadFor;
   int _brandRowsGeneration = 0;
   final BrandRowsService? _brandRowsServiceOverride;
+
+  /// What the Plex account's friends watched (Plebz), as a row.
+  final FriendsActivity _friends;
+  Listenable? _friendsSetting;
+  MediaHub? _friendsRow;
+  List<FriendTitle>? _friendsRowFrom;
+
+  void _onFriendsChanged() {
+    if (isDisposed) return;
+    unawaited(_friends.ensureFeed());
+    safeNotifyListeners();
+  }
+
+  /// The row, rebuilt only when the feed's titles change — a fresh hub on
+  /// every read would have the rail start over.
+  MediaHub? get _friendsHub {
+    final titles = _friends.titles;
+    if (identical(titles, _friendsRowFrom)) return _friendsRow;
+    _friendsRowFrom = titles;
+    final shown = titles.take(friendsRowLimit).toList();
+    return _friendsRow = shown.isEmpty
+        ? null
+        : MediaHub(
+            id: friendsHubId,
+            title: t.friends.rowTitle,
+            type: 'mixed',
+            items: [for (final title in shown) title.toMediaItem()],
+            size: shown.length,
+          );
+  }
+
   late final BrandRowsService _brandRowsService =
       _brandRowsServiceOverride ?? BrandRowsService(_multiServer.serverManager);
   List<Listenable> _brandRowSettings = const [];
@@ -368,9 +412,9 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
   /// heading over an empty strip says only that something went wrong.
   List<MediaHub> get hubs {
     final all = switch (SettingsService.instanceOrNull?.read(PlebzPrefs.brandRowsPosition)) {
-      BrandRowsPosition.top => [..._brandRows, ?_recommendations, ..._hubs],
-      BrandRowsPosition.bottom => [?_recommendations, ..._hubs, ..._brandRows],
-      _ => [?_recommendations, ..._brandRows, ..._hubs],
+      BrandRowsPosition.top => [..._brandRows, ?_recommendations, ?_friendsHub, ..._hubs],
+      BrandRowsPosition.bottom => [?_recommendations, ?_friendsHub, ..._hubs, ..._brandRows],
+      _ => [?_recommendations, ?_friendsHub, ..._brandRows, ..._hubs],
     };
     final settings = SettingsService.instanceOrNull;
     if (settings == null) return all;
@@ -653,6 +697,7 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
       // slow server must not hold back the rows the viewer came for.
       unawaited(_loadRecommendations());
       unawaited(_loadBrandRows());
+      unawaited(_friends.ensureFeed());
       _loadedHubServerIds = _authoritativeSucceededServerIds(
         fetchedHubs.succeededServerIds,
         fetchedHubs.failedServerIds,
@@ -1474,6 +1519,8 @@ class DiscoverProvider extends ChangeNotifier with DisposableChangeNotifierMixin
       setting.removeListener(_onBrandRowSettingsChanged);
     }
     _brandRowsPositionSetting?.removeListener(safeNotifyListeners);
+    _friendsSetting?.removeListener(_onFriendsChanged);
+    _friends.removeListener(_onFriendsChanged);
     _loadCoordinator.dispose();
     _pendingSystemShelfItems = null;
     super.dispose();

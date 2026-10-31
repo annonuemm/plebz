@@ -20,6 +20,8 @@ import '../models/catalog/catalog_item.dart';
 import '../navigation/main_screen_scope.dart';
 import '../providers/catalog_sources_provider.dart';
 import '../providers/explore_provider.dart';
+import '../services/friends/friends_activity.dart';
+import 'friends_activity_screen.dart';
 import '../services/catalog/catalog_source.dart';
 import '../services/catalog/plex_catalog_source.dart';
 import '../services/catalog/seerr_catalog_source.dart';
@@ -127,6 +129,9 @@ class ExploreScreenState extends State<ExploreScreen>
         const AppMenuDivider<String>(),
       ],
       AppMenuItem<String>(value: 'trailerStage', icon: Symbols.theaters_rounded, label: t.trailerStage.title),
+      // What the Plex friends watched (Plebz), where a Plex account has them.
+      if (FriendsActivity.instance.isEnabled)
+        AppMenuItem<String>(value: 'friends', icon: Symbols.group_rounded, label: t.friends.pageTitle),
       AppMenuItem<String>(value: 'search', icon: Symbols.search_rounded, label: t.common.search),
       AppMenuItem<String>(value: 'refresh', icon: Symbols.refresh_rounded, label: t.common.refresh),
     ];
@@ -148,6 +153,10 @@ class ExploreScreenState extends State<ExploreScreen>
     }
     if (chosen == 'trailerStage') {
       _openTrailerStage();
+      return;
+    }
+    if (chosen == 'friends') {
+      _openFriends();
       return;
     }
     final id = sources.connectedSources.firstWhereOrNull((s) => 'source:${s.id.name}' == chosen)?.id;
@@ -192,6 +201,12 @@ class ExploreScreenState extends State<ExploreScreen>
     _sources = context.read<CatalogSourcesProvider>();
     _activeSourceId = _sources.activeSource?.id;
     _sources.addListener(_onActiveSourceChanged);
+    FriendsActivity.instance.addListener(_onFriendsChanged);
+  }
+
+  /// The friends' door comes and goes with the Plex account and its switch.
+  void _onFriendsChanged() {
+    if (mounted) setState(() {});
   }
 
   /// A live query belongs to the source it was typed against, so a source
@@ -236,6 +251,7 @@ class ExploreScreenState extends State<ExploreScreen>
   @override
   void dispose() {
     _sources.removeListener(_onActiveSourceChanged);
+    FriendsActivity.instance.removeListener(_onFriendsChanged);
     _brandSpotlightTimer?.cancel();
     _spotlight.dispose();
     super.dispose();
@@ -763,6 +779,33 @@ class ExploreScreenState extends State<ExploreScreen>
                   ),
                 ),
               ),
+              // Named too, for the same reason (Plebz): somewhere else to go.
+              if (FriendsActivity.instance.isEnabled)
+                FocusableAction(
+                  debugLabel: 'ExploreFriends',
+                  onPressed: _openFriends,
+                  tooltip: t.friends.pageTitle,
+                  child: InkWell(
+                    onTap: _openFriends,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      child: Row(
+                        mainAxisSize: .min,
+                        children: [
+                          AppIcon(Symbols.group_rounded, fill: 1, size: 22, color: foregroundColor),
+                          const SizedBox(width: 8),
+                          Text(
+                            t.friends.pageTitle,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleMedium?.copyWith(color: foregroundColor, fontWeight: .w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               FocusableAction(
                 icon: Symbols.refresh_rounded,
                 iconColor: foregroundColor,
@@ -774,6 +817,11 @@ class ExploreScreenState extends State<ExploreScreen>
         ],
       ),
     );
+  }
+
+  /// Open what the Plex friends watched (Plebz).
+  void _openFriends() {
+    unawaited(Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const FriendsActivityScreen())));
   }
 
   /// Open the trailer stage.

@@ -73,6 +73,7 @@ class LibrariesScreen extends StatefulWidget {
 class _LibrariesScreenState extends State<LibrariesScreen>
     with
         Refreshable,
+        WatchStateRefreshable,
         ManualRefreshable,
         FullRefreshable,
         FocusableTab,
@@ -665,6 +666,17 @@ class _LibrariesScreenState extends State<LibrariesScreen>
       return;
     }
     _refreshSelectedLibraryTabs();
+  }
+
+  /// The selected library's tabs fetch the new watch state in place (Plebz):
+  /// [refresh] would start a grid scrolled deep over at the top.
+  @override
+  void refreshWatchState() {
+    if (_selectedLibraryGlobalKey == null) return;
+    for (var i = 0; i < _visibleTabs.length; i++) {
+      final Object? tabState = _getTabState(i);
+      if (tabState is BaseLibraryTabState) tabState.refreshWatchState();
+    }
   }
 
   /// Returning to the Libraries tab consumes push-marked staleness (#1646)

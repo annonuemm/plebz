@@ -16,6 +16,7 @@ void main() {
       'iptv|a|7|1761592500',
     );
     expect(HomeLink.tryParse('plebz://reminder'), isNull, reason: 'no reminder named');
+    expect(HomeLink.tryParse('plebz://profiles'), isA<PlebzProfilesLink>());
   });
 
   test('anything else is left to its own handler, or to nobody', () {

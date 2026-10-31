@@ -16,6 +16,7 @@ import '../system_shelf_service.dart';
 /// plebz://play?server=<serverId>&id=<itemId>[&mode=next|shuffle]
 /// plebz://play?type=movie|show&tmdb=<n>|tvdb=<n>|imdb=tt<n>|plex=<hash>[&mode=next|shuffle]
 /// plebz://play?content_id=plezy_<serverId>_<itemId>      (launcher shelf rows)
+///   any play link may add start=beginning: from the start, not where it was left
 /// plebz://live?channel=<channel>[&server=<serverId>][&start=beginning|live]
 /// plebz://external-player/<result>/<session>?...           (external player return links)
 /// ```
@@ -89,7 +90,7 @@ enum PlayMode {
 
 /// `plebz://play`: play one title.
 final class PlayLink extends DeepLink {
-  const PlayLink({required this.target, this.mode = PlayMode.next, super.profile});
+  const PlayLink({required this.target, this.mode = PlayMode.next, this.fromStart = false, super.profile});
 
   static const host = 'play';
 
@@ -97,6 +98,10 @@ final class PlayLink extends DeepLink {
 
   /// Used when the target is a show or season; movies and episodes ignore it.
   final PlayMode mode;
+
+  /// `start=beginning`: from the start rather than where it was left (a
+  /// launcher's "Von vorn").
+  final bool fromStart;
 
   static PlayLink? _parse(Map<String, String> params, String? profile) {
     final mode = switch (_param(params, 'mode')?.toLowerCase()) {
@@ -107,12 +112,17 @@ final class PlayLink extends DeepLink {
     if (mode == null) return null;
     final target = PlayTarget._parse(params);
     if (target == null) return null;
-    return PlayLink(target: target, mode: mode, profile: profile);
+    final fromStart = _param(params, 'start')?.toLowerCase() == 'beginning';
+    return PlayLink(target: target, mode: mode, fromStart: fromStart, profile: profile);
   }
 
   @override
-  Uri toUri() =>
-      DeepLink._uri(host, {...target._params, if (mode != PlayMode.next) 'mode': mode.name, ..._profileParam});
+  Uri toUri() => DeepLink._uri(host, {
+    ...target._params,
+    if (mode != PlayMode.next) 'mode': mode.name,
+    if (fromStart) 'start': 'beginning',
+    ..._profileParam,
+  });
 }
 
 /// What a [PlayLink] names.
@@ -315,6 +325,7 @@ final class HomeTileLink extends DeepLink {
     PlebzSportLink() => DeepLink._uri('sport', _profileParam),
     PlebzLiveNowLink(:final entryId) => DeepLink._uri('now', {'id': entryId, ..._profileParam}),
     PlebzReminderLink(:final key) => DeepLink._uri('reminder', {'key': key, ..._profileParam}),
+    PlebzProfilesLink() => DeepLink._uri('profiles', _profileParam),
   };
 }
 

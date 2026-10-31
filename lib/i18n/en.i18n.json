@@ -553,6 +553,8 @@
     "recommendationsSourceEmby": "Emby only",
     "showBrandRows": "Streaming service rows",
     "showBrandRowsDescription": "Netflix, Prime and more, with titles from your servers",
+    "showFriendsActivity": "What friends are watching",
+    "showFriendsActivityDescription": "Shows what your Plex friends have watched",
     "brandRowsPick": "Choose services",
     "brandRowsPosition": "Place on the home screen",
     "brandRowsPositionTop": "At the top",
@@ -3037,6 +3039,19 @@
     "unsavedTitle": "Save changes?",
     "unsavedMessage": "Some details you changed are not saved yet.",
     "discardChanges": "Discard"
+  },
+  "friends": {
+    "rowTitle": "What friends are watching",
+    "pageTitle": "Friends",
+    "watchedBy": "Watched by",
+    "all": "All",
+    "today": "today",
+    "yesterday": "yesterday",
+    "sectionToday": "Today",
+    "sectionWeek": "This week",
+    "sectionEarlier": "Earlier",
+    "empty": "Your friends haven't shared anything yet.",
+    "more": "+$count"
   },
   "trailerStage": {
     "title": "Trailer stage",

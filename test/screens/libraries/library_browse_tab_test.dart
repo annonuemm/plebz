@@ -39,6 +39,7 @@ import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/screens/libraries/alpha_scroll_handle.dart';
 import 'package:plezy/screens/libraries/sort_bottom_sheet.dart';
 import 'package:plezy/screens/libraries/state_messages.dart';
+import 'package:plezy/screens/libraries/tabs/base_library_tab.dart';
 import 'package:plezy/screens/libraries/tabs/library_browse_tab.dart';
 import 'package:plezy/services/jellyfin_mappers.dart';
 import 'package:plezy/services/multi_server_manager.dart';
@@ -686,6 +687,49 @@ void main() {
       });
     }
   });
+
+  // A tracker-led profile's tracker reports news every few minutes (Plebz).
+  // The plain refresh started the grid over at the top and dropped the
+  // focus; the watch-state refresh fetches in place.
+  testWidgets('news from the tracker leaves a grid scrolled deep where it is', (tester) async {
+    await SettingsService.instance.write(SettingsService.tvFullCardLayout, true);
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+    final harness = _PlexBrowseHarness(itemCount: 3000);
+    addTearDown(harness.dispose);
+    await pumpLibraryTab(
+      tester,
+      provider: harness.provider,
+      size: const Size(1920, 1080),
+      tab: LibraryBrowseTab(library: harness.library, canGroupByFolders: true, isActive: true),
+    );
+    await _pumpUntil(tester, () => harness.pageRequestCount >= 1);
+    await pumpRequestFrames(tester);
+    await _enterKeyboardMode(tester);
+    for (var i = 0; i < 40; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+    // The scroll at rest, and past the cooldown the first load credited.
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(seconds: 1));
+    }
+    await tester.pump(const Duration(minutes: 2));
+    final grid = tester.stateList<ScrollableState>(find.byType(Scrollable)).last.position;
+    final offset = grid.pixels;
+    final focused = FocusManager.instance.primaryFocus;
+    expect(offset, greaterThan(5000), reason: 'deep in the grid');
+    expect(focused?.debugLabel, startsWith('browse_grid_item_'));
+
+    final requestsBefore = harness.pageRequestCount;
+    tester.state<BaseLibraryTabState>(find.byType(LibraryBrowseTab)).refreshWatchState();
+    await tester.pump(const Duration(seconds: 4));
+    await pumpRequestFrames(tester);
+
+    expect(harness.pageRequestCount, greaterThan(requestsBefore), reason: 'the new watch state fetched');
+    expect(grid.pixels, offset);
+    expect(FocusManager.instance.primaryFocus, same(focused));
+  });
 }
 
 FocusableMediaCard _cardFor(WidgetTester tester, String title) =>
@@ -824,7 +868,7 @@ class _BrowseHarness {
 /// A Plex movie library large enough for the alpha bar strategy to show the
 /// phone scroll handle (≥ 80 items, ≥ 6 first-character buckets).
 class _PlexBrowseHarness {
-  static const _itemCount = 100;
+  final int itemCount;
   static final _serverId = ServerId('plex-server');
 
   final AppDatabase database;
@@ -837,7 +881,7 @@ class _PlexBrowseHarness {
   var filterMetadataRequestCount = 0;
   final filterMetadataRequests = <Uri>[];
 
-  _PlexBrowseHarness() : database = AppDatabase.forTesting(NativeDatabase.memory()) {
+  _PlexBrowseHarness({this.itemCount = 100}) : database = AppDatabase.forTesting(NativeDatabase.memory()) {
     PlexApiCache.initialize(database);
     library = MediaLibrary(
       id: 'movies',
@@ -875,7 +919,7 @@ class _PlexBrowseHarness {
             jsonEncode({
               'MediaContainer': {
                 'size': 0,
-                'totalSize': _itemCount,
+                'totalSize': itemCount,
                 'Meta': {
                   'Type': [
                     {
@@ -921,11 +965,11 @@ class _PlexBrowseHarness {
         }
         pageRequestCount++;
         final start = int.tryParse(request.url.queryParameters['X-Plex-Container-Start'] ?? '') ?? 0;
-        final requested = int.tryParse(request.url.queryParameters['X-Plex-Container-Size'] ?? '') ?? _itemCount;
-        final end = (start + requested).clamp(0, _itemCount);
+        final requested = int.tryParse(request.url.queryParameters['X-Plex-Container-Size'] ?? '') ?? itemCount;
+        final end = (start + requested).clamp(0, itemCount);
         container = {
           'size': end - start,
-          'totalSize': _itemCount,
+          'totalSize': itemCount,
           'offset': start,
           'Metadata': [
             for (var i = start; i < end; i++) {'ratingKey': 'movie-$i', 'type': 'movie', 'title': 'Movie $i'},
@@ -936,7 +980,7 @@ class _PlexBrowseHarness {
         container = {
           'Directory': [
             for (final letter in const ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'])
-              {'key': letter, 'title': letter, 'size': '${_itemCount ~/ 8}'},
+              {'key': letter, 'title': letter, 'size': '${itemCount ~/ 8}'},
           ],
         };
       case '/library/sections/movies/folder':

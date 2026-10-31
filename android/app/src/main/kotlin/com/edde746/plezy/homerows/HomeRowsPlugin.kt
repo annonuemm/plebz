@@ -1,6 +1,10 @@
 package com.edde746.plezy.homerows
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -14,12 +18,20 @@ import java.util.concurrent.Executors
  * Takes the home rows from Dart (Plebz, `HomeRows`) and keeps them for [HomeRowsProvider]:
  * `publish` replaces the snapshot and its artwork sources, `clear` empties both. Each change is
  * announced on [HomeRowsProvider.ROWS_URI], so a launcher watching it refreshes at once.
+ *
+ * While the engine runs it also takes a launcher's call for fresh rows ([ACTION_REFRESH], sent
+ * only by apps holding the rows' signature permission) and passes it to Dart as `refresh`. The
+ * receiver is registered here, not in the manifest, so the call never starts the app.
  */
 class HomeRowsPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
   private companion object {
     const val TAG = "HomeRowsPlugin"
     const val CHANNEL = "app.plebz/home_rows"
+    const val ACTION_REFRESH = "app.plebz.homerows.REFRESH"
+    const val PERMISSION = "app.plebz.permission.HOME_ROWS"
   }
+
+  private var requests: BroadcastReceiver? = null
 
   private var channel: MethodChannel? = null
   private var context: Context? = null
@@ -30,9 +42,27 @@ class HomeRowsPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
     context = binding.applicationContext
     executor = Executors.newSingleThreadExecutor()
     channel = MethodChannel(binding.binaryMessenger, CHANNEL).also { it.setMethodCallHandler(this) }
+    val receiver = object : BroadcastReceiver() {
+      override fun onReceive(context: Context, intent: Intent) {
+        channel?.invokeMethod("refresh", null)
+      }
+    }
+    try {
+      val filter = IntentFilter(ACTION_REFRESH)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        binding.applicationContext.registerReceiver(receiver, filter, PERMISSION, main, Context.RECEIVER_EXPORTED)
+      } else {
+        binding.applicationContext.registerReceiver(receiver, filter, PERMISSION, main)
+      }
+      requests = receiver
+    } catch (e: Exception) {
+      Log.w(TAG, "Launcher refresh calls unavailable", e)
+    }
   }
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+    requests?.let { runCatching { binding.applicationContext.unregisterReceiver(it) } }
+    requests = null
     channel?.setMethodCallHandler(null)
     channel = null
     executor?.shutdown()

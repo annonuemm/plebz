@@ -622,11 +622,14 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       _onPendingLiveNow();
       final multiServer = context.read<MultiServerProvider?>();
       if (multiServer != null) {
-        _homeRowsFeed = HomeRowsFeed(
-          discover: _discover,
-          multiServer: multiServer,
-          catalog: context.read<CatalogSourcesProvider?>(),
-        )..takeTheme(context);
+        _homeRowsFeed =
+            HomeRowsFeed(
+                discover: _discover,
+                multiServer: multiServer,
+                catalog: context.read<CatalogSourcesProvider?>(),
+              )
+              ..takeTheme(context)
+              ..takeProfile(context);
       }
     });
   }

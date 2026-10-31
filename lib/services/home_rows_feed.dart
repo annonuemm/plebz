@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../i18n/strings.g.dart';
 import '../media/ids.dart';
@@ -13,6 +14,7 @@ import '../media/media_backend.dart';
 import '../media/media_server_client.dart';
 import '../media/ultra_blur_colors.dart';
 import '../models/catalog/catalog_item.dart';
+import '../profiles/active_profile_provider.dart';
 import '../providers/catalog_sources_provider.dart';
 import '../providers/discover_provider.dart';
 import '../providers/multi_server_provider.dart';
@@ -48,12 +50,17 @@ class HomeRowsFeed {
        sport = sport ?? SportRepository.instance {
     discover.addListener(_onDiscoverChanged);
     _onDiscoverChanged();
+    this.rows.listenForRequests();
+    _requests = this.rows.refreshRequests.listen((_) => refreshOnRequest());
     // The screensaver builds its scenes from the same rows.
     AmbientFeed.instance.start();
     AmbientInApp.instance.start();
   }
 
   static const Duration watchlistInterval = Duration(minutes: 15);
+
+  /// How often a launcher's call for fresh rows is answered at most.
+  static const Duration requestInterval = Duration(minutes: 2);
   static const int watchlistLimit = 20;
 
   /// Titles per library row, as many as the watchlist sends.
@@ -72,10 +79,50 @@ class HomeRowsFeed {
   DateTime? _watchlistAt;
   bool _watchlistLoading = false;
   bool _disposed = false;
+  StreamSubscription<void>? _requests;
+  DateTime? _requestedAt;
 
   void dispose() {
     _disposed = true;
+    _requests?.cancel();
+    _profiles?.removeListener(_onProfiles);
     discover.removeListener(_onDiscoverChanged);
+  }
+
+  /// A launcher came to the front and asked for fresh rows: Continue
+  /// Watching, the recommendations if due, the watchlist and the matchdays —
+  /// at most every [requestInterval], each through its own cache.
+  void refreshOnRequest() {
+    if (_disposed) return;
+    final now = DateTime.now();
+    final at = _requestedAt;
+    if (at != null && now.difference(at) < requestInterval) return;
+    _requestedAt = now;
+    unawaited(discover.refreshContinueWatching());
+    discover.refreshRecommendationsIfStale();
+    unawaited(refreshWatchlist());
+    unawaited(refreshSport());
+  }
+
+  ActiveProfileProvider? _profiles;
+
+  /// Whose rows they are, for the launcher to name, and whether there are
+  /// other profiles to switch to — kept up as the active profile changes.
+  void takeProfile(BuildContext context) {
+    final profiles = context.read<ActiveProfileProvider?>();
+    if (identical(profiles, _profiles)) return;
+    _profiles?.removeListener(_onProfiles);
+    _profiles = profiles?..addListener(_onProfiles);
+    _onProfiles();
+  }
+
+  void _onProfiles() {
+    if (_disposed) return;
+    final profiles = _profiles;
+    final active = profiles?.active;
+    rows.setProfile(
+      active == null ? null : HomeRowsProfile(name: active.displayName, switchable: profiles!.hasMultipleProfiles),
+    );
   }
 
   /// The app's look, for the launcher to match.
@@ -193,11 +240,11 @@ class HomeRowsFeed {
       });
     }
 
-    // Brand rows (Plebz) are not the libraries' own shelves; a launcher is
-    // offered those alone.
+    // Brand rows and the friends row (Plebz) are not the libraries' own
+    // shelves; a launcher is offered those alone.
     final shelves = [
       for (final hub in discover.hubs)
-        if (hub.id != recommendationsHubId && !isBrandRowHub(hub)) hub,
+        if (hub.id != recommendationsHubId && hub.id != friendsHubId && !isBrandRowHub(hub)) hub,
     ];
     final seenShelves = _seenShelves;
     if (seenShelves == null ||

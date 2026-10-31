@@ -826,7 +826,7 @@ class _MainScreenState extends State<MainScreen>
     _primeContentTabs();
     if (_trackerRevisionBeforePrime) {
       _trackerRevisionBeforePrime = false;
-      _refreshContentAfterStaleResume();
+      _refreshContentAfterTrackerChange();
     }
   }
 
@@ -1009,6 +1009,8 @@ class _MainScreenState extends State<MainScreen>
         _selectTab(NavigationTabId.watchlist);
       case PlebzSportLink():
         _selectTab(NavigationTabId.sport);
+      case PlebzProfilesLink():
+        unawaited(Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ProfileSwitchScreen())));
       case PlebzLiveNowLink(:final entryId):
         _selectTab(NavigationTabId.discover);
         pendingLiveNowEntry.value = entryId;
@@ -1303,7 +1305,25 @@ class _MainScreenState extends State<MainScreen>
       _trackerRevisionBeforePrime = true;
       return;
     }
-    _refreshContentAfterStaleResume();
+    _refreshContentAfterTrackerChange();
+  }
+
+  /// The content tabs take what the tracker reported (Plebz). The libraries
+  /// refetch in place: [Refreshable.refresh] would start a grid scrolled deep
+  /// over at the top, every time the tracker had news.
+  void _refreshContentAfterTrackerChange() {
+    if (_isOffline || !_startupServicesPrimed || !mounted) return;
+    if (VideoPlayerScreenState.activeGlobalKey != null) return;
+    if (!context.read<MultiServerProvider>().hasConnectedServers) return;
+    appLogger.d('Refreshing content tabs after a tracker change');
+    for (final tab in _contentTabs) {
+      switch (_screenKeys[tab]?.currentState) {
+        case final WatchStateRefreshable screen:
+          screen.refreshWatchState();
+        case final Refreshable screen:
+          screen.refresh();
+      }
+    }
   }
 
   /// Refetch the content tabs after the app resumes from a long backgrounding.

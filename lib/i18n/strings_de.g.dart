@@ -96,6 +96,7 @@ class TranslationsDe extends Translations with BaseTranslations<AppLocale, Trans
 	@override late final _Translations$addServer$de addServer = _Translations$addServer$de._(_root);
 	@override late final _Translations$deepLinks$de deepLinks = _Translations$deepLinks$de._(_root);
 	@override late final _Translations$iptv$de iptv = _Translations$iptv$de._(_root);
+	@override late final _Translations$friends$de friends = _Translations$friends$de._(_root);
 	@override late final _Translations$trailerStage$de trailerStage = _Translations$trailerStage$de._(_root);
 	@override late final _Translations$actor$de actor = _Translations$actor$de._(_root);
 	@override late final _Translations$sport$de sport = _Translations$sport$de._(_root);
@@ -619,6 +620,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get recommendationsSourceEmby => 'Nur Emby';
 	@override String get showBrandRows => 'Anbieter-Reihen';
 	@override String get showBrandRowsDescription => 'Netflix, Prime und andere mit Titeln von deinen Servern';
+	@override String get showFriendsActivity => 'Was Freunde schauen';
+	@override String get showFriendsActivityDescription => 'Zeigt, was deine Plex-Freunde gesehen haben';
 	@override String get brandRowsPick => 'Anbieter auswählen';
 	@override String get brandRowsPosition => 'Platz auf der Startseite';
 	@override String get brandRowsPositionTop => 'Ganz oben';
@@ -2860,6 +2863,26 @@ class _Translations$iptv$de extends Translations$iptv$en {
 	@override String get discardChanges => 'Verwerfen';
 }
 
+// Path: friends
+class _Translations$friends$de extends Translations$friends$en {
+	_Translations$friends$de._(TranslationsDe root) : this._root = root, super.internal(root);
+
+	final TranslationsDe _root; // ignore: unused_field
+
+	// Translations
+	@override String get rowTitle => 'Was Freunde schauen';
+	@override String get pageTitle => 'Freunde';
+	@override String get watchedBy => 'Geschaut';
+	@override String get all => 'Alle';
+	@override String get today => 'heute';
+	@override String get yesterday => 'gestern';
+	@override String get sectionToday => 'Heute';
+	@override String get sectionWeek => 'Diese Woche';
+	@override String get sectionEarlier => 'Früher';
+	@override String get empty => 'Deine Freunde haben noch nichts geteilt.';
+	@override String more({required Object count}) => '+${count}';
+}
+
 // Path: trailerStage
 class _Translations$trailerStage$de extends Translations$trailerStage$en {
 	_Translations$trailerStage$de._(TranslationsDe root) : this._root = root, super.internal(root);
@@ -4766,6 +4789,8 @@ extension on TranslationsDe {
 			'settings.recommendationsSourceEmby' => 'Nur Emby',
 			'settings.showBrandRows' => 'Anbieter-Reihen',
 			'settings.showBrandRowsDescription' => 'Netflix, Prime und andere mit Titeln von deinen Servern',
+			'settings.showFriendsActivity' => 'Was Freunde schauen',
+			'settings.showFriendsActivityDescription' => 'Zeigt, was deine Plex-Freunde gesehen haben',
 			'settings.brandRowsPick' => 'Anbieter auswählen',
 			'settings.brandRowsPosition' => 'Platz auf der Startseite',
 			'settings.brandRowsPositionTop' => 'Ganz oben',
@@ -4782,10 +4807,10 @@ extension on TranslationsDe {
 			'settings.appThemeVariantGlas' => 'Redesign – Glas',
 			'settings.appThemeVariantGlasDescription' => 'Schwebende Navigation, am Fernseher neu angeordnet',
 			'settings.appThemeVariantFlach' => 'Redesign – Flach',
-			'settings.appThemeVariantFlachDescription' => 'Wie Glas, aber flach, mit weißem Fokus',
-			'settings.flachAccent' => 'Akzentfarbe',
 			_ => null,
 		} ?? switch (path) {
+			'settings.appThemeVariantFlachDescription' => 'Wie Glas, aber flach, mit weißem Fokus',
+			'settings.flachAccent' => 'Akzentfarbe',
 			'settings.flachAccentDescription' => 'Für Fortschritt, gewählte Seite und Filter',
 			'settings.flachPreset' => 'Farbprofil',
 			'settings.flachPresetCustom' => 'Eigene',
@@ -5296,10 +5321,10 @@ extension on TranslationsDe {
 			'videoControls.pipErrors.unknown' => ({required Object error}) => 'Ein Fehler ist aufgetreten: ${error}',
 			'videoControls.chapters' => 'Kapitel',
 			'videoControls.noChaptersAvailable' => 'Keine Kapitel verfügbar',
-			'videoControls.queue' => 'Warteschlange',
-			'videoControls.noQueueItems' => 'Keine Elemente in der Warteschlange',
 			_ => null,
 		} ?? switch (path) {
+			'videoControls.queue' => 'Warteschlange',
+			'videoControls.noQueueItems' => 'Keine Elemente in der Warteschlange',
 			'videoControls.noAudioDevicesAvailable' => 'Keine Audiogeräte verfügbar',
 			'videoControls.searchSubtitles' => 'Untertitel suchen',
 			'videoControls.language' => 'Sprache',
@@ -5810,10 +5835,10 @@ extension on TranslationsDe {
 			'explore.rows.trendingAnime' => 'Angesagte Anime',
 			'explore.rows.suggestedAnime' => 'Empfohlene Anime',
 			'explore.rows.airingAnime' => 'Beste derzeit laufende Anime',
-			'explore.rows.popularAnime' => 'Beliebteste Anime',
-			'explore.rows.trending' => 'Angesagt',
 			_ => null,
 		} ?? switch (path) {
+			'explore.rows.popularAnime' => 'Beliebteste Anime',
+			'explore.rows.trending' => 'Angesagt',
 			'explore.rows.upcomingMovies' => 'Kommende Filme',
 			'explore.rows.upcomingShows' => 'Kommende Serien',
 			'explore.rows.genres' => 'Genres',
@@ -6324,10 +6349,10 @@ extension on TranslationsDe {
 			'downloads.noDownloads' => 'Noch keine Downloads',
 			'downloads.noDownloadsDescription' => 'Heruntergeladene Inhalte werden hier für die Offline-Wiedergabe angezeigt',
 			'downloads.downloadNow' => 'Herunterladen',
-			'downloads.deleteDownload' => 'Download löschen',
-			'downloads.retryDownload' => 'Download wiederholen',
 			_ => null,
 		} ?? switch (path) {
+			'downloads.deleteDownload' => 'Download löschen',
+			'downloads.retryDownload' => 'Download wiederholen',
 			'downloads.downloadQueued' => 'Download in Warteschlange',
 			'downloads.downloadResumed' => 'Download fortgesetzt',
 			'downloads.serverErrorBitrate' => 'Serverfehler: Datei überschreitet möglicherweise das Remote-Bitrate-Limit',
@@ -6838,10 +6863,10 @@ extension on TranslationsDe {
 			'services.pendingAuth.copyUrl' => 'Anmelde-URL kopieren',
 			'services.pendingAuth.urlCopied' => 'URL kopiert',
 			'services.libraryFilter.title' => 'Mediatheksfilter',
-			'services.libraryFilter.subtitleAllSyncing' => 'Alle Mediatheken werden synchronisiert',
-			'services.libraryFilter.subtitleNoneSyncing' => 'Nichts wird synchronisiert',
 			_ => null,
 		} ?? switch (path) {
+			'services.libraryFilter.subtitleAllSyncing' => 'Alle Mediatheken werden synchronisiert',
+			'services.libraryFilter.subtitleNoneSyncing' => 'Nichts wird synchronisiert',
 			'services.libraryFilter.subtitleBlocked' => ({required Object count}) => '${count} ausgeschlossen',
 			'services.libraryFilter.subtitleAllowed' => ({required Object count}) => '${count} zugelassen',
 			'services.libraryFilter.mode' => 'Filtermodus',
@@ -7011,6 +7036,17 @@ extension on TranslationsDe {
 			'iptv.unsavedTitle' => 'Änderungen speichern?',
 			'iptv.unsavedMessage' => 'Du hast Angaben geändert, die noch nicht gespeichert sind.',
 			'iptv.discardChanges' => 'Verwerfen',
+			'friends.rowTitle' => 'Was Freunde schauen',
+			'friends.pageTitle' => 'Freunde',
+			'friends.watchedBy' => 'Geschaut',
+			'friends.all' => 'Alle',
+			'friends.today' => 'heute',
+			'friends.yesterday' => 'gestern',
+			'friends.sectionToday' => 'Heute',
+			'friends.sectionWeek' => 'Diese Woche',
+			'friends.sectionEarlier' => 'Früher',
+			'friends.empty' => 'Deine Freunde haben noch nichts geteilt.',
+			'friends.more' => ({required Object count}) => '+${count}',
 			'trailerStage.title' => 'Trailerbühne',
 			'trailerStage.mood' => 'Worauf hast du heute Lust?',
 			'trailerStage.kind' => 'Art',

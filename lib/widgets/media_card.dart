@@ -44,6 +44,7 @@ import '../i18n/strings.g.dart';
 import 'media_context_menu.dart';
 import 'media_card_list_layout.dart';
 import 'backend_badge.dart';
+import 'friend_watch_badge.dart';
 import 'optimized_media_image.dart';
 
 const _failedPosterUrlCacheLimit = 512;
@@ -668,6 +669,8 @@ class MediaCardState extends State<MediaCard> with ContextMenuTapMixin<MediaCard
     final overlays = <Widget>[
       if (item is MediaItem && _showsWatchedIndicator(item)) WatchedIndicator(item: item),
       ...catalogPosterOverlays(_catalogItem, badgeLabels: badgeLabels),
+      // The friend who watched it, on the friends row and page (Plebz).
+      if (item is MediaItem) ?FriendWatchBadge.forItem(item),
     ];
     // Plebz: under Liquid Glass the focused picture wears a glass rim, laid
     // under the overlays so only the picture bends.

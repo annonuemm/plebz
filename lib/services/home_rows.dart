@@ -68,7 +68,10 @@ class HomeRows extends ChangeNotifier {
 
   final Map<String, ({String title, List<HomeRowTile> tiles, String? subtitle, bool selected, int order})> _rows = {};
   HomeRowsTheme? _theme;
+  HomeRowsProfile? _profile;
   Timer? _timer;
+  final StreamController<void> _requests = StreamController<void>.broadcast();
+  bool _listening = false;
 
   /// What the last write held, without its time ([buildPayload]'s content).
   String? _lastSnapshot;
@@ -129,6 +132,27 @@ class HomeRows extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Whose rows these are, for a launcher to name.
+  void setProfile(HomeRowsProfile? profile) {
+    if (!_supported || profile == _profile) return;
+    _profile = profile;
+    _schedule();
+  }
+
+  /// A launcher asking for fresh rows (when it comes to the front): it calls
+  /// in while the app runs, and never starts the app for it.
+  Stream<void> get refreshRequests => _requests.stream;
+
+  /// Starts taking the launcher's requests from the Android side.
+  void listenForRequests() {
+    if (!_supported || _listening) return;
+    _listening = true;
+    channel.setMethodCallHandler((call) async {
+      if (call.method == 'refresh') _requests.add(null);
+      return null;
+    });
+  }
+
   /// Empties the snapshot — on a change of profile, before the next one's rows.
   Future<void> clear() async {
     if (!_supported) return;
@@ -183,6 +207,7 @@ class HomeRows extends ChangeNotifier {
     final ids = _orderedIds();
     final body = <String, dynamic>{
       'theme': ?_theme?.toJson(),
+      'profile': ?_profile?.toJson(),
       'rows': [
         for (final id in ids)
           {
@@ -217,8 +242,27 @@ class HomeRows extends ChangeNotifier {
     _timer = null;
     _rows.clear();
     _theme = null;
+    _profile = null;
     _lastSnapshot = null;
   }
+}
+
+/// The profile the rows belong to: its name, and whether the app has others
+/// to switch to (`plebz://profiles` opens the choice).
+@immutable
+class HomeRowsProfile {
+  const HomeRowsProfile({required this.name, this.switchable = false});
+
+  final String name;
+  final bool switchable;
+
+  Map<String, dynamic> toJson() => {'name': name, if (switchable) 'switchable': true};
+
+  @override
+  bool operator ==(Object other) => other is HomeRowsProfile && other.name == name && other.switchable == switchable;
+
+  @override
+  int get hashCode => Object.hash(name, switchable);
 }
 
 /// The app's look, for a launcher to take on.
@@ -272,9 +316,12 @@ enum HomeRowImageShape { poster, landscape, logo }
 /// A team on a game's tile.
 @immutable
 class HomeRowTeam {
-  const HomeRowTeam({required this.name, this.image, this.colour});
+  const HomeRowTeam({required this.name, this.shortName, this.image, this.colour});
 
   final String name;
+
+  /// The name the club goes by in a narrow space ("Frankfurt").
+  final String? shortName;
 
   /// The crest's address; the snapshot names it by key.
   final String? image;
@@ -284,6 +331,7 @@ class HomeRowTeam {
 
   Map<String, dynamic> toJson(String? Function(String? address) art) => {
     'name': name,
+    if (shortName != null && shortName != name) 'short': shortName,
     'image': ?art(image),
     if (colour != null) 'colour': _hex(colour!),
   };
@@ -314,6 +362,12 @@ class HomeRowTile {
     this.colours,
     this.ambientImage,
     this.addedAt,
+    this.league,
+    this.logo,
+    this.durationMs,
+    this.offsetMs,
+    this.play,
+    this.details,
   });
 
   final String id;
@@ -359,6 +413,25 @@ class HomeRowTile {
   final String? ambientImage;
   final DateTime? addedAt;
 
+  /// A game's league ("1. Bundesliga"), so a launcher can write the game's
+  /// state beside it from the kickoff as time goes by.
+  final String? league;
+
+  /// The title's logo (Plex's clear logo), for the spotlight in place of its
+  /// name.
+  final String? logo;
+
+  /// How long it runs and how far it has been watched, in milliseconds: the
+  /// spotlight works out what is left and when it would end.
+  final int? durationMs;
+  final int? offsetMs;
+
+  /// The links a launcher's remote keys and tile menu use: playing it (on
+  /// from where it was left; add `start=beginning` for the start), and its
+  /// page.
+  final String? play;
+  final String? details;
+
   Map<String, dynamic> toJson(String? Function(String? address) art) => {
     'id': id,
     'kind': kind,
@@ -378,7 +451,13 @@ class HomeRowTile {
     if (facts.isNotEmpty) 'facts': facts,
     'badge': ?badge,
     if (colours case final c?) 'colours': [_hex(c.topLeft), _hex(c.topRight), _hex(c.bottomRight), _hex(c.bottomLeft)],
+    'league': ?league,
+    'logo': ?art(logo),
+    'durationMs': ?durationMs,
+    'offsetMs': ?offsetMs,
     'open': open,
+    'play': ?play,
+    'details': ?details,
   };
 }
 
@@ -402,8 +481,8 @@ HomeRowTile homeRowTileForMatch(SportMatch match, {required DateTime now}) {
     imageShape: HomeRowImageShape.logo,
     startsAt: match.kickoff,
     live: live,
-    home: HomeRowTeam(name: match.home.name, image: match.home.iconUrl, colour: clubColourFor(match.home)),
-    away: HomeRowTeam(name: match.away.name, image: match.away.iconUrl, colour: clubColourFor(match.away)),
+    home: _team(match.home),
+    away: _team(match.away),
     score: score == null ? null : '${score.home}:${score.away}',
     open: 'plebz://sport',
   );
@@ -471,9 +550,12 @@ HomeRowTile? homeRowTileForItem(
 }) {
   final serverId = item.serverId;
   final String open;
+  String? play, details;
   if (serverId != null && client != null) {
     final contentId = Uri.encodeQueryComponent(homeRowsContentId(serverId, item.id));
-    open = resume && !openDetails ? 'plebz://play?content_id=$contentId' : 'plebz://open?content_id=$contentId';
+    play = 'plebz://play?content_id=$contentId';
+    details = 'plebz://open?content_id=$contentId';
+    open = resume && !openDetails ? play : details;
   } else if (!resume) {
     // A watchlist title no server has: the watchlist itself is the way to it.
     open = 'plebz://watchlist';
@@ -515,14 +597,35 @@ HomeRowTile? homeRowTileForItem(
     progress: resume && duration > 0 && offset > 0 ? (offset / duration).clamp(0.0, 1.0) : null,
     open: open,
     backdrop: backdrop,
-    summary: resume && !spoiler && (item.summary?.trim().isNotEmpty ?? false) ? item.summary!.trim() : null,
+    summary: spoiler ? null : _summaryOf(item, whole: resume),
     facts: resume ? _spotlightFacts(item) : const [],
     badge: resume && item.contentRating != null ? formatContentRating(item.contentRating!) : null,
     colours: colours,
     ambientImage: _address(ambientPath, client, width: 1920, height: 1080),
     addedAt: addedAt == null ? null : DateTime.fromMillisecondsSinceEpoch(addedAt * 1000),
+    logo: resume ? _address(item.clearLogoPath, client, width: 800, height: 310) : null,
+    durationMs: resume && duration > 0 ? duration : null,
+    offsetMs: resume && duration > 0 && offset > 0 ? offset : null,
+    play: play,
+    details: details,
   );
 }
+
+/// The title's description: whole for the spotlight over Continue Watching,
+/// else its first sentences up to [_shortSummary] characters, for the line a
+/// launcher writes over the row with the cursor.
+String? _summaryOf(MediaItem item, {required bool whole}) {
+  final text = item.summary?.replaceAll(RegExp(r'\s+'), ' ').trim();
+  if (text == null || text.isEmpty) return null;
+  if (whole || text.length <= _shortSummary) return text;
+  final cut = text.substring(0, _shortSummary);
+  final sentence = cut.lastIndexOf(RegExp(r'[.!?] '));
+  if (sentence > 60) return cut.substring(0, sentence + 1);
+  final word = cut.lastIndexOf(' ');
+  return '${cut.substring(0, word > 0 ? word : cut.length)}…';
+}
+
+const _shortSummary = 240;
 
 /// The start page spotlight's facts, in its order: which episode, when, what
 /// kind, how long, which cut, how it scored. The age rating goes apart, as
@@ -563,10 +666,11 @@ HomeRowTile homeRowTileForLiveNow(
         imageShape: HomeRowImageShape.logo,
         startsAt: match.kickoff,
         live: live,
-        home: HomeRowTeam(name: match.home.name, image: match.home.iconUrl, colour: clubColourFor(match.home)),
-        away: HomeRowTeam(name: match.away.name, image: match.away.iconUrl, colour: clubColourFor(match.away)),
+        home: _team(match.home),
+        away: _team(match.away),
         score: score == null ? null : '${score.home}:${score.away}',
         open: open,
+        league: liveNowLeagueName(league),
       );
     case LiveNowChannel(:final channel, :final program):
       final begins = program?.beginsAt;
@@ -589,6 +693,9 @@ HomeRowTile homeRowTileForLiveNow(
       );
   }
 }
+
+HomeRowTeam _team(SportTeam team) =>
+    HomeRowTeam(name: team.name, shortName: team.shortName, image: team.iconUrl, colour: clubColourFor(team));
 
 String? _episodeLine(MediaItem item) {
   final season = item.parentIndex;

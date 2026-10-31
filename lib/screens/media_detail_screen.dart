@@ -16,6 +16,8 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:collection/collection.dart';
 import '../media/server_capabilities.dart';
+import '../services/friends/friends_activity.dart';
+import '../widgets/friends_watched.dart';
 import '../widgets/collapsible_text.dart';
 import '../widgets/library_copy_tile.dart';
 import '../widgets/settings_section.dart';
@@ -3749,6 +3751,22 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                                 SizedBox(height: isTv ? 28 : 8),
                               ],
 
+                              // Which friends watched it (Plebz): a row like the info
+                              // rows below, only once there is someone to name.
+                              FriendsWatchedBuilder(
+                                titleKey: metadata.globalKey,
+                                resolveId: () => FriendsActivity.instance.discoverIdOf(
+                                  metadata,
+                                  client: _getMediaClientForMetadata(context),
+                                ),
+                                builder: (context, watches) => watches.isEmpty
+                                    ? const SizedBox.shrink()
+                                    : Padding(
+                                        padding: const EdgeInsets.only(bottom: 12),
+                                        child: _buildFriendsInfoRow(watches),
+                                      ),
+                              ),
+
                               // Additional info — wrapped in Focus so DPAD DOWN from the
                               // last focusable section lands here and scrolls it into view.
                               if (_hasInfoRows)
@@ -4605,7 +4623,30 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       quality: twoRows ? false : null,
       includeBitrate: !_tvDetailOneFactsRow(context, titleAreaExpanded: titleAreaExpanded),
     );
-    if (parts.isEmpty && !twoRows) return const SizedBox.shrink();
+    // The friends who watched it close the first row (Plebz): no line of
+    // its own, so the header's height budget stays as it is. The facts give
+    // way to it — a name is worth more than the bitrate. Until there is a
+    // name the row is exactly what it was.
+    Widget withFriends(Widget row) => FriendsWatchedBuilder(
+      titleKey: metadata.globalKey,
+      resolveId: () => FriendsActivity.instance.discoverIdOf(metadata, client: _getMediaClientForMetadata(context)),
+      builder: (context, watches) => watches.isEmpty
+          ? row
+          : Row(
+              mainAxisSize: .min,
+              children: [
+                Flexible(child: row),
+                SizedBox(width: 16 * scale),
+                Flexible(
+                  child: FriendsWatchedSummary(
+                    watches: watches,
+                    style: textStyle.copyWith(fontWeight: FontWeight.w600, letterSpacing: 0),
+                  ),
+                ),
+              ],
+            ),
+    );
+    if (parts.isEmpty && !twoRows) return withFriends(const SizedBox.shrink());
 
     // Each fact in its own box: on a full-screen title area the row is read
     // at a distance, and a box separates more clearly than a bullet between
@@ -4620,7 +4661,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       ratingSpacing: 4 * scale,
       ratingEntrySpacing: 12 * scale,
     );
-    if (!twoRows) return line(parts);
+    if (!twoRows) return withFriends(line(parts));
 
     final metrics = TvDetailHeaderMetrics(
       availableHeight: 0,
@@ -4636,7 +4677,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       children: [
         SizedBox(
           height: metrics.metadataLineHeight,
-          child: Align(alignment: .centerLeft, child: line(parts)),
+          child: Align(alignment: .centerLeft, child: withFriends(line(parts))),
         ),
         SizedBox(height: metrics.metadataRowGap),
         SizedBox(
@@ -5457,6 +5498,29 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           );
         },
       ),
+    );
+  }
+
+  /// "Geschaut" with the friends' pictures and names, set like [_buildInfoRow].
+  Widget _buildFriendsInfoRow(List<FriendWatch> watches) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: .center,
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(
+            t.friends.watchedBy,
+            style: TextStyle(fontWeight: .w600, color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ),
+        Expanded(
+          child: Align(
+            alignment: .centerLeft,
+            child: FriendsWatchedSummary(watches: watches, style: theme.textTheme.bodyLarge ?? const TextStyle()),
+          ),
+        ),
+      ],
     );
   }
 

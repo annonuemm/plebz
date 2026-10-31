@@ -82,6 +82,16 @@ Future<void> _launchPlayLink(BuildContext context, PlayLink link, {required bool
         PlayLinkFailureReason.notFound => t.deepLinks.notFound,
         PlayLinkFailureReason.unsupportedItem => t.deepLinks.unsupportedItem,
       });
+    case PlayLinkItem(:final item, :final offline) when link.fromStart:
+      // From the start, as the title's menu does it.
+      unawaited(
+        navigateToVideoPlayer(
+          context,
+          metadata: item.copyWith(viewOffsetMs: 0),
+          isOffline: offline,
+          resolveWatchState: false,
+        ),
+      );
     case PlayLinkItem(:final item, :final offline):
       // Completes when the player closes. An open player is replaced.
       unawaited(navigateToVideoPlayer(context, metadata: item, isOffline: offline));

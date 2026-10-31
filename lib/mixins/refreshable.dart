@@ -2,6 +2,13 @@ mixin Refreshable {
   void refresh();
 }
 
+/// The watch state under the items changed: a tracker-led profile's tracker
+/// reported news (Plebz). Screens whose [Refreshable.refresh] would start the
+/// viewer over at the top refetch in place instead.
+mixin WatchStateRefreshable {
+  void refreshWatchState();
+}
+
 /// User-initiated refresh — the desktop Cmd+R / Ctrl+R chord, bound to the same
 /// action as the screen's toolbar refresh button. Distinct from [Refreshable],
 /// which is a conditional stale-resume refresh, and [FullRefreshable], which is

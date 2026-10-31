@@ -111,6 +111,10 @@ abstract class BaseLibraryTabState<T, W extends BaseLibraryTab<T>> extends State
   /// and the next activation retries.
   int? _inFlightLibraryContentEpoch;
 
+  /// The watch state changed under the items since the last committed load
+  /// (Plebz, [refreshWatchState]).
+  bool _watchStateStale = false;
+
   // Focus management
   bool _hasLoadedData = false;
   @protected
@@ -287,6 +291,7 @@ abstract class BaseLibraryTabState<T, W extends BaseLibraryTab<T>> extends State
   void recordLibraryContentEpoch(int epoch) {
     _loadedLibraryContentEpoch = epoch;
     _inFlightLibraryContentEpoch = null;
+    _watchStateStale = false;
     // A committed load is as good as a live pass: defer a push event landing
     // moments later to the cooldown's trailing edge.
     _livePacer.notePass();
@@ -311,6 +316,7 @@ abstract class BaseLibraryTabState<T, W extends BaseLibraryTab<T>> extends State
   /// Whether a server push marked this library's content since the last
   /// committed load, and no load started since is already fetching it.
   bool get _isLibraryContentStale {
+    if (_watchStateStale && _inFlightLibraryContentEpoch == null) return true;
     final epoch = _providerLibraryContentEpoch();
     return epoch != null && epoch != _loadedLibraryContentEpoch && epoch != _inFlightLibraryContentEpoch;
   }
@@ -323,6 +329,15 @@ abstract class BaseLibraryTabState<T, W extends BaseLibraryTab<T>> extends State
   void refreshIfLibraryContentStale() {
     if (!mounted || !_isLibraryContentStale) return;
     loadItems();
+  }
+
+  /// A tracker-led profile's tracker reported news (Plebz): the same paced
+  /// in-place pass a server push gets, so the grid keeps its place and focus.
+  /// A hidden tab takes it when it is shown again.
+  void refreshWatchState() {
+    if (!mounted) return;
+    _watchStateStale = true;
+    if (_isLiveSurfaceVisible) _livePacer.schedule();
   }
 
   /// Pacing for push-driven live refreshes, mirroring [DiscoverProvider]:

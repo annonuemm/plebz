@@ -553,6 +553,8 @@
     "recommendationsSourceEmby": "Nur Emby",
     "showBrandRows": "Anbieter-Reihen",
     "showBrandRowsDescription": "Netflix, Prime und andere mit Titeln von deinen Servern",
+    "showFriendsActivity": "Was Freunde schauen",
+    "showFriendsActivityDescription": "Zeigt, was deine Plex-Freunde gesehen haben",
     "brandRowsPick": "Anbieter auswählen",
     "brandRowsPosition": "Platz auf der Startseite",
     "brandRowsPositionTop": "Ganz oben",
@@ -3037,6 +3039,19 @@
     "unsavedTitle": "Änderungen speichern?",
     "unsavedMessage": "Du hast Angaben geändert, die noch nicht gespeichert sind.",
     "discardChanges": "Verwerfen"
+  },
+  "friends": {
+    "rowTitle": "Was Freunde schauen",
+    "pageTitle": "Freunde",
+    "watchedBy": "Geschaut",
+    "all": "Alle",
+    "today": "heute",
+    "yesterday": "gestern",
+    "sectionToday": "Heute",
+    "sectionWeek": "Diese Woche",
+    "sectionEarlier": "Früher",
+    "empty": "Deine Freunde haben noch nichts geteilt.",
+    "more": "+$count"
   },
   "trailerStage": {
     "title": "Trailerbühne",

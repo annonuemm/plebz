@@ -24,6 +24,8 @@ import '../utils/country_codes.dart';
 import '../utils/formatters.dart';
 import '../utils/layout_constants.dart';
 import '../utils/media_image_helper.dart';
+import '../services/friends/friends_activity.dart';
+import '../widgets/friends_watched.dart';
 import '../widgets/app_icon.dart';
 import '../widgets/detail_home_button.dart';
 import '../widgets/library_copy_tile.dart';
@@ -321,16 +323,34 @@ class CatalogItemStageState extends State<CatalogItemStage> {
   /// the stage.
   Widget? _factSheet() {
     final facts = _facts();
-    if (facts.isEmpty) return null;
+    // The friends who watched it close the card (Plebz) — and make one where
+    // the title has no other facts to give.
+    final discoverId = widget.item.ids.plex;
+    final asksFriends = discoverId != null && discoverId.isNotEmpty && FriendsActivity.instance.isEnabled;
+    if (facts.isEmpty && !asksFriends) return null;
     final tk = tokens(context);
     final type = OckerType.of(context);
     final scale = ockerScale(context);
-    return OckerFactCard(
+    final valueStyle = type.spotlightFacts.copyWith(fontSize: 19 * scale, color: tk.ink(0.9), height: 1.25);
+    Widget card(List<FriendWatch> watches) => OckerFactCard(
       facts: [for (final fact in facts) (label: type.headingCase(fact.label), value: fact.value)],
+      widgetFacts: [
+        if (watches.isNotEmpty)
+          (
+            label: type.headingCase(t.friends.watchedBy),
+            value: FriendsWatchedSummary(watches: watches, style: valueStyle, avatarSize: 26 * scale),
+          ),
+      ],
       labelWidth: 170 * scale,
       labelStyle: type.counter.copyWith(fontSize: 15 * scale, color: tk.ink(0.55), height: 1.25),
-      valueStyle: type.spotlightFacts.copyWith(fontSize: 19 * scale, color: tk.ink(0.9), height: 1.25),
+      valueStyle: valueStyle,
       rowGap: 9 * scale,
+    );
+    if (!asksFriends) return card(const []);
+    return FriendsWatchedBuilder(
+      titleKey: discoverId,
+      resolveId: () async => discoverId,
+      builder: (context, watches) => facts.isEmpty && watches.isEmpty ? const SizedBox.shrink() : card(watches),
     );
   }
 

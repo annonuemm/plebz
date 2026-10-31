@@ -28,6 +28,14 @@ void main() {
       final link = DeepLink.tryParse('plebz://play?content_id=plezy_abc123_42') as PlayLink;
       expect(link.target, ItemPlayTarget(serverId: ServerId('abc123'), itemId: '42'));
       expect(link.mode, PlayMode.next);
+      expect(link.fromStart, isFalse);
+    });
+
+    test('start=beginning plays from the start, and is written back', () {
+      final link = DeepLink.tryParse('plebz://play?content_id=plezy_abc123_42&start=beginning') as PlayLink;
+      expect(link.fromStart, isTrue);
+      expect((DeepLink.tryParse(link.toUri().toString()) as PlayLink).fromStart, isTrue);
+      expect((DeepLink.tryParse('plebz://play?server=a&id=1&start=live') as PlayLink).fromStart, isFalse);
     });
 
     test('reads a catalogue title and normalizes its ids', () {

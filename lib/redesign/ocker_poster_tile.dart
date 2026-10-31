@@ -17,6 +17,7 @@ import '../theme/mono_tokens.dart';
 import '../utils/formatters.dart' show formatSeasonEpisodeLabel;
 import '../utils/media_image_helper.dart';
 import '../utils/poster_caption.dart';
+import '../widgets/friend_watch_badge.dart';
 import '../widgets/media_card.dart' show catalogPosterOverlays;
 import '../widgets/media_context_menu.dart';
 import '../widgets/optimized_media_image.dart';
@@ -418,6 +419,8 @@ class OckerPosterTileState extends State<OckerPosterTile> {
           // on — these went missing here for as long as this tile had
           // its own idea of what a poster carries.
           if (widget.content == null) ...catalogPosterOverlays(widget.item.catalogItem),
+          // The friend who watched it, on the friends row and page (Plebz).
+          if (widget.content == null) ?FriendWatchBadge.forItem(widget.item),
         ],
       ),
     );

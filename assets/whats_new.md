@@ -13,6 +13,18 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.37.0 (Build 895)
+
+### Freunde
+- Neu: Du siehst, was deine Plex-Freunde schauen. Auf der Startseite gibt es dafür die Reihe „Was Freunde schauen“, und auf jedem Poster steht, wer den Titel wann gesehen hat.
+- Auf der Detailseite eines Films oder einer Serie steht unter „Geschaut“, welche deiner Freunde ihn schon kennen.
+- Unter Erkunden → Freunde findest du alles auf einen Blick, auf Wunsch auch nur von einem bestimmten Freund.
+- Du siehst nur, was deine Freunde in Plex für dich freigegeben haben. Abschalten kannst du alles unter Einstellungen → Darstellung → Startseite → „Was Freunde schauen“.
+- Dafür brauchst du ein eigenes Plex-Konto. Profile mit „Fortschritt über Simkl“ auf einem geteilten Konto zeigen keine Freunde.
+
+### Simkl
+- Bei Profilen mit „Fortschritt über Simkl“ springt die Mediathek nicht mehr alle paar Minuten nach ganz oben. Was du gesehen hast, wird jetzt im Hintergrund nachgetragen, und du bleibst, wo du warst.
+
 ## 1.36.0 (Build 890)
 
 ### Startseite

@@ -9,6 +9,7 @@ import '../../providers/catalog_sources_provider.dart';
 import '../../providers/discover_provider.dart';
 import '../../providers/seerr_account_provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../services/friends/friends_activity.dart';
 import '../../services/recommendations_service.dart';
 import '../../services/settings_service.dart' hide ThemeMode;
 import '../../theme/mono_theme.dart' show isRedesignVariant, redesignOfferedHere, supportedAppThemeVariant;
@@ -434,6 +435,20 @@ class AppearanceSettingsScreen extends StatelessWidget {
                       subtitle: t.settings.resetRecommendationsDescription,
                       trailingIcon: Symbols.restart_alt_rounded,
                       onTap: () => _resetRecommendations(context),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            // What the Plex friends watched (Plebz): the row, the line on a
+            // detail page and the page under Explore. Only where a Plex
+            // account has friends to show.
+            ListenableBuilder(
+              listenable: FriendsActivity.instance,
+              builder: (context, _) => FriendsActivity.instance.isAvailable
+                  ? SettingSwitchTile(
+                      pref: PlebzPrefs.showFriendsActivity,
+                      icon: Symbols.group_rounded,
+                      title: t.settings.showFriendsActivity,
+                      subtitle: t.settings.showFriendsActivityDescription,
                     )
                   : const SizedBox.shrink(),
             ),

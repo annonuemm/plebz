@@ -100,6 +100,31 @@ void main() {
       });
     });
 
+    test('the profile goes along, and says whether there are others', () {
+      final home = rows()
+        ..publish(HomeRows.continueRow, 'Weiterschauen', [tile('a')])
+        ..setProfile(const HomeRowsProfile(name: 'Anna', switchable: true));
+      final snapshot = jsonDecode(home.buildPayload().snapshot) as Map;
+      expect(snapshot['profile'], {'name': 'Anna', 'switchable': true});
+      home.setProfile(const HomeRowsProfile(name: 'Anna'));
+      expect((jsonDecode(home.buildPayload().snapshot) as Map)['profile'], {'name': 'Anna'});
+    });
+
+    test("a launcher's call for fresh rows arrives as a request", () async {
+      final home = rows()..listenForRequests();
+      final requests = <void>[];
+      final subscription = home.refreshRequests.listen(requests.add);
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
+        channel.name,
+        const StandardMethodCodec().encodeMethodCall(const MethodCall('refresh')),
+        (_) {},
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(requests, hasLength(1));
+      await subscription.cancel();
+      channel.setMethodCallHandler(null);
+    });
+
     test('the theme carries the ink when the app gives it', () {
       final home = rows()
         ..setTheme(
@@ -210,6 +235,38 @@ void main() {
       expect(json['summary'], 'Mark leads a team.');
     });
 
+    test('Continue Watching carries its logo, run time and the links for the remote', () {
+      final item = testMediaItem(
+        id: '42',
+        kind: MediaKind.episode,
+        title: 'Pilot',
+        grandparentTitle: 'Severance',
+        serverId: 'srv',
+        clearLogoPath: '/library/metadata/1/clearLogo',
+        durationMs: 2460000,
+        viewOffsetMs: 600000,
+      );
+      final tile = homeRowTileForItem(item, client: _Client(), resume: true, openDetails: true)!;
+      expect(tile.durationMs, 2460000);
+      expect(tile.offsetMs, 600000);
+      expect(tile.play, 'plebz://play?content_id=plezy_srv_42');
+      expect(tile.details, 'plebz://open?content_id=plezy_srv_42');
+
+      final home = rows()..publish(HomeRows.continueRow, 'Weiterschauen', [tile]);
+      final payload = home.buildPayload();
+      final json = (jsonDecode(payload.snapshot)['rows'] as List).single['items'].single as Map;
+      expect(json['logo'], startsWith('content://app.plebz.homerows/art/'), reason: 'the address keeps its token here');
+      expect(payload.sources.values, contains(contains('/library/metadata/1/clearLogo')));
+      expect(json['durationMs'], 2460000);
+      expect(json['offsetMs'], 600000);
+      expect(json['play'], 'plebz://play?content_id=plezy_srv_42');
+
+      final poster = homeRowTileForItem(item, client: _Client())!;
+      expect(poster.logo, isNull, reason: 'only the spotlight shows a logo');
+      expect(poster.durationMs, isNull);
+      expect(poster.play, 'plebz://play?content_id=plezy_srv_42');
+    });
+
     test('an unwatched episode keeps its story to itself when spoilers are hidden', () {
       final item = testMediaItem(
         id: '43',
@@ -231,14 +288,22 @@ void main() {
       expect(tile.image, contains('/library/metadata/1/art'), reason: 'the still would show the scene');
     });
 
-    test('a poster tile carries no spotlight', () {
+    test('a poster tile carries no spotlight, only its description for the line over its row', () {
       final tile = homeRowTileForItem(
         testMediaItem(id: '7', title: 'Dune', serverId: 'srv', thumbPath: '/t', summary: 'Sand.'),
         client: _Client(),
       )!;
       expect(tile.backdrop, isNull);
-      expect(tile.summary, isNull);
+      expect(tile.summary, 'Sand.');
       expect(tile.facts, isEmpty);
+
+      final long = 'Paul Atreides reist mit seiner Familie nach Arrakis. ${'Der Wüstenplanet birgt Gefahren. ' * 12}';
+      final short = homeRowTileForItem(
+        testMediaItem(id: '8', title: 'Dune', serverId: 'srv', thumbPath: '/t', summary: long),
+        client: _Client(),
+      )!.summary!;
+      expect(short.length, lessThanOrEqualTo(240));
+      expect(short, endsWith('.'), reason: 'cut after a whole sentence');
     });
 
     test('a recommendation opens its page; a watchlist title no server has opens the watchlist', () {
@@ -300,6 +365,10 @@ void main() {
       expect(tile.home!.image, 'https://crests.example/fcb.png');
       expect(tile.live, isTrue);
       expect(tile.open, 'plebz://now?id=${Uri.encodeQueryComponent(entry.id)}');
+      final json = tile.toJson((address) => address);
+      expect(json['league'], isNotEmpty, reason: 'the launcher writes the state beside the league itself');
+      expect((json['home'] as Map)['short'], 'Bayern');
+      expect((json['away'] as Map)['short'], 'Dortmund');
     });
 
     test("a game carries the clubs' colours for the tile's ground", () {

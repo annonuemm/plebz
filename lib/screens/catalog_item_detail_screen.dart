@@ -51,6 +51,8 @@ import '../utils/media_navigation_helper.dart';
 import '../utils/platform_detector.dart';
 import '../utils/rating_utils.dart';
 import '../utils/snackbar_helper.dart';
+import '../services/friends/friends_activity.dart';
+import '../widgets/friends_watched.dart';
 import '../widgets/app_bar_back_button.dart';
 import 'catalog_item_stage.dart';
 import 'catalog_person_screen.dart';
@@ -1257,6 +1259,28 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
     );
   }
 
+  /// "Geschaut" with the friends' pictures and names, set like [_buildFactRow].
+  Widget _buildFriendsRow(ThemeData theme, List<FriendWatch> watches) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 140,
+          child: Text(
+            t.friends.watchedBy,
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.65)),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Align(
+            alignment: .centerLeft,
+            child: FriendsWatchedSummary(watches: watches, style: theme.textTheme.bodyMedium ?? const TextStyle()),
+          ),
+        ),
+      ],
+    );
+  }
+
   /// Gap between definition-grid columns, and between relation tiles.
   static const double _factColumnSpacing = 24;
   static const double _relationTileSpacing = 12;
@@ -1978,6 +2002,18 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
                                   return Padding(padding: const EdgeInsets.only(top: 24), child: facts);
                                 },
                               ),
+                              // Which friends watched it (Plebz), as a row of the facts.
+                              if (_item.ids.plex case final discoverId? when discoverId.isNotEmpty)
+                                FriendsWatchedBuilder(
+                                  titleKey: discoverId,
+                                  resolveId: () async => discoverId,
+                                  builder: (context, watches) => watches.isEmpty
+                                      ? const SizedBox.shrink()
+                                      : Padding(
+                                          padding: const EdgeInsets.only(top: 16),
+                                          child: _buildFriendsRow(theme, watches),
+                                        ),
+                                ),
                               if (_buildRecommendersSection(theme) case final Widget recommenders) ...[
                                 const SizedBox(height: 24),
                                 recommenders,

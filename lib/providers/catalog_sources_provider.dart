@@ -40,6 +40,7 @@ import 'seerr_account_provider.dart';
 import 'trackers_provider.dart';
 import '../utils/platform_detector.dart';
 import '../utils/app_logger.dart';
+import '../services/friends/friends_activity.dart';
 
 typedef PlexDiscoverSessionSupplier = Future<PlexDiscoverSession?> Function();
 
@@ -76,6 +77,8 @@ class _CatalogSourceBinding<Client extends Object, Source extends CatalogSource>
   Client? _client;
   Source? source;
 
+  Client? get client => _client;
+
   bool update(Client? next) {
     if (_equals(_client, next)) return false;
     final replacement = next == null ? null : _create(next);
@@ -102,6 +105,7 @@ class _CatalogSourceBinding<Client extends Object, Source extends CatalogSource>
 class CatalogSourcesProvider extends ChangeNotifier with DisposableChangeNotifierMixin {
   CatalogSourcesProvider({this.plexSessionSupplier}) {
     _profileProgressChoice?.addListener(_onProfileProgressChoice);
+    addListener(_bindFriends);
   }
 
   // A profile that keeps its progress in Simkl keeps its watchlist there too
@@ -452,9 +456,18 @@ class CatalogSourcesProvider extends ChangeNotifier with DisposableChangeNotifie
     }
   }
 
+  /// What friends watched follows the Plex account (Plebz): its session, and
+  /// a profile that keeps its own progress on a shared account has none of
+  /// the account's friends.
+  void _bindFriends() {
+    if (isDisposed) return;
+    FriendsActivity.instance.bind(session: _plex.client, source: _plex.source, setAside: plexWatchlistSetAside);
+  }
+
   @override
   void dispose() {
     _profileProgressChoice?.removeListener(_onProfileProgressChoice);
+    if (identical(FriendsActivity.instance.boundSource, _plex.source)) FriendsActivity.instance.bind();
     _plex.dispose();
     _trakt.dispose();
     _mal.dispose();

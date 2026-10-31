@@ -294,6 +294,11 @@ abstract final class PlebzPrefs {
   /// home screen to add unasked.
   static const showBrandRows = BoolPref('show_brand_rows', defaultValue: false);
 
+  /// What the Plex account's friends watched: the home row, the line on a
+  /// detail page and the page under Explore (Plebz). On by default; only
+  /// offered where a Plex account has friends to show.
+  static const showFriendsActivity = BoolPref('show_friends_activity', defaultValue: true);
+
   /// Which services get a row and in which order, encoded by
   /// [BrandRowsLayout.encode]; empty is the standard arrangement.
   static const brandRowsLayout = StringPref('brand_rows_layout', defaultValue: '');
@@ -712,6 +717,7 @@ abstract final class PlebzPrefs {
     showLiveNowRow,
     recommendationsSource,
     showBrandRows,
+    showFriendsActivity,
     brandRowsLayout,
     brandRowsPosition,
     useSystemTvKeyboard,

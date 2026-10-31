@@ -20,9 +20,14 @@ class OckerFactCard extends StatelessWidget {
     required this.rowGap,
     this.valueMaxLines = 1,
     this.padding = EdgeInsets.zero,
+    this.widgetFacts = const [],
   });
 
   final List<({String label, String value})> facts;
+
+  /// Rows whose value is drawn rather than written — the friends who watched
+  /// a title, with their pictures (Plebz). Below [facts], set the same way.
+  final List<({String label, Widget value})> widgetFacts;
   final double labelWidth;
   final TextStyle labelStyle;
   final TextStyle valueStyle;
@@ -58,6 +63,21 @@ class OckerFactCard extends StatelessWidget {
                     ),
                     Expanded(
                       child: Text(facts[index].value, maxLines: valueMaxLines, overflow: .ellipsis, style: valueStyle),
+                    ),
+                  ],
+                ),
+              ),
+            for (var index = 0; index < widgetFacts.length; index++)
+              Padding(
+                padding: EdgeInsets.only(top: index == 0 && facts.isEmpty ? 0 : rowGap),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: labelWidth,
+                      child: Text(widgetFacts[index].label, maxLines: 1, overflow: .ellipsis, style: labelStyle),
+                    ),
+                    Expanded(
+                      child: Align(alignment: AlignmentDirectional.centerStart, child: widgetFacts[index].value),
                     ),
                   ],
                 ),

@@ -633,11 +633,9 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get appThemeVariantStandard => 'Original';
 	@override String get showLibraryPlaylistsTab => 'Reiter „Wiedergabelisten“';
 	@override String get showLibraryPlaylistsTabDescription => 'Wiedergabelisten bleiben trotzdem erreichbar';
-	@override String get showPlaybackTracksStatus => 'Ton und Untertitel';
-	@override String get showPlaybackTracksStatusDescription => 'Zeigt, welche Spuren beim Abspielen gewählt würden';
-	@override String get appThemeVariantGlas => 'Redesign – Glas';
-	@override String get appThemeVariantGlasDescription => 'Schwebende Navigation, am Fernseher neu angeordnet';
-	@override String get appThemeVariantFlach => 'Redesign – Flach';
+	@override String get appThemeVariantGlas => 'Glas';
+	@override String get appThemeVariantGlasDescription => 'Glasflächen und schwebende Navigation';
+	@override String get appThemeVariantFlach => 'Flach';
 	@override String get appThemeVariantFlachDescription => 'Wie Glas, aber flach, mit weißem Fokus';
 	@override String get flachAccent => 'Akzentfarbe';
 	@override String get flachAccentDescription => 'Für Fortschritt, gewählte Seite und Filter';
@@ -675,40 +673,22 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get glasAccentRotDescription => 'Schwarzer Grund, kräftiges Rot – wie Netflix';
 	@override String get glasAccentPlebz => 'Plebz';
 	@override String get glasAccentPlebzDescription => 'Fast schwarz, Violett, Abspielknopf im Logo-Verlauf';
-	@override String get glasSmoothFocus => 'Fließender Fokus';
-	@override String get glasSmoothFocusDescription => 'Gleitet weich, auch bei reduzierten Effekten';
 	@override String get glasUltraBlur => 'Hintergrund in Posterfarben';
 	@override String get glasUltraBlurDescription => 'Auf Startseite und Erkunden';
 	@override String get glasDetailPanel => 'Beschreibung neben den Postern';
 	@override String get glasDetailPanelDescription => 'Ohne passen mehr Poster in eine Reihe';
 	@override String get redesignSeasonTabs => 'Staffeln als Reiter';
 	@override String get redesignSeasonTabsDescription => 'Sonst hat jede Staffel ihre eigene Reihe';
-	@override String get glasSpinningFocus => 'Drehender Fokusrahmen';
-	@override String get glasSpinningFocusDescription => 'Kostet etwas Leistung';
 	@override String get glasLiquid => 'Liquid Glass';
 	@override String get glasLiquidDescription => 'Unscharfer Hintergrund wie bei Apple, kostet Leistung';
-	@override String get glasFakeGlass => 'Glaseffekt';
-	@override String get glasFakeGlassDescription => 'Navigation und Menüs als Glas, sonst flach';
 	@override String get glasRailSymbols => 'Symbolleiste immer zeigen';
 	@override String get glasRailSymbolsDescription => 'Die Navigation bleibt links sichtbar';
-	@override String get smoothScroll => 'Weiches Scrollen';
-	@override String get smoothScrollDescription => 'Reihen und Poster gleiten statt zu springen';
 	@override String get seasonalStartScreen => 'Startbildschirm zur Jahreszeit';
 	@override String get seasonalStartScreenDescription => 'Halloween vom 17. bis 31. Oktober, Weihnachten vom 1. bis 26. Dezember.';
 	@override String get homeTitleLogos => 'Logos auf Start und Erkunden';
 	@override String get homeTitleLogosDescription => 'Titel-Logos statt Text im großen Bild';
 	@override String get seerrCardEpisodeFacts => 'Folgenangaben auf Seerr-Kacheln';
 	@override String get seerrCardEpisodeFactsDescription => 'Folgenzahl und nächster Termin, je Serie eine Anfrage mehr';
-	@override String get showCatalogDetailFacts => 'Detailangaben';
-	@override String get showCatalogDetailFactsDescription => 'Originaltitel, Land, Studios und Budget auf Erkunden-Seiten';
-	@override String get showCatalogDetailCrew => 'Crew';
-	@override String get showCatalogDetailCrewDescription => 'Regie, Drehbuch und Produktion auf Erkunden-Seiten';
-	@override String get averageRatings => 'Bewertungen zusammenfassen';
-	@override String get averageRatingsDescription => 'Ein Durchschnitt statt einer Wertung pro Quelle';
-	@override String get showWatchTogetherAction => 'Knopf „Gemeinsam ansehen“';
-	@override String get showCompanionRemoteAction => 'Knopf „Fernbedienung“';
-	@override String get showServerActivitiesAction => 'Knopf „Serveraktivität“';
-	@override String get hideHomeActionsUntilFocus => 'Werkzeugleiste erst bei Fokus';
 	@override String get showDownloadAction => 'Download-Knopf';
 	@override String get showDownloadActionDescription => 'Auf Film- und Folgenseiten, sonst im ⋮-Menü';
 	@override String get hardwareTest => 'Hardware-Test';
@@ -778,7 +758,6 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get layoutModeTabletDescription => 'Touch-Oberfläche mit breitem Layout';
 	@override String get layoutModePhone => 'Telefon';
 	@override String get layoutModePhoneDescription => 'Kompakte Touch-Oberfläche mit unterer Navigation';
-	@override String get liveTvGuideTimeNavigation => 'Zeitauswahl im Programmführer';
 	@override String get liveTvGuideChannelNames => 'Sendernamen unter dem Logo';
 	@override String get liveTvSeamlessFullscreen => 'Vorschau nahtlos ins Vollbild';
 	@override String get liveTvSeamlessFullscreenDescription => 'Nur IPTV; schaltet Bildrate und Tunneling für Live-TV ab';
@@ -4802,15 +4781,13 @@ extension on TranslationsDe {
 			'settings.appThemeVariantStandard' => 'Original',
 			'settings.showLibraryPlaylistsTab' => 'Reiter „Wiedergabelisten“',
 			'settings.showLibraryPlaylistsTabDescription' => 'Wiedergabelisten bleiben trotzdem erreichbar',
-			'settings.showPlaybackTracksStatus' => 'Ton und Untertitel',
-			'settings.showPlaybackTracksStatusDescription' => 'Zeigt, welche Spuren beim Abspielen gewählt würden',
-			'settings.appThemeVariantGlas' => 'Redesign – Glas',
-			'settings.appThemeVariantGlasDescription' => 'Schwebende Navigation, am Fernseher neu angeordnet',
-			'settings.appThemeVariantFlach' => 'Redesign – Flach',
-			_ => null,
-		} ?? switch (path) {
+			'settings.appThemeVariantGlas' => 'Glas',
+			'settings.appThemeVariantGlasDescription' => 'Glasflächen und schwebende Navigation',
+			'settings.appThemeVariantFlach' => 'Flach',
 			'settings.appThemeVariantFlachDescription' => 'Wie Glas, aber flach, mit weißem Fokus',
 			'settings.flachAccent' => 'Akzentfarbe',
+			_ => null,
+		} ?? switch (path) {
 			'settings.flachAccentDescription' => 'Für Fortschritt, gewählte Seite und Filter',
 			'settings.flachPreset' => 'Farbprofil',
 			'settings.flachPresetCustom' => 'Eigene',
@@ -4846,40 +4823,22 @@ extension on TranslationsDe {
 			'settings.glasAccentRotDescription' => 'Schwarzer Grund, kräftiges Rot – wie Netflix',
 			'settings.glasAccentPlebz' => 'Plebz',
 			'settings.glasAccentPlebzDescription' => 'Fast schwarz, Violett, Abspielknopf im Logo-Verlauf',
-			'settings.glasSmoothFocus' => 'Fließender Fokus',
-			'settings.glasSmoothFocusDescription' => 'Gleitet weich, auch bei reduzierten Effekten',
 			'settings.glasUltraBlur' => 'Hintergrund in Posterfarben',
 			'settings.glasUltraBlurDescription' => 'Auf Startseite und Erkunden',
 			'settings.glasDetailPanel' => 'Beschreibung neben den Postern',
 			'settings.glasDetailPanelDescription' => 'Ohne passen mehr Poster in eine Reihe',
 			'settings.redesignSeasonTabs' => 'Staffeln als Reiter',
 			'settings.redesignSeasonTabsDescription' => 'Sonst hat jede Staffel ihre eigene Reihe',
-			'settings.glasSpinningFocus' => 'Drehender Fokusrahmen',
-			'settings.glasSpinningFocusDescription' => 'Kostet etwas Leistung',
 			'settings.glasLiquid' => 'Liquid Glass',
 			'settings.glasLiquidDescription' => 'Unscharfer Hintergrund wie bei Apple, kostet Leistung',
-			'settings.glasFakeGlass' => 'Glaseffekt',
-			'settings.glasFakeGlassDescription' => 'Navigation und Menüs als Glas, sonst flach',
 			'settings.glasRailSymbols' => 'Symbolleiste immer zeigen',
 			'settings.glasRailSymbolsDescription' => 'Die Navigation bleibt links sichtbar',
-			'settings.smoothScroll' => 'Weiches Scrollen',
-			'settings.smoothScrollDescription' => 'Reihen und Poster gleiten statt zu springen',
 			'settings.seasonalStartScreen' => 'Startbildschirm zur Jahreszeit',
 			'settings.seasonalStartScreenDescription' => 'Halloween vom 17. bis 31. Oktober, Weihnachten vom 1. bis 26. Dezember.',
 			'settings.homeTitleLogos' => 'Logos auf Start und Erkunden',
 			'settings.homeTitleLogosDescription' => 'Titel-Logos statt Text im großen Bild',
 			'settings.seerrCardEpisodeFacts' => 'Folgenangaben auf Seerr-Kacheln',
 			'settings.seerrCardEpisodeFactsDescription' => 'Folgenzahl und nächster Termin, je Serie eine Anfrage mehr',
-			'settings.showCatalogDetailFacts' => 'Detailangaben',
-			'settings.showCatalogDetailFactsDescription' => 'Originaltitel, Land, Studios und Budget auf Erkunden-Seiten',
-			'settings.showCatalogDetailCrew' => 'Crew',
-			'settings.showCatalogDetailCrewDescription' => 'Regie, Drehbuch und Produktion auf Erkunden-Seiten',
-			'settings.averageRatings' => 'Bewertungen zusammenfassen',
-			'settings.averageRatingsDescription' => 'Ein Durchschnitt statt einer Wertung pro Quelle',
-			'settings.showWatchTogetherAction' => 'Knopf „Gemeinsam ansehen“',
-			'settings.showCompanionRemoteAction' => 'Knopf „Fernbedienung“',
-			'settings.showServerActivitiesAction' => 'Knopf „Serveraktivität“',
-			'settings.hideHomeActionsUntilFocus' => 'Werkzeugleiste erst bei Fokus',
 			'settings.showDownloadAction' => 'Download-Knopf',
 			'settings.showDownloadActionDescription' => 'Auf Film- und Folgenseiten, sonst im ⋮-Menü',
 			'settings.hardwareTest' => 'Hardware-Test',
@@ -4974,7 +4933,6 @@ extension on TranslationsDe {
 			'settings.layoutModeTabletDescription' => 'Touch-Oberfläche mit breitem Layout',
 			'settings.layoutModePhone' => 'Telefon',
 			'settings.layoutModePhoneDescription' => 'Kompakte Touch-Oberfläche mit unterer Navigation',
-			'settings.liveTvGuideTimeNavigation' => 'Zeitauswahl im Programmführer',
 			'settings.liveTvGuideChannelNames' => 'Sendernamen unter dem Logo',
 			'settings.liveTvSeamlessFullscreen' => 'Vorschau nahtlos ins Vollbild',
 			'settings.liveTvSeamlessFullscreenDescription' => 'Nur IPTV; schaltet Bildrate und Tunneling für Live-TV ab',
@@ -5321,8 +5279,6 @@ extension on TranslationsDe {
 			'videoControls.pipErrors.unknown' => ({required Object error}) => 'Ein Fehler ist aufgetreten: ${error}',
 			'videoControls.chapters' => 'Kapitel',
 			'videoControls.noChaptersAvailable' => 'Keine Kapitel verfügbar',
-			_ => null,
-		} ?? switch (path) {
 			'videoControls.queue' => 'Warteschlange',
 			'videoControls.noQueueItems' => 'Keine Elemente in der Warteschlange',
 			'videoControls.noAudioDevicesAvailable' => 'Keine Audiogeräte verfügbar',
@@ -5344,6 +5300,8 @@ extension on TranslationsDe {
 			'videoControls.osdAudio' => ({required Object track}) => 'Audio: ${track}',
 			'videoControls.upNext' => 'ALS NÄCHSTES',
 			'videoControls.upNextStartsIn' => ({required Object seconds}) => 'Nächste Folge in ${seconds} s',
+			_ => null,
+		} ?? switch (path) {
 			'videoControls.closeUpNext' => 'Schließen',
 			'videoControls.showUpNextPanel' => '„Als nächstes"-Fenster zeigen',
 			'videoControls.endOfEpisodeStyle' => 'Am Ende einer Folge',
@@ -5835,8 +5793,6 @@ extension on TranslationsDe {
 			'explore.rows.trendingAnime' => 'Angesagte Anime',
 			'explore.rows.suggestedAnime' => 'Empfohlene Anime',
 			'explore.rows.airingAnime' => 'Beste derzeit laufende Anime',
-			_ => null,
-		} ?? switch (path) {
 			'explore.rows.popularAnime' => 'Beliebteste Anime',
 			'explore.rows.trending' => 'Angesagt',
 			'explore.rows.upcomingMovies' => 'Kommende Filme',
@@ -5858,6 +5814,8 @@ extension on TranslationsDe {
 			'explore.removedFromWatchlist' => 'Von der Watchlist entfernt',
 			'explore.watchlistUpdateFailed' => 'Merkliste konnte nicht aktualisiert werden',
 			'explore.watchlistNoMatch' => 'Dieser Eintrag konnte keiner Watchlist zugeordnet werden',
+			_ => null,
+		} ?? switch (path) {
 			'explore.notInLibrary' => 'Nicht in deiner Mediathek',
 			'explore.inTheseLibraries' => 'In diesen Mediatheken',
 			'explore.comparingCopies' => 'Fassungen werden verglichen …',
@@ -6349,8 +6307,6 @@ extension on TranslationsDe {
 			'downloads.noDownloads' => 'Noch keine Downloads',
 			'downloads.noDownloadsDescription' => 'Heruntergeladene Inhalte werden hier für die Offline-Wiedergabe angezeigt',
 			'downloads.downloadNow' => 'Herunterladen',
-			_ => null,
-		} ?? switch (path) {
 			'downloads.deleteDownload' => 'Download löschen',
 			'downloads.retryDownload' => 'Download wiederholen',
 			'downloads.downloadQueued' => 'Download in Warteschlange',
@@ -6372,6 +6328,8 @@ extension on TranslationsDe {
 			'downloads.syncingFile' => ({required Object file, required Object status}) => '${file} (${status} wird synchronisiert)',
 			'downloads.downloadedFileClickToComplete' => ({required Object file}) => '${file} heruntergeladen — zum Abschließen klicken',
 			'downloads.partialDownloadClickToComplete' => 'Teilweise heruntergeladen — zum Abschließen klicken',
+			_ => null,
+		} ?? switch (path) {
 			'downloads.deleting' => 'Wird gelöscht …',
 			'downloads.deletingWithProgress' => ({required Object title, required Object current, required Object total}) => '${title} wird gelöscht … (${current} von ${total})',
 			'downloads.queuedTooltip' => 'In Warteschlange',
@@ -6863,8 +6821,6 @@ extension on TranslationsDe {
 			'services.pendingAuth.copyUrl' => 'Anmelde-URL kopieren',
 			'services.pendingAuth.urlCopied' => 'URL kopiert',
 			'services.libraryFilter.title' => 'Mediatheksfilter',
-			_ => null,
-		} ?? switch (path) {
 			'services.libraryFilter.subtitleAllSyncing' => 'Alle Mediatheken werden synchronisiert',
 			'services.libraryFilter.subtitleNoneSyncing' => 'Nichts wird synchronisiert',
 			'services.libraryFilter.subtitleBlocked' => ({required Object count}) => '${count} ausgeschlossen',
@@ -6886,6 +6842,8 @@ extension on TranslationsDe {
 			'services.tmdb.apiKeyHint' => 'API-Schlüssel oder Read Access Token',
 			'services.tmdb.apiKeyHelp' => 'Kostenlos anzulegen auf themoviedb.org unter Einstellungen → API.',
 			'services.tmdb.verify' => 'Schlüssel prüfen',
+			_ => null,
+		} ?? switch (path) {
 			'services.tmdb.verifyValid' => 'TMDB hat den Schlüssel akzeptiert.',
 			'services.tmdb.verifyInvalid' => 'TMDB hat den Schlüssel abgelehnt.',
 			'services.tmdb.clearCache' => 'TMDB-Daten verwerfen',

@@ -24,6 +24,7 @@ import 'package:plezy/widgets/video_controls/desktop_video_controls.dart';
 import 'package:plezy/widgets/video_controls/widgets/content_strip.dart';
 import 'package:plezy/widgets/video_controls/widgets/content_strip_panel.dart';
 import 'package:plezy/widgets/video_controls/mobile_video_controls.dart';
+import 'package:plezy/widgets/video_controls/sheets/live_variant_sheet.dart';
 import 'package:plezy/watch_together/providers/watch_together_provider.dart';
 import 'package:plezy/widgets/video_controls/video_controls.dart';
 import 'package:plezy/widgets/video_controls/models/track_controls_state.dart';
@@ -1497,6 +1498,113 @@ void main() {
       expect(startAutoHide, 1);
       expect(cancelAutoHide, 0);
       expect(player.commandLog.where((entry) => entry == 'play' || entry == 'pause'), isEmpty);
+    });
+
+    testWidgets('the phone player picks a merged channel\'s copy and offers none on a plain channel', (tester) async {
+      LocaleSettings.setLocaleSync(AppLocale.en);
+      await initializeDateFormatting('en');
+      // The narrowest phone a viewer holds upright, six buttons in the header:
+      // the choice must still fit, so nothing is reserved beside the title.
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      resetSharedPreferencesForTest();
+      SettingsService.resetForTesting();
+      await SettingsService.getInstance();
+      final player = FakeSyncPlayer();
+      addTearDown(player.dispose);
+      final watchTogether = WatchTogetherProvider();
+      addTearDown(watchTogether.dispose);
+      final chosen = <int>[];
+      var cancelled = 0;
+      var restarted = 0;
+
+      Future<void> pumpWith(List<String> labels) async {
+        await tester.pumpWidget(
+          ChangeNotifierProvider<WatchTogetherProvider>.value(
+            value: watchTogether,
+            child: MaterialApp(
+              theme: ThemeData(extensions: const [testMonoTokens]),
+              home: OverlaySheetHost(
+                child: Scaffold(
+                  body: MobileVideoControls(
+                    player: player,
+                    metadata: testMediaItem(id: 'live'),
+                    chapters: const [],
+                    chaptersLoaded: true,
+                    seekTimeSmall: 10,
+                    trackChapterControls: const SizedBox(width: 240, height: 40),
+                    onSeek: (_) {},
+                    onSeekEnd: (_) {},
+                    onPlayPause: () {},
+                    onCancelAutoHide: () => cancelled++,
+                    onStartAutoHide: () => restarted++,
+                    isLive: true,
+                    liveChannelName: 'ARD HD',
+                    liveVariantLabels: labels,
+                    liveVariantIndex: 0,
+                    onLiveVariantSelected: chosen.add,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+      }
+
+      await pumpWith(const []);
+      expect(find.bySemanticsLabel(t.liveTv.chooseVariant), findsNothing);
+
+      await pumpWith(const ['ARD HD', 'ARD FHD']);
+      await tester.tap(find.bySemanticsLabel(t.liveTv.chooseVariant).last);
+      await tester.pumpAndSettle();
+      expect(find.text('ARD FHD'), findsOneWidget, reason: 'the picker must list the other copies');
+      expect(cancelled, 1, reason: 'the chrome stays up while the list is open');
+
+      await tester.tap(find.text('ARD FHD'));
+      await tester.pumpAndSettle();
+
+      expect(chosen, [1]);
+      expect(find.text('ARD FHD'), findsNothing, reason: 'and the sheet must close behind the choice');
+      expect(restarted, 1);
+    });
+
+    testWidgets('a long list of copies scrolls in a sheet a phone on its side cannot fit', (tester) async {
+      LocaleSettings.setLocaleSync(AppLocale.en);
+      tester.view.physicalSize = const Size(780, 360);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final chosen = <int>[];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(extensions: const [testMonoTokens]),
+          home: OverlaySheetHost(
+            child: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => showLiveVariantSheet(
+                    context,
+                    labels: const ['Copy 1', 'Copy 2', 'Copy 3', 'Copy 4', 'Copy 5', 'Copy 6'],
+                    index: 0,
+                    onSelected: chosen.add,
+                  ),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull, reason: 'six rows must not overflow the sheet');
+      await tester.scrollUntilVisible(find.text('Copy 6'), 100, scrollable: find.byType(Scrollable).last);
+      await tester.tap(find.text('Copy 6'));
+      await tester.pumpAndSettle();
+      expect(chosen, [5]);
     });
   });
 

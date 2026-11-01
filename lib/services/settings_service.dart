@@ -1155,6 +1155,8 @@ class SettingsService extends BaseSharedPreferencesService {
   Future<void> onInit() async {
     _assertCredentialsReadable();
     await PlebzPrefs.tmdbApiKey.load(this);
+    await PlebzPrefs.dropFixedChoices(this);
+    await PlebzPrefs.retireOriginalLook(this);
 
     const legacyRecentRoomsKey = 'watch_together_recent_rooms';
     await prefs.remove(legacyRecentRoomsKey);
@@ -1498,14 +1500,14 @@ class SettingsService extends BaseSharedPreferencesService {
     subtitleBorderColor,
     subtitleBackgroundColor,
     subtitleBackgroundOpacity,
-    rememberTrackSelections,
+    // rememberTrackSelections: fixed by Plebz (PlebzPrefs.fixedToDefault).
     followServerTrackSelections,
     downloadOnWifiOnly,
     backgroundDownloadWarningAcknowledged,
     downloadIncludeSpecials,
     autoCheckUpdatesOnStartup,
     showPerformanceOverlay,
-    autoHidePerformanceOverlay,
+    // autoHidePerformanceOverlay: fixed by Plebz (PlebzPrefs.fixedToDefault).
     enableDiscordRPC,
     enableTraktWatchedSync,
     // Scrobble toggle, one per tracker service.
@@ -1515,7 +1517,7 @@ class SettingsService extends BaseSharedPreferencesService {
     dvConversionMode,
     hdrSdrConversion,
     musicVolume,
-    resumeMusicOnLaunch,
+    // resumeMusicOnLaunch: fixed by Plebz (PlebzPrefs.fixedToDefault).
     autoPlayNextEpisode,
     playNextCountdown,
     shuffleStartsFromBeginning,
@@ -1523,7 +1525,7 @@ class SettingsService extends BaseSharedPreferencesService {
     gestureVolumeSwipe,
     gesturePinchToZoom,
     rememberBrightnessLevel,
-    directPlayCoveredQuality,
+    // directPlayCoveredQuality: fixed by Plebz (PlebzPrefs.fixedToDefault).
     deinterlaceMode,
     playerAlwaysOnTop,
     specialsOrdering,
@@ -1547,7 +1549,7 @@ class SettingsService extends BaseSharedPreferencesService {
     audioPassthrough,
     audioNormalization,
     audioChannelLimit,
-    audioDownmixNormalize,
+    // audioDownmixNormalize: fixed by Plebz (PlebzPrefs.fixedToDefault).
     appLocale,
     autoPip,
     maxVolume,
@@ -1586,15 +1588,14 @@ class SettingsService extends BaseSharedPreferencesService {
     rewindOnResume,
     tvFullCardLayout,
     focusGlow,
-    useGlobalHubs,
-    showServerNameOnHubs,
+    // useGlobalHubs, showServerNameOnHubs: fixed by Plebz (PlebzPrefs.fixedToDefault).
     groupLibrariesByServer,
     rotationLocked,
     subAssOverride,
     subtitleRenderResolution,
     subtitleBold,
     subtitleItalic,
-    showChapterMarkersOnTimeline,
+    // showChapterMarkersOnTimeline: fixed by Plebz (PlebzPrefs.fixedToDefault).
     clickVideoTogglesPlayback,
     skipIntroMode,
     skipCreditsMode,

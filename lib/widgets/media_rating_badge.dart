@@ -4,19 +4,17 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../media/media_item.dart';
 import '../media/media_rating.dart';
-import '../services/settings_service.dart';
 import '../theme/mono_tokens.dart';
 import '../utils/formatters.dart';
 import '../utils/rating_utils.dart';
 import '../utils/text_measure_cache.dart';
 import 'app_icon.dart';
-import 'settings_builder.dart';
 
 /// Every attributed score for [item], falling back to [fallbackItem] as a
 /// whole rather than per-source — a show's ratings never mix with an
 /// episode's.
-/// Honours [PlebzPrefs.averageRatings], collapsing the list to one mean
-/// score when the user asked for that. It happens here, at the single point
+/// Collapses the list to one mean score (Plebz, always since 2026-11-01).
+/// It happens here, at the single point
 /// every score list originates from, rather than inside the badge widgets:
 /// [FittedMetadataLine] measures badges with [inlineRatingBadgeWidth] to decide
 /// how many fit before it builds them, so a list that shrank later would be
@@ -24,19 +22,11 @@ import 'settings_builder.dart';
 ///
 /// [averaged] false leaves the mean to the caller, which merges more scores
 /// in first (the connected trackers') and then takes it with
-/// [averagedIfAsked].
+/// [averagedRatings].
 List<MediaRatingSource> mediaRatingsFor(MediaItem item, {MediaItem? fallbackItem, bool averaged = true}) {
   final ratings = _ratingsFor(item);
   final resolved = ratings.isNotEmpty || fallbackItem == null ? ratings : _ratingsFor(fallbackItem);
-  return averaged ? averagedIfAsked(resolved) : resolved;
-}
-
-/// [ratings] as one mean score where [PlebzPrefs.averageRatings] asks for it.
-List<MediaRatingSource> averagedIfAsked(List<MediaRatingSource> ratings) {
-  // instanceOrNull: score lists are built during startup and in widget tests
-  // that never boot settings; both mean "not averaged" rather than a crash.
-  final average = SettingsService.instanceOrNull?.read(PlebzPrefs.averageRatings) ?? false;
-  return average ? averagedRatings(ratings) : ratings;
+  return averaged ? averagedRatings(resolved) : resolved;
 }
 
 /// Formatted value for [rating] — the brand badge's own formatting where the
@@ -194,12 +184,6 @@ class MediaRatingBadgeGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The pill is the surface the setting is aimed at, so it follows the
-    // switch live instead of waiting for the page to be reopened.
-    return SettingValueBuilder<bool>(pref: PlebzPrefs.averageRatings, builder: (context, _, _) => _buildPill(context));
-  }
-
-  Widget _buildPill(BuildContext context) {
     final ratings = mediaRatingsFor(item, fallbackItem: fallbackItem);
     if (ratings.isEmpty) return const SizedBox.shrink();
 

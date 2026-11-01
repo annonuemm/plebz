@@ -120,7 +120,6 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
   static const _kVideoPlayerNavigation = 'video_player_navigation';
   static const _kCompanionRemoteServer = 'companion_remote_server';
   static const _kDebugLogging = 'debug_logging';
-  static const _kAutoHidePerformanceOverlay = 'auto_hide_performance_overlay';
   static const _kViewLogs = 'view_logs';
   static const _kClearImageCache = 'clear_image_cache';
   static const _kResetSettings = 'reset_settings';
@@ -677,13 +676,6 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
           icon: Symbols.bug_report_rounded,
           title: t.settings.debugLogging,
           subtitle: t.settings.debugLoggingDescription,
-        ),
-        SettingSwitchTile(
-          focusNode: _focusTracker.get(_kAutoHidePerformanceOverlay),
-          pref: settings.SettingsService.autoHidePerformanceOverlay,
-          icon: Symbols.speed_rounded,
-          title: t.settings.autoHidePerformanceOverlay,
-          subtitle: t.settings.autoHidePerformanceOverlayDescription,
         ),
         // Only Android reports its hardware (HardwareReport.kt); elsewhere the
         // screen would only say "unavailable" (Plebz: hidden there).

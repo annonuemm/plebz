@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -10,6 +12,8 @@ import '../../utils/desktop_window_padding.dart';
 import '../../utils/platform_detector.dart';
 import '../../i18n/strings.g.dart';
 import 'player_chrome_controller.dart';
+import 'sheets/live_variant_sheet.dart';
+import 'video_control_button.dart';
 import 'widgets/circular_control_button.dart';
 import 'widgets/content_strip.dart';
 import 'widgets/content_strip_panel.dart';
@@ -67,6 +71,15 @@ class MobileVideoControls extends StatefulWidget {
   /// What is on that channel right now, shown under its name.
   final String? liveProgramTitle;
 
+  /// The copies of this channel, where a playlist's were merged into one.
+  final List<String> liveVariantLabels;
+
+  /// Which of [liveVariantLabels] is playing.
+  final int liveVariantIndex;
+
+  /// Play the variant at that index of [liveVariantLabels].
+  final ValueChanged<int>? onLiveVariantSelected;
+
   // Live TV time-shift
   final CaptureBuffer? captureBuffer;
   final bool isAtLiveEdge;
@@ -117,6 +130,9 @@ class MobileVideoControls extends StatefulWidget {
     this.isLive = false,
     this.liveChannelName,
     this.liveProgramTitle,
+    this.liveVariantLabels = const [],
+    this.liveVariantIndex = 0,
+    this.onLiveVariantSelected,
     this.captureBuffer,
     this.isAtLiveEdge = true,
     this.liveEpochForPosition,
@@ -326,21 +342,62 @@ class _MobileVideoControlsState extends State<MobileVideoControls> with SingleTi
       bottom: false, // Only respect top safe area when in portrait
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: VideoControlsHeader(
-          metadata: widget.metadata,
-          titleOverride: widget.liveChannelName,
-          subtitle: widget.liveProgramTitle,
-          style: VideoHeaderStyle.multiLine,
-          onCancelAutoHide: widget.onCancelAutoHide,
-          onStartAutoHide: widget.onStartAutoHide,
-          trailing: widget.trackChapterControls,
-          onBack: widget.onBack,
-          showClock: !isPortraitPhone,
+        child: Column(
+          mainAxisSize: .min,
+          crossAxisAlignment: .end,
+          children: [
+            VideoControlsHeader(
+              metadata: widget.metadata,
+              titleOverride: widget.liveChannelName,
+              subtitle: widget.liveProgramTitle,
+              style: VideoHeaderStyle.multiLine,
+              onCancelAutoHide: widget.onCancelAutoHide,
+              onStartAutoHide: widget.onStartAutoHide,
+              trailing: widget.trackChapterControls,
+              onBack: widget.onBack,
+              showClock: !isPortraitPhone,
+            ),
+            if (widget.liveVariantLabels.length > 1) _buildVariantButton(),
+          ],
         ),
       ),
     );
 
     return DesktopAppBarHelper.wrapWithGestureDetector(topBar, opaque: true);
+  }
+
+  /// Which route to the station is playing, where a playlist offered several
+  /// and they were merged into one channel. Under the header rather than in
+  /// its row: a narrow phone has no width left there beside the channel name.
+  /// With the header, too, it stays reachable before the first frame, when a
+  /// copy that shows nothing is the reason to change it.
+  Widget _buildVariantButton() {
+    final index = widget.liveVariantIndex;
+    return Opacity(
+      opacity: widget.canControl ? 1.0 : 0.5,
+      child: VideoControlButton(
+        icon: Symbols.swap_horiz_rounded,
+        semanticLabel: t.liveTv.chooseVariant,
+        tooltip: t.liveTv.variantOf(
+          current: index + 1,
+          total: widget.liveVariantLabels.length,
+          name: widget.liveVariantLabels[index],
+        ),
+        onPressed: widget.canControl ? _showVariantSheet : null,
+      ),
+    );
+  }
+
+  void _showVariantSheet() {
+    widget.onCancelAutoHide?.call();
+    unawaited(
+      showLiveVariantSheet(
+        context,
+        labels: widget.liveVariantLabels,
+        index: widget.liveVariantIndex,
+        onSelected: widget.onLiveVariantSelected,
+      ).whenComplete(() => widget.onStartAutoHide?.call()),
+    );
   }
 
   Widget _buildPlaybackControls(BuildContext _) {

@@ -52,7 +52,11 @@ class GuidePreviewPlayer extends StatefulWidget {
   /// Null while nothing plays or nothing is known yet.
   final ValueNotifier<GuideStreamInfo?>? streamInfo;
 
-  const GuidePreviewPlayer({super.key, required this.channel, this.streamInfo});
+  /// Where the preview says which copies its channel has and which one plays
+  /// — see [GuideLiveCopies]. Null while nothing plays or there is only one.
+  final ValueNotifier<GuideLiveCopies?>? copies;
+
+  const GuidePreviewPlayer({super.key, required this.channel, this.streamInfo, this.copies});
 
   @override
   State<GuidePreviewPlayer> createState() => GuidePreviewPlayerState();
@@ -216,6 +220,17 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     if (!_disposed && mounted) setState(() {});
     appLogger.d('Guide preview: ${picture.channel.displayName} plays on from full screen');
     if (widget.streamInfo != null) unawaited(_probeStreamInfo(picture.player, picture.channel, generation));
+    // After the frame: this can run inside [didUpdateWidget], and the band
+    // that listens stands above this widget.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _publishCopies());
+  }
+
+  /// Plays the channel over the copy the viewer picked, and keeps to it: the
+  /// full screen opens the channel afresh where it cannot take this picture on.
+  Future<void> playVariant(int index) async {
+    final key = _session?.copyMemoryKey;
+    if (key != null) LiveCopyMemory.remember(key, index);
+    await _openVariant(index, _generation);
   }
 
   Future<void> _stop() async {
@@ -305,6 +320,7 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
 
       if (debugSuppressPlayback) {
         _session = session;
+        _publishCopies();
         setState(() => _starting = false);
         return;
       }
@@ -360,6 +376,7 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
 
       _session = session;
       _player = player;
+      _publishCopies();
       _decodeGuard
         ..prepare(channel, decodeMode)
         ..armForOpen(player, onStuck: (stuck) => unawaited(_restartInSoftware(stuck, generation)));
@@ -414,6 +431,7 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       final decodeMode = await applyLiveDecodeMode(player, channel, settings: settings);
       if (!current() || !identical(_player, player)) return;
       _session = next;
+      _publishCopies();
       _decodeGuard
         ..prepare(channel, decodeMode)
         ..armForOpen(player, onStuck: (stuck) => unawaited(_restartInSoftware(stuck, generation)));
@@ -478,6 +496,18 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     final notifier = widget.streamInfo;
     if (_disposed || notifier == null || notifier.value == info) return;
     notifier.value = info;
+  }
+
+  /// Says which copies the session in the box has. Like [_publishStreamInfo],
+  /// never when stopping: whoever owns the notifier clears it with the channel.
+  void _publishCopies() {
+    final notifier = widget.copies;
+    if (_disposed || !mounted || notifier == null) return;
+    final session = _session;
+    final labels = session?.variantLabels ?? const <String>[];
+    notifier.value = session != null && labels.length > 1
+        ? GuideLiveCopies(labels: labels, index: session.variantIndex)
+        : null;
   }
 
   /// What the full-screen player decides when it opens a channel, for a
@@ -632,6 +662,15 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       ],
     );
   }
+}
+
+/// The copies of the merged channel in the preview, and the one playing.
+@immutable
+class GuideLiveCopies {
+  const GuideLiveCopies({required this.labels, required this.index});
+
+  final List<String> labels;
+  final int index;
 }
 
 /// What the preview is actually receiving, read off its player once the

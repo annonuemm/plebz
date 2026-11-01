@@ -2,9 +2,6 @@ import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
-import 'package:plezy/widgets/app_icon.dart';
-import 'package:plezy/widgets/focusable_list_tile.dart';
-import 'package:plezy/widgets/overlay_sheet.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:flutter/services.dart';
 
@@ -26,6 +23,7 @@ import '../../i18n/strings.g.dart';
 import '../../models/livetv_capture_buffer.dart';
 import 'models/track_controls_state.dart';
 import 'player_chrome_controller.dart';
+import 'sheets/live_variant_sheet.dart';
 import 'widgets/content_strip.dart';
 import 'widgets/content_strip_panel.dart';
 import 'widgets/live_channel_strip.dart';
@@ -581,46 +579,6 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
   }
 
   /// Handle key events for horizontal button navigation
-  /// The copies of this station, to pick from.
-  ///
-  /// Marked with the one playing: the point of the list is to say where you
-  /// are as much as to offer somewhere else.
-  Future<void> _showVariantPicker(BuildContext context) async {
-    final labels = widget.liveVariantLabels;
-    if (labels.length < 2) return;
-    final chosen = await OverlaySheetController.showAdaptive<int>(
-      context,
-      showDragHandle: true,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-              child: Text(t.liveTv.chooseVariant, style: Theme.of(sheetContext).textTheme.titleMedium),
-            ),
-            for (var index = 0; index < labels.length; index++)
-              FocusableListTile(
-                autofocus: index == widget.liveVariantIndex,
-                leading: AppIcon(
-                  index == widget.liveVariantIndex ? Symbols.play_circle_rounded : Symbols.circle_rounded,
-                  fill: index == widget.liveVariantIndex ? 1 : 0,
-                ),
-                title: Text(labels[index]),
-                // closeAdaptive, not Navigator.pop: showAdaptive renders
-                // inside the player's OverlaySheetHost rather than as a
-                // route, and a route pop there closes nothing and returns
-                // no value — the picker stayed open and the switch never ran.
-                onTap: () => OverlaySheetController.closeAdaptive(sheetContext, index),
-              ),
-          ],
-        ),
-      ),
-    );
-    if (chosen != null && chosen != widget.liveVariantIndex) widget.onLiveVariantSelected?.call(chosen);
-  }
-
   KeyEventResult _handleButtonKeyEvent(FocusNode _, KeyEvent event, int index) {
     // Find nearest mounted left neighbor
     FocusNode? leftTarget;
@@ -1131,7 +1089,16 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
                       focusNode: _variantFocusNode,
                       index: _buttonFocusNodes.indexOf(_variantFocusNode),
                       icon: Symbols.swap_horiz_rounded,
-                      onPressed: _canControl ? () => unawaited(_showVariantPicker(context)) : null,
+                      onPressed: _canControl
+                          ? () => unawaited(
+                              showLiveVariantSheet(
+                                context,
+                                labels: widget.liveVariantLabels,
+                                index: widget.liveVariantIndex,
+                                onSelected: widget.onLiveVariantSelected,
+                              ),
+                            )
+                          : null,
                       semanticLabel: t.liveTv.chooseVariant,
                       tooltip: t.liveTv.variantOf(
                         current: widget.liveVariantIndex + 1,

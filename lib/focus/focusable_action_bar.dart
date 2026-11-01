@@ -80,13 +80,6 @@ class FocusableActionBar extends StatefulWidget {
 
   final double spacing;
 
-  /// Take the unfocused row all the way to invisible instead of merely dim.
-  ///
-  /// The buttons keep their place and their focus node, so the remote still
-  /// reaches them — they simply are not painted until it does. Only for bars
-  /// whose actions are chrome; a row of play buttons must never vanish.
-  final bool hideUntilFocused;
-
   /// Wraps each action a [FocusableAction.builder] built, with its state —
   /// how a row on a band of glass reports each button to the band's focus.
   final Widget Function(BuildContext context, FocusableActionBuildState state, Widget child)? wrapBuiltAction;
@@ -104,7 +97,6 @@ class FocusableActionBar extends StatefulWidget {
     this.onNavigateLeft,
     this.onNavigateRight,
     this.onBack,
-    this.hideUntilFocused = false,
     this.onFocusChange,
     this.spacing = 0,
     this.wrapBuiltAction,
@@ -318,8 +310,7 @@ class FocusableActionBarState extends State<FocusableActionBar> {
     // switch on the tiled GPUs low-end TVs use, and these bars sit on screen
     // permanently. Per-button dims (below) take over only while the row holds
     // focus; mid-transition the two multiply, which stays visually seamless.
-    final unfocused = widget.hideUntilFocused ? 0.0 : 0.6;
-    return AnimatedOpacity(opacity: isKeyboard && !_hasAnyFocus ? unfocused : 1.0, duration: duration, child: row);
+    return AnimatedOpacity(opacity: isKeyboard && !_hasAnyFocus ? 0.6 : 1.0, duration: duration, child: row);
   }
 
   double _gapBefore(int index) => widget.actions[index].spacingBefore ?? widget.spacing;

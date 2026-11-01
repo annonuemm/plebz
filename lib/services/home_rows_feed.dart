@@ -31,6 +31,7 @@ import 'sport/sport_league_names.dart';
 import 'sport/sport_models.dart';
 import 'sport/sport_repository.dart';
 import 'settings_service.dart';
+import '../theme/mono_theme.dart' show supportedAppThemeVariant;
 
 /// Feeds [HomeRows] from the start page (Plebz).
 ///
@@ -129,7 +130,8 @@ class HomeRowsFeed {
   void takeTheme(BuildContext context) {
     final tk = Theme.of(context).extension<MonoTokens>();
     if (tk == null) return;
-    final variant = SettingsService.instanceOrNull?.read(PlebzPrefs.appThemeVariant).name ?? 'standard';
+    final stored = SettingsService.instanceOrNull?.read(PlebzPrefs.appThemeVariant);
+    final variant = (stored == null ? AppThemeVariant.glas : supportedAppThemeVariant(stored)).name;
     final fullCards = SettingsService.instanceOrNull?.read(SettingsService.tvFullCardLayout) ?? false;
     rows.setTheme(
       HomeRowsTheme(variant: variant, accent: tk.accent, background: tk.bg, text: tk.text, fullCards: fullCards),

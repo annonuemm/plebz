@@ -8,7 +8,6 @@ import '../mixins/disposable_change_notifier_mixin.dart';
 import '../services/native_window_service.dart';
 import '../services/settings_binding_owner.dart';
 import '../services/settings_service.dart' as settings;
-import '../theme/glass_edge_spin.dart';
 import '../theme/liquid_glass.dart';
 import '../services/supporter/supporter_service.dart';
 import '../theme/mono_theme.dart';
@@ -62,9 +61,7 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
       _flachAccent = flachAccentFromHex(loaded.read(settings.PlebzPrefs.flachAccent));
       _flachPreset = loaded.read(settings.PlebzPrefs.flachPreset);
       _plainGround = plainGroundFrom(loaded);
-      GlassEdgeSpin.instance.enabled = loaded.read(settings.PlebzPrefs.glasSpinningFocus);
       OckerLiquidGlass.setting.value = loaded.read(settings.PlebzPrefs.glasLiquid);
-      OckerLiquidGlass.fakeGlass.value = loaded.read(settings.PlebzPrefs.glasFakeGlass);
       unawaited(OckerLiquidGlass.loadLens());
     }
     applyIconDefaultsFor(_variant);
@@ -81,17 +78,11 @@ class ThemeProvider extends ChangeNotifier with DisposableChangeNotifierMixin, W
         settings.PlebzPrefs.redesignOffBlack,
         settings.PlebzPrefs.redesignCustomGround,
         settings.PlebzPrefs.redesignGroundColour,
-        settings.PlebzPrefs.glasSpinningFocus,
         settings.PlebzPrefs.glasLiquid,
-        settings.PlebzPrefs.glasFakeGlass,
       ],
       onRefresh: (service) {
-        // Not part of the theme: the edge reads the turn itself, and a switch
-        // needs no rebuild of anything. The liquid glass likewise: only the
-        // panes listen.
-        GlassEdgeSpin.instance.enabled = service.read(settings.PlebzPrefs.glasSpinningFocus);
+        // Not part of the theme: only the liquid glass's panes listen.
         OckerLiquidGlass.setting.value = service.read(settings.PlebzPrefs.glasLiquid);
-        OckerLiquidGlass.fakeGlass.value = service.read(settings.PlebzPrefs.glasFakeGlass);
         final previous = (_storedMode, _customPalette);
         _readStored(service);
         // A stored change that paints the same still changes what the picker

@@ -50,6 +50,7 @@ import '../media/media_role.dart';
 import '../media/paged_media_list_state.dart';
 import '../widgets/media_card.dart';
 import '../widgets/media_rating_badge.dart';
+import '../utils/rating_utils.dart' show averagedRatings;
 import '../widgets/fitted_metadata_line.dart';
 import '../i18n/strings.g.dart';
 import '../redesign/ocker_skin.dart';
@@ -441,7 +442,6 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
   final Map<String, Object> _playbackProbeRequests = {};
   int _playbackProbeGeneration = 0;
   final ValueNotifier<int> _playbackStatusRevision = ValueNotifier(0);
-  String? _playbackStatusTarget;
   Timer? _playbackProbeTimer;
 
   // Scores from the full record a probe fetched, by global key. Plex children
@@ -956,7 +956,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
   /// after the merge (Plebz): a tracker's score joins the mean rather than
   /// standing beside it, and still replaces the server's copy of its site.
   List<MediaRatingSource> _titleRatings(MediaItem metadata) =>
-      averagedIfAsked(withCommunityRatings(mediaRatingsFor(metadata, averaged: false), _communityRatings));
+      averagedRatings(withCommunityRatings(mediaRatingsFor(metadata, averaged: false), _communityRatings));
 
   /// Hook up the watchlist action's data: every watchlist-capable catalog
   /// source this item resolves in, with its per-source ids. No-ops offline
@@ -3995,34 +3995,6 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                   ),
                 )
               : const SizedBox.shrink(),
-        ),
-        // Two notes share the corner opposite the summary, stacked: what Play
-        // would start with (bottom, level with the buttons it describes), and
-        // the show's credits above it. Both sit outside the foreground box on
-        // purpose — that box is a height budget the logo and the summary
-        // already bid for, and these must not take from it.
-        Positioned(
-          left: size.width * 0.60 + spotlightLeft,
-          right: spotlightLeft,
-          bottom: foregroundBottom,
-          height: _tvDetailActionSize * detailScale,
-          // What Play would start with leaves with the buttons it describes.
-          child: Offstage(
-            offstage: _tvDetailHidesActions(context, titleAreaExpanded: !railsRaised),
-            child: ValueListenableBuilder<MediaItem?>(
-              valueListenable: _tvDetailFocusedEpisode,
-              builder: (context, _, _) => Align(
-                alignment: .bottomRight,
-                child: _buildPlaybackTracksStatus(
-                  context,
-                  metadata,
-                  isTv: true,
-                  tvScale: detailScale,
-                  maxWidth: size.width * 0.40 - spotlightLeft * 2,
-                ),
-              ),
-            ),
-          ),
         ),
         // No on-screen back arrow: on a television the remote's back button is
         // the way out, and Google's TV guidance says not to draw one. The

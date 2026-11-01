@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
@@ -8,6 +10,7 @@ import '../../theme/mono_tokens.dart';
 import '../../widgets/fitted_metadata_line.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/app_icon.dart';
+import '../../widgets/video_controls/sheets/live_variant_sheet.dart';
 import 'guide_preview_player.dart';
 
 /// The band above the guide grid: a live picture on the left, what is on the
@@ -100,6 +103,7 @@ class GuidePreviewBand extends StatelessWidget {
     required this.onFullScreen,
     this.playerKey,
     this.streamInfo,
+    this.copies,
   });
 
   final LiveTvChannel? previewChannel;
@@ -113,8 +117,21 @@ class GuidePreviewBand extends StatelessWidget {
   /// does not show it.
   final ValueNotifier<GuideStreamInfo?>? streamInfo;
 
+  /// Handed to the picture, which says there which copies its channel has; a
+  /// merged channel gets the choice beside the full-screen button.
+  final ValueNotifier<GuideLiveCopies?>? copies;
+
   @override
   Widget build(BuildContext context) {
+    final copies = this.copies;
+    if (copies == null) return _buildBand(context, null);
+    return ValueListenableBuilder<GuideLiveCopies?>(
+      valueListenable: copies,
+      builder: (context, value, _) => _buildBand(context, value),
+    );
+  }
+
+  Widget _buildBand(BuildContext context, GuideLiveCopies? copies) {
     final theme = Theme.of(context);
     final channel = previewChannel;
     final program = this.program;
@@ -123,7 +140,7 @@ class GuidePreviewBand extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        GuidePreviewPlayer(key: playerKey, channel: channel, streamInfo: streamInfo),
+        GuidePreviewPlayer(key: playerKey, channel: channel, streamInfo: streamInfo, copies: this.copies),
         if (channel == null)
           Align(
             alignment: const Alignment(0, 0.5),
@@ -150,13 +167,13 @@ class GuidePreviewBand extends StatelessWidget {
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 28, 60, 10),
+                  padding: EdgeInsets.fromLTRB(12, 28, copies == null ? 60 : 116, 10),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        channel.displayName,
+                        copies == null ? channel.displayName : copies.labels[copies.index],
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
@@ -179,19 +196,53 @@ class GuidePreviewBand extends StatelessWidget {
           Positioned(
             right: 8,
             bottom: 8,
-            child: Material(
-              color: Colors.black.withValues(alpha: 0.55),
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: IconButton(
-                tooltip: t.common.fullscreen,
-                onPressed: onFullScreen,
-                icon: const AppIcon(Symbols.fullscreen_rounded, fill: 1, color: Colors.white),
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (copies != null) ...[
+                  _BandButton(
+                    icon: Symbols.swap_horiz_rounded,
+                    tooltip: t.liveTv.chooseVariant,
+                    onPressed: () => unawaited(
+                      showLiveVariantSheet(
+                        context,
+                        labels: copies.labels,
+                        index: copies.index,
+                        onSelected: (index) => unawaited(playerKey?.currentState?.playVariant(index)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                _BandButton(icon: Symbols.fullscreen_rounded, tooltip: t.common.fullscreen, onPressed: onFullScreen),
+              ],
             ),
           ),
         ],
       ],
+    );
+  }
+}
+
+/// A round button on the band's picture.
+class _BandButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _BandButton({required this.icon, required this.tooltip, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.55),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        icon: AppIcon(icon, fill: 1, color: Colors.white),
+      ),
     );
   }
 }

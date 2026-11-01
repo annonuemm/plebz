@@ -92,12 +92,17 @@ abstract final class PlebzPrefs {
     defaultValue: LayoutMode.auto,
   );
 
-  /// The app's visual language. Off the shelf on a television (the TV
-  /// layout, override included) it is the redesign, [AppThemeVariant.glas];
-  /// everywhere else "Original", [AppThemeVariant.standard] — the redesign is
-  /// drawn for a remote and a screen across the room, not for a phone.
+  /// The app's visual language: Glas, everywhere (since 2026-11-01, when
+  /// "Original" left the app). Under [debugOriginalLook] it is what it was
+  /// before: Glas on a television, upstream's look elsewhere.
   static AppThemeVariant _tvAwareAppThemeVariantDefault() =>
-      PlatformDetector.isTV() ? AppThemeVariant.glas : AppThemeVariant.standard;
+      debugOriginalLook && !PlatformDetector.isTV() ? AppThemeVariant.standard : AppThemeVariant.glas;
+
+  /// Plebz has two looks, Glas and Flach. Upstream's own
+  /// ([AppThemeVariant.standard]) stays in the code for the test suite alone,
+  /// whose upstream tests are written against it (`flutter_test_config.dart`
+  /// turns this on); in the app it is never offered and reads as Glas.
+  static bool debugOriginalLook = false;
   static const appThemeVariant = EnumPref<AppThemeVariant>(
     'app_theme_variant',
     values: AppThemeVariant.values,
@@ -115,18 +120,6 @@ abstract final class PlebzPrefs {
     defaultValue: GlasAccent.eisblau,
   );
 
-  /// Under "Redesign – Glas": let the focus capsule glide from word to word —
-  /// swallowing the mark on show as it passes — and the words' ink fade, even
-  /// where the visual effects are reduced. Those two cost little; the rest of
-  /// what "full" turns on is what makes a weak box slow, and this keeps them
-  /// apart.
-  static const glasSmoothFocus = BoolPref('glas_smooth_focus', defaultValue: false);
-
-  /// Under "Redesign – Glas": the focus edge's glint goes slowly round it.
-  /// Off by default — a turning edge draws a frame every vsync while it turns,
-  /// which a weak box can feel beside scrolling and a playing preview.
-  static const glasSpinningFocus = BoolPref('glas_spinning_focus', defaultValue: false);
-
   /// Under "Redesign – Glas": "Liquid Glass" — the panes and bands blur and
   /// brighten what lies behind them, as Apple's glass does, and their edge
   /// catches the light on both sides. Apple builds only (Apple TV, Mac, later
@@ -135,24 +128,12 @@ abstract final class PlebzPrefs {
   /// was drawn to avoid (see `OckerLiquidGlass`).
   static const glasLiquid = BoolPref('glas_liquid', defaultValue: false);
 
-  /// Under "Redesign – Glas" where there is no Liquid Glass (Android): the
-  /// navigation, the menus and the capsules as fake glass — a sheen and a lit
-  /// rim, no blur. Off, they are flat, as on Apple's builds with Liquid Glass
-  /// switched off (the user's call, 2026-10-14). On by default.
-  static const glasFakeGlass = BoolPref('glas_fake_glass', defaultValue: true);
-
   /// Under "Redesign – Glas" on the television: the rail's strip of symbols
   /// stays on show at the left, as it did before Glas hid its shut rail after
   /// Apple's TV app (the user's call, 2026-10-13: for those who want the
   /// symbols in view). Off by default: the rail hides itself and a capsule at
   /// the page's top left names the place on show.
   static const glasRailSymbolsPinned = BoolPref('glas_rail_symbols_pinned', defaultValue: false);
-
-  /// On the television, in every look: a D-pad step glides the rows and the
-  /// posters as the Apple TV does (half a second) rather than in Plezy's
-  /// quick Android step (the user's call, 2026-10-13). On by default; off for
-  /// a box that stutters. The Apple TV always glides.
-  static const smoothScroll = BoolPref('smooth_scroll', defaultValue: true);
 
   /// On the television, in every row: Back on a later title first returns to
   /// the row's first one, as Prime Video does; only Back there does what it
@@ -318,21 +299,6 @@ abstract final class PlebzPrefs {
     defaultValue: RecommendationsSource.all,
   );
 
-  /// Chrome in the Home screen's action bar. Each is a whole feature's entry
-  /// point, so they are switched independently rather than as one group.
-  static const showWatchTogetherAction = BoolPref('show_watch_together_action', defaultValue: true);
-  static const showCompanionRemoteAction = BoolPref('show_companion_remote_action', defaultValue: true);
-  static const showServerActivitiesAction = BoolPref('show_server_activities_action', defaultValue: true);
-
-  /// Whether the home screen's toolbar stays invisible until the remote goes
-  /// up to it.
-  ///
-  /// The buttons keep their place and stay reachable — they are simply not
-  /// painted while focus is in the content, which is nearly always. Has no
-  /// effect where there is no focus to speak of: on touch the row is drawn as
-  /// before, or it could never be tapped.
-  static const hideHomeActionsUntilFocus = BoolPref('hide_home_actions_until_focus');
-
   /// Whether the home screen and Explore show a title's logo in the spotlight
   /// at the top. Off, it sets the title as type; a title's own page keeps its
   /// logo either way.
@@ -351,15 +317,6 @@ abstract final class PlebzPrefs {
   /// for the setups where it never will: an empty tab is a destination that
   /// always disappoints, and it sits on the same row as the ones that do not.
   static const showLibraryPlaylistsTab = BoolPref('show_library_playlists_tab', defaultValue: true);
-
-  /// Whether the detail page names the audio track and subtitles Play would
-  /// start with.
-  ///
-  /// It answers "what will I hear" before you press anything, which is worth a
-  /// line on a multi-language library and worth nothing at all on a library
-  /// with one. Off, the corner it sits in is simply empty; nothing about
-  /// playback changes.
-  static const showPlaybackTracksStatus = BoolPref('show_playback_tracks_status', defaultValue: true);
 
   /// Show the rest of an actor's filmography on their page, greyed out.
   ///
@@ -426,22 +383,6 @@ abstract final class PlebzPrefs {
     values: WatchlistStatusFilter.values,
     defaultValue: WatchlistStatusFilter.any,
   );
-
-  /// Collapse an item's attributed scores (IMDb, TMDB, both Rotten Tomatoes
-  /// panels, ...) into a single mean instead of a badge per source.
-  ///
-  /// On by default (fork): one score leaves the first row of facts the room
-  /// its genres need.
-  static const averageRatings = BoolPref('average_ratings', defaultValue: true);
-
-  /// The catalog detail page's crew grid (director, writer, producer). On by
-  /// default; a long-running series lists dozens of names across three rows.
-  static const showCatalogDetailCrew = BoolPref('show_catalog_detail_crew', defaultValue: true);
-
-  /// The catalog detail page's fact grid (original title, alternative titles,
-  /// country, studios, budget, ...). On by default; the alternative-title list
-  /// alone can run to dozens of localized titles.
-  static const showCatalogDetailFacts = BoolPref('show_catalog_detail_facts', defaultValue: true);
 
   /// Which library copy the Explore detail page ranks first and opens from
   /// the button beside the poster (fork addition).
@@ -614,10 +555,6 @@ abstract final class PlebzPrefs {
 
   // Live TV and IPTV
 
-  /// Whether the guide keeps its day-and-time strip. Off, the guide opens on
-  /// now and is travelled with the D-pad alone.
-  static const liveTvGuideTimeNavigation = BoolPref('live_tv_guide_time_navigation', defaultValue: true);
-
   /// Whether the guide's channel column sets each channel's name under a
   /// smaller logo (a viewer's wish, 2026-10-14). The cells keep their size;
   /// off by default, the logo alone as before.
@@ -691,6 +628,52 @@ abstract final class PlebzPrefs {
     return NullableStringPref(profileScopedPrefsKey(profileId, liveTvChannelLayoutBaseKey));
   }
 
+  /// Plezy's own choices Plebz fixed to their default and took out of the
+  /// settings (the user's call, 2026-11-01). Their prefs stay for upstream's
+  /// readers; a stored choice is dropped at start ([dropFixedChoices]), and
+  /// they are neither exported nor imported.
+  static final List<Pref<Object?>> fixedToDefault = [
+    SettingsService.useGlobalHubs,
+    SettingsService.showServerNameOnHubs,
+    SettingsService.rememberTrackSelections,
+    SettingsService.resumeMusicOnLaunch,
+    SettingsService.showChapterMarkersOnTimeline,
+    SettingsService.audioDownmixNormalize,
+    SettingsService.directPlayCoveredQuality,
+    SettingsService.autoHidePerformanceOverlay,
+  ];
+
+  /// Drops what a viewer once stored for [fixedToDefault], so everyone reads
+  /// the default. Once per list version, and only on an install that has
+  /// started Plebz before ([plebzLastSeenBuild]): nothing writes these prefs
+  /// any more, and a fresh store (a new install, a test) has nothing to drop.
+  static Future<void> dropFixedChoices(SettingsService service) async {
+    final prefs = service.prefs;
+    if (!prefs.containsKey(plebzLastSeenBuild.key)) return;
+    if ((prefs.get(_fixedChoicesDroppedKey) as int? ?? 0) >= _fixedChoicesVersion) return;
+    for (final pref in fixedToDefault) {
+      await prefs.remove(pref.key);
+    }
+    await prefs.setInt(_fixedChoicesDroppedKey, _fixedChoicesVersion);
+  }
+
+  /// A stored "Original" (or "Klar", retired before it) becomes Glas, once,
+  /// on an install that has started Plebz before — so the settings show the
+  /// look that is drawn. A backup carrying it reads as Glas all the same
+  /// (`supportedAppThemeVariant`).
+  static Future<void> retireOriginalLook(SettingsService service) async {
+    final prefs = service.prefs;
+    if (!prefs.containsKey(plebzLastSeenBuild.key)) return;
+    final stored = prefs.get(appThemeVariant.key);
+    if (stored == AppThemeVariant.standard.name || stored == 'klar') {
+      await prefs.setString(appThemeVariant.key, AppThemeVariant.glas.name);
+    }
+  }
+
+  /// Raise it when [fixedToDefault] grows, so the new entries are dropped too.
+  static const _fixedChoicesVersion = 2;
+  static const _fixedChoicesDroppedKey = 'plebz_fixed_choices_dropped';
+
   /// Reset and exported, as [SettingsService]'s own group of the same kind.
   static final List<Pref<Object?>> resetAndPortable = [
     mirrorWatchedAcrossServers,
@@ -729,30 +712,23 @@ abstract final class PlebzPrefs {
     redesignOffBlack,
     redesignCustomGround,
     redesignGroundColour,
-    glasSmoothFocus,
     glasUltraBlur,
     flachUltraBlur,
     glasSeasonTabs,
     flachSeasonTabs,
     flachPreset,
     glasDetailPanel,
-    glasSpinningFocus,
     glasLiquid,
-    glasFakeGlass,
     glasRailSymbolsPinned,
-    smoothScroll,
     backToRowStart,
     seasonalStartScreen,
     showLibraryPlaylistsTab,
-    showPlaybackTracksStatus,
     showHomeTitleLogos,
-    hideHomeActionsUntilFocus,
     plebzUpdateOffer,
   ];
 
   /// Exported but left alone by a reset.
   static final List<Pref<Object?>> portableOnly = [
-    liveTvGuideTimeNavigation,
     liveTvGuideChannelNames,
     liveTvSeamlessFullscreen,
     iptvRefreshIntervalDays,

@@ -1179,12 +1179,9 @@ Duration ockerInkFade(BuildContext context) =>
     : Duration.zero;
 
 /// [full] for the glass focus's own motion — the capsule's glide and the ink
-/// fading with it: on the full tier, or wherever the viewer switched them on
-/// on their own ([PlebzPrefs.glasSmoothFocus]); nothing on a reduced tier
-/// otherwise.
-Duration ockerGlassMotion(Duration full) => SettingsService.instanceOrNull?.read(PlebzPrefs.glasSmoothFocus) ?? false
-    ? full
-    : DevicePerformance.reducedDuration(full);
+/// fading with it: on the full tier, nothing on a reduced one ("Visuelle
+/// Effekte" decides).
+Duration ockerGlassMotion(Duration full) => DevicePerformance.reducedDuration(full);
 
 /// Builds with [color], faded to it over [ockerInkFade] when it changes.
 class OckerInk extends StatelessWidget {

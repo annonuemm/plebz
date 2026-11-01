@@ -198,7 +198,6 @@ void main() {
     await tester.ensureVisible(title);
     await tester.pumpAndSettle();
     expect(find.text('Center channel boost'), findsNothing);
-    expect(find.text('Normalize downmix volume'), findsNothing);
 
     await tester.tap(title);
     await tester.pumpAndSettle();
@@ -209,33 +208,10 @@ void main() {
     expect(settings.read(SettingsService.audioChannelLimit), AudioChannelLimit.surround51);
     // A 5.1 fold keeps the center channel, so only normalization applies.
     expect(find.text('Center channel boost'), findsNothing);
-    expect(find.text('Normalize downmix volume'), findsOneWidget);
 
     await settings.write(SettingsService.audioChannelLimit, AudioChannelLimit.stereo);
     await tester.pumpAndSettle();
     expect(find.text('Center channel boost'), findsOneWidget);
-    expect(find.text('Normalize downmix volume'), findsOneWidget);
-  });
-
-  testWidgets('turns the covered-source direct play off from the quality group (#2193)', (tester) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(1000, 1400);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    addTearDown(tester.view.resetPhysicalSize);
-
-    await tester.pumpWidget(MaterialApp(theme: monoTheme(MonoPalette.dark), home: const PlaybackSettingsScreen()));
-    await tester.pumpAndSettle();
-
-    final title = find.text('Play smaller videos as-is');
-    await tester.scrollUntilVisible(title, 500, scrollable: find.byType(Scrollable).first);
-    await tester.ensureVisible(title);
-    await tester.pumpAndSettle();
-
-    expect(SettingsService.instance.read(SettingsService.directPlayCoveredQuality), isTrue);
-    await tester.tap(title);
-    await tester.pumpAndSettle();
-
-    expect(SettingsService.instance.read(SettingsService.directPlayCoveredQuality), isFalse);
   });
 
   testWidgets('gesture toggles render on mobile and persist', (tester) async {

@@ -5,7 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import '../services/settings_service.dart' show AppThemeVariant, GlasAccent;
+import '../services/settings_service.dart' show AppThemeVariant, GlasAccent, PlebzPrefs;
 import '../utils/platform_detector.dart';
 import '../widgets/app_icon.dart';
 import 'apple_type.dart';
@@ -449,10 +449,11 @@ bool get redesignOfferedHere => _debugRedesignOffered ?? true;
 @visibleForTesting
 set debugRedesignOfferedHere(bool? offered) => _debugRedesignOffered = offered;
 
-/// The variants that can be chosen here, in the order they are shown.
+/// The variants that can be chosen here, in the order they are shown: Glas
+/// and Flach (upstream's own look only under [PlebzPrefs.debugOriginalLook]).
 List<AppThemeVariant> get offeredAppThemeVariants => [
   for (final variant in AppThemeVariant.values)
-    if (redesignOfferedHere || !isRedesignVariant(variant)) variant,
+    if (isRedesignVariant(variant) ? redesignOfferedHere : PlebzPrefs.debugOriginalLook) variant,
 ];
 
 /// [variant] as this host can actually draw it.
@@ -463,8 +464,14 @@ List<AppThemeVariant> get offeredAppThemeVariants => [
 /// [AppThemeVariant.standard]. The *stored* value is left alone on purpose:
 /// the same profile still opens in the redesign on the television it was set
 /// from.
-AppThemeVariant supportedAppThemeVariant(AppThemeVariant variant) =>
-    isRedesignVariant(variant) && !redesignOfferedHere ? AppThemeVariant.standard : variant;
+///
+/// Upstream's own look is not drawn in Plebz (since 2026-11-01): a stored or
+/// restored "Original" reads as Glas, except in the test suite
+/// ([PlebzPrefs.debugOriginalLook]).
+AppThemeVariant supportedAppThemeVariant(AppThemeVariant variant) {
+  if (variant == AppThemeVariant.standard && !PlebzPrefs.debugOriginalLook) return AppThemeVariant.glas;
+  return isRedesignVariant(variant) && !redesignOfferedHere ? AppThemeVariant.standard : variant;
+}
 
 final Map<
   ({

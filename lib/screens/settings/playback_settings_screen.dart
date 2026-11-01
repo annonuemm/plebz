@@ -134,7 +134,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
                 _audioChannelLimitTile(exoActive: exoActive),
                 // Only a stereo fold mixes the center away; any fold can clip.
                 if (channelLimit == AudioChannelLimit.stereo) _downmixCenterBoostTile(),
-                if (channelLimit != AudioChannelLimit.original) _downmixNormalizeTile(),
                 _maxVolumeTile(),
               ],
             ),
@@ -150,7 +149,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
                 // mirroring cellularQualityPreset's nullable "same as default"
                 // pattern; needs local/remote connection detection in the
                 // failover client.
-                _directPlayCoveredQualityTile(),
                 // Desktop has no hardware-decode probe, so this is where a
                 // machine too weak for a codec says so (#2443).
                 if (PlatformDetector.isDesktopOS()) _videoCodecsTile(),
@@ -274,12 +272,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
     title: t.settings.behavior,
     children: [
       SettingSwitchTile(
-        pref: SettingsService.rememberTrackSelections,
-        icon: Symbols.bookmark_rounded,
-        title: t.settings.rememberTrackSelections,
-        subtitle: t.settings.rememberTrackSelectionsBackendRule,
-      ),
-      SettingSwitchTile(
         pref: SettingsService.followServerTrackSelections,
         icon: Symbols.dns_rounded,
         title: t.settings.followServerTrackSelections,
@@ -293,18 +285,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
           subtitle: t.remoteKeys.entryDescription,
           destinationBuilder: (_) => const RemoteKeysScreen(),
         ),
-      SettingSwitchTile(
-        pref: SettingsService.resumeMusicOnLaunch,
-        icon: Symbols.music_history_rounded,
-        title: t.settings.resumeMusicOnLaunch,
-        subtitle: t.settings.resumeMusicOnLaunchDescription,
-      ),
-      SettingSwitchTile(
-        pref: SettingsService.showChapterMarkersOnTimeline,
-        icon: Symbols.bookmarks_rounded,
-        title: t.settings.showChapterMarkersOnTimeline,
-        subtitle: t.settings.showChapterMarkersOnTimelineDescription,
-      ),
       SettingSelectionTile<SpecialsOrdering>(
         pref: SettingsService.specialsOrdering,
         icon: Symbols.low_priority_rounded,
@@ -632,13 +612,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
     suffixText: t.settings.downmixCenterBoostShort,
   );
 
-  Widget _downmixNormalizeTile() => SettingSwitchTile(
-    pref: SettingsService.audioDownmixNormalize,
-    icon: Symbols.graphic_eq_rounded,
-    title: t.settings.audioDownmixNormalize,
-    subtitle: t.settings.audioDownmixNormalizeDescription,
-  );
-
   Widget _maxVolumeTile() => SettingNumberTile(
     pref: SettingsService.maxVolume,
     icon: Symbols.volume_up_rounded,
@@ -800,13 +773,6 @@ class PlaybackSettingsScreen extends StatelessWidget {
     BestCopyPreference.complete => t.settings.bestCopyComplete,
     BestCopyPreference.fullHd => t.settings.bestCopyFullHd,
   };
-
-  Widget _directPlayCoveredQualityTile() => SettingSwitchTile(
-    pref: SettingsService.directPlayCoveredQuality,
-    icon: Symbols.bolt_rounded,
-    title: t.settings.directPlayCoveredQuality,
-    subtitle: t.settings.directPlayCoveredQualityDescription,
-  );
 
   Widget _videoCodecsTile() => SettingChecklistTile(
     uncheckedPref: SettingsService.refusedVideoCodecs,

@@ -1102,17 +1102,14 @@ void main() {
 
     const glide = Duration(milliseconds: 220);
 
-    test('the full tier glides whatever the switch says', () {
+    test('the full tier glides', () {
       DevicePerformance.debugReset(override: VisualEffectsSetting.full);
       expect(ockerGlassMotion(glide), glide);
     });
 
-    test('a reduced tier jumps, unless the viewer switched the glide on', () async {
+    test('a reduced tier jumps: the visual effects decide', () {
       DevicePerformance.debugReset(override: VisualEffectsSetting.reduced);
       expect(ockerGlassMotion(glide), Duration.zero);
-
-      await SettingsService.instanceOrNull!.write(PlebzPrefs.glasSmoothFocus, true);
-      expect(ockerGlassMotion(glide), glide, reason: 'on its own, without the rest of the effects');
     });
   });
 

@@ -617,18 +617,6 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
       return OckerGlassBand(overhang: EdgeInsets.all(ockerBandMargin(context)), liquidBubble: true, child: bar);
     }
 
-    // Off TV the track status sits at the row's far end, right-aligned so it
-    // reads as information about the row rather than a sixth button. It takes
-    // only the leftover width and is the first thing to go, so the buttons
-    // never compact because of it. On TV the hero is a 60% column, so the
-    // status is placed at the screen edge by _buildTvDetailScreen instead.
-    Widget? tracksStatusFor(List<FocusableAction> actions, double maxWidth) {
-      if (isTv || !maxWidth.isFinite) return null;
-      final remaining = maxWidth - estimatedRowWidth(actions) - gap;
-      if (remaining < 160) return null;
-      return _buildPlaybackTracksStatus(context, metadata, isTv: false, tvScale: tvScale, maxWidth: remaining);
-    }
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxWidth = constraints.maxWidth;
@@ -637,19 +625,7 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
         final actions = isTv || !maxWidth.isFinite || estimatedRowWidth(allActions) <= maxWidth
             ? allActions
             : compactActionsFor(maxWidth);
-        final status = tracksStatusFor(actions, maxWidth);
-        if (status == null) return actionBar(actions);
-        return SizedBox(
-          height: actionSize,
-          child: Row(
-            children: [
-              actionBar(actions),
-              Expanded(
-                child: Align(alignment: .centerRight, child: status),
-              ),
-            ],
-          ),
-        );
+        return actionBar(actions);
       },
     );
   }

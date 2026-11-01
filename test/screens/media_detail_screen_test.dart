@@ -466,9 +466,8 @@ void main() {
     expect(FocusManager.instance.primaryFocus, same(play));
   });
 
-  testWidgets('TV detail metadata line shows every rating source the item carries', (tester) async {
+  testWidgets('TV detail metadata line shows several scores as one average', (tester) async {
     await SettingsService.getInstance();
-    await SettingsService.instance.write(PlebzPrefs.averageRatings, false);
     tester.view.physicalSize = const Size(1280, 720);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -500,10 +499,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
-    expect(find.text('62%'), findsOneWidget);
-    expect(find.text('87%'), findsOneWidget);
+    // (6.2 + 8.7 + 7.4) / 3, with no brand of its own.
     expect(find.text('7.4'), findsOneWidget);
-    expect(find.byType(SvgPicture), findsNWidgets(3));
+    expect(find.text('62%'), findsNothing);
+    expect(find.byType(SvgPicture), findsNothing);
     expect(find.textContaining('★ 6.2', findRichText: true), findsNothing);
     // The redundant type label no longer opens the line.
     expect(find.text('Movie'), findsNothing);
@@ -842,10 +841,6 @@ void main() {
     expect(find.descendant(of: qualityRow, matching: find.text('1080p')), findsOneWidget);
     expect(find.descendant(of: qualityRow, matching: find.text('2017')), findsNothing);
     expect(tester.getTopLeft(find.text('2017')).dy, lessThan(tester.getTopLeft(find.text('1080p')).dy));
-    expect(
-      find.descendant(of: find.byKey(const ValueKey('detail_playback_tracks')), matching: find.text('1080p')),
-      findsNothing,
-    );
 
     // Desktop chip order: year, certification, runtime.
     final fieldXs = [
@@ -2027,8 +2022,8 @@ void main() {
     // the episode's IMDb score.
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump();
-    // Plebz folds two or more scores into one average by default
-    // (PlebzPrefs.averageRatings): 7.7 and the episode's IMDb 7.8.
+    // Plebz folds two or more scores into one average: 7.7 and the
+    // episode's IMDb 7.8.
     expect(announced(), contains('Average 7.8'));
     expect(
       find.descendant(of: find.byKey(const ValueKey('tv_detail_information_semantics')), matching: find.text('7.8')),
@@ -2043,131 +2038,6 @@ void main() {
     expect(announced(), contains('TMDB 71%'));
     expect(announced(), isNot(contains('IMDb')));
     semantics.dispose();
-  });
-
-  testWidgets('TV detail action row ends with the tracks Play will use, off the focus path', (tester) async {
-    await SettingsService.getInstance();
-    tester.view.physicalSize = const Size(1920, 1080);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    // The episode's cached media source, as the item's own fetch leaves it:
-    // Plex-selected English audio, no subtitle row selected.
-    final source = MediaSourceInfo(
-      videoUrl: '',
-      audioTracks: [
-        MediaAudioTrack(id: 101, index: 1, codec: 'truehd', languageCode: 'eng', channels: 8, selected: true),
-        MediaAudioTrack(id: 102, index: 2, codec: 'aac', languageCode: 'jpn', channels: 2, selected: false),
-      ],
-      subtitleTracks: [
-        MediaSubtitleTrack(id: 201, index: 3, codec: 'srt', languageCode: 'eng', selected: false, forced: false),
-      ],
-      chapters: const [],
-    );
-    const version = MediaVersion(id: 'v1', videoResolution: '1080', videoCodec: 'hevc');
-    final show = testMediaItem(
-      id: 'show_1',
-      backend: MediaBackend.plex,
-      kind: MediaKind.show,
-      title: 'The Show',
-      serverId: 'server_1',
-      serverName: 'Server',
-    );
-    final season = testMediaItem(
-      id: 'season_1',
-      backend: MediaBackend.plex,
-      kind: MediaKind.season,
-      title: 'Season 1',
-      index: 1,
-      parentId: show.id,
-      serverId: show.serverId,
-      serverName: show.serverName,
-    );
-    final episode = testMediaItem(
-      id: 'episode_1',
-      backend: MediaBackend.plex,
-      kind: MediaKind.episode,
-      title: 'Pilot',
-      index: 1,
-      parentId: season.id,
-      parentIndex: season.index,
-      grandparentId: show.id,
-      grandparentTitle: show.title,
-      serverId: show.serverId,
-      serverName: show.serverName,
-      mediaVersions: const [version],
-    );
-    final client = _FakeMediaServerClient(
-      show: show,
-      childrenByParent: {
-        show.id: [season],
-        season.id: [episode],
-      },
-      mediaSourcesById: {episode.id: source},
-    );
-    final provider = testMultiServer(clients: [client]).provider;
-
-    await tester.pumpWidget(
-      TranslationProvider(
-        child: ChangeNotifierProvider<MultiServerProvider>.value(
-          value: provider,
-          child: MaterialApp(
-            theme: monoTheme(MonoPalette.dark),
-            home: withProfileNavigationScope(
-              child: SizedBox(width: 1920, height: 1080, child: MediaDetailScreen(metadata: show)),
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump();
-    await tester.pump();
-    // Past the track probe's debounce: the hero's episode is fetched and its
-    // media source read from the cache.
-    await tester.pump(const Duration(milliseconds: 400));
-
-    // The row's trailing status is the player's own ladder run over the
-    // source rows Play will use: Plex-selected English audio, subtitles off
-    // (no row selected).
-    final status = find.byKey(const ValueKey('detail_playback_tracks'));
-    expect(status, findsOneWidget);
-    // Only the choice: which language is playing, and what subtitles do. The
-    // picture and the codecs are on the hero's facts line.
-    expect(tester.widget<Semantics>(status).properties.label, 'Audio & Subtitles: English, Off');
-    // The picture and the audio format; no video codec — the bitrate answers
-    // what it was standing in for, and it never fitted anything but itself.
-    expect(
-      tester.getSemantics(find.bySemanticsIdentifier('tv_detail_information')).label,
-      allOf(contains('1080p'), contains('TrueHD 7.1'), isNot(contains('HEVC'))),
-    );
-    final audioText = find.textContaining('English');
-    expect(audioText, findsOneWidget);
-
-    // At the screen's right edge — outside the hero's 60% text column, not
-    // right-aligned within it — sitting on the action row's baseline, in the
-    // hero's own ink rather than the muted chip colour.
-    final bar = tester.getRect(find.byType(FocusableActionBar));
-    final statusRect = tester.getRect(status);
-    expect(statusRect.right, closeTo(1920 - 56, 1)); // spotlightLeft at this scale (full-screen title area)
-    expect(statusRect.left, greaterThan(1920 * 0.60));
-    expect(statusRect.bottom, closeTo(bar.bottom, 1));
-    expect(statusRect.center.dy, greaterThan(bar.center.dy));
-    final ink = tester.widget<Text>(audioText).style!.color!;
-    expect(ink.a, 1.0);
-
-    // It is information, not a sixth button: RIGHT past the last action stays
-    // on the last action.
-    tester.state<TvBrowseRailState>(find.byType(TvBrowseRail)).requestFocus();
-    await tester.pump();
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-    await tester.pump();
-    for (var i = 0; i < 8; i++) {
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pump();
-    }
-    expect(FocusManager.instance.primaryFocus?.debugLabel, 'detail_more');
   });
 
   testWidgets('the facts line names the format, not the muxer\'s track title', (tester) async {
@@ -2249,11 +2119,6 @@ void main() {
     final texts = [for (final element in chips.evaluate()) (element.widget as Text).data];
     expect(texts, contains('DTS-HD MA Stereo'));
     expect(texts, isNot(contains('German DTS-HD MA 2.0 · Stereo')));
-    // The language stays where the choice is stated, under the buttons.
-    expect(
-      tester.widget<Semantics>(find.byKey(const ValueKey('detail_playback_tracks'))).properties.label,
-      contains('German'),
-    );
   });
 
   group('saved-source detail prediction', () {
@@ -2298,19 +2163,11 @@ void main() {
       return navigator;
     }
 
-    /// Everything the screen says about the resolved version, across the two
-    /// lines that now split it: the hero's facts line holds the picture and
-    /// the audio format, the line under the buttons holds the track choice.
-    String status(WidgetTester tester) {
-      final tracks = find.byKey(const ValueKey('detail_playback_tracks'));
-      return [
-        tester.getSemantics(find.bySemanticsIdentifier('tv_detail_information')).label,
-        // Absent offline: with no source there is no ladder to run, so there
-        // is no track choice to state. The picture still reads on the line
-        // above, which is what these cases are about.
-        if (tracks.evaluate().isNotEmpty) tester.widget<Semantics>(tracks).properties.label ?? '',
-      ].join(' | ');
-    }
+    /// What the screen says about the resolved version: the hero's facts line
+    /// (picture and audio format). The track choice line under the buttons is
+    /// gone (2026-11-01), so the version shows by its resolution alone.
+    String status(WidgetTester tester) =>
+        tester.getSemantics(find.bySemanticsIdentifier('tv_detail_information')).label;
 
     Future<void> settleSelection(WidgetTester tester) async {
       await tester.pump();
@@ -2327,25 +2184,23 @@ void main() {
       await saveMediaVersionPreferenceFor(movie, index: 1, versions: movie.mediaVersions!);
       await pumpDetail(tester, client);
       expect(status(tester), contains('4K'));
-      expect(status(tester), contains('Japanese'));
-      expect(status(tester), isNot(contains('English')));
+      expect(status(tester), isNot(contains('1080p')));
       final itemReads = client.itemReads;
 
       await saveMediaVersionPreferenceFor(movie, index: 0, versions: movie.mediaVersions!);
       await settleSelection(tester);
       expect(status(tester), contains('1080p'));
-      expect(status(tester), contains('English'));
-      expect(status(tester), isNot(contains('Japanese')));
+      expect(status(tester), isNot(contains('4K')));
       await saveMediaVersionPreferenceFor(movie, index: 1, versions: movie.mediaVersions!);
       await settleSelection(tester);
-      expect(status(tester), contains('Japanese'));
+      expect(status(tester), contains('4K'));
       final settings = await SettingsService.getInstance();
       await settings.write(
         SettingsService.mediaVersionPreferences,
         SettingsService.mediaVersionPreferences.defaultValue,
       );
       await settleSelection(tester);
-      expect(status(tester), contains('English'));
+      expect(status(tester), contains('1080p'));
       expect(client.itemReads, itemReads, reason: 'selection changes reuse item metadata, not its derived source');
     });
 
@@ -2357,7 +2212,7 @@ void main() {
       final client = _FakeMediaServerClient(show: movie, childrenByParent: {}, rawItems: {'movie': raw});
       await saveMediaVersionPreferenceFor(movie, index: 1, versions: movie.mediaVersions!);
       final navigator = await pumpDetail(tester, client);
-      expect(status(tester), contains('Japanese'));
+      expect(status(tester), contains('4K'));
       Future<void> returnAfterChanging(List<dynamic> media) async {
         unawaited(navigator.currentState!.push(MaterialPageRoute<void>(builder: (_) => const SizedBox())));
         await tester.pump();
@@ -2372,11 +2227,9 @@ void main() {
       final versions = raw['Media'] as List;
       await returnAfterChanging(versions.reversed.toList());
       expect(status(tester), contains('4K'));
-      expect(status(tester), contains('Japanese'));
       await returnAfterChanging([versions.first]);
       expect(status(tester), contains('1080p'));
-      expect(status(tester), contains('English'));
-      expect(status(tester), isNot(contains('Japanese')));
+      expect(status(tester), isNot(contains('4K')));
     });
 
     testWidgets('unavailable saved source falls back to the same playable version and part as Play', (tester) async {
@@ -2386,9 +2239,7 @@ void main() {
       await saveMediaVersionPreferenceFor(movie, index: 1, versions: movie.mediaVersions!);
       await pumpDetail(tester, client);
       expect(status(tester), contains('1080p'));
-      expect(status(tester), contains('English'));
-      expect(status(tester), isNot(contains('French')));
-      expect(status(tester), isNot(contains('Japanese')));
+      expect(status(tester), isNot(contains('4K')));
     });
 
     testWidgets('old selection probe cannot publish after preference change or screen disposal', (tester) async {
@@ -2402,10 +2253,10 @@ void main() {
       client.sourceGate = null;
       await saveMediaVersionPreferenceFor(movie, index: 0, versions: movie.mediaVersions!);
       await settleSelection(tester);
-      expect(status(tester), contains('English'));
+      expect(status(tester), contains('1080p'));
       gate.complete();
       await tester.pump();
-      expect(status(tester), isNot(contains('Japanese')));
+      expect(status(tester), isNot(contains('4K')));
       final disposedGate = Completer<void>();
       client.sourceGate = disposedGate;
       await saveMediaVersionPreferenceFor(movie, index: 1, versions: movie.mediaVersions!);
@@ -2442,15 +2293,14 @@ void main() {
       )..onDeckEpisode = first;
       await saveMediaVersionPreferenceFor(first, index: 1, versions: first.mediaVersions!);
       await pumpDetail(tester, client);
-      expect(status(tester), contains('Japanese'));
+      expect(status(tester), contains('4K'));
       tester.state<TvBrowseRailState>(find.byType(TvBrowseRail)).requestFocus();
       await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
       await settleSelection(tester);
       expect(find.text('S1E2'), findsOneWidget);
       expect(status(tester), contains('4K'));
-      expect(status(tester), contains('Japanese'));
-      expect(status(tester), isNot(contains('English')));
+      expect(status(tester), isNot(contains('1080p')));
     });
 
     testWidgets('offline picture labels use the completed nonzero download without probing server tracks', (
@@ -2494,8 +2344,6 @@ void main() {
       await pumpDetail(tester, client, downloads: downloads);
       expect(status(tester), contains('4K'));
       expect(status(tester), isNot(contains('1080p')));
-      expect(status(tester), isNot(contains('Japanese')));
-      expect(status(tester), isNot(contains('Off')));
       expect(client.itemReads, 0);
       expect(client.sourceReads, 0);
       expect(client.earlyPaints, isEmpty);
@@ -3045,8 +2893,8 @@ void main() {
 
     testWidgets('hero chip strip sheds chips by usefulness instead of wrapping', (tester) async {
       // The hero metadata strip is a single run: when it cannot fit, chips
-      // drop by usefulness — rating badges from the end first, then the
-      // quality label, certification, and runtime — never by wrapping onto a
+      // drop by usefulness — the score first, then the quality label,
+      // certification, and runtime — never by wrapping onto a
       // second run the height clip would hide. The interactive Rate chip and
       // the year go last and first, respectively. Phone widths take the
       // scores off the strip onto a row of their own, where the strip's
@@ -3064,9 +2912,7 @@ void main() {
             serverId: 'server_1',
             serverName: 'Server',
           ).copyWith(
-            // Unbranded sources (Plex's critic and audience scores, a bare
-            // unattributed score) render a square icon plus the bare value
-            // text, so each badge is findable by its formatted value.
+            // Plebz folds them into one average: (9.2 + 7.4 + 6.4) / 3.
             ratings: const [
               MediaRatingSource(source: 'critic', value: 9.2),
               MediaRatingSource(source: 'audience', value: 7.4),
@@ -3075,9 +2921,7 @@ void main() {
           );
       final client = _FakeMediaServerClient(show: movie, childrenByParent: const {});
 
-      // Per-source scores: averaging is on by default in this fork.
       await SettingsService.getInstance();
-      await SettingsService.instance.write(PlebzPrefs.averageRatings, false);
       await pumpPhoneDetail(tester, client, movie);
 
       Future<void> resizeTo(double width) async {
@@ -3110,11 +2954,7 @@ void main() {
 
       // 1100 wide: everything fits (test font ~13px/char puts the full strip
       // near 740px against ~1068px of hero width).
-      expectChips(present: ['2017', 'PG-13', '1h 46min', '1080p', '9.2', '7.4', '6.4', rate], absent: []);
-
-      // The scores pill sheds badges from the end before anything else.
-      await resizeTo(660);
-      expectChips(present: ['2017', 'PG-13', '1h 46min', '1080p', '9.2', rate], absent: ['7.4', '6.4']);
+      expectChips(present: ['2017', 'PG-13', '1h 46min', '1080p', '7.7', rate], absent: []);
 
       void expectScoresRow(List<String> scores) {
         final rateDy = tester.getCenter(find.text(rate)).dy;
@@ -3126,18 +2966,18 @@ void main() {
         }
       }
 
-      // Phone width: every score moves to its own row, and the strip sheds
+      // Phone width: the score moves to its own row, and the strip sheds
       // the quality label and the certification — never the runtime, year,
       // or Rate.
       await resizeTo(420);
-      expectChips(present: ['2017', '1h 46min', rate], absent: ['9.2', '7.4', '6.4', '1080p', 'PG-13']);
-      expectScoresRow(['9.2', '7.4', '6.4']);
+      expectChips(present: ['2017', '1h 46min', rate], absent: ['7.7', '1080p', 'PG-13']);
+      expectScoresRow(['7.7']);
 
       // Down to the bone: the strip keeps the year and the interactive Rate
-      // chip, and the scores row still has room for all three.
+      // chip, and the score keeps its row.
       await resizeTo(320);
-      expectChips(present: ['2017', rate], absent: ['1h 46min', '1080p', 'PG-13', '9.2']);
-      expectScoresRow(['9.2', '7.4', '6.4']);
+      expectChips(present: ['2017', rate], absent: ['1h 46min', '1080p', 'PG-13', '7.7']);
+      expectScoresRow(['7.7']);
     });
 
     testWidgets('phone-width hero centres the title, chip rows and actions; wider heroes stay left', (tester) async {
@@ -3763,7 +3603,6 @@ void main() {
       expect(find.byType(FocusableActionBar), findsNothing);
       expect(find.byType(TvBrowseRail), findsNothing);
       expect(find.byType(EpisodeCard), findsNothing);
-      expect(find.byKey(const ValueKey('detail_playback_tracks')), findsNothing);
     }
 
     testWidgets('an exact episode push with no parent information closes its own detail', (tester) async {

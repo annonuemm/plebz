@@ -1024,11 +1024,10 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
 
   /// Headline score, leaderboard context, audience counts, availability and
   /// release-shape facts that fit the established compact chip treatment.
-  /// The mean of every attributed score, when the user asked for one and there
-  /// is more than one score to combine. Null otherwise — a lone score is not an
+  /// The mean of every attributed score, when there is more than one score to
+  /// combine. Null otherwise — a lone score is not an
   /// average of anything, so it keeps its own attributed chip below.
   double? _combinedRating() {
-    if (!SettingsService.instance.read(PlebzPrefs.averageRatings)) return null;
     // The connected trackers' scores join the mean, as on the library page.
     final ratings = withCommunityRatings(_item.ratings ?? const [], _communityRatings);
     if (ratings.length < 2) return null;
@@ -1967,14 +1966,7 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
                                     ),
                                   ),
                                 ),
-                              SettingValueBuilder<bool>(
-                                pref: PlebzPrefs.averageRatings,
-                                builder: (context, _, _) {
-                                  final chips = _buildStatsChips();
-                                  if (chips == null) return const SizedBox.shrink();
-                                  return Padding(padding: const EdgeInsets.only(top: 20), child: chips);
-                                },
-                              ),
+                              if (_buildStatsChips() case final Widget chips) ...[const SizedBox(height: 20), chips],
                               if (item.overview?.trim() case final overview? when overview.isNotEmpty) ...[
                                 const SizedBox(height: 24),
                                 CollapsibleText(
@@ -1993,15 +1985,10 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
                               ],
                               // Gated as one unit — spacing included — so hiding
                               // the grid leaves no orphaned gap behind it.
-                              SettingValueBuilder<bool>(
-                                pref: PlebzPrefs.showCatalogDetailFacts,
-                                builder: (context, showFacts, _) {
-                                  if (!showFacts) return const SizedBox.shrink();
-                                  final facts = _buildFactsSection(theme);
-                                  if (facts == null) return const SizedBox.shrink();
-                                  return Padding(padding: const EdgeInsets.only(top: 24), child: facts);
-                                },
-                              ),
+                              if (_buildFactsSection(theme) case final Widget facts) ...[
+                                const SizedBox(height: 24),
+                                facts,
+                              ],
                               // Which friends watched it (Plebz), as a row of the facts.
                               if (_item.ids.plex case final discoverId? when discoverId.isNotEmpty)
                                 FriendsWatchedBuilder(
@@ -2018,29 +2005,20 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
                                 const SizedBox(height: 24),
                                 recommenders,
                               ],
-                              SettingValueBuilder<bool>(
-                                pref: PlebzPrefs.averageRatings,
-                                builder: (context, _, _) {
-                                  final ratings = _buildRatingsSection(theme);
-                                  if (ratings == null) return const SizedBox.shrink();
-                                  return Padding(padding: const EdgeInsets.only(top: 24), child: ratings);
-                                },
-                              ),
+                              if (_buildRatingsSection(theme) case final Widget ratings) ...[
+                                const SizedBox(height: 24),
+                                ratings,
+                              ],
                               if (_buildScheduleSection(theme) case final Widget schedule) ...[
                                 const SizedBox(height: 24),
                                 schedule,
                               ],
                               // Gated as one unit — spacing included — so
                               // hiding it leaves no orphaned gap behind.
-                              SettingValueBuilder<bool>(
-                                pref: PlebzPrefs.showCatalogDetailCrew,
-                                builder: (context, showCrew, _) {
-                                  if (!showCrew) return const SizedBox.shrink();
-                                  final crew = _buildCrewSection(theme);
-                                  if (crew == null) return const SizedBox.shrink();
-                                  return Padding(padding: const EdgeInsets.only(top: 24), child: crew);
-                                },
-                              ),
+                              if (_buildCrewSection(theme) case final Widget crew) ...[
+                                const SizedBox(height: 24),
+                                crew,
+                              ],
                               if (_buildTagsSection(theme) case final Widget tags) ...[
                                 const SizedBox(height: 24),
                                 tags,

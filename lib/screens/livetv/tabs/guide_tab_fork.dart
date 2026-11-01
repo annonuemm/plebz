@@ -71,7 +71,7 @@ extension _GuideTabFork on GuideTabState {
   /// ruler, over the channel column, instead of a strip of their own above
   /// it — the design's place, and the strip's height goes to the rows. Glas
   /// too while [ockerFlatSizes] holds.
-  bool get _timePillInRuler => _showsTimeNavigation && _ockerLayout && ockerFlatSizes(context);
+  bool get _timePillInRuler => _ockerLayout && ockerFlatSizes(context);
 
   /// Whether the band above the grid — the live picture, the title of what is
   /// on, and its description — is drawn at all.
@@ -179,10 +179,6 @@ extension _GuideTabFork on GuideTabState {
     }
   }
 
-  /// The guide is also built by hosts that have not loaded settings yet, and
-  /// the strip has always been there — so an unread setting keeps it.
-  bool get _showsTimeNavigation => SettingsService.instanceOrNull?.read(PlebzPrefs.liveTvGuideTimeNavigation) ?? true;
-
   /// What the last preview said about its stream belongs to that stream, so
   /// it goes with it; the new one reports its own once it plays.
   /// The channel list was replaced under the cursor — a playlist read again
@@ -208,6 +204,7 @@ extension _GuideTabFork on GuideTabState {
 
   void _setPreviewChannel(LiveTvChannel? channel) {
     _previewStreamInfo.value = null;
+    _previewCopies.value = null;
     _setState(() => _previewChannel = channel);
   }
 
@@ -372,18 +369,12 @@ extension _GuideTabFork on GuideTabState {
 
   /// Where UP off the top row goes.
   ///
-  /// The time strip when it is shown, and past it when it is not: an invisible
-  /// stop costs a press and gives nothing back — the cursor simply seems to
-  /// vanish for a beat somewhere above the grid.
+  /// The time strip.
   void _exitGridUpwards() {
-    if (_showsTimeNavigation) {
-      _updateFocus(() {
-        _focusZone = _GuideZone.timeNav;
-        _timeNavIndex = 1;
-      });
-      return;
-    }
-    widget.onNavigateUp?.call();
+    _updateFocus(() {
+      _focusZone = _GuideZone.timeNav;
+      _timeNavIndex = 1;
+    });
   }
 
   /// The channel the guide comes home to: the one in the preview window, else
@@ -449,7 +440,7 @@ extension _GuideTabFork on GuideTabState {
   /// handhelds, where the grid runs on beneath it: the rows are sized for
   /// what can be seen.
   void _measureGridHeight(double maxHeight) {
-    final chrome = _timeHeaderHeight + (_showsTimeNavigation && !_timePillInRuler ? _timeNavigationHeight : 0.0);
+    final chrome = _timeHeaderHeight + (!_timePillInRuler ? _timeNavigationHeight : 0.0);
     final rows = maxHeight - chrome - ockerFloatingBottomInset(context);
     if (rows.isFinite && rows > 0) _gridHeight = rows;
   }
@@ -701,6 +692,7 @@ extension _GuideTabFork on GuideTabState {
                       // television's band; the picture reports them as it
                       // starts, so it has to be listening from the first.
                       streamInfo: _previewStreamInfo,
+                      copies: _previewCopies,
                     ),
                   )
                 else if (_isTabletGlassPanel)

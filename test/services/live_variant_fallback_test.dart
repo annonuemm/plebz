@@ -272,7 +272,9 @@ void main() {
       LiveFileShape mpv(String? format) => (format: format, dynamic: null);
       expect(isOffAirClip(Duration.zero, mpv('mp4')), isFalse);
       expect(isOffAirClip(const Duration(seconds: 10), mpv('mp4')), isTrue);
-      expect(isOffAirClip(const Duration(seconds: 10), mpv('mpegts')), isTrue);
+      // A live transport stream's length is what mpv has read so far.
+      expect(isOffAirClip(const Duration(milliseconds: 691), mpv('mpegts')), isFalse);
+      expect(isOffAirClip(const Duration(seconds: 3), mpv('mpegts')), isFalse);
       expect(isOffAirClip(const Duration(seconds: 60), mpv('mov,mp4,m4a,3gp,3g2,mj2')), isTrue);
       expect(isOffAirClip(const Duration(seconds: 61), mpv('mp4')), isFalse);
       expect(isOffAirClip(const Duration(seconds: 4), mpv('hls')), isFalse);

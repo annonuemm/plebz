@@ -22,7 +22,6 @@ void main() {
   setUp(() => OckerLiquidGlass.debugOfferedHere = true);
   tearDown(() {
     OckerLiquidGlass.setting.value = false;
-    OckerLiquidGlass.fakeGlass.value = true;
     OckerLiquidGlass.debugOfferedHere = null;
     DevicePerformance.debugReset();
   });
@@ -239,27 +238,10 @@ void main() {
     expect(free, EdgeInsets.zero, reason: 'a pane standing free keeps its whole edge');
   });
 
-  testWidgets('on Android the fake glass can be switched off: flat, as Apple\'s builds without Liquid Glass', (
-    tester,
-  ) async {
+  testWidgets('on Android the fake glass is always on', (tester) async {
     OckerLiquidGlass.debugOfferedHere = false;
     await pumpPane(tester);
     expect(sheen(tester), isTrue);
-
-    OckerLiquidGlass.fakeGlass.value = false;
-    await tester.pump();
-    expectFlat(tester);
-
-    OckerLiquidGlass.fakeGlass.value = true;
-    await tester.pump();
-    expect(sheen(tester), isTrue, reason: 'back at once, without a rebuild from above');
-  });
-
-  testWidgets('the fake glass switch leaves Apple\'s builds alone', (tester) async {
-    OckerLiquidGlass.fakeGlass.value = false;
-    OckerLiquidGlass.setting.value = true;
-    await pumpPane(tester);
-    expect(blurBehindWords(), findsOneWidget, reason: 'Liquid Glass is theirs');
   });
 
   testWidgets('Flach stays flat', (tester) async {
@@ -334,11 +316,6 @@ void main() {
       await service.write(PlebzPrefs.glasLiquid, false);
       await Future<void>.delayed(Duration.zero);
       expect(OckerLiquidGlass.setting.value, isFalse);
-
-      expect(OckerLiquidGlass.fakeGlass.value, isTrue, reason: 'the fake glass on by default');
-      await service.write(PlebzPrefs.glasFakeGlass, false);
-      await Future<void>.delayed(Duration.zero);
-      expect(OckerLiquidGlass.fakeGlass.value, isFalse);
     });
   });
 

@@ -330,6 +330,10 @@ class GuideTabState extends State<GuideTab>
   /// What the preview is receiving, written by [GuidePreviewPlayer] and shown
   /// by the redesign's band.
   final ValueNotifier<GuideStreamInfo?> _previewStreamInfo = ValueNotifier(null);
+
+  /// The copies of the channel in the band, said by its picture.
+  final ValueNotifier<GuideLiveCopies?> _previewCopies = ValueNotifier(null);
+
   final GlobalKey<GuidePreviewPlayerState> _previewKey = GlobalKey<GuidePreviewPlayerState>();
 
   @override
@@ -365,7 +369,7 @@ class GuideTabState extends State<GuideTab>
         _gridColumn = 0;
         _gridChannelIndex = 0;
         _focusedProgram = null;
-      } else if (_showsTimeNavigation) {
+      } else {
         _focusZone = _GuideZone.timeNav;
         _timeNavIndex = 1;
       }
@@ -1396,9 +1400,7 @@ class GuideTabState extends State<GuideTab>
     final rows = _guideRows;
     return Column(
       children: [
-        // Hidden, the strip also gives up its focus row: the guide then opens
-        // on now and is travelled with the D-pad alone.
-        if (_showsTimeNavigation && !_timePillInRuler) _buildTimeNavigation(theme),
+        if (!_timePillInRuler) _buildTimeNavigation(theme),
         Expanded(
           child: ListenableBuilder(
             listenable: _gridHorizontalController,

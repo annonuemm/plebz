@@ -13,6 +13,18 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.38.0 (Build 899)
+
+### Aussehen
+- Plebz hat jetzt zwei Designs: Glas und Flach. Das alte Design „Original“ gibt es nicht mehr. Wer es benutzt hat, sieht ab jetzt Glas. Auf Handy, Tablet und Mac bleibt der gewohnte Aufbau, nur das Aussehen ist neu.
+
+### Einstellungen
+- Die Einstellungen sind aufgeräumt: Rund 20 Schalter sind weg. Was sie gesteuert haben, ist jetzt fest so eingestellt, wie es die meisten ohnehin hatten. Wer etwa Knöpfe auf der Startseite ausgeblendet hatte, sieht sie wieder.
+
+### Live-TV
+- Bei zusammengefassten Sendern kannst du jetzt auch auf Handy und Tablet selbst die Fassung wählen: im Player und direkt auf dem Vorschaubild über dem Programm.
+- Zusammengefasste Sender springen beim Einschalten nicht mehr unnötig durch ihre Fassungen.
+
 ## 1.37.1 (Build 897)
 
 - Kleinere Sicherheitsfixes.

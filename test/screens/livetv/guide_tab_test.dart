@@ -686,69 +686,13 @@ http://provider/stream/ard
     expect(box.width / box.height, closeTo(16 / 9, 0.02));
   });
 
-  testWidgets('with the time strip hidden, one press leaves the grid upwards', (tester) async {
-    // The strip is a focus stop of its own. Hidden, it still took a press and
-    // showed nothing for it — the cursor seemed to vanish for a beat somewhere
-    // above the grid.
-    resetSharedPreferencesForTest();
-    SettingsService.resetForTesting();
-    final settings = await SettingsService.getInstance();
-    await settings.write(PlebzPrefs.liveTvGuideTimeNavigation, false);
-    TvDetectionService.debugSetAppleTVOverride(true);
-    GuidePreviewPlayerState.debugSuppressPlayback = true;
-    addTearDown(() => GuidePreviewPlayerState.debugSuppressPlayback = false);
-
-    final multiServer = testMultiServerProvider(MultiServerManager());
-    addTearDown(multiServer.dispose);
-
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(1280, 600);
-    addTearDown(() {
-      tester.view.resetDevicePixelRatio();
-      tester.view.resetPhysicalSize();
-    });
-
-    var leftUpwards = 0;
-    await tester.pumpWidget(
-      TranslationProvider(
-        child: InputModeTracker(
-          child: MultiProvider(
-            providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
-            child: MaterialApp(
-              theme: monoTheme(MonoPalette.dark),
-              home: Scaffold(
-                body: GuideTab(channels: [_channel()], onNavigateUp: () => leftUpwards++),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    final guideFocus = tester.widget<Focus>(
-      find.byWidgetPredicate((widget) => widget is Focus && widget.focusNode?.debugLabel == 'guide_tab'),
-    );
-    guideFocus.focusNode!.requestFocus();
-    await tester.pump();
-    // Into the grid, then straight back out of the top of it.
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    await tester.pump();
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
-    await tester.pump();
-
-    expect(leftUpwards, 1);
-  });
-
   testWidgets('LEFT on a channel opens the groups where the host offers them', (tester) async {
     // TiviMate's gesture: at the left edge of the channel column, LEFT is
     // "step out one level" rather than "leave the guide" — but only where the
     // host has a column of groups to open. Without one, LEFT still leaves.
     resetSharedPreferencesForTest();
     SettingsService.resetForTesting();
-    final settings = await SettingsService.getInstance();
-    await settings.write(PlebzPrefs.liveTvGuideTimeNavigation, false);
+    await SettingsService.getInstance();
     TvDetectionService.debugSetAppleTVOverride(true);
     GuidePreviewPlayerState.debugSuppressPlayback = true;
     addTearDown(() => GuidePreviewPlayerState.debugSuppressPlayback = false);
@@ -1754,43 +1698,6 @@ http://provider/stream/ard
       (plateOf(cell).shape! as RoundedRectangleBorder).borderRadius,
       (plateOf(programme).shape! as RoundedRectangleBorder).borderRadius,
     );
-  });
-
-  testWidgets('the time strip goes away when the setting says so', (tester) async {
-    resetSharedPreferencesForTest();
-    SettingsService.resetForTesting();
-    final settings = await SettingsService.getInstance();
-    TvDetectionService.debugSetAppleTVOverride(true);
-
-    final multiServer = testMultiServerProvider(MultiServerManager());
-    addTearDown(multiServer.dispose);
-
-    Future<void> pumpGuide() async {
-      await tester.pumpWidget(
-        TranslationProvider(
-          child: InputModeTracker(
-            child: MultiProvider(
-              providers: [ChangeNotifierProvider<MultiServerProvider>.value(value: multiServer)],
-              child: MaterialApp(
-                theme: monoTheme(MonoPalette.dark),
-                home: Scaffold(body: GuideTab(channels: [_channel()])),
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-    }
-
-    await pumpGuide();
-    expect(find.text(t.liveTv.today), findsOneWidget);
-
-    await settings.write(PlebzPrefs.liveTvGuideTimeNavigation, false);
-    await pumpGuide();
-
-    // Hidden, the guide opens on now and is travelled with the D-pad alone.
-    expect(find.text(t.liveTv.today), findsNothing);
   });
 
   testWidgets('on TV the first press previews the channel and the second hands over', (tester) async {

@@ -1,9 +1,6 @@
-import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
-
-import 'glass_edge_spin.dart';
 
 /// The three colours a glass focus edge runs through, top left to bottom
 /// right: where the light falls on it, the middle, and the far end.
@@ -116,31 +113,15 @@ class GlassFocusDecoration extends BoxDecoration {
 }
 
 class _GlassFocusPainter extends BoxPainter {
-  _GlassFocusPainter(this._decoration, super.onChanged) {
-    // Only a showing edge turns: one at rest never asks for a frame.
-    if (_decoration.opacity > 0 && onChanged != null) {
-      _spinListener = onChanged;
-      GlassEdgeSpin.instance.addListener(_spinListener!);
-    }
-  }
+  _GlassFocusPainter(this._decoration, super.onChanged);
 
   final GlassFocusDecoration _decoration;
-  VoidCallback? _spinListener;
-
-  @override
-  void dispose() {
-    if (_spinListener case final listener?) GlassEdgeSpin.instance.removeListener(listener);
-    super.dispose();
-  }
 
   @override
   void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
     final size = configuration.size;
     final d = _decoration;
     if (size == null || size.isEmpty || d.opacity <= 0) return;
-    final spin = GlassEdgeSpin.instance;
-    spin.notePainted();
-    final turn = spin.turn;
     final rect = offset & size;
     // The stroke's centre line: inside, on, or outside the box's own edge.
     final shift = d.edgeWidth * d.strokeAlign / 2;
@@ -155,8 +136,6 @@ class _GlassFocusPainter extends BoxPainter {
             c.withValues(alpha: c.a * d.opacity),
         ],
         stops: [0, d.colors.midFrom, d.colors.midTo, 1],
-        // The light going round the edge, when the viewer has asked for it.
-        transform: turn == 0 ? null : GradientRotation(turn * 2 * math.pi),
       ).createShader(rect);
     switch (d.shape) {
       case BoxShape.circle:

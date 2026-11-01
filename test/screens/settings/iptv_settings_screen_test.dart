@@ -301,9 +301,5 @@ void main() {
 
     expect(find.text(t.settings.liveTv), findsOneWidget);
     expect(find.text(t.settings.liveTvDefaultFavorites), findsOneWidget);
-    final before = SettingsService.instance.read(PlebzPrefs.liveTvGuideTimeNavigation);
-    await tester.tap(find.text(t.settings.liveTvGuideTimeNavigation));
-    await tester.pumpAndSettle();
-    expect(SettingsService.instance.read(PlebzPrefs.liveTvGuideTimeNavigation), !before);
   });
 }

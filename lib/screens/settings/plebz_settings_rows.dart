@@ -11,7 +11,13 @@ import '../../services/settings_service.dart' as settings show ThemeMode;
 import '../../services/settings_mutation_service.dart';
 import '../../redesign/ocker_skin.dart' show OckerKeepColours;
 import '../../theme/mono_theme.dart'
-    show FlachPreset, flachPresetById, flachPresets, isRedesignVariant, redesignOfferedHere, supportedAppThemeVariant;
+    show
+        FlachPreset,
+        flachPresetById,
+        flachPresets,
+        isRedesignVariant,
+        offeredAppThemeVariants,
+        supportedAppThemeVariant;
 import '../../utils/snackbar_helper.dart';
 import '../../widgets/setting_tile.dart';
 import '../../widgets/settings_builder.dart';
@@ -20,7 +26,7 @@ import 'settings_utils.dart';
 /// The look, as the first-run setup offers it: design, then the redesign's
 /// accent while it is on, then light or dark. Applied live — the page redraws as a choice is made.
 List<Widget> plebzAppearanceRows() => [
-  _themeVariantSelector(),
+  themeVariantTile(),
   SettingValueBuilder<AppThemeVariant>(
     pref: PlebzPrefs.appThemeVariant,
     builder: (context, variant, _) => switch (supportedAppThemeVariant(variant)) {
@@ -191,35 +197,33 @@ class _GlasGroundTile extends StatelessWidget {
   }
 }
 
-Widget _themeVariantSelector() => SettingSelectionTile<AppThemeVariant>(
+/// The look: Glas or Flach. Shared by Appearance and the setup.
+Widget themeVariantTile() => SettingSelectionTile<AppThemeVariant>(
   pref: PlebzPrefs.appThemeVariant,
   icon: Symbols.palette_rounded,
   title: t.settings.appThemeVariant,
-  subtitleBuilder: (value) => switch (supportedAppThemeVariant(value)) {
-    AppThemeVariant.standard => t.settings.appThemeVariantStandard,
-    AppThemeVariant.glas => t.settings.appThemeVariantGlas,
-    AppThemeVariant.flach => t.settings.appThemeVariantFlach,
-  },
+  // Through the host gate, so a carried-in value names the look that is
+  // actually drawn ("Original" reads as Glas).
+  subtitleBuilder: (value) => appThemeVariantLabel(supportedAppThemeVariant(value)),
   options: [
-    DialogOption(
-      value: AppThemeVariant.standard,
-      title: t.settings.appThemeVariantStandard,
-      subtitle: t.settings.appThemeVariantStandardDescription,
-    ),
-    if (redesignOfferedHere)
+    for (final variant in offeredAppThemeVariants)
       DialogOption(
-        value: AppThemeVariant.glas,
-        title: t.settings.appThemeVariantGlas,
-        subtitle: t.settings.appThemeVariantGlasDescription,
-      ),
-    if (redesignOfferedHere)
-      DialogOption(
-        value: AppThemeVariant.flach,
-        title: t.settings.appThemeVariantFlach,
-        subtitle: t.settings.appThemeVariantFlachDescription,
+        value: variant,
+        title: appThemeVariantLabel(variant),
+        subtitle: switch (variant) {
+          AppThemeVariant.standard => t.settings.appThemeVariantStandardDescription,
+          AppThemeVariant.glas => t.settings.appThemeVariantGlasDescription,
+          AppThemeVariant.flach => t.settings.appThemeVariantFlachDescription,
+        },
       ),
   ],
 );
+
+String appThemeVariantLabel(AppThemeVariant variant) => switch (variant) {
+  AppThemeVariant.standard => t.settings.appThemeVariantStandard,
+  AppThemeVariant.glas => t.settings.appThemeVariantGlas,
+  AppThemeVariant.flach => t.settings.appThemeVariantFlach,
+};
 
 /// Whether a ready-made look ([PlebzPrefs.flachPreset]) is on and
 /// Flach the design on show.

@@ -1657,20 +1657,14 @@ class Translations$settings$en {
 	/// en: 'Playlists stay reachable anyway'
 	String get showLibraryPlaylistsTabDescription => 'Playlists stay reachable anyway';
 
-	/// en: 'Audio and subtitles'
-	String get showPlaybackTracksStatus => 'Audio and subtitles';
+	/// en: 'Glass'
+	String get appThemeVariantGlas => 'Glass';
 
-	/// en: 'Shows which tracks Play would pick'
-	String get showPlaybackTracksStatusDescription => 'Shows which tracks Play would pick';
+	/// en: 'Glass surfaces and floating navigation'
+	String get appThemeVariantGlasDescription => 'Glass surfaces and floating navigation';
 
-	/// en: 'Redesign – Glass'
-	String get appThemeVariantGlas => 'Redesign – Glass';
-
-	/// en: 'Floating navigation, rearranged on TV'
-	String get appThemeVariantGlasDescription => 'Floating navigation, rearranged on TV';
-
-	/// en: 'Redesign – Flat'
-	String get appThemeVariantFlach => 'Redesign – Flat';
+	/// en: 'Flat'
+	String get appThemeVariantFlach => 'Flat';
 
 	/// en: 'Like Glass, but flat, with a white focus'
 	String get appThemeVariantFlachDescription => 'Like Glass, but flat, with a white focus';
@@ -1783,12 +1777,6 @@ class Translations$settings$en {
 	/// en: 'Near-black, violet, the play button in the logo's gradient'
 	String get glasAccentPlebzDescription => 'Near-black, violet, the play button in the logo\'s gradient';
 
-	/// en: 'Smooth focus'
-	String get glasSmoothFocus => 'Smooth focus';
-
-	/// en: 'Glides smoothly, even with reduced effects'
-	String get glasSmoothFocusDescription => 'Glides smoothly, even with reduced effects';
-
 	/// en: 'Background in the poster's colours'
 	String get glasUltraBlur => 'Background in the poster\'s colours';
 
@@ -1807,35 +1795,17 @@ class Translations$settings$en {
 	/// en: 'Otherwise each season gets its own row'
 	String get redesignSeasonTabsDescription => 'Otherwise each season gets its own row';
 
-	/// en: 'Turning focus edge'
-	String get glasSpinningFocus => 'Turning focus edge';
-
-	/// en: 'Costs a little performance'
-	String get glasSpinningFocusDescription => 'Costs a little performance';
-
 	/// en: 'Liquid Glass'
 	String get glasLiquid => 'Liquid Glass';
 
 	/// en: 'Blurred background as on Apple, costs performance'
 	String get glasLiquidDescription => 'Blurred background as on Apple, costs performance';
 
-	/// en: 'Glass effect'
-	String get glasFakeGlass => 'Glass effect';
-
-	/// en: 'Navigation and menus as glass, otherwise flat'
-	String get glasFakeGlassDescription => 'Navigation and menus as glass, otherwise flat';
-
 	/// en: 'Always show the symbol rail'
 	String get glasRailSymbols => 'Always show the symbol rail';
 
 	/// en: 'The navigation stays visible on the left'
 	String get glasRailSymbolsDescription => 'The navigation stays visible on the left';
-
-	/// en: 'Smooth scrolling'
-	String get smoothScroll => 'Smooth scrolling';
-
-	/// en: 'Rows and posters glide instead of jumping'
-	String get smoothScrollDescription => 'Rows and posters glide instead of jumping';
 
 	/// en: 'Seasonal start screen'
 	String get seasonalStartScreen => 'Seasonal start screen';
@@ -1854,48 +1824,6 @@ class Translations$settings$en {
 
 	/// en: 'Episode count and next air date; one extra request per show'
 	String get seerrCardEpisodeFactsDescription => 'Episode count and next air date; one extra request per show';
-
-	/// en: 'Detail facts'
-	String get showCatalogDetailFacts => 'Detail facts';
-
-	/// en: 'Original title, country, studios and budget on Explore pages'
-	String get showCatalogDetailFactsDescription => 'Original title, country, studios and budget on Explore pages';
-
-	/// en: 'Crew'
-	String get showCatalogDetailCrew => 'Crew';
-
-	/// en: 'Director, writer and producer on Explore pages'
-	String get showCatalogDetailCrewDescription => 'Director, writer and producer on Explore pages';
-
-	/// en: 'Combine ratings'
-	String get averageRatings => 'Combine ratings';
-
-	/// en: 'One average instead of a score per source'
-	String get averageRatingsDescription => 'One average instead of a score per source';
-
-	/// en: 'Watch Together button'
-	String get showWatchTogetherAction => 'Watch Together button';
-
-	/// en: ''
-	String get showWatchTogetherActionDescription => '';
-
-	/// en: 'Remote button'
-	String get showCompanionRemoteAction => 'Remote button';
-
-	/// en: ''
-	String get showCompanionRemoteActionDescription => '';
-
-	/// en: 'Server activity button'
-	String get showServerActivitiesAction => 'Server activity button';
-
-	/// en: ''
-	String get showServerActivitiesActionDescription => '';
-
-	/// en: 'Toolbar only on focus'
-	String get hideHomeActionsUntilFocus => 'Toolbar only on focus';
-
-	/// en: ''
-	String get hideHomeActionsUntilFocusDescription => '';
 
 	/// en: 'Download button'
 	String get showDownloadAction => 'Download button';
@@ -2106,12 +2034,6 @@ class Translations$settings$en {
 
 	/// en: 'Compact touch interface with bottom navigation'
 	String get layoutModePhoneDescription => 'Compact touch interface with bottom navigation';
-
-	/// en: 'Guide time picker'
-	String get liveTvGuideTimeNavigation => 'Guide time picker';
-
-	/// en: ''
-	String get liveTvGuideTimeNavigationDescription => '';
 
 	/// en: 'Channel names under the logo'
 	String get liveTvGuideChannelNames => 'Channel names under the logo';
@@ -11071,11 +10993,9 @@ extension on Translations {
 			'settings.appThemeVariantStandardDescription' => '',
 			'settings.showLibraryPlaylistsTab' => 'Playlists tab',
 			'settings.showLibraryPlaylistsTabDescription' => 'Playlists stay reachable anyway',
-			'settings.showPlaybackTracksStatus' => 'Audio and subtitles',
-			'settings.showPlaybackTracksStatusDescription' => 'Shows which tracks Play would pick',
-			'settings.appThemeVariantGlas' => 'Redesign – Glass',
-			'settings.appThemeVariantGlasDescription' => 'Floating navigation, rearranged on TV',
-			'settings.appThemeVariantFlach' => 'Redesign – Flat',
+			'settings.appThemeVariantGlas' => 'Glass',
+			'settings.appThemeVariantGlasDescription' => 'Glass surfaces and floating navigation',
+			'settings.appThemeVariantFlach' => 'Flat',
 			'settings.appThemeVariantFlachDescription' => 'Like Glass, but flat, with a white focus',
 			'settings.flachAccent' => 'Accent colour',
 			'settings.flachAccentDescription' => 'For progress, the current page and the filter',
@@ -11113,44 +11033,22 @@ extension on Translations {
 			'settings.glasAccentRotDescription' => 'A black ground and a strong red – like Netflix',
 			'settings.glasAccentPlebz' => 'Plebz',
 			'settings.glasAccentPlebzDescription' => 'Near-black, violet, the play button in the logo\'s gradient',
-			'settings.glasSmoothFocus' => 'Smooth focus',
-			'settings.glasSmoothFocusDescription' => 'Glides smoothly, even with reduced effects',
 			'settings.glasUltraBlur' => 'Background in the poster\'s colours',
 			'settings.glasUltraBlurDescription' => 'On Home and Explore',
 			'settings.glasDetailPanel' => 'Description beside the posters',
 			'settings.glasDetailPanelDescription' => 'Without it, more posters fit in a row',
 			'settings.redesignSeasonTabs' => 'Seasons as tabs',
 			'settings.redesignSeasonTabsDescription' => 'Otherwise each season gets its own row',
-			'settings.glasSpinningFocus' => 'Turning focus edge',
-			'settings.glasSpinningFocusDescription' => 'Costs a little performance',
 			'settings.glasLiquid' => 'Liquid Glass',
 			'settings.glasLiquidDescription' => 'Blurred background as on Apple, costs performance',
-			'settings.glasFakeGlass' => 'Glass effect',
-			'settings.glasFakeGlassDescription' => 'Navigation and menus as glass, otherwise flat',
 			'settings.glasRailSymbols' => 'Always show the symbol rail',
 			'settings.glasRailSymbolsDescription' => 'The navigation stays visible on the left',
-			'settings.smoothScroll' => 'Smooth scrolling',
-			'settings.smoothScrollDescription' => 'Rows and posters glide instead of jumping',
 			'settings.seasonalStartScreen' => 'Seasonal start screen',
 			'settings.seasonalStartScreenDescription' => 'Halloween from 17 to 31 October, Christmas from 1 to 26 December.',
 			'settings.homeTitleLogos' => 'Logos on Home and Explore',
 			'settings.homeTitleLogosDescription' => 'Title logos instead of text in the spotlight',
 			'settings.seerrCardEpisodeFacts' => 'Episode facts on Seerr posters',
 			'settings.seerrCardEpisodeFactsDescription' => 'Episode count and next air date; one extra request per show',
-			'settings.showCatalogDetailFacts' => 'Detail facts',
-			'settings.showCatalogDetailFactsDescription' => 'Original title, country, studios and budget on Explore pages',
-			'settings.showCatalogDetailCrew' => 'Crew',
-			'settings.showCatalogDetailCrewDescription' => 'Director, writer and producer on Explore pages',
-			'settings.averageRatings' => 'Combine ratings',
-			'settings.averageRatingsDescription' => 'One average instead of a score per source',
-			'settings.showWatchTogetherAction' => 'Watch Together button',
-			'settings.showWatchTogetherActionDescription' => '',
-			'settings.showCompanionRemoteAction' => 'Remote button',
-			'settings.showCompanionRemoteActionDescription' => '',
-			'settings.showServerActivitiesAction' => 'Server activity button',
-			'settings.showServerActivitiesActionDescription' => '',
-			'settings.hideHomeActionsUntilFocus' => 'Toolbar only on focus',
-			'settings.hideHomeActionsUntilFocusDescription' => '',
 			'settings.showDownloadAction' => 'Download button',
 			'settings.showDownloadActionDescription' => 'On movie and episode pages; otherwise in the ⋮ menu',
 			'settings.hardwareTest' => 'Hardware test',
@@ -11247,8 +11145,6 @@ extension on Translations {
 			'settings.layoutModeTabletDescription' => 'Touch interface with wide layout',
 			'settings.layoutModePhone' => 'Phone',
 			'settings.layoutModePhoneDescription' => 'Compact touch interface with bottom navigation',
-			'settings.liveTvGuideTimeNavigation' => 'Guide time picker',
-			'settings.liveTvGuideTimeNavigationDescription' => '',
 			'settings.liveTvGuideChannelNames' => 'Channel names under the logo',
 			'settings.liveTvGuideChannelNamesDescription' => '',
 			'settings.liveTvSeamlessFullscreen' => 'Seamless preview to full screen',
@@ -11550,8 +11446,6 @@ extension on Translations {
 			'videoControls.showPlaybackControls' => 'Show playback controls',
 			'videoControls.hidePlaybackControls' => 'Hide playback controls',
 			'videoControls.seekBackwardButton' => ({required Object seconds}) => 'Seek backward ${seconds} seconds',
-			_ => null,
-		} ?? switch (path) {
 			'videoControls.seekForwardButton' => ({required Object seconds}) => 'Seek forward ${seconds} seconds',
 			'videoControls.previousButton' => 'Previous episode',
 			'videoControls.nextButton' => 'Next episode',
@@ -11578,6 +11472,8 @@ extension on Translations {
 			'videoControls.rotationLockButton' => 'Rotation lock',
 			'videoControls.lockScreen' => 'Lock screen',
 			'videoControls.screenLockButton' => 'Screen lock',
+			_ => null,
+		} ?? switch (path) {
 			'videoControls.longPressToUnlock' => 'Long press to unlock',
 			'videoControls.timelineSlider' => 'Video timeline',
 			'videoControls.volumeSlider' => 'Volume level',
@@ -12064,8 +11960,6 @@ extension on Translations {
 			'hubDetail.releaseYear' => 'Release Year',
 			'hubDetail.dateAdded' => 'Date Added',
 			'hubDetail.rating' => 'Rating',
-			_ => null,
-		} ?? switch (path) {
 			'hubDetail.noItemsFound' => 'No items found',
 			'logs.clearLogs' => 'Clear Logs',
 			'logs.copyLogs' => 'Copy Logs',
@@ -12092,6 +11986,8 @@ extension on Translations {
 			'startup.restartRequiredBody' => 'Your data was repaired, but Plebz has to start fresh before it can use it. Close Plebz and open it again.',
 			'startup.quitPlezy' => 'Quit Plebz',
 			'startup.repairFailed' => 'Repair failed',
+			_ => null,
+		} ?? switch (path) {
 			'startup.repairKeptSignIns' => 'Your servers and profiles are still signed in.',
 			'startup.repairLostSignIns' => 'The key protecting your saved sign-ins could not be recovered. You will have to sign in to every server and profile again.',
 			'startup.repairLostSessions' => 'At least one tracker or Seerr connection was lost and has to be reconnected.',
@@ -12578,8 +12474,6 @@ extension on Translations {
 			'watchTogether.endRoomConfirm' => 'This ends the room for everyone.',
 			'watchTogether.end' => 'End',
 			'watchTogether.playBlockedTitle' => 'Playback didn\'t start',
-			_ => null,
-		} ?? switch (path) {
 			'watchTogether.playBlockedDescription' => 'Press play to start watching with the room.',
 			'watchTogether.notices.pressedPlay' => ({required Object name}) => '${name} pressed play',
 			'watchTogether.notices.playbackStarted' => 'Playback started',
@@ -12606,6 +12500,8 @@ extension on Translations {
 			'watchTogether.notices.shareFailed' => 'Couldn\'t share this video with the room',
 			'watchTogether.notices.downloadNotShared' => 'Downloads aren\'t shared with the room while their server is offline',
 			'watchTogether.notices.openFailed' => 'Couldn\'t open the room\'s video',
+			_ => null,
+		} ?? switch (path) {
 			'watchTogether.ended.ended' => 'The host ended the room',
 			'watchTogether.ended.kicked' => 'You were removed from the room',
 			'watchTogether.ended.expired' => 'The room expired',
@@ -13092,8 +12988,6 @@ extension on Translations {
 			'seerr.freshCookieRejected' => 'Seerr rejected the new session cookie',
 			'seerr.noUserInformation' => 'Seerr did not return user information',
 			'seerr.sessionRejectedAfterReauth' => 'The session was rejected after signing in again',
-			_ => null,
-		} ?? switch (path) {
 			'seerr.permissionDenied' => 'Seerr denied this action: your account no longer has the required permission',
 			'seerr.permissionRevoked' => 'You no longer have permission to request this',
 			'seerr.stillInCinemas' => 'A film still showing in cinemas has nothing to download yet — the request would sit open until its release. Better to wait until it is out.',
@@ -13120,6 +13014,8 @@ extension on Translations {
 			'services.ownProgressDescription' => 'Watched marks and progress come from Simkl, not the server',
 			'services.ownProgressNote' => 'Plex still marks watched at about 90 % – only matters for profiles without Simkl',
 			'services.syncStatusTitle' => 'Sync with Simkl',
+			_ => null,
+		} ?? switch (path) {
 			'services.syncStatusOk' => ({required Object time, required Object shows, required Object movies}) => 'Last synced at ${time} · ${shows} series, ${movies} films',
 			'services.syncStatusNever' => 'Not synced yet',
 			'services.syncStatusRunning' => 'Syncing …',

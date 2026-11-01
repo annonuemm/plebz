@@ -33,13 +33,8 @@ abstract final class OckerLiquidGlass {
   /// The viewer's switch; the theme provider keeps it in step with the pref.
   static final ValueNotifier<bool> setting = ValueNotifier(false);
 
-  /// The viewer's switch for the fake glass where Liquid Glass is not offered
-  /// (Android; `PlebzPrefs.glasFakeGlass`), kept in step by the theme
-  /// provider: off, the glass that stands in for the lens is flat instead.
-  static final ValueNotifier<bool> fakeGlass = ValueNotifier(true);
-
-  /// Either switch: what the panes and capsules listen to.
-  static final Listenable changes = Listenable.merge([setting, fakeGlass]);
+  /// What the panes and capsules listen to.
+  static Listenable get changes => setting;
 
   /// Where it is offered at all: the Apple builds only — Apple TV, the Mac,
   /// and iPhone and iPad once there is a build for them (the user's call,
@@ -63,7 +58,7 @@ abstract final class OckerLiquidGlass {
   /// where it is not offered at all — on Android, where the fake glass (a
   /// sheen and a lit edge, no blur) stands in for the lens for good. On
   /// Apple's builds with Liquid Glass off, the same shapes are flat instead.
-  static bool get look => active || (!offeredHere && fakeGlass.value);
+  static bool get look => active || !offeredHere;
 
   /// How much of a pane's ground stays when it is liquid: the blur now does
   /// some of what the ground did, keeping words readable over a busy picture.

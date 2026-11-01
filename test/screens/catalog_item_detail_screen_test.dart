@@ -8,7 +8,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/focus/focusable_action_bar.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:plezy/i18n/app_locale_utils.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/media/media_kind.dart';
@@ -436,8 +435,6 @@ void main() {
     resetSharedPreferencesForTest();
     SettingsService.resetForTesting();
     await SettingsService.getInstance();
-    // Per-source scores: averaging is on by default in this fork.
-    await SettingsService.instance.write(PlebzPrefs.averageRatings, false);
     TvDetectionService.debugSetAppleTVOverride(true);
   });
 
@@ -1522,27 +1519,7 @@ void main() {
     expect(find.text(t.explore.detail.revealSpoilerTags), findsNothing);
   });
 
-  testWidgets('ratings row labels every score source without a brand mark', (tester) async {
-    const item = CatalogItem(
-      source: CatalogSourceId.trakt,
-      kind: MediaKind.movie,
-      title: 'Rated Movie',
-      ids: CatalogItemIds(tmdb: 11),
-      ratings: [
-        MediaRatingSource(source: 'critic', value: 7.2, votes: 14),
-        MediaRatingSource(source: 'audience', value: 8.8, votes: 15),
-      ],
-    );
-    final source = _FakeCatalogSource(detail: const CatalogDetail(item: item));
-
-    await _pumpDetail(tester, source, item: item);
-
-    expect(find.text(t.explore.detail.ratings), findsOneWidget);
-    expect(find.text('Critics 7.2 (14 votes)'), findsOneWidget);
-    expect(find.text('Audience 8.8 (15 votes)'), findsOneWidget);
-  });
-
-  testWidgets('averaging moves one score up to the poster chips and drops the ratings section', (tester) async {
+  testWidgets('several scores become one average in the poster chips, and the ratings section goes', (tester) async {
     const item = CatalogItem(
       source: CatalogSourceId.trakt,
       kind: MediaKind.show,
@@ -1559,7 +1536,6 @@ void main() {
     );
     final source = _FakeCatalogSource(detail: const CatalogDetail(item: item));
 
-    await SettingsService.instance.write(PlebzPrefs.averageRatings, true);
     await _pumpDetail(tester, source, item: item);
 
     // (8.1 + 8.3 + 7.2 + 8.8) / 4 = 8.1
@@ -1569,33 +1545,6 @@ void main() {
     expect(find.text(t.explore.detail.ratings), findsNothing);
     expect(find.text('Simkl 8.1 (11 votes)'), findsNothing);
     expect(find.text('Audience 8.8 (15 votes)'), findsNothing);
-  });
-
-  testWidgets('the poster chips follow the averaging switch without reopening the page', (tester) async {
-    const item = CatalogItem(
-      source: CatalogSourceId.trakt,
-      kind: MediaKind.show,
-      title: 'Live Toggle Show',
-      ids: CatalogItemIds(tmdb: 25),
-      rating: 8.5,
-      votes: 3616,
-      ratings: [
-        MediaRatingSource(source: 'simkl', value: 8.0, votes: 11),
-        MediaRatingSource(source: 'mal', value: 9.0, votes: 13),
-      ],
-    );
-    final source = _FakeCatalogSource(detail: const CatalogDetail(item: item));
-
-    await _pumpDetail(tester, source, item: item);
-    expect(find.text('8.5 (3.62K votes)'), findsOneWidget);
-    expect(find.text(t.explore.detail.ratings), findsOneWidget);
-
-    await SettingsService.instance.write(PlebzPrefs.averageRatings, true);
-    await tester.pumpAndSettle();
-
-    expect(find.text('${t.common.ratingSource.average} 8.5'), findsOneWidget);
-    expect(find.text('8.5 (3.62K votes)'), findsNothing);
-    expect(find.text(t.explore.detail.ratings), findsNothing);
   });
 
   testWidgets('a lone attributed score keeps its own section rather than posing as an average', (tester) async {
@@ -1610,7 +1559,6 @@ void main() {
     );
     final source = _FakeCatalogSource(detail: const CatalogDetail(item: item));
 
-    await SettingsService.instance.write(PlebzPrefs.averageRatings, true);
     await _pumpDetail(tester, source, item: item);
 
     expect(find.textContaining(t.common.ratingSource.average), findsNothing);
@@ -1618,51 +1566,6 @@ void main() {
     // Simkl's score wears its own mark since Plezy 2.24, so only its votes
     // are written out beside it.
     expect(find.textContaining('(11 votes)'), findsOneWidget);
-  });
-
-  testWidgets('scores whose source owns a logo render the mark and that source scale', (tester) async {
-    const item = CatalogItem(
-      source: CatalogSourceId.trakt,
-      kind: MediaKind.movie,
-      title: 'Attributed Movie',
-      ids: CatalogItemIds(tmdb: 21),
-      ratings: [
-        MediaRatingSource(source: 'rottenTomatoesCritic', value: 8.4),
-        MediaRatingSource(source: 'rottenTomatoesAudience', value: 4.1),
-        MediaRatingSource(source: 'imdb', value: 7.9, votes: 12),
-        MediaRatingSource(source: 'tmdb', value: 7.5),
-        MediaRatingSource(source: 'simkl', value: 8.1, votes: 11),
-        MediaRatingSource(source: 'mal', value: 8.3, votes: 13),
-      ],
-    );
-    final source = _FakeCatalogSource(detail: const CatalogDetail(item: item));
-
-    await _pumpDetail(tester, source, item: item);
-
-    expect(
-      tester
-          .widgetList<SvgPicture>(find.byType(SvgPicture))
-          .map((picture) => picture.bytesLoader)
-          .whereType<SvgAssetLoader>()
-          .map((loader) => loader.assetName),
-      containsAll(const [
-        'assets/rating_icons/rt_fresh.svg',
-        'assets/rating_icons/rt_spilled.svg',
-        'assets/rating_icons/imdb.svg',
-        'assets/rating_icons/tmdb.svg',
-        'assets/simkl_mark.svg',
-        'assets/mal_mark.svg',
-      ]),
-    );
-    // The mark carries the attribution, so the chip keeps only the score, on
-    // the scale that source publishes.
-    expect(find.text('84%'), findsOneWidget);
-    expect(find.text('41%'), findsOneWidget);
-    expect(find.text('7.9 (12 votes)'), findsOneWidget);
-    expect(find.text('75%'), findsOneWidget);
-    expect(find.text('8.1 (11 votes)'), findsOneWidget);
-    expect(find.text('8.30 (13 votes)'), findsOneWidget);
-    expect(find.text('${t.common.ratingSource.rottenTomatoesCritic} 8.4'), findsNothing);
   });
 
   testWidgets('seasonal rank keeps its season window instead of claiming all-time rank', (tester) async {
@@ -2049,71 +1952,6 @@ void main() {
     expect(find.textContaining('2,500,000'), findsOneWidget);
   });
 
-  testWidgets('the detail-facts setting hides the fact grid and keeps the rest of the page', (tester) async {
-    final item = CatalogItem(
-      source: CatalogSourceId.trakt,
-      kind: MediaKind.movie,
-      title: 'Fact Toggle Movie',
-      overview: 'Overview stays visible',
-      ids: CatalogItemIds(tmdb: 22),
-      originalTitle: 'Original Fact Title',
-      altTitles: ['Alternate Fact Title'],
-      countries: ['US'],
-      credits: [CatalogCredit(name: 'A. Director', role: CatalogCreditRole.director)],
-    );
-    final source = _FakeCatalogSource(detail: CatalogDetail(item: item));
-
-    await SettingsService.instance.write(PlebzPrefs.showCatalogDetailFacts, false);
-    await _pumpDetail(tester, source, item: item);
-
-    expect(find.text('Original Fact Title'), findsNothing);
-    expect(find.text('Alternate Fact Title'), findsNothing);
-    expect(find.text(t.explore.detail.alsoKnownAs), findsNothing);
-    // Only the fact grid goes; the synopsis and the crew block are separate
-    // sections and must survive.
-    expect(find.text('Overview stays visible'), findsOneWidget);
-    expect(find.text('A. Director'), findsOneWidget);
-
-    // The page reacts to the switch without being reopened.
-    await SettingsService.instance.write(PlebzPrefs.showCatalogDetailFacts, true);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Original Fact Title'), findsOneWidget);
-    expect(find.text('Alternate Fact Title'), findsOneWidget);
-  });
-
-  testWidgets('the crew setting hides only the crew grid', (tester) async {
-    final item = CatalogItem(
-      source: CatalogSourceId.trakt,
-      kind: MediaKind.show,
-      title: 'Crew Toggle Show',
-      overview: 'Overview stays visible',
-      ids: CatalogItemIds(tmdb: 27),
-      originalTitle: 'Original Fact Title',
-      credits: [
-        CatalogCredit(name: 'A. Director', role: CatalogCreditRole.director),
-        CatalogCredit(name: 'W. Writer', role: CatalogCreditRole.writer),
-      ],
-    );
-    final source = _FakeCatalogSource(detail: CatalogDetail(item: item));
-
-    await SettingsService.instance.write(PlebzPrefs.showCatalogDetailCrew, false);
-    await _pumpDetail(tester, source, item: item);
-
-    expect(find.text(t.explore.detail.crew), findsNothing);
-    expect(find.text('A. Director'), findsNothing);
-    expect(find.text('W. Writer'), findsNothing);
-    // The neighbouring sections stay put.
-    expect(find.text('Overview stays visible'), findsOneWidget);
-    expect(find.text('Original Fact Title'), findsOneWidget);
-
-    await SettingsService.instance.write(PlebzPrefs.showCatalogDetailCrew, true);
-    await tester.pumpAndSettle();
-
-    expect(find.text(t.explore.detail.crew), findsOneWidget);
-    expect(find.text('A. Director'), findsOneWidget);
-  });
-
   testWidgets('detail facts are shown by default', (tester) async {
     final item = CatalogItem(
       source: CatalogSourceId.trakt,
@@ -2126,7 +1964,6 @@ void main() {
 
     await _pumpDetail(tester, source, item: item);
 
-    expect(SettingsService.instance.read(PlebzPrefs.showCatalogDetailFacts), isTrue);
     expect(find.text('Original Fact Title'), findsOneWidget);
   });
 

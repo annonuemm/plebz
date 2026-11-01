@@ -23,8 +23,6 @@ import '../test_helpers/prefs.dart';
 /// normally one or two entries — never a reason to re-fetch an item.
 Future<void> _pumpSpotlight(WidgetTester tester, MediaItem item, {AppThemeVariant? variant}) async {
   await SettingsService.getInstance();
-  // Per-source scores: averaging is on by default in this fork.
-  await SettingsService.instance.write(PlebzPrefs.averageRatings, false);
   tester.view.physicalSize = const Size(1920, 1080);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -130,24 +128,25 @@ void main() {
     expect(find.text('Logo Movie'), findsWidgets, reason: 'the title as type in its place');
   });
 
-  testWidgets('dashboard spotlight badges every rating the listing carried', (tester) async {
+  testWidgets('dashboard spotlight shows several scores as one average', (tester) async {
     await _pumpSpotlight(
       tester,
       const MediaItem.plex(
         id: 'movie_1',
         kind: MediaKind.movie,
         title: 'Spotlight Movie',
-        rating: 9.2,
+        rating: 9.0,
         ratings: [
-          MediaRatingSource(source: 'rottenTomatoesCritic', value: 9.2),
-          MediaRatingSource(source: 'rottenTomatoesAudience', value: 8.5),
+          MediaRatingSource(source: 'rottenTomatoesCritic', value: 9.0),
+          MediaRatingSource(source: 'rottenTomatoesAudience', value: 8.0),
         ],
       ),
     );
 
-    expect(find.text('92%'), findsOneWidget);
-    expect(find.text('85%'), findsOneWidget);
-    expect(find.byType(SvgPicture), findsNWidgets(2));
+    expect(find.text('8.5'), findsOneWidget);
+    expect(find.text('90%'), findsNothing);
+    // The mean belongs to no brand, so no logo is drawn for it.
+    expect(find.byType(SvgPicture), findsNothing);
   });
 
   testWidgets('dashboard spotlight still shows one badge for a single-score listing', (tester) async {
@@ -178,7 +177,7 @@ void main() {
     expect(find.byType(SvgPicture), findsNothing);
   });
 
-  testWidgets('dashboard spotlight announces each rating with its source name', (tester) async {
+  testWidgets('dashboard spotlight announces the average as one', (tester) async {
     final semantics = tester.ensureSemantics();
 
     await _pumpSpotlight(
@@ -194,12 +193,7 @@ void main() {
       ),
     );
 
-    // Without the group's own label a reader would hear "92%, 7.4" with no
-    // way to tell which score belongs to which source.
-    expect(
-      find.bySemanticsLabel('${t.common.ratingSource.rottenTomatoesCritic} 92%, ${t.common.ratingSource.imdb} 7.4'),
-      findsOneWidget,
-    );
+    expect(find.bySemanticsLabel('${t.common.ratingSource.average} 8.3'), findsOneWidget);
     semantics.dispose();
   });
 }

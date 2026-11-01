@@ -1143,106 +1143,91 @@ class _DiscoverScreenState extends State<DiscoverScreen>
           }
         }
 
-        // The three optional entry points below are per-feature switches,
-        // so the bar rebuilds when any of them is flipped.
-        return SettingsBuilder(
-          prefs: const [
-            PlebzPrefs.showWatchTogetherAction,
-            PlebzPrefs.showCompanionRemoteAction,
-            PlebzPrefs.showServerActivitiesAction,
-          ],
-          builder: (context) {
-            final settings = SettingsService.instance;
-            return FocusableActionBar(
-              key: _actionBarKey,
-              hideUntilFocused: settings.read(PlebzPrefs.hideHomeActionsUntilFocus),
-              onNavigateLeft: _navigateToSidebar,
-              onNavigateDown: _focusContentFromAppBar,
-              actions: [
-                FocusableAction(icon: Symbols.refresh_rounded, iconColor: foregroundColor, onPressed: manualRefresh),
-                // Watch Together
-                if (watchTogetherAvailable && settings.read(PlebzPrefs.showWatchTogetherAction))
-                  FocusableAction(
-                    onPressed: openWatchTogether,
-                    child: Stack(
-                      children: [
-                        IconButton(
-                          icon: AppIcon(
-                            Symbols.group_rounded,
-                            fill: watchTogether.isInSession ? 1 : 0,
-                            color: watchTogether.isInSession ? colorScheme.primary : foregroundColor,
-                          ),
-                          onPressed: openWatchTogether,
-                          tooltip: t.watchTogether.title,
-                        ),
-                        if (watchTogether.isInSession && watchTogether.participantCount > 1)
-                          Positioned(
-                            top: 6,
-                            right: 6,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: colorScheme.primary,
-                                borderRadius: BorderRadius.all(Radius.circular(flatRadius(context, 8))),
-                              ),
-                              child: Text(
-                                '${watchTogether.participantCount}',
-                                style: TextStyle(color: colorScheme.onPrimary, fontSize: 10, fontWeight: .bold),
-                              ),
-                            ),
-                          ),
-                      ],
+        return FocusableActionBar(
+          key: _actionBarKey,
+          onNavigateLeft: _navigateToSidebar,
+          onNavigateDown: _focusContentFromAppBar,
+          actions: [
+            FocusableAction(icon: Symbols.refresh_rounded, iconColor: foregroundColor, onPressed: manualRefresh),
+            // Watch Together
+            if (watchTogetherAvailable)
+              FocusableAction(
+                onPressed: openWatchTogether,
+                child: Stack(
+                  children: [
+                    IconButton(
+                      icon: AppIcon(
+                        Symbols.group_rounded,
+                        fill: watchTogether.isInSession ? 1 : 0,
+                        color: watchTogether.isInSession ? colorScheme.primary : foregroundColor,
+                      ),
+                      onPressed: openWatchTogether,
+                      tooltip: t.watchTogether.title,
                     ),
-                  ),
-                // Companion Remote
-                if (settings.read(PlebzPrefs.showCompanionRemoteAction))
-                  FocusableAction(
+                    if (watchTogether.isInSession && watchTogether.participantCount > 1)
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary,
+                            borderRadius: BorderRadius.all(Radius.circular(flatRadius(context, 8))),
+                          ),
+                          child: Text(
+                            '${watchTogether.participantCount}',
+                            style: TextStyle(color: colorScheme.onPrimary, fontSize: 10, fontWeight: .bold),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            // Companion Remote
+            FocusableAction(
+              onPressed: openCompanionRemote,
+              child: Stack(
+                children: [
+                  IconButton(
+                    icon: AppIcon(
+                      Symbols.phone_android_rounded,
+                      fill: companionRemote.isConnected ? 1 : 0,
+                      color: companionRemote.isConnected ? colorScheme.primary : foregroundColor,
+                    ),
                     onPressed: openCompanionRemote,
-                    child: Stack(
-                      children: [
-                        IconButton(
-                          icon: AppIcon(
-                            Symbols.phone_android_rounded,
-                            fill: companionRemote.isConnected ? 1 : 0,
-                            color: companionRemote.isConnected ? colorScheme.primary : foregroundColor,
-                          ),
-                          onPressed: openCompanionRemote,
-                          tooltip: t.companionRemote.title,
+                    tooltip: t.companionRemote.title,
+                  ),
+                  if (companionRemote.isConnected)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                          border: Border.fromBorderSide(BorderSide(color: foregroundColor, width: 1)),
                         ),
-                        if (companionRemote.isConnected)
-                          Positioned(
-                            top: 6,
-                            right: 6,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                shape: BoxShape.circle,
-                                border: Border.fromBorderSide(BorderSide(color: foregroundColor, width: 1)),
-                              ),
-                            ),
-                          ),
-                      ],
+                      ),
                     ),
-                  ),
-                // Server Tasks — Plex-only (`/activities` API has no
-                // Jellyfin equivalent), hide the button entirely on
-                // Jellyfin-only profiles so the chrome doesn't show
-                // a permanently empty popover.
-                if (settings.read(PlebzPrefs.showServerActivitiesAction) &&
-                    PlatformDetector.isDesktop(context) &&
-                    context.select<MultiServerProvider, bool>((p) => p.hasOnlinePlexServers))
-                  FocusableAction(
-                    onPressed: () => _serverActivitiesButtonKey.currentState?.togglePanel(),
-                    child: ServerActivitiesButton(key: _serverActivitiesButtonKey),
-                  ),
-                // User menu — profiles + sign out. Under "Flach" on a
-                // television it lives at the rail's foot instead (Plebz).
-                if (!(isOckerLayout(context) && ockerFlat(context))) _buildUserMenuAction(context),
-              ],
-            );
-          },
+                ],
+              ),
+            ),
+            // Server Tasks — Plex-only (`/activities` API has no
+            // Jellyfin equivalent), hide the button entirely on
+            // Jellyfin-only profiles so the chrome doesn't show
+            // a permanently empty popover.
+            if (PlatformDetector.isDesktop(context) &&
+                context.select<MultiServerProvider, bool>((p) => p.hasOnlinePlexServers))
+              FocusableAction(
+                onPressed: () => _serverActivitiesButtonKey.currentState?.togglePanel(),
+                child: ServerActivitiesButton(key: _serverActivitiesButtonKey),
+              ),
+            // User menu — profiles + sign out. Under "Flach" on a
+            // television it lives at the rail's foot instead (Plebz).
+            if (!(isOckerLayout(context) && ockerFlat(context))) _buildUserMenuAction(context),
+          ],
         );
       },
     );

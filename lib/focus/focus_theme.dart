@@ -72,12 +72,11 @@ class FocusTheme {
   /// Successive presses (including hold-repeats) retarget the animation from
   /// wherever the row currently is, so a fast series still glides continuously.
   ///
-  /// Plebz: an Android television glides as the Apple TV does unless
-  /// "Weiches Scrollen" is off ([PlebzPrefs.smoothScroll], the user's call:
-  /// Plezy's quick step read as a jump).
+  /// Plebz: an Android television glides as the Apple TV does (the user's
+  /// call: Plezy's quick step read as a jump), unless the visual effects are
+  /// reduced — a weak box keeps the quick step.
   static Duration navigationScrollDuration() =>
-      PlatformDetector.isAppleTV() ||
-          (PlatformDetector.isTV() && (SettingsService.instanceOrNull?.read(PlebzPrefs.smoothScroll) ?? true))
+      PlatformDetector.isAppleTV() || (PlatformDetector.isTV() && !DevicePerformance.isReduced)
       ? const Duration(milliseconds: 500)
       : const Duration(milliseconds: 150);
 

@@ -24,8 +24,9 @@ import 'playback_open_outcome.dart';
 // A channel never ends, so a copy that ends within [offAirClipLimit] of its
 // open is a clip, whatever the player. Where the player can tell sooner, the
 // copy is moved past at once: ExoPlayer knows whether an HLS playlist is
-// still growing; for mpv a short length on a stream that is not HLS will do
-// (a live HLS playlist reports its few seconds of window as a length there).
+// still growing; for mpv a short length on a file with a length of its own
+// will do (a live HLS playlist reports its few seconds of window as a length
+// there, a live transport stream what it has read so far).
 //
 // The copy picker lives in the player's controls, which come up with the
 // first frame — for a silent copy never, for a clip over the wrong picture.
@@ -82,8 +83,9 @@ typedef LiveFileShape = ({String? format, bool? dynamic});
 /// Whether a live open whose file reports [duration] is known at once to be a
 /// provider's stand-in clip rather than the channel. A long file may be a
 /// channel that plays a film round the clock. A timeline that stopped growing
-/// is a finished file; without that word, a stream that is not HLS will do,
-/// and an unknown one is given the benefit of the doubt — its end still tells.
+/// is a finished file; without that word, a file format that has a length of
+/// its own will do, and an unknown one is given the benefit of the doubt — its
+/// end still tells.
 @visibleForTesting
 bool isOffAirClip(Duration duration, LiveFileShape shape) {
   if (duration <= Duration.zero || duration > LiveVariantFallbackGuard.offAirClipLimit) return false;
@@ -91,14 +93,16 @@ bool isOffAirClip(Duration duration, LiveFileShape shape) {
   if (dynamic != null) return !dynamic;
   final format = shape.format;
   if (format == null || format.isEmpty) return false;
-  return !_isHls(format);
+  return !_lengthIsSoFar(format);
 }
 
-/// mpv names an HLS stream `hls` (ffmpeg's demuxer); older builds said
-/// `applehttp`.
-bool _isHls(String format) {
+/// Live formats whose length is only what has arrived: mpv gives an HLS stream
+/// (`hls`, ffmpeg's demuxer; older builds said `applehttp`) its playlist's
+/// window, and a transport stream (`mpegts`) what it has read, under a second
+/// on the first read.
+bool _lengthIsSoFar(String format) {
   final lower = format.toLowerCase();
-  return lower.contains('hls') || lower.contains('applehttp');
+  return lower.contains('hls') || lower.contains('applehttp') || lower.contains('mpegts');
 }
 
 /// Watches the open of a merged channel's copy, and names the next copy when

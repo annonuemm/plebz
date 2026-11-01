@@ -48,27 +48,9 @@ void main() {
     resetSharedPreferencesForTest();
     SettingsService.resetForTesting();
     await SettingsService.getInstance();
-    // Per-source scores: averaging is on by default in this fork.
-    await SettingsService.instance.write(PlebzPrefs.averageRatings, false);
   });
 
-  test('the fork averages the scores unless the viewer says otherwise', () {
-    expect(PlebzPrefs.averageRatings.defaultValue, isTrue);
-  });
-
-  testWidgets('with averaging off every source keeps its own badge', (tester) async {
-    await _pumpBadges(tester, _fourScoreMovie);
-
-    expect(SettingsService.instance.read(PlebzPrefs.averageRatings), isFalse);
-    expect(find.text('79%'), findsOneWidget);
-    expect(find.text('7.4'), findsOneWidget);
-    expect(find.text('95%'), findsOneWidget);
-    expect(find.text('96%'), findsOneWidget);
-    expect(find.byType(SvgPicture), findsNWidgets(4));
-  });
-
-  testWidgets('the setting collapses the four badges into one mean score', (tester) async {
-    await SettingsService.instance.write(PlebzPrefs.averageRatings, true);
+  testWidgets('four scores collapse into one mean score', (tester) async {
     await _pumpBadges(tester, _fourScoreMovie);
 
     expect(find.text('8.6'), findsOneWidget);
@@ -80,19 +62,7 @@ void main() {
     expect(find.byType(SvgPicture), findsNothing);
   });
 
-  testWidgets('the pill follows the switch without being rebuilt by its parent', (tester) async {
-    await _pumpBadges(tester, _fourScoreMovie);
-    expect(find.text('7.4'), findsOneWidget);
-
-    await SettingsService.instance.write(PlebzPrefs.averageRatings, true);
-    await tester.pumpAndSettle();
-
-    expect(find.text('8.6'), findsOneWidget);
-    expect(find.text('7.4'), findsNothing);
-  });
-
   testWidgets('a lone score is shown as itself, not as an average of one', (tester) async {
-    await SettingsService.instance.write(PlebzPrefs.averageRatings, true);
     await _pumpBadges(
       tester,
       const MediaItem.jellyfin(
@@ -109,7 +79,6 @@ void main() {
   });
 
   testWidgets('an item with no scores renders nothing either way', (tester) async {
-    await SettingsService.instance.write(PlebzPrefs.averageRatings, true);
     await _pumpBadges(tester, const MediaItem.plex(id: 'movie_3', kind: MediaKind.movie, title: 'Unrated'));
 
     expect(find.byType(SvgPicture), findsNothing);

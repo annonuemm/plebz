@@ -1,13 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/models/livetv_channel.dart';
 import 'package:plezy/mpv/mpv.dart';
 import 'package:plezy/mpv/player/video_rect_support.dart';
+import 'package:plezy/screens/livetv/guide_preview_panel.dart';
 import 'package:plezy/screens/livetv/guide_preview_player.dart';
 import 'package:plezy/services/iptv/iptv_live_tv_source.dart';
 import 'package:plezy/services/live_picture_handover.dart';
+import 'package:plezy/services/live_variant_fallback.dart';
+import 'package:plezy/widgets/overlay_sheet.dart';
 import 'package:plezy/widgets/video_surface_hole.dart';
+
+import '../../test_helpers/theme.dart';
 
 /// A playing picture in a texture on one of the Android backends, both of
 /// which can also place their picture on the video plane; just enough of a
@@ -100,6 +106,74 @@ void main() {
     expect(previewKey.currentState!.isHoldingStream, isTrue);
     expect(find.byType(Video), findsOneWidget);
     expect(player.disposed, isFalse);
+  });
+
+  testWidgets('the band offers a merged channel\'s copies beside full screen and keeps to the one picked', (
+    tester,
+  ) async {
+    LiveCopyMemory.resetForTest();
+    addTearDown(LiveCopyMemory.resetForTest);
+    final copies = ValueNotifier<GuideLiveCopies?>(null);
+    addTearDown(copies.dispose);
+
+    Future<void> pumpBand(LiveTvChannel? channel) => tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: const [testMonoTokens]),
+        home: OverlaySheetHost(
+          child: Scaffold(
+            body: SizedBox(
+              width: 360,
+              height: 202,
+              child: GuidePreviewBand(
+                playerKey: previewKey,
+                previewChannel: channel,
+                program: null,
+                onFullScreen: () {},
+                copies: copies,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // One address: nothing to choose.
+    await pumpBand(null);
+    previewKey.currentState!.adopt(_picture(_PicturePlayer()));
+    await pumpBand(_channel);
+    await tester.pump();
+    expect(copies.value, isNull);
+    expect(find.byTooltip(t.liveTv.chooseVariant), findsNothing);
+    expect(find.byTooltip(t.common.fullscreen), findsOneWidget);
+
+    await pumpBand(null);
+    await tester.pump();
+    const variants = [
+      (url: 'http://provider.test/live/1.ts', headers: <String, String>{}, label: 'ARD HD'),
+      (url: 'http://provider.test/live/2.ts', headers: <String, String>{}, label: 'ARD FHD'),
+    ];
+    previewKey.currentState!.adopt(
+      LivePictureHandover(
+        player: _PicturePlayer(),
+        session: IptvPlaybackSession(variants: variants),
+        channel: _channel,
+      ),
+    );
+    await pumpBand(_channel);
+    await tester.pump();
+    expect(copies.value?.labels, ['ARD HD', 'ARD FHD']);
+    expect(copies.value?.index, 0);
+
+    await tester.tap(find.byTooltip(t.liveTv.chooseVariant));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ARD FHD'));
+    await tester.pumpAndSettle();
+
+    expect(
+      LiveCopyMemory.startIndexFor(IptvPlaybackSession.memoryKeyFor(variants), variants.length),
+      1,
+      reason: 'a full screen that opens the channel afresh must find the copy the viewer picked',
+    );
   });
 
   testWidgets('a picture in a texture is not handed over: only one on the plane grows', (tester) async {

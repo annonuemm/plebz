@@ -254,7 +254,7 @@ class IptvLiveTvSource implements LiveTvSupport {
     if (cache == null) return;
 
     final reading = Stopwatch()..start();
-    final entry = await cache.read(source.id);
+    final entry = await cache.read(source.id, secrets: IptvCacheSecrets.of(source));
     if (entry != null) {
       _timing('stored copy read', reading, '${entry.channels.length} channels, ${entry.programs.length} programmes');
     }
@@ -330,6 +330,7 @@ class IptvLiveTvSource implements LiveTvSupport {
           epgLogos: _epgLogos,
           playlistGuideUrls: _playlistGuideUrls,
         ),
+        secrets: IptvCacheSecrets.of(source),
       ),
     );
   }

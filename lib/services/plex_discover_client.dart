@@ -8,6 +8,7 @@ import '../media/media_kind.dart';
 import '../utils/app_logger.dart';
 import '../utils/external_ids.dart';
 import '../utils/json_utils.dart';
+import '../utils/token_request.dart';
 
 /// Credentials for Plex's cloud Discover provider. The access token is scoped
 /// to the active Plex/Home profile; it must never be logged or persisted here.
@@ -757,11 +758,11 @@ class PlexDiscoverClient {
       'X-Plex-Version': '2',
       if (language != null) ...{'Accept-Language': language, 'X-Plex-Language': language},
     };
-    final request = switch (method) {
-      'GET' => _http.get(uri, headers: headers),
-      'PUT' => _http.put(uri, headers: headers),
-      _ => throw ArgumentError.value(method, 'method', 'Unsupported Plex Discover method'),
-    };
+    if (method != 'GET' && method != 'PUT') {
+      throw ArgumentError.value(method, 'method', 'Unsupported Plex Discover method');
+    }
+    // Plebz: a redirect may not carry the token off plex.tv.
+    final request = sendTokenRequest(_http, method, uri, headers: headers, home: 'plex.tv');
     final stopwatch = Stopwatch()..start();
     final response = await request.timeout(requestTimeout);
     // The other API surfaces log every request; without this line Discover

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/models/livetv_channel.dart';
 import 'package:plezy/models/livetv_program.dart';
 import 'package:plezy/services/iptv/iptv_disk_cache.dart';
+import 'package:plezy/services/iptv/iptv_source.dart';
 
 /// A playlist and a guide are expensive to fetch and slow to parse, and
 /// neither changes by the hour — so they outlive the app session. What is
@@ -128,5 +129,68 @@ void main() {
     await cache.write('src', IptvCacheEntry(savedAt: DateTime.now(), channels: const [], programs: const []));
 
     expect(await cache.read('src'), isNull);
+  });
+
+  group('credentials (Plebz)', () {
+    // An Xtream panel's playlist names the login in every stream address and
+    // in its guide address; the copy on disk must not.
+    const source = IptvSource(
+      id: 'src',
+      name: 'Mein IPTV',
+      kind: IptvSourceKind.m3u,
+      playlistUrl: 'http://panel.example:8080/get.php?username=kunde42&password=g3h%2Fe1m&type=m3u_plus',
+      epgUrls: ['http://panel.example:8080/xmltv.php?username=kunde42&password=g3h%2Fe1m'],
+    );
+    final secrets = IptvCacheSecrets.of(source);
+
+    IptvCacheEntry withLogin() => IptvCacheEntry(
+      savedAt: DateTime.fromMillisecondsSinceEpoch(1_700_000_000_000),
+      channels: entry().channels,
+      programs: const [],
+      streamUrls: {'iptv:src:das-erste.de': 'http://panel.example:8080/live/kunde42/g3h%2Fe1m/1.ts'},
+      playlistGuideUrls: ['http://panel.example:8080/xmltv.php?username=kunde42&password=g3h/e1m'],
+    );
+
+    Future<String> stored() => File('${root.path}/iptv_cache/src.json').readAsString();
+
+    test('are kept out of the file and come back on reading', () async {
+      await cache.write('src', withLogin(), secrets: secrets);
+
+      final onDisk = await stored();
+      expect(onDisk, isNot(contains('kunde42')));
+      expect(onDisk, isNot(contains('g3h')));
+
+      final restored = (await cache.read('src', secrets: secrets))!;
+      expect(restored.streamUrls, withLogin().streamUrls);
+      expect(restored.playlistGuideUrls, withLogin().playlistGuideUrls);
+      expect(restored.channels.single.title, 'Das Erste HD');
+    });
+
+    test('a copy whose login the source no longer has is a miss', () async {
+      await cache.write('src', withLogin(), secrets: secrets);
+
+      expect(await cache.read('src'), isNull);
+    });
+
+    test('a copy written before is read, and written again without them', () async {
+      await cache.write('src', withLogin());
+      expect(await stored(), contains('kunde42'));
+
+      final restored = await cache.read('src', secrets: secrets);
+      expect(restored!.streamUrls, withLogin().streamUrls);
+      // The rewrite runs behind the read.
+      for (var i = 0; i < 100 && (await stored()).contains('kunde42'); i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(await stored(), isNot(contains('kunde42')));
+    });
+
+    test('short values are left alone', () {
+      final short = IptvCacheSecrets.of(
+        const IptvSource(id: 's', name: 'n', kind: IptvSourceKind.xtream, username: 'tv', password: 'ab'),
+      );
+
+      expect(short.conceal('"tv ab"'), '"tv ab"');
+    });
   });
 }

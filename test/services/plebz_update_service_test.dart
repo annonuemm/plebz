@@ -39,6 +39,8 @@ Map<String, dynamic> _releaseJson({
             'name': 'Plebz-1.0.1-build551-$label.apk',
             'browser_download_url': 'https://example.test/$label.apk',
             'size': 4,
+            // What the fake download serves; an asset without a digest is refused.
+            'digest': 'sha256:${sha256.convert(utf8.encode('apk!'))}',
           },
       ],
 };
@@ -264,6 +266,13 @@ void main() {
         size: 4,
         sha256: 'f' * 64,
       );
+
+      await expectLater(service(utf8.encode('apk!')).download(asset), throwsFormatException);
+      expect(File('${temp.path}/updates/Plebz.apk').existsSync(), isFalse);
+    });
+
+    test('refuses a file the release publishes no digest for (Plebz)', () async {
+      final asset = PlebzReleaseAsset(name: 'Plebz.apk', url: Uri.parse('https://example.test/p.apk'), size: 4);
 
       await expectLater(service(utf8.encode('apk!')).download(asset), throwsFormatException);
       expect(File('${temp.path}/updates/Plebz.apk').existsSync(), isFalse);

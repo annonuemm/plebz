@@ -3,6 +3,8 @@ package com.edde746.plezy
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -20,6 +22,10 @@ import java.io.File
  * apps"). This channel answers whether that is allowed, opens the switch when it is not, and
  * starts the installer on the APK. Android checks the signature itself: an APK not signed with
  * the installed app's key is refused, whatever the download claimed.
+ *
+ * The APK goes to the installer that came with the system, not to whichever app claims APKs: a
+ * file manager or another store registered for them would otherwise be offered the update (and
+ * the read grant on it) as well. A box with no system installer for it keeps the open request.
  */
 internal class UpdateInstallerChannel(private val activity: Activity) {
   companion object {
@@ -70,11 +76,30 @@ internal class UpdateInstallerChannel(private val activity: Activity) {
       setDataAndType(uri, APK_MIME)
       addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
     }
+    systemInstaller(intent)?.let(intent::setPackage)
     return try {
       activity.startActivity(intent)
       true
     } catch (_: ActivityNotFoundException) {
       false
     }
+  }
+
+  /** The package of a system app that installs what [intent] opens, or null when none does. */
+  private fun systemInstaller(intent: Intent): String? {
+    val packageManager = activity.packageManager
+    val matches = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      packageManager.queryIntentActivities(
+        intent,
+        PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong())
+      )
+    } else {
+      @Suppress("DEPRECATION")
+      packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
+    }
+    return matches
+      .map { it.activityInfo }
+      .firstOrNull { (it.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0 }
+      ?.packageName
   }
 }

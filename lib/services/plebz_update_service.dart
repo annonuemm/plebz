@@ -214,9 +214,9 @@ class PlebzUpdateService {
   static const downloadIdleTimeout = Duration(seconds: 30);
 
   /// Downloads [asset] into the app's cache and checks it against the digest
-  /// GitHub published. Throws on a failed or stalled download or a mismatch,
-  /// and [PlebzUpdateCancelled] once [cancelled] completes; a file that did
-  /// not finish is removed.
+  /// GitHub published. Throws on a failed or stalled download, a mismatch or
+  /// a missing digest, and [PlebzUpdateCancelled] once [cancelled] completes;
+  /// a file that did not finish is removed.
   Future<File> download(
     PlebzReleaseAsset asset, {
     void Function(double progress)? onProgress,
@@ -251,8 +251,14 @@ class PlebzUpdateService {
       hasher.close();
       if (!complete && file.existsSync()) file.deleteSync();
     }
+    // No digest, no install: the digest is what ties the file to the release
+    // GitHub listed, and GitHub has published one for every asset since 2025.
     final expected = asset.sha256;
-    if (expected != null && hashInput.value.toString() != expected) {
+    if (expected == null) {
+      file.deleteSync();
+      throw const FormatException('The release publishes no checksum for this file');
+    }
+    if (hashInput.value.toString() != expected) {
       file.deleteSync();
       throw const FormatException('The downloaded update does not match the published checksum');
     }

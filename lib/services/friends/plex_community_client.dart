@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../../utils/app_logger.dart';
 import '../../utils/json_utils.dart';
+import '../../utils/token_request.dart';
 import '../plex_discover_client.dart';
 
 /// A Plex friend as the account's friend list names them (Plebz).
@@ -182,20 +183,21 @@ query PlebzTitleActivity(\$first: PaginationInt!, \$metadataID: ID) {
 
   Future<Map<String, dynamic>> _query(String query, Map<String, Object?> variables, String operation) async {
     final stopwatch = Stopwatch()..start();
-    final response = await _http
-        .post(
-          endpoint,
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'X-Plex-Token': session.accessToken,
-            'X-Plex-Client-Identifier': session.clientIdentifier,
-            'X-Plex-Product': 'Plezy',
-            'X-Plex-Version': '2',
-          },
-          body: jsonEncode({'query': query, 'variables': variables, 'operationName': operation}),
-        )
-        .timeout(requestTimeout);
+    final response = await sendTokenRequest(
+      _http,
+      'POST',
+      endpoint,
+      home: 'plex.tv',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-Plex-Token': session.accessToken,
+        'X-Plex-Client-Identifier': session.clientIdentifier,
+        'X-Plex-Product': 'Plezy',
+        'X-Plex-Version': '2',
+      },
+      body: jsonEncode({'query': query, 'variables': variables, 'operationName': operation}),
+    ).timeout(requestTimeout);
     appLogger.d('Community $operation → ${response.statusCode} (${stopwatch.elapsedMilliseconds}ms)');
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw PlexCommunityException(response.statusCode, 'HTTP ${response.statusCode}');

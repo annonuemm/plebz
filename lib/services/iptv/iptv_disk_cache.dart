@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../models/livetv_channel.dart';
 import '../../models/livetv_program.dart';
 import '../../utils/app_logger.dart';
+import 'iptv_source.dart';
 
 /// One source's channels and guide, as they were last read.
 class IptvCacheEntry {
@@ -86,37 +88,50 @@ class IptvDiskCache {
   /// What was stored for [sourceId], or null when there is nothing readable.
   ///
   /// A damaged file is a miss, not an error: the source refetches, and the
-  /// next write replaces it.
-  Future<IptvCacheEntry?> read(String sourceId) async {
+  /// next write replaces it. So is a file whose [secrets] no longer fill its
+  /// placeholders (see [IptvCacheSecrets]); one written before the secrets
+  /// were taken out is read, and written again without them.
+  Future<IptvCacheEntry?> read(String sourceId, {IptvCacheSecrets secrets = IptvCacheSecrets.none}) async {
     try {
       final file = await _fileFor(sourceId);
       if (!await file.exists()) return null;
-      final raw = await file.readAsString();
+      final stored = await file.readAsString();
+      final raw = secrets.restore(stored);
+      if (raw == null) {
+        appLogger.i('IPTV cache: the stored copy of $sourceId names credentials this source no longer has');
+        return null;
+      }
       // A real guide is megabytes and would drop frames parsed here; a short
       // one costs less to parse than an isolate costs to start.
-      return raw.length < _isolateThresholdBytes ? _decodeEntry(raw) : await compute(_decodeEntry, raw);
+      final entry = raw.length < _isolateThresholdBytes ? _decodeEntry(raw) : await compute(_decodeEntry, raw);
+      if (entry != null && identical(raw, stored) && secrets.occurIn(stored)) {
+        unawaited(write(sourceId, entry, secrets: secrets));
+      }
+      return entry;
     } catch (e) {
       appLogger.w('IPTV cache: could not read $sourceId', error: e);
       return null;
     }
   }
 
-  Future<void> write(String sourceId, IptvCacheEntry entry) {
-    final next = (_writes[sourceId] ?? Future<void>.value()).then((_) => _write(sourceId, entry));
+  /// Stores [entry] with every one of [secrets] replaced by a placeholder.
+  Future<void> write(String sourceId, IptvCacheEntry entry, {IptvCacheSecrets secrets = IptvCacheSecrets.none}) {
+    final next = (_writes[sourceId] ?? Future<void>.value()).then((_) => _write(sourceId, entry, secrets));
     _writes[sourceId] = next;
     return next.whenComplete(() {
       if (identical(_writes[sourceId], next)) _writes.remove(sourceId);
     });
   }
 
-  Future<void> _write(String sourceId, IptvCacheEntry entry) async {
+  Future<void> _write(String sourceId, IptvCacheEntry entry, IptvCacheSecrets secrets) async {
     if (entry.isEmpty) return;
     File? temp;
     final writing = Stopwatch()..start();
     try {
-      final raw = entry.channels.length + entry.programs.length < _isolateThresholdEntries
+      final encoded = entry.channels.length + entry.programs.length < _isolateThresholdEntries
           ? _encodeEntry(entry)
           : await compute(_encodeEntry, entry);
+      final raw = secrets.conceal(encoded);
       final file = await _fileFor(sourceId);
       // Through a temporary file: a write cut short by the app going away
       // would otherwise leave a half-written guide behind. One of its own per
@@ -149,6 +164,113 @@ class IptvDiskCache {
     } catch (e) {
       appLogger.d('IPTV cache: could not clear $sourceId', error: e);
     }
+  }
+}
+
+/// The credentials a source's stored copy must not hold (Plebz).
+///
+/// A playlist from an Xtream panel names the login in every stream address
+/// (`/live/<user>/<pass>/1.ts`) and in its guide address; the source keeps
+/// them sealed in the credential vault, so the copy on disk replaces each by
+/// a placeholder and gets it back from the source when read.
+///
+/// A placeholder is `\x01`, then its slot in [_names] written in `\x02` and
+/// `\x03`, then `\x01`. JSON text never holds a raw control character — the
+/// encoder escapes them — so no secret can contain one, and no placeholder
+/// can be mistaken for text or be matched by a later secret.
+@immutable
+class IptvCacheSecrets {
+  const IptvCacheSecrets._(this._values);
+
+  static const none = IptvCacheSecrets._({});
+
+  /// The query parameters of a playlist or guide address that carry a login.
+  static const _queryNames = ['username', 'password', 'user', 'pass', 'token'];
+
+  /// Every slot a secret can fill, in a fixed order: the placeholder names
+  /// its slot, so a copy reads back only into the same slots. New names go
+  /// at the end; `query.*` names one of [_queryNames] each.
+  static const _names = [
+    'username',
+    'password',
+    'query.username',
+    'query.password',
+    'query.user',
+    'query.pass',
+    'query.token',
+  ];
+
+  /// Shorter values stay as they are: replacing every "tv" in the copy would
+  /// not hide anything.
+  static const _minLength = 3;
+
+  /// Slot name → value, for the slots this source fills.
+  final Map<String, String> _values;
+
+  factory IptvCacheSecrets.of(IptvSource source) {
+    final values = <String, String>{'username': ?source.username, 'password': ?source.password};
+    for (final address in [?source.playlistUrl, ...source.epgUrls]) {
+      final Map<String, String> query;
+      try {
+        query = Uri.parse(address).queryParameters;
+      } on FormatException {
+        continue;
+      }
+      for (final name in _queryNames) {
+        if (query[name] case final value?) values.putIfAbsent('query.$name', () => value);
+      }
+    }
+    values.removeWhere((_, value) => value.length < _minLength);
+    return IptvCacheSecrets._(values);
+  }
+
+  /// The texts to replace, longest first, each with its placeholder: a value
+  /// as JSON writes it, plain and in both URL encodings.
+  List<(String, String)> get _replacements {
+    final seen = <String>{};
+    final out = <(String, String)>[];
+    for (final (slot, name) in _names.indexed) {
+      final value = _values[name];
+      if (value == null) continue;
+      final forms = [value, Uri.encodeComponent(value), Uri.encodeQueryComponent(value)];
+      for (final (form, text) in forms.indexed) {
+        final escaped = jsonEncode(text);
+        final json = escaped.substring(1, escaped.length - 1);
+        if (json.length >= _minLength && seen.add(json)) out.add((json, _placeholder(slot * 3 + form)));
+      }
+    }
+    return out..sort((a, b) => b.$1.length.compareTo(a.$1.length));
+  }
+
+  static String _placeholder(int index) =>
+      '\x01${index.toRadixString(2).replaceAll('0', '\x02').replaceAll('1', '\x03')}\x01';
+
+  static final _placeholderPattern = RegExp('\x01([\x02\x03]+)\x01');
+
+  /// [json] with every secret replaced by its placeholder.
+  String conceal(String json) {
+    var out = json;
+    for (final (text, placeholder) in _replacements) {
+      out = out.replaceAll(text, placeholder);
+    }
+    return out;
+  }
+
+  /// Whether [json] still holds one of the secrets as it stands.
+  bool occurIn(String json) => _replacements.any((replacement) => json.contains(replacement.$1));
+
+  /// [stored] with its placeholders filled; [stored] itself when it has none,
+  /// null when one names a slot this source does not fill.
+  String? restore(String stored) {
+    if (!stored.contains('\x01')) return stored;
+    final bySlot = {for (final (text, placeholder) in _replacements) placeholder: text};
+    var missing = false;
+    final out = stored.replaceAllMapped(_placeholderPattern, (match) {
+      final text = bySlot[match[0]];
+      if (text == null) missing = true;
+      return text ?? '';
+    });
+    return missing ? null : out;
   }
 }
 

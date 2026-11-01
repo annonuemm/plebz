@@ -13,6 +13,10 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.37.1 (Build 897)
+
+- Kleinere Sicherheitsfixes.
+
 ## 1.37.0 (Build 895)
 
 ### Freunde

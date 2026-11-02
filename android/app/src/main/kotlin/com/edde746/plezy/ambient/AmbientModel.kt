@@ -37,13 +37,15 @@ internal data class AmbientScene(
   }
 }
 
-/** A line of the "Heute" strip along the bottom. */
+/** A line of the "Heute" strip along the bottom; a game carries its clubs' colours. */
 internal data class AmbientTickerEntry(
   val time: String?,
   val text: String,
   val live: Boolean = false,
   val startsAt: Long? = null,
-  val endsAt: Long? = null
+  val endsAt: Long? = null,
+  val home: Int? = null,
+  val away: Int? = null
 )
 
 /** The app's look as the start page had it: design and colours. */
@@ -63,7 +65,9 @@ internal data class AmbientSnapshot(
   /** The app's language (a BCP 47 tag), which the date is written in. */
   val locale: String? = null,
   val scenes: List<AmbientScene>,
-  val ticker: List<AmbientTickerEntry>
+  val ticker: List<AmbientTickerEntry>,
+  /** Whether the app's look is frosted ("Milchglas"), which the card and the strip then are too. */
+  val frost: Boolean = false
 )
 
 /** What the paused player handed over (in memory only): the screensaver's first scene. */
@@ -100,6 +104,55 @@ internal object AmbientKeys {
   }
 }
 
+/** "Milchglas" without a GPU: a small picture blurred once, apart from drawing. */
+internal object AmbientFrost {
+  /** Blurs [pixels] (ARGB) in place: box passes, which three times over come close to a Gaussian. */
+  fun blur(pixels: IntArray, width: Int, height: Int, radius: Int, passes: Int = 3) {
+    if (radius <= 0 || width <= 0 || height <= 0) return
+    val scratch = IntArray(pixels.size)
+    repeat(passes) {
+      lines(pixels, scratch, length = width, lines = height, along = 1, across = width, radius = radius)
+      lines(scratch, pixels, length = height, lines = width, along = width, across = 1, radius = radius)
+    }
+  }
+
+  private fun lines(
+    from: IntArray,
+    to: IntArray,
+    length: Int,
+    lines: Int,
+    along: Int,
+    across: Int,
+    radius: Int
+  ) {
+    val span = radius * 2 + 1
+    for (line in 0 until lines) {
+      val base = line * across
+      var alpha = 0
+      var red = 0
+      var green = 0
+      var blue = 0
+      for (i in -radius..radius) {
+        val pixel = from[base + i.coerceIn(0, length - 1) * along]
+        alpha += pixel ushr 24
+        red += pixel shr 16 and 0xFF
+        green += pixel shr 8 and 0xFF
+        blue += pixel and 0xFF
+      }
+      for (i in 0 until length) {
+        to[base + i * along] =
+          (alpha / span shl 24) or (red / span shl 16) or (green / span shl 8) or (blue / span)
+        val entering = from[base + (i + radius + 1).coerceAtMost(length - 1) * along]
+        val leaving = from[base + (i - radius).coerceAtLeast(0) * along]
+        alpha += (entering ushr 24) - (leaving ushr 24)
+        red += (entering shr 16 and 0xFF) - (leaving shr 16 and 0xFF)
+        green += (entering shr 8 and 0xFF) - (leaving shr 8 and 0xFF)
+        blue += (entering and 0xFF) - (leaving and 0xFF)
+      }
+    }
+  }
+}
+
 /** The screensaver's choices, apart from drawing, so a plain JVM can test them. */
 internal object AmbientPlan {
   /** How long a live score from the snapshot is still worth showing. */
@@ -115,9 +168,13 @@ internal object AmbientPlan {
     !ended && !expired
   }
 
-  /** The strip's lines still ahead or running at [now]. */
-  fun ticker(entries: List<AmbientTickerEntry>, now: Long): List<AmbientTickerEntry> =
-    entries.filter { entry -> entry.endsAt?.let { it > now } ?: true }
+  /** The strip's lines still ahead or running at [now], without the game [shown] large already. */
+  fun ticker(entries: List<AmbientTickerEntry>, now: Long, shown: AmbientScene? = null): List<AmbientTickerEntry> =
+    entries.filter { entry ->
+      val running = entry.endsAt?.let { it > now } ?: true
+      val onScreen = shown?.kind == AmbientScene.SPORT && entry.text == shown.title && entry.startsAt == shown.startsAt
+      running && !onScreen
+    }
 
   /** A score shows once the game is over, or while the snapshot is fresh enough to be right. */
   fun showsScore(scene: AmbientScene, updatedAt: Long, now: Long): Boolean {

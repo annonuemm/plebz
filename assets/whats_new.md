@@ -13,6 +13,15 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.40.0 (Build 932)
+
+### Bildschirmschoner
+- Der Bildschirmschoner passt jetzt zum überarbeiteten Glas. Ist Milchglas an, zeigen seine Flächen das Bild dahinter weich verschwommen.
+- Die Leiste unten ist nur noch so breit wie ihr Inhalt und steht bündig unter der Karte.
+
+### Detailseite
+- Der Beschreibungstext hinter dem Info-Knopf ist wieder so groß wie auf der Detailseite.
+
 ## 1.39.0 (Build 927)
 
 ### Aussehen

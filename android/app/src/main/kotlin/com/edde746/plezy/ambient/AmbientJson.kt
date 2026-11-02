@@ -16,7 +16,8 @@ internal object AmbientJson {
         liveLabel = json.optJSONObject("labels")?.optStringOrNull("live") ?: "Live",
         locale = json.optStringOrNull("locale"),
         scenes = json.optJSONArray("scenes").objects().mapNotNull(::scene),
-        ticker = json.optJSONArray("ticker").objects().mapNotNull(::tickerEntry)
+        ticker = json.optJSONArray("ticker").objects().mapNotNull(::tickerEntry),
+        frost = json.optBoolean("frost")
       )
     } catch (_: Exception) {
       null
@@ -82,7 +83,9 @@ internal object AmbientJson {
       text = text,
       live = json.optBoolean("live"),
       startsAt = json.optLongOrNull("startsAt"),
-      endsAt = json.optLongOrNull("endsAt")
+      endsAt = json.optLongOrNull("endsAt"),
+      home = colour(json.optStringOrNull("home")),
+      away = colour(json.optStringOrNull("away"))
     )
   }
 

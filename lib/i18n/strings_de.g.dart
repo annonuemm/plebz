@@ -2255,6 +2255,7 @@ class _Translations$downloads$de extends Translations$downloads$en {
 	@override String get unknownAlbum => 'Unbekanntes Album';
 	@override String completedOfTotal({required Object completed, required Object total}) => '${completed}/${total} abgeschlossen';
 	@override String get errorFileNotFound => 'Datei nicht gefunden (404)';
+	@override String get refusedByServer => 'Der Server erlaubt diesem Konto keine Downloads';
 	@override String get errorDownloadNotAllowed => 'Download vom Server nicht erlaubt (403)';
 	@override String get errorDownloadFailed => 'Download fehlgeschlagen';
 	@override String errorDownloadFailedWithReason({required Object reason}) => 'Download fehlgeschlagen: ${reason}';
@@ -6425,6 +6426,7 @@ extension on TranslationsDe {
 			'downloads.unknownAlbum' => 'Unbekanntes Album',
 			'downloads.completedOfTotal' => ({required Object completed, required Object total}) => '${completed}/${total} abgeschlossen',
 			'downloads.errorFileNotFound' => 'Datei nicht gefunden (404)',
+			'downloads.refusedByServer' => 'Der Server erlaubt diesem Konto keine Downloads',
 			'downloads.errorDownloadNotAllowed' => 'Download vom Server nicht erlaubt (403)',
 			'downloads.errorDownloadFailed' => 'Download fehlgeschlagen',
 			'downloads.errorDownloadFailedWithReason' => ({required Object reason}) => 'Download fehlgeschlagen: ${reason}',
@@ -6847,9 +6849,9 @@ extension on TranslationsDe {
 			'services.tmdb.enabledDescription' => 'Logos und Beschreibungen, die dem Server fehlen',
 			'services.tmdb.apiKey' => 'API-Schlüssel',
 			'services.tmdb.apiKeySet' => 'Hinterlegt',
-			'services.tmdb.apiKeyMissing' => 'Nicht hinterlegt',
 			_ => null,
 		} ?? switch (path) {
+			'services.tmdb.apiKeyMissing' => 'Nicht hinterlegt',
 			'services.tmdb.apiKeyHint' => 'API-Schlüssel oder Read Access Token',
 			'services.tmdb.apiKeyHelp' => 'Kostenlos anzulegen auf themoviedb.org unter Einstellungen → API.',
 			'services.tmdb.verify' => 'Schlüssel prüfen',

@@ -11,8 +11,10 @@ import 'package:intl/intl.dart';
 import '../../i18n/app_locale_utils.dart';
 import '../../i18n/strings.g.dart';
 import '../../utils/app_logger.dart';
+import '../../utils/platform_detector.dart';
 import '../home_rows.dart';
 import '../program_reminders.dart';
+import '../settings_service.dart';
 
 /// What the paused player hands the screensaver (Plebz): enough to show the
 /// title and to play on with OK.
@@ -379,6 +381,8 @@ class AmbientFeed {
           if (tile.live == true) 'live': true,
           'startsAt': ?starts?.millisecondsSinceEpoch,
           'endsAt': ?ends?.millisecondsSinceEpoch,
+          'home': ?_hex(tile.home?.colour),
+          'away': ?_hex(tile.away?.colour),
         },
       ));
     }
@@ -440,6 +444,9 @@ class AmbientFeed {
       'locale': LocaleSettings.currentLocale.languageTag,
       'scenes': scenes,
       'ticker': [for (final item in ticker.take(maxTicker)) item.entry],
+      // "Milchglas": a television's alone, as in the app.
+      if (PlatformDetector.isTV() && (SettingsService.instanceOrNull?.read(PlebzPrefs.glasV2Frost) ?? false))
+        'frost': true,
     };
     final content = jsonEncode(body);
     final snapshot = jsonEncode({'schema': schema, 'updatedAt': now.millisecondsSinceEpoch, ...body});
@@ -456,14 +463,11 @@ class AmbientFeed {
 
   static Map<String, Object?>? _team(HomeRowTeam? team, String? Function(String?) art) {
     if (team == null) return null;
-    final colour = team.colour;
-    return {
-      'name': team.name,
-      'image': ?art(team.image),
-      if (colour != null)
-        'colour': '#${(colour.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}',
-    };
+    return {'name': team.name, 'image': ?art(team.image), 'colour': ?_hex(team.colour)};
   }
+
+  static String? _hex(Color? colour) =>
+      colour == null ? null : '#${(colour.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
 
   @visibleForTesting
   void debugReset() {

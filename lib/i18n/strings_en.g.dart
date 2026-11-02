@@ -5817,6 +5817,9 @@ class Translations$downloads$en {
 	/// en: 'File not found (404)'
 	String get errorFileNotFound => 'File not found (404)';
 
+	/// en: 'This server does not allow this account to download'
+	String get refusedByServer => 'This server does not allow this account to download';
+
 	/// en: 'Download not allowed by the server (403)'
 	String get errorDownloadNotAllowed => 'Download not allowed by the server (403)';
 
@@ -12663,6 +12666,7 @@ extension on Translations {
 			'downloads.unknownAlbum' => 'Unknown Album',
 			'downloads.completedOfTotal' => ({required Object completed, required Object total}) => '${completed}/${total} completed',
 			'downloads.errorFileNotFound' => 'File not found (404)',
+			'downloads.refusedByServer' => 'This server does not allow this account to download',
 			'downloads.errorDownloadNotAllowed' => 'Download not allowed by the server (403)',
 			'downloads.errorDownloadFailed' => 'Download failed',
 			'downloads.errorDownloadFailedWithReason' => ({required Object reason}) => 'Download failed: ${reason}',
@@ -13034,9 +13038,9 @@ extension on Translations {
 			'services.notConnected' => 'Not connected',
 			'services.connectedAs' => ({required Object username}) => 'Connected as @${username}',
 			'services.scrobble' => 'Track progress automatically',
-			'services.scrobbleDescription' => 'Update your list after every film and episode',
 			_ => null,
 		} ?? switch (path) {
+			'services.scrobbleDescription' => 'Update your list after every film and episode',
 			'services.ownProgress' => 'Own progress via Simkl',
 			'services.ownProgressDescription' => 'Watched marks and progress come from Simkl, not the server',
 			'services.ownProgressNote' => 'Plex still marks watched at about 90 % – only matters for profiles without Simkl',

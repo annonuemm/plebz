@@ -13,6 +13,36 @@ class AmbientPlanTest {
     AmbientScene(kind = kind, kicker = "", title = title, endsAt = endsAt, validUntil = validUntil)
 
   @Test
+  fun aGameShownLargeLeavesTheStrip() {
+    val game = AmbientScene(kind = AmbientScene.SPORT, kicker = "", title = "Bayern – Dortmund", startsAt = 500L)
+    val entries = listOf(
+      AmbientTickerEntry(time = "20:30", text = "Bayern – Dortmund", startsAt = 500L),
+      AmbientTickerEntry(time = "15:30", text = "Bayern – Dortmund", startsAt = 900L),
+      AmbientTickerEntry(time = "20:15", text = "Tatort", startsAt = 400L)
+    )
+
+    assertEquals(3, AmbientPlan.ticker(entries, now = 0L).size)
+    assertEquals(listOf(900L, 400L), AmbientPlan.ticker(entries, now = 0L, shown = game).map { it.startsAt })
+
+    val film = AmbientScene(kind = AmbientScene.TV, kicker = "", title = "Tatort", startsAt = 400L)
+    assertEquals(3, AmbientPlan.ticker(entries, now = 0L, shown = film).size)
+  }
+
+  @Test
+  fun frostSpreadsAPointAndLeavesAnEvenGroundAlone() {
+    val even = IntArray(36) { 0xFF336699.toInt() }
+    AmbientFrost.blur(even, width = 6, height = 6, radius = 2)
+    assertTrue(even.all { it == 0xFF336699.toInt() })
+
+    val point = IntArray(49) { 0xFF000000.toInt() }
+    point[24] = 0xFFFFFFFF.toInt()
+    AmbientFrost.blur(point, width = 7, height = 7, radius = 1, passes = 1)
+    assertTrue((point[24] and 0xFF) in 1..254)
+    assertTrue((point[16] and 0xFF) > 0)
+    assertEquals(0xFF, point[0] ushr 24)
+  }
+
+  @Test
   fun nightRunsFromElevenToSix() {
     assertFalse(AmbientPlan.isNight(22))
     assertTrue(AmbientPlan.isNight(23))

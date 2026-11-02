@@ -13,17 +13,24 @@ import '../utils/app_logger.dart';
 /// client that never asks never notices the restriction. This service is the
 /// asking.
 ///
-/// **A silent server is not a refusal.** Only an explicit "no" blocks
-/// anything: a failed probe, an older server, a backend without the notion all
-/// leave downloads as they were. Restricting on silence would strand every
-/// setup whose server simply does not answer the question.
+/// **A silent server is not a refusal, and not a permission either.** Only an
+/// explicit answer changes anything: a failed probe, an older server, a backend
+/// without the notion all leave downloads as they were. Restricting on silence
+/// would strand every setup whose server simply does not answer the question;
+/// lifting a refusal on silence let one slow answer undo it.
 class DownloadPermissionService extends ChangeNotifier {
   DownloadPermissionService._();
 
   static final DownloadPermissionService instance = DownloadPermissionService._();
 
+  /// How long an answer from [confirm] holds: a Retry all asks once.
+  static const _confirmedFor = Duration(seconds: 30);
+
   /// Servers that answered "no". Absence means "not told otherwise".
   final Set<String> _blocked = {};
+
+  /// When each server was last asked by [confirm].
+  final Map<String, DateTime> _confirmedAt = {};
 
   /// Whether media may be downloaded from [serverId].
   bool allows(String serverId) => !_blocked.contains(serverId);
@@ -53,6 +60,20 @@ class DownloadPermissionService extends ChangeNotifier {
     _apply(id, allowed);
   }
 
+  /// Whether [client]'s server permits downloads right now, for the moment one
+  /// is about to start. What [allows] holds dates from the last connect, and an
+  /// admin can withdraw downloads while the app stays open.
+  Future<bool> confirm(MediaServerClient client) async {
+    final id = client.serverId.value;
+    final now = DateTime.now();
+    final asked = _confirmedAt[id];
+    if (asked == null || now.difference(asked) >= _confirmedFor) {
+      _confirmedAt[id] = now;
+      await refreshFor(client);
+    }
+    return allows(id);
+  }
+
   /// Asks every server in [clients], and forgets any server no longer among
   /// them — a disconnected server must not keep blocking downloads that a
   /// reconnect might permit.
@@ -68,9 +89,10 @@ class DownloadPermissionService extends ChangeNotifier {
   }
 
   void _apply(String serverId, bool? allowed) {
-    final changed = allowed == false ? _blocked.add(serverId) : _blocked.remove(serverId);
+    if (allowed == null) return;
+    final changed = allowed ? _blocked.remove(serverId) : _blocked.add(serverId);
     if (changed) {
-      appLogger.i('Downloads ${allowed == false ? 'blocked' : 'permitted'} on server $serverId');
+      appLogger.i('Downloads ${allowed ? 'permitted' : 'blocked'} on server $serverId');
       notifyListeners();
     }
   }
@@ -81,6 +103,7 @@ class DownloadPermissionService extends ChangeNotifier {
   @visibleForTesting
   void debugReset() {
     _blocked.clear();
+    _confirmedAt.clear();
     notifyListeners();
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/services/settings_service.dart';
+import 'package:plezy/redesign/ocker_type.dart';
 import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/utils/dialogs.dart';
 import 'package:plezy/widgets/dialog_action_button.dart';
@@ -104,6 +105,40 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Übersicht'), findsNothing);
+  });
+
+  testWidgets('a description stands as large as on the page, other notes keep their size', (tester) async {
+    Future<double> sizeOf({required bool description}) async {
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: MaterialApp(
+            theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glasV2),
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () =>
+                      showFullTextDialog(context, title: 'Übersicht', text: 'Kurz.', description: description),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      final style = tester.widget<Text>(find.textContaining('Kurz.')).style!;
+      final context = tester.element(find.textContaining('Kurz.'));
+      expect(
+        style.fontSize,
+        description ? OckerType.of(context).spotlightSynopsis.fontSize : OckerType.of(context).synopsis.fontSize,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.select);
+      await tester.pumpAndSettle();
+      return style.fontSize!;
+    }
+
+    expect(await sizeOf(description: true), greaterThan(await sizeOf(description: false)));
   });
 
   group('a question — the update dialog', () {

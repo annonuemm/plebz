@@ -1518,6 +1518,7 @@ class DownloadProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     try {
       // Claim the operation before the first await so a second tap cannot
       // launch a duplicate container expansion.
+      if (!await _serverStillAllowsDownloads(client)) return 0;
       if (await DownloadManagerService.shouldBlockDownloadOnCellular()) {
         throw CellularDownloadBlockedException();
       }
@@ -1609,6 +1610,7 @@ class DownloadProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     if (!_downloadManager.downloadsSupported) return 0;
 
     final ownership = _captureQueueOwnership();
+    if (!await _serverStillAllowsDownloads(client)) return 0;
     if (await DownloadManagerService.shouldBlockDownloadOnCellular()) {
       throw CellularDownloadBlockedException();
     }
@@ -1677,6 +1679,13 @@ class DownloadProvider extends ChangeNotifier with DisposableChangeNotifierMixin
     if (DownloadPermissionService.instance.allows(client.serverId.value)) return true;
     appLogger.i('Download refused: server ${client.serverId.value} does not permit downloads');
     return false;
+  }
+
+  /// [_serverAllowsDownloads], asked afresh: for a press or a sync run, where
+  /// the answer on hand may be hours old. Each file of a run asks the sync one.
+  Future<bool> _serverStillAllowsDownloads(MediaServerClient client) async {
+    await DownloadPermissionService.instance.confirm(client);
+    return _serverAllowsDownloads(client);
   }
 
   /// Queue a single movie or episode for download.
@@ -1955,6 +1964,7 @@ class DownloadProvider extends ChangeNotifier with DisposableChangeNotifierMixin
       throw Exception('queueMissingEpisodes only supports shows/seasons');
     }
     final ownership = _captureQueueOwnership();
+    if (!await _serverStillAllowsDownloads(client)) return 0;
     final queued = await _expandAndQueue(
       container: metadata,
       client: client,
@@ -2047,7 +2057,7 @@ class DownloadProvider extends ChangeNotifier with DisposableChangeNotifierMixin
   /// Resume a paused download; one from a server that no longer permits
   /// downloads stays paused.
   Future<void> resumeDownload(String globalKey, MediaServerClient client) async {
-    if (!_serverAllowsDownloads(client)) return;
+    if (!await _serverStillAllowsDownloads(client)) return;
     await _whenOwnedIn(globalKey, const {
       DownloadStatus.paused,
     }, () => _downloadManager.resumeDownload(globalKey, client));
@@ -2057,9 +2067,9 @@ class DownloadProvider extends ChangeNotifier with DisposableChangeNotifierMixin
   /// repeat call a no-op, so a second press cannot restart the same item. One
   /// from a server that no longer permits downloads stays failed.
   Future<void> retryDownload(String globalKey, MediaServerClient client) async {
-    if (!_serverAllowsDownloads(client)) return;
     if (!_retryingKeys.add(globalKey)) return;
     try {
+      if (!await _serverStillAllowsDownloads(client)) return;
       await _whenOwnedIn(globalKey, const {
         DownloadStatus.failed,
       }, () => _downloadManager.retryDownload(globalKey, client));

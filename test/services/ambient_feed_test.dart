@@ -146,6 +146,8 @@ void main() {
     expect((scene['home'] as Map)['colour'], '#F5D20A');
     expect(scene['endsAt'], DateTime(2026, 10, 27, 20, 30).add(AmbientFeed.gameLength).millisecondsSinceEpoch);
     expect((json['ticker'] as List).single, containsPair('time', '20:30'));
+    expect((json['ticker'] as List).single, containsPair('home', '#F5D20A'));
+    expect((json['ticker'] as List).single, containsPair('away', '#1D9A5B'));
   });
 
   test('a reminder set for today becomes a scene that tunes its channel', () {

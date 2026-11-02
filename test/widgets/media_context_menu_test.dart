@@ -1754,7 +1754,7 @@ void main() {
       expect(harness.client.fileInfoRequests, [same(track)]);
       expect(find.byType(FileInfoBottomSheet), findsOneWidget);
       expect(find.text('Ready Lets Go'), findsOneWidget);
-      expect(find.text(trackPath), findsOneWidget);
+      expect(find.text(trackPath), findsNothing);
       expect(find.text(t.fileInfo.audio), findsOneWidget);
       expect(find.text(t.fileInfo.video), findsNothing);
       // The loading dialog must be gone and no error snackbar raised.

@@ -2387,6 +2387,7 @@
     "unknownAlbum": "Unbekanntes Album",
     "completedOfTotal": "${completed}/${total} abgeschlossen",
     "errorFileNotFound": "Datei nicht gefunden (404)",
+    "refusedByServer": "Der Server erlaubt diesem Konto keine Downloads",
     "errorDownloadNotAllowed": "Download vom Server nicht erlaubt (403)",
     "errorDownloadFailed": "Download fehlgeschlagen",
     "errorDownloadFailedWithReason": "Download fehlgeschlagen: ${reason}",

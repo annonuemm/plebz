@@ -111,6 +111,14 @@ class _LibraryStampingClient implements MediaServerClient {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+/// Answers the permission probe with a refusal.
+class _RefusingClient extends _ScopedTestClient {
+  _RefusingClient({required super.serverId, required super.scopedServerId});
+
+  @override
+  Future<bool?> fetchDownloadsAllowed() async => false;
+}
+
 class _ScopedTestClient implements MediaServerClient, ScopedMediaServerClient {
   _ScopedTestClient({
     required this.serverId,
@@ -975,6 +983,18 @@ void main() {
       expect(queued, 0);
       expect(p.downloads, isEmpty);
       expect(await db.getDownloadedMedia('srv:1'), isNull);
+    });
+
+    test('a press hears a refusal given since the server was last asked', () async {
+      addTearDown(DownloadPermissionService.instance.debugReset);
+      final p = DownloadProvider.forTesting(downloadManager: downloadManager, database: db);
+      await p.ensureInitialized();
+
+      final queued = await p.queueDownload(movie, _RefusingClient(serverId: ServerId('srv'), scopedServerId: 'srv'));
+
+      expect(queued, 0);
+      expect(p.downloads, isEmpty);
+      expect(DownloadPermissionService.instance.allows('srv'), isFalse);
     });
 
     test('a server that has not answered is not treated as a refusal', () async {

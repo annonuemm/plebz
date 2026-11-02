@@ -12,6 +12,7 @@ import '../media/media_server_client.dart';
 import '../database/app_database.dart';
 import '../providers/download_provider.dart';
 import '../providers/multi_server_provider.dart';
+import '../services/download_permission_service.dart';
 import '../services/playlist_items_loader.dart';
 import '../services/settings_service.dart';
 import '../services/sync_rule_executor.dart';
@@ -213,6 +214,15 @@ Future<DownloadResult?> showDownloadOptionsAndQueue(
   );
 }
 
+/// Says so when [client]'s server turned the download just asked for down, and
+/// returns whether it did: the queue answers such a press with nothing queued,
+/// which reads as success or as "all there" otherwise.
+bool reportDownloadRefused(BuildContext context, MediaServerClient client) {
+  if (DownloadPermissionService.instance.allows(client.serverId.value)) return false;
+  showErrorSnackBar(context, t.downloads.refusedByServer);
+  return true;
+}
+
 /// Run [showDownloadOptionsAndQueue] and surface the outcome: a success
 /// snackbar for a queued download, dedicated copy for cellular-blocked
 /// downloads, and a generic error snackbar otherwise. The dialog → snackbar
@@ -233,6 +243,7 @@ Future<void> queueDownloadWithFeedback(
       onDelete: onDelete,
     );
     if (result == null || !context.mounted) return;
+    if (reportDownloadRefused(context, client)) return;
 
     showSuccessSnackBar(context, result.toSnackBarMessage());
   } on CellularDownloadBlockedException {
@@ -340,6 +351,7 @@ Future<void> fetchAndQueueListDownload(
       downloadProvider: downloadProvider,
     );
     if (result == null || !context.mounted) return;
+    if (reportDownloadRefused(context, client)) return;
 
     showSuccessSnackBar(context, result.toSnackBarMessage());
   } on CellularDownloadBlockedException {

@@ -140,12 +140,21 @@ Future<bool> showConfirmDialog(
 /// text fields use.
 ///
 /// [span] replaces [text] where parts of it need a style of their own.
-Future<void> showFullTextDialog(BuildContext context, {required String title, String text = '', InlineSpan? span}) {
+/// [description] is for a title's or person's description: under "Glas – v2"
+/// (Plebz) it stands as large as on the page it was opened from.
+Future<void> showFullTextDialog(
+  BuildContext context, {
+  required String title,
+  String text = '',
+  InlineSpan? span,
+  bool description = false,
+}) {
   return showScopedDialog<void>(
     context: context,
     builder: (dialogContext) => _FullTextDialog(
       title: title,
       span: span ?? TextSpan(text: text),
+      description: description,
     ),
   );
 }
@@ -169,10 +178,17 @@ Future<bool> showFullTextConfirmDialog(
 }
 
 class _FullTextDialog extends StatefulWidget {
-  const _FullTextDialog({required this.title, required this.span, this.confirmText, this.cancelText});
+  const _FullTextDialog({
+    required this.title,
+    required this.span,
+    this.confirmText,
+    this.cancelText,
+    this.description = false,
+  });
 
   final String title;
   final InlineSpan span;
+  final bool description;
   final String? confirmText;
   final String? cancelText;
 
@@ -235,7 +251,9 @@ class _FullTextDialogState extends State<_FullTextDialog> {
             controller: _controller,
             child: Text.rich(
               widget.span,
-              style: type?.synopsis ?? Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
+              style:
+                  (widget.description ? type?.spotlightSynopsis : type?.synopsis) ??
+                  Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
             ),
           ),
         ),

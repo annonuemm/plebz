@@ -18,6 +18,7 @@ import '../../services/music/music_playback_service.dart';
 import '../../theme/mono_tokens.dart';
 import '../../utils/app_logger.dart';
 import '../../utils/dialogs.dart';
+import '../../utils/download_utils.dart';
 import '../../utils/formatters.dart';
 import '../../utils/media_image_helper.dart';
 import '../../utils/music_navigation.dart';
@@ -188,7 +189,7 @@ class _AlbumDetailScreenState extends BaseMediaListDetailScreen<AlbumDetailScree
     // tracks are skipped inside the provider, so this also fills gaps.
     try {
       final count = await downloadProvider.queueDownload(widget.album, mediaClient);
-      if (!mounted) return;
+      if (!mounted || reportDownloadRefused(context, mediaClient)) return;
       showSuccessSnackBar(context, count > 1 ? t.downloads.tracksQueued(count: count) : t.downloads.downloadQueued);
     } on CellularDownloadBlockedException {
       if (mounted) showErrorSnackBar(context, t.settings.cellularDownloadBlocked);

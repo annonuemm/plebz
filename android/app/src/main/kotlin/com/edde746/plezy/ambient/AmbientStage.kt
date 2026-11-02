@@ -7,9 +7,13 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorFilter
+import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
@@ -72,6 +76,12 @@ internal class AmbientStage(private val context: Context, private val host: Host
     const val INTER = "flutter_assets/assets/fonts/Inter-Variable.ttf"
     const val PAUSE_ART = "ambient_pause"
     const val PAUSE_ART_MAX_AGE_MS = 24 * 60 * 60 * 1000L
+    const val FROST_WIDTH = 384
+    const val FROST_RADIUS = 4
+
+    /** How bright a club's colour stands: the whole ground stays darker than a tile on the strip. */
+    const val GROUND_DEPTH = 0.46f
+    const val CHIP_DEPTH = 0.58f
   }
 
   private sealed class Shown {
@@ -89,6 +99,7 @@ internal class AmbientStage(private val context: Context, private val host: Host
   private var step = 0
   private var night: Boolean? = null
   private var scale = 1f
+  private val frost = FrostPicture()
 
   private lateinit var root: FrameLayout
   private lateinit var backs: Array<ImageView>
@@ -214,8 +225,9 @@ internal class AmbientStage(private val context: Context, private val host: Host
       val logoPicture = scene?.logo?.let { loadKey(it, width / 3, height / 3) }
       val home = scene?.home?.image?.let { loadKey(it, 512, 512) }
       val away = scene?.away?.image?.let { loadKey(it, 512, 512) }
+      val blurred = background?.takeIf { frosted() }?.let(::frostOf)
       main.post {
-        if (!stopped) render(shown, background, posters, logoPicture, home, away)
+        if (!stopped) render(shown, background, blurred, posters, logoPicture, home, away)
       }
     }
   }
@@ -223,6 +235,7 @@ internal class AmbientStage(private val context: Context, private val host: Host
   private fun render(
     shown: Shown,
     background: Bitmap?,
+    blurred: Bitmap?,
     posters: List<Bitmap>,
     logoPicture: Bitmap?,
     home: Bitmap?,
@@ -231,6 +244,7 @@ internal class AmbientStage(private val context: Context, private val host: Host
     current = shown
     val now = System.currentTimeMillis()
     crossfade(background)
+    frost.bitmap = blurred
     scrim.visibility = if (background != null) View.VISIBLE else View.GONE
     clockScrim.visibility = scrim.visibility
 
@@ -238,9 +252,9 @@ internal class AmbientStage(private val context: Context, private val host: Host
     val sport = scene?.kind == AmbientScene.SPORT
     sportGround.visibility = if (sport && background == null) View.VISIBLE else View.GONE
     if (sport && scene != null) {
-      sportGround.background = SplitDrawable(
-        dim(scene.home?.colour ?: theme.background),
-        dim(scene.away?.colour ?: theme.background)
+      sportGround.background = ClubsDrawable(
+        club(scene.home?.colour, GROUND_DEPTH),
+        club(scene.away?.colour, GROUND_DEPTH)
       )
     }
     crests.visibility = if (sport && (home != null || away != null)) View.VISIBLE else View.GONE
@@ -291,6 +305,10 @@ internal class AmbientStage(private val context: Context, private val host: Host
     place()
     card.animate().alpha(1f).setDuration(CARD_FADE_MS).start()
     fillTicker(now)
+    // The strip's lines and the frost behind them change with the scene: not in one hard step.
+    ticker.animate().cancel()
+    ticker.alpha = 0f
+    ticker.animate().alpha(1f).setDuration(CARD_FADE_MS).start()
     date.text = dateLine()
     nightDate.text = dateLine()
   }
@@ -298,6 +316,7 @@ internal class AmbientStage(private val context: Context, private val host: Host
   private fun showEmpty() {
     current = null
     crossfade(null)
+    frost.bitmap = null
     scrim.visibility = View.GONE
     clockScrim.visibility = View.GONE
     sportGround.visibility = View.GONE
@@ -306,6 +325,7 @@ internal class AmbientStage(private val context: Context, private val host: Host
     logo.visibility = View.GONE
     fill(kicker = "", title = "Plebz", subtitle = "", progress = null, hint = null)
     card.alpha = 1f
+    ticker.alpha = 1f
     place()
     fillTicker(System.currentTimeMillis())
     date.text = dateLine()
@@ -321,10 +341,11 @@ internal class AmbientStage(private val context: Context, private val host: Host
     val (cardX, cardY) = AmbientPlan.shift(step)
     card.translationX = cardX * scale
     card.translationY = cardY * scale
+    // Under the card and flush with it wherever it has wandered to.
+    ticker.translationX = cardX * scale
+    ticker.translationY = cardY * scale
     val (driftX, driftY) = AmbientPlan.drift(step)
     clockBox.animate().translationX(driftX * scale).translationY(driftY * scale).setDuration(FADE_MS).start()
-    ticker.setPadding(px(86 - driftX), 0, px(86), px(AmbientPlan.DRIFT_RANGE))
-    ticker.animate().translationY(-driftY * scale).setDuration(FADE_MS).start()
     val (nightX, nightY) = AmbientPlan.nightSpot(step)
     moveNightClock(nightX * scale, nightY * scale)
   }
@@ -359,24 +380,41 @@ internal class AmbientStage(private val context: Context, private val host: Host
 
   private fun fillTicker(now: Long) {
     ticker.removeAllViews()
-    val entries = snapshot?.let { AmbientPlan.ticker(it.ticker, now) } ?: emptyList()
+    val shown = (current as? Shown.Scene)?.scene
+    val entries = snapshot?.let { AmbientPlan.ticker(it.ticker, now, shown) } ?: emptyList()
     ticker.visibility = if (entries.isEmpty() || night == true) View.GONE else View.VISIBLE
-    for (entry in entries) {
+    entries.forEachIndexed { index, entry ->
+      val last = index == entries.lastIndex
       if (entry.live) ticker.addView(dot(), LinearLayout.LayoutParams(px(10), px(10)).apply {
         marginEnd = px(10)
         gravity = Gravity.CENTER_VERTICAL
       })
+      val game = entry.home != null || entry.away != null
       ticker.addView(
-        text(24, regular = true, alpha = 0.78f).apply {
+        text(22, regular = !game, alpha = if (game) 1f else 0.78f).apply {
           text = listOfNotNull(entry.time, entry.text).joinToString(" ")
           maxLines = 1
           ellipsize = TextUtils.TruncateAt.END
+          if (game) {
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(px(22), 0, px(22), 0)
+            background = ClubsDrawable(
+              club(entry.home, CHIP_DEPTH),
+              club(entry.away, CHIP_DEPTH),
+              radius = px(24).toFloat()
+            )
+          }
         },
-        LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-          marginEnd = px(48)
+        LinearLayout.LayoutParams(
+          LinearLayout.LayoutParams.WRAP_CONTENT,
+          if (game) px(48) else LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+          marginEnd = if (last) 0 else px(if (game) 12 else 36)
           gravity = Gravity.CENTER_VERTICAL
         }
       )
+      // As much room at the end as at the start; a capsule inside it stands close to the edge.
+      if (last) ticker.setPadding(px(30), 0, px(if (game) 8 else 30), 0)
     }
   }
 
@@ -473,8 +511,8 @@ internal class AmbientStage(private val context: Context, private val host: Host
       orientation = LinearLayout.VERTICAL
       setPadding(px(40), px(28), px(40), px(32))
     }
-    kicker = text(24, regular = true, alpha = 0.72f)
-    title = text(60, regular = false).apply {
+    kicker = text(22, regular = true, alpha = 0.72f)
+    title = text(64, regular = false).apply {
       maxLines = 2
       ellipsize = TextUtils.TruncateAt.END
     }
@@ -483,7 +521,7 @@ internal class AmbientStage(private val context: Context, private val host: Host
       ellipsize = TextUtils.TruncateAt.END
     }
     progress = ProgressLine(context)
-    hint = text(24, regular = true, alpha = 0.72f)
+    hint = text(22, regular = true, alpha = 0.72f)
     card.addView(kicker)
     card.addView(title, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
       topMargin = px(6)
@@ -511,8 +549,8 @@ internal class AmbientStage(private val context: Context, private val host: Host
       orientation = LinearLayout.VERTICAL
       gravity = Gravity.END
     }
-    clockBox.addView(clock(72))
-    date = text(24, regular = true, alpha = 0.72f).apply { gravity = Gravity.END }
+    clockBox.addView(clock(64))
+    date = text(22, regular = true, alpha = 0.72f).apply { gravity = Gravity.END }
     clockBox.addView(date)
     root.addView(
       clockBox,
@@ -523,18 +561,22 @@ internal class AmbientStage(private val context: Context, private val host: Host
       }
     )
 
-    // The strip reaches below the screen, so lifting it as it drifts never opens a gap underneath.
+    // A capsule floating over the picture, as the app's own bands do: as long as what it says, and
+    // starting where the card above it starts. What runs past the screen's margin is cut at its end.
     ticker = LinearLayout(context).apply {
       orientation = LinearLayout.HORIZONTAL
       gravity = Gravity.CENTER_VERTICAL
-      setPadding(px(86), 0, px(86), px(AmbientPlan.DRIFT_RANGE))
+      clipToOutline = true
+      outlineProvider = RoundedOutline(px(32))
       visibility = View.GONE
     }
     root.addView(
       ticker,
-      FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, px(72 + AmbientPlan.DRIFT_RANGE)).apply {
-        gravity = Gravity.BOTTOM
-        bottomMargin = -px(AmbientPlan.DRIFT_RANGE)
+      FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, px(64)).apply {
+        gravity = Gravity.START or Gravity.BOTTOM
+        leftMargin = px(86)
+        rightMargin = px(86)
+        bottomMargin = px(36)
       }
     )
 
@@ -575,10 +617,9 @@ internal class AmbientStage(private val context: Context, private val host: Host
       setGradientCenter(1f, 0f)
       colors = intArrayOf(withAlpha(next.background, 0.7f), withAlpha(next.background, 0.3f), Color.TRANSPARENT)
     }
-    card.background = CardDrawable(next, px(28).toFloat())
-    ticker.background = ColorDrawable(
-      if (next.glass) withAlpha(next.background, 0.6f) else withAlpha(next.text, 0.07f)
-    )
+    val glass = if (frosted(next)) frost else null
+    card.background = CardDrawable(next, px(28).toFloat(), card, glass)
+    ticker.background = CardDrawable(next, px(32).toFloat(), ticker, glass)
     progress.track = withAlpha(next.text, 0.25f)
     progress.fill = next.accent
     listOf(kicker, title, subtitle, hint, date, nightDate).forEach { it.setTextColor(next.text) }
@@ -679,12 +720,27 @@ internal class AmbientStage(private val context: Context, private val host: Host
   private fun sha1(text: String): String =
     MessageDigest.getInstance("SHA-1").digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
 
-  private fun dim(colour: Int): Int {
+  /** A club's colour at one depth, whatever its own: a bright yellow beside a navy would shout. */
+  private fun club(colour: Int?, depth: Float): Int {
     val hsv = FloatArray(3)
-    Color.colorToHSV(colour, hsv)
-    hsv[2] = hsv[2] * 0.38f
-    hsv[1] = hsv[1] * 0.85f
+    Color.colorToHSV(colour ?: return theme.background, hsv)
+    hsv[1] = hsv[1].coerceAtMost(0.85f)
+    hsv[2] = depth
     return Color.HSVToColor(hsv)
+  }
+
+  private fun frosted(look: AmbientTheme = theme): Boolean = snapshot?.frost == true && look.glass
+
+  /** [picture] small and blurred: once a scene, so nothing is blurred frame by frame. */
+  private fun frostOf(picture: Bitmap): Bitmap? = try {
+    val height = (picture.height * FROST_WIDTH / picture.width).coerceAtLeast(1)
+    val small = Bitmap.createScaledBitmap(picture, FROST_WIDTH, height, true)
+    val pixels = IntArray(FROST_WIDTH * height)
+    small.getPixels(pixels, 0, FROST_WIDTH, 0, 0, FROST_WIDTH, height)
+    AmbientFrost.blur(pixels, FROST_WIDTH, height, FROST_RADIUS)
+    Bitmap.createBitmap(pixels, FROST_WIDTH, height, Bitmap.Config.ARGB_8888)
+  } catch (e: OutOfMemoryError) {
+    null
   }
 
   // Last, so every view and face above exists before the stage builds itself.
@@ -697,14 +753,41 @@ internal class AmbientStage(private val context: Context, private val host: Host
 private fun withAlpha(colour: Int, alpha: Float): Int =
   Color.argb((alpha * 255).toInt().coerceIn(0, 255), Color.red(colour), Color.green(colour), Color.blue(colour))
 
+/** The blurred picture of the scene on show, which the card and the strip show their part of. */
+private class FrostPicture {
+  var bitmap: Bitmap? = null
+
+  /** The part of [picture] that lies behind [box] of [host], as the stage crops the picture itself. */
+  fun behind(picture: Bitmap, host: View, box: Rect): Rect {
+    val stage = host.parent as View
+    val share = minOf(picture.width.toFloat() / stage.width, picture.height.toFloat() / stage.height)
+    val left = (picture.width - stage.width * share) / 2 + (host.left + host.translationX + box.left) * share
+    val top = (picture.height - stage.height * share) / 2 + (host.top + host.translationY + box.top) * share
+    return Rect(
+      left.toInt(),
+      top.toInt(),
+      (left + box.width() * share).toInt(),
+      (top + box.height() * share).toInt()
+    )
+  }
+}
+
 /**
- * The info card: Glas's glass without blur — the ground half see-through, its edge lit from the top
- * left and shaded at the foot — or Flach's flat wash of ink.
+ * The info card and the strip: with [frost], Milchglas — the blurred picture under a veil of the
+ * ground, a hairline round it; otherwise Glas's glass without blur — the ground half see-through,
+ * its edge lit from the top left and shaded at the foot — or Flach's flat wash of ink.
  */
-private class CardDrawable(private val theme: AmbientTheme, private val radius: Float) : Drawable() {
+private class CardDrawable(
+  private val theme: AmbientTheme,
+  private val radius: Float,
+  private val host: View,
+  private val frost: FrostPicture?
+) : Drawable() {
   private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     color = if (theme.glass) withAlpha(theme.background, 0.58f) else withAlpha(theme.text, 0.10f)
   }
+  private val picturePaint = Paint(Paint.FILTER_BITMAP_FLAG)
+  private val outline = Path()
   private val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     style = Paint.Style.STROKE
     strokeWidth = 2f
@@ -712,6 +795,10 @@ private class CardDrawable(private val theme: AmbientTheme, private val radius: 
 
   override fun draw(canvas: Canvas) {
     val box = RectF(bounds)
+    if (frost != null) {
+      drawFrost(canvas, frost, box)
+      return
+    }
     canvas.drawRoundRect(box, radius, radius, fill)
     if (!theme.glass) return
     val line = RectF(box).apply { inset(1f, 1f) }
@@ -727,6 +814,23 @@ private class CardDrawable(private val theme: AmbientTheme, private val radius: 
     stroke(withAlpha(Color.BLACK, 0.40f), box.left, box.bottom - radius, box.right, box.bottom)
   }
 
+  private fun drawFrost(canvas: Canvas, frost: FrostPicture, box: RectF) {
+    val picture = frost.bitmap
+    if (picture != null) {
+      outline.reset()
+      outline.addRoundRect(box, radius, radius, Path.Direction.CW)
+      canvas.save()
+      canvas.clipPath(outline)
+      canvas.drawBitmap(picture, frost.behind(picture, host, bounds), box, picturePaint)
+      canvas.restore()
+    }
+    // A game's scene has no picture, only its clubs' colours to let through.
+    fill.color = withAlpha(theme.background, if (picture != null) 0.5f else 0.34f)
+    canvas.drawRoundRect(box, radius, radius, fill)
+    edge.color = withAlpha(Color.WHITE, 0.22f)
+    canvas.drawRoundRect(RectF(box).apply { inset(1f, 1f) }, radius, radius, edge)
+  }
+
   override fun setAlpha(alpha: Int) = Unit
   override fun setColorFilter(colorFilter: ColorFilter?) = Unit
 
@@ -734,16 +838,28 @@ private class CardDrawable(private val theme: AmbientTheme, private val radius: 
   override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 }
 
-/** A game's ground: each half in its club's colour, darkened so the words stay readable. */
-private class SplitDrawable(private val left: Int, private val right: Int) : Drawable() {
-  private val paint = Paint()
+/** A game's two clubs running into each other, as the app's "Jetzt live" tiles have them. */
+private class ClubsDrawable(
+  private val left: Int,
+  private val right: Int,
+  private val radius: Float = 0f
+) : Drawable() {
+  private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+  override fun onBoundsChange(bounds: Rect) {
+    paint.shader = LinearGradient(
+      bounds.left.toFloat(),
+      0f,
+      bounds.right.toFloat(),
+      0f,
+      intArrayOf(left, left, right, right),
+      floatArrayOf(0f, 0.2f, 0.8f, 1f),
+      Shader.TileMode.CLAMP
+    )
+  }
 
   override fun draw(canvas: Canvas) {
-    val box = bounds
-    paint.color = left
-    canvas.drawRect(box.left.toFloat(), box.top.toFloat(), box.exactCenterX(), box.bottom.toFloat(), paint)
-    paint.color = right
-    canvas.drawRect(box.exactCenterX(), box.top.toFloat(), box.right.toFloat(), box.bottom.toFloat(), paint)
+    canvas.drawRoundRect(RectF(bounds), radius, radius, paint)
   }
 
   override fun setAlpha(alpha: Int) = Unit

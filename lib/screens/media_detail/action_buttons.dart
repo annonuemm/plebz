@@ -494,13 +494,15 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
     final infoAction = isTv && description != null && description.trim().isNotEmpty
         ? FocusableAction(
             debugLabel: 'detail_overview',
-            onPressed: () =>
-                unawaited(showFullTextDialog(context, title: t.discover.overview, text: description.trim())),
+            onPressed: () => unawaited(
+              showFullTextDialog(context, title: t.discover.overview, text: description.trim(), description: true),
+            ),
             builder: (context, state) => iconActionButton(
               state,
               icon: const AppIcon(Symbols.info_rounded, fill: 1),
-              onPressed: () =>
-                  unawaited(showFullTextDialog(context, title: t.discover.overview, text: description.trim())),
+              onPressed: () => unawaited(
+                showFullTextDialog(context, title: t.discover.overview, text: description.trim(), description: true),
+              ),
               tooltip: t.discover.overview,
             ),
           )
@@ -910,7 +912,7 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
     if (!_canUseDetail) return;
     try {
       await downloadProvider.queueDownload(metadata, client, versionConfig: versionConfig);
-      if (mounted) showSuccessSnackBar(context, t.downloads.downloadQueued);
+      if (mounted && !reportDownloadRefused(context, client)) showSuccessSnackBar(context, t.downloads.downloadQueued);
     } on CellularDownloadBlockedException {
       if (mounted) showErrorSnackBar(context, t.settings.cellularDownloadBlocked);
     }
@@ -977,7 +979,7 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
       if (versionConfig == null || !_canUseDetail || !context.mounted) return;
 
       final count = await downloadProvider.queueMissingEpisodes(metadata, client, versionConfig: versionConfig);
-      if (_canUseDetail && context.mounted) {
+      if (_canUseDetail && context.mounted && !reportDownloadRefused(context, client)) {
         final message = count > 0 ? t.downloads.episodesQueued(count: count) : t.downloads.allEpisodesAlreadyDownloaded;
         showAppSnackBar(context, message);
       }

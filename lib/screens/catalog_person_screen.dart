@@ -329,7 +329,7 @@ class _CatalogPersonScreenState extends State<CatalogPersonScreen>
   void _openBiography() {
     final summary = _person?.summary;
     if (summary == null) return;
-    unawaited(showFullTextDialog(context, title: _person?.name ?? widget.name, text: summary));
+    unawaited(showFullTextDialog(context, title: _person?.name ?? widget.name, text: summary, description: true));
   }
 
   // ---------------------------------------------------------------- stage

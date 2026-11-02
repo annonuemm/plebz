@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plezy/focus/focusable_wrapper.dart';
 import 'package:plezy/focus/input_mode_tracker.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/media/media_file_info.dart';
@@ -42,15 +40,14 @@ void main() {
     expect(find.text('Subtitles'), findsOneWidget);
   });
 
-  testWidgets('audio-only file drops the video section and keeps the copyable path', (tester) async {
-    const path = '/music/Boards of Canada/Geogaddi/01 Ready Lets Go.flac';
+  testWidgets('audio-only file drops the video section', (tester) async {
     const fileInfo = MediaFileInfo(
       versions: [
         MediaFileVersion(
           container: 'flac',
           parts: [
             MediaFilePart(
-              filePath: path,
+              filePath: '/music/Boards of Canada/Geogaddi/01 Ready Lets Go.flac',
               fileSize: 35651584,
               streams: [
                 MediaStreamDetails(
@@ -79,7 +76,6 @@ void main() {
     expect(find.text('stereo (2 ch)'), findsOneWidget);
     expect(find.text('44.1 kHz'), findsOneWidget);
     expect(find.text('16 bit'), findsOneWidget);
-    expect(find.text(path), findsOneWidget);
 
     // Nothing video-shaped may leak into a track's sheet.
     expect(find.text('Video'), findsNothing);
@@ -105,11 +101,11 @@ void main() {
     expect(find.text('Delivery'), findsNothing);
   });
 
-  testWidgets('version counters and distinct file names render only for multiple versions', (tester) async {
+  testWidgets('version counters render only for multiple versions', (tester) async {
     const multiVersion = MediaFileInfo(
       versions: [
-        MediaFileVersion(parts: [MediaFilePart(filePath: '/media/theatrical.mkv')]),
-        MediaFileVersion(parts: [MediaFilePart(filePath: '/media/directors-cut.mkv')]),
+        MediaFileVersion(parts: [MediaFilePart(container: 'mkv')]),
+        MediaFileVersion(parts: [MediaFilePart(container: 'mp4')]),
       ],
     );
 
@@ -117,18 +113,48 @@ void main() {
 
     expect(find.text('Version 1 of 2'), findsOneWidget);
     expect(find.text('Version 2 of 2'), findsOneWidget);
-    expect(find.text('theatrical.mkv'), findsOneWidget);
-    expect(find.text('directors-cut.mkv'), findsOneWidget);
 
     const singleVersion = MediaFileInfo(
       versions: [
-        MediaFileVersion(parts: [MediaFilePart(filePath: '/media/theatrical.mkv')]),
+        MediaFileVersion(parts: [MediaFilePart(container: 'mkv')]),
       ],
     );
     await _pumpSheet(tester, fileInfo: singleVersion);
 
     expect(find.textContaining('Version '), findsNothing);
-    expect(find.text('theatrical.mkv'), findsOneWidget);
+  });
+
+  testWidgets('no path, file name or sidecar reaches the sheet (Plebz)', (tester) async {
+    const fileInfo = MediaFileInfo(
+      versions: [
+        MediaFileVersion(
+          parts: [
+            MediaFilePart(
+              filePath: '/data/Movies/Example (2026)/Example.2026.1080p-GROUP.mkv',
+              fileSize: 35651584,
+              streamKey: '/library/parts/1/2/file.mkv',
+              streams: [
+                MediaStreamDetails(
+                  kind: MediaStreamKind.subtitle,
+                  ordinal: 1,
+                  codec: 'srt',
+                  filePath: '/data/Movies/Example (2026)/Example.de.srt',
+                  externalKey: '/library/streams/9',
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+
+    await _pumpSheet(tester, fileInfo: fileInfo);
+
+    expect(find.textContaining('/data/'), findsNothing);
+    expect(find.textContaining('GROUP'), findsNothing);
+    expect(find.textContaining('Example.de'), findsNothing);
+    expect(find.textContaining('/library/'), findsNothing);
+    expect(find.text('Path'), findsNothing);
   });
 
   testWidgets('file counters render for multiple parts and collapse to File for one part', (tester) async {
@@ -136,8 +162,8 @@ void main() {
       versions: [
         MediaFileVersion(
           parts: [
-            MediaFilePart(filePath: '/media/disc-1.mkv'),
-            MediaFilePart(filePath: '/media/disc-2.mkv'),
+            MediaFilePart(container: 'mkv'),
+            MediaFilePart(container: 'mkv'),
           ],
         ),
       ],
@@ -151,7 +177,7 @@ void main() {
 
     const singlePart = MediaFileInfo(
       versions: [
-        MediaFileVersion(parts: [MediaFilePart(filePath: '/media/movie.mkv')]),
+        MediaFileVersion(parts: [MediaFilePart(container: 'mkv')]),
       ],
     );
     await _pumpSheet(tester, fileInfo: singlePart);
@@ -287,54 +313,6 @@ void main() {
     expect(find.text('NotoSans.otf'), findsOneWidget);
   });
 
-  testWidgets('tapping a path copies its full value and confirms the action', (tester) async {
-    const path = '/media/movies/Example Movie (2026)/Example Movie.mkv';
-    final clipboardCalls = _interceptClipboard();
-    const fileInfo = MediaFileInfo(
-      versions: [
-        MediaFileVersion(parts: [MediaFilePart(filePath: path)]),
-      ],
-    );
-
-    await _pumpSheet(tester, fileInfo: fileInfo);
-    await tester.tap(find.text(path));
-    await tester.pumpAndSettle();
-
-    expect(clipboardCalls, hasLength(1));
-    expect(clipboardCalls.single.method, 'Clipboard.setData');
-    expect(clipboardCalls.single.arguments, <String, dynamic>{'text': path});
-    expect(find.text('File path copied'), findsOneWidget);
-  });
-
-  testWidgets('keyboard select activates the focused path row and copies its full value', (tester) async {
-    const path = '/media/tv/Example Show/Season 01/Episode 01.mkv';
-    final clipboardCalls = _interceptClipboard();
-    const fileInfo = MediaFileInfo(
-      versions: [
-        MediaFileVersion(parts: [MediaFilePart(filePath: path)]),
-      ],
-    );
-
-    await _pumpSheet(tester, fileInfo: fileInfo);
-    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-    await tester.pump();
-
-    final pathWrapper = find.ancestor(of: find.text(path), matching: find.byType(FocusableWrapper));
-    expect(pathWrapper, findsOneWidget);
-    final pathFocus = find.descendant(of: pathWrapper, matching: find.byType(Focus)).first;
-    final pathFocusNode = tester.widget<Focus>(pathFocus).focusNode!;
-    pathFocusNode.requestFocus();
-    await tester.pump();
-    expect(pathFocusNode.hasFocus, isTrue);
-
-    await tester.sendKeyEvent(LogicalKeyboardKey.select);
-    await tester.pumpAndSettle();
-
-    expect(clipboardCalls, hasLength(1));
-    expect(clipboardCalls.single.arguments, <String, dynamic>{'text': path});
-    expect(find.text('File path copied'), findsOneWidget);
-  });
-
   testWidgets('field grid uses two columns when wide and one column when narrow', (tester) async {
     const fileInfo = MediaFileInfo(versions: [MediaFileVersion(container: 'mkv', durationMs: 123000)]);
 
@@ -373,15 +351,4 @@ Future<void> _pumpSheet(
     ),
   );
   await tester.pump();
-}
-
-List<MethodCall> _interceptClipboard() {
-  final calls = <MethodCall>[];
-  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-  messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
-    if (call.method == 'Clipboard.setData') calls.add(call);
-    return null;
-  });
-  addTearDown(() => messenger.setMockMethodCallHandler(SystemChannels.platform, null));
-  return calls;
 }

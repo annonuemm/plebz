@@ -65,6 +65,32 @@ void main() {
       expect(service.allows('plex-3'), isTrue);
     });
 
+    test('neither silence nor a failed probe lifts a refusal', () async {
+      await service.refreshFor(_PermissionClient('plex-5', allowed: false));
+
+      await service.refreshFor(_PermissionClient('plex-5', allowed: null));
+      expect(service.allows('plex-5'), isFalse);
+
+      await service.refreshFor(_PermissionClient('plex-5', fails: true));
+      expect(service.allows('plex-5'), isFalse);
+    });
+
+    test('confirm hears a refusal given since the server was last asked', () async {
+      await service.refreshFor(_PermissionClient('plex-6', allowed: true));
+      expect(service.allows('plex-6'), isTrue);
+
+      expect(await service.confirm(_PermissionClient('plex-6', allowed: false)), isFalse);
+      expect(service.allows('plex-6'), isFalse);
+    });
+
+    test('a burst of confirmations asks the server once', () async {
+      final client = _PermissionClient('plex-7', allowed: false);
+
+      expect(await service.confirm(client), isFalse);
+      expect(await service.confirm(client), isFalse);
+      expect(client.probes, 1);
+    });
+
     test('permission granted later lifts the block', () async {
       await service.refreshFor(_PermissionClient('plex-4', allowed: false));
       expect(service.allows('plex-4'), isFalse);

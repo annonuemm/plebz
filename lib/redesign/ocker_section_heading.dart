@@ -67,7 +67,8 @@ class OckerSectionHeading extends StatelessWidget {
             color: type.flat ? tk.ink(trailing ? 0.62 : 0.94) : (trailing ? tk.ink(0.42) : tk.ink(1)),
           ),
         ),
-        if (count != null) ...[
+        // "Glas – v2" (Plebz): no count beside a section's name.
+        if (count != null && !ockerGlasV2(context)) ...[
           SizedBox(width: (type.flat ? 14 : 12) * scale),
           Text('$count', style: type.counter.copyWith(color: tk.ink(type.flat ? 0.40 : 0.38))),
         ],

@@ -131,7 +131,9 @@ class HomeRowsFeed {
     final tk = Theme.of(context).extension<MonoTokens>();
     if (tk == null) return;
     final stored = SettingsService.instanceOrNull?.read(PlebzPrefs.appThemeVariant);
-    final variant = (stored == null ? AppThemeVariant.glas : supportedAppThemeVariant(stored)).name;
+    final drawn = stored == null ? AppThemeVariant.glas : supportedAppThemeVariant(stored);
+    // The launcher knows Glas and Flach; "Glas – v2" is Glas's paint.
+    final variant = (drawn == AppThemeVariant.glasV2 ? AppThemeVariant.glas : drawn).name;
     final fullCards = SettingsService.instanceOrNull?.read(SettingsService.tvFullCardLayout) ?? false;
     rows.setTheme(
       HomeRowsTheme(variant: variant, accent: tk.accent, background: tk.bg, text: tk.text, fullCards: fullCards),

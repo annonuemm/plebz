@@ -8,6 +8,7 @@ import '../screens/libraries/library_server_label.dart';
 import '../services/device_performance.dart';
 import '../theme/mono_tokens.dart';
 import '../widgets/focusable_list_tile.dart';
+import 'ocker_frost.dart';
 import 'ocker_skin.dart';
 import 'ocker_type.dart';
 import 'ocker_rail_shell.dart' show OckerHidesPlace;
@@ -95,6 +96,7 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
   final _scroll = ScrollController();
 
   bool _open = false;
+  final _frost = OckerFrostShot();
 
   /// Whether the cursor has been inside yet: not on the frame between opening
   /// and focusing a row, when a "focus left the column" rule would close it
@@ -123,6 +125,7 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
       node.dispose();
     }
     _scroll.dispose();
+    _frost.dispose();
     super.dispose();
   }
 
@@ -136,6 +139,8 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
       // the rail, RIGHT goes into the page, not back onto the rail.
       _cameFrom = from != null && _isInsidePage(from) ? from : null;
       _hadFocus = false;
+      // Before it opens: what was last painted is the page alone.
+      if (ockerFrost(context)) _frost.take(context);
       setState(() => _open = true);
     }
     _focusChosen(attempt: 0);
@@ -330,7 +335,7 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
     return OckerHidesPlace(
       hide: _open,
       child: AnimatedContainer(
-        duration: DevicePerformance.reducedDuration(const Duration(milliseconds: 180)),
+        duration: ockerFrostGlide(context, DevicePerformance.reducedDuration(const Duration(milliseconds: 180))),
         curve: Curves.easeOutCubic,
         width: _open ? width : 0,
         // Clipped rather than laid out narrower: the rows keep their width and
@@ -366,19 +371,25 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
                     // own pane (the viewer's call).
                     : Padding(
                         padding: liquid ? EdgeInsets.zero : EdgeInsets.all(12 * scale),
-                        child: OckerGlass(
-                          key: OckerLibraryColumn.paneKey,
-                          borderRadius: liquid ? BorderRadius.horizontal(right: radius.topRight) : radius,
-                          scrimInset: 0,
-                          liquid: true,
-                          lensBeyond: liquid
-                              ? EdgeInsets.fromLTRB(400 * scale, 400 * scale, 0, 400 * scale)
-                              : EdgeInsets.zero,
-                          child: ClipRRect(
-                            borderRadius: liquid ? BorderRadius.horizontal(right: radius.topRight) : radius,
-                            child: list,
-                          ),
-                        ),
+                        child: ockerFrost(context)
+                            ? ClipRRect(
+                                key: OckerLibraryColumn.paneKey,
+                                borderRadius: liquid ? BorderRadius.horizontal(right: radius.topRight) : radius,
+                                child: OckerFrostPane(ground: tokens(context).bg, picture: _frost.image, child: list),
+                              )
+                            : OckerGlass(
+                                key: OckerLibraryColumn.paneKey,
+                                borderRadius: liquid ? BorderRadius.horizontal(right: radius.topRight) : radius,
+                                scrimInset: 0,
+                                liquid: true,
+                                lensBeyond: liquid
+                                    ? EdgeInsets.fromLTRB(400 * scale, 400 * scale, 0, 400 * scale)
+                                    : EdgeInsets.zero,
+                                child: ClipRRect(
+                                  borderRadius: liquid ? BorderRadius.horizontal(right: radius.topRight) : radius,
+                                  child: list,
+                                ),
+                              ),
                       ),
               ),
             ),

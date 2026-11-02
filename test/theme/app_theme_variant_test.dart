@@ -49,7 +49,7 @@ void main() {
     });
 
     test('is not a variant any more', () {
-      expect(AppThemeVariant.values.map((v) => v.name), ['standard', 'glas', 'flach']);
+      expect(AppThemeVariant.values.map((v) => v.name), ['standard', 'glas', 'flach', 'glasV2']);
     });
   });
 

@@ -12,7 +12,7 @@ import '../../providers/theme_provider.dart';
 import '../../services/friends/friends_activity.dart';
 import '../../services/recommendations_service.dart';
 import '../../services/settings_service.dart' hide ThemeMode;
-import '../../theme/mono_theme.dart' show isRedesignVariant, supportedAppThemeVariant;
+import '../../theme/mono_theme.dart' show isGlasVariant, isRedesignVariant, supportedAppThemeVariant;
 import '../../focus/focusable_slider.dart';
 import '../../services/device_performance.dart';
 import '../../theme/liquid_glass.dart';
@@ -32,8 +32,15 @@ import 'plebz_settings_rows.dart'
 import 'settings_utils.dart';
 import 'sport_favourite_club_tile.dart';
 
+/// What a page of the appearance settings holds (Plebz): one long page read
+/// badly on a remote, so its groups stand under topics of their own. Each is a
+/// row of the settings' column; null shows the whole.
+enum AppearanceTopic { look, home, cards }
+
 class AppearanceSettingsScreen extends StatelessWidget {
-  const AppearanceSettingsScreen({super.key});
+  const AppearanceSettingsScreen({super.key, this.topic});
+
+  final AppearanceTopic? topic;
 
   @override
   Widget build(BuildContext context) {
@@ -55,346 +62,370 @@ class AppearanceSettingsScreen extends StatelessWidget {
     // have nothing left to steer there (Plebz). On a phone, tablet or Mac it
     // is a look only, and they keep working.
     final glasLayout = isOckerLayout(context);
+    bool shows(AppearanceTopic part) => topic == null || topic == part;
     return SettingsPage(
-      title: Text(t.settings.appearance),
+      title: Text(switch (topic) {
+        AppearanceTopic.home => t.settings.homeScreen,
+        AppearanceTopic.cards => t.plebz.postersAndDetailPages,
+        _ => t.settings.appearance,
+      }),
       children: [
-        SettingsGroup(
-          title: t.settings.display,
-          children: [
-            _themeSelector(),
-            themeVariantTile(),
-            // Only asked while glass is the theme: the accent is a detail of a
-            // look that is otherwise not there.
-            SettingValueBuilder<AppThemeVariant>(
-              pref: PlebzPrefs.appThemeVariant,
-              builder: (context, variant, _) => switch (supportedAppThemeVariant(variant)) {
-                AppThemeVariant.glas => _glasAccentSelector(),
-                AppThemeVariant.flach => flachColourTiles(),
-                AppThemeVariant.standard => const SizedBox.shrink(),
-              },
-            ),
-            // Glass that blurs what lies behind it: the Apple builds only, and
-            // not on the reduced tier, where it never runs.
-            SettingValueBuilder<AppThemeVariant>(
-              pref: PlebzPrefs.appThemeVariant,
-              builder: (context, variant, _) =>
-                  supportedAppThemeVariant(variant) == AppThemeVariant.glas && OckerLiquidGlass.offerable
-                  ? SettingSwitchTile(
-                      pref: PlebzPrefs.glasLiquid,
-                      icon: Symbols.blur_on_rounded,
-                      title: t.settings.glasLiquid,
-                      subtitle: t.settings.glasLiquidDescription,
-                    )
-                  : const SizedBox.shrink(),
-            ),
-            // Plebz: Glas hides its shut rail after Apple's TV app; this keeps
-            // the symbols in view. The television's rail only.
-            if (PlatformDetector.isTV())
+        if (shows(AppearanceTopic.look))
+          SettingsGroup(
+            title: t.settings.display,
+            children: [
+              _themeSelector(),
+              themeVariantTile(),
+              // Only asked while glass is the theme: the accent is a detail of a
+              // look that is otherwise not there.
               SettingValueBuilder<AppThemeVariant>(
                 pref: PlebzPrefs.appThemeVariant,
-                builder: (context, variant, _) => supportedAppThemeVariant(variant) == AppThemeVariant.glas
-                    ? SettingSwitchTile(
-                        pref: PlebzPrefs.glasRailSymbolsPinned,
-                        icon: Symbols.side_navigation_rounded,
-                        title: t.settings.glasRailSymbols,
-                        subtitle: t.settings.glasRailSymbolsDescription,
-                      )
-                    : const SizedBox.shrink(),
-              ),
-            // The colours behind the television layout's screens; there is no
-            // such ground on a phone, a tablet or the Mac.
-            if (PlatformDetector.isTV())
-              SettingValueBuilder<AppThemeVariant>(
-                pref: PlebzPrefs.appThemeVariant,
-                builder: (context, variant, _) => isRedesignVariant(supportedAppThemeVariant(variant))
-                    ? Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Both redesigns: under "Flach" the colours take
-                          // the place of its plain ground (the user's wish).
-                          SettingSwitchTile(
-                            pref: PlebzPrefs.ultraBlurFor(
-                              flat: supportedAppThemeVariant(variant) == AppThemeVariant.flach,
-                            ),
-                            icon: Symbols.gradient_rounded,
-                            title: t.settings.glasUltraBlur,
-                            subtitle: t.settings.glasUltraBlurDescription,
-                            // The colours need the picture in the corner: in
-                            // full the spotlight covers them (the user's call,
-                            // 2026-10-14).
-                            onAfterWrite: (on) async {
-                              if (on) {
-                                await SettingsService.instance.write(SettingsService.tvCornerSpotlightBackdrop, true);
-                              }
-                            },
-                          ),
-                          SettingSwitchTile(
-                            pref: PlebzPrefs.seasonTabsFor(
-                              flat: supportedAppThemeVariant(variant) == AppThemeVariant.flach,
-                            ),
-                            icon: Symbols.tab_rounded,
-                            title: t.settings.redesignSeasonTabs,
-                            subtitle: t.settings.redesignSeasonTabsDescription,
-                          ),
-                          SettingSwitchTile(
-                            pref: PlebzPrefs.glasDetailPanel,
-                            icon: Symbols.view_sidebar_rounded,
-                            title: t.settings.glasDetailPanel,
-                            subtitle: t.settings.glasDetailPanelDescription,
-                          ),
-                        ],
-                      )
-                    : const SizedBox.shrink(),
-              ),
-            // Plebz: Halloween and Christmas on the start screen, every device.
-            SettingSwitchTile(
-              pref: PlebzPrefs.seasonalStartScreen,
-              icon: Symbols.celebration_rounded,
-              title: t.settings.seasonalStartScreen,
-              subtitle: t.settings.seasonalStartScreenDescription,
-            ),
-            // Plebz: the way to Android's screensaver choice, where it shows.
-            const AmbientScreensaverTile(),
-            // Plebz: the app's own screensaver, for TVs without that choice.
-            ...ambientInAppRows(),
-            if (PlatformDetector.isAutomotive()) _displayScaleSelector(),
-            // Plebz: on iPhone, iPad and Apple TV too — nothing is detected
-            // there, but "reduced" chosen by hand still lightens the effects.
-            if (Platform.isAndroid || Platform.isIOS) _visualEffectsSelector(context),
-          ],
-        ),
-
-        SettingsGroup(
-          title: t.settings.libraryAndCards,
-          children: [
-            if (!glasLayout) _viewModeSelector(),
-            if (!glasLayout) _densitySelector(),
-            if (!glasLayout) _gridSpacingSelector(),
-            _episodePosterModeSelector(),
-            if (!glasLayout)
-              SettingSwitchTile(
-                pref: SettingsService.showEpisodeNumberOnCards,
-                icon: Symbols.tag_rounded,
-                title: t.settings.showEpisodeNumberOnCards,
-                subtitle: t.settings.showEpisodeNumberOnCardsDescription,
-              ),
-            if (!PlatformDetector.isTV())
-              SettingSwitchTile(
-                pref: SettingsService.showSeasonPostersOnTabs,
-                icon: Symbols.image_rounded,
-                title: t.settings.showSeasonPostersOnTabs,
-                subtitle: t.settings.showSeasonPostersOnTabsDescription,
-              ),
-            SettingSwitchTile(
-              pref: SettingsService.hideSpoilers,
-              icon: Symbols.visibility_off_rounded,
-              title: t.settings.hideSpoilers,
-              subtitle: t.settings.hideSpoilersDescription,
-            ),
-            SettingSwitchTile(
-              pref: SettingsService.showWatchedIndicators,
-              icon: Symbols.check_circle_rounded,
-              title: t.settings.showWatchedIndicators,
-              subtitle: t.settings.showWatchedIndicatorsDescription,
-            ),
-            if (PlatformDetector.isTV())
-              SettingSwitchTile(
-                pref: SettingsService.tvFullCardLayout,
-                icon: Symbols.image_rounded,
-                title: t.settings.tvFullCardLayout,
-                subtitle: t.settings.tvFullCardLayoutDescription,
-              ),
-            // Also on a desktop window, where it has always *done* something
-            // and only the switch was missing: a catalog detail page honours
-            // it on every host (see `CatalogItemDetailScreen._buildBackdrop`),
-            // so on a Mac the artwork treatment was fixed at whatever the
-            // stored value happened to be.
-            if (PlatformDetector.isTV() || PlatformDetector.isDesktopOS())
-              SettingSwitchTile(
-                pref: SettingsService.tvCornerSpotlightBackdrop,
-                icon: Symbols.picture_in_picture_alt_rounded,
-                title: t.settings.tvCornerSpotlightBackdrop,
-                subtitle: t.settings.tvCornerSpotlightBackdropDescription,
-                // Plebz: without the corner the poster colours do not show,
-                // so they go with it.
-                onAfterWrite: (on) async {
-                  if (on) return;
-                  await SettingsService.instance.write(PlebzPrefs.glasUltraBlur, false);
-                  await SettingsService.instance.write(PlebzPrefs.flachUltraBlur, false);
+                builder: (context, variant, _) => switch (supportedAppThemeVariant(variant)) {
+                  AppThemeVariant.glas || AppThemeVariant.glasV2 => _glasAccentSelector(),
+                  AppThemeVariant.flach => flachColourTiles(),
+                  AppThemeVariant.standard => const SizedBox.shrink(),
                 },
               ),
-            if (PlatformDetector.isTV() && !glasLayout)
-              SettingSwitchTile(
-                pref: SettingsService.focusGlow,
-                icon: Symbols.lightbulb_rounded,
-                title: t.settings.focusGlow,
-                subtitle: t.settings.focusGlowDescription,
+              // Glass that blurs what lies behind it: the Apple builds only, and
+              // not on the reduced tier, where it never runs.
+              SettingValueBuilder<AppThemeVariant>(
+                pref: PlebzPrefs.appThemeVariant,
+                builder: (context, variant, _) =>
+                    isGlasVariant(supportedAppThemeVariant(variant)) && OckerLiquidGlass.offerable
+                    ? SettingSwitchTile(
+                        pref: PlebzPrefs.glasLiquid,
+                        icon: Symbols.blur_on_rounded,
+                        title: t.settings.glasLiquid,
+                        subtitle: t.settings.glasLiquidDescription,
+                      )
+                    : const SizedBox.shrink(),
               ),
-            // Only the television's spotlight reads it; the phone's banner
-            // draws its logo either way (Plebz).
-            if (PlatformDetector.isTV())
+              // Plebz: Glas hides its shut rail after Apple's TV app; this keeps
+              // the symbols in view. The television's rail only.
+              if (PlatformDetector.isTV())
+                SettingValueBuilder<AppThemeVariant>(
+                  pref: PlebzPrefs.appThemeVariant,
+                  builder: (context, variant, _) => isGlasVariant(supportedAppThemeVariant(variant))
+                      ? SettingSwitchTile(
+                          pref: PlebzPrefs.glasRailSymbolsPinned,
+                          icon: Symbols.side_navigation_rounded,
+                          title: t.settings.glasRailSymbols,
+                          subtitle: t.settings.glasRailSymbolsDescription,
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              // The colours behind the television layout's screens; there is no
+              // such ground on a phone, a tablet or the Mac.
+              if (PlatformDetector.isTV())
+                SettingValueBuilder<AppThemeVariant>(
+                  pref: PlebzPrefs.appThemeVariant,
+                  builder: (context, variant, _) => isRedesignVariant(supportedAppThemeVariant(variant))
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Both redesigns: under "Flach" the colours take
+                            // the place of its plain ground (the user's wish).
+                            SettingSwitchTile(
+                              pref: PlebzPrefs.ultraBlurFor(
+                                flat: supportedAppThemeVariant(variant) == AppThemeVariant.flach,
+                              ),
+                              icon: Symbols.gradient_rounded,
+                              title: t.settings.glasUltraBlur,
+                              subtitle: t.settings.glasUltraBlurDescription,
+                              // The colours need the picture in the corner: in
+                              // full the spotlight covers them (the user's call,
+                              // 2026-10-14).
+                              onAfterWrite: (on) async {
+                                if (on) {
+                                  await SettingsService.instance.write(SettingsService.tvCornerSpotlightBackdrop, true);
+                                }
+                              },
+                            ),
+                            if (supportedAppThemeVariant(variant) == AppThemeVariant.glasV2)
+                              SettingSwitchTile(
+                                pref: PlebzPrefs.glasV2Frost,
+                                icon: Symbols.blur_on_rounded,
+                                title: t.settings.glasV2Frost,
+                                subtitle: t.settings.glasV2FrostDescription,
+                              ),
+                            SettingSwitchTile(
+                              pref: PlebzPrefs.seasonTabsFor(
+                                flat: supportedAppThemeVariant(variant) == AppThemeVariant.flach,
+                              ),
+                              icon: Symbols.tab_rounded,
+                              title: t.settings.redesignSeasonTabs,
+                              subtitle: t.settings.redesignSeasonTabsDescription,
+                            ),
+                            SettingSwitchTile(
+                              pref: PlebzPrefs.glasDetailPanel,
+                              icon: Symbols.view_sidebar_rounded,
+                              title: t.settings.glasDetailPanel,
+                              subtitle: t.settings.glasDetailPanelDescription,
+                            ),
+                          ],
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              // Plebz: Halloween and Christmas on the start screen, every device.
               SettingSwitchTile(
-                pref: PlebzPrefs.showHomeTitleLogos,
-                icon: Symbols.title_rounded,
-                title: t.settings.homeTitleLogos,
-                subtitle: t.settings.homeTitleLogosDescription,
+                pref: PlebzPrefs.seasonalStartScreen,
+                icon: Symbols.celebration_rounded,
+                title: t.settings.seasonalStartScreen,
+                subtitle: t.settings.seasonalStartScreenDescription,
               ),
-            if (hasSeerr)
+              // Plebz: the way to Android's screensaver choice, where it shows.
+              const AmbientScreensaverTile(),
+              // Plebz: the app's own screensaver, for TVs without that choice.
+              ...ambientInAppRows(),
+              if (PlatformDetector.isAutomotive()) _displayScaleSelector(),
+              // Plebz: on iPhone, iPad and Apple TV too — nothing is detected
+              // there, but "reduced" chosen by hand still lightens the effects.
+              if (Platform.isAndroid || Platform.isIOS) _visualEffectsSelector(context),
+            ],
+          ),
+
+        if (shows(AppearanceTopic.cards))
+          SettingsGroup(
+            title: t.settings.libraryAndCards,
+            children: [
+              if (!glasLayout) _viewModeSelector(),
+              if (!glasLayout) _densitySelector(),
+              if (!glasLayout) _gridSpacingSelector(),
+              _episodePosterModeSelector(),
+              if (!glasLayout)
+                SettingSwitchTile(
+                  pref: SettingsService.showEpisodeNumberOnCards,
+                  icon: Symbols.tag_rounded,
+                  title: t.settings.showEpisodeNumberOnCards,
+                  subtitle: t.settings.showEpisodeNumberOnCardsDescription,
+                ),
+              if (!PlatformDetector.isTV())
+                SettingSwitchTile(
+                  pref: SettingsService.showSeasonPostersOnTabs,
+                  icon: Symbols.image_rounded,
+                  title: t.settings.showSeasonPostersOnTabs,
+                  subtitle: t.settings.showSeasonPostersOnTabsDescription,
+                ),
               SettingSwitchTile(
-                pref: PlebzPrefs.seerrCardEpisodeFacts,
-                icon: Symbols.playlist_add_check_rounded,
-                title: t.settings.seerrCardEpisodeFacts,
-                subtitle: t.settings.seerrCardEpisodeFactsDescription,
+                pref: SettingsService.hideSpoilers,
+                icon: Symbols.visibility_off_rounded,
+                title: t.settings.hideSpoilers,
+                subtitle: t.settings.hideSpoilersDescription,
               ),
-            SettingSwitchTile(
-              pref: PlebzPrefs.showLibraryPlaylistsTab,
-              icon: Symbols.queue_music_rounded,
-              title: t.settings.showLibraryPlaylistsTab,
-              subtitle: t.settings.showLibraryPlaylistsTabDescription,
-            ),
-          ],
-        ),
+              SettingSwitchTile(
+                pref: SettingsService.showWatchedIndicators,
+                icon: Symbols.check_circle_rounded,
+                title: t.settings.showWatchedIndicators,
+                subtitle: t.settings.showWatchedIndicatorsDescription,
+              ),
+              if (PlatformDetector.isTV())
+                SettingSwitchTile(
+                  pref: SettingsService.tvFullCardLayout,
+                  icon: Symbols.image_rounded,
+                  title: t.settings.tvFullCardLayout,
+                  subtitle: t.settings.tvFullCardLayoutDescription,
+                ),
+              // Also on a desktop window, where it has always *done* something
+              // and only the switch was missing: a catalog detail page honours
+              // it on every host (see `CatalogItemDetailScreen._buildBackdrop`),
+              // so on a Mac the artwork treatment was fixed at whatever the
+              // stored value happened to be.
+              if (PlatformDetector.isTV() || PlatformDetector.isDesktopOS())
+                SettingSwitchTile(
+                  pref: SettingsService.tvCornerSpotlightBackdrop,
+                  icon: Symbols.picture_in_picture_alt_rounded,
+                  title: t.settings.tvCornerSpotlightBackdrop,
+                  subtitle: t.settings.tvCornerSpotlightBackdropDescription,
+                  // Plebz: without the corner the poster colours do not show,
+                  // so they go with it.
+                  onAfterWrite: (on) async {
+                    if (on) return;
+                    await SettingsService.instance.write(PlebzPrefs.glasUltraBlur, false);
+                    await SettingsService.instance.write(PlebzPrefs.flachUltraBlur, false);
+                  },
+                ),
+              if (PlatformDetector.isTV() && !glasLayout)
+                SettingSwitchTile(
+                  pref: SettingsService.focusGlow,
+                  icon: Symbols.lightbulb_rounded,
+                  title: t.settings.focusGlow,
+                  subtitle: t.settings.focusGlowDescription,
+                ),
+              // Only the television's spotlight reads it; the phone's banner
+              // draws its logo either way (Plebz).
+              if (PlatformDetector.isTV())
+                SettingSwitchTile(
+                  pref: PlebzPrefs.showHomeTitleLogos,
+                  icon: Symbols.title_rounded,
+                  title: t.settings.homeTitleLogos,
+                  subtitle: t.settings.homeTitleLogosDescription,
+                ),
+              if (hasSeerr)
+                SettingSwitchTile(
+                  pref: PlebzPrefs.seerrCardEpisodeFacts,
+                  icon: Symbols.playlist_add_check_rounded,
+                  title: t.settings.seerrCardEpisodeFacts,
+                  subtitle: t.settings.seerrCardEpisodeFactsDescription,
+                ),
+              SettingSwitchTile(
+                pref: PlebzPrefs.showLibraryPlaylistsTab,
+                icon: Symbols.queue_music_rounded,
+                title: t.settings.showLibraryPlaylistsTab,
+                subtitle: t.settings.showLibraryPlaylistsTabDescription,
+              ),
+            ],
+          ),
 
         // What the detail pages show — the fork's own switches, gathered
         // here rather than among the cards they do not touch.
-        SettingsGroup(
-          title: t.settings.detailPages,
-          children: [
-            SettingSwitchTile(
-              pref: PlebzPrefs.showDownloadAction,
-              icon: Symbols.download_rounded,
-              title: t.settings.showDownloadAction,
-              subtitle: t.settings.showDownloadActionDescription,
-            ),
-            if (hasTmdbKey)
+        if (shows(AppearanceTopic.cards))
+          SettingsGroup(
+            title: t.settings.detailPages,
+            children: [
               SettingSwitchTile(
-                pref: PlebzPrefs.showActorFilmography,
-                icon: Symbols.theater_comedy_rounded,
-                title: t.settings.showActorFilmography,
-                subtitle: t.settings.showActorFilmographyDescription,
+                pref: PlebzPrefs.showDownloadAction,
+                icon: Symbols.download_rounded,
+                title: t.settings.showDownloadAction,
+                subtitle: t.settings.showDownloadActionDescription,
               ),
-            // Not on a television under the redesigns: there an Explore
-            // title's page shows its facts on the fact sheet beside the info
-            // box, always, and these two switches steer nothing (Plebz).
-          ],
-        ),
+              if (hasTmdbKey)
+                SettingSwitchTile(
+                  pref: PlebzPrefs.showActorFilmography,
+                  icon: Symbols.theater_comedy_rounded,
+                  title: t.settings.showActorFilmography,
+                  subtitle: t.settings.showActorFilmographyDescription,
+                ),
+              // Not on a television under the redesigns: there an Explore
+              // title's page shows its facts on the fact sheet beside the info
+              // box, always, and these two switches steer nothing (Plebz).
+            ],
+          ),
 
-        SettingsGroup(
-          title: t.settings.homeScreen,
-          children: [
-            if (!PlatformDetector.isTV())
+        if (shows(AppearanceTopic.home))
+          SettingsGroup(
+            title: topic == null ? t.settings.homeScreen : null,
+            children: [
+              if (!PlatformDetector.isTV())
+                SettingSwitchTile(
+                  pref: SettingsService.showHeroSection,
+                  icon: Symbols.featured_play_list_rounded,
+                  title: t.settings.showHeroSection,
+                  subtitle: t.settings.showHeroSectionDescription,
+                ),
+              _continueWatchingActionSelector(),
+              _episodeActionSelector(),
+              if (!PlatformDetector.isMobile(context))
+                SettingSwitchTile(
+                  pref: PlebzPrefs.hideHomeActionsUntilFocus,
+                  icon: Symbols.visibility_off_rounded,
+                  title: t.settings.hideHomeActionsUntilFocus,
+                  subtitle: t.settings.hideHomeActionsUntilFocusDescription,
+                ),
               SettingSwitchTile(
-                pref: SettingsService.showHeroSection,
-                icon: Symbols.featured_play_list_rounded,
-                title: t.settings.showHeroSection,
-                subtitle: t.settings.showHeroSectionDescription,
+                pref: PlebzPrefs.showLiveNowRow,
+                icon: Symbols.live_tv_rounded,
+                title: t.settings.showLiveNowRow,
+                subtitle: t.settings.showLiveNowRowDescription,
               ),
-            _continueWatchingActionSelector(),
-            _episodeActionSelector(),
-            SettingSwitchTile(
-              pref: PlebzPrefs.showLiveNowRow,
-              icon: Symbols.live_tv_rounded,
-              title: t.settings.showLiveNowRow,
-              subtitle: t.settings.showLiveNowRowDescription,
-            ),
-            SettingSwitchTile(
-              pref: PlebzPrefs.showRecommendationsRow,
-              icon: Symbols.recommend_rounded,
-              title: t.settings.showRecommendationsRow,
-              subtitle: t.settings.showRecommendationsRowDescription,
-            ),
-            // Only asked once the row is on: it is a detail of a thing that is
-            // otherwise not there.
-            SettingValueBuilder<bool>(
-              pref: PlebzPrefs.showRecommendationsRow,
-              builder: (context, showRow, _) => showRow ? _recommendationsSourceSelector() : const SizedBox.shrink(),
-            ),
-            // Forgets the row's "Mehr davon" and "Weniger davon"; only while
-            // the row is on, like its source.
-            SettingValueBuilder<bool>(
-              pref: PlebzPrefs.showRecommendationsRow,
-              builder: (context, showRow, _) => showRow
-                  ? SettingNavigationTile(
-                      icon: Symbols.restart_alt_rounded,
-                      title: t.settings.resetRecommendations,
-                      subtitle: t.settings.resetRecommendationsDescription,
-                      trailingIcon: Symbols.restart_alt_rounded,
-                      onTap: () => _resetRecommendations(context),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-            // What the Plex friends watched (Plebz): the row, the line on a
-            // detail page and the page under Explore. Only where a Plex
-            // account has friends to show.
-            ListenableBuilder(
-              listenable: FriendsActivity.instance,
-              builder: (context, _) => FriendsActivity.instance.isAvailable
-                  ? SettingSwitchTile(
-                      pref: PlebzPrefs.showFriendsActivity,
-                      icon: Symbols.group_rounded,
-                      title: t.settings.showFriendsActivity,
-                      subtitle: t.settings.showFriendsActivityDescription,
-                    )
-                  : const SizedBox.shrink(),
-            ),
-            // Rows per streaming service (Plebz).
-            ...brandRowsSettingsRows(),
-          ],
-        ),
+              SettingSwitchTile(
+                pref: PlebzPrefs.showRecommendationsRow,
+                icon: Symbols.recommend_rounded,
+                title: t.settings.showRecommendationsRow,
+                subtitle: t.settings.showRecommendationsRowDescription,
+              ),
+              // Only asked once the row is on: it is a detail of a thing that is
+              // otherwise not there.
+              SettingValueBuilder<bool>(
+                pref: PlebzPrefs.showRecommendationsRow,
+                builder: (context, showRow, _) => showRow ? _recommendationsSourceSelector() : const SizedBox.shrink(),
+              ),
+              // Forgets the row's "Mehr davon" and "Weniger davon"; only while
+              // the row is on, like its source.
+              SettingValueBuilder<bool>(
+                pref: PlebzPrefs.showRecommendationsRow,
+                builder: (context, showRow, _) => showRow
+                    ? SettingNavigationTile(
+                        icon: Symbols.restart_alt_rounded,
+                        title: t.settings.resetRecommendations,
+                        subtitle: t.settings.resetRecommendationsDescription,
+                        trailingIcon: Symbols.restart_alt_rounded,
+                        onTap: () => _resetRecommendations(context),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              // What the Plex friends watched (Plebz): the row, the line on a
+              // detail page and the page under Explore. Only where a Plex
+              // account has friends to show.
+              ListenableBuilder(
+                listenable: FriendsActivity.instance,
+                builder: (context, _) => FriendsActivity.instance.isAvailable
+                    ? SettingSwitchTile(
+                        pref: PlebzPrefs.showFriendsActivity,
+                        icon: Symbols.group_rounded,
+                        title: t.settings.showFriendsActivity,
+                        subtitle: t.settings.showFriendsActivityDescription,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              // Rows per streaming service (Plebz).
+              ...brandRowsSettingsRows(),
+            ],
+          ),
 
-        SettingsGroup(
-          title: t.settings.navigation,
-          children: [
-            if (hasExplore)
+        if (shows(AppearanceTopic.look))
+          SettingsGroup(
+            title: t.settings.navigation,
+            children: [
+              if (hasExplore)
+                SettingSwitchTile(
+                  pref: SettingsService.showExploreTab,
+                  icon: Symbols.explore_rounded,
+                  title: t.settings.showExploreTab,
+                  subtitle: t.settings.showExploreTabDescription,
+                ),
+              // Right under Explore's switch, as the destination sits right after
+              // Explore's in the navigation.
               SettingSwitchTile(
-                pref: SettingsService.showExploreTab,
-                icon: Symbols.explore_rounded,
-                title: t.settings.showExploreTab,
-                subtitle: t.settings.showExploreTabDescription,
+                pref: PlebzPrefs.showSportTab,
+                icon: Symbols.sports_soccer_rounded,
+                title: t.settings.showSportTab,
+                subtitle: t.settings.showSportTabDescription,
               ),
-            // Right under Explore's switch, as the destination sits right after
-            // Explore's in the navigation.
-            SettingSwitchTile(
-              pref: PlebzPrefs.showSportTab,
-              icon: Symbols.sports_soccer_rounded,
-              title: t.settings.showSportTab,
-              subtitle: t.settings.showSportTabDescription,
-            ),
-            // Only while there is a Sport page to put the club on.
-            SettingValueBuilder<bool>(
-              pref: PlebzPrefs.showSportTab,
-              builder: (context, sport, _) => sport ? const SportFavouriteClubTile() : const SizedBox.shrink(),
-            ),
-            if (Platform.isAndroid || PlatformDetector.isDesktopOS()) _layoutModeSelector(context),
-            if (PlatformDetector.shouldUseSideNavigation(context) && !glasLayout)
+              // Only while there is a Sport page to put the club on.
+              SettingValueBuilder<bool>(
+                pref: PlebzPrefs.showSportTab,
+                builder: (context, sport, _) => sport ? const SportFavouriteClubTile() : const SizedBox.shrink(),
+              ),
+              if (Platform.isAndroid || PlatformDetector.isDesktopOS()) _layoutModeSelector(context),
+              if (PlatformDetector.shouldUseSideNavigation(context) && !glasLayout)
+                SettingSwitchTile(
+                  pref: SettingsService.alwaysKeepSidebarOpen,
+                  icon: Symbols.dock_to_left_rounded,
+                  title: t.settings.alwaysKeepSidebarOpen,
+                  subtitle: t.settings.alwaysKeepSidebarOpenDescription,
+                ),
+              if (PlatformDetector.shouldUseSideNavigation(context) && !glasLayout)
+                SettingSwitchTile(
+                  pref: SettingsService.groupLibrariesByServer,
+                  icon: Symbols.dns_rounded,
+                  title: t.settings.groupLibrariesByServer,
+                  subtitle: t.settings.groupLibrariesByServerDescription,
+                ),
+              if (!PlatformDetector.shouldUseSideNavigation(context))
+                SettingSwitchTile(
+                  pref: SettingsService.showNavBarLabels,
+                  icon: Symbols.label_rounded,
+                  title: t.settings.showNavBarLabels,
+                  subtitle: t.settings.showNavBarLabelsDescription,
+                ),
               SettingSwitchTile(
-                pref: SettingsService.alwaysKeepSidebarOpen,
-                icon: Symbols.dock_to_left_rounded,
-                title: t.settings.alwaysKeepSidebarOpen,
-                subtitle: t.settings.alwaysKeepSidebarOpenDescription,
+                pref: SettingsService.showUnwatchedCount,
+                icon: Symbols.counter_1_rounded,
+                title: t.settings.showUnwatchedCount,
+                subtitle: t.settings.showUnwatchedCountDescription,
               ),
-            if (PlatformDetector.shouldUseSideNavigation(context) && !glasLayout)
-              SettingSwitchTile(
-                pref: SettingsService.groupLibrariesByServer,
-                icon: Symbols.dns_rounded,
-                title: t.settings.groupLibrariesByServer,
-                subtitle: t.settings.groupLibrariesByServerDescription,
-              ),
-            if (!PlatformDetector.shouldUseSideNavigation(context))
-              SettingSwitchTile(
-                pref: SettingsService.showNavBarLabels,
-                icon: Symbols.label_rounded,
-                title: t.settings.showNavBarLabels,
-                subtitle: t.settings.showNavBarLabelsDescription,
-              ),
-            SettingSwitchTile(
-              pref: SettingsService.showUnwatchedCount,
-              icon: Symbols.counter_1_rounded,
-              title: t.settings.showUnwatchedCount,
-              subtitle: t.settings.showUnwatchedCountDescription,
-            ),
-          ],
-        ),
+            ],
+          ),
 
         // Live TV's rows live with IPTV (Plebz).
         const SizedBox(height: 24),

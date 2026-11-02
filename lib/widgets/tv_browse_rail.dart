@@ -77,6 +77,9 @@ class TvBrowseRailLayoutMetrics {
   final double containerHeight;
   final double height;
 
+  /// The room over a row's cards, under its heading.
+  final double cardTop;
+
   const TvBrowseRailLayoutMetrics({
     required this.isPersonHub,
     required this.isGenreHub,
@@ -94,6 +97,7 @@ class TvBrowseRailLayoutMetrics {
     required this.posterHeight,
     required this.containerHeight,
     required this.height,
+    required this.cardTop,
   });
 
   // Value equality: the metrics are recomputed every rail build and feed the
@@ -112,7 +116,8 @@ class TvBrowseRailLayoutMetrics {
       other.posterWidth == posterWidth &&
       other.posterHeight == posterHeight &&
       other.containerHeight == containerHeight &&
-      other.height == height;
+      other.height == height &&
+      other.cardTop == cardTop;
 
   @override
   int get hashCode => Object.hash(
@@ -128,6 +133,7 @@ class TvBrowseRailLayoutMetrics {
     posterHeight,
     containerHeight,
     height,
+    cardTop,
   );
 }
 
@@ -281,6 +287,7 @@ class TvBrowseRailLayout {
     double widePosterScale = 1.0,
     bool hasLeading = false,
     bool twoLineLiveCaption = false,
+    bool v2 = false,
   }) {
     final focusExtra = FocusTheme.focusBorderWidth * 2 * scale;
     final railEdgePadding = railEdgePaddingForScale(scale);
@@ -291,7 +298,11 @@ class TvBrowseRailLayout {
     // edge to edge, so a focused one grows (and rings) past its slot by more
     // than a poster's own margin — with "tight" spacing the next tile painted
     // over the ring.
-    final itemGap = fullCardLayout || isLiveNowHub(hub) ? fullCardItemGapForScale(scale) : gridSpacing.gridGap * scale;
+    // "Glas – v2" (Plebz): a poster grows as in the grids, and its ring reached
+    // the next one at the spacing a card's own margin was enough for.
+    final itemGap = fullCardLayout || isLiveNowHub(hub)
+        ? fullCardItemGapForScale(scale)
+        : (gridSpacing.gridGap + (v2 ? 8 : 0)) * scale;
     final isPersonHub = TvBrowseRailLayout.isPersonHub(hub);
     final isGenreHub = TvBrowseRailLayout.isGenreHub(hub);
     // "Jetzt live" takes the studio shelf's wide geometry, and keeps the
@@ -340,6 +351,8 @@ class TvBrowseRailLayout {
         ? TvBrowseRailLayout.chipHeightFor(scale)
         : (isPersonHub || isSquareHub || isPlatformHub)
         ? posterWidth
+        : v2 && isLiveNowHub(hub)
+        ? posterWidth / liveNowV2TileAspect
         : (useWideLayout ? posterWidth * 9 / 16 : posterWidth * 1.5);
     // A service tile carries no name under it — the logo is the name — and a
     // chip is nothing but its name, so neither row keeps height for one.
@@ -350,7 +363,11 @@ class TvBrowseRailLayout {
         ? 0.0
         : ((isPersonHub ? 52 : (twoLineLiveCaption && isLiveNowHub(hub) ? 50 : 36)) * scale);
     final containerHeight = (posterHeight + labelHeight).ceilToDouble();
-    final height = containerHeight + focusExtra + (10 * scale);
+    // "Glas – v2" (Plebz): a poster grows as much as in the grids, and its ring
+    // stands outside that. The room above keeps the ring off the row's heading,
+    // the room below keeps it inside the section a low-end glide snapshots.
+    final cardTop = (v2 ? 10 : 2) * scale;
+    final height = cardTop - (2 * scale) + containerHeight + focusExtra + ((v2 ? 16 : 10) * scale);
 
     return TvBrowseRailLayoutMetrics(
       isPersonHub: isPersonHub,
@@ -369,6 +386,7 @@ class TvBrowseRailLayout {
       posterHeight: posterHeight,
       containerHeight: containerHeight,
       height: height,
+      cardTop: cardTop,
     );
   }
 
@@ -386,6 +404,7 @@ class TvBrowseRailLayout {
     double tallPosterScale = 1.0,
     double widePosterScale = 1.0,
     bool twoLineLiveCaption = false,
+    bool v2 = false,
   }) {
     var maxHeight = 0.0;
     for (final hub in hubs) {
@@ -403,6 +422,7 @@ class TvBrowseRailLayout {
         tallPosterScale: tallPosterScale,
         widePosterScale: widePosterScaleForHub?.call(hub) ?? widePosterScale,
         twoLineLiveCaption: twoLineLiveCaption,
+        v2: v2,
       );
       if (metrics.height > maxHeight) maxHeight = metrics.height;
     }
@@ -519,6 +539,7 @@ class TvBrowseRailLayout {
     double tallPosterScale = 1.0,
     double widePosterScale = 1.0,
     bool twoLineLiveCaption = false,
+    bool v2 = false,
   }) {
     if (hubs.isEmpty) return 0;
 
@@ -540,6 +561,7 @@ class TvBrowseRailLayout {
       tallPosterScale: tallPosterScale,
       widePosterScale: widePosterScale,
       twoLineLiveCaption: twoLineLiveCaption,
+      v2: v2,
     );
 
     final sectionHeight = hubSectionHeightFor(scale: scale, activeRailHeight: railHeight);
@@ -1637,6 +1659,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                 widePosterScale: wideScales[i],
                 hasLeading: _hasLeadingFor(widget.hubs[i]),
                 twoLineLiveCaption: ockerGlass(context),
+                v2: ockerGlasV2(context),
               ),
           ];
           final sectionHeights = [
@@ -1989,6 +2012,9 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     return [hub.title, if (selection.isNotEmpty) selection].join(', ');
   }
 
+  /// A detail page's row of a season's episodes (Plebz).
+  static bool _isDetailEpisodeRow(MediaHub hub) => hub.type == 'episode' && hub.id.startsWith('detail_');
+
   Widget _buildHubHeader(
     BuildContext context, {
     required MediaHub hub,
@@ -2000,7 +2026,11 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
     final ocker = isOcker(context);
     final titleColor = isActive ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.54);
     final iconColor = isActive ? colorScheme.onSurface : colorScheme.onSurface.withValues(alpha: 0.42);
-    final showServerName = widget.showServerName && hub.serverName != null;
+    // "Glas – v2" (Plebz): a row at rest is its name and nothing else; how
+    // long it is, which server it comes from and that it opens in full are
+    // said on the row being read, not on every row down the page.
+    final quietAtRest = ockerGlasV2(context) && !isActive;
+    final showServerName = widget.showServerName && hub.serverName != null && !quietAtRest;
     final serverColor = ocker
         ? tokens(context).ink(isActive ? 0.38 : 0.26)
         : colorScheme.primary.withValues(alpha: isActive ? 0.7 : 0.4);
@@ -2070,7 +2100,11 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                         style: titleStyle,
                       ),
                     ),
-                    if (_hubLength(hub) case final length? when flatType != null) ...[
+                    // "Glas – v2": no count beside a row's name (the user's
+                    // call) — what is in it is there to be seen. A season's
+                    // row keeps its number of episodes, which is worth knowing.
+                    if (_hubLength(hub) case final length?
+                        when flatType != null && (!ockerGlasV2(context) || _isDetailEpisodeRow(hub))) ...[
                       SizedBox(width: 14 * ockerScale(context)),
                       Text('$length', style: serverStyle),
                     ],
@@ -2085,7 +2119,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
                   ],
                 ),
               ),
-              if (_trailingFor(hub) == TvRailTrailing.viewAll) ...[
+              if (_trailingFor(hub) == TvRailTrailing.viewAll && !quietAtRest) ...[
                 SizedBox(width: 8 * scale),
                 AppIcon(Symbols.chevron_right_rounded, fill: 1, size: 20 * scale, color: iconColor),
                 SizedBox(width: 30 * scale),
@@ -2198,7 +2232,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
         slivers: [
           if (leadingCount > 0)
             SliverPadding(
-              padding: .fromLTRB(metrics.railEdgePadding, 2 * scale, 0, 6 * scale),
+              padding: .fromLTRB(metrics.railEdgePadding, metrics.cardTop, 0, 6 * scale),
               sliver: SliverToBoxAdapter(
                 child: Align(
                   alignment: .topLeft,
@@ -2213,7 +2247,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
             ),
           SliverPadding(
             key: centerSliverKey,
-            padding: .fromLTRB(metrics.railEdgePadding, 2 * scale, metrics.railEdgePadding, 6 * scale),
+            padding: .fromLTRB(metrics.railEdgePadding, metrics.cardTop, metrics.railEdgePadding, 6 * scale),
             sliver: SliverVariedExtentList(
               // Asked per item rather than fixed: a chip row's tiles are each
               // as wide as their own word, and the trailing cell is a pill.
@@ -2319,7 +2353,11 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
         context: context,
         isFocused: focus.$1,
         borderRadius: tokens(context).radiusSm,
-        focusScale: fullCardLayout
+        // "Glas – v2" (Plebz): a poster grows as it does in the grids. Wide
+        // tiles keep their share: at 1.06 they would run over their neighbours.
+        focusScale: ockerGlasV2(context) && !metrics.useWideLayout
+            ? FocusTheme.flatPosterFocusScale
+            : fullCardLayout
             ? TvBrowseRailLayout.fullCardFocusScale
             : ockerFlat(context)
             ? FocusTheme.flatPosterFocusScale
@@ -2397,7 +2435,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
       );
     }
     if (isLiveNowHub(hub)) {
-      return LiveNowTileCard(
+      final tile = LiveNowTileCard(
         item: item,
         width: metrics.cardWidth,
         cardHeight: metrics.posterHeight,
@@ -2405,6 +2443,7 @@ class TvBrowseRailState extends State<TvBrowseRail> with TickerProviderStateMixi
         scale: scale,
         card: (card) => CardFocusBorder(borderRadius: liveNowTileRadius(context, scale), glassRim: true, child: card),
       );
+      return ockerGlasV2(context) ? LiveNowGroundReporter(item: item, child: tile) : tile;
     }
     if (metrics.isBrandHub) {
       return CardFocusBorder(

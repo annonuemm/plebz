@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../redesign/ocker_skin.dart';
+import '../screens/live_now/live_now_game_facts.dart';
 import '../redesign/ocker_type.dart';
 import '../theme/mono_tokens.dart';
 import '../i18n/strings.g.dart';
@@ -112,6 +113,7 @@ class TvSpotlightScaffold extends StatelessWidget {
             gridSpacing: settings.read(SettingsService.gridSpacing),
             tallPosterScale: TvBrowseRailLayout.compactTallPosterScale,
             twoLineLiveCaption: glass,
+            v2: ockerGlasV2(context),
           );
     final spotlightTop = (size.height * 0.075).clamp(64.0 * scale, 120.0 * scale).toDouble();
     final minimumSpotlightBottom = railHeight + (8 * scale);
@@ -151,6 +153,7 @@ class TvSpotlightScaffold extends StatelessWidget {
                         contentLeft: spotlightLeft + foregroundLeft,
                         showInfo: showSpotlightInfo,
                         targetWidthPx: (size.width * MediaQuery.devicePixelRatioOf(context)).ceil(),
+                        infoFooter: ockerGlasV2(context) ? LiveNowGameLine(item: spotlight) : null,
                       );
                     },
                   ),
@@ -159,6 +162,31 @@ class TvSpotlightScaffold extends StatelessWidget {
                 );
               },
             ),
+            // "Glas – v2" (Plebz): a game has no backdrop, so its facts take
+            // the side a picture would fill.
+            if (showSpotlightInfo && ockerGlasV2(context))
+              Positioned(
+                top: spotlightTop,
+                bottom: spotlightBottom,
+                right: spotlightLeft,
+                width: 520 * scale,
+                child: IgnorePointer(
+                  child: Align(
+                    alignment: Alignment.bottomRight,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.bottomRight,
+                      child: SizedBox(
+                        width: 520 * scale,
+                        child: ValueListenableBuilder<MediaItem?>(
+                          valueListenable: spotlightListenable,
+                          builder: (context, _, _) => LiveNowSpotlightFacts(item: resolveSpotlight()),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             foreground,
           ],
         ),
@@ -183,6 +211,7 @@ class CatalogSpotlightBackground extends StatefulWidget {
     required this.contentLeft,
     required this.targetWidthPx,
     this.showInfo = true,
+    this.infoFooter,
   });
 
   final MediaItem? item;
@@ -193,6 +222,9 @@ class CatalogSpotlightBackground extends StatefulWidget {
   final double contentLeft;
   final bool showInfo;
   final int targetWidthPx;
+
+  /// See [TvSpotlightBackground.infoFooter].
+  final Widget? infoFooter;
 
   @override
   State<CatalogSpotlightBackground> createState() => _CatalogSpotlightBackgroundState();
@@ -364,6 +396,7 @@ class _CatalogSpotlightBackgroundState extends State<CatalogSpotlightBackground>
       compact: true,
       showInfo: widget.showInfo,
       metadataTrailing: _buildNextEpisodeMetadata(context),
+      infoFooter: widget.infoFooter,
     );
     if (accentColor == null) return background;
     return Theme(

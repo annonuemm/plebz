@@ -728,6 +728,8 @@ class HubSectionState extends State<HubSection> with MountedSetStateMixin, Skele
                         ? chipTileHeight(1)
                         : isPlatformHub
                         ? posterWidth
+                        : isLiveHub && ockerGlasV2(context)
+                        ? posterWidth / liveNowV2TileAspect
                         : useWideLayout
                         ? posterWidth *
                               (9 / 16) // 16:9 for wide layout

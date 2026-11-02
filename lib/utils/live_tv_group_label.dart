@@ -126,3 +126,72 @@ String liveTvGroupLabel(String group, {required bool stripCountryPrefix, String?
   final rest = match.group(2)!.trim();
   return rest.isEmpty ? group : rest;
 }
+
+/// [group]'s leading country code and the name behind it (Plebz, "Glas – v2"):
+/// `DE • Doku` is `(country: 'DE', rest: 'Doku')`; a group with no code is
+/// `(country: null, rest: group)`.
+({String? country, String rest}) liveTvGroupCountrySplit(String group) {
+  final trimmed = group.trim();
+  final match = _bracketedPrefix.firstMatch(trimmed) ?? _barePrefix.firstMatch(trimmed);
+  if (match == null || !_isCountryCode(match.group(1)!)) return (country: null, rest: trimmed);
+  final rest = match.group(2)!.trim();
+  return rest.isEmpty ? (country: null, rest: trimmed) : (country: match.group(1)!.toUpperCase(), rest: rest);
+}
+
+/// A country code as a heading over its groups: the country's German name
+/// where it is one a provider commonly uses, else the code itself.
+String liveTvCountryHeading(String code) => _countryNames[code.toUpperCase()] ?? code.toUpperCase();
+
+const _countryNames = {
+  'DE': 'Deutschland',
+  'GER': 'Deutschland',
+  'AT': 'Österreich',
+  'AUT': 'Österreich',
+  'CH': 'Schweiz',
+  'SUI': 'Schweiz',
+  'UK': 'Großbritannien',
+  'GB': 'Großbritannien',
+  'US': 'USA',
+  'USA': 'USA',
+  'NL': 'Niederlande',
+  'BE': 'Belgien',
+  'FR': 'Frankreich',
+  'IT': 'Italien',
+  'ES': 'Spanien',
+  'PT': 'Portugal',
+  'PL': 'Polen',
+  'TR': 'Türkei',
+  'DK': 'Dänemark',
+  'SE': 'Schweden',
+  'NO': 'Norwegen',
+  'FI': 'Finnland',
+  'GR': 'Griechenland',
+  'HR': 'Kroatien',
+  'RS': 'Serbien',
+  'RO': 'Rumänien',
+  'HU': 'Ungarn',
+  'CZ': 'Tschechien',
+  'RU': 'Russland',
+  'UA': 'Ukraine',
+  'AR': 'Arabisch',
+  'IN': 'Indien',
+  'CA': 'Kanada',
+  'AU': 'Australien',
+  'BR': 'Brasilien',
+  'MX': 'Mexiko',
+};
+
+/// [names] with a trailing "RAW" (the provider's mark for an unprocessed
+/// stream) left off each, where that leaves no two names the same.
+List<String> liveTvWithoutRawMark(List<String> names) {
+  final raw = RegExp(r'\s*[•·|:/\-–—]?\s*RAW$', caseSensitive: false);
+  final stripped = [for (final name in names) name.replaceFirst(raw, '').trim()];
+  final seen = <String, int>{};
+  for (final name in stripped) {
+    seen[name] = (seen[name] ?? 0) + 1;
+  }
+  return [
+    for (var i = 0; i < names.length; i++)
+      stripped[i].isEmpty || (seen[stripped[i]] ?? 0) > 1 || stripped[i] == names[i] ? names[i] : stripped[i],
+  ];
+}

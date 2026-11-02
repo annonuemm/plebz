@@ -20,6 +20,7 @@ import '../navigation/navigation_tabs.dart';
 import '../theme/glass_backdrop.dart';
 import '../theme/mono_tokens.dart';
 import '../widgets/system_clock.dart';
+import 'ocker_frost.dart';
 import 'ocker_header_slot.dart';
 import 'ocker_side_rail.dart';
 import 'ocker_skin.dart';
@@ -144,20 +145,22 @@ class _OckerRailShellState extends State<OckerRailShell> {
           ambient: ultraBlur,
           child: OckerHeaderSlot(
             slot: _headerSlot,
-            child: GlassBackdrop(
-              // The route under the shell lays the same ground already.
-              reuseRouteGround: true,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // A slot of its own either way: the shell beside it keeps its
-                  // place, and with it the screens and focus, when switched.
-                  if (ultraBlur != null)
-                    IgnorePointer(child: UltraBlurLayer(colors: ultraBlur))
-                  else
-                    const SizedBox.shrink(),
-                  _buildShell(context, media, railWidth),
-                ],
+            child: OckerFrostSource(
+              child: GlassBackdrop(
+                // The route under the shell lays the same ground already.
+                reuseRouteGround: true,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // A slot of its own either way: the shell beside it keeps its
+                    // place, and with it the screens and focus, when switched.
+                    if (ultraBlur != null)
+                      IgnorePointer(child: UltraBlurLayer(colors: ultraBlur))
+                    else
+                      const SizedBox.shrink(),
+                    _buildShell(context, media, railWidth),
+                  ],
+                ),
               ),
             ),
           ),
@@ -229,7 +232,7 @@ class _OckerRailShellState extends State<OckerRailShell> {
                   child: IgnorePointer(
                     child: AnimatedOpacity(
                       opacity: widget.expanded ? 1 : 0,
-                      duration: SideNavigationRailState.expandDuration,
+                      duration: ockerFrostGlide(context, SideNavigationRailState.expandDuration),
                       child: ColoredBox(color: tokens(context).bg.withValues(alpha: 0.55)),
                     ),
                   ),
@@ -277,7 +280,9 @@ class _Chrome extends StatelessWidget {
     final scale = ockerScale(context);
     return Positioned(
       top: MediaQuery.paddingOf(context).top + OckerLayout.headerTop / 2 * scale,
-      right: OckerLayout.safeMargin * scale,
+      // "Glas – v2" (Plebz): as far from the right edge as the page's words
+      // and the place capsule stand from the left — one margin, both sides.
+      right: ockerGlasV2(context) ? ockerFlushLeftInset(context) : OckerLayout.safeMargin * scale,
       child: Row(
         key: OckerRailShell.chromeKey,
         mainAxisSize: .min,
@@ -285,9 +290,12 @@ class _Chrome extends StatelessWidget {
           builder(context),
           SizedBox(width: 18 * scale),
           SystemClock(
-            style: OckerType.of(
-              context,
-            ).clock.copyWith(color: tk.ink(tk.flat ? 0.62 : 0.72), fontWeight: tk.flat ? FontWeight.w500 : null),
+            // "Glas – v2" (Plebz): in the glyphs' ink and a weight that
+            // matches their stroke, so the corner reads as one line.
+            style: OckerType.of(context).clock.copyWith(
+              color: tk.ink(tk.flat ? 0.62 : (tk.v2 ? 0.75 : 0.72)),
+              fontWeight: tk.flat || tk.v2 ? FontWeight.w500 : null,
+            ),
           ),
         ],
       ),
@@ -405,7 +413,7 @@ class _PlaceVisibilityState extends State<_PlaceVisibility> {
     super.didUpdateWidget(oldWidget);
     final want = widget.railShut && widget.columnShut;
     if (want == (oldWidget.railShut && oldWidget.columnShut)) return;
-    final glide = SideNavigationRailState.expandDuration;
+    final glide = ockerFrostGlide(context, SideNavigationRailState.expandDuration);
     final liquid = OckerLiquidGlass.active;
     if (!widget.columnShut) {
       _show(false);

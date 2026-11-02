@@ -101,6 +101,26 @@ void main() {
       expect(server.asked, ['/library/metadata/7/art/1', '/library/metadata/8/art/1'], reason: 'the first is known');
     });
 
+    testWidgets('a tile with colours of its own needs no server, and waits like a poster', (tester) async {
+      final server = _server('plex-1');
+      final ambient = UltraBlurAmbient((owner: (_) => server.client, any: () => server.client));
+      addTearDown(ambient.dispose);
+      const colors = UltraBlurColors(
+        topLeft: Color(0xFF400000),
+        topRight: Color(0xFF000040),
+        bottomRight: Color(0xFF000040),
+        bottomLeft: Color(0xFF400000),
+      );
+
+      ambient.reportColors(colors);
+      await tester.pump();
+      expect(ambient.value, isNull, reason: 'a row walked past does not change the ground');
+
+      await tester.pump(UltraBlurAmbient.settleDelay);
+      expect(ambient.value, colors);
+      expect(server.asked, isEmpty);
+    });
+
     testWidgets('a title that is not Plex\'s lets the ground show again', (tester) async {
       final server = _server('plex-1');
       final ambient = UltraBlurAmbient((owner: (_) => server.client, any: () => server.client));

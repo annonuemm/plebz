@@ -41,6 +41,15 @@ class FocusableAction {
   /// Ignored on the first action.
   final double? spacingBefore;
 
+  /// Stays at full strength whatever holds focus (Plebz): a faded action is
+  /// drawn into a layer of its own, where a live blur has nothing behind it
+  /// to blur. The row then dims its other actions one by one.
+  final bool staysLit;
+
+  /// Marks its own focus, so [FocusableActionBar.wrapBuiltAction] leaves it
+  /// alone: two marks of focus on one button read as neither (Plebz).
+  final bool marksOwnFocus;
+
   const FocusableAction({
     this.icon = Symbols.circle_rounded,
     this.iconColor,
@@ -54,6 +63,8 @@ class FocusableAction {
     this.child,
     this.builder,
     this.spacingBefore,
+    this.staysLit = false,
+    this.marksOwnFocus = false,
   });
 }
 
@@ -80,14 +91,21 @@ class FocusableActionBar extends StatefulWidget {
 
   final double spacing;
 
+  /// Take the unfocused row all the way to invisible instead of merely dim.
+  ///
+  /// The buttons keep their place and their focus node, so the remote still
+  /// reaches them — they simply are not painted until it does. Only for bars
+  /// whose actions are chrome; a row of play buttons must never vanish.
+  final bool hideUntilFocused;
+
   /// Wraps each action a [FocusableAction.builder] built, with its state —
   /// how a row on a band of glass reports each button to the band's focus.
   final Widget Function(BuildContext context, FocusableActionBuildState state, Widget child)? wrapBuiltAction;
 
-  /// Under "Flach", how big each icon action's disc is drawn, where a row
-  /// stands beside a detail page's own and should match it (Plebz). Null for
-  /// the toolbar's size, [OckerFilterGlyph]'s own.
-  final double? flatGlyphDiameter;
+  /// How big each icon action is drawn under the redesign, where a row stands
+  /// beside a detail page's own buttons and should match them (Plebz). Null
+  /// for the toolbar's size, [OckerFilterGlyph]'s own.
+  final double? glyphDiameter;
 
   const FocusableActionBar({
     super.key,
@@ -97,10 +115,11 @@ class FocusableActionBar extends StatefulWidget {
     this.onNavigateLeft,
     this.onNavigateRight,
     this.onBack,
+    this.hideUntilFocused = false,
     this.onFocusChange,
     this.spacing = 0,
     this.wrapBuiltAction,
-    this.flatGlyphDiameter,
+    this.glyphDiameter,
   });
 
   @override
@@ -310,8 +329,12 @@ class FocusableActionBarState extends State<FocusableActionBar> {
     // switch on the tiled GPUs low-end TVs use, and these bars sit on screen
     // permanently. Per-button dims (below) take over only while the row holds
     // focus; mid-transition the two multiply, which stays visually seamless.
-    return AnimatedOpacity(opacity: isKeyboard && !_hasAnyFocus ? 0.6 : 1.0, duration: duration, child: row);
+    final unfocused = widget.hideUntilFocused ? 0.0 : 0.6;
+    final dimRow = isKeyboard && !_hasAnyFocus && !_anyStaysLit;
+    return AnimatedOpacity(opacity: dimRow ? unfocused : 1.0, duration: duration, child: row);
   }
+
+  bool get _anyStaysLit => widget.actions.any((action) => action.staysLit);
 
   double _gapBefore(int index) => widget.actions[index].spacingBefore ?? widget.spacing;
 
@@ -340,7 +363,12 @@ class FocusableActionBarState extends State<FocusableActionBar> {
   /// enclosing [Focus], so nothing is lost by drawing the glyph plainly; the
   /// gesture below is only for a pointer.
   Widget _buildOckerFace(BuildContext context, FocusableAction action, {required bool showFocus}) {
-    if (action.child != null) return action.child!;
+    if (action.child case final child?) {
+      // "Glas – v2" (Plebz): a button of its own (an IconButton with a badge)
+      // shows focus as every other one does — the glass capsule behind it —
+      // rather than only coming up brighter than its neighbours.
+      return ockerGlasV2(context) ? OckerGlassFocusBehind.wrap(showFocus, const CircleBorder(), child) : child;
+    }
     // On iPhone and iPad the whole of Apple's touch target answers, not only
     // the glyph — which is all a bare glyph hit-tests on its own.
     final appleTarget = ockerGlasTouch(context);
@@ -350,7 +378,7 @@ class FocusableActionBarState extends State<FocusableActionBar> {
       // Small where the redesign sets these beside the tabs; a toolbar's own
       // size where the layout is the app's own and they sit in an app bar.
       size: isOckerLayout(context) ? OckerFilterGlyph.glyphSize : action.iconSize,
-      flatDiameter: widget.flatGlyphDiameter,
+      diameter: widget.glyphDiameter,
     );
     if (appleTarget) {
       glyph = ConstrainedBox(
@@ -372,11 +400,13 @@ class FocusableActionBarState extends State<FocusableActionBar> {
     final enabled = action.onPressed != null;
     final isFocused = _focusStates[index];
     final showFocus = isFocused && isKeyboard;
-    final opacity = isKeyboard && _hasAnyFocus && !isFocused ? 0.6 : 1.0;
+    final opacity = isKeyboard && !action.staysLit && !isFocused && (_hasAnyFocus || _anyStaysLit) ? 0.6 : 1.0;
     final buildState = FocusableActionBuildState(showFocus: showFocus, animationDuration: duration);
     final built = action.builder?.call(context, buildState);
     final wrap = widget.wrapBuiltAction;
-    final customChild = built == null || wrap == null ? built : wrap(context, buildState, built);
+    final customChild = built == null || wrap == null || action.marksOwnFocus
+        ? built
+        : wrap(context, buildState, built);
 
     return Focus(
       // Keyed on the binding so an insertion moves the element with its node

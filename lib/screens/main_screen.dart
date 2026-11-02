@@ -563,6 +563,10 @@ class _MainScreenState extends State<MainScreen>
   bool _trackerRevisionBeforePrime = false;
   Timer? _startupSettleTimeout;
 
+  /// Running from [_focusContent] until the cursor has had time to reach the
+  /// page. See [_syncSidebarFocusWithRail].
+  Timer? _leavingRail;
+
   /// Hard ceiling on how long we wait for [ActiveProfileBinder] to settle
   /// before priming libraries, watch sync, and downloads anyway. The binder
   /// always calls `markBindingFinished` in its `finally`, but this is a
@@ -1185,6 +1189,7 @@ class _MainScreenState extends State<MainScreen>
 
   @override
   void dispose() {
+    _leavingRail?.cancel();
     if (_watchTogether?.navigatorOpener == _navigateToWatchTogetherMedia) _watchTogether?.navigatorOpener = null;
     WidgetsBinding.instance.removeObserver(this);
     TrackerProgressController.instance.revision.removeListener(_onTrackerRevision);
@@ -1641,6 +1646,8 @@ class _MainScreenState extends State<MainScreen>
     }
     setState(() => _isSidebarFocused = false);
     _updateTvosMenuPassthrough();
+    _leavingRail?.cancel();
+    _leavingRail = Timer(const Duration(milliseconds: 200), _syncSidebarFocusWithRail);
     if (restorePreviousFocus) {
       _contentFocusScope.requestFocus();
     }
@@ -1665,10 +1672,14 @@ class _MainScreenState extends State<MainScreen>
   /// Plebz: the mirror of [_syncSidebarFocusWithContent] for the redesign's
   /// rail. Focus can walk into it without [_focusSidebar] — LEFT from a
   /// page's chrome in the top right corner — and Glas's hidden rail then held
-  /// focus out of sight. It opens to match.
+  /// focus out of sight. It opens to match. Not while [_leavingRail] runs: a
+  /// rail that shuts with no glide drops the row holding the cursor, focus
+  /// falls back on the scope for the frames the page takes to receive it, and
+  /// the rail flashed open again on the way out (the user's report). Still in
+  /// the rail after that, the page had nowhere to land, and the rail reopens.
   void _syncSidebarFocusWithRail() {
     if (!mounted || _isSidebarFocused || !_sidebarFocusScope.hasFocus) return;
-    if (_ockerRailKey.currentState == null) return;
+    if (_ockerRailKey.currentState == null || (_leavingRail?.isActive ?? false)) return;
     setState(() => _isSidebarFocused = true);
     _updateTvosMenuPassthrough();
   }

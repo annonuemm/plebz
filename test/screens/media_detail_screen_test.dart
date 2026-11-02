@@ -244,6 +244,40 @@ void main() {
     }
   });
 
+  testWidgets('under Glas – v2 the play button names itself and the actions beside it stay glyphs', (tester) async {
+    await SettingsService.getInstance();
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final movie = testMediaItem(
+      id: 'movie_v2',
+      kind: MediaKind.movie,
+      title: 'A Film With Words',
+      summary: 'Something happens.',
+    );
+
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: MaterialApp(
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glasV2),
+          home: withProfileNavigationScope(child: MediaDetailScreen(metadata: movie)),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    final bar = find.byType(FocusableActionBar);
+    expect(find.descendant(of: bar, matching: find.text(t.common.play)), findsOneWidget);
+    expect(
+      find.descendant(of: bar, matching: find.byType(Text)),
+      findsOneWidget,
+      reason: 'only the play button carries a word',
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a title the watchlist provider does not know is kept by the app instead of turned away', (tester) async {
     await SettingsService.getInstance();
     tester.view.physicalSize = const Size(1280, 720);

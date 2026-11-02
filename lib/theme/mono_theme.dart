@@ -158,7 +158,12 @@ double glasAccentWash(GlasAccent accent) => accent == GlasAccent.rot ? 0.7 : 0.2
 /// the hairline focus ring, the absence of shadows — all of that belongs to
 /// the redesign and answers here. Which ground and which accent is a separate
 /// question with a separate switch.
-bool isRedesignVariant(AppThemeVariant variant) => variant == AppThemeVariant.glas || variant == AppThemeVariant.flach;
+bool isRedesignVariant(AppThemeVariant variant) =>
+    variant == AppThemeVariant.glas || variant == AppThemeVariant.flach || variant == AppThemeVariant.glasV2;
+
+/// Whether [variant] is painted in glass with Glas's palettes (Plebz): Glas
+/// itself and "Glas – v2", which differs in its rules, not in its paint.
+bool isGlasVariant(AppThemeVariant variant) => variant == AppThemeVariant.glas || variant == AppThemeVariant.glasV2;
 
 /// "Redesign – Flach"'s ground and ink (Plebz): the design's near-black with a
 /// trace of violet, an all but neutral white the viewer chose, the accent the
@@ -449,12 +454,17 @@ bool get redesignOfferedHere => _debugRedesignOffered ?? true;
 @visibleForTesting
 set debugRedesignOfferedHere(bool? offered) => _debugRedesignOffered = offered;
 
-/// The variants that can be chosen here, in the order they are shown: Glas
-/// and Flach (upstream's own look only under [PlebzPrefs.debugOriginalLook]).
-List<AppThemeVariant> get offeredAppThemeVariants => [
-  for (final variant in AppThemeVariant.values)
-    if (isRedesignVariant(variant) ? redesignOfferedHere : PlebzPrefs.debugOriginalLook) variant,
-];
+/// The variants that can be chosen here, in the order they are shown:
+/// "Glas – v2" and Flach (upstream's own look and the first Glas only under
+/// [PlebzPrefs.debugOriginalLook]).
+List<AppThemeVariant> get offeredAppThemeVariants => PlebzPrefs.debugOriginalLook
+    ? [
+        for (final variant in AppThemeVariant.values)
+          if (!isRedesignVariant(variant) || redesignOfferedHere) variant,
+      ]
+    : [
+        if (redesignOfferedHere) ...const [AppThemeVariant.glasV2, AppThemeVariant.flach],
+      ];
 
 /// [variant] as this host can actually draw it.
 ///
@@ -465,11 +475,12 @@ List<AppThemeVariant> get offeredAppThemeVariants => [
 /// the same profile still opens in the redesign on the television it was set
 /// from.
 ///
-/// Upstream's own look is not drawn in Plebz (since 2026-11-01): a stored or
-/// restored "Original" reads as Glas, except in the test suite
-/// ([PlebzPrefs.debugOriginalLook]).
+/// Upstream's own look and the first Glas are not drawn in Plebz (since
+/// 2026-11-01 and 2026-11-02): a stored or restored one reads as "Glas – v2",
+/// except in the test suite ([PlebzPrefs.debugOriginalLook]).
 AppThemeVariant supportedAppThemeVariant(AppThemeVariant variant) {
-  if (variant == AppThemeVariant.standard && !PlebzPrefs.debugOriginalLook) return AppThemeVariant.glas;
+  final retired = variant == AppThemeVariant.standard || variant == AppThemeVariant.glas;
+  if (retired && !PlebzPrefs.debugOriginalLook) return AppThemeVariant.glasV2;
   return isRedesignVariant(variant) && !redesignOfferedHere ? AppThemeVariant.standard : variant;
 }
 
@@ -504,7 +515,7 @@ ThemeData monoTheme(
     plainGround: palette == MonoPalette.oled || !isRedesignVariant(variant) ? null : plainGround,
     platform: defaultTargetPlatform,
     variant: variant,
-    glasAccent: variant == AppThemeVariant.glas ? glasAccent : null,
+    glasAccent: isGlasVariant(variant) ? glasAccent : null,
     flachAccent: variant == AppThemeVariant.flach ? flachAccent : null,
     // Fixed for a host; a key only so a test can switch it.
     appleSystemFont: isRedesignVariant(variant) && ockerAppleSystemFont,
@@ -762,6 +773,21 @@ ThemeData _buildMonoTheme(
       // ignore: deprecated_member_use — opting into the 2024 slider appearance until the default flips
       year2023: false,
     ),
+    // "Glas – v2" (Plebz): a switch that is on says so in the accent, with a
+    // white knob — white on white with a black knob read as off at a glance.
+    switchTheme: variant == AppThemeVariant.glasV2
+        ? SwitchThemeData(
+            thumbColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.selected) ? Colors.white : c.text.withValues(alpha: 0.72),
+            ),
+            trackColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.selected) ? glas.accent : c.text.withValues(alpha: 0.12),
+            ),
+            trackOutlineColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.selected) ? Colors.transparent : c.text.withValues(alpha: 0.3),
+            ),
+          )
+        : null,
     dividerTheme: DividerThemeData(space: 0, thickness: 1, color: c.outline),
     listTileTheme: ListTileThemeData(
       dense: true,
@@ -797,7 +823,7 @@ ThemeData _buildMonoTheme(
   // the theme hands out in SF Pro, cut and spaced for its size, after
   // ThemeData has merged its defaults in, since only then does every style
   // have one. Flach keeps SF Pro as it was.
-  final appleType = variant == AppThemeVariant.glas && ockerAppleSystemFont;
+  final appleType = isGlasVariant(variant) && ockerAppleSystemFont;
   TextStyle? apple(TextStyle? style) =>
       style == null ? null : appleSystemType(style, pointsPerPixel: ockerApplePointsPerPixel);
 
@@ -860,6 +886,7 @@ ThemeData _buildMonoTheme(
         redesignLayout: redesign,
         glass: redesign,
         flat: flat,
+        v2: variant == AppThemeVariant.glasV2,
         accentWash: redesign && !flat ? glasAccentWash(glasAccent) : 0.22,
       ),
     ],
@@ -902,7 +929,7 @@ TextTheme _appleTextTheme(TextTheme theme) {
 /// own give way to Apple's: Back is a chevron, More a row of dots, Share a box
 /// with an arrow.
 void applyIconDefaultsFor(AppThemeVariant variant) {
-  final glas = variant == AppThemeVariant.glas;
+  final glas = isGlasVariant(variant);
   AppIconDefaults.substitutes = glas && ockerAppleLook ? appleGlyphSubstitutes : {};
   AppIconDefaults.opticalSizeFollowsSize = glas;
   AppIconDefaults.update(
@@ -910,11 +937,11 @@ void applyIconDefaultsFor(AppThemeVariant variant) {
       AppThemeVariant.standard => 1,
       // Ocker fills exactly two glyphs, and neither of them goes through here:
       // the play triangle and the LIVE marker draw their own.
-      AppThemeVariant.glas || AppThemeVariant.flach => 0,
+      AppThemeVariant.glas || AppThemeVariant.flach || AppThemeVariant.glasV2 => 0,
     },
     weight: switch (variant) {
       AppThemeVariant.standard => 700,
-      AppThemeVariant.glas => 400,
+      AppThemeVariant.glas || AppThemeVariant.glasV2 => 400,
       // Flat leans on words and a few plain glyphs; a little more ink keeps
       // the glyphs from vanishing without glass to sit on.
       AppThemeVariant.flach => 300,

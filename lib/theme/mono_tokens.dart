@@ -200,6 +200,11 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
   /// edge, solid fills, focus a white fill with what stands on it inverted.
   final bool flat;
 
+  /// "Glas – v2" (Plebz): Glas under one rulebook — see
+  /// `AppThemeVariant.glasV2`. Glas's paint and palettes, [glass] true and
+  /// [flat] false; read it through `ockerGlasV2`.
+  final bool v2;
+
   /// How much of the [accent] the glass capsule wears on the one chosen — the
   /// destination on show, the chosen row of a menu. A faint wash in most
   /// palettes; one that is only black, white and red spends its red there.
@@ -271,6 +276,7 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
     this.redesignLayout = false,
     this.glass = false,
     this.flat = false,
+    this.v2 = false,
     this.accentWash = 0.22,
   });
 
@@ -306,6 +312,7 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
     bool? redesignLayout,
     bool? glass,
     bool? flat,
+    bool? v2,
     double? accentWash,
   }) => MonoTokens(
     radiusSm: radiusSm ?? this.radiusSm,
@@ -338,6 +345,7 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
     redesignLayout: redesignLayout ?? this.redesignLayout,
     glass: glass ?? this.glass,
     flat: flat ?? this.flat,
+    v2: v2 ?? this.v2,
     accentWash: accentWash ?? this.accentWash,
   );
 
@@ -382,6 +390,7 @@ class MonoTokens extends ThemeExtension<MonoTokens> {
       redesignLayout: t < 0.5 ? redesignLayout : other.redesignLayout,
       glass: t < 0.5 ? glass : other.glass,
       flat: t < 0.5 ? flat : other.flat,
+      v2: t < 0.5 ? v2 : other.v2,
       accentWash: lerpDouble(accentWash, other.accentWash, t)!,
     );
   }

@@ -62,6 +62,10 @@ class TvSpotlightBackground extends StatelessWidget {
   /// the start page's three or four (Plebz: the catalog detail stage).
   final int? summaryMaxLines;
 
+  /// A line of the caller's own under the description (Plebz: a game's
+  /// channel and stadium).
+  final Widget? infoFooter;
+
   const TvSpotlightBackground({
     super.key,
     required this.item,
@@ -77,6 +81,7 @@ class TvSpotlightBackground extends StatelessWidget {
     this.cornerProgress,
     this.metadataTrailing,
     this.summaryMaxLines,
+    this.infoFooter,
   });
 
   double _scale(BuildContext context) => TvLayoutConstants.scaleOf(context);
@@ -111,7 +116,13 @@ class TvSpotlightBackground extends StatelessWidget {
           // cold-start every cached backdrop when the setting is toggled.
           width: size.width,
           height: size.height,
-          fallbackColor: media == null ? bgColor : Theme.of(context).colorScheme.surfaceContainerHighest,
+          // "Glas – v2" (Plebz): a title with no picture at all, a game, leaves
+          // the ground showing, where a grey box stood over its colours.
+          fallbackColor: media == null
+              ? bgColor
+              : (fallbackPaths.isEmpty && ockerGlasV2(context)
+                    ? Colors.transparent
+                    : Theme.of(context).colorScheme.surfaceContainerHighest),
         );
         final artwork = backdrop;
         return Stack(
@@ -452,6 +463,7 @@ class TvSpotlightBackground extends StatelessWidget {
                   style: prose,
                 ),
         ),
+        ?infoFooter,
       ],
     );
   }

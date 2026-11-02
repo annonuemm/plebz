@@ -8,8 +8,10 @@ import '../../media/media_backend.dart';
 import '../../media/media_hub.dart';
 import '../../media/media_item.dart';
 import '../../media/media_kind.dart';
+import '../../media/ultra_blur_colors.dart';
 import '../../redesign/ocker_skin.dart';
 import '../../redesign/ocker_type.dart';
+import '../../redesign/ultra_blur_backdrop.dart';
 import '../../services/sport/club_colours.dart';
 import '../sport/club_colour_ground.dart';
 import '../../services/sport/sport_league_names.dart';
@@ -89,6 +91,39 @@ class LiveNowScope extends InheritedWidget {
 double liveNowTileRadius(BuildContext context, double scale) =>
     ockerGlass(context) ? artworkRadius(context) : flatRadius(context, 8) * scale;
 
+/// "Glas – v2" (Plebz): a tile's width over its height. Crests and logos sit
+/// in a line, so the tile need not be 16:9, and the row hands the page back
+/// the height it saves.
+const double liveNowV2TileAspect = 2.6;
+
+/// The screen's ground behind a game, its clubs on their sides of it as on
+/// the tile; a club without a colour leaves [plain] there. Null with neither.
+UltraBlurColors? liveNowGameGround(SportMatch match, Color plain) {
+  final home = clubColourFor(match.home);
+  final away = clubColourFor(match.away);
+  if (home == null && away == null) return null;
+  final left = home == null ? plain : ClubColourGround.flatColour(home);
+  final right = away == null ? plain : ClubColourGround.flatColour(away);
+  return UltraBlurColors(topLeft: left, topRight: right, bottomRight: right, bottomLeft: left);
+}
+
+/// "Glas – v2" (Plebz): a tile of the row takes the screen's ground while it
+/// holds focus, as a poster does: a game its clubs' colours, a channel, which
+/// has none, the plain ground rather than the last poster's.
+class LiveNowGroundReporter extends StatelessWidget {
+  const LiveNowGroundReporter({super.key, required this.item, required this.child});
+
+  final MediaItem item;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final entry = LiveNowScope.entryOf(context, item.id);
+    final colors = entry is LiveNowGame ? liveNowGameGround(entry.match, tokens(context).bg) : null;
+    return UltraBlurCardReporter(item: item, colors: colors, child: child);
+  }
+}
+
 /// One tile of the "Jetzt live" row: a wide card and its caption under it.
 ///
 /// A game shows both crests and, while it is on, the score and a LIVE mark; a
@@ -133,6 +168,10 @@ class LiveNowTileCard extends StatelessWidget {
         child: switch (entry) {
           LiveNowGame() => _GameCard(entry: entry, height: cardHeight, scale: scale),
           LiveNowChannel() => ClubColourGround(
+            // "Glas – v2" (Plebz): a logo has no colours to glow through the
+            // pane, so the page behind it does; a reading pane stood out as a
+            // dark block among the tiles.
+            plainGroundOpacity: tk.v2 ? ockerBandGroundOpacity : ockerReadingGroundOpacity,
             child: _ChannelCard(entry: entry, width: width, height: cardHeight, scale: scale),
           ),
           null => const SizedBox.shrink(),

@@ -24,10 +24,17 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
     final isTv = PlatformDetector.isTV();
     final tvScale = TvLayoutConstants.scaleOf(context);
     final actionSize = isTv ? _tvDetailActionSize * tvScale : 48.0;
-    final playButtonLabel = _getPlayButtonLabel(metadata);
     final playIcon = _getPlayButtonIcon(metadata);
     final playActionLabel = playIcon == Symbols.resume_rounded ? t.common.resume : t.common.play;
-    final playSemanticsLabel = playButtonLabel.isEmpty ? playActionLabel : '$playActionLabel $playButtonLabel';
+    // "Glas – v2" (Plebz) on the television: the play button says what it
+    // does ("Abspielen", "Fortsetzen S1E3") and stands out at rest; the
+    // actions beside it stay glyphs, so the row keeps all of them.
+    final v2Play = isTv && isOckerLayout(context) && ockerGlasV2(context);
+    final episodeLabel = _getPlayButtonLabel(metadata);
+    final playButtonLabel = v2Play
+        ? (episodeLabel.isEmpty ? playActionLabel : '$playActionLabel $episodeLabel')
+        : episodeLabel;
+    final playSemanticsLabel = episodeLabel.isEmpty ? playActionLabel : '$playActionLabel $episodeLabel';
     final playIconSize = isTv ? 22 * tvScale : 20.0;
     final playTextStyle = TextStyle(fontSize: isTv ? 17 * tvScale : 16, fontWeight: .w700);
     final playButtonIcon = AppIcon(playIcon, fill: 1, size: playIconSize);
@@ -273,7 +280,51 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
       );
     }
 
-    Widget plebzGround(Widget button, OutlinedBorder shape, bool focused) => flat
+    // "Glas – v2" (Plebz): the one main action is filled with the accent at
+    // rest — it stands out before focus reaches it — and a filled shape takes
+    // a picture's focus, a ring standing off it.
+    final v2Frost = ockerFrost(context);
+    final v2OnAccent = !v2Frost && ThemeData.estimateBrightnessForColor(tokens(context).accent) == Brightness.light
+        ? tokens(context).bg
+        : Colors.white;
+    final v2PlayStyle = ButtonStyle(
+      backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+      foregroundColor: WidgetStatePropertyAll(v2OnAccent),
+    );
+    Widget v2PlayGround(Widget button, OutlinedBorder shape, bool focused) {
+      final tk = tokens(context);
+      final scale = ockerScale(context);
+      // Frosted: glass rather than the accent, clipped apart from the ring,
+      // which stands outside the shape.
+      return DecoratedBox(
+        decoration: ShapeDecoration(shape: shape, color: v2Frost ? null : tk.accent),
+        position: DecorationPosition.background,
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: FlatFocusRingDecoration(
+            ink: tk.ink(1),
+            ground: tk.bg,
+            gap: FocusTheme.flatRingGap * scale,
+            ringWidth: FocusTheme.flatRingWidth * scale,
+            opacity: focused ? 1 : 0,
+            borderRadius: shape is RoundedRectangleBorder
+                ? shape.borderRadius.resolve(Directionality.of(context))
+                : BorderRadius.circular(actionSize / 2),
+          ),
+          child: v2Frost
+              ? OckerFrostBlur(
+                  shape: shape.copyWith(side: BorderSide(color: tk.ink(0.28))),
+                  tint: tk.ink(ockerFrostButtonTint),
+                  child: button,
+                )
+              : button,
+        ),
+      );
+    }
+
+    Widget plebzGround(Widget button, OutlinedBorder shape, bool focused) => v2Play
+        ? v2PlayGround(button, shape, focused)
+        : flat
         ? flatPlayGround(button, shape, focused)
         : plebzPlay
         ? OckerPlebzPlayGround(focused: focused, shape: shape, child: button)
@@ -285,7 +336,7 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
       final style = actionButtonStyle(
         showFocus: state.showFocus,
         padding: .symmetric(horizontal: isTv ? 17 * tvScale : 16, vertical: isTv ? 9 * tvScale : 0),
-        shape: playShape ?? (plebzPlay || flat ? playCapsule : null),
+        shape: playShape ?? (plebzPlay || flat || v2Play ? playCapsule : null),
       );
       return Semantics(
         label: playSemanticsLabel,
@@ -297,7 +348,11 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
           child: plebzGround(
             FilledButton(
               onPressed: onPlayPressed,
-              style: plebzPlay || flat ? plebzStyle.merge(style) : style,
+              style: v2Play
+                  ? v2PlayStyle.merge(style)
+                  : plebzPlay || flat
+                  ? plebzStyle.merge(style)
+                  : style,
               child: playButtonLabel.isNotEmpty
                   ? Row(
                       mainAxisSize: .min,
@@ -336,7 +391,11 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
             child: plebzGround(
               FilledButton(
                 onPressed: onPlayVersionPressed,
-                style: plebzPlay || flat ? plebzStyle.merge(versionStyle) : versionStyle,
+                style: v2Play
+                    ? v2PlayStyle.merge(versionStyle)
+                    : plebzPlay || flat
+                    ? plebzStyle.merge(versionStyle)
+                    : versionStyle,
                 child: AppIcon(Symbols.keyboard_arrow_down_rounded, fill: 1, size: playIconSize),
               ),
               versionShape,
@@ -368,12 +427,14 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
       focusNode: _playButtonFocusNode,
       autofocus: isKeyboardMode,
       onPressed: onPlayPressed,
+      staysLit: v2Play && v2Frost,
       builder: (context, state) => playButton(state),
     );
 
     final versionAction = showVersionSplit
         ? FocusableAction(
             debugLabel: 'detail_play_version',
+            staysLit: v2Play && v2Frost,
             spacingBefore: splitGap,
             onPressed: onPlayVersionPressed,
             builder: (context, state) => versionButton(state),

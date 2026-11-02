@@ -53,6 +53,7 @@ import '../widgets/media_rating_badge.dart';
 import '../utils/rating_utils.dart' show averagedRatings;
 import '../widgets/fitted_metadata_line.dart';
 import '../i18n/strings.g.dart';
+import '../redesign/ocker_frost.dart';
 import '../redesign/ocker_skin.dart';
 import '../redesign/ocker_type.dart';
 import '../widgets/plebz_start_animation.dart' show plebzMarkColours;
@@ -4711,6 +4712,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       fullCardLayout: svc.read(SettingsService.tvFullCardLayout),
       gridSpacing: svc.read(SettingsService.gridSpacing),
       tallPosterScale: _tvDetailTallPosterScale,
+      v2: ockerGlasV2(context),
     );
   }
 
@@ -4741,6 +4743,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
       scale: scale,
       tallPosterScale: _tvDetailTallPosterScale,
       widePosterScale: 1.0,
+      v2: ockerGlasV2(context),
     );
     final sectionHeight = TvBrowseRailLayout.hubSectionHeightFor(scale: scale, activeRailHeight: metrics.height);
     return TvBrowseRailLayout.railTopPaddingForScale(scale) +

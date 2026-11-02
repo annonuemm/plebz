@@ -1,7 +1,7 @@
 name: plezy
 description: "A beautiful Plex and Jellyfin client for Flutter"
 publish_to: "none"
-version: 1.38.0+899
+version: 1.39.0+927
 
 environment:
   # Dart floor stays 3.12: freezed 3.x emits `final` constructor parameters,

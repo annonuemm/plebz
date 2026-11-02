@@ -10,6 +10,7 @@ void main() {
     WidgetTester tester,
     List<FocusableAction> actions, {
     double spacing = 12,
+    bool hideUntilFocused = false,
     FocusNode? elsewhere,
   }) async {
     await tester.pumpWidget(
@@ -22,7 +23,7 @@ void main() {
                 // focusable thing on screen it holds focus itself, and the row
                 // is never in the unfocused state the fade is about.
                 if (elsewhere != null) Focus(focusNode: elsewhere, child: const SizedBox(width: 40, height: 40)),
-                FocusableActionBar(actions: actions, spacing: spacing),
+                FocusableActionBar(actions: actions, spacing: spacing, hideUntilFocused: hideUntilFocused),
               ],
             ),
           ),
@@ -59,6 +60,25 @@ void main() {
     expect(shuffle.left - version.right, 12);
   });
 
+  testWidgets('hideUntilFocused takes the unfocused row to nothing, not just dim', (tester) async {
+    final elsewhere = FocusNode(debugLabel: 'elsewhere');
+    addTearDown(elsewhere.dispose);
+
+    await pumpBar(
+      tester,
+      [FocusableAction(icon: Symbols.refresh_rounded, debugLabel: 'refresh', onPressed: () {})],
+      hideUntilFocused: true,
+      elsewhere: elsewhere,
+    );
+
+    // Keyboard mode is what the fade is for; a key press gets the tracker there.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    elsewhere.requestFocus();
+    await tester.pumpAndSettle();
+
+    expect(barOpacity(tester), 0);
+  });
+
   testWidgets('an unfocused row dims', (tester) async {
     final elsewhere = FocusNode(debugLabel: 'elsewhere');
     addTearDown(elsewhere.dispose);
@@ -72,6 +92,71 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(barOpacity(tester), 0.6);
+  });
+
+  testWidgets('an action that stays lit is never drawn faded, the others dim one by one', (tester) async {
+    final elsewhere = FocusNode(debugLabel: 'elsewhere');
+    addTearDown(elsewhere.dispose);
+
+    await pumpBar(tester, [
+      FocusableAction(icon: Symbols.play_arrow_rounded, debugLabel: 'play', staysLit: true, onPressed: () {}),
+      FocusableAction(icon: Symbols.info_rounded, debugLabel: 'info', onPressed: () {}),
+    ], elsewhere: elsewhere);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    elsewhere.requestFocus();
+    await tester.pumpAndSettle();
+
+    final opacities = tester.widgetList<AnimatedOpacity>(find.byType(AnimatedOpacity)).map((o) => o.opacity).toList();
+    expect(opacities, [1.0, 1.0, 0.6], reason: 'the row, the lit action, the other');
+  });
+
+  testWidgets('an action that marks its own focus is left out of the row\'s wrap', (tester) async {
+    await tester.pumpWidget(
+      InputModeTracker(
+        child: MaterialApp(
+          home: Scaffold(
+            body: FocusableActionBar(
+              wrapBuiltAction: (context, state, child) => KeyedSubtree(key: const ValueKey('wrapped'), child: child),
+              actions: [
+                FocusableAction(debugLabel: 'own', marksOwnFocus: true, builder: (_, _) => const Text('own')),
+                FocusableAction(debugLabel: 'plain', builder: (_, _) => const Text('plain')),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.descendant(of: find.byKey(const ValueKey('wrapped')), matching: find.text('plain')), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const ValueKey('wrapped')), matching: find.text('own')), findsNothing);
+  });
+
+  testWidgets('a hidden row is still reachable — it is unpainted, not gone', (tester) async {
+    // The whole design rests on this: invisible buttons that could not be
+    // focused would put the profile menu out of reach for good.
+    final elsewhere = FocusNode(debugLabel: 'elsewhere');
+    final node = FocusNode(debugLabel: 'refresh');
+    addTearDown(elsewhere.dispose);
+    addTearDown(node.dispose);
+
+    await pumpBar(
+      tester,
+      [FocusableAction(icon: Symbols.refresh_rounded, debugLabel: 'refresh', focusNode: node, onPressed: () {})],
+      hideUntilFocused: true,
+      elsewhere: elsewhere,
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    elsewhere.requestFocus();
+    await tester.pumpAndSettle();
+    expect(barOpacity(tester), 0);
+
+    node.requestFocus();
+    await tester.pumpAndSettle();
+
+    expect(node.hasFocus, isTrue);
+    expect(barOpacity(tester), 1.0, reason: 'focus brings it back into view');
   });
 
   Future<void> pumpTrackedBar(WidgetTester tester, List<FocusableAction> actions, List<bool> rowFocusChanges) async {

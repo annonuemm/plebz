@@ -2041,6 +2041,16 @@ class GuideTabState extends State<GuideTab>
           fillColor = ockerFlatWash(tk, gone ? 0.025 : (isCurrentlyAiring ? 0.09 : 0.055));
           titleColor = gone ? tk.ink(0.4) : tk.ink(1);
           subtitleColor = gone ? tk.ink(0.3) : tk.ink(0.5);
+        } else if (glass && ockerGlasV2(context)) {
+          // "Glas – v2" (Plebz): what is on now is plainly the brightest
+          // block, what is gone steps right back — "live must look live".
+          // Only what is on now is set in white (the user's call): what is
+          // still to come, or kept in the archive, a step down; what is gone
+          // a step further.
+          final gone = isPast && !isArchived;
+          fillColor = tk.ink(gone ? 0.02 : (isCurrentlyAiring ? 0.16 : 0.06));
+          titleColor = isCurrentlyAiring ? tk.text : tk.ink(gone ? 0.42 : 0.62);
+          subtitleColor = isCurrentlyAiring ? tk.textMuted : tk.ink(gone ? 0.28 : 0.42);
         } else if (glass) {
           fillColor = tk.ink(isPast && !isArchived ? 0.03 : (isCurrentlyAiring ? 0.11 : 0.06));
           titleColor = isPast && !isArchived ? tk.text.withValues(alpha: 0.5) : tk.text;

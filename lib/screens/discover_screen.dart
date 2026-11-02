@@ -1128,7 +1128,15 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   /// "Ocker" has no backdrop for a toolbar to float over and a header that
   /// already carries a clock, so it takes these on their own and puts them at
   /// the end of the header row. Same widgets, same callbacks, one place.
-  Widget _buildToolbarActions(Color foregroundColor) {
+  Widget _buildToolbarActions(Color foregroundColor) => SettingsBuilder(
+    prefs: const [PlebzPrefs.hideHomeActionsUntilFocus],
+    builder: (context) => _toolbarActions(
+      foregroundColor,
+      hideUntilFocused: SettingsService.instance.read(PlebzPrefs.hideHomeActionsUntilFocus),
+    ),
+  );
+
+  Widget _toolbarActions(Color foregroundColor, {required bool hideUntilFocused}) {
     final colorScheme = Theme.of(context).colorScheme;
     return Consumer2<WatchTogetherProvider, CompanionRemoteProvider>(
       builder: (context, watchTogether, companionRemote, _) {
@@ -1143,8 +1151,46 @@ class _DiscoverScreenState extends State<DiscoverScreen>
           }
         }
 
+        // "Glas – v2" (Plebz) on the television: every glyph in the corner is
+        // the one glyph widget — one size, one stroke, one ink, one focus —
+        // where an icon button, a badge and a bare glyph stood side by side.
+        // A connected remote shows as its own glyph rather than a dot.
+        if (isOckerLayout(context) && ockerGlasV2(context)) {
+          FocusableAction glyph(IconData icon, VoidCallback onPressed, {Widget Function(Widget face)? wrap}) =>
+              FocusableAction(
+                onPressed: onPressed,
+                builder: (context, state) {
+                  final face = OckerFilterGlyph(icon: icon, focused: state.showFocus);
+                  return wrap == null ? face : wrap(face);
+                },
+              );
+          return FocusableActionBar(
+            key: _actionBarKey,
+            hideUntilFocused: hideUntilFocused,
+            onNavigateLeft: _navigateToSidebar,
+            onNavigateDown: _focusContentFromAppBar,
+            actions: [
+              glyph(Symbols.refresh_rounded, manualRefresh),
+              if (watchTogetherAvailable)
+                glyph(watchTogether.isInSession ? Symbols.groups_rounded : Symbols.group_rounded, openWatchTogether),
+              glyph(
+                companionRemote.isConnected ? Symbols.mobile_friendly_rounded : Symbols.phone_android_rounded,
+                openCompanionRemote,
+              ),
+              if (PlatformDetector.isDesktop(context) &&
+                  context.select<MultiServerProvider, bool>((p) => p.hasOnlinePlexServers))
+                glyph(
+                  Symbols.monitor_heart_rounded,
+                  () => _serverActivitiesButtonKey.currentState?.togglePanel(),
+                  wrap: (face) => ServerActivitiesButton(key: _serverActivitiesButtonKey, face: face),
+                ),
+            ],
+          );
+        }
+
         return FocusableActionBar(
           key: _actionBarKey,
+          hideUntilFocused: hideUntilFocused,
           onNavigateLeft: _navigateToSidebar,
           onNavigateDown: _focusContentFromAppBar,
           actions: [
@@ -1226,7 +1272,9 @@ class _DiscoverScreenState extends State<DiscoverScreen>
               ),
             // User menu — profiles + sign out. Under "Flach" on a
             // television it lives at the rail's foot instead (Plebz).
-            if (!(isOckerLayout(context) && ockerFlat(context))) _buildUserMenuAction(context),
+            // "Glas – v2" too: the rail's foot names the profile already.
+            if (!(isOckerLayout(context) && (ockerFlat(context) || ockerGlasV2(context))))
+              _buildUserMenuAction(context),
           ],
         );
       },

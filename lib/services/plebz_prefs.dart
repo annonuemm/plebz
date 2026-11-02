@@ -46,6 +46,14 @@ enum AppThemeVariant {
   /// frame. One accent, any colour the viewer picks
   /// ([PlebzPrefs.flachAccent]).
   flach,
+
+  /// "Glas – v2" (Plebz, 2026-11-01): Glas with one rulebook, after the
+  /// design audit of that day — one focus for pictures and one for
+  /// everything else, a chosen entry told apart from focus, labelled detail
+  /// buttons with a play button that always stands out, near-opaque menus,
+  /// one type ramp and calmer headings. Its palette is Glas's
+  /// ([PlebzPrefs.glasAccent]). Read it through `ockerGlasV2`.
+  glasV2,
 }
 
 /// The accent "Redesign – Glas" is drawn in, chosen in the settings.
@@ -92,16 +100,19 @@ abstract final class PlebzPrefs {
     defaultValue: LayoutMode.auto,
   );
 
-  /// The app's visual language: Glas, everywhere (since 2026-11-01, when
-  /// "Original" left the app). Under [debugOriginalLook] it is what it was
+  /// The app's visual language: "Glas – v2", everywhere (since 2026-11-02,
+  /// when it took Glas's place). Under [debugOriginalLook] it is what it was
   /// before: Glas on a television, upstream's look elsewhere.
-  static AppThemeVariant _tvAwareAppThemeVariantDefault() =>
-      debugOriginalLook && !PlatformDetector.isTV() ? AppThemeVariant.standard : AppThemeVariant.glas;
+  static AppThemeVariant _tvAwareAppThemeVariantDefault() {
+    if (!debugOriginalLook) return AppThemeVariant.glasV2;
+    return PlatformDetector.isTV() ? AppThemeVariant.glas : AppThemeVariant.standard;
+  }
 
-  /// Plebz has two looks, Glas and Flach. Upstream's own
-  /// ([AppThemeVariant.standard]) stays in the code for the test suite alone,
-  /// whose upstream tests are written against it (`flutter_test_config.dart`
-  /// turns this on); in the app it is never offered and reads as Glas.
+  /// Plebz has two looks, "Glas – v2" and Flach. Upstream's own
+  /// ([AppThemeVariant.standard]) and the first Glas stay in the code for the
+  /// test suite alone, whose tests are written against them
+  /// (`flutter_test_config.dart` turns this on); in the app neither is offered
+  /// and both read as "Glas – v2".
   static bool debugOriginalLook = false;
   static const appThemeVariant = EnumPref<AppThemeVariant>(
     'app_theme_variant',
@@ -159,6 +170,11 @@ abstract final class PlebzPrefs {
   /// Under glass, the ground takes the colours of the Plex title holding focus
   /// — Plex's "UltraBlur". A test, off until switched on.
   static const glasUltraBlur = BoolPref('glas_ultra_blur', defaultValue: false);
+
+  /// "Glas – v2": the navigation, the library column and the play button as
+  /// frosted glass, on a television. On until switched off (the user's call):
+  /// it asks more of a weak box, which is what the switch is there for.
+  static const glasV2Frost = BoolPref('glas_v2_frost', defaultValue: true);
 
   /// The same under "Flach". A switch of its own, so each redesign keeps the
   /// viewer's choice in each. Off to start with: Flach starts on its own
@@ -298,6 +314,15 @@ abstract final class PlebzPrefs {
     values: RecommendationsSource.values,
     defaultValue: RecommendationsSource.all,
   );
+
+  /// Whether the home screen's toolbar stays invisible until the remote goes
+  /// up to it.
+  ///
+  /// The buttons keep their place and stay reachable — they are simply not
+  /// painted while focus is in the content, which is nearly always. Has no
+  /// effect where there is no focus to speak of: on touch the row is drawn as
+  /// before, or it could never be tapped.
+  static const hideHomeActionsUntilFocus = BoolPref('hide_home_actions_until_focus');
 
   /// Whether the home screen and Explore show a title's logo in the spotlight
   /// at the top. Off, it sets the title as type; a title's own page keeps its
@@ -657,16 +682,17 @@ abstract final class PlebzPrefs {
     await prefs.setInt(_fixedChoicesDroppedKey, _fixedChoicesVersion);
   }
 
-  /// A stored "Original" (or "Klar", retired before it) becomes Glas, once,
-  /// on an install that has started Plebz before — so the settings show the
-  /// look that is drawn. A backup carrying it reads as Glas all the same
+  /// A stored look the app no longer offers — the first Glas, "Original", or
+  /// one retired before them — becomes "Glas – v2", once, on an install that
+  /// has started Plebz before: so the settings show the look that is drawn and
+  /// mark it as chosen. A backup carrying one reads as "Glas – v2" all the same
   /// (`supportedAppThemeVariant`).
-  static Future<void> retireOriginalLook(SettingsService service) async {
+  static Future<void> retireOldLooks(SettingsService service) async {
     final prefs = service.prefs;
     if (!prefs.containsKey(plebzLastSeenBuild.key)) return;
-    final stored = prefs.get(appThemeVariant.key);
-    if (stored == AppThemeVariant.standard.name || stored == 'klar') {
-      await prefs.setString(appThemeVariant.key, AppThemeVariant.glas.name);
+    const retired = {'glas', 'standard', 'klar', 'ocker', 'schwarz'};
+    if (retired.contains(prefs.get(appThemeVariant.key))) {
+      await prefs.setString(appThemeVariant.key, AppThemeVariant.glasV2.name);
     }
   }
 
@@ -713,6 +739,7 @@ abstract final class PlebzPrefs {
     redesignCustomGround,
     redesignGroundColour,
     glasUltraBlur,
+    glasV2Frost,
     flachUltraBlur,
     glasSeasonTabs,
     flachSeasonTabs,
@@ -724,6 +751,7 @@ abstract final class PlebzPrefs {
     seasonalStartScreen,
     showLibraryPlaylistsTab,
     showHomeTitleLogos,
+    hideHomeActionsUntilFocus,
     plebzUpdateOffer,
   ];
 

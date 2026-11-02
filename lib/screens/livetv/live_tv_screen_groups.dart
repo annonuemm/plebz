@@ -18,6 +18,39 @@ extension _LiveTvScreenFork on _LiveTvScreenState {
     ];
   }
 
+  /// The column's rows: every group in order. Under "Glas – v2" (Plebz) a
+  /// country's groups stand under its name instead of each repeating its
+  /// code ("DE • Doku" under "Deutschland" reads "Doku"), the provider's
+  /// trailing "RAW" goes where no two names would then read the same, and a
+  /// hairline sets "All channels" off from the groups.
+  List<({ChannelGroupOption? option, String label, bool ruledBelow})> _groupColumnEntries(
+    List<ChannelGroupOption> options,
+  ) {
+    if (!ockerGlasV2(context)) {
+      return [for (final option in options) (option: option, label: option.label, ruledBelow: false)];
+    }
+    final groups = [
+      for (final option in options)
+        if (option.key != null) option,
+    ];
+    final splits = [for (final option in groups) liveTvGroupCountrySplit(option.label)];
+    final names = liveTvWithoutRawMark([for (final split in splits) split.rest]);
+    final entries = <({ChannelGroupOption? option, String label, bool ruledBelow})>[
+      for (final option in options)
+        if (option.key == null) (option: option, label: option.label, ruledBelow: groups.isNotEmpty),
+    ];
+    String? country;
+    for (var i = 0; i < groups.length; i++) {
+      final code = splits[i].country;
+      if (code != null && code != country) {
+        entries.add((option: null, label: liveTvCountryHeading(code), ruledBelow: false));
+      }
+      country = code ?? country;
+      entries.add((option: groups[i], label: code == null ? groups[i].label : names[i], ruledBelow: false));
+    }
+    return entries;
+  }
+
   /// Group labels in the arranged order, with their channel counts. Built
   /// from the visible channels, so a hidden group is simply not offered.
   List<ChannelGroupOption> get _channelGroupOptions {
@@ -501,29 +534,36 @@ extension _LiveTvScreenFork on _LiveTvScreenState {
     final glass = ockerGlass(context);
     // A Material of its own, so the rows' ink paints above the column's
     // ground rather than under it.
+    final entries = _groupColumnEntries(options);
     final list = Material(
       type: MaterialType.transparency,
       child: ListView.builder(
         controller: _groupColumnScroll,
         padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: options.length,
-        itemBuilder: (context, i) => _GroupColumnRow(
-          focusNode: _groupChipFocusNode(options[i].key),
-          selected: options[i].key == _selectedGroup,
-          label: options[i].label,
-          count: options[i].count,
-          onTap: () {
-            _selectGroup(options[i].key);
-            _closeGroupColumn();
-          },
-          // Rename or hide: held SELECT, as it was on the bar of groups this
-          // column replaced. "All channels" is ours, not the provider's —
-          // nothing to rename, and hiding it would leave no way back.
-          onLongPress: switch (options[i].key) {
-            final group? => () => unawaited(_showGroupMenu(group)),
-            null => null,
-          },
-        ),
+        itemCount: entries.length,
+        itemBuilder: (context, i) {
+          final entry = entries[i];
+          final option = entry.option;
+          if (option == null) return _GroupColumnHeading(heading: entry.label);
+          return _GroupColumnRow(
+            focusNode: _groupChipFocusNode(option.key),
+            selected: option.key == _selectedGroup,
+            label: entry.label,
+            count: option.count,
+            ruledBelow: entry.ruledBelow,
+            onTap: () {
+              _selectGroup(option.key);
+              _closeGroupColumn();
+            },
+            // Rename or hide: held SELECT, as it was on the bar of groups this
+            // column replaced. "All channels" is ours, not the provider's —
+            // nothing to rename, and hiding it would leave no way back.
+            onLongPress: switch (option.key) {
+              final group? => () => unawaited(_showGroupMenu(group)),
+              null => null,
+            },
+          );
+        },
       ),
     );
 
@@ -789,6 +829,7 @@ class _GroupColumnRow extends StatefulWidget {
     required this.count,
     required this.onTap,
     this.onLongPress,
+    this.ruledBelow = false,
   });
 
   final FocusNode focusNode;
@@ -796,6 +837,9 @@ class _GroupColumnRow extends StatefulWidget {
   final String label;
   final int count;
   final VoidCallback onTap;
+
+  /// A hairline under the row ("Glas – v2": under "All channels").
+  final bool ruledBelow;
 
   /// A held SELECT, or a long press with a pointer.
   final VoidCallback? onLongPress;
@@ -847,6 +891,7 @@ class _GroupColumnRowState extends State<_GroupColumnRow> {
   @override
   Widget build(BuildContext context) {
     final glass = ockerGlass(context);
+    if (ockerGlasV2(context)) return _buildV2(context);
     final tile = FocusableListTile(
       focusNode: widget.focusNode,
       selected: widget.selected,
@@ -873,6 +918,51 @@ class _GroupColumnRowState extends State<_GroupColumnRow> {
         // The row's ink paints on the nearest Material; this one, not one
         // under the fill, where the fill would hide it.
         child: Material(type: MaterialType.transparency, child: keyed),
+      ),
+    );
+  }
+
+  /// "Glas – v2" (Plebz): one line a group — its name, and its count at the
+  /// right as a figure — so every row stands the same height and the column
+  /// reads down its names; the count no longer takes a second line.
+  Widget _buildV2(BuildContext context) {
+    final tk = tokens(context);
+    final type = OckerType.of(context);
+    final focused = widget.focusNode.hasFocus;
+    final tile = FocusableListTile(
+      focusNode: widget.focusNode,
+      selected: widget.selected,
+      title: Row(
+        children: [
+          Expanded(child: Text(widget.label, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          const SizedBox(width: 12),
+          Text(
+            '${widget.count}',
+            style: type.counter.copyWith(
+              color: tk.ink(focused ? 0.72 : 0.42),
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
+      glassMarks: true,
+    );
+    final keyed = Focus(canRequestFocus: false, skipTraversal: true, onKeyEvent: _onKey, child: tile);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      child: Column(
+        mainAxisSize: .min,
+        crossAxisAlignment: .stretch,
+        children: [
+          keyed,
+          if (widget.ruledBelow)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+              child: SizedBox(height: 1, child: ColoredBox(color: tk.ink(0.10))),
+            ),
+        ],
       ),
     );
   }
@@ -1018,6 +1108,27 @@ class _LiveTvGroupSheetState extends State<_LiveTvGroupSheet> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// "Glas – v2" (Plebz): a country's name over its groups in the column.
+class _GroupColumnHeading extends StatelessWidget {
+  const _GroupColumnHeading({required this.heading});
+
+  final String heading;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = tokens(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
+      child: Text(
+        heading,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: OckerType.of(context).counter.copyWith(color: tk.ink(0.5)),
+      ),
     );
   }
 }

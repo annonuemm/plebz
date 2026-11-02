@@ -14,19 +14,29 @@ import '../../theme/mono_tokens.dart';
 /// — black and white, or not known — leaves its side plain, and with neither
 /// there is the plain tile, glass under Glas.
 class ClubColourGround extends StatelessWidget {
-  const ClubColourGround({super.key, required this.child, this.home, this.away, this.borderRadius});
+  const ClubColourGround({
+    super.key,
+    required this.child,
+    this.home,
+    this.away,
+    this.borderRadius,
+    this.plainGroundOpacity = ockerReadingGroundOpacity,
+  });
 
   final Color? home;
   final Color? away;
 
   /// The glass's corner under Glas; the posters' own when not given.
   final BorderRadius? borderRadius;
+
+  /// How much of the ground the plain tile's glass holds.
+  final double plainGroundOpacity;
   final Widget child;
 
   /// The clubs' colours brought down to one depth, whatever their own: the
   /// score and the crests stand on them, and a bright yellow beside a navy
   /// would make one half shout.
-  static Color _flat(Color colour) {
+  static Color flatColour(Color colour) {
     final hsl = HSLColor.fromColor(colour);
     return hsl.withSaturation(math.min(hsl.saturation, 0.85)).withLightness(0.24).toColor();
   }
@@ -43,12 +53,12 @@ class ClubColourGround extends StatelessWidget {
     final radius = borderRadius ?? BorderRadius.circular(artworkRadius(context));
     if (home == null && away == null) {
       return glass
-          ? OckerGlass(borderRadius: radius, scrimInset: 0, child: child)
+          ? OckerGlass(borderRadius: radius, scrimInset: 0, groundOpacity: plainGroundOpacity, child: child)
           : ColoredBox(color: tk.tileFill, child: child);
     }
     if (!glass) {
-      final left = home == null ? tk.tileFill : _flat(home!);
-      final right = away == null ? tk.tileFill : _flat(away!);
+      final left = home == null ? tk.tileFill : flatColour(home!);
+      final right = away == null ? tk.tileFill : flatColour(away!);
       return DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -72,14 +82,34 @@ class ClubColourGround extends StatelessWidget {
         ),
       ),
     );
+    // "Glas – v2" (Plebz): the clubs run straight into each other. A glow's
+    // reach follows a tile's height, so on a flat one a dark band stood
+    // between the two.
+    Widget blend() {
+      final fallback = (home ?? away)!;
+      final left = home == null ? _glow(fallback).withValues(alpha: 0) : _glow(home!);
+      final right = away == null ? _glow(fallback).withValues(alpha: 0) : _glow(away!);
+      return Positioned.fill(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [left, left, right, right], stops: const [0, 0.2, 0.8, 1]),
+          ),
+        ),
+      );
+    }
+
     return OckerGlass(
       borderRadius: radius,
       scrimInset: 0,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (home case final colour?) glow(colour, const Alignment(-0.7, 0.15)),
-          if (away case final colour?) glow(colour, const Alignment(0.7, 0.15)),
+          if (tk.v2)
+            blend()
+          else ...[
+            if (home case final colour?) glow(colour, const Alignment(-0.7, 0.15)),
+            if (away case final colour?) glow(colour, const Alignment(0.7, 0.15)),
+          ],
           child,
         ],
       ),

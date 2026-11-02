@@ -36,7 +36,25 @@ class OckerType {
   /// 2026-10-13). See [sectionHeading], [headingCase].
   final bool glasHeadings;
 
-  const OckerType(this.scale, {this.flat = false, bool? flatSizes, this.glasHeadings = false})
+  /// "Glas – v2" (Plebz): every size is taken to the nearest step of one ramp
+  /// ([v2Ramp]) — the redesign had grown some fifteen sizes, several a pixel
+  /// apart (21, 22, 23, 24, 25), which read as accident rather than order.
+  final bool ramp;
+
+  /// The steps "Glas – v2" sets type in, at the 1920-wide reference.
+  static const v2Ramp = <double>[12, 15, 18, 22, 28, 36, 48, 64];
+
+  /// [size] on [v2Ramp]: the nearest step, the smaller one on a tie, so no
+  /// line grows past the room it was drawn for.
+  static double onRamp(double size) {
+    var best = v2Ramp.first;
+    for (final step in v2Ramp) {
+      if ((step - size).abs() < (best - size).abs()) best = step;
+    }
+    return best;
+  }
+
+  const OckerType(this.scale, {this.flat = false, bool? flatSizes, this.glasHeadings = false, this.ramp = false})
     : flatSizes = flatSizes ?? flat;
 
   factory OckerType.of(BuildContext context) => OckerType(
@@ -44,9 +62,15 @@ class OckerType {
     flat: ockerFlat(context),
     flatSizes: ockerFlatSizes(context),
     glasHeadings: ockerGlass(context) && !ockerFlat(context),
+    ramp: ockerGlasV2(context),
   );
 
   double _px(double referenceSize) => referenceSize * scale;
+
+  /// A font size: [_px], on [v2Ramp] under [ramp]. Only sizes go on the ramp —
+  /// tracking, line boxes and gaps keep their own figures (a tracking of
+  /// −1.1 taken to the ramp's nearest step spaced a title out to 12).
+  double _fs(double referenceSize) => _px(ramp ? onRamp(referenceSize) : referenceSize);
 
   /// [style] in the cut and spacing Apple gives its size, where the face is
   /// Apple's own (see [appleSystemType]) and the look is Glas; as it is
@@ -77,7 +101,7 @@ class OckerType {
     TextStyle(
       fontFamily: ockerUiFontFamily,
       fontWeight: .w700,
-      fontSize: _px((withGroupBar ? 60 : 64) * titleTextScale),
+      fontSize: _fs((withGroupBar ? 60 : 64) * titleTextScale),
       letterSpacing: _px(-1.1),
       height: 1.08,
     ),
@@ -104,7 +128,7 @@ class OckerType {
   /// Its own style rather than a larger [detailTitle]: that one is also the
   /// title of the guide band and the info sheet, which have no room to grow.
   TextStyle spotlightTitle({bool detail = false}) {
-    final size = _px(detail ? 76 : 60);
+    final size = _fs(detail ? 76 : 60);
     return _apple(
       TextStyle(
         fontFamily: ockerUiFontFamily,
@@ -123,7 +147,7 @@ class OckerType {
   TextStyle get spotlightFacts => _apple(
     TextStyle(
       fontFamily: ockerUiFontFamily,
-      fontSize: _px(23),
+      fontSize: _fs(23),
       fontWeight: .w500,
       height: 1,
       fontFeatures: const [FontFeature.tabularFigures()],
@@ -137,12 +161,12 @@ class OckerType {
   /// mistake rather than as a second voice. What sets it apart from the title
   /// above is weight, which is the distinction this face is built to make.
   TextStyle detailSubtitle({bool withGroupBar = false}) =>
-      _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(withGroupBar ? 25 : 27), height: 1.2));
+      _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _fs(withGroupBar ? 25 : 27), height: 1.2));
 
   // -------------------------------------------------------------- interface
 
   TextStyle get wordmark => _apple(
-    TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(23), fontWeight: .w700, letterSpacing: _px(-0.7), height: 1),
+    TextStyle(fontFamily: ockerUiFontFamily, fontSize: _fs(23), fontWeight: .w700, letterSpacing: _px(-0.7), height: 1),
   );
 
   /// A destination in the header. The active one is the same size in a heavier
@@ -152,16 +176,16 @@ class OckerType {
   /// a sofa, and at 18 the row of destinations was the smallest type on the
   /// screen rather than the first thing found on it.
   TextStyle navWord({required bool active}) => _apple(
-    TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(24), fontWeight: active ? .w600 : .w400, height: 1),
+    TextStyle(fontFamily: ockerUiFontFamily, fontSize: _fs(24), fontWeight: active ? .w600 : .w400, height: 1),
   );
 
   /// An entry in the group bar: a library, or a channel group. Just under the
   /// destinations above them, for the same reason and by the same amount.
   TextStyle groupEntry({required bool active}) => _apple(
-    TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(22), fontWeight: active ? .w600 : .w500, height: 1),
+    TextStyle(fontFamily: ockerUiFontFamily, fontSize: _fs(22), fontWeight: active ? .w600 : .w500, height: 1),
   );
 
-  TextStyle get body => _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(18), height: 1.6));
+  TextStyle get body => _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _fs(18), height: 1.6));
 
   /// How much larger prose is set than the interface around it.
   ///
@@ -188,15 +212,16 @@ class OckerType {
   /// design's 21 read small on the television (the viewer's call).
   TextStyle get synopsis => flat
       ? spotlightSynopsis
-      : _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(18 * readingScale), height: 1.6));
+      : _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _fs(18 * readingScale), height: 1.6));
 
   /// The description under [spotlightTitle]: "Flach"'s [synopsis], which
-  /// Glas's spotlight sets too where [flatSizes] holds.
+  /// Glas's spotlight sets too where [flatSizes] holds. Off the ramp under
+  /// "Glas – v2" (Plebz): its 22 read small from the sofa, the user's call.
   TextStyle get spotlightSynopsis =>
       _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(25), height: 1.5, letterSpacing: 0));
 
   /// Credits, and anything else that is body copy one notch down.
-  TextStyle get secondary => _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(15), height: 1.6));
+  TextStyle get secondary => _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _fs(15), height: 1.6));
 
   /// The single line of facts under a title. Never wraps — see the widget that
   /// draws it — so its figures are tabular and cannot change its width as the
@@ -204,7 +229,7 @@ class OckerType {
   TextStyle get metadata => _apple(
     TextStyle(
       fontFamily: ockerUiFontFamily,
-      fontSize: _px(15),
+      fontSize: _fs(15),
       height: 1,
       fontFeatures: const [FontFeature.tabularFigures()],
     ),
@@ -224,14 +249,14 @@ class OckerType {
   /// "Flach" sets them as its start page sets its facts and its prose, 23 and
   /// 25: the design's 19 and 21 read small on the television there too (the
   /// viewer's call). Glas follows while [flatSizes] holds.
-  TextStyle get guideFacts => _apple(metadata.copyWith(fontSize: _px(flatSizes ? 23 : 19)));
+  TextStyle get guideFacts => _apple(metadata.copyWith(fontSize: _fs(flatSizes ? 23 : 19)));
 
   /// Two lines of programme description, one notch under the facts beside it.
   TextStyle get guideSummary =>
-      _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(flatSizes ? 25 : 21), height: 1.5));
+      _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _fs(flatSizes ? 25 : 21), height: 1.5));
 
   TextStyle get primaryButton =>
-      _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(19), fontWeight: .w700, height: 1));
+      _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _fs(19), fontWeight: .w700, height: 1));
 
   /// The clock at the end of the header. 22, a step under the destinations it
   /// shares the row with: it is the one thing up there that is never pressed,
@@ -240,7 +265,7 @@ class OckerType {
   TextStyle get clock => _apple(
     TextStyle(
       fontFamily: ockerUiFontFamily,
-      fontSize: _px(22),
+      fontSize: _fs(22),
       height: 1,
       fontFeatures: const [FontFeature.tabularFigures()],
     ),
@@ -263,7 +288,7 @@ class OckerType {
       ? _apple(
           TextStyle(
             fontFamily: ockerUiFontFamily,
-            fontSize: _px(23),
+            fontSize: _fs(23),
             fontWeight: .w600,
             letterSpacing: _px(-0.2),
             height: 1,
@@ -271,7 +296,9 @@ class OckerType {
         )
       : glasHeadings
       // Apple's own: the name of a row in bold, sentence case (Plebz).
-      ? _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _px(23), fontWeight: .w700, height: 1))
+      // "Glas – v2" names a row a step up the ramp, 28: at 22 a row's name
+      // stood level with the words under the posters (the user's call).
+      ? _apple(TextStyle(fontFamily: ockerUiFontFamily, fontSize: _fs(ramp ? 28 : 23), fontWeight: .w700, height: 1))
       : _monoLabel;
 
   /// [text] as a heading is written: in capitals everywhere but "Flach" and
@@ -283,11 +310,11 @@ class OckerType {
   TextStyle get eyebrow => _monoLabel;
 
   TextStyle get _monoLabel =>
-      _apple(TextStyle(fontFamily: ockerMonoFontFamily, fontSize: _px(19), letterSpacing: _px(2.4), height: 1));
+      _apple(TextStyle(fontFamily: ockerMonoFontFamily, fontSize: _fs(19), letterSpacing: _px(2.4), height: 1));
 
   /// The source label at the left of a group-bar row.
   TextStyle get sourceLabel =>
-      _apple(TextStyle(fontFamily: ockerMonoFontFamily, fontSize: _px(13), letterSpacing: _px(1.8), height: 1));
+      _apple(TextStyle(fontFamily: ockerMonoFontFamily, fontSize: _fs(13), letterSpacing: _px(1.8), height: 1));
 
   /// The count beside a heading or a group entry. A step under the heading it
   /// belongs to, and it moved up with it.
@@ -295,7 +322,7 @@ class OckerType {
       ? _apple(
           TextStyle(
             fontFamily: ockerUiFontFamily,
-            fontSize: _px(17),
+            fontSize: _fs(17),
             fontWeight: .w500,
             height: 1,
             fontFeatures: const [FontFeature.tabularFigures()],
@@ -304,7 +331,7 @@ class OckerType {
       : _apple(
           TextStyle(
             fontFamily: ockerMonoFontFamily,
-            fontSize: _px(16),
+            fontSize: _fs(16),
             letterSpacing: _px(1.4),
             height: 1,
             fontFeatures: const [FontFeature.tabularFigures()],
@@ -322,7 +349,7 @@ class OckerType {
   TextStyle get timecode => _apple(
     TextStyle(
       fontFamily: ockerMonoFontFamily,
-      fontSize: _px(15),
+      fontSize: _fs(15),
       height: 1,
       fontFeatures: const [FontFeature.tabularFigures()],
     ),
@@ -332,7 +359,7 @@ class OckerType {
   TextStyle get nowChip => _apple(
     TextStyle(
       fontFamily: ockerMonoFontFamily,
-      fontSize: _px(12),
+      fontSize: _fs(12),
       fontWeight: .w600,
       height: 1,
       fontFeatures: const [FontFeature.tabularFigures()],
@@ -341,8 +368,8 @@ class OckerType {
 
   /// The letters inside a drawn key: OK, ZURÜCK, GRÜN.
   TextStyle get keycap =>
-      _apple(TextStyle(fontFamily: ockerMonoFontFamily, fontSize: _px(12), letterSpacing: _px(1), height: 1));
+      _apple(TextStyle(fontFamily: ockerMonoFontFamily, fontSize: _fs(12), letterSpacing: _px(1), height: 1));
 
   /// The technical strip at the foot of a context menu: codec, size, audio.
-  TextStyle get technical => _apple(TextStyle(fontFamily: ockerMonoFontFamily, fontSize: _px(13), height: 1.4));
+  TextStyle get technical => _apple(TextStyle(fontFamily: ockerMonoFontFamily, fontSize: _fs(13), height: 1.4));
 }

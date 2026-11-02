@@ -30,7 +30,7 @@ List<Widget> plebzAppearanceRows() => [
   SettingValueBuilder<AppThemeVariant>(
     pref: PlebzPrefs.appThemeVariant,
     builder: (context, variant, _) => switch (supportedAppThemeVariant(variant)) {
-      AppThemeVariant.glas => _glasAccentSelector(),
+      AppThemeVariant.glas || AppThemeVariant.glasV2 => _glasAccentSelector(),
       AppThemeVariant.flach => flachColourTiles(),
       AppThemeVariant.standard => const SizedBox.shrink(),
     },
@@ -203,7 +203,7 @@ Widget themeVariantTile() => SettingSelectionTile<AppThemeVariant>(
   icon: Symbols.palette_rounded,
   title: t.settings.appThemeVariant,
   // Through the host gate, so a carried-in value names the look that is
-  // actually drawn ("Original" reads as Glas).
+  // actually drawn.
   subtitleBuilder: (value) => appThemeVariantLabel(supportedAppThemeVariant(value)),
   options: [
     for (final variant in offeredAppThemeVariants)
@@ -212,7 +212,7 @@ Widget themeVariantTile() => SettingSelectionTile<AppThemeVariant>(
         title: appThemeVariantLabel(variant),
         subtitle: switch (variant) {
           AppThemeVariant.standard => t.settings.appThemeVariantStandardDescription,
-          AppThemeVariant.glas => t.settings.appThemeVariantGlasDescription,
+          AppThemeVariant.glas || AppThemeVariant.glasV2 => t.settings.appThemeVariantGlasDescription,
           AppThemeVariant.flach => t.settings.appThemeVariantFlachDescription,
         },
       ),
@@ -221,7 +221,7 @@ Widget themeVariantTile() => SettingSelectionTile<AppThemeVariant>(
 
 String appThemeVariantLabel(AppThemeVariant variant) => switch (variant) {
   AppThemeVariant.standard => t.settings.appThemeVariantStandard,
-  AppThemeVariant.glas => t.settings.appThemeVariantGlas,
+  AppThemeVariant.glas || AppThemeVariant.glasV2 => t.settings.appThemeVariantGlas,
   AppThemeVariant.flach => t.settings.appThemeVariantFlach,
 };
 

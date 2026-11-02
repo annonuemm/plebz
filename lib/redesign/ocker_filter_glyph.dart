@@ -29,18 +29,13 @@ class OckerFilterGlyph extends StatelessWidget {
   /// this that belongs to the look; the size belongs to the row.
   final double size;
 
-  /// Under "Flach", the disc's diameter where a row wants a size of its own
-  /// (Plebz: the Explore detail stage matches a detail page's buttons). Null
-  /// for the toolbar's.
-  final double? flatDiameter;
+  /// How big the control stands where a row wants a size of its own (Plebz:
+  /// the Explore detail stage matches a detail page's buttons): under "Flach"
+  /// the disc, under glass the square the capsule of focus fills. Null for the
+  /// toolbar's.
+  final double? diameter;
 
-  const OckerFilterGlyph({
-    super.key,
-    required this.icon,
-    required this.focused,
-    this.size = glyphSize,
-    this.flatDiameter,
-  });
+  const OckerFilterGlyph({super.key, required this.icon, required this.focused, this.size = glyphSize, this.diameter});
 
   /// The glyph's own size — deliberately a fixed number rather than one scaled
   /// with the viewport. These are the quietest marks on the screen, and below
@@ -59,6 +54,25 @@ class OckerFilterGlyph extends StatelessWidget {
   Widget build(BuildContext context) {
     final tk = tokens(context);
     if (tk.flat) return _buildFlat(context, tk);
+    // A button's size, a button's capsule, as a detail page's own (21 on 46).
+    if (diameter case final diameter?) {
+      return OckerWordFocus(
+        focused: focused,
+        outset: EdgeInsets.zero,
+        child: SizedBox.square(
+          dimension: diameter,
+          child: Center(
+            child: AppIcon(
+              icon,
+              fill: 0,
+              size: diameter * 0.46,
+              weight: 400,
+              color: focused ? tk.ink(1) : tk.ink(0.75),
+            ),
+          ),
+        ),
+      );
+    }
     // These lie on a band with the words beside them, so they take its
     // weight: a heavier stroke and a brighter rest, which a hairline glyph on
     // glass did not have.
@@ -85,7 +99,7 @@ extension on OckerFilterGlyph {
   /// each control is a shape rather than a glyph on a shared band.
   Widget _buildFlat(BuildContext context, MonoTokens tk) {
     final scale = ockerScale(context);
-    final diameter = flatDiameter ?? 52 * scale;
+    final diameter = this.diameter ?? 52 * scale;
     return Padding(
       padding: EdgeInsets.only(right: OckerFilterGlyph.flatGap * scale),
       child: OckerFlatControl(
@@ -97,7 +111,7 @@ extension on OckerFilterGlyph {
             child: AppIcon(
               icon,
               fill: 0,
-              size: flatDiameter == null ? math.max(24 * scale, 13) : diameter * 0.5,
+              size: this.diameter == null ? math.max(24 * scale, 13) : diameter * 0.5,
               weight: 400,
               color: focused ? tk.bg : tk.ink(0.7),
             ),

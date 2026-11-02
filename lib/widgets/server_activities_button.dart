@@ -16,7 +16,12 @@ import '../providers/multi_server_provider.dart';
 import '../utils/media_server_http_client.dart';
 
 class ServerActivitiesButton extends StatefulWidget {
-  const ServerActivitiesButton({super.key});
+  const ServerActivitiesButton({super.key, this.face});
+
+  /// Plebz: what to draw in place of the icon button — a header whose glyphs
+  /// all come from one widget ("Glas – v2") hands its own in. The panel still
+  /// opens under it.
+  final Widget? face;
 
   @override
   State<ServerActivitiesButton> createState() => ServerActivitiesButtonState();
@@ -410,6 +415,9 @@ class ServerActivitiesButtonState extends State<ServerActivitiesButton> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.face case final face?) {
+      return GestureDetector(key: _buttonKey, onTap: togglePanel, child: face);
+    }
     return IconButton(
       key: _buttonKey,
       icon: const AppIcon(Symbols.monitor_heart_rounded, color: Colors.white),

@@ -436,7 +436,9 @@ class WatchlistScreenState extends State<WatchlistScreen>
       // holds focus is worth more here than anywhere else this screen serves.
       ockerPageInAnyLayout: true,
       // The rail lights "Merkliste" but not which of its lists is on show.
-      ockerLocation: '${t.explore.rows.watchlist} · ${active.label}',
+      // "Glas – v2" (Plebz): the place capsule already says "Merkliste", so
+      // the corner names the list alone.
+      ockerLocation: ockerGlasV2(context) ? active.label : '${t.explore.rows.watchlist} · ${active.label}',
       hub: MediaHub(
         id: 'watchlist:${active.id}',
         identifier: 'watchlist.${active.id}',

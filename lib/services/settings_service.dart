@@ -1156,7 +1156,7 @@ class SettingsService extends BaseSharedPreferencesService {
     _assertCredentialsReadable();
     await PlebzPrefs.tmdbApiKey.load(this);
     await PlebzPrefs.dropFixedChoices(this);
-    await PlebzPrefs.retireOriginalLook(this);
+    await PlebzPrefs.retireOldLooks(this);
 
     const legacyRecentRoomsKey = 'watch_together_recent_rooms';
     await prefs.remove(legacyRecentRoomsKey);

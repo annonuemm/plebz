@@ -13,6 +13,15 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.39.0 (Build 927)
+
+### Aussehen
+- Glas wurde überarbeitet: Fokus, Knöpfe, Menüs und Schriften wirken jetzt einheitlicher und ruhiger.
+- Auf dem Fernseher zeigen Navigation und Mediatheken-Spalte die Seite dahinter jetzt weich verschwommen. Läuft das auf deiner Box nicht flüssig, kannst du es unter Einstellungen → Darstellung → „Milchglas“ abschalten.
+
+### Einstellungen
+- Die langen Seiten Darstellung und Videowiedergabe sind jetzt nach Themen aufgeteilt, zum Beispiel Startseite, Ton und Untertitel oder Bedienung im Player. Was selten gebraucht wird, steht unter „Erweitert“. Die Einstellungen selbst funktionieren wie bisher.
+
 ## 1.38.0 (Build 899)
 
 ### Aussehen

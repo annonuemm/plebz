@@ -63,6 +63,9 @@ import '../widgets/collapsible_text.dart';
 import '../widgets/corner_backdrop.dart';
 import '../widgets/focusable_tab_chip.dart';
 import '../widgets/hub_section.dart';
+import '../redesign/ocker_frost.dart';
+import '../focus/focus_theme.dart';
+import '../theme/flat_focus_ring.dart';
 import '../redesign/ocker_skin.dart';
 import '../widgets/library_copy_jump_button.dart';
 import '../widgets/library_copy_tile.dart';
@@ -1696,9 +1699,11 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
           liquidBubble: true,
           child: FocusableActionBar(
             key: _actionBarKey,
-            // On the stage, Flach's discs at a detail page's size: the
-            // toolbar's own read as an afterthought beside the copy's button.
-            flatGlyphDiameter: stage ? 46 * TvLayoutConstants.scaleOf(context) : null,
+            // On the stage, the glyphs at a detail page's size: the toolbar's
+            // own read as an afterthought beside the copy's button. Flach's
+            // discs keep their own room, glass stands clear of the copy's ring.
+            glyphDiameter: stage ? 46 * TvLayoutConstants.scaleOf(context) : null,
+            spacing: stage && !ockerFlat(context) ? 16 * TvLayoutConstants.scaleOf(context) : 0,
             wrapBuiltAction: ockerGlass(context)
                 ? (context, state, child) =>
                       OckerWordFocus(focused: state.showFocus, outset: EdgeInsets.zero, child: child)
@@ -1713,14 +1718,39 @@ class _CatalogItemDetailScreenState extends State<CatalogItemDetailScreen> {
                 FocusableAction(
                   debugLabel: 'catalog_best_copy',
                   onPressed: _bestCopy == null ? null : _openBestCopy,
-                  builder: (context, state) => bounded(
-                    LibraryCopyJumpButton(
+                  staysLit: ockerFrost(context),
+                  marksOwnFocus: ockerFrost(context),
+                  builder: (context, state) {
+                    final button = LibraryCopyJumpButton(
                       copy: _bestCopy,
                       quality: _bestCopy == null ? null : _copyQuality[_bestCopy!.globalKey],
                       showFocus: state.showFocus,
                       onPressed: _bestCopy == null ? null : _openBestCopy,
-                    ),
-                  ),
+                    );
+                    if (!ockerFrost(context)) return bounded(button);
+                    final tk = tokens(context);
+                    final scale = ockerScale(context);
+                    // A filled shape's focus, as the detail page's play
+                    // button: a ring standing off it.
+                    return bounded(
+                      DecoratedBox(
+                        position: DecorationPosition.foreground,
+                        decoration: FlatFocusRingDecoration(
+                          ink: tk.ink(1),
+                          ground: tk.bg,
+                          gap: FocusTheme.flatRingGap * scale,
+                          ringWidth: FocusTheme.flatRingWidth * scale,
+                          opacity: state.showFocus ? 1 : 0,
+                          borderRadius: BorderRadius.circular(80 * scale),
+                        ),
+                        child: OckerFrostBlur(
+                          shape: StadiumBorder(side: BorderSide(color: tk.ink(0.28))),
+                          tint: tk.ink(ockerFrostButtonTint),
+                          child: button,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               if (_watchlistSource != null)
                 FocusableAction(

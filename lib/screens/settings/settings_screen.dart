@@ -226,15 +226,42 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
         icon: Symbols.palette_rounded,
         title: t.settings.appearance,
         subtitle: _appearanceSummary(context),
-        page: (_) => const AppearanceSettingsScreen(),
+        page: (_) => const AppearanceSettingsScreen(topic: AppearanceTopic.look),
+      ),
+      PlebzSettingsSection(
+        id: 'home',
+        group: look,
+        icon: Symbols.home_rounded,
+        title: t.settings.homeScreen,
+        page: (_) => const AppearanceSettingsScreen(topic: AppearanceTopic.home),
+      ),
+      PlebzSettingsSection(
+        id: 'cards',
+        group: look,
+        icon: Symbols.grid_view_rounded,
+        title: t.plebz.postersAndDetailPages,
+        page: (_) => const AppearanceSettingsScreen(topic: AppearanceTopic.cards),
       ),
       PlebzSettingsSection(
         id: 'playback',
         group: look,
         icon: Symbols.play_circle_rounded,
-        title: t.settings.videoPlayback,
-        subtitle: t.settings.videoPlaybackDescription,
-        page: (_) => const PlaybackSettingsScreen(),
+        title: t.settings.player,
+        page: (_) => const PlaybackSettingsScreen(topic: PlaybackTopic.player),
+      ),
+      PlebzSettingsSection(
+        id: 'sound',
+        group: look,
+        icon: Symbols.subtitles_rounded,
+        title: t.plebz.soundAndSubtitles,
+        page: (_) => const PlaybackSettingsScreen(topic: PlaybackTopic.soundAndSubtitles),
+      ),
+      PlebzSettingsSection(
+        id: 'player_handling',
+        group: look,
+        icon: Symbols.tune_rounded,
+        title: t.plebz.playerHandling,
+        page: (_) => const PlaybackSettingsScreen(topic: PlaybackTopic.handling),
       ),
       if (hasControls)
         PlebzSettingsSection(
@@ -361,7 +388,7 @@ class _SettingsScreenState extends State<SettingsScreen> with FocusableTab, Moun
   String _appearanceSummary(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
     final redesignName = switch (themeProvider.variant) {
-      settings.AppThemeVariant.glas => t.settings.appThemeVariantGlas,
+      settings.AppThemeVariant.glas || settings.AppThemeVariant.glasV2 => t.settings.appThemeVariantGlas,
       settings.AppThemeVariant.flach => t.settings.appThemeVariantFlach,
       settings.AppThemeVariant.standard => null,
     };

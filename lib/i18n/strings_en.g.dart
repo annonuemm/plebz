@@ -1783,6 +1783,12 @@ class Translations$settings$en {
 	/// en: 'On Home and Explore'
 	String get glasUltraBlurDescription => 'On Home and Explore';
 
+	/// en: 'Frosted glass'
+	String get glasV2Frost => 'Frosted glass';
+
+	/// en: 'Navigation, library column and play button; may stutter on weak boxes'
+	String get glasV2FrostDescription => 'Navigation, library column and play button; may stutter on weak boxes';
+
 	/// en: 'Description beside the posters'
 	String get glasDetailPanel => 'Description beside the posters';
 
@@ -1824,6 +1830,12 @@ class Translations$settings$en {
 
 	/// en: 'Episode count and next air date; one extra request per show'
 	String get seerrCardEpisodeFactsDescription => 'Episode count and next air date; one extra request per show';
+
+	/// en: 'Toolbar only on focus'
+	String get hideHomeActionsUntilFocus => 'Toolbar only on focus';
+
+	/// en: ''
+	String get hideHomeActionsUntilFocusDescription => '';
 
 	/// en: 'Download button'
 	String get showDownloadAction => 'Download button';
@@ -7663,6 +7675,15 @@ class Translations$plebz$en {
 	/// en: 'Servers and profiles'
 	String get serversAndProfiles => 'Servers and profiles';
 
+	/// en: 'Posters and detail pages'
+	String get postersAndDetailPages => 'Posters and detail pages';
+
+	/// en: 'Sound and subtitles'
+	String get soundAndSubtitles => 'Sound and subtitles';
+
+	/// en: 'Player controls'
+	String get playerHandling => 'Player controls';
+
 	/// en: 'IPTV and Live TV'
 	String get iptvAndLiveTv => 'IPTV and Live TV';
 
@@ -11035,6 +11056,8 @@ extension on Translations {
 			'settings.glasAccentPlebzDescription' => 'Near-black, violet, the play button in the logo\'s gradient',
 			'settings.glasUltraBlur' => 'Background in the poster\'s colours',
 			'settings.glasUltraBlurDescription' => 'On Home and Explore',
+			'settings.glasV2Frost' => 'Frosted glass',
+			'settings.glasV2FrostDescription' => 'Navigation, library column and play button; may stutter on weak boxes',
 			'settings.glasDetailPanel' => 'Description beside the posters',
 			'settings.glasDetailPanelDescription' => 'Without it, more posters fit in a row',
 			'settings.redesignSeasonTabs' => 'Seasons as tabs',
@@ -11049,6 +11072,8 @@ extension on Translations {
 			'settings.homeTitleLogosDescription' => 'Title logos instead of text in the spotlight',
 			'settings.seerrCardEpisodeFacts' => 'Episode facts on Seerr posters',
 			'settings.seerrCardEpisodeFactsDescription' => 'Episode count and next air date; one extra request per show',
+			'settings.hideHomeActionsUntilFocus' => 'Toolbar only on focus',
+			'settings.hideHomeActionsUntilFocusDescription' => '',
 			'settings.showDownloadAction' => 'Download button',
 			'settings.showDownloadActionDescription' => 'On movie and episode pages; otherwise in the ⋮ menu',
 			'settings.hardwareTest' => 'Hardware test',
@@ -11468,12 +11493,12 @@ extension on Translations {
 			'videoControls.ambientLighting' => 'Ambient lighting',
 			'videoControls.fullscreenButton' => 'Enter fullscreen',
 			'videoControls.exitFullscreenButton' => 'Exit fullscreen',
+			_ => null,
+		} ?? switch (path) {
 			'videoControls.alwaysOnTopButton' => 'Always on top',
 			'videoControls.rotationLockButton' => 'Rotation lock',
 			'videoControls.lockScreen' => 'Lock screen',
 			'videoControls.screenLockButton' => 'Screen lock',
-			_ => null,
-		} ?? switch (path) {
 			'videoControls.longPressToUnlock' => 'Long press to unlock',
 			'videoControls.timelineSlider' => 'Video timeline',
 			'videoControls.volumeSlider' => 'Volume level',
@@ -11982,12 +12007,12 @@ extension on Translations {
 			'startup.repairBodySessionsUncertain' => 'Trackers (MAL, AniList, Simkl, Trakt) and Seerr are stored separately and may or may not survive. Plebz will tell you exactly what it kept.',
 			'startup.repairConfirm' => 'Repair',
 			'startup.repairSucceeded' => 'Storage repaired',
+			_ => null,
+		} ?? switch (path) {
 			'startup.repairNeedsRestart' => 'Storage repaired — restart required',
 			'startup.restartRequiredBody' => 'Your data was repaired, but Plebz has to start fresh before it can use it. Close Plebz and open it again.',
 			'startup.quitPlezy' => 'Quit Plebz',
 			'startup.repairFailed' => 'Repair failed',
-			_ => null,
-		} ?? switch (path) {
 			'startup.repairKeptSignIns' => 'Your servers and profiles are still signed in.',
 			'startup.repairLostSignIns' => 'The key protecting your saved sign-ins could not be recovered. You will have to sign in to every server and profile again.',
 			'startup.repairLostSessions' => 'At least one tracker or Seerr connection was lost and has to be reconnected.',
@@ -12496,12 +12521,12 @@ extension on Translations {
 			'watchTogether.notices.left' => ({required Object name}) => '${name} left',
 			'watchTogether.notices.controlRefused' => 'Only the host can control playback',
 			'watchTogether.notices.searchFailed' => 'Some servers couldn\'t be searched for the room\'s video',
+			_ => null,
+		} ?? switch (path) {
 			'watchTogether.notices.playBlocked' => 'Press play to start',
 			'watchTogether.notices.shareFailed' => 'Couldn\'t share this video with the room',
 			'watchTogether.notices.downloadNotShared' => 'Downloads aren\'t shared with the room while their server is offline',
 			'watchTogether.notices.openFailed' => 'Couldn\'t open the room\'s video',
-			_ => null,
-		} ?? switch (path) {
 			'watchTogether.ended.ended' => 'The host ended the room',
 			'watchTogether.ended.kicked' => 'You were removed from the room',
 			'watchTogether.ended.expired' => 'The room expired',
@@ -13010,12 +13035,12 @@ extension on Translations {
 			'services.connectedAs' => ({required Object username}) => 'Connected as @${username}',
 			'services.scrobble' => 'Track progress automatically',
 			'services.scrobbleDescription' => 'Update your list after every film and episode',
+			_ => null,
+		} ?? switch (path) {
 			'services.ownProgress' => 'Own progress via Simkl',
 			'services.ownProgressDescription' => 'Watched marks and progress come from Simkl, not the server',
 			'services.ownProgressNote' => 'Plex still marks watched at about 90 % – only matters for profiles without Simkl',
 			'services.syncStatusTitle' => 'Sync with Simkl',
-			_ => null,
-		} ?? switch (path) {
 			'services.syncStatusOk' => ({required Object time, required Object shows, required Object movies}) => 'Last synced at ${time} · ${shows} series, ${movies} films',
 			'services.syncStatusNever' => 'Not synced yet',
 			'services.syncStatusRunning' => 'Syncing …',
@@ -13329,6 +13354,9 @@ extension on Translations {
 			'plebz.settingsGroupContent' => 'Content',
 			'plebz.settingsGroupApp' => 'App',
 			'plebz.serversAndProfiles' => 'Servers and profiles',
+			'plebz.postersAndDetailPages' => 'Posters and detail pages',
+			'plebz.soundAndSubtitles' => 'Sound and subtitles',
+			'plebz.playerHandling' => 'Player controls',
 			'plebz.iptvAndLiveTv' => 'IPTV and Live TV',
 			'plebz.librariesSection' => 'Libraries',
 			'plebz.aboutAndUpdates' => 'About and updates',

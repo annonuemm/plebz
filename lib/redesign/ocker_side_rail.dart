@@ -1,6 +1,7 @@
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/services.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +17,7 @@ import '../widgets/app_icon.dart';
 import '../widgets/plebz_start_animation.dart' show PlebzLockup, PlebzMark, plebzMarkColours;
 import '../widgets/side_navigation_rail.dart' show SideNavigationRailState;
 import '../theme/liquid_glass.dart';
+import 'ocker_frost.dart';
 import 'ocker_skin.dart';
 import 'ocker_submenu.dart';
 import 'ocker_type.dart';
@@ -115,6 +117,7 @@ class OckerSideRail extends StatefulWidget {
 
 class OckerSideRailState extends State<OckerSideRail> {
   final Map<NavigationTabId, FocusNode> _nodes = {};
+  final _frost = OckerFrostShot();
 
   /// "Flach" (Plebz): the profile row at the foot, below every destination.
   final FocusNode _profileNode = FocusNode(debugLabel: 'ocker_side_rail_profile');
@@ -182,6 +185,8 @@ class OckerSideRailState extends State<OckerSideRail> {
       _nodes.remove(id)?.dispose();
     }
     if (oldWidget.selectedTab != widget.selectedTab) _unfolded.clear();
+    // Here, not once it has opened: what was last painted is the page alone.
+    if (widget.expanded && !oldWidget.expanded && ockerFrost(context)) _frost.take(context);
   }
 
   @override
@@ -191,6 +196,7 @@ class OckerSideRailState extends State<OckerSideRail> {
     for (final node in [..._nodes.values, ..._subNodes, _profileNode]) {
       node.dispose();
     }
+    _frost.dispose();
     super.dispose();
   }
 
@@ -222,6 +228,13 @@ class OckerSideRailState extends State<OckerSideRail> {
     ],
     if (tokens(context).flat || ockerGlasTv(context)) _profileNode,
   ];
+
+  /// "Glas – v2" (Plebz): the first of the tools, above which the rail draws
+  /// its hairline — null where the rail has only destinations.
+  NavigationTab? get _firstTool => widget.tabs.firstWhereOrNull(
+    (tab) =>
+        tab.id == NavigationTabId.search || tab.id == NavigationTabId.downloads || tab.id == NavigationTabId.settings,
+  );
 
   /// The row's word where no profile is named. A getter of its own because
   /// [_buildAt]'s `t` is the opening, not the translations.
@@ -314,7 +327,7 @@ class OckerSideRailState extends State<OckerSideRail> {
     _menu = widget.menuFor?.call(widget.selectedTab);
     return TweenAnimationBuilder<double>(
       tween: Tween(end: widget.expanded ? 1.0 : 0.0),
-      duration: SideNavigationRailState.expandDuration,
+      duration: ockerFrostGlide(context, SideNavigationRailState.expandDuration),
       curve: SideNavigationRailState.expandCurve,
       builder: (context, t, _) => _buildAt(context, t),
     );
@@ -337,10 +350,13 @@ class OckerSideRailState extends State<OckerSideRail> {
     final safeBottom = MediaQuery.paddingOf(context).bottom;
     // "Flach" (Plebz) stands the Plebz mark at the head of the strip as its
     // anchor, and the destinations a clear step below it.
-    final top = safeTop + (tk.flat ? _flatRowsTop * scale : ockerContentTop(context));
+    // "Glas – v2" takes the mark too, in white, its rows a step down for it.
+    final top =
+        safeTop + (tk.flat ? _flatRowsTop * scale : ockerContentTop(context) + (tk.v2 ? _v2RowsDrop * scale : 0));
     final geometry = _RailGeometry(
       t: t,
       flat: tk.flat,
+      v2: tk.v2,
       scale: scale,
       collapsedWidth: collapsed,
       paneLeft: 0,
@@ -382,26 +398,32 @@ class OckerSideRailState extends State<OckerSideRail> {
                 // (ockerReadingGroundOpacity): the rail opens over a schedule,
                 // and at .9 the guide's words still read through its names —
                 // a second menu under the first.
-                child: OckerGlass(
-                  key: OckerSideRail.paneKey,
-                  borderRadius: radius,
-                  scrimInset: 0,
-                  groundOpacity: 0.97,
-                  liquid: true,
-                  // Flush with the left, top and foot: the rim is the open side.
-                  lensBeyond: EdgeInsets.fromLTRB(400 * scale, 400 * scale, 0, 400 * scale),
-                  child: const SizedBox.expand(),
-                ),
+                child: tk.v2
+                    ? _V2RailGround(key: OckerSideRail.paneKey, radius: radius, frost: _frost)
+                    : OckerGlass(
+                        key: OckerSideRail.paneKey,
+                        borderRadius: radius,
+                        scrimInset: 0,
+                        groundOpacity: 0.97,
+                        liquid: true,
+                        // Flush with the left, top and foot: the rim is the open side.
+                        lensBeyond: EdgeInsets.fromLTRB(400 * scale, 400 * scale, 0, 400 * scale),
+                        child: const SizedBox.expand(),
+                      ),
               ),
             ),
           // Over the column of symbols at every stage of the opening, so it
           // stays flush with them as they move into the pane; the name slides
           // in beside it as the rail opens, as on the start screen.
-          if (tk.flat)
+          if (tk.flat || tk.v2)
             Positioned(
               top: safeTop + _flatMarkTop * scale,
               left: geometry.iconLeft + (geometry.iconSize - PlebzMark.widthFor(_flatMarkHeight * scale)) / 2,
-              child: PlebzLockup(markHeight: _flatMarkHeight * scale, colours: plebzMarkColours(context), name: t),
+              child: PlebzLockup(
+                markHeight: _flatMarkHeight * scale,
+                colours: tk.v2 ? _v2MarkColours : plebzMarkColours(context),
+                name: t,
+              ),
             ),
           Positioned(
             left: 0,
@@ -424,6 +446,9 @@ class OckerSideRailState extends State<OckerSideRail> {
                   crossAxisAlignment: .start,
                   children: [
                     for (final tab in widget.tabs) ...[
+                      // "Glas – v2" (Plebz): a hairline between what to watch
+                      // and the tools — search, downloads, settings.
+                      if (tk.v2 && identical(tab, _firstTool)) _V2RailDivider(geometry: geometry),
                       _RailItem(
                         key: OckerSideRail.itemKey(tab.id),
                         icon: tab.icon,
@@ -494,6 +519,9 @@ class OckerSideRailState extends State<OckerSideRail> {
                   child: _RailItem(
                     key: _profileRowKey,
                     icon: Symbols.account_circle_rounded,
+                    // "Glas – v2" (Plebz): the profile's initial in a disc
+                    // rather than an empty figure.
+                    initial: tk.v2 && name != null && name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : null,
                     label: name ?? _profilesWord,
                     geometry: geometry,
                     active: false,
@@ -516,6 +544,10 @@ class OckerSideRailState extends State<OckerSideRail> {
 const double _flatMarkTop = 56;
 const double _flatMarkHeight = 34;
 const double _flatRowsTop = 202;
+
+/// "Glas – v2": the mark all in white, and how far its rows stand lower for it.
+const _v2MarkColours = [Colors.white, Colors.white, Colors.white];
+const double _v2RowsDrop = 36;
 
 /// How far above the screen's foot "Flach" stands its profile row.
 const double _flatProfileBottom = 40;
@@ -555,6 +587,7 @@ class _RailGeometry {
   const _RailGeometry({
     required this.t,
     required this.flat,
+    this.v2 = false,
     required this.scale,
     required this.collapsedWidth,
     required this.paneLeft,
@@ -567,6 +600,10 @@ class _RailGeometry {
   /// "Redesign – Flach" (Plebz): smaller symbols on a tighter pitch — 60 to a
   /// row and 12 between.
   final bool flat;
+
+  /// "Glas – v2" (Plebz): the list on a tighter pitch, read as one list
+  /// rather than a column of separate words.
+  final bool v2;
   final double scale;
   final double collapsedWidth;
   final double paneLeft;
@@ -580,9 +617,12 @@ class _RailGeometry {
   /// gives its white focus fill clear room on both, so it reads as a mark on
   /// the pane rather than a bar across it (the viewer's call, 2026-10-10).
   double get inset => (flat ? 24 : 10) * scale;
-  double get iconSize => (flat ? 30 : 44) * scale;
-  double get rowHeight => (flat ? 72 : 88) * scale;
-  double get subRowHeight => 72 * scale;
+  double get iconSize => (flat ? 30 : (v2 ? 34 : 44)) * scale;
+  double get rowHeight => (flat ? 72 : (v2 ? 72 : 88)) * scale;
+  double get subRowHeight => (v2 ? 60 : 72) * scale;
+
+  /// The size of a destination's name.
+  double get labelSize => (v2 ? 28 : 26) * scale;
 
   double get _shutCapsule => (collapsedWidth - 8).clamp(0.0, 80 * scale).toDouble();
   double get capsuleLeft => lerpDouble((collapsedWidth - _shutCapsule) / 2, paneLeft + inset, t)!;
@@ -616,9 +656,13 @@ class _RailItem extends StatefulWidget {
     required this.focusNode,
     required this.onKey,
     required this.onTap,
+    this.initial,
   });
 
   final IconData icon;
+
+  /// Drawn in a disc in place of [icon] where given.
+  final String? initial;
   final String label;
   final _RailGeometry geometry;
   final bool active;
@@ -648,7 +692,11 @@ class _RailItemState extends State<_RailItem> {
     final g = widget.geometry;
     final scale = g.scale;
     final height = g.rowHeight;
-    final capsuleHeight = g.flat ? 54 * scale : lerpDouble(64 * scale, height - 8 * scale, g.t)!;
+    final capsuleHeight = g.flat
+        ? 54 * scale
+        : g.v2
+        ? height - 8 * scale
+        : lerpDouble(64 * scale, height - 8 * scale, g.t)!;
     final lit = _focused || widget.active;
     // Flat focus is a white fill: the glyph and word on it go dark (Plebz).
     final flatFocused = _focused && tk.flat;
@@ -674,7 +722,7 @@ class _RailItemState extends State<_RailItem> {
               children: [
                 // Flat (Plebz): the destination on show is told by its glyph
                 // in the accent, not by a pane behind it.
-                if (_focused || (widget.active && !tk.flat))
+                if (_focused || (widget.active && !tk.flat && !tk.v2))
                   Positioned(
                     left: g.capsuleLeft,
                     width: g.capsuleWidth,
@@ -683,7 +731,7 @@ class _RailItemState extends State<_RailItem> {
                     child: OckerGlassFocusFill(
                       shape: const StadiumBorder(),
                       bright: _focused,
-                      tint: widget.active && !tk.flat ? 1 : 0,
+                      tint: widget.active && !tk.flat && !tk.v2 ? 1 : 0,
                     ),
                   ),
                 // Flat: the destination on show is its glyph at full ink and a
@@ -704,23 +752,25 @@ class _RailItemState extends State<_RailItem> {
                 Positioned(
                   left: g.iconLeft,
                   top: (height - g.iconSize) / 2,
-                  child: OckerInk(
-                    color: flatFocused
-                        ? tk.bg
-                        : tk.flat
-                        // The glyph in its word's grey: a fainter symbol beside
-                        // it read as the row's two halves not matching.
-                        ? tk.ink(widget.active ? 1 : 0.62)
-                        : (lit ? tk.ink(1) : tk.ink(0.55)),
-                    builder: (context, ink) => AppIcon(
-                      widget.icon,
-                      size: g.iconSize,
-                      fill: navIconFill,
-                      // Plebz: on the Apple TV a symbol as heavy as its word.
-                      weight: ockerGlasTv(context) ? 500 : navIconWeight,
-                      color: ink,
-                    ),
-                  ),
+                  child: widget.initial != null
+                      ? _V2Initial(letter: widget.initial!, size: g.iconSize)
+                      : OckerInk(
+                          color: flatFocused
+                              ? tk.bg
+                              : tk.flat
+                              // The glyph in its word's grey: a fainter symbol beside
+                              // it read as the row's two halves not matching.
+                              ? tk.ink(widget.active ? 1 : 0.62)
+                              : (lit ? tk.ink(1) : tk.ink(0.55)),
+                          builder: (context, ink) => AppIcon(
+                            widget.icon,
+                            size: g.iconSize,
+                            fill: navIconFill,
+                            // Plebz: on the Apple TV a symbol as heavy as its word.
+                            weight: ockerGlasTv(context) ? 500 : navIconWeight,
+                            color: ink,
+                          ),
+                        ),
                 ),
                 if (g.t > 0)
                   Positioned(
@@ -747,7 +797,7 @@ class _RailItemState extends State<_RailItem> {
                                 style: type
                                     .navWord(active: widget.active)
                                     .copyWith(
-                                      fontSize: 26 * scale,
+                                      fontSize: g.labelSize,
                                       color: ink,
                                       // Plebz: Apple's TV app sets its sidebar
                                       // in medium, the place on show in bold;
@@ -865,7 +915,7 @@ class _RailSubItemState extends State<_RailSubItem> {
               clipBehavior: Clip.none,
               children: [
                 // Flat: the one on show is told by its word in the accent.
-                if (_focused || (item.selected && !tk.flat))
+                if (_focused || (item.selected && !tk.flat && !tk.v2))
                   Positioned(
                     left: tileLeft,
                     width: tileWidth,
@@ -874,7 +924,7 @@ class _RailSubItemState extends State<_RailSubItem> {
                     child: OckerGlassFocusFill(
                       shape: const StadiumBorder(),
                       bright: _focused,
-                      tint: item.selected && !tk.flat ? 1 : 0,
+                      tint: item.selected && !tk.flat && !tk.v2 ? 1 : 0,
                     ),
                   ),
                 if (glyph != null)
@@ -920,6 +970,84 @@ class _RailSubItemState extends State<_RailSubItem> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Glas – v2" (Plebz): the open rail's ground — the palette's own, solid,
+/// with a hairline on its open side — where Glas lays a pane of grey glass.
+class _V2RailGround extends StatelessWidget {
+  const _V2RailGround({super.key, required this.radius, required this.frost});
+
+  final BorderRadius radius;
+  final OckerFrostShot frost;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = tokens(context);
+    final ground = Color.alphaBlend(tk.ink(0.03), tk.bg);
+    final frosted = ockerFrost(context);
+    return DecoratedBox(
+      position: DecorationPosition.foreground,
+      decoration: BoxDecoration(
+        color: frosted ? null : ground,
+        borderRadius: radius,
+        border: Border(right: BorderSide(color: tk.ink(0.10))),
+      ),
+      child: frosted
+          ? ClipRRect(
+              borderRadius: radius,
+              child: OckerFrostPane(ground: ground, picture: frost.image),
+            )
+          : const SizedBox.expand(),
+    );
+  }
+}
+
+/// "Glas – v2" (Plebz): the hairline between the destinations and the tools.
+class _V2RailDivider extends StatelessWidget {
+  const _V2RailDivider({required this.geometry});
+
+  final _RailGeometry geometry;
+
+  @override
+  Widget build(BuildContext context) {
+    final g = geometry;
+    return Opacity(
+      opacity: g.t.clamp(0.0, 1.0),
+      child: Padding(
+        padding: EdgeInsets.only(left: g.capsuleLeft + 22 * g.scale, top: 10 * g.scale, bottom: 10 * g.scale),
+        child: SizedBox(
+          width: (g.capsuleWidth - 44 * g.scale).clamp(0.0, double.infinity).toDouble(),
+          height: 1,
+          child: ColoredBox(color: tokens(context).ink(0.10)),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Glas – v2" (Plebz): a profile's initial in a disc, the size of a symbol.
+class _V2Initial extends StatelessWidget {
+  const _V2Initial({required this.letter, required this.size});
+
+  final String letter;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final tk = tokens(context);
+    return SizedBox.square(
+      dimension: size,
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: tk.ink(0.14), shape: BoxShape.circle),
+        child: Center(
+          child: Text(
+            letter,
+            style: TextStyle(fontSize: size * 0.48, fontWeight: FontWeight.w600, color: tk.ink(0.9), height: 1),
           ),
         ),
       ),

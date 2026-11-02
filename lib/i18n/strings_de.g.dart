@@ -675,6 +675,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get glasAccentPlebzDescription => 'Fast schwarz, Violett, Abspielknopf im Logo-Verlauf';
 	@override String get glasUltraBlur => 'Hintergrund in Posterfarben';
 	@override String get glasUltraBlurDescription => 'Auf Startseite und Erkunden';
+	@override String get glasV2Frost => 'Milchglas';
+	@override String get glasV2FrostDescription => 'Navigation, Mediatheken-Spalte und Abspielen; kann auf schwachen Boxen ruckeln';
 	@override String get glasDetailPanel => 'Beschreibung neben den Postern';
 	@override String get glasDetailPanelDescription => 'Ohne passen mehr Poster in eine Reihe';
 	@override String get redesignSeasonTabs => 'Staffeln als Reiter';
@@ -689,6 +691,7 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get homeTitleLogosDescription => 'Titel-Logos statt Text im großen Bild';
 	@override String get seerrCardEpisodeFacts => 'Folgenangaben auf Seerr-Kacheln';
 	@override String get seerrCardEpisodeFactsDescription => 'Folgenzahl und nächster Termin, je Serie eine Anfrage mehr';
+	@override String get hideHomeActionsUntilFocus => 'Werkzeugleiste erst bei Fokus';
 	@override String get showDownloadAction => 'Download-Knopf';
 	@override String get showDownloadActionDescription => 'Auf Film- und Folgenseiten, sonst im ⋮-Menü';
 	@override String get hardwareTest => 'Hardware-Test';
@@ -2989,6 +2992,9 @@ class _Translations$plebz$de extends Translations$plebz$en {
 	@override String get settingsGroupContent => 'Inhalte';
 	@override String get settingsGroupApp => 'App';
 	@override String get serversAndProfiles => 'Server und Profile';
+	@override String get postersAndDetailPages => 'Poster und Detailseiten';
+	@override String get soundAndSubtitles => 'Ton und Untertitel';
+	@override String get playerHandling => 'Bedienung im Player';
 	@override String get iptvAndLiveTv => 'IPTV und Live-TV';
 	@override String get librariesSection => 'Mediatheken';
 	@override String get aboutAndUpdates => 'Über und Updates';
@@ -4825,6 +4831,8 @@ extension on TranslationsDe {
 			'settings.glasAccentPlebzDescription' => 'Fast schwarz, Violett, Abspielknopf im Logo-Verlauf',
 			'settings.glasUltraBlur' => 'Hintergrund in Posterfarben',
 			'settings.glasUltraBlurDescription' => 'Auf Startseite und Erkunden',
+			'settings.glasV2Frost' => 'Milchglas',
+			'settings.glasV2FrostDescription' => 'Navigation, Mediatheken-Spalte und Abspielen; kann auf schwachen Boxen ruckeln',
 			'settings.glasDetailPanel' => 'Beschreibung neben den Postern',
 			'settings.glasDetailPanelDescription' => 'Ohne passen mehr Poster in eine Reihe',
 			'settings.redesignSeasonTabs' => 'Staffeln als Reiter',
@@ -4839,6 +4847,7 @@ extension on TranslationsDe {
 			'settings.homeTitleLogosDescription' => 'Titel-Logos statt Text im großen Bild',
 			'settings.seerrCardEpisodeFacts' => 'Folgenangaben auf Seerr-Kacheln',
 			'settings.seerrCardEpisodeFactsDescription' => 'Folgenzahl und nächster Termin, je Serie eine Anfrage mehr',
+			'settings.hideHomeActionsUntilFocus' => 'Werkzeugleiste erst bei Fokus',
 			'settings.showDownloadAction' => 'Download-Knopf',
 			'settings.showDownloadActionDescription' => 'Auf Film- und Folgenseiten, sonst im ⋮-Menü',
 			'settings.hardwareTest' => 'Hardware-Test',
@@ -5297,11 +5306,11 @@ extension on TranslationsDe {
 			'videoControls.forcedTrack' => ({required Object label}) => '${label} (Erzwungen)',
 			'videoControls.osdSubtitlesOff' => 'Untertitel: Aus',
 			'videoControls.osdSubtitles' => ({required Object track}) => 'Untertitel: ${track}',
+			_ => null,
+		} ?? switch (path) {
 			'videoControls.osdAudio' => ({required Object track}) => 'Audio: ${track}',
 			'videoControls.upNext' => 'ALS NÄCHSTES',
 			'videoControls.upNextStartsIn' => ({required Object seconds}) => 'Nächste Folge in ${seconds} s',
-			_ => null,
-		} ?? switch (path) {
 			'videoControls.closeUpNext' => 'Schließen',
 			'videoControls.showUpNextPanel' => '„Als nächstes"-Fenster zeigen',
 			'videoControls.endOfEpisodeStyle' => 'Am Ende einer Folge',
@@ -5811,11 +5820,11 @@ extension on TranslationsDe {
 			'explore.addToWatchlist' => 'Zur Merkliste hinzufügen',
 			'explore.removeFromWatchlist' => 'Von Merkliste entfernen',
 			'explore.addedToWatchlist' => 'Zur Watchlist hinzugefügt',
+			_ => null,
+		} ?? switch (path) {
 			'explore.removedFromWatchlist' => 'Von der Watchlist entfernt',
 			'explore.watchlistUpdateFailed' => 'Merkliste konnte nicht aktualisiert werden',
 			'explore.watchlistNoMatch' => 'Dieser Eintrag konnte keiner Watchlist zugeordnet werden',
-			_ => null,
-		} ?? switch (path) {
 			'explore.notInLibrary' => 'Nicht in deiner Mediathek',
 			'explore.inTheseLibraries' => 'In diesen Mediatheken',
 			'explore.comparingCopies' => 'Fassungen werden verglichen …',
@@ -6325,11 +6334,11 @@ extension on TranslationsDe {
 			'downloads.allEpisodesAlreadyDownloaded' => 'Alle Episoden sind bereits heruntergeladen',
 			'downloads.resumeDownload' => 'Download fortsetzen',
 			'downloads.cancelledDownload' => 'Abgebrochener Download',
+			_ => null,
+		} ?? switch (path) {
 			'downloads.syncingFile' => ({required Object file, required Object status}) => '${file} (${status} wird synchronisiert)',
 			'downloads.downloadedFileClickToComplete' => ({required Object file}) => '${file} heruntergeladen — zum Abschließen klicken',
 			'downloads.partialDownloadClickToComplete' => 'Teilweise heruntergeladen — zum Abschließen klicken',
-			_ => null,
-		} ?? switch (path) {
 			'downloads.deleting' => 'Wird gelöscht …',
 			'downloads.deletingWithProgress' => ({required Object title, required Object current, required Object total}) => '${title} wird gelöscht … (${current} von ${total})',
 			'downloads.queuedTooltip' => 'In Warteschlange',
@@ -6839,11 +6848,11 @@ extension on TranslationsDe {
 			'services.tmdb.apiKey' => 'API-Schlüssel',
 			'services.tmdb.apiKeySet' => 'Hinterlegt',
 			'services.tmdb.apiKeyMissing' => 'Nicht hinterlegt',
+			_ => null,
+		} ?? switch (path) {
 			'services.tmdb.apiKeyHint' => 'API-Schlüssel oder Read Access Token',
 			'services.tmdb.apiKeyHelp' => 'Kostenlos anzulegen auf themoviedb.org unter Einstellungen → API.',
 			'services.tmdb.verify' => 'Schlüssel prüfen',
-			_ => null,
-		} ?? switch (path) {
 			'services.tmdb.verifyValid' => 'TMDB hat den Schlüssel akzeptiert.',
 			'services.tmdb.verifyInvalid' => 'TMDB hat den Schlüssel abgelehnt.',
 			'services.tmdb.clearCache' => 'TMDB-Daten verwerfen',
@@ -7103,6 +7112,9 @@ extension on TranslationsDe {
 			'plebz.settingsGroupContent' => 'Inhalte',
 			'plebz.settingsGroupApp' => 'App',
 			'plebz.serversAndProfiles' => 'Server und Profile',
+			'plebz.postersAndDetailPages' => 'Poster und Detailseiten',
+			'plebz.soundAndSubtitles' => 'Ton und Untertitel',
+			'plebz.playerHandling' => 'Bedienung im Player',
 			'plebz.iptvAndLiveTv' => 'IPTV und Live-TV',
 			'plebz.librariesSection' => 'Mediatheken',
 			'plebz.aboutAndUpdates' => 'Über und Updates',

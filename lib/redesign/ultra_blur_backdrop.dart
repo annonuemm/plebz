@@ -62,6 +62,14 @@ class UltraBlurAmbient extends ChangeNotifier implements ValueListenable<UltraBl
     _settle = Timer(settleDelay, () => unawaited(_resolve(item, generation)));
   }
 
+  /// A tile with colours of its own has taken focus: no artwork, no server
+  /// to ask, the same wait before the ground follows.
+  void reportColors(UltraBlurColors colors) {
+    ++_generation;
+    _settle?.cancel();
+    _settle = Timer(settleDelay, () => _set(colors));
+  }
+
   Future<void> _resolve(MediaItem item, int generation) async {
     final request = _requestFor(item);
     if (request == null) {
@@ -143,24 +151,41 @@ class UltraBlurScope extends InheritedWidget {
 /// [child], reporting [item] whenever the card's focus wrapper shows focus
 /// ([CardFocusScope]) — and nothing more while the ambient colours are off.
 class UltraBlurCardReporter extends StatelessWidget {
-  const UltraBlurCardReporter({super.key, required this.item, required this.child});
+  const UltraBlurCardReporter({super.key, required this.item, this.colors, required this.child});
 
   final MediaItem item;
+
+  /// The card's own colours, reported in place of [item]'s artwork.
+  final UltraBlurColors? colors;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     if (UltraBlurScope.of(context) == null) return child;
-    return UltraBlurFocusReporter(item: item, focused: CardFocusScope.maybeOf(context) ?? false, child: child);
+    return UltraBlurFocusReporter(
+      item: item,
+      colors: colors,
+      focused: CardFocusScope.maybeOf(context) ?? false,
+      child: child,
+    );
   }
 }
 
 /// Reports [item] to the ambient colours whenever the card around it shows
 /// focus. [focused] comes from the card's own focus wrapper.
 class UltraBlurFocusReporter extends StatefulWidget {
-  const UltraBlurFocusReporter({super.key, required this.item, required this.focused, required this.child});
+  const UltraBlurFocusReporter({
+    super.key,
+    required this.item,
+    this.colors,
+    required this.focused,
+    required this.child,
+  });
 
   final MediaItem item;
+
+  /// See [UltraBlurCardReporter.colors].
+  final UltraBlurColors? colors;
   final bool focused;
   final Widget child;
 
@@ -186,7 +211,12 @@ class _UltraBlurFocusReporterState extends State<UltraBlurFocusReporter> {
   void _reportSoon() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !widget.focused) return;
-      UltraBlurScope.read(context)?.report(widget.item);
+      final ambient = UltraBlurScope.read(context);
+      if (widget.colors case final colors?) {
+        ambient?.reportColors(colors);
+      } else {
+        ambient?.report(widget.item);
+      }
     });
   }
 

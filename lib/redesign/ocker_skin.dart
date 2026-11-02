@@ -431,6 +431,11 @@ bool ockerFlat(BuildContext context) => Theme.of(context).extension<MonoTokens>(
 /// white outline.
 bool ockerGlasOnly(BuildContext context) => ockerGlass(context) && !ockerFlat(context);
 
+/// "Glas – v2" (Plebz): Glas under one rulebook, after the design audit of
+/// 2026-11-01. Everything Glas does it does too ([ockerGlasOnly] is true);
+/// where it answers differently, this is the gate.
+bool ockerGlasV2(BuildContext context) => Theme.of(context).extension<MonoTokens>()?.v2 == true;
+
 /// Glas in the television arrangement (Plebz), after Apple's TV app.
 bool ockerGlasTv(BuildContext context) => isOckerLayout(context) && !ockerFlat(context);
 
@@ -805,6 +810,23 @@ class OckerOnGlass extends InheritedWidget {
 /// column: more than a band's, because it carries rows of words over a busy
 /// grid of posters. See [ockerBandGroundOpacity].
 const ockerReadingGroundOpacity = 0.88;
+
+/// "Glas – v2" (Plebz): what a menu or a dialog holds of its ground — near
+/// opaque. Without a blur the 12 % Glas lets through is the page's own words,
+/// legible behind the menu's; the glass stays in the sheen and the edge.
+const ockerV2PaneGroundOpacity = 0.96;
+
+/// "Glas – v2" (Plebz): [pane] on a solid ground of the palette — for the
+/// panes read over a page (menus, the open rail). Glass without a blur, and
+/// on Android a pane the lens code counts as liquid keeps 40 % of its ground,
+/// let the page's words read through the pane's own; the glass's sheen and
+/// edge stay on top. Elsewhere [pane] as it is.
+Widget ockerV2SolidUnder(BuildContext context, BorderRadius radius, Widget pane) => ockerGlasV2(context)
+    ? DecoratedBox(
+        decoration: BoxDecoration(color: tokens(context).bg, borderRadius: radius),
+        child: pane,
+      )
+    : pane;
 
 class OckerGlass extends StatelessWidget {
   const OckerGlass({
@@ -1283,13 +1305,19 @@ class OckerGlassFocusBehind extends StatelessWidget {
 double ockerWordFocusLift(BuildContext context) =>
     // Flat — and a band gone flat under Liquid Glass: focus and the one on
     // show are the same segment, one size, the band's even margin all round
-    // it, so track and capsule stay concentric (the user's call).
-    ockerFlat(context) || _OckerBandScope.flatAt(context) || _OckerBandScope.evenAt(context)
+    // it, so track and capsule stay concentric (the user's call). "Glas – v2"
+    // the same: beside a chosen pill a taller one read as a slip.
+    ockerFlat(context) || ockerGlasV2(context) || _OckerBandScope.flatAt(context) || _OckerBandScope.evenAt(context)
     ? 0
     : ockerBandMargin(context) + 4 * ockerScale(context);
 
 /// The wash every palette started with; the sheen stands whole up to it.
 const _faintWash = 0.22;
+
+/// "Glas – v2" (Plebz): how much of the accent the one chosen wears — the
+/// destination on show, the chosen row of a menu. Flat, without glass, so it
+/// never reads as focus.
+const ockerV2ChosenWash = 0.26;
 
 /// The capsule behind a word: the glass again, lit at its edge.
 ///
@@ -1339,6 +1367,20 @@ class _OckerGlassCapsule extends StatelessWidget {
       );
     }
     final wash = tk.accentWash * tint;
+    // "Glas – v2" (Plebz): what is chosen is told apart from focus by its
+    // paint, not only by its brightness — a flat wash of the accent, no
+    // sheen and no lit edge; glass with its edge is focus and nothing else.
+    if (tk.v2 && !bright) {
+      return IgnorePointer(
+        child: DecoratedBox(
+          decoration: ShapeDecoration(
+            shape: shape,
+            color: tk.accent.withValues(alpha: ockerV2ChosenWash * tint),
+          ),
+          child: const SizedBox.expand(),
+        ),
+      );
+    }
     // Plebz: on Apple's builds with Liquid Glass off a capsule is flat too —
     // the same shape, a lighter wash of ink for focus, the accent's wash for
     // the place on show; no sheen and no lit edge (the user's call,
@@ -1574,7 +1616,9 @@ class _OckerGlassBandState extends State<OckerGlassBand> with TickerProviderStat
   /// lighter segment of it, focus a white fill with the word inverted. The
   /// glass is kept for the menus and the side rail. Android wears the look
   /// for good ([OckerLiquidGlass.look]).
-  bool get _liquidFlat => OckerLiquidGlass.look && !ockerFlat(context);
+  // "Glas – v2" (Plebz): no band goes flat — focus is the one glass capsule
+  // everywhere, never a white fill with the words inverted.
+  bool get _liquidFlat => OckerLiquidGlass.look && !ockerFlat(context) && !ockerGlasV2(context);
 
   @override
   void dispose() {

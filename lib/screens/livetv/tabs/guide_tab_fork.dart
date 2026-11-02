@@ -798,7 +798,14 @@ extension _GuideTabFork on GuideTabState {
                   maxLines: 1,
                 ),
               ),
-            Expanded(child: Container(width: 2, color: tk.accent)),
+            // "Glas – v2" (Plebz): through the grid the line is a hairline
+            // at half strength — it marks the moment without striking
+            // through the titles it crosses; the pill above stays whole.
+            Expanded(
+              child: ockerGlasV2(context)
+                  ? Container(width: 1, color: tk.accent.withValues(alpha: 0.5))
+                  : Container(width: 2, color: tk.accent),
+            ),
           ],
         ),
       ),

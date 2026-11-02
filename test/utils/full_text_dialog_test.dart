@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/i18n/strings.g.dart';
+import 'package:plezy/services/settings_service.dart';
+import 'package:plezy/theme/mono_theme.dart';
 import 'package:plezy/utils/dialogs.dart';
 import 'package:plezy/widgets/dialog_action_button.dart';
 
@@ -77,6 +79,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(scrollOffset(tester), 0);
+  });
+
+  testWidgets('Glas – v2 opens on its filled close button, so OK closes at once', (tester) async {
+    await tester.pumpWidget(
+      TranslationProvider(
+        child: MaterialApp(
+          theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glasV2),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => showFullTextDialog(context, title: 'Übersicht', text: 'Kurz.'),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.select);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Übersicht'), findsNothing);
   });
 
   group('a question — the update dialog', () {

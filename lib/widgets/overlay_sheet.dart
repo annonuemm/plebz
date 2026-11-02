@@ -151,13 +151,20 @@ class OverlaySheetController {
   /// resize arbitrarily tall: a portrait tablet and a 10-foot UI keep the full
   /// 75%, and so does a desktop window narrower than 601px, which is
   /// phone-shaped and where 75% is the norm.
+  /// A sheet's widest under "Glas – v2" on the television, in logical pixels.
+  static const v2TvSheetMaxWidth = 460.0;
+
   static BoxConstraints _defaultSheetConstraints(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final isWideViewport = size.width > 600;
     final isDesktopWindow = isWideViewport && PlatformDetector.isDesktopOS() && !PlatformDetector.isTV();
     final maxHeight = size.height * 0.75;
+    // "Glas – v2" (Plebz) on the television: a menu as wide as its rows need,
+    // not two thirds of the screen — words in a narrow column read as a menu,
+    // spread across the room they read as a page.
+    final narrow = isWideViewport && PlatformDetector.isTV() && ockerGlasV2(context);
     return BoxConstraints(
-      maxWidth: isWideViewport ? 700 : double.infinity,
+      maxWidth: narrow ? v2TvSheetMaxWidth : (isWideViewport ? 700 : double.infinity),
       maxHeight: isDesktopWindow ? math.min(maxHeight, _windowedMaxHeight) : maxHeight,
     );
   }
@@ -632,10 +639,12 @@ class _OverlaySheetHostState extends State<OverlaySheetHost> with SingleTickerPr
                     return GestureDetector(
                       onTap: _barrierDismissible ? () => _close() : null,
                       // Half the dimming under glass: a pane over a darkened
-                      // picture has nothing left to let through.
+                      // picture has nothing left to let through. "Glas – v2"
+                      // dims in full: its panes hold their ground, and the
+                      // page behind steps back rather than showing through.
                       child: ColoredBox(
                         color: Colors.black.withValues(
-                          alpha: _barrierAnimation.value * (_glassSheet(context) ? 0.5 : 1),
+                          alpha: _barrierAnimation.value * (_glassSheet(context) && !ockerGlasV2(context) ? 0.5 : 1),
                         ),
                       ),
                     );
@@ -906,15 +915,19 @@ class _OverlaySheetHostState extends State<OverlaySheetHost> with SingleTickerPr
                       : null,
                   clipBehavior: Clip.antiAlias,
                   child: glass
-                      ? OckerGlass(
-                          borderRadius: borderRadius,
-                          groundOpacity: ockerReadingGroundOpacity,
-                          liquid: true,
-                          // A Material of its own inside the pane: the rows'
-                          // ink lands on the nearest one, and the pane's
-                          // ground between them would hide it.
-                          child: OckerOnGlass(
-                            child: Material(type: MaterialType.transparency, child: sheetBody),
+                      ? ockerV2SolidUnder(
+                          context,
+                          borderRadius,
+                          OckerGlass(
+                            borderRadius: borderRadius,
+                            groundOpacity: ockerGlasV2(context) ? ockerV2PaneGroundOpacity : ockerReadingGroundOpacity,
+                            liquid: true,
+                            // A Material of its own inside the pane: the rows'
+                            // ink lands on the nearest one, and the pane's
+                            // ground between them would hide it.
+                            child: OckerOnGlass(
+                              child: Material(type: MaterialType.transparency, child: sheetBody),
+                            ),
                           ),
                         )
                       : sheetBody,

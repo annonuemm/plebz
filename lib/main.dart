@@ -28,6 +28,7 @@ import 'profiles/profile_activation.dart';
 import 'profiles/profile_selection_policy.dart';
 import 'models/external_player_models.dart';
 import 'mixins/mounted_set_state_mixin.dart';
+import 'redesign/ocker_v2_type_ramp.dart';
 import 'theme/mono_theme.dart';
 import 'profiles/plex_home_service.dart';
 import 'screens/auth_screen.dart';
@@ -1888,9 +1889,12 @@ class _AppShell extends StatelessWidget {
 /// interface grew.
 Widget rootShell(Widget? child) {
   return FormFactorScale(
-    child: ScaffoldMessenger(
-      key: rootScaffoldMessengerKey,
-      child: Scaffold(backgroundColor: Colors.transparent, body: child),
+    // Plebz: "Glas – v2" sets the theme's type on its ramp on the television.
+    child: OckerV2TypeRamp(
+      child: ScaffoldMessenger(
+        key: rootScaffoldMessengerKey,
+        child: Scaffold(backgroundColor: Colors.transparent, body: child),
+      ),
     ),
   );
 }

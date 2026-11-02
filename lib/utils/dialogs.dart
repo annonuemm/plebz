@@ -7,6 +7,7 @@ import '../focus/focusable_text_field.dart';
 import '../focus/input_mode_tracker.dart';
 import '../i18n/strings.g.dart';
 import '../mixins/controller_disposer_mixin.dart';
+import '../redesign/ocker_type.dart';
 import '../theme/mono_tokens.dart';
 import '../widgets/app_icon.dart';
 import '../widgets/dialog_action_button.dart';
@@ -211,19 +212,31 @@ class _FullTextDialogState extends State<_FullTextDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // "Glas – v2" (Plebz): the dialog speaks in the page's own sizes — Material's
+    // set the notes nearly twice as large as the text beside them — on the
+    // menus' ground, and closes on a button that looks like one.
+    final v2 = Theme.of(context).extension<MonoTokens>()?.v2 == true;
+    final type = v2 ? OckerType.of(context) : null;
     return AlertDialog(
       title: Text(widget.title),
+      titleTextStyle: type?.sectionHeading.copyWith(fontSize: 28 * type.scale),
+      backgroundColor: v2 ? Color.alphaBlend(tokens(context).ink(0.09), tokens(context).bg) : null,
       content: SizedBox(
         width: 560,
         child: Focus(
           // A question starts on its answer: the text cannot show that it has
           // focus, so a dialog that opened on it showed no focus at all. UP
-          // still reaches the text to scroll it.
-          autofocus: widget.confirmText == null,
+          // still reaches the text to scroll it. "Glas – v2" (Plebz): so does
+          // a filled close button, which reads as holding focus; OK has to
+          // keep that promise.
+          autofocus: widget.confirmText == null && !v2,
           onKeyEvent: _handleKey,
           child: SingleChildScrollView(
             controller: _controller,
-            child: Text.rich(widget.span, style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5)),
+            child: Text.rich(
+              widget.span,
+              style: type?.synopsis ?? Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
+            ),
           ),
         ),
       ),
@@ -245,7 +258,11 @@ class _FullTextDialogState extends State<_FullTextDialog> {
           DialogActionButton(
             onPressed: () => Navigator.pop(context),
             label: t.common.close,
-            style: TextButton.styleFrom(padding: _buttonPadding, shape: _buttonShape),
+            isPrimary: v2,
+            autofocus: v2,
+            style: v2
+                ? FilledButton.styleFrom(padding: _buttonPadding, shape: _buttonShape)
+                : TextButton.styleFrom(padding: _buttonPadding, shape: _buttonShape),
           ),
       ],
     );

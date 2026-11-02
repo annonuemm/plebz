@@ -29,8 +29,15 @@ import 'settings_utils.dart';
 import 'shader_preset_setting.dart';
 import 'subtitle_styling_screen.dart';
 
+/// What a page of the playback settings holds (Plebz): one long page read
+/// badly on a remote, so its groups stand under topics of their own. Each is a
+/// row of the settings' column; null shows the whole.
+enum PlaybackTopic { player, soundAndSubtitles, handling }
+
 class PlaybackSettingsScreen extends StatelessWidget {
-  const PlaybackSettingsScreen({super.key});
+  const PlaybackSettingsScreen({super.key, this.topic});
+
+  final PlaybackTopic? topic;
 
   @override
   Widget build(BuildContext context) {
@@ -81,100 +88,121 @@ class PlaybackSettingsScreen extends StatelessWidget {
             (androidTv &&
                 (svc.read(SettingsService.matchContentFrameRate) || svc.read(PlebzPrefs.matchDisplayResolution)));
 
+        bool shows(PlaybackTopic part) => topic == null || topic == part;
         return SettingsPage(
-          title: Text(t.settings.videoPlayback),
+          title: Text(switch (topic) {
+            PlaybackTopic.soundAndSubtitles => t.plebz.soundAndSubtitles,
+            PlaybackTopic.handling => t.plebz.playerHandling,
+            PlaybackTopic.player => t.settings.player,
+            null => t.settings.videoPlayback,
+          }),
           children: [
-            SettingsGroup(
-              title: t.settings.player,
-              children: [
-                if (Platform.isAndroid) _playerBackendSelector(),
-                if (PlatformDetector.supportsExternalPlayers()) _externalPlayerTile(),
-                if (mpvInUse) _mpvConfigTile(),
-                // mpv's shaders, choosable without starting a video (Plebz).
-                if (!exoActive) ?shaderPresetSettingTile(context),
-                _hardwareDecodingTile(),
-                if (exoInUse) _playbackBufferTile(),
-                // A TV box's decoder tunnels; a phone's or tablet's hardly
-                // ever does (Plebz).
-                if (exoInUse && !isMobile) _tunneledPlaybackTile(),
-                if (PlatformDetector.supportsPictureInPicture()) _autoPipTile(),
-                // IPTV's player, the guide's seamless preview and the live
-                // variants of frame-rate matching and tunnelling sit with IPTV
-                // (Plebz).
-              ],
-            ),
+            if (shows(PlaybackTopic.player))
+              SettingsGroup(
+                title: topic == null ? t.settings.player : null,
+                children: [
+                  if (Platform.isAndroid) _playerBackendSelector(),
+                  if (PlatformDetector.supportsExternalPlayers()) _externalPlayerTile(),
+                  // mpv's shaders, choosable without starting a video (Plebz).
+                  if (!exoActive) ?shaderPresetSettingTile(context),
+                  if (PlatformDetector.supportsPictureInPicture()) _autoPipTile(),
+                  // IPTV's player, the guide's seamless preview and the live
+                  // variants of frame-rate matching and tunnelling sit with IPTV
+                  // (Plebz).
+                ],
+              ),
 
-            SettingsGroup(
-              title: t.settings.videoAndDisplay,
-              children: [
-                if (androidTv) _matchContentFrameRateTile(),
-                if (androidTv) _matchDisplayResolutionTile(),
-                if (Platform.isWindows) _matchRefreshRateTile(),
-                if (Platform.isWindows) _matchDynamicRangeTile(),
-                if (showDisplaySwitchDelay) _displaySwitchDelayTile(),
-                if (dolbyVisionSettled) _disableDolbyVisionTile(),
-                // Nothing left to choose once Dolby Vision is off entirely.
-                if (dolbyVisionSettled && !dolbyVisionOff) _dvConversionModeTile(),
-                // mpv-only: ExoPlayer always leaves the conversion to the device.
-                if (Platform.isAndroid && mpvInUse) _hdrSdrConversionTile(),
-                // mpv's subtitle plane over the picture only (Plebz).
-                if (Platform.isAndroid && mpvInUse) _mpvOsdPictureOnlyTile(),
-                // mpv-only (#2149): ExoPlayer has no filter chain, so the
-                // tile disappears while the ExoPlayer backend is active.
-                if (mpvInUse) _deinterlaceTile(),
-                // TODO: "Extend video into display cutout" toggle (#1769)
-                // goes here, Android-only.
-              ],
-            ),
+            if (shows(PlaybackTopic.player))
+              SettingsGroup(
+                title: t.settings.videoAndDisplay,
+                children: [
+                  if (androidTv) _matchContentFrameRateTile(),
+                  if (androidTv) _matchDisplayResolutionTile(),
+                  if (Platform.isWindows) _matchRefreshRateTile(),
+                  if (Platform.isWindows) _matchDynamicRangeTile(),
+                  if (dolbyVisionSettled) _disableDolbyVisionTile(),
+                  // Nothing left to choose once Dolby Vision is off entirely.
+                  if (dolbyVisionSettled && !dolbyVisionOff) _dvConversionModeTile(),
+                  // mpv-only (#2149): ExoPlayer has no filter chain, so the
+                  // tile disappears while the ExoPlayer backend is active.
+                  if (mpvInUse) _deinterlaceTile(),
+                  // TODO: "Extend video into display cutout" toggle (#1769)
+                  // goes here, Android-only.
+                ],
+              ),
 
-            SettingsGroup(
-              title: t.settings.audio,
-              children: [
-                if (PlatformDetector.supportsAudioPassthrough()) _audioPassthroughTile(),
-                _audioChannelLimitTile(exoActive: exoActive),
-                // Only a stereo fold mixes the center away; any fold can clip.
-                if (channelLimit == AudioChannelLimit.stereo) _downmixCenterBoostTile(),
-                _maxVolumeTile(),
-              ],
-            ),
+            if (shows(PlaybackTopic.soundAndSubtitles))
+              SettingsGroup(
+                title: t.settings.audio,
+                children: [
+                  if (PlatformDetector.supportsAudioPassthrough()) _audioPassthroughTile(),
+                  _audioChannelLimitTile(exoActive: exoActive),
+                  // Only a stereo fold mixes the center away; any fold can clip.
+                  if (channelLimit == AudioChannelLimit.stereo) _downmixCenterBoostTile(),
+                  _maxVolumeTile(),
+                ],
+              ),
 
-            SettingsGroup(
-              title: t.settings.quality,
-              children: [
-                _defaultQualityTile(),
-                // Only a phone/tablet has a cellular radio; desktop and TV
-                // never report a cellular-only connection.
-                if (isMobile) _cellularQualityTile(),
-                // TODO: "Remote streaming quality" selector (#2064) goes here,
-                // mirroring cellularQualityPreset's nullable "same as default"
-                // pattern; needs local/remote connection detection in the
-                // failover client.
-                // Desktop has no hardware-decode probe, so this is where a
-                // machine too weak for a codec says so (#2443).
-                if (PlatformDetector.isDesktopOS()) _videoCodecsTile(),
-                _musicQualityTile(),
-                _bestCopyPreferenceTile(),
-              ],
-            ),
+            if (shows(PlaybackTopic.player))
+              SettingsGroup(
+                title: t.settings.quality,
+                children: [
+                  _defaultQualityTile(),
+                  // Only a phone/tablet has a cellular radio; desktop and TV
+                  // never report a cellular-only connection.
+                  if (isMobile) _cellularQualityTile(),
+                  // TODO: "Remote streaming quality" selector (#2064) goes here,
+                  // mirroring cellularQualityPreset's nullable "same as default"
+                  // pattern; needs local/remote connection detection in the
+                  // failover client.
+                  // Desktop has no hardware-decode probe, so this is where a
+                  // machine too weak for a codec says so (#2443).
+                  if (PlatformDetector.isDesktopOS()) _videoCodecsTile(),
+                  _musicQualityTile(),
+                  _bestCopyPreferenceTile(),
+                ],
+              ),
 
-            SettingsGroup(
-              title: t.settings.subtitles,
-              children: [
-                SettingNavigationTile(
-                  icon: Symbols.subtitles_rounded,
-                  title: t.settings.subtitleStyling,
-                  subtitle: t.settings.subtitleStylingDescription,
-                  destinationBuilder: (_) => const SubtitleStylingScreen(),
-                ),
-                _replayCaptionsTile(),
-              ],
-            ),
+            // What few ever change, last on the player's page (Plebz).
+            if (shows(PlaybackTopic.player))
+              SettingsGroup(
+                title: t.settings.advanced,
+                children: [
+                  if (mpvInUse) _mpvConfigTile(),
+                  _hardwareDecodingTile(),
+                  if (exoInUse) _playbackBufferTile(),
+                  // A TV box's decoder tunnels; a phone's or tablet's hardly
+                  // ever does (Plebz).
+                  if (exoInUse && !isMobile) _tunneledPlaybackTile(),
+                  if (showDisplaySwitchDelay) _displaySwitchDelayTile(),
+                  // mpv-only: ExoPlayer always leaves the conversion to the device.
+                  if (Platform.isAndroid && mpvInUse) _hdrSdrConversionTile(),
+                  // mpv's subtitle plane over the picture only (Plebz).
+                  if (Platform.isAndroid && mpvInUse) _mpvOsdPictureOnlyTile(),
+                ],
+              ),
 
-            _seekAndTimingGroup(isMobile),
-            _autoPlayAndSkipGroup(),
-            _behaviorGroup(context, isMobile),
-            if (isMobile) _gesturesGroup(),
-            _rememberPlayerChangesGroup(),
+            if (shows(PlaybackTopic.soundAndSubtitles))
+              SettingsGroup(
+                title: t.settings.subtitles,
+                children: [
+                  SettingNavigationTile(
+                    icon: Symbols.subtitles_rounded,
+                    title: t.settings.subtitleStyling,
+                    subtitle: t.settings.subtitleStylingDescription,
+                    destinationBuilder: (_) => const SubtitleStylingScreen(),
+                  ),
+                  _replayCaptionsTile(),
+                ],
+              ),
+
+            if (shows(PlaybackTopic.handling)) ...[
+              _seekAndTimingGroup(isMobile),
+              _autoPlayAndSkipGroup(),
+              _behaviorGroup(context, isMobile),
+              if (isMobile) _gesturesGroup(),
+              _rememberPlayerChangesGroup(),
+            ],
             const SizedBox(height: 24),
           ],
         );

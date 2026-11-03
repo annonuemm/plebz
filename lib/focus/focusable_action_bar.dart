@@ -23,7 +23,11 @@ class FocusableActionBuildState {
 class FocusableAction {
   final IconData icon;
   final Color? iconColor;
-  final double iconFill;
+
+  /// The glyph's fill. Given, it tells a state (a filter that is on); left
+  /// out, the bar's habit of filled glyphs, which the app's own glyphs drop
+  /// for Apple's outline (see `AppIcon.marksState`).
+  final double? iconFill;
   final double iconSize;
 
   final String? debugLabel;
@@ -53,7 +57,7 @@ class FocusableAction {
   const FocusableAction({
     this.icon = Symbols.circle_rounded,
     this.iconColor,
-    this.iconFill = 1.0,
+    this.iconFill,
     this.iconSize = 24,
     this.debugLabel,
     this.focusNode,
@@ -346,7 +350,13 @@ class FocusableActionBarState extends State<FocusableActionBar> {
       child:
           action.child ??
           IconButton(
-            icon: AppIcon(action.icon, size: action.iconSize, fill: action.iconFill, color: action.iconColor),
+            icon: AppIcon(
+              action.icon,
+              size: action.iconSize,
+              fill: action.iconFill ?? 1.0,
+              marksState: action.iconFill != null,
+              color: action.iconColor,
+            ),
             tooltip: action.tooltip,
             onPressed: action.onPressed,
           ),

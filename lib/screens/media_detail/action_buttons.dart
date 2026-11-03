@@ -585,6 +585,7 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
               icon: AppIcon(
                 isFavorite ? Symbols.favorite_rounded : Symbols.favorite_border_rounded,
                 fill: isFavorite ? 1 : 0,
+                marksState: true,
                 color: isFavorite ? Colors.redAccent : null,
               ),
               tooltip: isFavorite ? t.mediaMenu.removeFromFavorites : t.mediaMenu.addToFavorites,

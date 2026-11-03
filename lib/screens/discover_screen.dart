@@ -1205,6 +1205,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                       icon: AppIcon(
                         Symbols.group_rounded,
                         fill: watchTogether.isInSession ? 1 : 0,
+                        marksState: true,
                         color: watchTogether.isInSession ? colorScheme.primary : foregroundColor,
                       ),
                       onPressed: openWatchTogether,
@@ -1238,6 +1239,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                     icon: AppIcon(
                       Symbols.phone_android_rounded,
                       fill: companionRemote.isConnected ? 1 : 0,
+                      marksState: true,
                       color: companionRemote.isConnected ? colorScheme.primary : foregroundColor,
                     ),
                     onPressed: openCompanionRemote,

@@ -28,6 +28,7 @@ import '../../utils/app_logger.dart';
 import '../../utils/live_tv_player_navigation.dart';
 import '../../utils/platform_detector.dart';
 import '../../utils/tone_mapped_logo_image.dart';
+import '../../widgets/app_icon.dart';
 import '../../widgets/live_tv_channel_logo.dart';
 import '../../widgets/video_surface_hole.dart';
 import '../video_player/player_output_format.dart';
@@ -610,7 +611,7 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
     final channel = widget.channel;
     if (channel == null) {
       return Center(
-        child: Icon(Symbols.tv_rounded, size: 40, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+        child: AppIcon(Symbols.tv_rounded, size: 40, color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
       );
     }
     if (_failed) {
@@ -651,7 +652,7 @@ class GuidePreviewPlayerState extends State<GuidePreviewPlayer> with WidgetsBind
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Symbols.tv_rounded, size: 32, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+        AppIcon(Symbols.tv_rounded, size: 32, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
         const SizedBox(height: 6),
         Text(
           channel.displayName,

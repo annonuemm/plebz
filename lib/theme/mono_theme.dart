@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import '../services/settings_service.dart' show AppThemeVariant, GlasAccent, PlebzPrefs;
 import '../utils/platform_detector.dart';
+import '../widgets/app_glyphs.dart';
 import '../widgets/app_icon.dart';
 import 'apple_type.dart';
 import 'gapped_track_shape.dart';
@@ -81,6 +82,17 @@ final bool _appleSystemFontHere =
 
 @visibleForTesting
 bool? debugOckerAppleSystemFont;
+
+/// Whether the redesigns draw the app's own glyphs ([plebzGlyphs], Apple's
+/// look on every device — the user's call, 2026-11-03) instead of Material
+/// Symbols. Not under `flutter test`, whose finders ask for the Material
+/// symbols the code names.
+bool get plebzGlyphsHere => debugPlebzGlyphs ?? _plebzGlyphsHere;
+
+final bool _plebzGlyphsHere = kIsWeb || !Platform.environment.containsKey('FLUTTER_TEST');
+
+@visibleForTesting
+bool? debugPlebzGlyphs;
 
 /// The redesign's one corner for everything the interface draws — the tokens'
 /// radiusSm, and also every shape
@@ -753,6 +765,16 @@ ThemeData _buildMonoTheme(
     // Only the redesign sets these; the other variants keep Material's.
     dialogTheme: redesign ? DialogThemeData(backgroundColor: c.surface, elevation: 0, shape: themeShape) : null,
     popupMenuTheme: redesign ? PopupMenuThemeData(color: c.surface, elevation: 0, shape: themeShape) : null,
+    // Material's own Back, Close and Drawer buttons draw from a font of their
+    // own; through AppIcon they take the app's glyphs like everything else.
+    actionIconTheme: redesign
+        ? ActionIconThemeData(
+            backButtonIconBuilder: (_) => const AppIcon(Symbols.arrow_back_rounded),
+            closeButtonIconBuilder: (_) => const AppIcon(Symbols.close_rounded),
+            drawerButtonIconBuilder: (_) => const AppIcon(Symbols.menu_rounded),
+            endDrawerButtonIconBuilder: (_) => const AppIcon(Symbols.menu_rounded),
+          )
+        : null,
     inputDecorationTheme: _inputDecorationTheme(c.text, c.textMuted, themeRadius),
     elevatedButtonTheme: ElevatedButtonThemeData(style: buttonStyle),
     filledButtonTheme: FilledButtonThemeData(style: buttonStyle),
@@ -928,9 +950,15 @@ TextTheme _appleTextTheme(TextTheme theme) {
 /// Apple's builds ([ockerAppleLook]) the three glyphs that read as Android's
 /// own give way to Apple's: Back is a chevron, More a row of dots, Share a box
 /// with an arrow.
+///
+/// Both redesigns then draw the app's own glyphs ([plebzGlyphs]) over all of
+/// it, on every device: what is left of weight and fill is the filled twin.
 void applyIconDefaultsFor(AppThemeVariant variant) {
   final glas = isGlasVariant(variant);
+  final ownGlyphs = variant != AppThemeVariant.standard && plebzGlyphsHere;
   AppIconDefaults.substitutes = glas && ockerAppleLook ? appleGlyphSubstitutes : {};
+  AppIconDefaults.glyphs = ownGlyphs ? plebzGlyphs : {};
+  AppIconDefaults.filledGlyphs = ownGlyphs ? plebzFilledGlyphs : {};
   AppIconDefaults.opticalSizeFollowsSize = glas;
   AppIconDefaults.update(
     fill: switch (variant) {

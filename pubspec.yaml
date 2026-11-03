@@ -1,7 +1,7 @@
 name: plezy
 description: "A beautiful Plex and Jellyfin client for Flutter"
 publish_to: "none"
-version: 1.40.0+932
+version: 1.41.0+935
 
 environment:
   # Dart floor stays 3.12: freezed 3.x emits `final` constructor parameters,
@@ -56,6 +56,8 @@ dependencies:
     path: packages/saf_util
   saf_stream: ^3.1.0
   material_symbols_icons: ^4.2951.0
+  # Plebz draws its glyphs from Flutter's iOS-style set (lib/widgets/app_glyphs.dart).
+  cupertino_icons: ^1.0.8
   web_socket_channel: ^3.0.1
   # 1.2.1: Windows IPC no longer blocks the UI isolate while Discord stalls (#2518).
   dart_discord_presence: ^1.2.1
@@ -207,6 +209,11 @@ flutter:
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Variable.ttf
+    # The glyphs CupertinoIcons lacks, drawn in its stroke by
+    # scripts/brand/make_plebz_symbols.py.
+    - family: PlebzSymbols
+      fonts:
+        - asset: assets/fonts/PlebzSymbols.ttf
     - family: Go Noto Current
       fonts:
         - asset: assets/go-noto-current-regular.ttf

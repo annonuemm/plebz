@@ -765,7 +765,10 @@ class _RailItemState extends State<_RailItem> {
                           builder: (context, ink) => AppIcon(
                             widget.icon,
                             size: g.iconSize,
-                            fill: navIconFill,
+                            // The place on show in Apple's filled glyph, beside
+                            // its bright word (the app's own glyphs only).
+                            fill: widget.active && AppIconDefaults.glyphs.isNotEmpty ? 1 : navIconFill,
+                            marksState: true,
                             // Plebz: on the Apple TV a symbol as heavy as its word.
                             weight: ockerGlasTv(context) ? 500 : navIconWeight,
                             color: ink,

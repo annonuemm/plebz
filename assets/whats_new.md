@@ -13,6 +13,12 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.41.0 (Build 935)
+
+### Aussehen
+- Neue Symbole in der ganzen App: Sie wirken jetzt einheitlicher, auf Fernseher, Handy und Tablet, in Glas und Flach.
+- Symbole sind jetzt schlanke Umrisse. Gefüllt sind nur noch die Wiedergabe-Knöpfe, der Bereich, in dem du gerade bist, und was eingeschaltet ist, etwa ein gemerkter Titel oder ein gesetztes Herz.
+
 ## 1.40.0 (Build 932)
 
 ### Bildschirmschoner

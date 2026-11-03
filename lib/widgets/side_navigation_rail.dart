@@ -234,6 +234,7 @@ class NavigationRailItem extends StatelessWidget {
       AppIcon(
         isSelected && selectedIcon != null ? selectedIcon! : icon,
         fill: iconFill,
+        marksState: true,
         weight: iconWeight,
         size: iconSize,
         color: isSelected ? t.accent : t.textMuted,

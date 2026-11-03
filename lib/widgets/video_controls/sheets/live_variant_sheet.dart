@@ -42,6 +42,7 @@ Future<void> showLiveVariantSheet(
                       leading: AppIcon(
                         row == index ? Symbols.play_circle_rounded : Symbols.circle_rounded,
                         fill: row == index ? 1 : 0,
+                        marksState: true,
                       ),
                       title: Text(labels[row]),
                       // closeAdaptive, not Navigator.pop: showAdaptive renders

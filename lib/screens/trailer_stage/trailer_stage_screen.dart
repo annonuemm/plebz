@@ -23,6 +23,7 @@ import '../../media/media_item_types.dart';
 import '../../utils/content_utils.dart';
 import '../../utils/media_image_helper.dart';
 import '../../utils/layout_constants.dart';
+import '../../widgets/app_icon.dart';
 import '../../widgets/fitted_metadata_line.dart';
 import '../../widgets/media_rating_badge.dart';
 import '../../widgets/loading_indicator_box.dart';
@@ -555,7 +556,7 @@ FocusableAction _stageAction({
             child: Container(
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(color: background, shape: BoxShape.circle),
-              child: Icon(icon, size: 22, color: foreground),
+              child: AppIcon(icon, size: 22, color: foreground),
             ),
           ),
         ),
@@ -570,7 +571,7 @@ FocusableAction _stageAction({
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 22, color: foreground),
+            AppIcon(icon, size: 22, color: foreground),
             const SizedBox(width: 8),
             Text(
               label,

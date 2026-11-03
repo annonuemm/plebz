@@ -143,7 +143,14 @@ class _Place extends StatelessWidget {
     final platter = !selected
         ? Colors.transparent
         : (tk.flat ? tk.ink(0.12) : tk.accent.withValues(alpha: tk.accentWash));
-    final glyph = AppIcon(item.icon, fill: selected ? 1 : 0, weight: navIconWeight, size: 24, color: ink);
+    final glyph = AppIcon(
+      item.icon,
+      fill: selected ? 1 : 0,
+      weight: navIconWeight,
+      size: 24,
+      color: ink,
+      marksState: true,
+    );
     return Semantics(
       button: true,
       selected: selected,

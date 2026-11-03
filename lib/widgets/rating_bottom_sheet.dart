@@ -759,6 +759,7 @@ class _StarRatingControlState extends State<_StarRatingControl> {
                       child: AppIcon(
                         half ? Symbols.star_half_rounded : Symbols.star_rounded,
                         fill: filled || half ? 1 : 0,
+                        marksState: true,
                         color: filled || half
                             ? Colors.amber
                             : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.34),
@@ -811,6 +812,7 @@ class _FavoriteControl extends StatelessWidget {
               AppIcon(
                 Symbols.favorite_rounded,
                 fill: value ? 1 : 0,
+                marksState: true,
                 color: value ? Colors.redAccent : (enabled ? scheme.onSurfaceVariant : theme.disabledColor),
                 size: 18,
               ),

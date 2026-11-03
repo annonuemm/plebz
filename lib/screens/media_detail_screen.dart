@@ -1552,6 +1552,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                     AppIcon(
                       iconData,
                       fill: active ? 1 : 0,
+                      marksState: true,
                       color: showFocus ? fgColor : (active ? activeIconColor : fgColor),
                       size: 16,
                     ),

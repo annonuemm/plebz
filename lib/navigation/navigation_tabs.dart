@@ -40,11 +40,17 @@ class NavigationTab {
   /// full word usually still fits before this ellipsis applies.
   Widget toDestination() {
     final glyph = AppIcon(icon, fill: navIconFill, weight: navIconWeight);
+    // The place one is at in Apple's filled glyph (the app's own glyphs only).
+    final chosen = AppIcon(icon, fill: 1, weight: navIconWeight, marksState: true);
     return DefaultTextStyle.merge(
       maxLines: 1,
       softWrap: false,
       overflow: TextOverflow.ellipsis,
-      child: NavigationDestination(icon: glyph, selectedIcon: glyph, label: getLabel()),
+      child: NavigationDestination(
+        icon: glyph,
+        selectedIcon: AppIconDefaults.glyphs.isEmpty ? glyph : chosen,
+        label: getLabel(),
+      ),
     );
   }
 

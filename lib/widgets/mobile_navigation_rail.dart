@@ -211,7 +211,7 @@ class MobileNavigationRail extends StatelessWidget {
     // Apple's rail fills the glyph of the place one is at, as its tab bar does.
     final apple = ockerGlasTouch(context);
     Widget glyph(double fill) {
-      Widget icon = AppIcon(tab.icon, fill: fill, weight: navIconWeight);
+      Widget icon = AppIcon(tab.icon, fill: fill, weight: navIconWeight, marksState: true);
       final onLongPress = onLibrariesLongPress;
       if (tab.id == NavigationTabId.libraries && onLongPress != null) {
         // Only a long-press recogniser: taps fall through to the rail's own

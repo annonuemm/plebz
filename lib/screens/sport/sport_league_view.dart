@@ -1698,7 +1698,7 @@ class _SportCrestState extends State<SportCrest> {
     // name. A crest that is loading shows nothing; one that cannot be had
     // shows a quiet shield of its own size.
     Widget shield(BuildContext context) => Center(
-      child: Icon(Symbols.shield_rounded, size: size * 0.8, color: tokens(context).ink(0.3)),
+      child: AppIcon(Symbols.shield_rounded, size: size * 0.8, color: tokens(context).ink(0.3)),
     );
     final url = _url;
     return SizedBox.square(

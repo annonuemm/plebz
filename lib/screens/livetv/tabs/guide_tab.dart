@@ -2048,9 +2048,12 @@ class GuideTabState extends State<GuideTab>
           // still to come, or kept in the archive, a step down; what is gone
           // a step further.
           final gone = isPast && !isArchived;
-          fillColor = tk.ink(gone ? 0.02 : (isCurrentlyAiring ? 0.16 : 0.06));
-          titleColor = isCurrentlyAiring ? tk.text : tk.ink(gone ? 0.42 : 0.62);
-          subtitleColor = isCurrentlyAiring ? tk.textMuted : tk.ink(gone ? 0.28 : 0.42);
+          // Focus lights the block on top of its glass, a step past what is
+          // on now, so the cursor stands out over the brightest block too (the
+          // user's call: the glass alone read too faint in the grid).
+          fillColor = tk.ink(isFocused ? _v2FocusWash : (gone ? 0.02 : (isCurrentlyAiring ? 0.16 : 0.06)));
+          titleColor = isCurrentlyAiring || isFocused ? tk.text : tk.ink(gone ? 0.42 : 0.62);
+          subtitleColor = isCurrentlyAiring || isFocused ? tk.textMuted : tk.ink(gone ? 0.28 : 0.42);
         } else if (glass) {
           fillColor = tk.ink(isPast && !isArchived ? 0.03 : (isCurrentlyAiring ? 0.11 : 0.06));
           titleColor = isPast && !isArchived ? tk.text.withValues(alpha: 0.5) : tk.text;
@@ -2285,6 +2288,13 @@ class _RecordingDot extends StatelessWidget {
   }
 }
 
+/// "Glas – v2" (Plebz): the wash a focused guide cell wears over its glass.
+const double _v2FocusWash = 0.22;
+
+/// The room a channel cell keeps at its right for the favourite star and the
+/// catch-up clock (Plebz).
+const double _markerLane = 16;
+
 class _ChannelCell extends StatefulWidget {
   final double rowHeight;
   final double channelColumnWidth;
@@ -2338,13 +2348,9 @@ class _ChannelCellState extends State<_ChannelCell> {
     final scale = ockerScale(context);
     final gapRight = flat ? 6 * scale : tk.groupGap;
     final gapBelow = flat ? 8 * scale : tk.groupGap;
-    final radius = BorderRadius.circular(
-      flat
-          ? 12 * scale
-          : widget.isFocused
-          ? tk.radiusSm
-          : tk.radiusXs,
-    );
+    // One shape, focused or not, as the programme blocks beside it: focus
+    // changes what is drawn on the cell, never its corners.
+    final radius = BorderRadius.circular(flat ? 12 * scale : tk.radiusXs);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -2366,7 +2372,8 @@ class _ChannelCellState extends State<_ChannelCell> {
                 // the page's gradient, and focus a pane of bright glass behind.
                 color: glass
                     ? (widget.isFocused
-                          ? Colors.transparent
+                          // "Glas – v2": lit as a focused programme block is.
+                          ? (ockerGlasV2(context) ? tk.ink(_v2FocusWash) : Colors.transparent)
                           : flat
                           ? ockerFlatWash(tk, _hovered ? 0.10 : 0.06)
                           : tk.ink(_hovered ? 0.10 : 0.06))
@@ -2394,25 +2401,33 @@ class _ChannelCellState extends State<_ChannelCell> {
                           // and the channel name where neither loads — see
                           // [LiveTvChannelLogo]. Plebz: or a smaller logo with
                           // the name under it ([_GuideChannelMark]).
-                          _GuideChannelMark(
-                            channel: widget.channel,
-                            height: widget.rowHeight - gapBelow - 12,
-                            nameColour: plateFocused
-                                ? theme.colorScheme.onPrimary
-                                : glass
-                                ? tk.ink(0.8)
-                                : theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                            fallback: widget.fallbackBuilder,
-                            logo: (height, fallback) => LiveTvChannelLogo(
+                          Padding(
+                            // Plebz: the markers keep a lane of their own at the
+                            // right, so no logo runs under them, and every logo
+                            // centres in the same room whether its channel has
+                            // markers or not. A little below the row's full
+                            // height, so a wide logo does not fill the cell.
+                            padding: const EdgeInsets.only(right: _markerLane),
+                            child: _GuideChannelMark(
                               channel: widget.channel,
-                              client: widget.client,
-                              width: widget.channelColumnWidth - gapRight - 16,
-                              height: height,
-                              logoToneTarget: channelLogoToneTargetFor(
-                                surface: plateFocused ? theme.colorScheme.primary : tk.surface,
-                                foreground: plateFocused ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                              height: (widget.rowHeight - gapBelow - 12) * 0.85,
+                              nameColour: plateFocused
+                                  ? theme.colorScheme.onPrimary
+                                  : glass
+                                  ? tk.ink(0.8)
+                                  : theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                              fallback: widget.fallbackBuilder,
+                              logo: (height, fallback) => LiveTvChannelLogo(
+                                channel: widget.channel,
+                                client: widget.client,
+                                width: widget.channelColumnWidth - gapRight - 16 - _markerLane,
+                                height: height,
+                                logoToneTarget: channelLogoToneTargetFor(
+                                  surface: plateFocused ? theme.colorScheme.primary : tk.surface,
+                                  foreground: plateFocused ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                                ),
+                                fallback: (_) => fallback(),
                               ),
-                              fallback: (_) => fallback(),
                             ),
                           ),
                           if (widget.isFavorite)
@@ -2421,11 +2436,14 @@ class _ChannelCellState extends State<_ChannelCell> {
                               right: 0,
                               child: AppIcon(
                                 Symbols.star_rounded,
+                                // A favourite is a state: Apple's filled star.
+                                fill: 1,
+                                marksState: true,
                                 size: 14,
                                 color: plateFocused ? theme.colorScheme.onPrimary : theme.colorScheme.primary,
                               ),
                             ),
-                          // Opposite corner from the star, and a step quieter: the
+                          // Under the star in the same lane, and a step quieter: the
                           // star is the viewer's own decision, this is only a
                           // property of the station. It answers "is scrolling back
                           // here worth anything" while standing in the present,
@@ -2433,7 +2451,7 @@ class _ChannelCellState extends State<_ChannelCell> {
                           if (widget.channel.catchupDays != null)
                             Positioned(
                               bottom: 2,
-                              left: 0,
+                              right: 0,
                               child: AppIcon(
                                 Symbols.history_rounded,
                                 size: 14,

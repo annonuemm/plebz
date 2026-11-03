@@ -13,6 +13,13 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.41.1 (Build 938)
+
+### Live-TV
+- Der Stern bei Favoriten-Sendern ist jetzt gefüllt.
+- Stern und Archiv-Uhr stehen gemeinsam rechts neben dem Senderlogo und verdecken es nicht mehr. Die Logos sind etwas kleiner.
+- Der Fokus im Programm ist heller und besser zu sehen. Die Senderkacheln behalten dabei ihre Form.
+
 ## 1.41.0 (Build 935)
 
 ### Aussehen

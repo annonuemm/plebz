@@ -204,9 +204,9 @@ class SimklClient implements DisposableTrackerClient {
   /// The paused sessions: where playback of a film or an episode was left.
   Future<Object?> getPlayback() => _request('GET', '/sync/playback');
 
-  Future<void> addToList(Map<String, dynamic> body) async {
-    await _request('POST', '/sync/add-to-list', body: body);
-  }
+  /// The answer's `added` and `not_found` say what Simkl matched; it is 201
+  /// either way.
+  Future<Object?> addToList(Map<String, dynamic> body) => _request('POST', '/sync/add-to-list', body: body);
 
   Future<SimklDetail?> getDetail(SimklCatalogType urlType, int simklId) async {
     final decoded = await _request('GET', '/${urlType.detailPath}/$simklId');

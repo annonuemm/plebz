@@ -13,6 +13,7 @@ import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/providers/iptv_sources_provider.dart';
 import 'package:plezy/redesign/ocker_skin.dart';
 import 'package:plezy/providers/multi_server_provider.dart';
+import 'package:plezy/screens/sport/sport_board_widgets.dart';
 import 'package:plezy/screens/sport/sport_broadcast_finder.dart';
 import 'package:plezy/screens/sport/sport_league_view.dart';
 import 'package:plezy/screens/sport/sport_match_sheet.dart';
@@ -114,6 +115,7 @@ void main() {
     GlobalKey<SportLeagueViewState>? key,
     SportBroadcastFinder? broadcastFinder,
     bool tracksInput = false,
+    TargetPlatform? platform,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
@@ -123,7 +125,7 @@ void main() {
     await tester.pumpWidget(
       app(
         MaterialApp(
-          theme: monoTheme(MonoPalette.dark, variant: variant),
+          theme: monoTheme(MonoPalette.dark, variant: variant).copyWith(platform: platform),
           home: Scaffold(
             body: SportLeagueView(
               key: key,
@@ -137,7 +139,11 @@ void main() {
         ),
       ),
     );
-    await pumpUntil(tester, () => find.text(t.sport.matchday(n: 4)).evaluate().isNotEmpty);
+    // The television's bar sets the matchday in one line with its dates (Plebz).
+    await pumpUntil(
+      tester,
+      () => find.textContaining(t.sport.matchday(n: 4), findRichText: true).evaluate().isNotEmpty,
+    );
   }
 
   Future<void> focusMatchday(WidgetTester tester, GlobalKey<SportLeagueViewState> key) async {
@@ -195,13 +201,15 @@ void main() {
 
   testWidgets('entered from the navigation, the top match of the matchday takes focus', (tester) async {
     final key = GlobalKey<SportLeagueViewState>();
-    await pumpLeague(tester, provider(), key: key, variant: AppThemeVariant.glas);
+    // A Mac's page (Plebz): a phone and a tablet have the board for touch.
+    await pumpLeague(tester, provider(), key: key, variant: AppThemeVariant.glas, platform: TargetPlatform.macOS);
 
     key.currentState!.focusFirstMatch();
     expect(tester.binding.hasScheduledFrame, isTrue, reason: 'it asks for the frame it waits on');
     await tester.pump();
     await tester.pump();
-    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_match_401');
+    // The game on now stands on the stage over the rest (Plebz).
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_favourite_stage');
   });
 
   testWidgets('asked for while the matchday is loading, the top match takes focus once it is there', (tester) async {
@@ -211,7 +219,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(
-        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas),
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glas).copyWith(platform: TargetPlatform.macOS),
         home: Scaffold(
           body: SportLeagueView(
             key: key,
@@ -227,7 +235,7 @@ void main() {
     await pumpUntil(tester, () => find.text(t.sport.matchday(n: 4)).evaluate().isNotEmpty);
     await tester.pump();
     await tester.pump();
-    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_match_401');
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_favourite_stage');
   });
 
   testWidgets('opens on the current matchday, with the fixtures and the table beside them', (tester) async {
@@ -253,15 +261,44 @@ void main() {
     expect(tableRow.left, greaterThan(fixture.right));
   });
 
-  testWidgets('under the redesign the table stands as far from the fixtures as the page from its edge', (tester) async {
-    TvDetectionService.debugSetAppleTVOverride(true);
-    await pumpLeague(tester, provider(), variant: AppThemeVariant.flach);
-    await tester.pump(const Duration(seconds: 1));
+  for (final variant in [AppThemeVariant.glasV2, AppThemeVariant.flach]) {
+    testWidgets(
+      '${variant.name} on a television: the stage, the games as tiles by day, the table at the foot (Plebz)',
+      (tester) async {
+        TvDetectionService.debugSetAppleTVOverride(true);
+        final key = GlobalKey<SportLeagueViewState>();
+        await pumpLeague(tester, provider(), key: key, variant: variant);
+        await tester.pump(const Duration(seconds: 1));
 
-    final fixtures = tester.getRect(find.byType(ListView));
-    final table = tester.getRect(find.byWidgetPredicate((w) => w.runtimeType.toString() == '_SportTable'));
-    expect(table.left - fixtures.right, moreOrLessEquals(OckerLayout.safeMargin, epsilon: 0.5));
-  });
+        expect(tester.takeException(), isNull);
+        expect(find.byType(SportStageHero), findsOneWidget);
+        expect(find.text('Borussia Dortmund\nRB Leipzig'), findsOneWidget, reason: 'the game on now on the stage');
+        // Yesterday's, today's and tomorrow's games, a row each.
+        expect(find.byType(SportGameTile), findsNWidgets(3));
+        expect(find.text('2 : 1'), findsOneWidget, reason: 'a result on its tile');
+
+        key.currentState!.focusFirstMatch();
+        await tester.pump();
+        await tester.pump();
+        expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_board_stage');
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pump();
+        expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_tile_0_401');
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        await tester.pumpAndSettle();
+        expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_board_table', reason: 'DOWN reaches the table');
+
+        // A small table on one panel: four clubs need no second (Plebz).
+        expect(find.byType(SportTablePanel), findsOneWidget);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+        await tester.pump();
+        expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_tile_2_403');
+      },
+    );
+  }
 
   testWidgets('the bar: the matchday in the middle, an arrow either side', (tester) async {
     await pumpLeague(tester, provider());
@@ -294,7 +331,7 @@ void main() {
     expect(api.requests, isNot(contains('/getmatchdata/bl1/2026/5')), reason: 'reaching the arrow loads nothing');
 
     await tester.sendKeyEvent(LogicalKeyboardKey.select);
-    await pumpUntil(tester, () => find.text('Hamburger SV').evaluate().isNotEmpty);
+    await pumpUntil(tester, () => find.textContaining('Hamburger SV').evaluate().isNotEmpty);
     expect(find.text(t.sport.matchday(n: 5)), findsOneWidget);
     expect(find.textContaining(t.sport.current), findsNothing);
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_matchday_next', reason: 'press again for the next');
@@ -312,7 +349,7 @@ void main() {
     tester,
   ) async {
     final key = GlobalKey<SportLeagueViewState>();
-    await pumpLeague(tester, provider(), key: key, variant: AppThemeVariant.flach);
+    await pumpLeague(tester, provider(), key: key, variant: AppThemeVariant.flach, platform: TargetPlatform.macOS);
 
     final label = tester.getRect(find.text(t.sport.matchday(n: 4)));
     final previous = tester.getRect(part('sport_matchday_previous'));
@@ -379,7 +416,7 @@ void main() {
     // The cursor opens on matchday 4, so one step down is matchday 5.
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.select);
-    await pumpUntil(tester, () => find.text('Hamburger SV').evaluate().isNotEmpty);
+    await pumpUntil(tester, () => find.textContaining('Hamburger SV').evaluate().isNotEmpty);
     await tester.pumpAndSettle();
     expect(api.countOf('/getmatchdata/bl1/2026/5'), 1);
     expect(find.text('FC Bayern München'), findsNothing);
@@ -391,10 +428,24 @@ void main() {
   testWidgets('under Flach a running game on the focus fill keeps its LIVE badge and its scoreboard as they are', (
     tester,
   ) async {
+    // A second game on now: the first takes the stage, this one stays a line.
+    final api = provider();
+    final now = DateTime.now().toUtc();
+    (api.routes['/getmatchdata/bl1']! as List).insert(
+      2,
+      openLigaMatch(
+        id: 404,
+        matchday: 4,
+        kickoffUtc: now.subtract(const Duration(minutes: 20)),
+        home: hamburg,
+        away: koeln,
+        goals: [openLigaGoal(home: 1, away: 0, minute: 9, scorer: 'Glatzel')],
+      ),
+    );
     // Focus shows as the white fill only while the remote is in use.
-    await pumpLeague(tester, provider(), variant: AppThemeVariant.flach, tracksInput: true);
-    Color scoreColour() => tester.widget<Text>(find.text('0 : 1')).style!.color!;
-    final tk = tokens(tester.element(find.text('0 : 1')));
+    await pumpLeague(tester, api, variant: AppThemeVariant.flach, tracksInput: true, platform: TargetPlatform.macOS);
+    Color scoreColour() => tester.widget<Text>(find.text('1 : 0')).style!.color!;
+    final tk = tokens(tester.element(find.text('1 : 0')));
     expect(scoreColour(), isNot(tk.ink(1)), reason: 'off focus, the running score in the live colour');
 
     // DOWN from the game above: a key that navigates is what shows focus.
@@ -402,19 +453,19 @@ void main() {
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.pumpAndSettle();
-    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_match_402');
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_match_404');
 
     // The names turn with the fill; the board keeps its own colours.
-    expect(OckerFlatFocusInk.invertingAt(tester.element(find.text('Borussia Dortmund'))), isTrue);
+    expect(OckerFlatFocusInk.invertingAt(tester.element(find.text('Hamburger SV'))), isTrue);
     expect(
-      find.ancestor(of: find.text('0 : 1'), matching: find.byType(OckerKeepColours)),
+      find.ancestor(of: find.text('1 : 0'), matching: find.byType(OckerKeepColours)),
       findsOneWidget,
       reason: 'a scoreboard stays one: black, the score in the live colour, not turned to its complement',
     );
     expect(scoreColour(), isNot(tk.ink(1)));
     expect(
       find.ancestor(of: find.text(t.sport.live), matching: find.byType(OckerKeepColours)),
-      findsOneWidget,
+      findsWidgets,
       reason: 'the badge in its own colours',
     );
   });
@@ -424,7 +475,7 @@ void main() {
   ) async {
     await SettingsService.instance.write(PlebzPrefs.sportFavouriteClub, dortmund['teamId'] as int);
     final key = GlobalKey<SportLeagueViewState>();
-    await pumpLeague(tester, provider(), key: key, variant: AppThemeVariant.flach);
+    await pumpLeague(tester, provider(), key: key, variant: AppThemeVariant.flach, platform: TargetPlatform.macOS);
 
     expect(find.text('Borussia Dortmund – RB Leipzig'), findsOneWidget, reason: 'the pairing under the stage');
     expect(part('sport_match_402'), findsNothing, reason: 'not a second time in the list');
@@ -443,12 +494,12 @@ void main() {
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_favourite_stage');
   });
 
-  testWidgets('without a favourite, or where it does not play, there is no stage', (tester) async {
+  testWidgets('where the favourite does not play, the game on now takes the stage (Plebz)', (tester) async {
     await SettingsService.instance.write(PlebzPrefs.sportFavouriteClub, koeln['teamId'] as int);
-    await pumpLeague(tester, provider(), variant: AppThemeVariant.flach);
+    await pumpLeague(tester, provider(), variant: AppThemeVariant.flach, platform: TargetPlatform.macOS);
 
-    expect(find.byWidgetPredicate((w) => w.runtimeType.toString() == '_FavouriteStage'), findsNothing);
-    expect(part('sport_match_402'), findsOneWidget);
+    expect(find.text('Borussia Dortmund – RB Leipzig'), findsOneWidget);
+    expect(part('sport_match_402'), findsNothing, reason: 'not a second time in the list');
   });
 
   testWidgets('under the redesign the table\'s zones are coloured, with a key under it', (tester) async {
@@ -463,7 +514,14 @@ void main() {
     tester,
   ) async {
     final key = GlobalKey<SportLeagueViewState>();
-    await pumpLeague(tester, provider(), variant: AppThemeVariant.flach, key: key, tracksInput: true);
+    await pumpLeague(
+      tester,
+      provider(),
+      variant: AppThemeVariant.flach,
+      key: key,
+      tracksInput: true,
+      platform: TargetPlatform.macOS,
+    );
     Color currentColour() => tester.widget<Text>(find.text(t.sport.current)).style!.color!;
     final tk = tokens(tester.element(find.text(t.sport.current)));
     expect(currentColour(), isNot(tk.ink(1)), reason: 'off focus, in the live colour');
@@ -484,12 +542,13 @@ void main() {
     expect(tester.widget<FocusableWrapper>(row).disableScale, isTrue);
   });
 
-  for (final television in [true, false]) {
+  // The television draws tiles, not rows (Plebz).
+  for (final television in [false]) {
     testWidgets(
-      'glas on a ${television ? 'television' : 'phone'}: a game row keeps room between its plate and its time',
+      'glas on a ${television ? 'television' : 'Mac'}: a game row keeps room between its plate and its time',
       (tester) async {
         TvDetectionService.debugSetAppleTVOverride(television);
-        await pumpLeague(tester, provider(), variant: AppThemeVariant.glas);
+        await pumpLeague(tester, provider(), variant: AppThemeVariant.glas, platform: TargetPlatform.macOS);
 
         final row = find.ancestor(of: find.text('FC Bayern München'), matching: find.byType(FocusableWrapper)).first;
         final time = find.descendant(of: row, matching: find.byType(Text)).first;
@@ -511,6 +570,9 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.pump();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_favourite_stage');
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_match_401');
 
     // BACK from a game returns to the matchday rather than leaving the page.
@@ -526,6 +588,8 @@ void main() {
     await pumpLeague(tester, api, key: key);
     await focusMatchday(tester, key);
 
+    // Past the stage, to yesterday's game.
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
     await tester.sendKeyEvent(LogicalKeyboardKey.select);
     await tester.pumpAndSettle();
@@ -596,7 +660,7 @@ void main() {
 
     api.failing.clear();
     await tester.sendKeyEvent(LogicalKeyboardKey.select);
-    await pumpUntil(tester, () => find.text('Borussia Dortmund').evaluate().isNotEmpty);
+    await pumpUntil(tester, () => find.textContaining('Borussia Dortmund').evaluate().isNotEmpty);
     expect(find.text(t.sport.loadFailed), findsNothing);
   });
 
@@ -677,9 +741,10 @@ void main() {
         ),
       ),
     );
-    await pumpUntil(tester, () => find.text('Borussia Dortmund').evaluate().isNotEmpty);
+    await pumpUntil(tester, () => find.textContaining('Borussia Dortmund').evaluate().isNotEmpty);
 
-    await tester.tap(find.text('Borussia Dortmund'));
+    // The game on now, on the stage.
+    await tester.tap(find.textContaining('Borussia Dortmund'));
     await pumpUntil(tester, () => find.text('Sky Bundesliga 1').evaluate().isNotEmpty);
     await tester.pump();
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'sport_watch_0_0');
@@ -696,10 +761,16 @@ void main() {
           await pumpLeague(tester, provider(), variant: variant, size: size);
 
           expect(tester.takeException(), isNull);
-          // The whole table stands beside the fixtures: it is read, not
-          // walked, so a club below the edge could never be scrolled to.
           final screen = tester.view.physicalSize / tester.view.devicePixelRatio;
-          expect(tester.getRect(find.text('Bremen')).bottom, lessThanOrEqualTo(screen.height));
+          if (variant == AppThemeVariant.standard) {
+            // The whole table stands beside the fixtures: it is read, not
+            // walked, so a club below the edge could never be scrolled to.
+            expect(tester.getRect(find.text('Bremen')).bottom, lessThanOrEqualTo(screen.height));
+          } else {
+            // The board (Plebz): the stage and the first row of tiles on the
+            // first screen, the table further down for the cursor to reach.
+            expect(tester.getRect(find.byType(SportGameTile).first).bottom, lessThanOrEqualTo(screen.height));
+          }
         });
       }
     }
@@ -712,85 +783,178 @@ void main() {
       final previous = tester.getRect(part('sport_matchday_previous'));
       final next = tester.getRect(part('sport_matchday_next'));
       expect(previous.left, lessThan(24));
-      expect(next.right, greaterThan(376));
+      // The table's switch stands last, at the right edge (Plebz).
+      expect(next.right, greaterThan(300));
+      expect(tester.getRect(part('sport_view_toggle')).right, greaterThan(376));
       expect(next.width, greaterThanOrEqualTo(44), reason: 'a finger-sized target');
 
       await tester.tap(part('sport_matchday_next'));
-      await pumpUntil(tester, () => find.text('HSV').evaluate().isNotEmpty);
+      await pumpUntil(tester, () => find.textContaining('Hamburger SV').evaluate().isNotEmpty);
       expect(find.text(t.sport.matchday(n: 5)), findsOneWidget);
 
-      await tester.tap(find.text('HSV'));
+      // Its one game stands on the stage.
+      await tester.tap(find.textContaining('Hamburger SV'));
       await tester.pumpAndSettle();
       expect(find.byType(SportMatchDetail), findsOneWidget, reason: 'a game opens with a tap too');
     });
 
-    testWidgets('a phone puts the table under the fixtures', (tester) async {
+    testWidgets('a phone shows the table as a view of its own, switched in the bar (Plebz)', (tester) async {
       await pumpLeague(tester, provider(), size: const Size(400, 860));
 
       expect(tester.takeException(), isNull);
-      await tester.scrollUntilVisible(find.text('Bremen').last, 200, scrollable: find.byType(Scrollable).last);
-      final fixture = tester.getRect(find.text('Freiburg'));
-      final tableRow = tester.getRect(find.text('Bremen').last);
-      expect(tableRow.top, greaterThan(fixture.bottom));
+      expect(find.text('Leipzig'), findsNothing, reason: 'the table is not under the fixtures');
+      // A phone's switch is its symbol alone.
+      await tester.tap(part('sport_view_toggle'));
+      await tester.pumpAndSettle();
+      expect(find.text('Leipzig'), findsOneWidget);
+      expect(find.text('Freiburg'), findsNothing, reason: 'the fixtures give way to it');
+      await tester.tap(part('sport_view_toggle'));
+      await tester.pumpAndSettle();
+      expect(find.text('Freiburg'), findsOneWidget);
     });
 
     group('under the redesigns a phone (Plebz)', () {
+      Finder tileOf(String club) => find.ancestor(of: find.text(club), matching: find.byType(SportGameTile));
+
       for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
-        testWidgets('${variant.name}: sets each game on two lines, the clubs by their full names', (tester) async {
+        testWidgets('${variant.name}: the games as tiles under one another, the bar inside the screen', (tester) async {
           await pumpLeague(tester, provider(), size: const Size(400, 860), variant: variant);
           await tester.pump(const Duration(seconds: 1));
 
           expect(tester.takeException(), isNull);
-          final home = tester.getRect(find.text('Borussia Dortmund'));
-          final away = tester.getRect(find.text('RB Leipzig'));
-          expect(away.top, greaterThan(home.bottom), reason: 'the away club on the line under the home club');
-          expect(home.left, moreOrLessEquals(away.left, epsilon: 1), reason: 'both names start where the crests end');
-          expect(home.right, lessThanOrEqualTo(400));
-        });
-
-        testWidgets('${variant.name}: the matchday bar stays inside the screen', (tester) async {
-          await pumpLeague(tester, provider(), size: const Size(400, 860), variant: variant);
-          await tester.pump(const Duration(seconds: 1));
-
-          expect(tester.takeException(), isNull);
-          final previous = tester.getRect(part('sport_matchday_previous'));
+          final first = tester.getRect(tileOf('Freiburg'));
+          final second = tester.getRect(tileOf('Bayern').first);
+          expect(first.right, lessThanOrEqualTo(400));
+          expect((first.left - second.left).abs(), lessThan(1), reason: 'one column');
+          expect(first.top != second.top, isTrue, reason: 'under one another, not side by side');
           final next = tester.getRect(part('sport_matchday_next'));
-          final current = tester.getRect(find.textContaining(t.sport.current).first);
           expect(next.right, lessThanOrEqualTo(400));
-          expect(current.right, lessThanOrEqualTo(previous.left), reason: '"current" no longer runs under the arrow');
           expect(next.width, greaterThanOrEqualTo(44), reason: 'a finger-sized target');
         });
       }
 
-      testWidgets('on its side keeps the table under the fixtures, not squeezed beside them', (tester) async {
+      for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+        testWidgets('${variant.name}: a day named as the start page names a row, "current" in the accent', (
+          tester,
+        ) async {
+          await pumpLeague(tester, provider(), size: const Size(400, 860), variant: variant);
+          await tester.pump(const Duration(seconds: 1));
+
+          // Glas's bold sentence case, Flach's label in capitals (HubSection).
+          if (variant == AppThemeVariant.glas) {
+            final heading = tester.widget<Text>(find.textContaining(t.sport.yesterday));
+            expect(heading.style?.fontWeight, FontWeight.w700);
+          } else {
+            expect(find.textContaining(t.sport.yesterday.toUpperCase()), findsOneWidget);
+          }
+          final bar = tester.widget<RichText>(
+            find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText().contains(t.sport.current)),
+          );
+          Color? current;
+          bar.text.visitChildren((span) {
+            if (span is TextSpan && span.text == t.sport.current) current = span.style?.color;
+            return true;
+          });
+          expect(current, tokens(tester.element(find.byType(SportTouchStage))).accent);
+        });
+      }
+
+      testWidgets('the switch under the stage turns the page to the table and back', (tester) async {
+        await pumpLeague(tester, provider(), size: const Size(400, 860), variant: AppThemeVariant.glas);
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(find.text(t.sport.zoneChampionsLeague), findsNothing, reason: 'the games first');
+        await tester.tap(find.text(t.sport.table));
+        await tester.pumpAndSettle();
+        expect(find.text(t.sport.zoneChampionsLeague), findsOneWidget);
+        expect(find.byType(SportGameTile), findsNothing, reason: 'the games give way to it');
+        await tester.tap(find.text(t.sport.fixtures));
+        await tester.pumpAndSettle();
+        expect(find.byType(SportGameTile), findsWidgets);
+      });
+
+      testWidgets('on its side keeps the table off the fixtures\' side, a view of its own', (tester) async {
         await pumpLeague(tester, provider(), size: const Size(860, 400), variant: AppThemeVariant.glas);
         await tester.pump(const Duration(seconds: 1));
 
         expect(tester.takeException(), isNull);
-        // The table's "Bremen" (the fixtures name the club in full here): beside
-        // the fixtures it would stand in a column at the right.
-        await tester.scrollUntilVisible(find.text('Bremen'), 200, scrollable: find.byType(Scrollable).last);
-        expect(tester.getRect(find.text('Bremen').first).left, lessThan(300));
+        expect(find.text(t.sport.zoneChampionsLeague), findsNothing, reason: 'not squeezed in beside the fixtures');
+        expect(find.text(t.sport.table), findsOneWidget, reason: 'the switch to it');
       });
 
-      testWidgets('the fixtures start right under the bar, with no status bar\'s gap between', (tester) async {
+      testWidgets('the stage starts right under the bar, with no status bar\'s gap between', (tester) async {
         tester.view.padding = const FakeViewPadding(top: 80);
         addTearDown(tester.view.resetPadding);
         await pumpLeague(tester, provider(), size: const Size(400, 860), variant: AppThemeVariant.glas);
         await tester.pump(const Duration(seconds: 1));
 
         final bar = tester.getRect(part('sport_matchday_next'));
-        final firstDay = tester.getRect(find.textContaining(t.sport.yesterday).first).top;
-        expect(firstDay - bar.bottom, lessThan(40));
+        final stage = tester.getRect(find.byType(SportTouchStage)).top;
+        expect(stage - bar.bottom, lessThan(40));
       });
 
-      testWidgets('a game still opens with a tap', (tester) async {
+      testWidgets('a game opens with a tap on its tile', (tester) async {
         await pumpLeague(tester, provider(), size: const Size(400, 860), variant: AppThemeVariant.glas);
         await tester.pump(const Duration(seconds: 1));
 
-        await tester.tap(find.text('SC Freiburg'));
+        await tester.ensureVisible(tileOf('Freiburg'));
+        await tester.pumpAndSettle();
+        await tester.tap(tileOf('Freiburg'));
         await tester.pumpAndSettle();
         expect(find.byType(SportMatchDetail), findsOneWidget);
+      });
+
+      testWidgets('the stage\'s game opens with "Zum Spiel"', (tester) async {
+        await pumpLeague(tester, provider(), size: const Size(400, 860), variant: AppThemeVariant.glas);
+        await tester.pump(const Duration(seconds: 1));
+
+        await tester.tap(find.text(t.sport.toMatch));
+        await tester.pumpAndSettle();
+        expect(find.byType(SportMatchDetail), findsOneWidget);
+      });
+
+      testWidgets('a swipe on the stage steps to the next game, and says where it stands', (tester) async {
+        await pumpLeague(tester, provider(), size: const Size(400, 860), variant: AppThemeVariant.glas);
+        await tester.pump(const Duration(seconds: 1));
+
+        // The game on now stands there first.
+        expect(find.text('Borussia Dortmund – RB Leipzig'), findsOneWidget);
+        await tester.fling(find.byType(SportTouchStage), const Offset(-300, 0), 1000);
+        await tester.pumpAndSettle();
+        expect(find.text('SC Freiburg – 1. FSV Mainz 05'), findsOneWidget);
+        expect(find.text(t.sport.stagePosition(n: 3, total: 3)), findsOneWidget);
+      });
+    });
+
+    group('under the redesigns a tablet (Plebz)', () {
+      testWidgets('held across: the table beside the games, no switch', (tester) async {
+        await pumpLeague(tester, provider(), size: const Size(1280, 800), variant: AppThemeVariant.glas);
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(tester.takeException(), isNull);
+        expect(find.text(t.sport.zoneChampionsLeague), findsOneWidget);
+        expect(find.text(t.sport.fixtures), findsNothing, reason: 'nothing to switch');
+        final table = tester.getRect(find.text(t.sport.zoneChampionsLeague));
+        final tile = tester.getRect(find.byType(SportGameTile).first);
+        expect(table.left, greaterThan(tile.right), reason: 'the table at the right of the games');
+        expect(
+          tester.getRect(find.text(t.sport.zoneRelegation)).bottom,
+          lessThanOrEqualTo(800),
+          reason: 'the whole table fits the page, its key included',
+        );
+      });
+
+      testWidgets('upright: a phone\'s page, the tiles in pairs', (tester) async {
+        await pumpLeague(tester, provider(), size: const Size(800, 1280), variant: AppThemeVariant.glas);
+        await tester.pump(const Duration(seconds: 1));
+
+        expect(tester.takeException(), isNull);
+        expect(find.text(t.sport.table), findsOneWidget, reason: 'the switch to the table');
+        // The day before yesterday's and today's game share no row; the two
+        // of matchday 4 on one day stand side by side where there are two.
+        final tiles = find.byType(SportGameTile);
+        expect(tiles, findsWidgets);
+        expect(tester.getRect(tiles.first).width, lessThan(400), reason: 'two to a row');
       });
     });
 

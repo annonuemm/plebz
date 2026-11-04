@@ -13,6 +13,27 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.42.0 (Build 958)
+
+### Sport
+- Sport auf dem Fernseher ist neu aufgebaut: Oben steht das wichtigste Spiel groß in den Farben der Vereine, darunter die Spiele des Spieltags als Kacheln und ganz unten die Tabelle.
+- Auch auf Handy und Tablet sieht Sport jetzt aus wie auf dem Fernseher. Auf dem Handy schaltest du zwischen Spielen und Tabelle um.
+- Bei Spielen mit deutschen Vereinen steht jetzt das Datum dabei.
+- Laufende Spiele werden zuverlässiger als live erkannt.
+- Sport läuft auf dem Fernseher flüssiger.
+
+### Handy und Tablet
+- Im Querformat steht die Navigation jetzt wie auf dem Fernseher am linken Rand, mit größeren Symbolen.
+- Seiten, deren Name schon in der Navigation steht, zeigen ihn nicht noch einmal als Titel.
+
+### Aussehen
+- In Flach ist der Abspielknopf jetzt einfarbig.
+- Öffnet sich die Mediatheken-Spalte, wird der Rest des Bildes abgedunkelt, wie bei der Navigation.
+- Der Bildschirmschoner zeigt Spiele ohne Vereinsfarben.
+
+### Merkliste
+- Mit Simkl landen hinzugefügte Titel jetzt zuverlässig in der Merkliste. Kennt Simkl einen Titel nicht, sagt Plebz das.
+
 ## 1.41.1 (Build 938)
 
 ### Live-TV

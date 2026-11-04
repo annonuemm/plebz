@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
+import 'package:plezy/focus/focusable_wrapper.dart';
 import 'package:plezy/i18n/strings.g.dart';
 import 'package:plezy/navigation/main_screen_scope.dart';
+import 'package:plezy/screens/sport/sport_board_widgets.dart';
 import 'package:plezy/screens/sport/sport_league_management_sheet.dart';
 import 'package:plezy/screens/sport/sport_league_view.dart';
 import 'package:plezy/screens/sport/sport_screen.dart';
@@ -106,7 +109,7 @@ void main() {
   testWidgets('a cup switched on under "Ligen verwalten" joins the leagues, a hidden league leaves', (tester) async {
     final api = provider();
     await pump(tester, SportScreen(repository: api.repository()));
-    await pumpUntil(tester, () => find.text('FC Bayern München').evaluate().isNotEmpty);
+    await pumpUntil(tester, () => find.textContaining('FC Bayern München').evaluate().isNotEmpty);
     expect(find.text(t.sport.championsLeague), findsNothing);
 
     final layout = SportLeagueLayout.decode(
@@ -121,7 +124,7 @@ void main() {
     expect(find.text(t.sport.liga3), findsNothing);
 
     await tester.tap(find.text(t.sport.championsLeague));
-    await pumpUntil(tester, () => find.text('Real Madrid').evaluate().isNotEmpty);
+    await pumpUntil(tester, () => find.textContaining('Real Madrid').evaluate().isNotEmpty);
   });
 
   testWidgets('"Ligen verwalten" lists every competition and switches one on', (tester) async {
@@ -144,7 +147,7 @@ void main() {
   testWidgets('the DFB-Pokal shows its round by name, no table, and how a tie was decided', (tester) async {
     final api = provider();
     await pump(tester, view(SportLeague.dfbPokal, api));
-    await pumpUntil(tester, () => find.text('Eintracht Frankfurt').evaluate().isNotEmpty);
+    await pumpUntil(tester, () => find.textContaining('Eintracht Frankfurt').evaluate().isNotEmpty);
 
     expect(tester.takeException(), isNull);
     expect(find.text('2. Runde'), findsOneWidget);
@@ -152,34 +155,103 @@ void main() {
     expect(find.text(t.sport.onPenalties(score: '3:5')), findsOneWidget);
   });
 
-  for (final variant in [AppThemeVariant.standard, AppThemeVariant.glas, AppThemeVariant.flach]) {
-    testWidgets('${variant.name}: a European cup\'s table is a view of its own, in two columns', (tester) async {
-      final redesign = variant != AppThemeVariant.standard;
-      if (redesign) {
-        TvDetectionService.debugSetAppleTVOverride(true);
-        addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
-      }
+  testWidgets('standard: a European cup\'s table is a view of its own, in two columns', (tester) async {
+    final api = provider();
+    await pump(tester, view(SportLeague.championsLeague, api));
+    await pumpUntil(tester, () => find.textContaining('Real Madrid').evaluate().isNotEmpty);
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(t.sport.matchday(n: 3)), findsOneWidget, reason: 'the league phase counts its matchdays');
+    expect(find.text('Club 1'), findsNothing, reason: 'the fixtures take the page; the table waits');
+
+    await tester.tap(find.text(t.sport.table));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('Real Madrid'), findsNothing);
+    final first = tester.getTopLeft(find.text('Club 1'));
+    final nineteenth = tester.getTopLeft(find.text('Club 19'));
+    expect(nineteenth.dx, greaterThan(first.dx + 400), reason: 'places 19 to 36 stand in a column of their own');
+    expect((nineteenth.dy - first.dy).abs(), lessThan(2), reason: 'side by side, level with places 1 to 18');
+    expect(find.text('Club 36'), findsOneWidget);
+    expect(find.text(t.sport.fixtures), findsOneWidget, reason: 'and the bar leads back to the games');
+  });
+
+  for (final variant in [AppThemeVariant.glasV2, AppThemeVariant.flach]) {
+    testWidgets('${variant.name} on a television: a European cup\'s table at the foot, four panels to walk (Plebz)', (
+      tester,
+    ) async {
+      TvDetectionService.debugSetAppleTVOverride(true);
+      addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
       final api = provider();
       await pump(tester, view(SportLeague.championsLeague, api), variant: variant);
-      await pumpUntil(tester, () => find.text('Real Madrid').evaluate().isNotEmpty);
+      await pumpUntil(tester, () => find.textContaining('Real Madrid').evaluate().isNotEmpty);
       await tester.pump(const Duration(seconds: 1));
 
       expect(tester.takeException(), isNull);
-      expect(find.text(t.sport.matchday(n: 3)), findsOneWidget, reason: 'the league phase counts its matchdays');
-      expect(find.text('Club 1'), findsNothing, reason: 'the fixtures take the page; the table waits');
-
-      await tester.tap(find.text(t.sport.table));
-      await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
-
-      expect(tester.takeException(), isNull);
-      expect(find.text('Real Madrid'), findsNothing);
+      expect(
+        find.byWidgetPredicate((w) => w is FocusableWrapper && w.focusNode?.debugLabel == 'sport_view_toggle'),
+        findsNothing,
+        reason: 'no switch: the table is on the page',
+      );
+      // Nine places a panel, two side by side on the screen.
+      expect(sportTablePanels(List.generate(36, (i) => i)).map((panel) => panel.length), [9, 9, 9, 9]);
       final first = tester.getTopLeft(find.text('Club 1'));
-      final nineteenth = tester.getTopLeft(find.text('Club 19'));
-      expect(nineteenth.dx, greaterThan(first.dx + 400), reason: 'places 19 to 36 stand in a column of their own');
-      expect((nineteenth.dy - first.dy).abs(), lessThan(2), reason: 'side by side, level with places 1 to 18');
-      expect(find.text('Club 36'), findsOneWidget);
-      expect(find.text(t.sport.fixtures), findsOneWidget, reason: 'and the bar leads back to the games');
+      final tenth = tester.getTopLeft(find.text('Club 10'));
+      expect(tenth.dx, greaterThan(first.dx + 400), reason: 'places 10 to 18 on the panel beside');
+      expect((tenth.dy - first.dy).abs(), lessThan(2), reason: 'level with places 1 to 9');
+      expect(first.dy, greaterThan(tester.getRect(find.byType(SportGameTile)).bottom));
     });
   }
+
+  testWidgets('a European cup\'s German clubs\' row tells each game\'s day under its kickoff (Plebz)', (tester) async {
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+    final api = provider();
+    api.routes['/getmatchdata/ucl'] = [
+      ...api.routes['/getmatchdata/ucl']! as List,
+      openLigaMatch(
+        id: 7003,
+        matchday: 3,
+        groupName: '3.Spieltag',
+        kickoffUtc: kickoff,
+        home: openLigaTeam(40, 'FC Bayern München'),
+        away: openLigaTeam(7004, 'Paris Saint-Germain'),
+      ),
+    ];
+    await pump(tester, view(SportLeague.championsLeague, api), variant: AppThemeVariant.glasV2);
+    await pumpUntil(tester, () => find.textContaining('Real Madrid').evaluate().isNotEmpty);
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(tester.takeException(), isNull);
+    Finder tile(String label) =>
+        find.byWidgetPredicate((w) => w is FocusableWrapper && w.focusNode?.debugLabel == label);
+    final date = DateFormat.MMMEd('en').format(kickoff.toLocal());
+    expect(find.text(t.sport.withGermanClubs), findsOneWidget);
+    expect(find.descendant(of: tile('sport_tile_0_7003'), matching: find.text(date)), findsOneWidget);
+    expect(
+      find.descendant(of: tile('sport_tile_1_7003'), matching: find.text(date)),
+      findsNothing,
+      reason: 'a row of one day has its date in its name',
+    );
+  });
+
+  testWidgets('the DFB-Pokal on a television ends on its rounds, the one being played marked (Plebz)', (tester) async {
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+    final api = provider();
+    await pump(tester, view(SportLeague.dfbPokal, api), variant: AppThemeVariant.glasV2);
+    await pumpUntil(tester, () => find.textContaining('Eintracht Frankfurt').evaluate().isNotEmpty);
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(tester.takeException(), isNull);
+    expect(find.text(t.sport.roadToFinal), findsOneWidget);
+    for (final round in ['1. Runde', 'Achtelfinale']) {
+      expect(find.text(round), findsOneWidget);
+    }
+    expect(find.text(t.sport.roundPlayed), findsOneWidget, reason: 'the round behind says so');
+    expect(find.text(t.sport.onPenalties(score: '3:5')), findsWidgets, reason: 'how the tie was decided');
+  });
 }

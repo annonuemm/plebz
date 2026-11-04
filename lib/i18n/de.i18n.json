@@ -3134,7 +3134,18 @@
     "zoneEliminated": "Ausgeschieden",
     "afterExtraTime": "n. V.",
     "onPenalties": "${score} i. E.",
-    "europaLeagueLate": "Ergebnisse kommen oft erst ein bis zwei Tage später"
+    "europaLeagueLate": "Ergebnisse kommen oft erst ein bis zwei Tage später",
+    "yourClub": "Dein Verein",
+    "nextMatch": "Nächstes Spiel",
+    "withGermanClubs": "Mit deutschen Vereinen",
+    "germanClub": "Deutscher Verein",
+    "toMatch": "Zum Spiel",
+    "roadToFinal": "Der Weg nach Berlin",
+    "roundPlayed": "gespielt",
+    "tableAfter": "nach Spieltag ${n}",
+    "stagePosition": "Spiel ${n} von ${total}",
+    "previousMatch": "Vorheriges Spiel",
+    "nextOnStage": "Nächstes Spiel"
   },
   "plebz": {
     "settingsGroupLook": "Aussehen und Wiedergabe",

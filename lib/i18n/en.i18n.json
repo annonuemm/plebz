@@ -3134,7 +3134,18 @@
     "zoneEliminated": "Eliminated",
     "afterExtraTime": "a.e.t.",
     "onPenalties": "${score} on pens",
-    "europaLeagueLate": "Results often arrive a day or two late"
+    "europaLeagueLate": "Results often arrive a day or two late",
+    "yourClub": "Your club",
+    "nextMatch": "Next match",
+    "withGermanClubs": "With German clubs",
+    "germanClub": "German club",
+    "toMatch": "Open match",
+    "roadToFinal": "The road to Berlin",
+    "roundPlayed": "played",
+    "tableAfter": "after matchday ${n}",
+    "stagePosition": "Match ${n} of ${total}",
+    "previousMatch": "Previous match",
+    "nextOnStage": "Next match"
   },
   "plebz": {
     "settingsGroupLook": "Look and playback",

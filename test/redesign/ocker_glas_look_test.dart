@@ -244,39 +244,48 @@ void main() {
       });
     }
 
-    testWidgets('the rail floats as glass and shows where one is', (tester) async {
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(1180, 820);
-      addTearDown(tester.view.reset);
-      await tester.pumpWidget(
-        host(
-          Row(
-            children: [
-              MobileNavigationRail(
-                tabs: [
-                  for (final id in [NavigationTabId.discover, NavigationTabId.libraries])
-                    allNavigationTabs.firstWhere((tab) => tab.id == id),
-                ],
-                selectedTab: NavigationTabId.libraries,
-                showLabels: true,
-                onDestinationSelected: (_) {},
-              ),
-              const Expanded(child: SizedBox()),
-            ],
+    for (final variant in [AppThemeVariant.glas, AppThemeVariant.flach]) {
+      testWidgets('the rail stands at the edge, the screen\'s height, as the television\'s (${variant.name}, Plebz)', (
+        tester,
+      ) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(1180, 820);
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(
+          host(
+            Row(
+              children: [
+                MobileNavigationRail(
+                  tabs: [
+                    for (final id in [NavigationTabId.discover, NavigationTabId.libraries])
+                      allNavigationTabs.firstWhere((tab) => tab.id == id),
+                  ],
+                  selectedTab: NavigationTabId.libraries,
+                  showLabels: true,
+                  onDestinationSelected: (_) {},
+                ),
+                const Expanded(child: SizedBox()),
+              ],
+            ),
+            variant: variant,
           ),
-        ),
-      );
-      await tester.pump(const Duration(seconds: 1));
+        );
+        await tester.pump(const Duration(seconds: 1));
 
-      expect(find.byType(OckerGlass), findsOneWidget);
-      final context = tester.element(find.byType(NavigationRail));
-      final tk = tokens(context);
-      final theme = NavigationRailTheme.of(context);
-      expect(theme.selectedLabelTextStyle?.color, tk.accent);
-      expect(theme.indicatorColor, isNot(Colors.transparent));
-      expect(theme.unselectedLabelTextStyle?.color, isNot(tk.accent));
-      expect(tester.getTopLeft(find.byType(OckerGlass)).dx, MobileNavigationRail.appleMargin);
-    });
+        expect(find.byType(OckerGlass), findsNothing, reason: 'no column of glass floating clear of the edges');
+        final rail = tester.getRect(find.byType(MobileNavigationRail));
+        expect(rail.left, 0);
+        expect(rail.height, 820);
+        final context = tester.element(find.byType(NavigationRail));
+        final tk = tokens(context);
+        final theme = NavigationRailTheme.of(context);
+        expect(theme.indicatorColor, Colors.transparent, reason: 'no capsule behind the place on show');
+        expect(theme.selectedLabelTextStyle?.color, tk.ink(1));
+        expect(theme.selectedLabelTextStyle?.fontWeight, FontWeight.w700);
+        expect(theme.unselectedLabelTextStyle?.color, isNot(tk.ink(1)), reason: 'the others quieter');
+        expect(theme.selectedIconTheme?.size, MobileNavigationRail.redesignIconSize);
+      });
+    }
 
     testWidgets('page bars fade softly instead of turning solid', (tester) async {
       await tester.pumpWidget(
@@ -338,30 +347,6 @@ void main() {
         expect(inner, room ? 0 : 96, reason: 'under Glas nothing inside adds the room again');
       });
     }
-
-    testWidgets('the rail covers its margin, its width and a gap as much again', (tester) async {
-      double? flush;
-      double? notched;
-      await tester.pumpWidget(
-        Directionality(
-          textDirection: TextDirection.ltr,
-          child: Column(
-            children: [
-              MediaQuery(
-                data: const MediaQueryData(),
-                child: Builder(builder: (context) => Text('${flush = MobileNavigationRail.appleExtent(context)}')),
-              ),
-              MediaQuery(
-                data: const MediaQueryData(padding: EdgeInsets.only(left: 59)),
-                child: Builder(builder: (context) => Text('${notched = MobileNavigationRail.appleExtent(context)}')),
-              ),
-            ],
-          ),
-        ),
-      );
-      expect(flush, 8 + 88 + 8);
-      expect(notched, 59 + 88 + 8, reason: 'past the notch, not the notch plus a margin');
-    });
 
     testWidgets('under Flach the settings rows stay dense', (tester) async {
       await tester.pumpWidget(

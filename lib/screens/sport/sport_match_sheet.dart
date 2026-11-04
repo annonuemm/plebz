@@ -10,6 +10,9 @@ import '../../focus/focusable_wrapper.dart';
 import '../../i18n/app_locale_utils.dart';
 import '../../i18n/strings.g.dart';
 import '../../models/livetv_channel.dart';
+import '../../redesign/ocker_type.dart';
+import '../../services/sport/club_colours.dart';
+import '../../utils/layout_constants.dart';
 import '../../services/sport/sport_broadcast_matching.dart';
 import '../../services/sport/sport_league_names.dart';
 import '../../services/sport/sport_models.dart';
@@ -42,17 +45,23 @@ Future<void> showSportMatchSheet(
 }) {
   final size = MediaQuery.sizeOf(context);
   final look = SportLook.of(context);
+  // The television (Plebz): in the middle of the screen, its head in the
+  // clubs' colours to the sheet's edges. A sheet at the right edge stood
+  // half way down it — sheets are as tall as what they hold.
+  final tv = look.ocker;
   return OverlaySheetController.showAdaptive<void>(
     context,
     alignment: Alignment.center,
     // Plebz: a phone's window the screen's width — at three fifths of it the
     // clubs' names broke mid-word.
-    constraints: BoxConstraints(
-      maxWidth: size.width < 600 ? size.width : (size.width * 0.62).clamp(320.0, 1100.0),
-      maxHeight: size.height * 0.86,
-    ),
+    constraints: tv
+        ? BoxConstraints(maxWidth: (1200 * look.scale).clamp(320.0, 1100.0), maxHeight: size.height * 0.86)
+        : BoxConstraints(
+            maxWidth: size.width < 600 ? size.width : (size.width * 0.62).clamp(320.0, 1100.0),
+            maxHeight: size.height * 0.86,
+          ),
     builder: (sheetContext) => Padding(
-      padding: EdgeInsets.symmetric(horizontal: 36 * look.scale, vertical: 30 * look.scale),
+      padding: tv ? EdgeInsets.zero : EdgeInsets.symmetric(horizontal: 36 * look.scale, vertical: 30 * look.scale),
       child: SportMatchDetail(
         match: match,
         league: league,
@@ -220,6 +229,8 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
       DateFormat.Hm(locale).format(match.kickoff),
     ].join(' · ');
 
+    if (look.ocker) return _buildTv(look, match, score, live, now, locale, eyebrow);
+
     return Focus(
       focusNode: _sheetNode,
       autofocus: true,
@@ -286,16 +297,202 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
     );
   }
 
+  /// The television's sheet (Plebz): a head in the clubs' colours, running
+  /// out into the sheet — crests, names and places, the kickoff or the score
+  /// large between them — and under it, with room between, where to watch
+  /// it, the goals and the ground, each under a heading as the page's rows
+  /// have.
+  Widget _buildTv(
+    SportLook look,
+    SportMatch match,
+    SportScore? score,
+    bool live,
+    DateTime now,
+    String locale,
+    String eyebrow,
+  ) {
+    final s = look.scale;
+    final home = clubColourFor(match.home);
+    final away = clubColourFor(match.away);
+    Color deep(Color? colour) {
+      if (colour == null) return look.ink(0.10);
+      final hsl = HSLColor.fromColor(colour);
+      return hsl
+          .withSaturation(hsl.saturation.clamp(0.0, 0.85))
+          .withLightness(hsl.lightness.clamp(0.0, 0.34))
+          .toColor();
+    }
+
+    final white = home != null || away != null ? Colors.white : look.ink(1);
+    final middle = score == null ? DateFormat.Hm(locale).format(match.kickoff) : '${score.home} : ${score.away}';
+    // The sheet's glass holds its words 8 in from its edge ([OckerGlass]); the
+    // colours run on under that margin to the edge, where the sheet's own
+    // corners cut them — stopped short of it, they read as a box.
+    const edge = 8.0;
+    final head = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          left: -edge,
+          right: -edge,
+          top: -edge,
+          bottom: 0,
+          child: ShaderMask(
+            blendMode: BlendMode.dstIn,
+            shaderCallback: (rect) => const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xE6000000), Color(0x99000000), Color(0x00000000)],
+              stops: [0, 0.55, 1],
+            ).createShader(rect),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [deep(home), deep(home), deep(away), deep(away)],
+                  stops: const [0, 0.25, 0.75, 1],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(48 * s, 48 * s, 48 * s, 56 * s),
+          child: Column(
+            children: [
+              Text(
+                eyebrow,
+                textAlign: TextAlign.center,
+                style: look.time.copyWith(fontSize: 20 * s, color: white.withValues(alpha: 0.8)),
+              ),
+              SizedBox(height: 40 * s),
+              Row(
+                crossAxisAlignment: .start,
+                children: [
+                  Expanded(child: _tvClub(look, match.home, white)),
+                  SizedBox(
+                    width: 220 * s,
+                    child: Column(
+                      children: [
+                        SizedBox(height: 40 * s),
+                        Text(
+                          middle,
+                          style: look.score().copyWith(fontSize: 64 * s, color: live ? look.live : white),
+                        ),
+                        SizedBox(height: 10 * s),
+                        Text(
+                          [_state(match, now), ?sportScoreNote(match)].join(' · '),
+                          textAlign: TextAlign.center,
+                          style: look.time.copyWith(fontSize: 18 * s, color: white.withValues(alpha: 0.72)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(child: _tvClub(look, match.away, white)),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    return Focus(
+      focusNode: _sheetNode,
+      autofocus: true,
+      onKeyEvent: _onKey,
+      child: SingleChildScrollView(
+        controller: _scroll,
+        // The head's colours reach past the list to the sheet's edge.
+        clipBehavior: Clip.none,
+        padding: EdgeInsets.only(bottom: 48 * s),
+        child: Column(
+          crossAxisAlignment: .stretch,
+          mainAxisSize: .min,
+          children: [
+            head,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 48 * s),
+              child: Column(
+                crossAxisAlignment: .stretch,
+                mainAxisSize: .min,
+                children: [
+                  ..._broadcastSection(look, locale),
+                  if (score != null) ...[
+                    _tvHeading(look, t.sport.goals),
+                    if (match.goals.isEmpty)
+                      Text(
+                        t.sport.noGoals,
+                        style: look.body.copyWith(fontSize: 20 * s, color: look.ink(0.6)),
+                      )
+                    else
+                      ..._goals(look, match),
+                  ],
+                  if (_venue(match) case final String venue) ...[
+                    SizedBox(height: 40 * s),
+                    Text(
+                      venue,
+                      style: look.body.copyWith(fontSize: 20 * s, color: look.ink(0.6)),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// A section's name on the television: as a row of the page is named, in
+  /// sentence case, with room above it.
+  Widget _tvHeading(SportLook look, String text) {
+    final s = look.scale;
+    return Padding(
+      padding: EdgeInsets.only(top: 44 * s, bottom: 18 * s),
+      child: Text(
+        text,
+        style: OckerType.of(context).sectionHeading.copyWith(fontSize: 26 * s, color: look.ink(1)),
+      ),
+    );
+  }
+
+  Widget _tvClub(SportLook look, SportTeam team, Color ink) {
+    final s = look.scale;
+    final row = _rowFor(team);
+    return Column(
+      children: [
+        SportCrest(team: team, size: 150 * s),
+        SizedBox(height: 20 * s),
+        Text(
+          team.name,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          style: look.teamName(strong: true).copyWith(fontSize: 25 * s, height: 1.15, color: ink),
+        ),
+        if (row != null) ...[
+          SizedBox(height: 8 * s),
+          Text(
+            '${t.sport.place(n: row.position)} · ${row.points} ${t.sport.points}',
+            textAlign: TextAlign.center,
+            style: look.time.copyWith(fontSize: 18 * s, color: ink.withValues(alpha: 0.7)),
+          ),
+        ],
+      ],
+    );
+  }
+
   // ------------------------------------------------------------ broadcasts
 
   List<Widget> _broadcastSection(SportLook look, String locale) {
     if (widget.broadcasts == null) return const [];
-    final heading = [
-      SizedBox(height: look.gap * 2),
-      Text(t.sport.broadcast.toUpperCase(), style: look.heading.copyWith(color: look.ink(0.55))),
-      SizedBox(height: look.gap / 2),
-    ];
-    final note = look.body.copyWith(color: look.ink(0.6));
+    final heading = look.ocker
+        ? [_tvHeading(look, t.sport.broadcast)]
+        : [
+            SizedBox(height: look.gap * 2),
+            Text(t.sport.broadcast.toUpperCase(), style: look.heading.copyWith(color: look.ink(0.55))),
+            SizedBox(height: look.gap / 2),
+          ];
+    final note = look.body.copyWith(color: look.ink(0.6), fontSize: look.ocker ? 20 * look.scale : null);
 
     if (_searching) {
       return [
@@ -355,7 +552,31 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
       for (var j = 0; j < rows[i].actions.length; j++)
         _watchButton(look, rows[i].broadcast, rows[i].actions[j], i, j, rows[i].actions.length, search),
     ];
-    final spacing = look.gap * 0.8;
+    final spacing = look.ocker ? 28 * look.scale : look.gap * 0.8;
+    // The television (Plebz, the user's call): a line a channel — its logo,
+    // when it is on, and its buttons at the right edge — so a long list of
+    // channels stays short.
+    if (look.ocker) {
+      return Column(
+        crossAxisAlignment: .stretch,
+        children: [
+          for (var i = 0; i < rows.length; i++)
+            Padding(
+              padding: EdgeInsets.only(top: i == 0 ? 0 : 16 * look.scale),
+              child: Row(
+                children: [
+                  Expanded(child: _tvBroadcastLine(look, rows[i].broadcast, locale)),
+                  SizedBox(width: 20 * look.scale),
+                  for (final (j, button) in buttonsOf(i).indexed) ...[
+                    if (j > 0) SizedBox(width: 12 * look.scale),
+                    button,
+                  ],
+                ],
+              ),
+            ),
+        ],
+      );
+    }
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 560 * look.scale) {
@@ -369,8 +590,12 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
                     crossAxisAlignment: .start,
                     children: [
                       _broadcastInfo(look, rows[i].broadcast, locale),
-                      SizedBox(height: look.gap / 2),
-                      Wrap(spacing: look.gap / 2, runSpacing: look.gap / 2, children: buttonsOf(i)),
+                      SizedBox(height: look.ocker ? 14 * look.scale : look.gap / 2),
+                      Wrap(
+                        spacing: look.ocker ? 12 * look.scale : look.gap / 2,
+                        runSpacing: look.gap / 2,
+                        children: buttonsOf(i),
+                      ),
                     ],
                   ),
                 ),
@@ -405,6 +630,53 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
     );
   }
 
+  /// A channel on the television's sheet: its logo — its name where it has
+  /// none — and when the programme is on, "Konferenz" after it for one.
+  Widget _tvBroadcastLine(SportLook look, SportBroadcast broadcast, String locale) {
+    final s = look.scale;
+    final channel = broadcast.channel;
+    final program = broadcast.program;
+    final logo = channel.thumb ?? channel.guideLogo;
+    final start = program?.startTime;
+    final end = program?.endTime;
+    final when = [
+      if (start != null && end != null) '${DateFormat.Hm(locale).format(start)}–${DateFormat.Hm(locale).format(end)}',
+      if (broadcast.kind == SportBroadcastKind.conference) t.sport.conference,
+    ].join(' · ');
+    final name = Text(
+      channel.displayName,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: look.teamName(strong: true).copyWith(fontSize: 22 * s, color: look.ink(1)),
+    );
+    return Row(
+      children: [
+        SizedBox(
+          width: 132 * s,
+          height: 60 * s,
+          child: logo != null && (logo.startsWith('http://') || logo.startsWith('https://'))
+              ? LiveTvChannelLogo(
+                  channel: channel,
+                  client: null,
+                  width: 132 * s,
+                  height: 60 * s,
+                  fallback: (_) => Align(alignment: Alignment.centerLeft, child: name),
+                )
+              : Align(alignment: Alignment.centerLeft, child: name),
+        ),
+        SizedBox(width: 24 * s),
+        Expanded(
+          child: Text(
+            when,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: look.time.copyWith(fontSize: 20 * s, color: look.ink(0.72)),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _broadcastInfo(SportLook look, SportBroadcast broadcast, String locale) {
     final channel = broadcast.channel;
     final program = broadcast.program;
@@ -416,21 +688,24 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
         ? null
         : '${DateFormat.Hm(locale).format(start)}–${DateFormat.Hm(locale).format(end)}';
 
+    final tv = look.ocker;
+    final logoWidth = (tv ? 96 : 64) * look.scale;
+    final logoHeight = (tv ? 54 : 36) * look.scale;
     return Row(
       children: [
         if (logo != null && (logo.startsWith('http://') || logo.startsWith('https://'))) ...[
           SizedBox(
-            width: 64 * look.scale,
-            height: 36 * look.scale,
+            width: logoWidth,
+            height: logoHeight,
             child: LiveTvChannelLogo(
               channel: channel,
               client: null,
-              width: 64 * look.scale,
-              height: 36 * look.scale,
+              width: logoWidth,
+              height: logoHeight,
               fallback: (_) => const SizedBox.shrink(),
             ),
           ),
-          SizedBox(width: look.gap * 0.8),
+          SizedBox(width: tv ? 20 * look.scale : look.gap * 0.8),
         ],
         Expanded(
           child: Column(
@@ -450,15 +725,21 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: look.teamName(strong: true).copyWith(color: look.ink(1)),
+                style: look.teamName(strong: true).copyWith(color: look.ink(1), fontSize: tv ? 23 * look.scale : null),
               ),
-              if (title != null)
+              if (title != null) ...[
+                if (tv) SizedBox(height: 6 * look.scale),
                 Text(
                   [?times, title].join(' · '),
-                  maxLines: 1,
+                  maxLines: tv ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
-                  style: look.time.copyWith(color: look.ink(0.6)),
+                  style: look.time.copyWith(
+                    color: look.ink(0.6),
+                    fontSize: tv ? 18 * look.scale : null,
+                    height: tv ? 1.3 : null,
+                  ),
                 ),
+              ],
             ],
           ),
         ),
@@ -486,10 +767,16 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
 
     FocusNode? rowNode(int r) =>
         r < 0 || r >= _rowNodes.length ? null : _rowNodes[r][column.clamp(0, _rowNodes[r].length - 1)];
-    final style = look.matchdayChip(current: true).copyWith(color: look.ink(1));
+    final tv = look.ocker;
+    final tvScale = TvLayoutConstants.scaleOf(context);
+    final height = 46 * tvScale;
+    final style = tv
+        ? TextStyle(fontSize: 17 * tvScale, fontWeight: .w600, color: look.ink(1))
+        : look.matchdayChip(current: true).copyWith(color: look.ink(1));
     return FocusableWrapper(
       focusNode: _rowNodes[row][column],
-      borderRadius: look.tk.radiusSm,
+      // The television: a capsule, as the page's other buttons are.
+      borderRadius: tv ? height / 2 : look.tk.radiusSm,
       useBackgroundFocus: true,
       glassFocus: true,
       semanticLabel: '$label, ${broadcast.channel.displayName}',
@@ -510,10 +797,13 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
       child: SportTap(
         onTap: watch,
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 14 * look.scale, vertical: 8 * look.scale),
+          height: tv ? height : null,
+          padding: tv
+              ? EdgeInsets.symmetric(horizontal: 22 * tvScale)
+              : EdgeInsets.symmetric(horizontal: 14 * look.scale, vertical: 8 * look.scale),
           decoration: BoxDecoration(
             color: look.ink(column == 0 ? 0.12 : 0.06),
-            borderRadius: BorderRadius.circular(look.tk.radiusSm),
+            borderRadius: BorderRadius.circular(tv ? height / 2 : look.tk.radiusSm),
           ),
           child: Row(
             mainAxisSize: .min,
@@ -535,7 +825,7 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
   /// A line under the score saying where the match stands.
   String _state(SportMatch match, DateTime now) {
     if (match.isLive(now)) {
-      final halftime = match.halftime;
+      final halftime = match.halftimeAt(now);
       return halftime == null ? t.sport.live : '${t.sport.live} · ${t.sport.halftime} $halftime';
     }
     if (match.isFinished) {
@@ -584,7 +874,7 @@ class _SportMatchDetailState extends State<SportMatchDetail> {
         if (notes.isNotEmpty) '(${notes.join(', ')})',
       ].where((part) => part.isNotEmpty).join(' ');
       final text = home ? '$who  $minute' : '$minute  $who';
-      final style = look.body.copyWith(color: look.ink(0.9));
+      final style = look.body.copyWith(color: look.ink(0.9), fontSize: look.ocker ? 20 * look.scale : null);
       lines.add(
         Padding(
           padding: EdgeInsets.symmetric(vertical: 3 * look.scale),

@@ -1073,7 +1073,8 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     final bar = ToolbarScrim(
       child: Row(
         children: [
-          if (!PlatformDetector.isTV())
+          // Plebz: none where a handheld's navigation names the place.
+          if (!PlatformDetector.isTV() && !MainScreenNamedPlaces.hidesTitle(context, NavigationTabId.discover))
             Text(
               // Plebz: the tab's own name. "Entdecken" over a tab called
               // "Start", beside "Erkunden", was three names for two places

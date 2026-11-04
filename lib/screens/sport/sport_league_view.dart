@@ -9,13 +9,22 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 import '../../redesign/ocker_skin.dart';
+import '../../focus/focus_theme.dart';
+import '../../redesign/ocker_type.dart';
 import '../../focus/focusable_wrapper.dart';
+import '../../utils/layout_constants.dart';
+import '../../redesign/ocker_play_ground.dart';
+import '../../redesign/ocker_frost.dart';
+import '../../redesign/ocker_glide_edge.dart';
+import '../../services/device_performance.dart';
+import '../../focus/focusable_action_bar.dart';
 import '../../i18n/app_locale_utils.dart';
 import '../../i18n/strings.g.dart';
 import '../../models/livetv_channel.dart';
 import '../../providers/multi_server_provider.dart';
 import '../../services/settings_service.dart';
 import '../../services/sport/club_colours.dart';
+import '../../services/sport/sport_board.dart';
 import '../../services/sport/sport_broadcast_matching.dart';
 import '../../services/sport/sport_crest_fallback.dart';
 import '../../services/sport/sport_league_names.dart';
@@ -30,6 +39,7 @@ import '../../utils/live_tv_matching.dart';
 import '../../utils/live_tv_player_navigation.dart';
 import '../../utils/platform_detector.dart';
 import 'club_colour_ground.dart';
+import 'sport_board_widgets.dart';
 import 'sport_broadcast_finder.dart';
 import 'sport_look.dart';
 import 'sport_match_sheet.dart';
@@ -75,6 +85,10 @@ class SportLeagueView extends StatefulWidget {
   /// For tests; the app opens the player through [navigateToLiveTv].
   final SportWatchCallback? onWatch;
 
+  /// Where the television's board hands its stage's clubs, for the ground
+  /// the screen draws behind it (Plebz); null for a league not on show.
+  final ValueNotifier<SportStageGround?>? stageGround;
+
   const SportLeagueView({
     super.key,
     required this.league,
@@ -84,13 +98,15 @@ class SportLeagueView extends StatefulWidget {
     this.repository,
     this.broadcastFinder,
     this.onWatch,
+    this.stageGround,
   });
 
   @override
   State<SportLeagueView> createState() => SportLeagueViewState();
 }
 
-class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliveClientMixin {
+class SportLeagueViewState extends State<SportLeagueView>
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   SportRepository get _repo => widget.repository ?? SportRepository.instance;
 
   int? _season;
@@ -116,11 +132,15 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
 
   /// A European cup's 36 clubs need the page's width (Plebz): its table is a
   /// view of its own, two columns side by side, which the bar switches to.
+  /// On a phone a German league's too, rather than under its fixtures.
   bool _showTable = false;
 
-  bool get _tableIsView => widget.league.hasTable && !widget.league.isDomestic;
+  /// Whether the table is a view the bar switches to, for the layout last
+  /// built: a European cup's off the television, a league's on a phone.
+  /// The television puts it at the foot of the page ([_buildBoard]).
+  bool _tableIsView = false;
 
-  /// The table beside or under the fixtures — a German league's.
+  /// The table beside the fixtures — a German league's, with room for both.
   bool get _tableBeside => widget.league.hasTable && widget.league.isDomestic;
 
   Timer? _liveTimer;
@@ -132,6 +152,52 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
   final Map<int, FocusNode> _matchNodes = {};
   final _retryNode = FocusNode(debugLabel: 'sport_retry');
   final _stageNode = FocusNode(debugLabel: 'sport_favourite_stage');
+
+  // The television's board (Plebz): the stage's button, the tiles by row
+  // and place — a game can stand in two rows, a European cup's German clubs'
+  // and its kickoff's — the table at the foot, or the cup's rounds.
+  bool _boardShown = false;
+  List<SportBoardRow> _boardRows = const [];
+  final _boardStageNode = FocusNode(debugLabel: 'sport_board_stage');
+  final _stagePreviousNode = FocusNode(debugLabel: 'sport_stage_previous');
+  final _stageNextNode = FocusNode(debugLabel: 'sport_stage_next');
+
+  /// The game the viewer stepped the stage to with its arrows (Plebz); null
+  /// for the one [sportStageFor] picks. A new matchday starts from the pick.
+  int? _stageMatchId;
+  final _boardTableNode = FocusNode(debugLabel: 'sport_board_table');
+  final Map<String, FocusNode> _tileNodes = {};
+  final Map<int, FocusNode> _roundNodes = {};
+  final Map<int, ScrollController> _rowScrolls = {};
+  final Map<int, GlobalKey> _rowKeys = {};
+  late final _boardScroll = ScrollController()..addListener(_publishStageGround);
+
+  /// The soft top edge the board glides under, as the start page's rows do
+  /// ([OckerGlideEdge]): eased in as a glide starts and out once it has
+  /// settled; [_boardGlideTarget] is where the glide ends, so the edge clears
+  /// over its last stretch and the row arriving on top is whole.
+  late final _boardEdgeIn = AnimationController(vsync: this, duration: const Duration(milliseconds: 90));
+  double? _boardGlideTarget;
+
+  /// The stage's clubs, last handed to [SportLeagueView.stageGround].
+  SportMatch? _groundMatch;
+
+  /// The row the cursor last stood in. The page scrolls up or down only when
+  /// it changes rows: walking along one, the page stays where it is.
+  int? _boardFocusRow;
+
+  /// The clubs the table at the foot lights: the favourite's alone (Plebz,
+  /// the user's call — a tile says its clubs' places itself).
+  final _boardHighlight = ValueNotifier<Set<int>>(const {});
+  final Map<int, FocusNode> _tablePanelNodes = {};
+  final _tableScroll = ScrollController();
+  final _tableBlockKey = GlobalKey();
+
+  /// The table's panel at [index]: its first is [_boardTableNode], where the
+  /// cursor comes down to.
+  FocusNode _tablePanelNode(int index) => index == 0
+      ? _boardTableNode
+      : _tablePanelNodes.putIfAbsent(index, () => FocusNode(debugLabel: 'sport_table_panel_$index'));
 
   /// While a match is being played, how often its score is asked for again.
   static const _livePoll = Duration(seconds: 60);
@@ -147,6 +213,15 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
   }
 
   @override
+  void didUpdateWidget(covariant SportLeagueView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Back on show (Plebz): the screen's ground takes this league's stage.
+    if (widget.stageGround != oldWidget.stageGround) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _publishStageGround());
+    }
+  }
+
+  @override
   void dispose() {
     _liveTimer?.cancel();
     _viewToggleNode.dispose();
@@ -158,18 +233,58 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
     }
     _retryNode.dispose();
     _stageNode.dispose();
+    _boardStageNode.dispose();
+    _stagePreviousNode.dispose();
+    _stageNextNode.dispose();
+    _boardTableNode.dispose();
+    for (final node in [..._tileNodes.values, ..._roundNodes.values]) {
+      node.dispose();
+    }
+    for (final controller in [..._rowScrolls.values, _boardScroll]) {
+      controller.dispose();
+    }
+    _boardEdgeIn.dispose();
+    _boardHighlight.dispose();
+    for (final node in _tablePanelNodes.values) {
+      node.dispose();
+    }
+    _tableScroll.dispose();
     super.dispose();
   }
 
   FocusNode _matchNode(int id) => _matchNodes.putIfAbsent(id, () => FocusNode(debugLabel: 'sport_match_$id'));
 
-  /// The favourite club's game of the matchday on show (Plebz), which stands
-  /// on a stage over the rest; null without a favourite, or where it does not
-  /// play.
-  SportMatch? get _stage {
-    final club = SettingsService.instanceOrNull?.read(PlebzPrefs.sportFavouriteClub) ?? 0;
-    if (club == 0) return null;
-    return _matches.where((match) => match.home.id == club || match.away.id == club).firstOrNull;
+  /// The game of the matchday on show that stands on a stage over the rest,
+  /// and why ([sportStageFor], Plebz): a game on now, the favourite club's,
+  /// a German club's in a European cup, the next one.
+  ({SportMatch match, SportStageReason reason})? get _stagePick => sportStageFor(
+    _matches,
+    league: widget.league,
+    favouriteClub: SettingsService.instanceOrNull?.read(PlebzPrefs.sportFavouriteClub) ?? 0,
+    now: clock.now(),
+  );
+
+  SportMatch? get _stage => _stagePick?.match;
+
+  /// What the television's stage shows: the game stepped to, else the pick.
+  ({SportMatch match, SportStageReason reason})? get _boardStage {
+    final chosen = _stageMatchId;
+    if (chosen != null) {
+      final match = _matches.where((match) => match.id == chosen).firstOrNull;
+      if (match != null) return (match: match, reason: SportStageReason.next);
+    }
+    return _stagePick;
+  }
+
+  /// The stage one game on or back, in kickoff order. The arrow at an end
+  /// gives way: focus moves to the button beside it.
+  void _stepStage(SportMatch from, int by) {
+    final index = _matches.indexWhere((match) => match.id == from.id);
+    final target = index + by;
+    if (index < 0 || target < 0 || target >= _matches.length) return;
+    setState(() => _stageMatchId = _matches[target].id);
+    final atEnd = target == 0 || target == _matches.length - 1;
+    if (atEnd) WidgetsBinding.instance.addPostFrameCallback((_) => _boardStageNode.requestFocus());
   }
 
   /// The matchday's games in the list: all but the one on the stage.
@@ -297,6 +412,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
       _selected = order;
       _focusedMatch = null;
       _dayLoading = true;
+      _stageMatchId = null;
     });
     final matches = await _repo.matchday(widget.league, season, order);
     if (!mounted || generation != _generation) return;
@@ -392,38 +508,33 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
       builder: (context, _, _) => LayoutBuilder(
         builder: (context, constraints) {
           // Side by side wherever there is a table's width to spare; on a phone
-          // the table goes under the fixtures instead of crushing both into
+          // the table is a view of its own instead of crushing both into
           // columns too narrow for a club's name. Plebz: a handheld needs the
           // height for it too — a phone on its side squeezed the table's rows
           // to slivers beside the fixtures.
           final wide =
               constraints.maxWidth >= 720 &&
               (look.ocker || !PlatformDetector.isMobile(context) || constraints.maxHeight >= 480);
+          // The television (Plebz): the stage, the games as rows of tiles and
+          // the table at the foot, the way the start page is laid out.
+          // A phone or a tablet under the redesigns (Plebz): the same board
+          // for touch. A Mac keeps its list and the table beside it.
+          final touch = look.flat && PlatformDetector.isMobile(context);
+          _boardShown = look.ocker || touch;
+          if (look.ocker) {
+            _tableIsView = false;
+            return _buildBoard(look, constraints);
+          }
+          if (touch) {
+            _tableIsView = false;
+            return _buildTouchBoard(look, constraints);
+          }
+          // Off it, a table that is not beside the fixtures is a view of its
+          // own (Plebz): a European cup's, and on a phone a league's.
+          _tableIsView = widget.league.hasTable && (!widget.league.isDomestic || !wide);
           // A cup (Plebz): its fixtures take the page's width — a European
           // cup's table is a view of its own, the DFB-Pokal has none.
-          if (!_tableBeside) return _buildCupPage(look, constraints, wide: wide);
-          if (!wide) {
-            final bar = _buildMatchdayBar(look, compact: _isCompactBar(look, constraints.maxWidth));
-            return Column(
-              children: [
-                bar,
-                SizedBox(height: look.gap),
-                Expanded(
-                  child: ListView(
-                    padding: _listPadding(context),
-                    children: [
-                      if (_dayLoading || _matches.isEmpty)
-                        SizedBox(height: look.matchRowHeight * 3, child: _buildFixturesPlaceholder(look))
-                      else
-                        ..._matchItems(look, compact: _isCompact(look, constraints.maxWidth)),
-                      SizedBox(height: look.gap * 2),
-                      _SportTable(rows: _table, look: look, highlight: _highlightedTeams, league: widget.league),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          }
+          if (!_tableBeside || !wide) return _buildCupPage(look, constraints, wide: wide);
           final tableWidth = ((look.ocker ? 600 : 380) * look.scale).clamp(0.0, constraints.maxWidth * 0.46);
           // Under the redesign the table stands as far from the fixtures as
           // from the screen's edge — the page's own margin, both sides alike.
@@ -481,6 +592,366 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
             ],
           );
         },
+      ),
+    );
+  }
+
+  /// A phone's or a tablet's Sport page under the redesigns (Plebz): the
+  /// television's board for touch — the bar, the stage and the games as
+  /// tiles by day (a cup's evening by kickoff, a European cup's German clubs
+  /// first). Narrow, the tiles stand under one another and a switch under
+  /// the stage turns the page to the table; with room for two columns they
+  /// pair up; a tablet held across keeps the table beside them.
+  Widget _buildTouchBoard(SportLook look, BoxConstraints constraints) {
+    final locale = LocaleSettings.currentLocale.intlLocaleName;
+    final pick = _dayLoading || _matches.isEmpty ? null : _boardStage;
+    if (_groundMatch?.id != pick?.match.id) {
+      _groundMatch = pick?.match;
+      // After the frame: the ground is built above this page.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _publishStageGround());
+    }
+    final bar = _buildTouchBar(look);
+    if (_dayLoading || _matches.isEmpty) {
+      return Column(
+        children: [
+          bar,
+          Expanded(child: _buildFixturesPlaceholder(look)),
+        ],
+      );
+    }
+    const gap = 12.0;
+    const tableWidth = 360.0;
+    final hasTable = widget.league.hasTable && _table.isNotEmpty;
+    final beside = hasTable && constraints.maxWidth >= 1000;
+    final width = beside ? constraints.maxWidth - tableWidth - 2 * gap : constraints.maxWidth;
+    final columns = width >= 640 ? 2 : 1;
+    final tileWidth = (width - gap * (columns - 1)) / columns;
+    final rows = sportBoardRows(_matches, league: widget.league);
+    _boardRows = rows;
+    final places = {for (final row in _table) row.team.id: row.position};
+    final children = <Widget>[
+      if (pick != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 12, bottom: 8),
+          child: _buildTouchStage(look, pick, locale, wide: width >= 640),
+        ),
+      if (hasTable && !beside) _buildViewSwitch(look),
+      if (hasTable && !beside && _showTable)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: _SportTable(
+            rows: _table,
+            look: look,
+            highlight: const {},
+            league: widget.league,
+            splitAt: width >= 760 ? (_table.length + 1) ~/ 2 : null,
+            // The switch over it already says what it is.
+            showTitle: false,
+          ),
+        )
+      else
+        for (var i = 0; i < rows.length; i++) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 20, bottom: 8, left: 2),
+            child: _touchRowHeading(_boardRowLabel(rows, i, locale)),
+          ),
+          for (var start = 0; start < rows[i].matches.length; start += columns)
+            Padding(
+              padding: const EdgeInsets.only(bottom: gap),
+              child: Row(
+                children: [
+                  for (var c = 0; c < columns; c++) ...[
+                    if (c > 0) const SizedBox(width: gap),
+                    if (start + c < rows[i].matches.length)
+                      _buildTouchTile(
+                        look,
+                        rows[i].matches[start + c],
+                        tileWidth,
+                        places: places,
+                        // The German clubs' row runs over the days.
+                        date: rows[i].kind == SportBoardRowKind.germanClubs
+                            ? DateFormat.MMMEd(locale).format(rows[i].matches[start + c].kickoff.toLocal())
+                            : null,
+                      )
+                    else
+                      SizedBox(width: tileWidth),
+                  ],
+                ],
+              ),
+            ),
+        ],
+    ];
+    final page = Column(
+      children: [
+        bar,
+        Expanded(
+          child: ListView(
+            controller: _boardScroll,
+            padding: _listPadding(context).add(const EdgeInsets.only(bottom: 24)),
+            children: children,
+          ),
+        ),
+      ],
+    );
+    if (!beside) return page;
+    return Row(
+      crossAxisAlignment: .start,
+      children: [
+        Expanded(child: page),
+        const SizedBox(width: 2 * gap),
+        Container(
+          width: tableWidth,
+          // Clear of a tablet's navigation bar, as the panel beside the list,
+          // and the panel as tall as the page: its rows close up to fit, the
+          // key under them included — run on past the foot, the table was cut
+          // off at the screen's edge.
+          padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom + 16),
+          child: _SportTable(rows: _table, look: look, highlight: const {}, league: widget.league, fitHeight: true),
+        ),
+      ],
+    );
+  }
+
+  /// A touch board row's name as the start page names its rows on this
+  /// device ([HubSection], Plebz): Glas's bold sentence case, Flach's mono
+  /// label in capitals.
+  Widget _touchRowHeading(String label) {
+    final type = OckerType.of(context);
+    final base = Theme.of(context).textTheme.titleLarge;
+    if (type.glasHeadings) {
+      return Text(
+        label,
+        maxLines: 1,
+        overflow: .ellipsis,
+        style: type.sectionHeading.copyWith(color: base?.color),
+      );
+    }
+    return Text(
+      label.toUpperCase(),
+      maxLines: 1,
+      overflow: .ellipsis,
+      style: base?.copyWith(
+        fontFamily: tokens(context).monoFontFamily,
+        fontSize: (base.fontSize ?? 22) * 0.62,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 1.8,
+      ),
+    );
+  }
+
+  /// The touch board's bar: the matchday between its two arrows, as on the
+  /// television; the middle opens the whole season.
+  Widget _buildTouchBar(SportLook look) {
+    final (previous, next) = _neighbours;
+    const height = 48.0;
+    return SizedBox(
+      height: height,
+      child: Row(
+        children: [
+          _buildArrow(
+            look,
+            compact: true,
+            node: _previousNode,
+            icon: Symbols.chevron_left_rounded,
+            target: previous,
+            label: previous == null ? null : _label(previous),
+            onNavigateLeft: widget.onExitLeft ?? () {},
+            onNavigateRight: _matchdayNode.requestFocus,
+          ),
+          Expanded(
+            child: FocusableWrapper(
+              focusNode: _matchdayNode,
+              borderRadius: height / 2,
+              useBackgroundFocus: true,
+              glassFocus: true,
+              onSelect: () => unawaited(_chooseMatchday()),
+              onNavigateLeft: _previousNode.requestFocus,
+              onNavigateRight: _nextNode.requestFocus,
+              onNavigateUp: widget.onExitUp,
+              onNavigateDown: _focusFirstMatch,
+              child: Center(
+                child: FittedBox(fit: BoxFit.scaleDown, child: _boardMatchdayWord(look, height, 15)),
+              ),
+            ),
+          ),
+          _buildArrow(
+            look,
+            compact: true,
+            node: _nextNode,
+            icon: Symbols.chevron_right_rounded,
+            target: next,
+            label: next == null ? null : _label(next),
+            onNavigateLeft: _matchdayNode.requestFocus,
+            onNavigateRight: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The touch board's stage: a swipe steps through the games, as the arrows
+  /// do on a tablet (and on the television); a phone shows where it stands
+  /// with dots under "Zum Spiel".
+  Widget _buildTouchStage(
+    SportLook look,
+    ({SportMatch match, SportStageReason reason}) pick,
+    String locale, {
+    required bool wide,
+  }) {
+    final match = pick.match;
+    final index = _matches.indexWhere((game) => game.id == match.id);
+    final count = _matches.length;
+    void step(int by) => _stepStage(match, by);
+    final v2 = ockerGlasV2(context);
+    const height = 44.0;
+    const shape = StadiumBorder();
+    final button = OckerPlayGround(
+      v2: v2,
+      focused: false,
+      shape: shape,
+      radius: height / 2,
+      child: FilledButton(
+        onPressed: () => _openMatch(match),
+        style: ButtonStyle(
+          backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+          foregroundColor: WidgetStatePropertyAll(OckerPlayGround.foreground(context, v2: v2)),
+          padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 22)),
+          minimumSize: const WidgetStatePropertyAll(Size(0, height)),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          shape: const WidgetStatePropertyAll(shape),
+        ),
+        child: Text(t.sport.toMatch, style: const TextStyle(fontSize: 15, fontWeight: .w700)),
+      ),
+    );
+    Widget arrow(IconData icon, int by, String tooltip) {
+      final enabled = index + by >= 0 && index + by < count;
+      return IconButton(
+        tooltip: tooltip,
+        onPressed: enabled ? () => step(by) : null,
+        icon: AppIcon(icon, size: 24, color: look.ink(enabled ? 0.85 : 0.2)),
+      );
+    }
+
+    final Widget action;
+    if (wide) {
+      action = Row(
+        mainAxisSize: .min,
+        children: [
+          button,
+          const SizedBox(width: 8),
+          arrow(Symbols.chevron_left_rounded, -1, t.sport.previousMatch),
+          arrow(Symbols.chevron_right_rounded, 1, t.sport.nextOnStage),
+        ],
+      );
+    } else {
+      action = Column(
+        mainAxisSize: .min,
+        children: [
+          button,
+          // As many dots as games, while they fit on a line.
+          if (count > 1 && count <= 12) ...[
+            const SizedBox(height: 10),
+            Row(
+              mainAxisSize: .min,
+              children: [
+                for (var i = 0; i < count; i++)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    width: i == index ? 14 : 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: look.ink(i == index ? 0.95 : 0.35),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      );
+    }
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+        if (velocity.abs() < 200) return;
+        step(velocity < 0 ? 1 : -1);
+      },
+      child: SportTouchStage(
+        match: match,
+        reason: pick.reason,
+        look: look,
+        locale: locale,
+        wide: wide,
+        position: _stageMatchId == null || index < 0 ? null : t.sport.stagePosition(n: index + 1, total: count),
+        action: action,
+      ),
+    );
+  }
+
+  /// "Spiele | Tabelle" under a phone's stage (Plebz): the two views of the
+  /// page, the one on show in the chosen wash.
+  Widget _buildViewSwitch(SportLook look) {
+    const height = 36.0;
+    Widget part(String label, bool chosen, bool table) => Expanded(
+      child: SportTap(
+        onTap: () => setState(() => _showTable = table),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          height: height,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: chosen ? look.tk.accent.withValues(alpha: ockerV2ChosenWash) : null,
+            borderRadius: BorderRadius.circular(height / 2),
+          ),
+          child: Text(
+            label,
+            style: look.time.copyWith(
+              fontSize: 15,
+              fontWeight: chosen ? .w600 : .w500,
+              color: look.ink(chosen ? 1 : 0.62),
+            ),
+          ),
+        ),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(color: look.ink(0.08), borderRadius: BorderRadius.circular(height / 2 + 3)),
+        child: Row(children: [part(t.sport.fixtures, !_showTable, false), part(t.sport.table, _showTable, true)]),
+      ),
+    );
+  }
+
+  /// One game of the touch board: a tap opens it, as a line of the list did.
+  Widget _buildTouchTile(
+    SportLook look,
+    SportMatch match,
+    double width, {
+    required Map<int, int> places,
+    String? date,
+  }) {
+    final score = match.scoreAt(clock.now());
+    return FocusableWrapper(
+      focusNode: _matchNode(match.id),
+      borderRadius: artworkRadius(context),
+      disableScale: true,
+      semanticLabel: [match.home.name, match.away.name, if (score != null) score.toString()].join(', '),
+      onSelect: () => _openMatch(match),
+      child: SportTap(
+        onTap: () => _openMatch(match),
+        child: SportGameTile(
+          match: match,
+          width: width,
+          touchHeight: 104,
+          look: look,
+          homePlace: places[match.home.id],
+          awayPlace: places[match.away.id],
+          date: date,
+        ),
       ),
     );
   }
@@ -557,6 +1028,811 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
         : Text(t.sport.noMatches, style: look.body.copyWith(color: look.ink(0.6))),
   );
 
+  // ---------------------------------------------------------------- board
+
+  FocusNode _tileNode(int row, int match) =>
+      _tileNodes.putIfAbsent('$row:$match', () => FocusNode(debugLabel: 'sport_tile_${row}_$match'));
+
+  FocusNode _roundNode(int order) => _roundNodes.putIfAbsent(order, () => FocusNode(debugLabel: 'sport_round_$order'));
+
+  ScrollController _rowScroll(int row) => _rowScrolls.putIfAbsent(row, ScrollController.new);
+
+  int get _favouriteClub => SettingsService.instanceOrNull?.read(PlebzPrefs.sportFavouriteClub) ?? 0;
+
+  /// What stands under the rows: the table, or the DFB-Pokal's rounds.
+  bool get _boardHasFoot => widget.league.hasTable ? _table.isNotEmpty : _matchdays.isNotEmpty;
+
+  void _focusBoardEntry() {
+    if (_stage != null) return _boardStageNode.requestFocus();
+    _focusTile(0, 0);
+  }
+
+  /// One tile's width with the gap after it, from the board's last build.
+  double _boardStride = 1;
+
+  /// Focus on the tile at [column] of [row]. A row only builds the tiles in
+  /// view, so one scrolled out of it is brought in first and focused once it
+  /// is there — asked for before, the request went nowhere and the cursor
+  /// stayed where it was.
+  void _focusTile(int row, int column) {
+    if (row < 0 || row >= _boardRows.length) return;
+    final games = _boardRows[row].matches;
+    if (games.isEmpty) return;
+    final place = column.clamp(0, games.length - 1);
+    final node = _tileNode(row, games[place].id);
+    if (node.context != null) return node.requestFocus();
+    final controller = _rowScroll(row);
+    if (controller.hasClients) {
+      final position = controller.position;
+      controller.jumpTo((place * _boardStride).clamp(position.minScrollExtent, position.maxScrollExtent));
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && node.context != null) node.requestFocus();
+    });
+  }
+
+  /// UP or DOWN from the tile at [column] of [from]: the tile of [to] that
+  /// stands under it on the screen — the rows are scrolled each its own way,
+  /// so the same place in the row can be far off to one side.
+  void _focusRow(int from, int column, int to) {
+    if (to < 0 || to >= _boardRows.length) return;
+    double offset(int row) => _rowScroll(row).hasClients ? _rowScroll(row).offset : 0;
+    final x = column * _boardStride - offset(from);
+    final place = ((x + offset(to)) / _boardStride).round();
+    _focusTile(to, place.clamp(0, _boardRows[to].matches.length - 1));
+  }
+
+  /// The table's panel the cursor last stood on, to come back down to.
+  int _tablePanel = 0;
+
+  /// The table's panels' width with the gap after, from the board's last
+  /// build.
+  double _tableStride = 1;
+
+  /// DOWN from the last row: the table's panel last stood on — brought into
+  /// view first where the row of panels has scrolled it away, as a tile is
+  /// ([_focusTile]) — or the DFB-Pokal's round on show.
+  void _focusBoardFoot() {
+    if (!_boardHasFoot) return;
+    if (widget.league.hasTable) {
+      final node = _tablePanelNode(_tablePanel);
+      if (node.context != null) return node.requestFocus();
+      if (_tableScroll.hasClients) {
+        final position = _tableScroll.position;
+        _tableScroll.jumpTo((_tablePanel * _tableStride).clamp(position.minScrollExtent, position.maxScrollExtent));
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && node.context != null) node.requestFocus();
+      });
+      return;
+    }
+    final order = _selected ?? _matchdays.first.order;
+    _roundNode(_matchdays.any((day) => day.order == order) ? order : _matchdays.first.order).requestFocus();
+  }
+
+  /// Keeps the tile at [column] of [row] in view as the cursor walks the row:
+  /// the row scrolls only as far as it has to.
+  ///
+  /// The row runs from one edge of the screen to the other: a tile stops at
+  /// the page's margins — [start] on the left, [end] on the right — and
+  /// whatever lies past them is cut by the screen's edge, not the page's.
+  void _revealTile(int row, int column, double tileWidth, double gap, {required double start, required double end}) {
+    final controller = _rowScroll(row);
+    if (!controller.hasClients) return;
+    final position = controller.position;
+    // Where the tile stands in the row, its first tile at [start].
+    final left = start + column * (tileWidth + gap);
+    final right = left + tileWidth;
+    var target = position.pixels;
+    if (left - target < start) target = left - start;
+    if (right - target > position.viewportDimension - end) target = right - (position.viewportDimension - end);
+    target = target.clamp(position.minScrollExtent, position.maxScrollExtent);
+    if ((target - position.pixels).abs() < 1) return;
+    unawaited(
+      controller.animateTo(target, duration: FocusTheme.navigationScrollDuration(), curve: Curves.easeOutCubic),
+    );
+  }
+
+  /// Hands the stage's clubs to the screen's ground, fading as the page
+  /// scrolls down past the stage.
+  void _publishStageGround() {
+    final target = widget.stageGround;
+    if (target == null || !mounted) return;
+    final match = _boardShown ? _groundMatch : null;
+    final offset = _boardScroll.hasClients ? _boardScroll.offset : 0.0;
+    final fade = (1 - offset / (360 * ockerScale(context))).clamp(0.0, 1.0);
+    final next = match == null
+        ? null
+        : SportStageGround(home: clubColourFor(match.home), away: clubColourFor(match.away), opacity: fade);
+    if (target.value != next) target.value = next;
+  }
+
+  /// The matchday's name, its dates and "aktuell", as the one word of the
+  /// board's bar between its arrows.
+  Widget _boardMatchdayWord(SportLook look, double height, double size) {
+    final selected = _selected;
+    final label = selected == null ? '' : _label(selected);
+    final dates = _dateRange(LocaleSettings.currentLocale.intlLocaleName);
+    final isCurrent = selected != null && selected == _currentMatchday;
+    final base = OckerType.of(context).spotlightFacts.copyWith(fontSize: size, height: 1);
+    return KeyedSubtree(
+      key: _matchdayKey,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => unawaited(_chooseMatchday()),
+        child: SizedBox(
+          height: height,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: height * 0.38),
+            child: Center(
+              widthFactor: 1,
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: label,
+                      style: TextStyle(color: look.ink(1), fontWeight: .w700),
+                    ),
+                    if (dates != null) TextSpan(text: ' · $dates'),
+                    if (isCurrent) const TextSpan(text: ' · '),
+                    if (isCurrent)
+                      TextSpan(
+                        text: t.sport.current,
+                        style: TextStyle(color: look.live, fontWeight: .w600),
+                      ),
+                  ],
+                ),
+                maxLines: 1,
+                style: base.copyWith(color: look.ink(0.7)),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A row of the board's buttons on one band of glass, as a detail page's
+  /// are: focus the band's capsule gliding along them; Flach's discs and
+  /// capsules mark their own.
+  Widget _boardBand(FocusableActionBar bar) => ockerGlass(context) && !ockerFlat(context)
+      ? OckerGlassBand(overhang: EdgeInsets.all(ockerBandMargin(context)), liquidBubble: true, child: bar)
+      : bar;
+
+  /// The board's bar: the league's name, and beside it the matchday between
+  /// its two arrows on one band (Plebz), in the size of a detail page's
+  /// buttons. The middle opens the whole season.
+  Widget _buildBoardBar(SportLook look) {
+    final tvScale = TvLayoutConstants.scaleOf(context);
+    final size = 46 * tvScale;
+    final (previous, next) = _neighbours;
+    final glass = ockerGlass(context) && !ockerFlat(context);
+    return Row(
+      children: [
+        Text(
+          sportLeagueName(widget.league),
+          style: OckerType.of(context).spotlightFacts.copyWith(fontSize: 17 * tvScale, color: look.ink(0.62)),
+        ),
+        SizedBox(width: 20 * tvScale),
+        _boardBand(
+          FocusableActionBar(
+            glyphDiameter: size,
+            spacing: glass ? 4 * tvScale : 10 * tvScale,
+            wrapBuiltAction: glass
+                ? (context, state, child) =>
+                      OckerWordFocus(focused: state.showFocus, outset: EdgeInsets.zero, child: child)
+                : null,
+            onNavigateUp: widget.onExitUp,
+            onNavigateDown: _focusFirstMatch,
+            onNavigateLeft: widget.onExitLeft,
+            actions: [
+              FocusableAction(
+                debugLabel: 'sport_matchday_previous',
+                focusNode: _previousNode,
+                icon: Symbols.chevron_left_rounded,
+                tooltip: previous == null ? null : _label(previous),
+                onPressed: previous == null ? null : () => unawaited(_selectMatchday(previous)),
+              ),
+              FocusableAction(
+                debugLabel: 'sport_matchday',
+                focusNode: _matchdayNode,
+                onPressed: () => unawaited(_chooseMatchday()),
+                builder: (context, state) => _boardMatchdayWord(look, size, 17 * tvScale),
+              ),
+              FocusableAction(
+                debugLabel: 'sport_matchday_next',
+                focusNode: _nextNode,
+                icon: Symbols.chevron_right_rounded,
+                tooltip: next == null ? null : _label(next),
+                onPressed: next == null ? null : () => unawaited(_selectMatchday(next)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The stage's buttons: "Zum Spiel" — a detail page's play button, on the
+  /// same ground ([OckerPlayGround]) at the same size — and beside it two
+  /// arrows that step the stage through the matchday's games (Plebz).
+  Widget _buildStageAction(SportLook look, SportMatch match) {
+    final index = _matches.indexWhere((game) => game.id == match.id);
+    final tvScale = TvLayoutConstants.scaleOf(context);
+    final size = 46 * tvScale;
+    final v2 = ockerGlasV2(context);
+    final glass = ockerGlass(context) && !ockerFlat(context);
+    final foreground = OckerPlayGround.foreground(context, v2: v2);
+    const shape = StadiumBorder();
+    void open() => _openMatch(match);
+    return _boardBand(
+      FocusableActionBar(
+        wrapBuiltAction: glass
+            ? (context, state, child) => OckerWordFocus(focused: state.showFocus, outset: EdgeInsets.zero, child: child)
+            : null,
+        glyphDiameter: size,
+        spacing: glass ? 16 * tvScale : 10 * tvScale,
+        onNavigateUp: _focusMatchdayButton,
+        onNavigateDown: () => _focusTile(0, 0),
+        onNavigateLeft: widget.onExitLeft,
+        onFocusChange: (focused) {
+          if (!focused) return;
+          _boardFocusRow = null;
+          _boardToTop();
+        },
+        actions: [
+          FocusableAction(
+            debugLabel: 'sport_board_stage',
+            focusNode: _boardStageNode,
+            onPressed: open,
+            staysLit: v2 && ockerFrost(context),
+            builder: (context, state) => SizedBox(
+              height: size,
+              child: OckerPlayGround(
+                v2: v2,
+                focused: state.showFocus,
+                shape: shape,
+                radius: size / 2,
+                child: FilledButton(
+                  onPressed: open,
+                  style: ButtonStyle(
+                    backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+                    foregroundColor: WidgetStatePropertyAll(foreground),
+                    overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+                    padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 22 * tvScale)),
+                    minimumSize: WidgetStatePropertyAll(Size(0, size)),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: const WidgetStatePropertyAll(shape),
+                  ),
+                  child: Text(
+                    t.sport.toMatch,
+                    style: TextStyle(fontSize: 17 * tvScale, fontWeight: .w700),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          FocusableAction(
+            debugLabel: 'sport_stage_previous',
+            focusNode: _stagePreviousNode,
+            icon: Symbols.chevron_left_rounded,
+            tooltip: t.sport.previousMatch,
+            onPressed: index > 0 ? () => _stepStage(match, -1) : null,
+          ),
+          FocusableAction(
+            debugLabel: 'sport_stage_next',
+            focusNode: _stageNextNode,
+            icon: Symbols.chevron_right_rounded,
+            tooltip: t.sport.nextOnStage,
+            onPressed: index >= 0 && index < _matches.length - 1 ? () => _stepStage(match, 1) : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The television's Sport page (Plebz): the bar, the stage with the game
+  /// that matters most just now, the games as rows of tiles — by day, or for
+  /// a cup by kickoff, a European cup's German clubs first — and at the foot
+  /// the table in two columns, or the DFB-Pokal's way to the final. The sizes
+  /// are the start page's: a 28 heading over each row, tiles 520 wide.
+  Widget _buildBoard(SportLook look, BoxConstraints constraints) {
+    final bar = _buildBoardBar(look);
+    final locale = LocaleSettings.currentLocale.intlLocaleName;
+    final pick = _dayLoading || _matches.isEmpty ? null : _boardStage;
+    if (_groundMatch?.id != pick?.match.id) {
+      _groundMatch = pick?.match;
+      // After the frame: the ground is built above this page.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _publishStageGround());
+    }
+    final s = look.scale;
+    // The page runs from one edge of the screen to the other (Plebz): a row's
+    // tiles come in from the right edge and leave at the left one, as on the
+    // start page, and a ring of focus is never cut by the page. What is not a
+    // row keeps to the margins inside.
+    final start = ockerFlushLeftInset(context);
+    final margin = OckerLayout.safeMargin * s;
+    Widget inside(Widget child) => Padding(
+      padding: EdgeInsets.only(left: start, right: margin),
+      child: child,
+    );
+    if (_dayLoading || _matches.isEmpty) {
+      return Column(
+        crossAxisAlignment: .start,
+        children: [
+          inside(bar),
+          Expanded(child: inside(_buildFixturesPlaceholder(look))),
+        ],
+      );
+    }
+    final rows = sportBoardRows(_matches, league: widget.league);
+    _boardRows = rows;
+    final favourite = _favouriteClub;
+    _boardHighlight.value = favourite == 0 ? const {} : {favourite};
+    final places = {for (final row in _table) row.team.id: row.position};
+
+    final gap = 24 * s;
+    final tileWidth = 520 * s;
+    _boardStride = tileWidth + gap;
+    // Room round a tile for its ring and its growth, inside the row.
+    final lead = 14 * s;
+    final rowHeading = OckerType.of(context).sectionHeading;
+
+    final children = <Widget>[
+      if (pick != null)
+        inside(
+          Padding(
+            padding: EdgeInsets.only(top: 72 * s, bottom: 16 * s),
+            child: SportStageHero(
+              match: pick.match,
+              reason: pick.reason,
+              look: look,
+              locale: locale,
+              position: _stageMatchId == null
+                  ? null
+                  : t.sport.stagePosition(n: _matches.indexOf(pick.match) + 1, total: _matches.length),
+              action: _buildStageAction(look, pick.match),
+            ),
+          ),
+        ),
+      for (var i = 0; i < rows.length; i++)
+        _buildBoardRow(
+          look,
+          rows,
+          i,
+          locale,
+          tileWidth: tileWidth,
+          gap: gap,
+          lead: lead,
+          start: start,
+          endRoom: margin,
+          heading: rowHeading,
+          hasStage: pick != null,
+          places: places,
+        ),
+      if (_boardHasFoot && widget.league.hasTable)
+        Padding(
+          padding: EdgeInsets.only(top: 48 * s),
+          child: _buildBoardTable(look, rowHeading, start: start, margin: margin, width: constraints.maxWidth),
+        )
+      else if (_boardHasFoot)
+        inside(
+          Padding(
+            padding: EdgeInsets.only(top: 48 * s),
+            child: _buildRounds(look, rowHeading),
+          ),
+        ),
+    ];
+    return Column(
+      crossAxisAlignment: .start,
+      children: [
+        inside(bar),
+        Expanded(
+          // As the start page's rows (Plebz): what glides up under the bar
+          // dissolves into it while it moves, and at rest a row stands whole
+          // at the top with nothing drawn offscreen; a weak box keeps the
+          // plain clip.
+          child: OckerGlideEdge(
+            listenable: Listenable.merge([_boardScroll, _boardEdgeIn]),
+            strength: _boardEdgeStrength,
+            fadeHeight: 72 * s,
+            child: SingleChildScrollView(
+              controller: _boardScroll,
+              padding: _listPadding(context).add(EdgeInsets.only(bottom: 48 * s)),
+              child: Column(crossAxisAlignment: .start, children: children),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Brings [row] up once the cursor has moved into it, at its tile for
+  /// [match]: the first row back to the top, where the stage is; another to
+  /// the top of the page, under the bar, as the start page brings its row
+  /// up (Plebz).
+  void _revealRow(int row, int match) {
+    if (row == 0) return _boardToTop();
+    // The whole row, its heading over the tiles: brought up from the table
+    // with the tiles alone, the heading stayed cut under the bar.
+    _revealBox(() => _rowKeys[row]?.currentContext ?? _tileNode(row, match).context);
+  }
+
+  /// Glides the page until the box at [of] stands at its top, under the bar,
+  /// [room] below it: in this frame where the box is laid out, as the start
+  /// page starts its glide, after it where it has only just been built.
+  ///
+  /// A row brings its own room above its heading, so it stands at the very
+  /// top as the start page's row does — any lower, and the bottom of the row
+  /// above showed as a strip under the bar.
+  void _revealBox(BuildContext? Function() of, {double room = 0}) {
+    if (_glideToBox(of, room)) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _glideToBox(of, room));
+  }
+
+  bool _glideToBox(BuildContext? Function() of, double room) {
+    final context = of();
+    if (!mounted || !_boardScroll.hasClients || context == null || !context.mounted) return false;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return false;
+    final viewport = _boardScroll.position.context.notificationContext?.findRenderObject() as RenderBox?;
+    if (viewport == null) return false;
+    final top = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+    final position = _boardScroll.position;
+    _boardGlide(position.pixels + top - room);
+    return true;
+  }
+
+  /// Back to the top of the page, where the stage is: the first row and the
+  /// stage share the first screen.
+  void _boardToTop() {
+    if (!_boardScroll.hasClients || _boardScroll.offset <= 0) return;
+    _boardGlide(0);
+  }
+
+  /// The page's one way of moving up and down: at the start page's pace
+  /// ([FocusTheme.navigationScrollDuration] — the quick step on a weak box),
+  /// the top edge soft only while it glides.
+  void _boardGlide(double to) {
+    final position = _boardScroll.position;
+    final target = to.clamp(position.minScrollExtent, position.maxScrollExtent).toDouble();
+    if ((target - position.pixels).abs() < 1) return;
+    _boardGlideTarget = target;
+    if (!DevicePerformance.isReduced) unawaited(_boardEdgeIn.forward());
+    unawaited(
+      _boardScroll
+          .animateTo(target, duration: FocusTheme.navigationScrollDuration(), curve: Curves.easeOutCubic)
+          .whenComplete(() {
+            // A newer glide has taken over and keeps the edge.
+            if (!mounted || _boardGlideTarget != target) return;
+            _boardGlideTarget = null;
+            unawaited(_boardEdgeIn.reverse());
+          }),
+    );
+  }
+
+  /// How soft the top edge is just now: eased in, and cleared over a glide's
+  /// last stretch.
+  double _boardEdgeStrength() {
+    var strength = _boardEdgeIn.value;
+    final target = _boardGlideTarget;
+    if (target != null && _boardScroll.hasClients) {
+      final remaining = (_boardScroll.offset - target).abs();
+      strength = math.min(strength, (remaining / (140 * ockerScale(context))).clamp(0.0, 1.0));
+    }
+    return strength;
+  }
+
+  String _boardRowLabel(List<SportBoardRow> rows, int index, String locale) {
+    final row = rows[index];
+    final previous = index > 0 ? rows[index - 1] : null;
+    return switch (row.kind) {
+      SportBoardRowKind.germanClubs => t.sport.withGermanClubs,
+      SportBoardRowKind.day => _dayLabel(row.day, locale),
+      SportBoardRowKind.kickoff =>
+        '${row.sameDayAs(previous) ? DateFormat.EEEE(locale).format(row.day) : _dayLabel(row.day, locale)}'
+            ' · ${DateFormat.Hm(locale).format(row.kickoff!)}',
+    };
+  }
+
+  Widget _buildBoardRow(
+    SportLook look,
+    List<SportBoardRow> rows,
+    int index,
+    String locale, {
+    required double tileWidth,
+    required double gap,
+    required double lead,
+    required double start,
+    required double endRoom,
+    required TextStyle heading,
+    required bool hasStage,
+    required Map<int, int> places,
+  }) {
+    final s = look.scale;
+    final row = rows[index];
+    final games = row.matches;
+    final tileHeight = tileWidth / sportTileAspect;
+    final last = index == rows.length - 1;
+    return Padding(
+      key: _rowKeys.putIfAbsent(index, GlobalKey.new),
+      padding: EdgeInsets.only(top: 40 * s),
+      child: Column(
+        crossAxisAlignment: .start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: start),
+            child: Text(
+              look.headingCase(_boardRowLabel(rows, index, locale)),
+              style: heading.copyWith(color: look.ink(1)),
+            ),
+          ),
+          SizedBox(height: 6 * s),
+          SizedBox(
+            height: tileHeight + 2 * lead,
+            child: ListView.separated(
+              controller: _rowScroll(index),
+              scrollDirection: Axis.horizontal,
+              physics: const ClampingScrollPhysics(),
+              // The next tile peeks past the page's margin, as on the start
+              // page, rather than stopping at a cut.
+              clipBehavior: Clip.none,
+              // The last tile can come in as far as the page's margin.
+              padding: EdgeInsets.fromLTRB(start, lead, endRoom, lead),
+              itemCount: games.length,
+              separatorBuilder: (_, _) => SizedBox(width: gap),
+              itemBuilder: (context, column) {
+                final match = games[column];
+                return FocusableWrapper(
+                  focusNode: _tileNode(index, match.id),
+                  borderRadius: artworkRadius(context),
+                  focusScale: FocusTheme.focusScaleFor(context, 1.04),
+                  // The page's scrolling is the board's own ([_revealRow]): the
+                  // wrapper's, and going back to the top for the first row, took
+                  // turns and the row bobbed up and down along a walk.
+                  autoScroll: false,
+                  semanticLabel: [
+                    match.home.name,
+                    match.away.name,
+                    if (match.scoreAt(clock.now()) case final score?)
+                      score.toString()
+                    else
+                      DateFormat.Hm(locale).format(match.kickoff.toLocal()),
+                  ].join(', '),
+                  onFocusChange: (focused) {
+                    if (!focused) return;
+                    _revealTile(index, column, tileWidth, gap, start: start, end: endRoom);
+                    if (index != _boardFocusRow) {
+                      _boardFocusRow = index;
+                      _revealRow(index, match.id);
+                    }
+                  },
+                  onSelect: () => _openMatch(match),
+                  onNavigateLeft: column > 0 ? () => _focusTile(index, column - 1) : (widget.onExitLeft ?? () {}),
+                  onNavigateRight: column < games.length - 1 ? () => _focusTile(index, column + 1) : () {},
+                  onNavigateUp: index > 0
+                      ? () => _focusRow(index, column, index - 1)
+                      : hasStage
+                      ? _boardStageNode.requestFocus
+                      : _focusMatchdayButton,
+                  onNavigateDown: last
+                      ? (_boardHasFoot ? _focusBoardFoot : () {})
+                      : () => _focusRow(index, column, index + 1),
+                  // BACK walks to the row's start first, as on the start page.
+                  onBack: column > 0 ? () => _focusTile(index, 0) : _focusMatchdayButton,
+                  child: SportTap(
+                    onTap: () => _openMatch(match),
+                    child: SportGameTile(
+                      match: match,
+                      width: tileWidth,
+                      look: look,
+                      homePlace: places[match.home.id],
+                      awayPlace: places[match.away.id],
+                      // The German clubs' row runs over the days (Plebz).
+                      date: row.kind == SportBoardRowKind.germanClubs
+                          ? DateFormat.MMMEd(locale).format(match.kickoff.toLocal())
+                          : null,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The table at the foot of the page (Plebz): its two halves on two flat
+  /// panels side by side, under a row's heading. Read, not walked: one stop
+  /// for the cursor, so a remote can get down to it — both panels ringed
+  /// while it holds focus, neither grown.
+  Widget _buildBoardTable(
+    SportLook look,
+    TextStyle heading, {
+    required double start,
+    required double margin,
+    required double width,
+  }) {
+    final s = look.scale;
+    final played = _table.fold<int>(0, (most, row) => math.max(most, row.played));
+    final panels = sportTablePanels(_table);
+    final gap = 48 * s;
+    // Two panels side by side between the page's margins; more come in from
+    // the right as the cursor walks on.
+    final panelWidth = ((width - start - margin - gap) / 2).clamp(320 * s, double.infinity).toDouble();
+    final panelHeight = sportTablePanelHeight(panels.first.length) * s;
+    _tableStride = panelWidth + gap;
+    if (_tablePanel >= panels.length) _tablePanel = 0;
+    // UP from a panel: the tile standing over it in the last row.
+    void up(int index) {
+      final last = _boardRows.length - 1;
+      if (last < 0) return;
+      final x = index * _tableStride - (_tableScroll.hasClients ? _tableScroll.offset : 0);
+      final rowOffset = _rowScroll(last).hasClients ? _rowScroll(last).offset : 0;
+      _focusTile(last, ((x + rowOffset) / _boardStride).round());
+    }
+
+    void reveal(int index) {
+      if (!_tableScroll.hasClients) return;
+      final position = _tableScroll.position;
+      final left = start + index * (panelWidth + gap);
+      final right = left + panelWidth;
+      var target = position.pixels;
+      if (left - target < start) target = left - start;
+      if (right - target > position.viewportDimension - margin) target = right - (position.viewportDimension - margin);
+      target = target.clamp(position.minScrollExtent, position.maxScrollExtent);
+      if ((target - position.pixels).abs() < 1) return;
+      unawaited(
+        _tableScroll.animateTo(target, duration: FocusTheme.navigationScrollDuration(), curve: Curves.easeOutCubic),
+      );
+    }
+
+    return Column(
+      key: _tableBlockKey,
+      crossAxisAlignment: .start,
+      children: [
+        // Named as a row of tiles is, with how far the season has come beside
+        // it.
+        Padding(
+          padding: EdgeInsets.only(left: start, right: margin),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: look.headingCase(t.sport.table)),
+                      if (played > 0)
+                        TextSpan(
+                          text: '   ${t.sport.tableAfter(n: played)}',
+                          style: OckerType.of(
+                            context,
+                          ).spotlightFacts.copyWith(color: look.ink(0.55), fontSize: heading.fontSize! * 0.66),
+                        ),
+                    ],
+                  ),
+                  style: heading.copyWith(color: look.ink(1)),
+                ),
+              ),
+              // More panels than the screen holds (Plebz): arrows say which
+              // way the table goes on.
+              if (panels.length > 2)
+                ListenableBuilder(
+                  listenable: _tableScroll,
+                  builder: (context, _) {
+                    final position = _tableScroll.hasClients ? _tableScroll.position : null;
+                    final back = position != null && position.pixels > position.minScrollExtent + 1;
+                    final on = position == null || position.pixels < position.maxScrollExtent - 1;
+                    final size = heading.fontSize! * 1.1;
+                    return Row(
+                      mainAxisSize: .min,
+                      children: [
+                        AppIcon(Symbols.chevron_left_rounded, size: size, color: look.ink(back ? 0.7 : 0.18)),
+                        SizedBox(width: 8 * s),
+                        AppIcon(Symbols.chevron_right_rounded, size: size, color: look.ink(on ? 0.7 : 0.18)),
+                      ],
+                    );
+                  },
+                ),
+            ],
+          ),
+        ),
+        SizedBox(height: 20 * s),
+        SizedBox(
+          height: panelHeight,
+          child: ListView.separated(
+            controller: _tableScroll,
+            scrollDirection: Axis.horizontal,
+            physics: const ClampingScrollPhysics(),
+            clipBehavior: Clip.none,
+            padding: EdgeInsets.only(left: start, right: margin),
+            itemCount: panels.length,
+            separatorBuilder: (_, _) => SizedBox(width: gap),
+            itemBuilder: (context, index) => FocusableWrapper(
+              focusNode: _tablePanelNode(index),
+              // The ring round the one panel under the cursor, and no growth
+              // (the user's calls): it would push past the screen's margins.
+              borderRadius: 28 * s,
+              disableScale: true,
+              autoScroll: false,
+              semanticLabel: t.sport.table,
+              onFocusChange: (focused) {
+                if (!focused) return;
+                _tablePanel = index;
+                reveal(index);
+                if (_boardFocusRow != -1) {
+                  _boardFocusRow = -1;
+                  // The table's title as high as a row's heading.
+                  _revealBox(() => _tableBlockKey.currentContext, room: 40 * s);
+                }
+              },
+              onNavigateUp: () => up(index),
+              onNavigateDown: () {},
+              onNavigateLeft: index > 0 ? _tablePanelNode(index - 1).requestFocus : (widget.onExitLeft ?? () {}),
+              onNavigateRight: index < panels.length - 1 ? _tablePanelNode(index + 1).requestFocus : () {},
+              onBack: index > 0 ? _boardTableNode.requestFocus : _focusMatchdayButton,
+              child: SizedBox(
+                width: panelWidth,
+                child: SportTablePanel(
+                  rows: panels[index],
+                  count: _table.length,
+                  league: widget.league,
+                  highlight: _boardHighlight.value,
+                  look: look,
+                ),
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.only(left: start, right: margin, top: 20 * s),
+          child: SportTableLegend(rows: _table, league: widget.league, look: look),
+        ),
+      ],
+    );
+  }
+
+  /// The DFB-Pokal's rounds, the one being played marked (Plebz): "Der Weg
+  /// nach Berlin". OK on one shows it.
+  Widget _buildRounds(SportLook look, TextStyle heading) {
+    final s = look.scale;
+    final days = _matchdays;
+    return Column(
+      crossAxisAlignment: .start,
+      children: [
+        Text(look.headingCase(t.sport.roadToFinal), style: heading.copyWith(color: look.ink(1))),
+        SizedBox(height: 18 * s),
+        Row(
+          children: [
+            for (var i = 0; i < days.length; i++) ...[
+              if (i > 0) SizedBox(width: 16 * s),
+              Expanded(
+                child: SportRoundPane(
+                  name: sportMatchdayLabel(widget.league, days[i].order, name: days[i].name),
+                  note: days[i].order == _currentMatchday
+                      ? t.sport.current
+                      : (_currentMatchday != null && days[i].order < _currentMatchday!)
+                      ? t.sport.roundPlayed
+                      : null,
+                  onShow: days[i].order == _selected,
+                  isCurrent: days[i].order == _currentMatchday,
+                  look: look,
+                  focusNode: _roundNode(days[i].order),
+                  onSelect: () => unawaited(_selectMatchday(days[i].order)),
+                  onNavigateLeft: i > 0 ? _roundNode(days[i - 1].order).requestFocus : (widget.onExitLeft ?? () {}),
+                  onNavigateRight: i < days.length - 1 ? _roundNode(days[i + 1].order).requestFocus : () {},
+                  onNavigateUp: () => _focusTile(_boardRows.length - 1, 0),
+                  onBack: _focusMatchdayButton,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
   // --------------------------------------------------------------- matchday
 
   /// The matchday before and after the one on show, or null at either end of
@@ -626,7 +1902,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
             onNavigateLeft: _matchdayNode.requestFocus,
             onNavigateRight: _tableIsView ? _viewToggleNode.requestFocus : () {},
           ),
-          if (_tableIsView) ...[SizedBox(width: 8 * look.scale), _buildViewToggle(look)],
+          if (_tableIsView) ...[SizedBox(width: 8 * look.scale), _buildViewToggle(look, compact: compact)],
         ],
       ),
     );
@@ -692,9 +1968,10 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
   }
 
   /// "Tabelle" over the fixtures, "Spiele" over the table (Plebz): a European
-  /// cup's two views, at the bar's right end. Shaped like the arrows beside
-  /// it — a plain plate in the standard look and Glas, a round-ended button
-  /// on Flach.
+  /// cup's two views — and on a phone a league's — at the bar's right end.
+  /// Shaped like the arrows beside it — a plain plate in the standard look and
+  /// Glas, a round-ended button on Flach. A phone's bar has room for its
+  /// symbol alone.
   Widget _buildViewToggle(SportLook look, {bool compact = false}) {
     final height = (compact ? 44 : (look.flat ? 54 : (look.ocker ? 64 : 48))) * look.scale;
     final label = _showTable ? t.sport.fixtures : t.sport.table;
@@ -714,24 +1991,28 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
         onTap: toggle,
         child: Container(
           height: height,
-          padding: EdgeInsets.symmetric(horizontal: (compact ? 14 : 20) * look.scale),
+          width: compact ? height : null,
+          padding: compact ? null : EdgeInsets.symmetric(horizontal: 20 * look.scale),
           decoration: BoxDecoration(
             color: look.flat ? look.ink(0.06) : null,
             borderRadius: BorderRadius.circular(look.flat ? height / 2 : look.tk.radiusSm),
           ),
           child: Row(
             mainAxisSize: .min,
+            mainAxisAlignment: .center,
             children: [
               AppIcon(
                 _showTable ? Symbols.sports_soccer_rounded : Symbols.table_rows_rounded,
                 size: height * (look.flat ? 0.4 : 0.42),
                 color: look.ink(0.85),
               ),
-              SizedBox(width: 8 * look.scale),
-              Text(
-                label,
-                style: look.time.copyWith(color: look.ink(0.9), fontWeight: .w600),
-              ),
+              if (!compact) ...[
+                SizedBox(width: 8 * look.scale),
+                Text(
+                  label,
+                  style: look.time.copyWith(color: look.ink(0.9), fontWeight: .w600),
+                ),
+              ],
             ],
           ),
         ),
@@ -970,6 +2251,7 @@ class SportLeagueViewState extends State<SportLeagueView> with AutomaticKeepAliv
 
   void _focusFirstMatch() {
     if (_dayLoading || _matches.isEmpty) return;
+    if (_boardShown) return _focusBoardEntry();
     if (_stage != null) return _stageNode.requestFocus();
     _matchNode(_matches.first.id).requestFocus();
   }
@@ -1243,7 +2525,7 @@ class _FavouriteStage extends StatelessWidget {
         ? _LiveBadge(look: look)
         : Text(
             match.isFinished
-                ? t.sport.finalScore
+                ? (sportScoreNote(match) ?? t.sport.finalScore)
                 : '${DateFormat.EEEE(locale).format(kickoff)}, ${DateFormat.Hm(locale).format(kickoff)}',
             style: look.time.copyWith(color: ink.withValues(alpha: 0.78)),
           );
@@ -1724,6 +3006,49 @@ class _SportCrestState extends State<SportCrest> {
 
 // ------------------------------------------------------------------ table
 
+/// Where a place in the table stands for something — the places that go
+/// up, or into the Champions League (0), the next ones, Europe or the
+/// promotion play-off (1), and the foot, the ones that go down (2) — as a
+/// stroke at its left under the redesigns, in the zone's colour, with a key
+/// under the table. Null for the places between. [count] is the table's
+/// length.
+int? sportTableZone(SportLeague league, int position, int count) {
+  final (top, next, bottom) = switch (league) {
+    // Champions League, then the Europa places; the play-off and the drop.
+    SportLeague.bundesliga1 => (4, 6, 3),
+    // Promotion, the play-off; the play-off and the drop.
+    SportLeague.bundesliga2 => (2, 3, 3),
+    // Promotion, the play-off; the drop.
+    SportLeague.liga3 => (2, 3, 4),
+    // The league phase (Plebz): the round of sixteen, the knock-out
+    // play-offs, out.
+    SportLeague.championsLeague || SportLeague.europaLeague => (8, 24, count - 24),
+    // Knock-out only; it has no table.
+    SportLeague.dfbPokal => (0, 0, 0),
+  };
+  if (position <= top) return 0;
+  if (position <= next) return 1;
+  if (position > count - bottom) return 2;
+  return null;
+}
+
+Color sportZoneColour(SportLeague league, int zone) => switch (zone) {
+  0 => league == SportLeague.bundesliga1 ? const Color(0xFF3D7BE0) : const Color(0xFF2FAE5B),
+  1 => const Color(0xFFE8912D),
+  _ => const Color(0xFFD9534F),
+};
+
+String sportZoneLabel(SportLeague league, int zone) => switch ((league, zone)) {
+  (SportLeague.championsLeague || SportLeague.europaLeague, 0) => t.sport.zoneRoundOf16,
+  (SportLeague.championsLeague || SportLeague.europaLeague, 1) => t.sport.zoneKnockoutPlayoff,
+  (SportLeague.championsLeague || SportLeague.europaLeague, _) => t.sport.zoneEliminated,
+  (SportLeague.bundesliga1, 0) => t.sport.zoneChampionsLeague,
+  (SportLeague.bundesliga1, 1) => t.sport.zoneEurope,
+  (_, 0) => t.sport.zonePromotion,
+  (_, 1) => t.sport.zonePlayoff,
+  _ => t.sport.zoneRelegation,
+};
+
 class _SportTable extends StatelessWidget {
   final List<SportTableRow> rows;
   final SportLook look;
@@ -1744,6 +3069,10 @@ class _SportTable extends StatelessWidget {
   /// (Plebz: a European cup's 36 clubs on a page of their own); null for one.
   final int? splitAt;
 
+  /// "Tabelle" over the rows; left out where something over the panel says
+  /// it already (Plebz, a phone's switch).
+  final bool showTitle;
+
   const _SportTable({
     required this.rows,
     required this.look,
@@ -1751,6 +3080,7 @@ class _SportTable extends StatelessWidget {
     required this.league,
     this.fitHeight = false,
     this.splitAt,
+    this.showTitle = true,
   });
 
   @override
@@ -1784,48 +3114,11 @@ class _SportTable extends StatelessWidget {
     return _buildTable(context);
   }
 
-  /// Where a place in the table stands for something — the places that go
-  /// up, or into the Champions League (0), the next ones, Europe or the
-  /// promotion play-off (1), and the foot, the ones that go down (2) — as a
-  /// stroke at its left under the redesigns, in the zone's colour, with a key
-  /// under the table. Null for the places between.
-  int? _zone(int position) {
-    final count = rows.length;
-    final (top, next, bottom) = switch (league) {
-      // Champions League, then the Europa places; the play-off and the drop.
-      SportLeague.bundesliga1 => (4, 6, 3),
-      // Promotion, the play-off; the play-off and the drop.
-      SportLeague.bundesliga2 => (2, 3, 3),
-      // Promotion, the play-off; the drop.
-      SportLeague.liga3 => (2, 3, 4),
-      // The league phase (Plebz): the round of sixteen, the knock-out
-      // play-offs, out.
-      SportLeague.championsLeague || SportLeague.europaLeague => (8, 24, count - 24),
-      // Knock-out only; it has no table.
-      SportLeague.dfbPokal => (0, 0, 0),
-    };
-    if (position <= top) return 0;
-    if (position <= next) return 1;
-    if (position > count - bottom) return 2;
-    return null;
-  }
+  int? _zone(int position) => sportTableZone(league, position, rows.length);
 
-  Color _zoneColour(int zone) => switch (zone) {
-    0 => league == SportLeague.bundesliga1 ? const Color(0xFF3D7BE0) : const Color(0xFF2FAE5B),
-    1 => const Color(0xFFE8912D),
-    _ => const Color(0xFFD9534F),
-  };
+  Color _zoneColour(int zone) => sportZoneColour(league, zone);
 
-  String _zoneLabel(int zone) => switch ((league, zone)) {
-    (SportLeague.championsLeague || SportLeague.europaLeague, 0) => t.sport.zoneRoundOf16,
-    (SportLeague.championsLeague || SportLeague.europaLeague, 1) => t.sport.zoneKnockoutPlayoff,
-    (SportLeague.championsLeague || SportLeague.europaLeague, _) => t.sport.zoneEliminated,
-    (SportLeague.bundesliga1, 0) => t.sport.zoneChampionsLeague,
-    (SportLeague.bundesliga1, 1) => t.sport.zoneEurope,
-    (_, 0) => t.sport.zonePromotion,
-    (_, 1) => t.sport.zonePlayoff,
-    _ => t.sport.zoneRelegation,
-  };
+  String _zoneLabel(int zone) => sportZoneLabel(league, zone);
 
   TextStyle get _legendStyle {
     final cell = look.tableCell();
@@ -1872,19 +3165,31 @@ class _SportTable extends StatelessWidget {
     if (!fitHeight) {
       return Column(
         crossAxisAlignment: .start,
-        children: [heading, _columns((look.ocker ? 40 : 30) * look.scale, natural: true), if (look.flat) _legend()],
+        children: [
+          if (showTitle) heading,
+          _columns((look.ocker ? 40 : 30) * look.scale, natural: true),
+          if (look.flat) _legend(),
+        ],
       );
     }
     return LayoutBuilder(
       builder: (context, constraints) {
-        final headingHeight = look.heading.fontSize! * 1.4 + look.gap / 2;
-        final legendHeight = look.flat ? _legendStyle.fontSize! * 1.4 + look.gap * 0.6 : 0.0;
+        // What the heading and the key take, as drawn (Plebz): the redesigns'
+        // title is the larger one, and the key's line its stroke or its words,
+        // whichever is taller — measured short, the key fell off the foot.
+        final titleSize = look.flat ? 24 * look.scale : look.heading.fontSize!;
+        final headingHeight = showTitle ? titleSize * 1.4 + look.gap / 2 : 0.0;
+        final legendLine = math.max(_legendStyle.fontSize! * 1.5, 12 * look.scale);
+        final legendHeight = look.flat ? legendLine + look.gap * 0.6 + 4 * look.scale : 0.0;
         final available = constraints.maxHeight - headingHeight - legendHeight;
         final perColumn = splitAt == null ? rows.length : splitAt!.clamp(0, rows.length);
         final rowHeight = (available / (perColumn + 1)).clamp(18.0 * look.scale, (look.ocker ? 44 : 34) * look.scale);
         return SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
-          child: Column(crossAxisAlignment: .start, children: [heading, _columns(rowHeight), if (look.flat) _legend()]),
+          child: Column(
+            crossAxisAlignment: .start,
+            children: [if (showTitle) heading, _columns(rowHeight), if (look.flat) _legend()],
+          ),
         );
       },
     );

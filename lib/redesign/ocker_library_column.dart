@@ -11,7 +11,7 @@ import '../widgets/focusable_list_tile.dart';
 import 'ocker_frost.dart';
 import 'ocker_skin.dart';
 import 'ocker_type.dart';
-import 'ocker_rail_shell.dart' show OckerHidesPlace;
+import 'ocker_rail_shell.dart' show OckerHidesPlace, OckerPageVeil;
 
 /// The libraries, as a column that opens beside a library page — the way the
 /// channel groups open beside the guide.
@@ -256,6 +256,9 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
   /// library's name, and the page still in view beside it.
   double _width(BuildContext context) => (MediaQuery.sizeOf(context).width * 0.22).clamp(220.0, 360.0).toDouble();
 
+  Duration _glide(BuildContext context) =>
+      ockerFrostGlide(context, DevicePerformance.reducedDuration(const Duration(milliseconds: 180)));
+
   @override
   Widget build(BuildContext context) {
     return OckerLibraryColumnScope(
@@ -264,6 +267,8 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
         fit: StackFit.expand,
         children: [
           widget.child,
+          // Open, the page behind dims as it does behind the rail (Plebz).
+          if (ockerGlasHiddenRail(context)) OckerPageVeil(shown: _open, duration: _glide(context)),
           Positioned(left: 0, top: 0, bottom: 0, child: _buildColumn(context)),
         ],
       ),
@@ -335,7 +340,7 @@ class OckerLibraryColumnState extends State<OckerLibraryColumn> {
     return OckerHidesPlace(
       hide: _open,
       child: AnimatedContainer(
-        duration: ockerFrostGlide(context, DevicePerformance.reducedDuration(const Duration(milliseconds: 180))),
+        duration: _glide(context),
         curve: Curves.easeOutCubic,
         width: _open ? width : 0,
         // Clipped rather than laid out narrower: the rows keep their width and

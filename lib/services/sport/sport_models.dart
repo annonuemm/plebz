@@ -28,6 +28,9 @@ enum SportLeague {
     championsLeague || europaLeague || dfbPokal => false,
   };
 
+  /// A European cup, whose German clubs the Sport page puts first (Plebz).
+  bool get isEuropean => this == championsLeague || this == europaLeague;
+
   /// Whether the competition has a table: the cup is knock-out only.
   bool get hasTable => this != dfbPokal;
 
@@ -380,23 +383,41 @@ class SportMatch {
     return local is String ? DateTime.tryParse(local) : null;
   }
 
+  /// Whether the provider has told anything from the game itself, a score
+  /// or a goal: it sets them at the whistle and not before.
+  bool get _reported => result != null || halftime != null || goals.isNotEmpty;
+
   /// Whether the whistle has gone and the final one has not.
   ///
-  /// The provider's own flag says when it is over; when it began is only the
-  /// kickoff time. A match more than three hours past kickoff that is still
-  /// not marked finished is a provider that stopped updating, not a match
-  /// still being played.
+  /// The provider's own flag says when it is over; that it began, the
+  /// kickoff time or anything the provider has told from the game — a device
+  /// whose clock is behind still sees a game on (Plebz). A match more than
+  /// three hours past kickoff that is still not marked finished is a provider
+  /// that stopped updating, not a match still being played.
   bool isLive(DateTime now) =>
-      !isFinished && !now.isBefore(kickoff) && now.isBefore(kickoff.add(const Duration(hours: 3)));
+      !isFinished && now.isBefore(kickoff.add(const Duration(hours: 3))) && (!now.isBefore(kickoff) || _reported);
 
   /// The score to show: the official one once it exists, otherwise the one
-  /// the goals so far add up to, and nothing before kickoff.
+  /// the goals so far add up to, and nothing before kickoff. While the game
+  /// is on the provider tells a goal before its score follows (Plebz), so
+  /// the one with more goals is the newer.
   SportScore? scoreAt(DateTime now) {
-    if (result != null) return result;
-    if (goals.isNotEmpty) return goals.last.score;
+    final official = result;
+    final counted = goals.isEmpty ? null : goals.last.score;
+    if (official != null && counted != null && !isFinished) {
+      return counted.home + counted.away > official.home + official.away ? counted : official;
+    }
+    if (official != null) return official;
+    if (counted != null) return counted;
     if (isFinished || isLive(now)) return const SportScore(0, 0);
     return null;
   }
+
+  /// The half-time score once the first half is behind (Plebz): the provider
+  /// sets a 0:0 at the whistle and fills it in at the break, so in a game's
+  /// first hour it says nothing yet.
+  SportScore? halftimeAt(DateTime now) =>
+      isFinished || !now.isBefore(kickoff.add(const Duration(minutes: 60))) ? halftime : null;
 }
 
 /// One line of the league table. Arrives in table order; [position] is that

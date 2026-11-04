@@ -40,6 +40,7 @@ import '../utils/focus_utils.dart';
 import 'libraries/state_messages.dart';
 import 'main_screen.dart';
 import '../redesign/ocker_glas_look.dart';
+import '../navigation/navigation_tabs.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -695,6 +696,10 @@ class _SearchScreenState extends State<SearchScreen>
             // leaves.
             if (isOckerLayout(context))
               SliverToBoxAdapter(child: SizedBox(height: ockerContentTop(context)))
+            // Plebz: nor where a handheld's navigation names it — only the
+            // room under the status bar.
+            else if (MainScreenNamedPlaces.hidesTitle(context, NavigationTabId.search))
+              SliverToBoxAdapter(child: SizedBox(height: MediaQuery.paddingOf(context).top + 16))
             else
               DesktopSliverAppBar(title: Text(t.common.search), floating: true),
             SliverToBoxAdapter(

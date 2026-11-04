@@ -7,13 +7,11 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorFilter
-import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.RectF
-import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
@@ -78,10 +76,6 @@ internal class AmbientStage(private val context: Context, private val host: Host
     const val PAUSE_ART_MAX_AGE_MS = 24 * 60 * 60 * 1000L
     const val FROST_WIDTH = 384
     const val FROST_RADIUS = 4
-
-    /** How bright a club's colour stands: the whole ground stays darker than a tile on the strip. */
-    const val GROUND_DEPTH = 0.46f
-    const val CHIP_DEPTH = 0.58f
   }
 
   private sealed class Shown {
@@ -106,7 +100,6 @@ internal class AmbientStage(private val context: Context, private val host: Host
   private var front = 0
   private lateinit var scrim: View
   private lateinit var clockScrim: View
-  private lateinit var sportGround: View
   private lateinit var crests: LinearLayout
   private lateinit var homeCrest: ImageView
   private lateinit var awayCrest: ImageView
@@ -249,14 +242,8 @@ internal class AmbientStage(private val context: Context, private val host: Host
     clockScrim.visibility = scrim.visibility
 
     val scene = (shown as? Shown.Scene)?.scene
+    // A game stands on the plain ground, its crests alone (the user's call: no clubs' colours).
     val sport = scene?.kind == AmbientScene.SPORT
-    sportGround.visibility = if (sport && background == null) View.VISIBLE else View.GONE
-    if (sport && scene != null) {
-      sportGround.background = ClubsDrawable(
-        club(scene.home?.colour, GROUND_DEPTH),
-        club(scene.away?.colour, GROUND_DEPTH)
-      )
-    }
     crests.visibility = if (sport && (home != null || away != null)) View.VISIBLE else View.GONE
     homeCrest.setImageBitmap(home)
     awayCrest.setImageBitmap(away)
@@ -319,7 +306,6 @@ internal class AmbientStage(private val context: Context, private val host: Host
     frost.bitmap = null
     scrim.visibility = View.GONE
     clockScrim.visibility = View.GONE
-    sportGround.visibility = View.GONE
     crests.visibility = View.GONE
     collage.visibility = View.GONE
     logo.visibility = View.GONE
@@ -395,26 +381,17 @@ internal class AmbientStage(private val context: Context, private val host: Host
           text = listOfNotNull(entry.time, entry.text).joinToString(" ")
           maxLines = 1
           ellipsize = TextUtils.TruncateAt.END
-          if (game) {
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(px(22), 0, px(22), 0)
-            background = ClubsDrawable(
-              club(entry.home, CHIP_DEPTH),
-              club(entry.away, CHIP_DEPTH),
-              radius = px(24).toFloat()
-            )
-          }
         },
-        LinearLayout.LayoutParams(
-          LinearLayout.LayoutParams.WRAP_CONTENT,
-          if (game) px(48) else LinearLayout.LayoutParams.WRAP_CONTENT
-        ).apply {
-          marginEnd = if (last) 0 else px(if (game) 12 else 36)
-          gravity = Gravity.CENTER_VERTICAL
-        }
+        // A game is told by its weight alone, on the strip's own ground (the user's call: no
+        // clubs' colours behind it).
+        LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+          .apply {
+            marginEnd = if (last) 0 else px(36)
+            gravity = Gravity.CENTER_VERTICAL
+          }
       )
-      // As much room at the end as at the start; a capsule inside it stands close to the edge.
-      if (last) ticker.setPadding(px(30), 0, px(if (game) 8 else 30), 0)
+      // As much room at the end as at the start.
+      if (last) ticker.setPadding(px(30), 0, px(30), 0)
     }
   }
 
@@ -450,8 +427,6 @@ internal class AmbientStage(private val context: Context, private val host: Host
     root = FrameLayout(context).apply { background = ColorDrawable(theme.background) }
     val full = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
 
-    sportGround = View(context).apply { visibility = View.GONE }
-    root.addView(sportGround, full)
     backs = Array(2) {
       ImageView(context).apply {
         scaleType = ImageView.ScaleType.CENTER_CROP
@@ -720,15 +695,6 @@ internal class AmbientStage(private val context: Context, private val host: Host
   private fun sha1(text: String): String =
     MessageDigest.getInstance("SHA-1").digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
 
-  /** A club's colour at one depth, whatever its own: a bright yellow beside a navy would shout. */
-  private fun club(colour: Int?, depth: Float): Int {
-    val hsv = FloatArray(3)
-    Color.colorToHSV(colour ?: return theme.background, hsv)
-    hsv[1] = hsv[1].coerceAtMost(0.85f)
-    hsv[2] = depth
-    return Color.HSVToColor(hsv)
-  }
-
   private fun frosted(look: AmbientTheme = theme): Boolean = snapshot?.frost == true && look.glass
 
   /** [picture] small and blurred: once a scene, so nothing is blurred frame by frame. */
@@ -824,7 +790,7 @@ private class CardDrawable(
       canvas.drawBitmap(picture, frost.behind(picture, host, bounds), box, picturePaint)
       canvas.restore()
     }
-    // A game's scene has no picture, only its clubs' colours to let through.
+    // A game's scene has no picture: the ground alone behind the veil.
     fill.color = withAlpha(theme.background, if (picture != null) 0.5f else 0.34f)
     canvas.drawRoundRect(box, radius, radius, fill)
     edge.color = withAlpha(Color.WHITE, 0.22f)
@@ -836,37 +802,6 @@ private class CardDrawable(
 
   @Deprecated("Deprecated in Java")
   override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
-}
-
-/** A game's two clubs running into each other, as the app's "Jetzt live" tiles have them. */
-private class ClubsDrawable(
-  private val left: Int,
-  private val right: Int,
-  private val radius: Float = 0f
-) : Drawable() {
-  private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-
-  override fun onBoundsChange(bounds: Rect) {
-    paint.shader = LinearGradient(
-      bounds.left.toFloat(),
-      0f,
-      bounds.right.toFloat(),
-      0f,
-      intArrayOf(left, left, right, right),
-      floatArrayOf(0f, 0.2f, 0.8f, 1f),
-      Shader.TileMode.CLAMP
-    )
-  }
-
-  override fun draw(canvas: Canvas) {
-    canvas.drawRoundRect(RectF(bounds), radius, radius, paint)
-  }
-
-  override fun setAlpha(alpha: Int) = Unit
-  override fun setColorFilter(colorFilter: ColorFilter?) = Unit
-
-  @Deprecated("Deprecated in Java")
-  override fun getOpacity(): Int = PixelFormat.OPAQUE
 }
 
 /** How far into the title: a thin track with the watched part in the accent. */

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../widgets/side_navigation_rail.dart';
@@ -161,4 +162,22 @@ class SideNavigationBleedBuilder extends StatelessWidget {
       child: child,
     );
   }
+}
+
+/// The places the navigation names on a phone or a tablet under the
+/// redesigns (Plebz): the rail's, the bar's and those in its "Mehr" sheet.
+/// Such a place's page sets no title of its own over it — the navigation
+/// already says where one is, as on the television (the user's call,
+/// 2026-11-03).
+class MainScreenNamedPlaces extends InheritedWidget {
+  const MainScreenNamedPlaces({super.key, required this.places, required super.child});
+
+  final Set<NavigationTabId> places;
+
+  /// Whether [place]'s page leaves its title out.
+  static bool hidesTitle(BuildContext context, NavigationTabId place) =>
+      context.dependOnInheritedWidgetOfExactType<MainScreenNamedPlaces>()?.places.contains(place) ?? false;
+
+  @override
+  bool updateShouldNotify(MainScreenNamedPlaces oldWidget) => !setEquals(oldWidget.places, places);
 }

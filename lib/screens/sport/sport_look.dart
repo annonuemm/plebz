@@ -21,7 +21,8 @@ import '../../widgets/focusable_tab_chip.dart' show activeTabChipColor;
 /// the leagues and no side rail to walk back to — that is decided by the
 /// screen, not here.
 class SportLook {
-  SportLook._(this.context, {required this.ocker, required this.scale, required this.tk}) : flat = tk.glass;
+  SportLook._(this.context, {required this.ocker, required this.touch, required this.scale, required this.tk})
+    : flat = tk.glass;
 
   factory SportLook.of(BuildContext context) {
     final ocker = isOckerLayout(context);
@@ -33,11 +34,22 @@ class SportLook {
     } else {
       scale = 1.0;
     }
-    return SportLook._(context, ocker: ocker, scale: scale, tk: tokens(context));
+    final tk = tokens(context);
+    return SportLook._(
+      context,
+      ocker: ocker,
+      touch: !ocker && tk.glass && PlatformDetector.isMobile(context),
+      scale: scale,
+      tk: tk,
+    );
   }
 
   final BuildContext context;
   final bool ocker;
+
+  /// A phone's or a tablet's board under the redesigns (Plebz): the
+  /// television's page for touch, in its colours too.
+  final bool touch;
   final double scale;
   final MonoTokens tk;
 
@@ -72,7 +84,7 @@ class SportLook {
   Color ink(double opacity) => tk.ink(opacity);
 
   /// The one colour a running match gets.
-  Color get live => ocker ? tk.accent : activeTabChipColor;
+  Color get live => ocker || touch ? tk.accent : activeTabChipColor;
 
   /// Room for a crest, square.
   double get crest => (ocker ? 34 : 24) * scale;

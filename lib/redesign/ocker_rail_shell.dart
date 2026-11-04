@@ -228,14 +228,9 @@ class _OckerRailShellState extends State<OckerRailShell> {
                 ),
               ),
               if (apple) ...[
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: AnimatedOpacity(
-                      opacity: widget.expanded ? 1 : 0,
-                      duration: ockerFrostGlide(context, SideNavigationRailState.expandDuration),
-                      child: ColoredBox(color: tokens(context).bg.withValues(alpha: 0.55)),
-                    ),
-                  ),
+                OckerPageVeil(
+                  shown: widget.expanded,
+                  duration: ockerFrostGlide(context, SideNavigationRailState.expandDuration),
                 ),
                 if (widget.tabs.firstWhereOrNull((tab) => tab.id == widget.selectedTab) case final tab?)
                   _ApplePlace(tab: tab, visible: !widget.expanded),
@@ -478,6 +473,28 @@ class _PlaceLightState extends State<_PlaceLight> {
       ),
     );
   }
+}
+
+/// The page dimmed behind a pane that opens over it under Glas with the rail
+/// hidden ([ockerGlasHiddenRail]): the rail, and the libraries' column
+/// (Plebz) — one veil, so the two cannot drift apart. Place it in a [Stack]
+/// between the page and the pane.
+class OckerPageVeil extends StatelessWidget {
+  const OckerPageVeil({super.key, required this.shown, required this.duration});
+
+  final bool shown;
+  final Duration duration;
+
+  @override
+  Widget build(BuildContext context) => Positioned.fill(
+    child: IgnorePointer(
+      child: AnimatedOpacity(
+        opacity: shown ? 1 : 0,
+        duration: duration,
+        child: ColoredBox(color: tokens(context).bg.withValues(alpha: 0.55)),
+      ),
+    ),
+  );
 }
 
 /// While [hide] holds, the place capsule on the Apple TV ([_ApplePlace])

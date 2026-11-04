@@ -7656,6 +7656,39 @@ class Translations$sport$en {
 
 	/// en: 'Results often arrive a day or two late'
 	String get europaLeagueLate => 'Results often arrive a day or two late';
+
+	/// en: 'Your club'
+	String get yourClub => 'Your club';
+
+	/// en: 'Next match'
+	String get nextMatch => 'Next match';
+
+	/// en: 'With German clubs'
+	String get withGermanClubs => 'With German clubs';
+
+	/// en: 'German club'
+	String get germanClub => 'German club';
+
+	/// en: 'Open match'
+	String get toMatch => 'Open match';
+
+	/// en: 'The road to Berlin'
+	String get roadToFinal => 'The road to Berlin';
+
+	/// en: 'played'
+	String get roundPlayed => 'played';
+
+	/// en: 'after matchday ${n}'
+	String tableAfter({required Object n}) => 'after matchday ${n}';
+
+	/// en: 'Match ${n} of ${total}'
+	String stagePosition({required Object n, required Object total}) => 'Match ${n} of ${total}';
+
+	/// en: 'Previous match'
+	String get previousMatch => 'Previous match';
+
+	/// en: 'Next match'
+	String get nextOnStage => 'Next match';
 }
 
 // Path: plebz
@@ -13354,6 +13387,17 @@ extension on Translations {
 			'sport.afterExtraTime' => 'a.e.t.',
 			'sport.onPenalties' => ({required Object score}) => '${score} on pens',
 			'sport.europaLeagueLate' => 'Results often arrive a day or two late',
+			'sport.yourClub' => 'Your club',
+			'sport.nextMatch' => 'Next match',
+			'sport.withGermanClubs' => 'With German clubs',
+			'sport.germanClub' => 'German club',
+			'sport.toMatch' => 'Open match',
+			'sport.roadToFinal' => 'The road to Berlin',
+			'sport.roundPlayed' => 'played',
+			'sport.tableAfter' => ({required Object n}) => 'after matchday ${n}',
+			'sport.stagePosition' => ({required Object n, required Object total}) => 'Match ${n} of ${total}',
+			'sport.previousMatch' => 'Previous match',
+			'sport.nextOnStage' => 'Next match',
 			'plebz.settingsGroupLook' => 'Look and playback',
 			'plebz.settingsGroupContent' => 'Content',
 			'plebz.settingsGroupApp' => 'App',

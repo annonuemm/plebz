@@ -458,6 +458,79 @@ void main() {
       expect(source.isOnWatchlist(MediaKind.movie, const CatalogItemIds(simkl: 1)), isTrue);
     });
 
+    // Plebz: Simkl answers 201 for a title it cannot match too, and lists it
+    // under `not_found`. Taken as added, the title showed as bookmarked and
+    // never reached the list.
+    test('a title Simkl cannot match is a failed add, not an added one', () async {
+      responder = (request) {
+        if (request.url.path == '/sync/all-items/all/plantowatch') return _json(_allItemsBody());
+        return _json({
+          'added': {'movies': <Object>[]},
+          'not_found': {
+            'movies': [
+              {
+                'to': 'plantowatch',
+                'ids': {'imdb': 'tt0000001'},
+              },
+            ],
+            'shows': <Object>[],
+          },
+        }, status: 201);
+      };
+      const ids = CatalogItemIds(imdb: 'tt0000001');
+      await source.ensureWatchlistLoaded();
+
+      await expectLater(source.addToWatchlist(MediaKind.movie, ids), throwsA(isA<TrackerApiException>()));
+      expect(source.isOnWatchlist(MediaKind.movie, ids), isFalse);
+    });
+
+    // Plebz: a list read while a title was added predates the addition. Kept,
+    // or joined by the next read, it hid the title for the cache's 15 minutes.
+    test('a watchlist read under way while a title is added is neither kept nor joined', () async {
+      final listed = _allItemsBody();
+      final withAddition = _allItemsBody();
+      (withAddition['movies'] as List).add({
+        'status': 'plantowatch',
+        'movie': {
+          'title': 'Arrival',
+          'year': 2016,
+          'ids': {'simkl': 4, 'imdb': 'tt2543164'},
+        },
+      });
+      final held = Completer<http.Response>();
+      var reads = 0;
+      var added = false;
+      responder = (request) {
+        if (request.url.path == '/sync/add-to-list') {
+          added = true;
+          return _json({
+            'added': {
+              'movies': [
+                {
+                  'to': 'plantowatch',
+                  'ids': {'simkl': 4},
+                  'type': 'movie',
+                },
+              ],
+            },
+            'not_found': {'movies': <Object>[], 'shows': <Object>[]},
+          }, status: 201);
+        }
+        reads++;
+        return reads == 1 ? held.future : _json(added ? withAddition : listed);
+      };
+      bool lists(CatalogPage page) => page.items.any((item) => item.ids.simkl == 4);
+
+      final before = source.fetchRow(CatalogRowId.watchlist);
+      await source.addToWatchlist(MediaKind.movie, const CatalogItemIds(simkl: 4));
+      final after = source.fetchRow(CatalogRowId.watchlist);
+      held.complete(_json(listed));
+
+      expect(lists(await before), isFalse);
+      expect(lists(await after), isTrue);
+      expect(lists(await source.fetchRow(CatalogRowId.watchlist)), isTrue);
+    });
+
     test('snapshot errors are swallowed and membership remains unknown', () async {
       responder = (request) => http.Response('failed', 500);
 

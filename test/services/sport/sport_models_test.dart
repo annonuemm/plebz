@@ -80,19 +80,24 @@ void main() {
   });
 
   group('SportMatch state', () {
-    SportMatch fixture({bool finished = false, List<Map<String, Object?>> goals = const [], (int, int)? result}) =>
-        SportMatch.fromJson(
-          openLigaMatch(
-            id: 1,
-            matchday: 4,
-            kickoffUtc: DateTime.utc(2026, 9, 19, 13, 30),
-            home: bayern,
-            away: bremen,
-            finished: finished,
-            goals: goals,
-            result: result,
-          ),
-        )!;
+    SportMatch fixture({
+      bool finished = false,
+      List<Map<String, Object?>> goals = const [],
+      (int, int)? result,
+      (int, int)? halftime,
+    }) => SportMatch.fromJson(
+      openLigaMatch(
+        id: 1,
+        matchday: 4,
+        kickoffUtc: DateTime.utc(2026, 9, 19, 13, 30),
+        home: bayern,
+        away: bremen,
+        finished: finished,
+        goals: goals,
+        result: result,
+        halftime: halftime,
+      ),
+    )!;
 
     final kickoff = DateTime.utc(2026, 9, 19, 13, 30).toLocal();
 
@@ -106,6 +111,28 @@ void main() {
 
     test('a provider that stopped updating does not keep a match live all night', () {
       expect(fixture().isLive(kickoff.add(const Duration(hours: 3))), isFalse);
+    });
+
+    test('what the provider tells from the game says it is on, whatever the device\'s clock (Plebz)', () {
+      final behind = kickoff.subtract(const Duration(hours: 2));
+      expect(fixture().isLive(behind), isFalse, reason: 'nothing told: the clock decides');
+      expect(fixture(result: (0, 0), halftime: (0, 0)).isLive(behind), isTrue);
+      expect(fixture(goals: [openLigaGoal(home: 1, away: 0, minute: 12)]).isLive(behind), isTrue);
+      expect(fixture(result: (0, 0)).isLive(kickoff.add(const Duration(hours: 3))), isFalse);
+    });
+
+    test('a goal told before the score follows it counts (Plebz)', () {
+      final lagging = fixture(result: (0, 0), goals: [openLigaGoal(home: 1, away: 0, minute: 12)]);
+      expect(lagging.scoreAt(kickoff.add(const Duration(minutes: 14))), const SportScore(1, 0));
+      final ahead = fixture(result: (2, 0), goals: [openLigaGoal(home: 1, away: 0, minute: 12)]);
+      expect(ahead.scoreAt(kickoff.add(const Duration(minutes: 16))), const SportScore(2, 0));
+    });
+
+    test('the half-time score waits for the break: at the whistle it is a 0:0 the provider sets (Plebz)', () {
+      final match = fixture(result: (2, 0), halftime: (0, 0));
+      expect(match.halftimeAt(kickoff.add(const Duration(minutes: 15))), isNull);
+      expect(match.halftimeAt(kickoff.add(const Duration(minutes: 65))), const SportScore(0, 0));
+      expect(fixture(finished: true, result: (2, 0), halftime: (1, 0)).halftimeAt(kickoff), const SportScore(1, 0));
     });
 
     test('has no score before kickoff and 0:0 once it is under way', () {

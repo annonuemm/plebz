@@ -14,16 +14,16 @@ import '../../services/settings_service.dart';
 import '../../services/sport/sport_league_names.dart';
 import '../../services/sport/sport_models.dart';
 import '../../services/sport/sport_repository.dart';
-import '../../theme/mono_tokens.dart';
 import '../../utils/platform_detector.dart';
 import '../../widgets/app_menu.dart';
 import '../../widgets/desktop_app_bar.dart';
 import '../../widgets/focusable_tab_chip.dart';
 import '../main_screen.dart';
 import 'sport_league_management_sheet.dart';
+import 'sport_board_widgets.dart';
 import 'sport_league_view.dart';
-import 'sport_look.dart';
 import '../../redesign/ocker_glas_look.dart';
+import '../../navigation/navigation_tabs.dart';
 
 /// The Sport destination: the German leagues, and the cups the viewer adds
 /// under "Ligen verwalten" (Plebz) — which ones and in which order is theirs
@@ -61,6 +61,11 @@ class SportScreenState extends State<SportScreen>
   final Map<SportLeague, GlobalKey<SportLeagueViewState>> _keyOf = {};
   final _actionBarKey = GlobalKey<FocusableActionBarState>();
 
+  /// The colours behind the television's stage (Plebz): the league on show
+  /// hands its stage's clubs up here, where the ground can reach the screen's
+  /// top and right edges.
+  final _stageGround = ValueNotifier<SportStageGround?>(null);
+
   FocusNode _chipNode(SportLeague league) =>
       _chipNodeOf[league] ??= FocusNode(debugLabel: 'sport_league_${league.shortcut}');
 
@@ -81,6 +86,7 @@ class SportScreenState extends State<SportScreen>
   @override
   void dispose() {
     _layoutListenable?.removeListener(_onLayoutChanged);
+    _stageGround.dispose();
     for (final node in _chipNodeOf.values) {
       node.dispose();
     }
@@ -206,6 +212,8 @@ class SportScreenState extends State<SportScreen>
     final ocker = isOckerLayout(context);
     final views = TabBarView(
       controller: tabController,
+      // The television's pages run to the screen's edge themselves (Plebz).
+      clipBehavior: ocker ? Clip.none : Clip.hardEdge,
       // A swipe between leagues is a phone's gesture. On a television, and in
       // the redesign where the leagues are chosen from a menu, the only way
       // from one to the next is the way that was asked for.
@@ -219,6 +227,9 @@ class SportScreenState extends State<SportScreen>
             onExitUp: ocker ? _exitToNavigation : focusTabBar,
             onExitLeft: _exitToNavigation,
             repository: widget.repository,
+            // The redesigns' stage ground (Plebz): the television's, and a
+            // phone's or a tablet's.
+            stageGround: (ocker || _touchBoard(context)) && tabController.index == i ? _stageGround : null,
           ),
       ],
     );
@@ -226,30 +237,30 @@ class SportScreenState extends State<SportScreen>
   }
 
   Widget _buildOcker(BuildContext context, Widget views) {
-    final tk = tokens(context);
-    final scale = ockerScale(context);
-    final look = SportLook.of(context);
     // No fill of its own: the page sits on the shell's glass ground, which a
-    // flat fill here covered everywhere but under the side rail.
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        ockerFlushLeftInset(context),
-        ockerContentTop(context),
-        OckerLayout.safeMargin * scale,
-        32 * scale,
-      ),
-      child: Column(
-        crossAxisAlignment: .start,
-        children: [
-          // Which league this is, said where the chips would have said it.
-          Text(
-            look.headingCase(_labelOf(_leagues[tabController.index])),
-            style: (look.flat ? look.leagueLabel : look.heading).copyWith(color: tk.ink(look.flat ? 0.6 : 0.72)),
+    // flat fill here covered everywhere but under the side rail. The league's
+    // name stands in the page's own bar (Plebz: beside the matchday), and
+    // behind the stage its clubs' colours run in from the screen's corner.
+    return Stack(
+      children: [
+        // The whole screen (the user's call): out of the top right corner, the
+        // colours reach the left edge along the top and the foot at the right.
+        Positioned.fill(
+          child: IgnorePointer(
+            child: ValueListenableBuilder<SportStageGround?>(
+              valueListenable: _stageGround,
+              builder: (context, ground, _) => SportStageBackdrop(ground: ground),
+            ),
           ),
-          SizedBox(height: (look.flat ? 8 : 16) * scale),
-          Expanded(child: views),
-        ],
-      ),
+        ),
+        // From one edge of the screen to the other, the foot included: the
+        // page keeps its own margins inside (Plebz), so its rows run on to
+        // the screen's edges and a focus ring is never cut by the page.
+        Padding(
+          padding: EdgeInsets.only(top: ockerContentTop(context)),
+          child: views,
+        ),
+      ],
     );
   }
 
@@ -265,68 +276,115 @@ class SportScreenState extends State<SportScreen>
     for (var i = 0; i < _leagues.length; i++) ...[if (i > 0) const SizedBox(width: 8), _buildChip(i)],
   ];
 
+  /// Whether the leagues are a phone's or a tablet's board under the
+  /// redesigns (Plebz), over the stage's clubs' ground.
+  bool _touchBoard(BuildContext context) => ockerGlass(context) && PlatformDetector.isMobile(context);
+
   Widget _buildStandard(BuildContext context, Widget views) {
     final sideNav = PlatformDetector.shouldUseSideNavigation(context);
-    return Scaffold(
-      body: CustomScrollView(
-        primary: false,
-        slivers: [
-          DesktopSliverAppBar(
-            title: sideNav ? TabChipStrip(children: _chips()) : Text(t.navigation.sport),
-            floating: true,
-            pinned: true,
-            backgroundColor: pageBarColor(context),
-            surfaceTintColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-            scrolledUnderElevation: 0,
-            actions: [
-              FocusableActionBar(
-                key: _actionBarKey,
-                onNavigateLeft: () => getTabChipFocusNode(tabCount - 1).requestFocus(),
-                onNavigateDown: _focusCurrentLeague,
-                actions: [
-                  FocusableAction(
-                    icon: Symbols.tune_rounded,
-                    tooltip: t.sport.manageLeagues,
-                    debugLabel: 'sport_manage_leagues',
-                    onPressed: _openLeagueManagement,
-                  ),
-                  FocusableAction(
-                    icon: Symbols.refresh_rounded,
-                    tooltip: t.common.refresh,
-                    debugLabel: 'sport_refresh',
-                    onPressed: manualRefresh,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          SliverFillRemaining(
-            child: OckerClearOfRail(
-              // Plebz: clear of Glas's floating rail in landscape on Apple's handhelds.
-              child: Column(
-                children: [
-                  if (!sideNav)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      alignment: .centerLeft,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(children: _chips()),
-                      ),
+    final leaguesUp = MainScreenNamedPlaces.hidesTitle(context, NavigationTabId.sport);
+    final page = CustomScrollView(
+      primary: false,
+      slivers: [
+        DesktopSliverAppBar(
+          // Plebz: where a handheld's navigation names the place, the
+          // leagues move up into the title's room.
+          title: sideNav
+              ? TabChipStrip(children: _chips())
+              : leaguesUp
+              // Cut off where the bar's buttons begin: the strip's pane may
+              // reach past its row, and its tabs ran on under them.
+              ? ClipRect(
+                  clipper: _ClipAtEnd(TabChipStrip.overhangOf(context)),
+                  child: TabChipStrip(children: _chips()),
+                )
+              : Text(t.navigation.sport),
+          floating: true,
+          pinned: true,
+          backgroundColor: pageBarColor(context),
+          surfaceTintColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          scrolledUnderElevation: 0,
+          actions: [
+            FocusableActionBar(
+              key: _actionBarKey,
+              onNavigateLeft: () => getTabChipFocusNode(tabCount - 1).requestFocus(),
+              onNavigateDown: _focusCurrentLeague,
+              actions: [
+                FocusableAction(
+                  icon: Symbols.tune_rounded,
+                  tooltip: t.sport.manageLeagues,
+                  debugLabel: 'sport_manage_leagues',
+                  onPressed: _openLeagueManagement,
+                ),
+                FocusableAction(
+                  icon: Symbols.refresh_rounded,
+                  tooltip: t.common.refresh,
+                  debugLabel: 'sport_refresh',
+                  onPressed: manualRefresh,
+                ),
+              ],
+            ),
+          ],
+        ),
+        SliverFillRemaining(
+          child: OckerClearOfRail(
+            // Plebz: clear of Glas's floating rail in landscape on Apple's handhelds.
+            child: Column(
+              children: [
+                if (!sideNav && !leaguesUp)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    alignment: .centerLeft,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(children: _chips()),
                     ),
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(sideNav ? 24 : 16, 8, sideNav ? 32 : 16, 16),
-                      child: views,
-                    ),
                   ),
-                ],
-              ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(sideNav ? 24 : 16, 8, sideNav ? 32 : 16, 16),
+                    child: views,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+    // Under the redesigns (Plebz) the stage's clubs' colours run in behind
+    // the page from the screen's top right corner, as on the television.
+    return Scaffold(
+      body: _touchBoard(context)
+          ? Stack(
+              children: [
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: ValueListenableBuilder<SportStageGround?>(
+                      valueListenable: _stageGround,
+                      builder: (context, ground, _) => SportStageBackdrop(ground: ground),
+                    ),
+                  ),
+                ),
+                page,
+              ],
+            )
+          : page,
     );
   }
+}
+
+/// A strip's box with its pane's overhang kept on every side but the far one
+/// (Plebz): the league tabs in a handheld's bar stop at the bar's buttons.
+class _ClipAtEnd extends CustomClipper<Rect> {
+  const _ClipAtEnd(this.overhang);
+
+  final EdgeInsets overhang;
+
+  @override
+  Rect getClip(Size size) => Rect.fromLTRB(-overhang.left, -overhang.top, size.width, size.height + overhang.bottom);
+
+  @override
+  bool shouldReclip(_ClipAtEnd oldClipper) => oldClipper.overhang != overhang;
 }

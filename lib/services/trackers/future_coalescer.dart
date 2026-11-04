@@ -41,6 +41,11 @@ class KeyedFutureCoalescer<K, T> {
   void clear() {
     _inFlight.clear();
   }
+
+  /// Detach the in-flight future of [key] alone.
+  void forget(K key) {
+    _inFlight.remove(key);
+  }
 }
 
 /// Keyed cache of loads: like [KeyedFutureCoalescer], but a successful future

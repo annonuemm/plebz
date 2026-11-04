@@ -4,8 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plezy/media/media_backend.dart';
 import 'package:plezy/media/media_library.dart';
 import 'package:plezy/redesign/ocker_library_column.dart';
+import 'package:plezy/redesign/ocker_rail_shell.dart' show OckerPageVeil;
 import 'package:plezy/services/settings_service.dart';
 import 'package:plezy/theme/mono_theme.dart';
+import 'package:plezy/utils/platform_detector.dart';
+
+import '../test_helpers/prefs.dart';
 
 void main() {
   testWidgets('UP and DOWN stop at the ends of the column instead of leaving it', (tester) async {
@@ -83,5 +87,44 @@ void main() {
     final pane = tester.getRect(find.byKey(OckerLibraryColumn.paneKey));
     final screen = tester.getSize(find.byType(Scaffold));
     expect(pane.top, closeTo(screen.height - pane.bottom, 0.5));
+  });
+
+  testWidgets('on the television under Glas the page dims behind the open column, as behind the rail (Plebz)', (
+    tester,
+  ) async {
+    resetSharedPreferencesForTest();
+    SettingsService.resetForTesting();
+    await SettingsService.getInstance();
+    TvDetectionService.debugSetAppleTVOverride(true);
+    addTearDown(() => TvDetectionService.debugSetAppleTVOverride(null));
+    final libraries = [MediaLibrary(id: 'Filme', backend: MediaBackend.plex, title: 'Filme', serverId: 'plex')];
+    final columnKey = GlobalKey<OckerLibraryColumnState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glasV2),
+        home: Scaffold(
+          body: OckerLibraryColumn(
+            key: columnKey,
+            libraries: libraries,
+            selectedKey: libraries.first.globalKey,
+            groupByServer: false,
+            onSelected: (_) {},
+            onFocusContent: () {},
+            child: const SizedBox.expand(),
+          ),
+        ),
+      ),
+    );
+    bool veiled() => tester.widget<OckerPageVeil>(find.byType(OckerPageVeil)).shown;
+    expect(veiled(), isFalse);
+
+    columnKey.currentState!.open();
+    await tester.pumpAndSettle();
+    expect(veiled(), isTrue);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(columnKey.currentState!.isOpen, isFalse, reason: 'RIGHT closes it');
+    expect(veiled(), isFalse);
   });
 }

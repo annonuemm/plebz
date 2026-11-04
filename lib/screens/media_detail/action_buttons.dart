@@ -245,89 +245,27 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
       backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
       foregroundColor: const WidgetStatePropertyAll(Colors.white),
     );
-    // "Flach": the one loud action — a gradient from the accent, and focus a
-    // thin ring standing off it, as round a poster.
+    // "Flach": the one loud action — one flat fill of the accent (Plebz, the
+    // user's call: the gradient read as busy), its label dark on a light
+    // accent, and focus a thin ring standing off it, as round a poster.
     final flat = ockerFlat(context);
-    Widget flatPlayGround(Widget button, OutlinedBorder shape, bool focused) {
-      final tk = tokens(context);
-      final scale = ockerScale(context);
-      return DecoratedBox(
-        decoration: ShapeDecoration(
-          shape: shape,
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: plebzMarkColours(context),
-            stops: const [0, 0.55, 1],
-          ),
-          shadows: focused ? [BoxShadow(color: tk.accent.withValues(alpha: 0.35), blurRadius: 40 * scale)] : null,
-        ),
-        position: DecorationPosition.background,
-        child: DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: FlatFocusRingDecoration(
-            ink: tk.ink(1),
-            ground: tk.bg,
-            gap: FocusTheme.flatRingGap * scale,
-            ringWidth: FocusTheme.flatRingWidth * scale,
-            opacity: focused ? 1 : 0,
-            borderRadius: shape is RoundedRectangleBorder
-                ? shape.borderRadius.resolve(Directionality.of(context))
-                : BorderRadius.circular(actionSize / 2),
-          ),
-          child: button,
-        ),
-      );
-    }
-
+    final flatPlayStyle = ButtonStyle(
+      backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+      foregroundColor: WidgetStatePropertyAll(OckerPlayGround.foreground(context, v2: false)),
+    );
     // "Glas – v2" (Plebz): the one main action is filled with the accent at
     // rest — it stands out before focus reaches it — and a filled shape takes
     // a picture's focus, a ring standing off it.
     final v2Frost = ockerFrost(context);
-    final v2OnAccent = !v2Frost && ThemeData.estimateBrightnessForColor(tokens(context).accent) == Brightness.light
-        ? tokens(context).bg
-        : Colors.white;
+    final v2OnAccent = OckerPlayGround.foreground(context, v2: true);
     final v2PlayStyle = ButtonStyle(
       backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
       foregroundColor: WidgetStatePropertyAll(v2OnAccent),
     );
-    Widget v2PlayGround(Widget button, OutlinedBorder shape, bool focused) {
-      final tk = tokens(context);
-      final scale = ockerScale(context);
-      // Frosted: glass rather than the accent, clipped apart from the ring,
-      // which stands outside the shape.
-      return DecoratedBox(
-        decoration: ShapeDecoration(shape: shape, color: v2Frost ? null : tk.accent),
-        position: DecorationPosition.background,
-        child: DecoratedBox(
-          position: DecorationPosition.foreground,
-          decoration: FlatFocusRingDecoration(
-            ink: tk.ink(1),
-            ground: tk.bg,
-            gap: FocusTheme.flatRingGap * scale,
-            ringWidth: FocusTheme.flatRingWidth * scale,
-            opacity: focused ? 1 : 0,
-            borderRadius: shape is RoundedRectangleBorder
-                ? shape.borderRadius.resolve(Directionality.of(context))
-                : BorderRadius.circular(actionSize / 2),
-          ),
-          child: v2Frost
-              ? OckerFrostBlur(
-                  shape: shape.copyWith(side: BorderSide(color: tk.ink(0.28))),
-                  tint: tk.ink(ockerFrostButtonTint),
-                  child: button,
-                )
-              : button,
-        ),
-      );
-    }
-
-    Widget plebzGround(Widget button, OutlinedBorder shape, bool focused) => v2Play
-        ? v2PlayGround(button, shape, focused)
-        : flat
-        ? flatPlayGround(button, shape, focused)
-        : plebzPlay
-        ? OckerPlebzPlayGround(focused: focused, shape: shape, child: button)
+    // The ground itself is the redesign's one main action (Plebz), shared with
+    // the Sport stage's button ([OckerPlayGround]).
+    Widget plebzGround(Widget button, OutlinedBorder shape, bool focused) => v2Play || flat || plebzPlay
+        ? OckerPlayGround(v2: v2Play, focused: focused, shape: shape, radius: actionSize / 2, child: button)
         : button;
     // A capsule, as the glass focus is: half its height for a corner.
     const playCapsule = StadiumBorder();
@@ -350,7 +288,9 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
               onPressed: onPlayPressed,
               style: v2Play
                   ? v2PlayStyle.merge(style)
-                  : plebzPlay || flat
+                  : flat
+                  ? flatPlayStyle.merge(style)
+                  : plebzPlay
                   ? plebzStyle.merge(style)
                   : style,
               child: playButtonLabel.isNotEmpty
@@ -393,7 +333,9 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
                 onPressed: onPlayVersionPressed,
                 style: v2Play
                     ? v2PlayStyle.merge(versionStyle)
-                    : plebzPlay || flat
+                    : flat
+                    ? flatPlayStyle.merge(versionStyle)
+                    : plebzPlay
                     ? plebzStyle.merge(versionStyle)
                     : versionStyle,
                 child: AppIcon(Symbols.keyboard_arrow_down_rounded, fill: 1, size: playIconSize),

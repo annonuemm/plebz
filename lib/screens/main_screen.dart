@@ -6,7 +6,12 @@ import '../navigation/page_refresh_shortcut.dart';
 import 'dart:io' show Platform, exit;
 
 export '../navigation/main_screen_scope.dart'
-    show MainScreenFocusScope, MainScreenScopeAspect, MainScreenTabSwitcher, SideNavigationBleedBuilder;
+    show
+        MainScreenFocusScope,
+        MainScreenNamedPlaces,
+        MainScreenScopeAspect,
+        MainScreenTabSwitcher,
+        SideNavigationBleedBuilder;
 
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
@@ -1367,16 +1372,24 @@ class _MainScreenState extends State<MainScreen>
   /// IndexedStack that disables tickers for offscreen children to prevent
   /// animation controllers on non-visible tabs from scheduling frames.
   Widget _buildTickerAwareStack() {
+    // A handheld's bar or rail names its places (Plebz); their pages set no
+    // title of their own.
+    final named = isOcker(context) && PlatformDetector.isMobile(context)
+        ? {for (final tab in _getBottomNavigationTabs(context)) tab.id}
+        : const <NavigationTabId>{};
     return Column(
       children: [
         const AuthErrorBanner(),
         Expanded(
-          child: IndexedStack(
-            index: _currentIndex,
-            clipBehavior: Clip.none,
-            children: [
-              for (var i = 0; i < _screens.length; i++) TickerMode(enabled: i == _currentIndex, child: _screens[i]),
-            ],
+          child: MainScreenNamedPlaces(
+            places: named,
+            child: IndexedStack(
+              index: _currentIndex,
+              clipBehavior: Clip.none,
+              children: [
+                for (var i = 0; i < _screens.length; i++) TickerMode(enabled: i == _currentIndex, child: _screens[i]),
+              ],
+            ),
           ),
         ),
       ],
@@ -2667,7 +2680,8 @@ class _MainScreenState extends State<MainScreen>
   /// content beside it. The rail absorbs the leading system inset itself, so
   /// the content must not indent for it a second time.
   Widget _buildLandscapeShell(BuildContext context) {
-    if (ockerGlasTouch(context)) return _buildAppleLandscapeShell(context);
+    // Plebz: the redesigns' rail stands beside the page at the screen's edge,
+    // as on the television, rather than floating over it.
     return Scaffold(
       body: Builder(
         builder: (context) {
@@ -2707,35 +2721,6 @@ class _MainScreenState extends State<MainScreen>
       );
     },
   );
-
-  /// Plebz: Glas on Apple's handhelds in landscape — the rail floats over the
-  /// page, which runs on beneath it as it does beneath Apple's sidebar. The
-  /// page is told the rail's extent as its leading padding, so what rests on
-  /// it starts past the glass ([ockerFloatingStartInset]).
-  Widget _buildAppleLandscapeShell(BuildContext context) {
-    return Scaffold(
-      body: Builder(
-        builder: (context) {
-          final isRtl = Directionality.of(context) == TextDirection.rtl;
-          final media = MediaQuery.of(context);
-          final extent = MobileNavigationRail.appleExtent(context);
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: MediaQuery(
-                  data: media.copyWith(
-                    padding: isRtl ? media.padding.copyWith(right: extent) : media.padding.copyWith(left: extent),
-                  ),
-                  child: _buildTickerAwareStack(),
-                ),
-              ),
-              PositionedDirectional(start: 0, top: 0, bottom: 0, child: _buildLandscapeRail(context)),
-            ],
-          );
-        },
-      ),
-    );
-  }
 
   Widget _buildPortraitShell(BuildContext context) {
     return Scaffold(

@@ -2980,6 +2980,17 @@ class _Translations$sport$de extends Translations$sport$en {
 	@override String get afterExtraTime => 'n. V.';
 	@override String onPenalties({required Object score}) => '${score} i. E.';
 	@override String get europaLeagueLate => 'Ergebnisse kommen oft erst ein bis zwei Tage später';
+	@override String get yourClub => 'Dein Verein';
+	@override String get nextMatch => 'Nächstes Spiel';
+	@override String get withGermanClubs => 'Mit deutschen Vereinen';
+	@override String get germanClub => 'Deutscher Verein';
+	@override String get toMatch => 'Zum Spiel';
+	@override String get roadToFinal => 'Der Weg nach Berlin';
+	@override String get roundPlayed => 'gespielt';
+	@override String tableAfter({required Object n}) => 'nach Spieltag ${n}';
+	@override String stagePosition({required Object n, required Object total}) => 'Spiel ${n} von ${total}';
+	@override String get previousMatch => 'Vorheriges Spiel';
+	@override String get nextOnStage => 'Nächstes Spiel';
 }
 
 // Path: plebz
@@ -7110,6 +7121,17 @@ extension on TranslationsDe {
 			'sport.afterExtraTime' => 'n. V.',
 			'sport.onPenalties' => ({required Object score}) => '${score} i. E.',
 			'sport.europaLeagueLate' => 'Ergebnisse kommen oft erst ein bis zwei Tage später',
+			'sport.yourClub' => 'Dein Verein',
+			'sport.nextMatch' => 'Nächstes Spiel',
+			'sport.withGermanClubs' => 'Mit deutschen Vereinen',
+			'sport.germanClub' => 'Deutscher Verein',
+			'sport.toMatch' => 'Zum Spiel',
+			'sport.roadToFinal' => 'Der Weg nach Berlin',
+			'sport.roundPlayed' => 'gespielt',
+			'sport.tableAfter' => ({required Object n}) => 'nach Spieltag ${n}',
+			'sport.stagePosition' => ({required Object n, required Object total}) => 'Spiel ${n} von ${total}',
+			'sport.previousMatch' => 'Vorheriges Spiel',
+			'sport.nextOnStage' => 'Nächstes Spiel',
 			'plebz.settingsGroupLook' => 'Aussehen und Wiedergabe',
 			'plebz.settingsGroupContent' => 'Inhalte',
 			'plebz.settingsGroupApp' => 'App',

@@ -11,10 +11,12 @@ import '../../models/simkl/simkl_recommendation.dart';
 import '../../models/simkl/simkl_rating.dart';
 import '../../models/simkl/simkl_search_result.dart';
 import '../../models/simkl/simkl_trending_item.dart';
+import '../../utils/app_logger.dart';
 import '../../utils/country_codes.dart';
 import '../../utils/external_ids.dart';
 import '../trackers/simkl/simkl_client.dart';
 import '../trackers/simkl/simkl_constants.dart';
+import '../trackers/tracker_constants.dart';
 import '../trackers/tracker_exceptions.dart';
 import '../trackers/future_coalescer.dart';
 import '../../utils/trailer_urls.dart';
@@ -91,9 +93,15 @@ class SimklCatalogSource with CatalogWatchlistMachinery implements CatalogSource
             DateTime.now().difference(currentLoadedAt) >= _rowCacheTtl;
         if (current != null && !currentExpired) return current;
         if (row == CatalogRowId.watchlist && currentExpired) _invalidateWatchlistCache();
+        final generation = _watchlistCacheGeneration;
         final fetched = await _fetchUnpaginatedRow(row);
-        _rowCache[row] = fetched;
-        _rowCacheLoadedAt[row] = DateTime.now();
+        // Plebz: a watchlist read while a title was added may predate the
+        // addition. It still answers its caller, but kept, it hid the title
+        // from every list for the cache's quarter of an hour.
+        if (row != CatalogRowId.watchlist || generation == _watchlistCacheGeneration) {
+          _rowCache[row] = fetched;
+          _rowCacheLoadedAt[row] = DateTime.now();
+        }
         return fetched;
       });
     }
@@ -638,11 +646,18 @@ class SimklCatalogSource with CatalogWatchlistMachinery implements CatalogSource
     final bucket = kind == MediaKind.show ? 'shows' : 'movies';
     final mutationIds = SimklIds.fromCatalogItemIds(ids).toJson();
     if (add) {
-      await _client.addToList({
+      final answer = await _client.addToList({
         bucket: [
           {'to': 'plantowatch', 'ids': mutationIds},
         ],
       });
+      // Plebz: Simkl answers 201 for a title it could not match too, and
+      // lists it under `not_found` (an anime under its `shows`). Taken as
+      // added, the title showed as bookmarked and never reached the list.
+      if (_unmatched(answer)) {
+        appLogger.w('Simkl: no title matches $mutationIds, nothing added to Plan to Watch');
+        throw TrackerApiException(service: TrackerService.simkl, statusCode: 404);
+      }
     } else {
       // Simkl has no remove-from-list endpoint. A bare-IDs history removal drops
       // the title from the user's library entirely, watch history included; for
@@ -666,12 +681,21 @@ class SimklCatalogSource with CatalogWatchlistMachinery implements CatalogSource
     _invalidateWatchlistCache();
   }
 
+  /// Whether an `/sync/add-to-list` answer lists anything as unmatched.
+  static bool _unmatched(Object? answer) {
+    final notFound = answer is Map ? answer['not_found'] : null;
+    return notFound is Map && notFound.values.any((titles) => titles is List && titles.isNotEmpty);
+  }
+
   void _invalidateWatchlistCache() {
     _watchlistCacheGeneration++;
     _watchlistCache = null;
     _simklAllItemsLoad.reset();
     _rowCache.remove(CatalogRowId.watchlist);
     _rowCacheLoadedAt.remove(CatalogRowId.watchlist);
+    // Plebz: a read already under way may predate the change; the next one
+    // must not join it.
+    _rowLoads.forget(CatalogRowId.watchlist);
   }
 
   @override

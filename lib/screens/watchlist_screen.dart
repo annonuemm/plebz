@@ -37,6 +37,7 @@ import '../redesign/ocker_skin.dart';
 import '../redesign/ocker_submenu.dart';
 import '../redesign/ocker_type.dart';
 import '../theme/mono_tokens.dart';
+import '../navigation/navigation_tabs.dart';
 
 /// The Watchlist tab: the full watchlist of one provider, as a navigation
 /// destination of its own.
@@ -244,20 +245,23 @@ class WatchlistScreenState extends State<WatchlistScreen>
   /// — "Alle", "Filme", "Serien" — one press each, the one on show marked as a
   /// tab is. First under the redesign, then in the original look too, at a
   /// viewer's request.
-  List<FocusableAction> _filterActions() => [
-    for (final (index, (value, label)) in [
-      (WatchlistTypeFilter.all, t.watchlist.typeAll),
-      (WatchlistTypeFilter.movies, t.watchlist.typeMovies),
-      (WatchlistTypeFilter.shows, t.watchlist.typeShows),
-    ].indexed)
-      FocusableAction(
-        tooltip: label,
-        onPressed: () => _applyFilter(_filter.withType(value)),
-        builder: (context, state) => isOcker(context)
+  List<(WatchlistTypeFilter, String)> get _types => [
+    (WatchlistTypeFilter.all, t.watchlist.typeAll),
+    (WatchlistTypeFilter.movies, t.watchlist.typeMovies),
+    (WatchlistTypeFilter.shows, t.watchlist.typeShows),
+  ];
+
+  /// The three type words on their own, at the bar's left where a handheld's
+  /// navigation names the place and the title's room is free (Plebz).
+  Widget _typeWords() => Row(
+    mainAxisSize: .min,
+    children: [
+      for (final (index, (value, label)) in _types.indexed)
+        isOcker(context)
             ? _TypeWord(
                 label: label,
                 active: _filter.type == value,
-                focused: state.showFocus,
+                focused: false,
                 first: index == 0,
                 last: index == WatchlistTypeFilter.values.length - 1,
                 onTap: () => _applyFilter(_filter.withType(value)),
@@ -265,10 +269,34 @@ class WatchlistScreenState extends State<WatchlistScreen>
             : _PlainTypeWord(
                 label: label,
                 active: _filter.type == value,
-                focused: state.showFocus,
+                focused: false,
                 onTap: () => _applyFilter(_filter.withType(value)),
               ),
-      ),
+    ],
+  );
+
+  List<FocusableAction> _filterActions({bool types = true}) => [
+    if (types)
+      for (final (index, (value, label)) in _types.indexed)
+        FocusableAction(
+          tooltip: label,
+          onPressed: () => _applyFilter(_filter.withType(value)),
+          builder: (context, state) => isOcker(context)
+              ? _TypeWord(
+                  label: label,
+                  active: _filter.type == value,
+                  focused: state.showFocus,
+                  first: index == 0,
+                  last: index == WatchlistTypeFilter.values.length - 1,
+                  onTap: () => _applyFilter(_filter.withType(value)),
+                )
+              : _PlainTypeWord(
+                  label: label,
+                  active: _filter.type == value,
+                  focused: state.showFocus,
+                  onTap: () => _applyFilter(_filter.withType(value)),
+                ),
+        ),
     FocusableAction(
       icon: switch (_filter.status) {
         WatchlistStatusFilter.any => Symbols.filter_alt_rounded,
@@ -378,7 +406,10 @@ class WatchlistScreenState extends State<WatchlistScreen>
     final title = Text(t.explore.rows.watchlist);
     // The redesign chooses the list in the side rail instead; see
     // [ockerRailMenu]. Only the name stays here.
-    if (tabs.length < 2 || isOckerLayout(context)) return title;
+    if (tabs.length < 2 || isOckerLayout(context)) {
+      // Plebz: no name where a handheld's navigation says it already.
+      return MainScreenNamedPlaces.hidesTitle(context, NavigationTabId.watchlist) ? const SizedBox.shrink() : title;
+    }
 
     return TabChipStrip(
       children: [
@@ -415,6 +446,10 @@ class WatchlistScreenState extends State<WatchlistScreen>
   Widget build(BuildContext context) {
     final tabs = _tabs(context);
     final active = _activeTab(tabs);
+    final typesLeft =
+        tabs.length < 2 &&
+        !isOckerLayout(context) &&
+        MainScreenNamedPlaces.hidesTitle(context, NavigationTabId.watchlist);
 
     if (active == null) {
       return Scaffold(
@@ -454,8 +489,10 @@ class WatchlistScreenState extends State<WatchlistScreen>
       loadItems: () => _loadTab(context, active),
       isEmbedded: true,
       itemFilter: _itemFilter,
-      hostAppBarActions: _filterActions(),
-      titleOverride: _buildTitle(tabs, active),
+      // Plebz: with no name over the page (a handheld's navigation says it)
+      // and no lists to switch, the type words take the title's room.
+      hostAppBarActions: _filterActions(types: !typesLeft),
+      titleOverride: typesLeft ? _typeWords() : _buildTitle(tabs, active),
       // LEFT out of the app bar actions lands on the last source chip, which
       // is the only way the D-pad can reach the switcher: UP from the grid
       // goes to the actions, not into the title.

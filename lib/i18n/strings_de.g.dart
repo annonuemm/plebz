@@ -327,6 +327,8 @@ class _Translations$settings$de extends Translations$settings$en {
 	@override String get gridView => 'Raster';
 	@override String get listView => 'Liste';
 	@override String get showHeroSection => 'Großer Empfehlungsbereich';
+	@override String get continueWatchingPosterMode => 'Bild in Weiterschauen';
+	@override String get continueWatchingPosterSameAsEverywhere => 'Wie „Bild für Folgen“';
 	@override String get continueWatchingAction => 'Aktion für Weiterschauen';
 	@override String get continueWatchingPlay => 'Abspielen';
 	@override String get continueWatchingDetails => 'Details öffnen';
@@ -1514,6 +1516,7 @@ class _Translations$discover$de extends Translations$discover$en {
 	@override String get directors => 'Regisseure';
 	@override String get movie => 'Film';
 	@override String get tvShow => 'Serie';
+	@override String resumeRemaining({required Object duration, required Object time}) => 'Noch ${duration} · bis ${time}';
 	@override String minutesLeft({required Object minutes}) => 'Noch ${minutes} Min.';
 	@override String get moreLikeThis => 'Ähnliche Inhalte';
 	@override String titleCount({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n,
@@ -4493,6 +4496,8 @@ extension on TranslationsDe {
 			'settings.gridView' => 'Raster',
 			'settings.listView' => 'Liste',
 			'settings.showHeroSection' => 'Großer Empfehlungsbereich',
+			'settings.continueWatchingPosterMode' => 'Bild in Weiterschauen',
+			'settings.continueWatchingPosterSameAsEverywhere' => 'Wie „Bild für Folgen“',
 			'settings.continueWatchingAction' => 'Aktion für Weiterschauen',
 			'settings.continueWatchingPlay' => 'Abspielen',
 			'settings.continueWatchingDetails' => 'Details öffnen',
@@ -4802,10 +4807,10 @@ extension on TranslationsDe {
 			'settings.appThemeVariantGlas' => 'Glas',
 			'settings.appThemeVariantGlasDescription' => 'Glasflächen und schwebende Navigation',
 			'settings.appThemeVariantFlach' => 'Flach',
-			'settings.appThemeVariantFlachDescription' => 'Wie Glas, aber flach, mit weißem Fokus',
-			'settings.flachAccent' => 'Akzentfarbe',
 			_ => null,
 		} ?? switch (path) {
+			'settings.appThemeVariantFlachDescription' => 'Wie Glas, aber flach, mit weißem Fokus',
+			'settings.flachAccent' => 'Akzentfarbe',
 			'settings.flachAccentDescription' => 'Für Fortschritt, gewählte Seite und Filter',
 			'settings.flachPreset' => 'Farbprofil',
 			'settings.flachPresetCustom' => 'Eigene',
@@ -5316,10 +5321,10 @@ extension on TranslationsDe {
 			'videoControls.subtitleTrack' => ({required Object n}) => 'Spur ${n}',
 			'videoControls.subtitleFile' => ({required Object name}) => 'Untertitel ${name}',
 			'videoControls.forcedTrack' => ({required Object label}) => '${label} (Erzwungen)',
-			'videoControls.osdSubtitlesOff' => 'Untertitel: Aus',
-			'videoControls.osdSubtitles' => ({required Object track}) => 'Untertitel: ${track}',
 			_ => null,
 		} ?? switch (path) {
+			'videoControls.osdSubtitlesOff' => 'Untertitel: Aus',
+			'videoControls.osdSubtitles' => ({required Object track}) => 'Untertitel: ${track}',
 			'videoControls.osdAudio' => ({required Object track}) => 'Audio: ${track}',
 			'videoControls.upNext' => 'ALS NÄCHSTES',
 			'videoControls.upNextStartsIn' => ({required Object seconds}) => 'Nächste Folge in ${seconds} s',
@@ -5598,6 +5603,7 @@ extension on TranslationsDe {
 			'discover.directors' => 'Regisseure',
 			'discover.movie' => 'Film',
 			'discover.tvShow' => 'Serie',
+			'discover.resumeRemaining' => ({required Object duration, required Object time}) => 'Noch ${duration} · bis ${time}',
 			'discover.minutesLeft' => ({required Object minutes}) => 'Noch ${minutes} Min.',
 			'discover.moreLikeThis' => 'Ähnliche Inhalte',
 			'discover.titleCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Titel', other: '${n} Titel', ), 
@@ -5829,11 +5835,11 @@ extension on TranslationsDe {
 			'explore.episodeCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Folge', other: '${n} Folgen', ), 
 			'explore.cast' => 'Besetzung',
 			'explore.characters' => 'Charaktere',
+			_ => null,
+		} ?? switch (path) {
 			'explore.addToWatchlist' => 'Zur Merkliste hinzufügen',
 			'explore.removeFromWatchlist' => 'Von Merkliste entfernen',
 			'explore.addedToWatchlist' => 'Zur Watchlist hinzugefügt',
-			_ => null,
-		} ?? switch (path) {
 			'explore.removedFromWatchlist' => 'Von der Watchlist entfernt',
 			'explore.watchlistUpdateFailed' => 'Merkliste konnte nicht aktualisiert werden',
 			'explore.watchlistNoMatch' => 'Dieser Eintrag konnte keiner Watchlist zugeordnet werden',
@@ -6343,11 +6349,11 @@ extension on TranslationsDe {
 			'downloads.collectionDownloadsDeleted' => 'Downloads gelöscht',
 			'downloads.cancelledDownloadTitle' => 'Abgebrochener Download',
 			'downloads.cancelledDownloadMessage' => 'Dieser Download wurde abgebrochen. Was möchtest du tun?',
+			_ => null,
+		} ?? switch (path) {
 			'downloads.allEpisodesAlreadyDownloaded' => 'Alle Episoden sind bereits heruntergeladen',
 			'downloads.resumeDownload' => 'Download fortsetzen',
 			'downloads.cancelledDownload' => 'Abgebrochener Download',
-			_ => null,
-		} ?? switch (path) {
 			'downloads.syncingFile' => ({required Object file, required Object status}) => '${file} (${status} wird synchronisiert)',
 			'downloads.downloadedFileClickToComplete' => ({required Object file}) => '${file} heruntergeladen — zum Abschließen klicken',
 			'downloads.partialDownloadClickToComplete' => 'Teilweise heruntergeladen — zum Abschließen klicken',
@@ -6857,11 +6863,11 @@ extension on TranslationsDe {
 			'services.tmdb.title' => 'TMDB',
 			'services.tmdb.hubSubtitle' => 'Ergänzt Logos und Beschreibungen',
 			'services.tmdb.enabled' => 'Fehlendes von TMDB ergänzen',
+			_ => null,
+		} ?? switch (path) {
 			'services.tmdb.enabledDescription' => 'Logos und Beschreibungen, die dem Server fehlen',
 			'services.tmdb.apiKey' => 'API-Schlüssel',
 			'services.tmdb.apiKeySet' => 'Hinterlegt',
-			_ => null,
-		} ?? switch (path) {
 			'services.tmdb.apiKeyMissing' => 'Nicht hinterlegt',
 			'services.tmdb.apiKeyHint' => 'API-Schlüssel oder Read Access Token',
 			'services.tmdb.apiKeyHelp' => 'Kostenlos anzulegen auf themoviedb.org unter Einstellungen → API.',

@@ -92,6 +92,7 @@ import '../utils/snackbar_helper.dart';
 import '../utils/video_player_navigation.dart';
 import '../widgets/app_bar_back_button.dart';
 import '../widgets/detail_home_button.dart';
+import '../widgets/detail_resume_progress.dart';
 import '../utils/desktop_window_padding.dart';
 import '../widgets/horizontal_scroll_with_arrows.dart';
 import '../widgets/media_context_menu.dart';
@@ -146,6 +147,9 @@ const double _heroChromeHeight = 58;
 const double _heroLogoHeight = 120;
 const double _heroLogoGap = 12;
 const double _heroActionHeight = 48;
+
+/// From the buttons to the resume line under them (Plebz).
+const double _heroResumeProgressGap = 8;
 const double _heroBottomInset = 16;
 const double _heroSideInset = 16;
 
@@ -159,6 +163,9 @@ const double _tvDetailTallPosterScale = 0.72;
 const double _tvDetailEpisodeThumbnailScale = 0.72;
 const double _tvDetailActionSize = 46;
 const double _tvDetailActionRailGap = 4;
+
+/// From the action row's foot to the resume line under it (Plebz).
+const double _tvDetailResumeProgressGap = 12;
 const String _tvDetailSeasonsErrorHubId = 'detail_seasons_error';
 const String _tvDetailSeasonHubIdPrefix = 'detail_season_';
 const String _tvDetailExtrasHubId = 'detail_extras';
@@ -4248,7 +4255,12 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
           // not run up the screen. Under glass the action band reaches a few
           // pixels past the column, and its focus capsule past the band; cut
           // at the column's own edges they lost their left end and their foot.
-          clipper: ockerGlass(context) ? const _ClipTopOnly(reach: 32) : null,
+          clipper: ockerGlass(context)
+              ? _ClipTopOnly(
+                  reach: 32,
+                  below: (_tvDetailResumeProgressGap * scale) + DetailResumeProgress.heightFor(scale),
+                )
+              : null,
           child: SizedBox(
             height: availableHeight,
             child: Stack(
@@ -4351,7 +4363,32 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                           Offstage(
                             key: const ValueKey('tv_detail_action_row'),
                             offstage: hidesActions,
-                            child: SizedBox(height: _tvDetailActionSize * scale, child: _buildActionButtons(metadata)),
+                            child: SizedBox(
+                              height: _tvDetailActionSize * scale,
+                              // Plebz: how far in Play resumes, under the
+                              // button. It hangs into the air between the row
+                              // and the parked rails rather than taking height
+                              // from the logo and the summary, and only while
+                              // the rails are parked — raised, they stand there.
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Positioned.fill(child: _buildActionButtons(metadata)),
+                                  if (titleAreaExpanded)
+                                    if (_resumeProgressTarget(metadata) case final target?)
+                                      Positioned(
+                                        key: const ValueKey('tv_detail_resume_progress'),
+                                        left: 0,
+                                        right: 0,
+                                        top: (_tvDetailActionSize + _tvDetailResumeProgressGap) * scale,
+                                        child: DetailResumeProgress(
+                                          item: target,
+                                          leadingInset: _playIconInset(context),
+                                        ),
+                                      ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -5265,8 +5302,17 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
         final blockAlignment = centered ? Alignment.bottomCenter : Alignment.bottomLeft;
         final wrapAlignment = centered ? WrapAlignment.center : WrapAlignment.start;
 
+        // Plebz: how far in Play resumes, under the buttons — while there is
+        // room for it beside them; the logo gives way first, as for a chip row.
+        final resumeTarget = _resumeProgressTarget(metadata);
+        final resumeBlockHeight = resumeTarget == null
+            ? 0.0
+            : _heroResumeProgressGap + DetailResumeProgress.heightFor(ockerScale(context));
         final showActions = availableHeight >= actionHeight;
-        final remainingAfterActions = availableHeight - (showActions ? actionHeight : 0);
+        final showResume =
+            showActions && resumeBlockHeight > 0 && availableHeight >= actionHeight + resumeBlockHeight + 52;
+        final actionBlockHeight = actionHeight + (showResume ? resumeBlockHeight : 0.0);
+        final remainingAfterActions = availableHeight - (showActions ? actionBlockHeight : 0);
         final chipsFit = remainingAfterActions >= 88;
         final gapAboveActions = showActions
             ? (availableHeight < 180 ? _HeroChips.shortActionGap : _HeroChips.actionGap)
@@ -5315,7 +5361,7 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
             chipBlockHeight +
             genreBlockHeight +
             chipActionGap +
-            (showActions ? actionHeight : 0.0);
+            (showActions ? actionBlockHeight : 0.0);
 
         Widget chipRow(List<Widget> chips) => ClipRect(
           child: ConstrainedBox(
@@ -5375,6 +5421,15 @@ class _MediaDetailScreenState extends State<MediaDetailScreen>
                       if (showGenres) ...[const SizedBox(height: rowGap), chipRow(genreChips)],
                       if (chipActionGap > 0) SizedBox(height: chipActionGap),
                       if (showActions) SizedBox(height: actionHeight, child: _buildActionButtons(metadata)),
+                      if (showResume) ...[
+                        const SizedBox(height: _heroResumeProgressGap),
+                        DetailResumeProgress(
+                          key: const ValueKey('hero_resume_progress'),
+                          item: resumeTarget!,
+                          centered: centered,
+                          leadingInset: _playIconInset(context),
+                        ),
+                      ],
                     ],
                   ),
                 ),

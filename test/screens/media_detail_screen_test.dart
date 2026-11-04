@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:plezy/database/app_database.dart';
@@ -35,6 +36,7 @@ import 'package:plezy/services/catalog/catalog_source.dart';
 import 'package:plezy/providers/catalog_sources_provider.dart';
 import 'package:plezy/models/catalog/catalog_item.dart';
 import 'package:plezy/widgets/detail_home_button.dart';
+import 'package:plezy/widgets/detail_resume_progress.dart';
 import 'package:plezy/models/download_models.dart';
 import 'package:plezy/navigation/profile_navigation_scope.dart';
 import 'package:plezy/services/plex_mappers.dart';
@@ -158,6 +160,8 @@ Future<void> _pumpThreeSeasonShow(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  // The resume line under the play button tells the end time.
+  setUpAll(() => initializeDateFormatting('en'));
 
   setUp(() {
     resetSharedPreferencesForTest();
@@ -2489,6 +2493,120 @@ void main() {
     expect(observer.pushedRouteNames, contains(kVideoPlayerRouteName));
   });
 
+  group('resume line under the play button (Plebz)', () {
+    Future<void> pumpTvDetail(
+      WidgetTester tester,
+      MediaItem item, {
+      MediaItem? onDeck,
+      Map<String, List<MediaItem>>? children,
+    }) async {
+      await SettingsService.getInstance();
+      final client = _FakeMediaServerClient(show: item, childrenByParent: children ?? {})..onDeckEpisode = onDeck;
+      final provider = testMultiServer(clients: [client]).provider;
+      await tester.pumpWidget(
+        TranslationProvider(
+          child: ChangeNotifierProvider<MultiServerProvider>.value(
+            value: provider,
+            child: MaterialApp(
+              theme: monoTheme(MonoPalette.dark, variant: AppThemeVariant.glasV2),
+              home: withProfileNavigationScope(
+                child: SizedBox(width: 1280, height: 720, child: MediaDetailScreen(metadata: item)),
+              ),
+            ),
+          ),
+        ),
+      );
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
+
+    MediaItem movie({int? viewOffsetMs}) => testMediaItem(
+      id: 'movie_1',
+      backend: MediaBackend.jellyfin,
+      kind: MediaKind.movie,
+      title: 'The Film',
+      summary: 'What happens in the film.',
+      durationMs: 166 * 60000,
+      viewOffsetMs: viewOffsetMs,
+      serverId: 'server_1',
+      serverName: 'Server',
+    );
+
+    testWidgets('a part-watched film says how much is left and when it ends', (tester) async {
+      await pumpTvDetail(tester, movie(viewOffsetMs: 94 * 60000));
+
+      final line = find.byKey(const ValueKey('tv_detail_resume_progress'));
+      expect(line, findsOneWidget);
+      expect(find.descendant(of: line, matching: find.textContaining('1h 12min left · ends ')), findsOneWidget);
+      // Under the buttons, starting where the play button's icon starts.
+      final row = find.byKey(const ValueKey('tv_detail_action_row'));
+      expect(tester.getTopLeft(line).dy, greaterThan(tester.getBottomLeft(row).dy));
+      final words = find.descendant(of: line, matching: find.byType(Text));
+      final playIcon = find.descendant(of: row, matching: find.byIcon(Symbols.resume_rounded));
+      // The icon's box, plus the glyph's own side bearing.
+      expect(tester.getTopLeft(words).dx - tester.getTopLeft(playIcon).dx, inInclusiveRange(1, 4));
+      // How far in, the button shows itself: its watched share washed.
+      final wash = tester.widget<DetailResumeWash>(find.byKey(const ValueKey('detail_resume_wash')));
+      expect(wash.fraction, closeTo(94 / 166, 0.001));
+    });
+
+    testWidgets('an unstarted film has no line', (tester) async {
+      await pumpTvDetail(tester, movie());
+
+      expect(find.byKey(const ValueKey('tv_detail_resume_progress')), findsNothing);
+      expect(find.byType(DetailResumeProgress), findsNothing);
+      expect(find.byType(DetailResumeWash), findsNothing);
+    });
+
+    testWidgets('a show measures the episode its play button continues', (tester) async {
+      final show = testMediaItem(
+        id: 'show_1',
+        backend: MediaBackend.jellyfin,
+        kind: MediaKind.show,
+        title: 'The Show',
+        serverId: 'server_1',
+        serverName: 'Server',
+      );
+      final season = testMediaItem(
+        id: 'season_2',
+        backend: MediaBackend.jellyfin,
+        kind: MediaKind.season,
+        title: 'Season 2',
+        index: 2,
+        parentId: show.id,
+        serverId: show.serverId,
+      );
+      final episode = testMediaItem(
+        id: 'episode_4',
+        backend: MediaBackend.jellyfin,
+        kind: MediaKind.episode,
+        title: 'Episode four',
+        index: 4,
+        durationMs: 50 * 60000,
+        viewOffsetMs: 19 * 60000,
+        parentId: season.id,
+        parentIndex: 2,
+        grandparentId: show.id,
+        serverId: show.serverId,
+        serverName: show.serverName,
+      );
+      await pumpTvDetail(
+        tester,
+        show,
+        onDeck: episode,
+        children: {
+          show.id: [season],
+          season.id: [episode],
+        },
+      );
+
+      final line = find.byKey(const ValueKey('tv_detail_resume_progress'));
+      expect(line, findsOneWidget);
+      expect(find.descendant(of: line, matching: find.textContaining('31min left')), findsOneWidget);
+    });
+  });
+
   group('phone layout', () {
     MediaItem buildShow({String? summary}) => testMediaItem(
       id: 'show_1',
@@ -2696,6 +2814,26 @@ void main() {
 
       expect(find.text('S1E2'), findsOneWidget, reason: 'fallback survives a settled empty on-deck');
       expect(find.text('S1E1'), findsNothing);
+    });
+
+    testWidgets('the resume line stands under the buttons, for the on-deck episode (Plebz)', (tester) async {
+      final show = buildShow();
+      final season1 = buildSeason(show, 1);
+      final episode1 = buildEpisode(show, season1, 1).copyWith(viewOffsetMs: 10 * 60000);
+      final client = _FakeMediaServerClient(
+        show: show,
+        childrenByParent: {
+          show.id: [season1],
+          season1.id: [episode1],
+        },
+      )..onDeckEpisode = episode1;
+
+      await pumpPhoneDetail(tester, client, show);
+
+      final line = find.byKey(const ValueKey('hero_resume_progress'));
+      expect(line, findsOneWidget);
+      expect(find.descendant(of: line, matching: find.textContaining('20min left')), findsOneWidget);
+      expect(tester.getTopLeft(line).dy, greaterThan(tester.getBottomLeft(find.byType(FocusableActionBar).first).dy));
     });
 
     testWidgets('returning from playback refreshes watch state without the full-screen loader', (tester) async {

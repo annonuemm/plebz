@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../focus/focus_theme.dart';
 import '../media/media_hub.dart';
 import '../media/media_item.dart';
+import '../services/settings_service.dart' show EpisodePosterMode;
 import 'ocker_poster_tile.dart';
 import 'ocker_skin.dart';
 
@@ -38,6 +39,10 @@ class OckerBrowseGrid extends StatefulWidget {
   /// The viewer has reached the last row; a paged list fetches more.
   final VoidCallback? onReachedEnd;
 
+  /// The episode picture the tiles wear instead of the app-wide one (Plebz:
+  /// Continue Watching's own).
+  final EpisodePosterMode? posterMode;
+
   const OckerBrowseGrid({
     super.key,
     required this.items,
@@ -47,6 +52,7 @@ class OckerBrowseGrid extends StatefulWidget {
     required this.onExitUp,
     this.onExitLeft,
     this.onReachedEnd,
+    this.posterMode,
   });
 
   @override
@@ -151,7 +157,7 @@ class OckerBrowseGridState extends State<OckerBrowseGrid> {
                   hub: widget.hub,
                   index: i,
                   itemCount: widget.items.length,
-                  posterMode: OckerPosterTile.posterModeOf(context),
+                  posterMode: widget.posterMode ?? OckerPosterTile.posterModeOf(context),
                   mixedHub: false,
                   hideSpoilers: OckerPosterTile.hideSpoilersOf(context),
                   tileWidth: tileWidth,

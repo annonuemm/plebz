@@ -80,9 +80,14 @@ class TvSpotlightScaffold extends StatelessWidget {
     required this.foreground,
     this.hideSpoilers,
     this.showSpotlightInfo = true,
+    this.episodePosterModeForHub,
   });
 
   final List<MediaHub> hubs;
+
+  /// A row's own episode picture, where it differs from the app-wide one
+  /// (Plebz: Continue Watching), so the rows' height is reckoned right.
+  final EpisodePosterMode Function(MediaHub hub)? episodePosterModeForHub;
   final ValueListenable<MediaItem?> spotlightListenable;
   final MediaItem? Function() resolveSpotlight;
   final TvSpotlightClientResolver resolveClient;
@@ -109,6 +114,7 @@ class TvSpotlightScaffold extends StatelessWidget {
             hubs: hubs,
             density: settings.read(SettingsService.libraryDensity),
             episodePosterMode: settings.read(SettingsService.episodePosterMode),
+            episodePosterModeForHub: episodePosterModeForHub,
             fullCardLayout: settings.read(SettingsService.tvFullCardLayout),
             gridSpacing: settings.read(SettingsService.gridSpacing),
             tallPosterScale: TvBrowseRailLayout.compactTallPosterScale,

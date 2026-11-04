@@ -313,6 +313,8 @@ class AppearanceSettingsScreen extends StatelessWidget {
                   subtitle: t.settings.showHeroSectionDescription,
                 ),
               _continueWatchingActionSelector(),
+              // Plebz: Continue Watching's picture, apart from "Bild für Folgen".
+              _continueWatchingPosterModeSelector(),
               _episodeActionSelector(),
               if (!PlatformDetector.isMobile(context))
                 SettingSwitchTile(
@@ -549,6 +551,24 @@ class AppearanceSettingsScreen extends StatelessWidget {
       ButtonSegment(value: EpisodePosterMode.episodeThumbnail, label: Text(t.settings.episodeThumbnail)),
     ],
   );
+
+  Widget _continueWatchingPosterModeSelector() => SettingSelectionTile<ContinueWatchingPosterMode>(
+    pref: PlebzPrefs.continueWatchingPosterMode,
+    icon: Symbols.image_rounded,
+    title: t.settings.continueWatchingPosterMode,
+    subtitleBuilder: _continueWatchingPosterModeLabel,
+    options: [
+      for (final mode in ContinueWatchingPosterMode.values)
+        DialogOption(value: mode, title: _continueWatchingPosterModeLabel(mode)),
+    ],
+  );
+
+  static String _continueWatchingPosterModeLabel(ContinueWatchingPosterMode mode) => switch (mode) {
+    ContinueWatchingPosterMode.sameAsEverywhere => t.settings.continueWatchingPosterSameAsEverywhere,
+    ContinueWatchingPosterMode.seriesPoster => t.settings.seriesPoster,
+    ContinueWatchingPosterMode.seasonPoster => t.settings.seasonPoster,
+    ContinueWatchingPosterMode.episodeThumbnail => t.settings.episodeThumbnail,
+  };
 
   Widget _continueWatchingActionSelector() => SettingSegmentedTile<ContinueWatchingAction>(
     pref: SettingsService.continueWatchingAction,

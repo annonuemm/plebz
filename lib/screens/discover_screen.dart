@@ -1293,6 +1293,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
         SettingsService.hideSpoilers,
         SettingsService.libraryDensity,
         SettingsService.episodePosterMode,
+        PlebzPrefs.continueWatchingPosterMode,
       ],
       builder: (context) => LiveNowScope(snapshot: _liveNow, child: _buildContent(context)),
     );
@@ -1344,6 +1345,8 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                       onRefresh: _discover.updateItem,
                       onRemoveFromContinueWatching: _discover.refreshContinueWatching,
                       isInContinueWatching: true,
+                      // Plebz: the row may wear a picture of its own.
+                      episodePosterModeOverride: PlebzPrefs.continueWatchingEpisodePosterMode(svc),
                       loadMoreItems: _discover.loadAllContinueWatching,
                       onVerticalNavigation: (isUp) => _handleVerticalNavigation(0, isUp),
                       onNavigateUp: _focusTopBoundary,
@@ -1456,10 +1459,21 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   // geometry) hand Element.updateChild the identical widget instance and the
   // whole rail subtree is skipped. Rebuilt only when its actual inputs change.
   TvBrowseRail? _tvBrowseRailWidget;
-  (List<MediaHub>, bool)? _tvBrowseRailWidgetKey;
+  (List<MediaHub>, bool, EpisodePosterMode)? _tvBrowseRailWidgetKey;
+
+  /// Continue Watching's own picture (Plebz); every other row keeps the
+  /// app-wide one.
+  EpisodePosterMode _episodePosterModeForHub(MediaHub hub) {
+    final svc = SettingsService.instance;
+    return hub.isContinueWatchingHub
+        ? PlebzPrefs.continueWatchingEpisodePosterMode(svc)
+        : svc.read(SettingsService.episodePosterMode);
+  }
 
   Widget _cachedTvBrowseRail(List<MediaHub> browseHubs, {required bool showServerName}) {
-    final key = (browseHubs, showServerName);
+    // The row's own picture is part of the key: the rail's settings listener
+    // knows only the app-wide one.
+    final key = (browseHubs, showServerName, PlebzPrefs.continueWatchingEpisodePosterMode(SettingsService.instance));
     if (_tvBrowseRailWidget != null && key == _tvBrowseRailWidgetKey) return _tvBrowseRailWidget!;
     _tvBrowseRailWidgetKey = key;
     return _tvBrowseRailWidget = TvBrowseRail(
@@ -1474,6 +1488,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       onRemoveFromContinueWatching: _discover.refreshContinueWatching,
       isContinueWatchingHub: (hub) => hub.isContinueWatchingHub,
       usesContinueWatchingAction: (hub) => hub.usesContinueWatchingAction,
+      episodePosterModeForHub: _episodePosterModeForHub,
       // Only for the hubs the rail cannot page from a server: Continue
       // Watching is assembled here, across servers, so it is handed over
       // whole. Everything else is read a page at a time — see
@@ -1520,6 +1535,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
     return TvSpotlightScaffold(
       hubs: browseHubs,
+      episodePosterModeForHub: _episodePosterModeForHub,
       spotlightListenable: _spotlight,
       resolveSpotlight: () => _spotlight.resolve(browseHubs),
       resolveClient: _getMediaClientForItem,

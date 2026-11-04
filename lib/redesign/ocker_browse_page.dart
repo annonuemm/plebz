@@ -41,6 +41,9 @@ class OckerBrowsePage extends StatefulWidget {
 
   final VoidCallback? onReachedEnd;
 
+  /// The episode picture the tiles wear instead of the app-wide one.
+  final EpisodePosterMode? posterMode;
+
   /// Sort and filter, on the band over the grid's top left.
   final List<Widget> filters;
 
@@ -84,6 +87,7 @@ class OckerBrowsePage extends StatefulWidget {
     this.showHeading = true,
     this.showCount = true,
     this.location,
+    this.posterMode,
   });
 
   @override
@@ -292,6 +296,7 @@ class OckerBrowsePageState extends State<OckerBrowsePage> {
                       onExitUp: _exitToHeader,
                       onExitLeft: widget.onExitLeft,
                       onReachedEnd: widget.onReachedEnd,
+                      posterMode: widget.posterMode,
                     ),
                   ],
                 ),

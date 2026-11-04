@@ -72,6 +72,23 @@ enum GlasAccent { eisblau, mint, flieder, grau, rot, plebz }
 /// The player IPTV channels use (Plebz): the main choice, or one of their own.
 enum IptvPlayerChoice { sameAsFilms, exoPlayer, mpv }
 
+/// The picture an episode wears in the home screen's Continue Watching row
+/// (Plebz): the app-wide "Bild für Folgen", or one of its three on its own.
+enum ContinueWatchingPosterMode {
+  sameAsEverywhere,
+  seriesPoster,
+  seasonPoster,
+  episodeThumbnail;
+
+  /// The mode the row draws with, given the app-wide one.
+  EpisodePosterMode resolve(EpisodePosterMode everywhere) => switch (this) {
+    sameAsEverywhere => everywhere,
+    seriesPoster => EpisodePosterMode.seriesPoster,
+    seasonPoster => EpisodePosterMode.seasonPoster,
+    episodeThumbnail => EpisodePosterMode.episodeThumbnail,
+  };
+}
+
 /// [PlebzPrefs.liveTvSeamlessFullscreen] (Plebz): on unless the viewer
 /// turned the live frame-rate match or live tunnelling on — either stops the
 /// picture carrying on, and the settings never claim both.
@@ -299,6 +316,19 @@ abstract final class PlebzPrefs {
   /// Which services get a row and in which order, encoded by
   /// [BrandRowsLayout.encode]; empty is the standard arrangement.
   static const brandRowsLayout = StringPref('brand_rows_layout', defaultValue: '');
+
+  /// The picture an episode wears in Continue Watching, apart from the
+  /// app-wide choice. Its "see all" page follows the row.
+  static const continueWatchingPosterMode = EnumPref<ContinueWatchingPosterMode>(
+    'continue_watching_poster_mode',
+    values: ContinueWatchingPosterMode.values,
+    defaultValue: ContinueWatchingPosterMode.sameAsEverywhere,
+  );
+
+  /// The mode Continue Watching draws with: its own choice, else the
+  /// app-wide one.
+  static EpisodePosterMode continueWatchingEpisodePosterMode(SettingsService svc) =>
+      svc.read(continueWatchingPosterMode).resolve(svc.read(SettingsService.episodePosterMode));
 
   /// Where the brand rows stand on the home screen.
   static const brandRowsPosition = EnumPref<BrandRowsPosition>(
@@ -729,6 +759,7 @@ abstract final class PlebzPrefs {
     showFriendsActivity,
     brandRowsLayout,
     brandRowsPosition,
+    continueWatchingPosterMode,
     useSystemTvKeyboard,
     showActorFilmography,
     seerrCardEpisodeFacts,

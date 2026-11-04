@@ -25,15 +25,19 @@ bool get _dolbyVisionDisabled => SettingsService.instance.read(PlebzPrefs.disabl
 /// Clips at the top edge only, and lets whatever is drawn reach [reach]
 /// past the other three.
 class _ClipTopOnly extends CustomClipper<Rect> {
-  const _ClipTopOnly({required this.reach});
+  const _ClipTopOnly({required this.reach, this.below = 0});
 
   final double reach;
 
-  @override
-  Rect getClip(Size size) => Rect.fromLTRB(-reach, 0, size.width + reach, size.height + reach);
+  /// Further room under the column (Plebz): the resume line hangs below the
+  /// action row, into the air above the parked rails.
+  final double below;
 
   @override
-  bool shouldReclip(_ClipTopOnly oldClipper) => oldClipper.reach != reach;
+  Rect getClip(Size size) => Rect.fromLTRB(-reach, 0, size.width + reach, size.height + reach + below);
+
+  @override
+  bool shouldReclip(_ClipTopOnly oldClipper) => oldClipper.reach != reach || oldClipper.below != below;
 }
 
 extension _MediaDetailFork on _MediaDetailScreenState {
@@ -340,6 +344,17 @@ extension _MediaDetailFork on _MediaDetailScreenState {
   /// sight — see [TvDetailHeaderMetrics.hidesActions].
   bool _tvDetailHidesActions(BuildContext context, {required bool titleAreaExpanded}) =>
       !titleAreaExpanded && ockerGlass(context);
+
+  /// The part-watched item Play would resume, for the line under the play
+  /// button (Plebz): the episode the button continues on a show, the first
+  /// episode on a season, the title itself otherwise. Null when Play starts
+  /// from the beginning.
+  MediaItem? _resumeProgressTarget(MediaItem metadata) {
+    final target = _playbackTargetItem(metadata);
+    if (target == null) return null;
+    final fresh = _fresh(target);
+    return DetailResumeProgress.shows(fresh) ? fresh : null;
+  }
 
   /// Glas's header on the start page's sizes (Plebz): see
   /// [TvDetailHeaderMetrics.compactGlass].

@@ -13,6 +13,18 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.43.0 (Build 963)
+
+### Startseite
+- Für „Weiterschauen“ kannst du jetzt ein eigenes Bild einstellen: Serienposter, Staffelposter oder Vorschaubild. Das findest du unter Einstellungen → Startseite → „Bild in Weiterschauen“.
+
+### Detailseite
+- Hast du einen Film oder eine Folge schon angefangen, zeigt dir der Abspielknopf, wie weit du bist.
+- Darunter steht, wie lange es noch dauert und wann du fertig bist, zum Beispiel „Noch 1 Std 12 Min · bis 22:41“.
+
+### Bildschirmschoner
+- Läuft ein Spiel groß im Bild, sind die Vereinsfarben wieder da.
+
 ## 1.42.0 (Build 958)
 
 ### Sport

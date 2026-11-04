@@ -684,6 +684,10 @@ class HubDetailScreenState extends State<HubDetailScreen>
         // the next page; without one there is nothing further to fetch and
         // the first load is all there ever was.
         onReachedEnd: _usesPaginatedLoader ? _requestNextHubPage : _loadMoreItems,
+        // Plebz: Continue Watching's page wears its row's picture.
+        posterMode: widget.isInContinueWatching
+            ? PlebzPrefs.continueWatchingEpisodePosterMode(SettingsService.instance)
+            : null,
         // Left out of the first column reaches the rail — from a destination;
         // a page pushed over the shell has no rail and swallows it.
         onExitLeft: widget.isEmbedded ? () => MainScreenFocusScope.focusSidebarOf(context) : null,
@@ -780,13 +784,17 @@ class HubDetailScreenState extends State<HubDetailScreen>
                     prefs: const [
                       SettingsService.viewMode,
                       SettingsService.episodePosterMode,
+                      PlebzPrefs.continueWatchingPosterMode,
                       SettingsService.libraryDensity,
                       SettingsService.tvFullCardLayout,
                     ],
                     builder: (context) {
                       final svc = SettingsService.instance;
                       final viewMode = svc.read(SettingsService.viewMode);
-                      final episodePosterMode = svc.read(SettingsService.episodePosterMode);
+                      // Plebz: Continue Watching's page follows its row.
+                      final episodePosterMode = widget.isInContinueWatching
+                          ? PlebzPrefs.continueWatchingEpisodePosterMode(svc)
+                          : svc.read(SettingsService.episodePosterMode);
                       final libraryDensity = svc.read(SettingsService.libraryDensity);
                       final fullCardLayout = PlatformDetector.isTV() && svc.read(SettingsService.tvFullCardLayout);
 
@@ -853,6 +861,7 @@ class HubDetailScreenState extends State<HubDetailScreen>
                             ),
                             mixedHubContext: isMixedHub,
                             fullBleedImage: fullCardLayout && position.isGrid,
+                            episodePosterModeOverride: widget.isInContinueWatching ? episodePosterMode : null,
                           );
                         },
                       );

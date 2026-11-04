@@ -225,6 +225,8 @@
     "gridView": "Grid",
     "listView": "List",
     "showHeroSection": "Featured banner",
+    "continueWatchingPosterMode": "Continue Watching image",
+    "continueWatchingPosterSameAsEverywhere": "Same as episode image",
     "continueWatchingAction": "Continue Watching Action",
     "continueWatchingPlay": "Play",
     "continueWatchingDetails": "Open Details",
@@ -1447,6 +1449,7 @@
     "directors": "Directors",
     "movie": "Movie",
     "tvShow": "TV Show",
+    "resumeRemaining": "${duration} left · ends ${time}",
     "minutesLeft": "${minutes} min left",
     "moreLikeThis": "More Like This",
     "titleCount": {

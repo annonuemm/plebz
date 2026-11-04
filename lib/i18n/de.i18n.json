@@ -225,6 +225,8 @@
     "gridView": "Raster",
     "listView": "Liste",
     "showHeroSection": "Großer Empfehlungsbereich",
+    "continueWatchingPosterMode": "Bild in Weiterschauen",
+    "continueWatchingPosterSameAsEverywhere": "Wie „Bild für Folgen“",
     "continueWatchingAction": "Aktion für Weiterschauen",
     "continueWatchingPlay": "Abspielen",
     "continueWatchingDetails": "Details öffnen",
@@ -1447,6 +1449,7 @@
     "directors": "Regisseure",
     "movie": "Film",
     "tvShow": "Serie",
+    "resumeRemaining": "Noch ${duration} · bis ${time}",
     "minutesLeft": "Noch ${minutes} Min.",
     "moreLikeThis": "Ähnliche Inhalte",
     "titleCount": {

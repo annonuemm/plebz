@@ -48,6 +48,9 @@ class FocusableMediaCard extends StatefulWidget {
   /// such as music collections and playlists.
   final CardShape? cardShapeOverride;
 
+  /// The episode picture this card wears instead of the app-wide one.
+  final EpisodePosterMode? episodePosterModeOverride;
+
   /// Show server name in list view (multi-server)
   final bool showServerName;
 
@@ -106,6 +109,7 @@ class FocusableMediaCard extends StatefulWidget {
     this.mixedHubContext = false,
     this.fullBleedImage = false,
     this.cardShapeOverride,
+    this.episodePosterModeOverride,
     this.showServerName = false,
     this.libraryName,
     this.sourceOverride,
@@ -170,6 +174,7 @@ class _FocusableMediaCardState extends State<FocusableMediaCard> {
         mixedHubContext: widget.mixedHubContext,
         fullBleedImage: widget.fullBleedImage,
         cardShapeOverride: widget.cardShapeOverride,
+        episodePosterModeOverride: widget.episodePosterModeOverride,
         showServerName: widget.showServerName,
         libraryName: widget.libraryName,
         sourceOverride: widget.sourceOverride,

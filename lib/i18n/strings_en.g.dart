@@ -631,6 +631,12 @@ class Translations$settings$en {
 	/// en: 'Featured banner'
 	String get showHeroSection => 'Featured banner';
 
+	/// en: 'Continue Watching image'
+	String get continueWatchingPosterMode => 'Continue Watching image';
+
+	/// en: 'Same as episode image'
+	String get continueWatchingPosterSameAsEverywhere => 'Same as episode image';
+
 	/// en: 'Continue Watching Action'
 	String get continueWatchingAction => 'Continue Watching Action';
 
@@ -3968,6 +3974,9 @@ class Translations$discover$en {
 
 	/// en: 'TV Show'
 	String get tvShow => 'TV Show';
+
+	/// en: '${duration} left · ends ${time}'
+	String resumeRemaining({required Object duration, required Object time}) => '${duration} left · ends ${time}';
 
 	/// en: '${minutes} min left'
 	String minutesLeft({required Object minutes}) => '${minutes} min left';
@@ -10706,6 +10715,8 @@ extension on Translations {
 			'settings.gridView' => 'Grid',
 			'settings.listView' => 'List',
 			'settings.showHeroSection' => 'Featured banner',
+			'settings.continueWatchingPosterMode' => 'Continue Watching image',
+			'settings.continueWatchingPosterSameAsEverywhere' => 'Same as episode image',
 			'settings.continueWatchingAction' => 'Continue Watching Action',
 			'settings.continueWatchingPlay' => 'Play',
 			'settings.continueWatchingDetails' => 'Open Details',
@@ -11013,10 +11024,10 @@ extension on Translations {
 			'settings.playerScopeLibrary' => 'Per library',
 			'settings.playerScopeTitle' => 'Per show or movie',
 			'settings.exportDialogTitle' => 'Export Plebz settings',
-			'settings.useSystemTvKeyboard' => 'Device keyboard',
-			'settings.useSystemTvKeyboardDescription' => 'Turn off if it doesn\'t appear',
 			_ => null,
 		} ?? switch (path) {
+			'settings.useSystemTvKeyboard' => 'Device keyboard',
+			'settings.useSystemTvKeyboardDescription' => 'Turn off if it doesn\'t appear',
 			'settings.backToRowStart' => 'Back to row start',
 			'settings.backToRowStartDescription' => 'First to the first title, then as usual',
 			'settings.showRecommendationsRow' => 'Recommendation row',
@@ -11527,10 +11538,10 @@ extension on Translations {
 			'videoControls.pipButton' => 'Picture-in-Picture mode',
 			'videoControls.aspectRatioButton' => 'Aspect ratio',
 			'videoControls.ambientLighting' => 'Ambient lighting',
-			'videoControls.fullscreenButton' => 'Enter fullscreen',
-			'videoControls.exitFullscreenButton' => 'Exit fullscreen',
 			_ => null,
 		} ?? switch (path) {
+			'videoControls.fullscreenButton' => 'Enter fullscreen',
+			'videoControls.exitFullscreenButton' => 'Exit fullscreen',
 			'videoControls.alwaysOnTopButton' => 'Always on top',
 			'videoControls.rotationLockButton' => 'Rotation lock',
 			'videoControls.lockScreen' => 'Lock screen',
@@ -11859,6 +11870,7 @@ extension on Translations {
 			'discover.directors' => 'Directors',
 			'discover.movie' => 'Movie',
 			'discover.tvShow' => 'TV Show',
+			'discover.resumeRemaining' => ({required Object duration, required Object time}) => '${duration} left · ends ${time}',
 			'discover.minutesLeft' => ({required Object minutes}) => '${minutes} min left',
 			'discover.moreLikeThis' => 'More Like This',
 			'discover.titleCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('en'))(n, one: '${n} title', other: '${n} titles', ), 
@@ -12040,11 +12052,11 @@ extension on Translations {
 			'startup.repairBodyOneCredential' => 'One saved sign-in is damaged and cannot be read. Repairing removes just that one; your other settings are left alone.',
 			'startup.repairBodySignInsKept' => 'Your servers and profiles should stay signed in.',
 			'startup.repairBodySignInsLost' => 'The key protecting your saved sign-ins cannot be recovered from this file, so you will have to sign in to every server and profile again. Nothing on your media server is affected.',
+			_ => null,
+		} ?? switch (path) {
 			'startup.repairBodySessionsUncertain' => 'Trackers (MAL, AniList, Simkl, Trakt) and Seerr are stored separately and may or may not survive. Plebz will tell you exactly what it kept.',
 			'startup.repairConfirm' => 'Repair',
 			'startup.repairSucceeded' => 'Storage repaired',
-			_ => null,
-		} ?? switch (path) {
 			'startup.repairNeedsRestart' => 'Storage repaired — restart required',
 			'startup.restartRequiredBody' => 'Your data was repaired, but Plebz has to start fresh before it can use it. Close Plebz and open it again.',
 			'startup.quitPlezy' => 'Quit Plebz',
@@ -12554,11 +12566,11 @@ extension on Translations {
 			'watchTogether.notices.hostChangedTo' => ({required Object name}) => '${name} is now the host',
 			'watchTogether.notices.youAreNowHost' => 'You are now the host',
 			'watchTogether.notices.joined' => ({required Object name}) => '${name} joined',
+			_ => null,
+		} ?? switch (path) {
 			'watchTogether.notices.left' => ({required Object name}) => '${name} left',
 			'watchTogether.notices.controlRefused' => 'Only the host can control playback',
 			'watchTogether.notices.searchFailed' => 'Some servers couldn\'t be searched for the room\'s video',
-			_ => null,
-		} ?? switch (path) {
 			'watchTogether.notices.playBlocked' => 'Press play to start',
 			'watchTogether.notices.shareFailed' => 'Couldn\'t share this video with the room',
 			'watchTogether.notices.downloadNotShared' => 'Downloads aren\'t shared with the room while their server is offline',
@@ -13068,11 +13080,11 @@ extension on Translations {
 			'services.title' => 'Services',
 			'services.hubSubtitle' => 'Request new titles and fill in logos and descriptions.',
 			'services.integrations' => 'Integrations',
+			_ => null,
+		} ?? switch (path) {
 			'services.notConnected' => 'Not connected',
 			'services.connectedAs' => ({required Object username}) => 'Connected as @${username}',
 			'services.scrobble' => 'Track progress automatically',
-			_ => null,
-		} ?? switch (path) {
 			'services.scrobbleDescription' => 'Update your list after every film and episode',
 			'services.ownProgress' => 'Own progress via Simkl',
 			'services.ownProgressDescription' => 'Watched marks and progress come from Simkl, not the server',

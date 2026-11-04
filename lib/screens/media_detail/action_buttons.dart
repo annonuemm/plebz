@@ -270,6 +270,14 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
     // A capsule, as the glass focus is: half its height for a corner.
     const playCapsule = StadiumBorder();
 
+    // Plebz: how far in Play resumes, as a wash over the watched share of
+    // the button. In the word's own colour, so it lies over the word without
+    // changing it and shows on any ground — a light accent's too.
+    final resumeTarget = _resumeProgressTarget(metadata);
+    final resumeWashColor = v2Play || flat || plebzPlay
+        ? OckerPlayGround.foreground(context, v2: v2Play)
+        : Theme.of(context).colorScheme.onPrimary;
+
     Widget playButton(FocusableActionBuildState state) {
       final style = actionButtonStyle(
         showFocus: state.showFocus,
@@ -284,25 +292,31 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
         child: SizedBox(
           height: actionSize,
           child: plebzGround(
-            FilledButton(
-              onPressed: onPlayPressed,
-              style: v2Play
-                  ? v2PlayStyle.merge(style)
-                  : flat
-                  ? flatPlayStyle.merge(style)
-                  : plebzPlay
-                  ? plebzStyle.merge(style)
-                  : style,
-              child: playButtonLabel.isNotEmpty
-                  ? Row(
-                      mainAxisSize: .min,
-                      children: [
-                        playButtonIcon,
-                        SizedBox(width: isTv ? 7 * tvScale : 8),
-                        Text(playButtonLabel, style: playTextStyle),
-                      ],
-                    )
-                  : playButtonIcon,
+            _withResumeWash(
+              resumeTarget,
+              shape: playShape ?? playCapsule,
+              color: resumeWashColor,
+              focused: state.showFocus,
+              child: FilledButton(
+                onPressed: onPlayPressed,
+                style: v2Play
+                    ? v2PlayStyle.merge(style)
+                    : flat
+                    ? flatPlayStyle.merge(style)
+                    : plebzPlay
+                    ? plebzStyle.merge(style)
+                    : style,
+                child: playButtonLabel.isNotEmpty
+                    ? Row(
+                        mainAxisSize: .min,
+                        children: [
+                          playButtonIcon,
+                          SizedBox(width: isTv ? 7 * tvScale : 8),
+                          Text(playButtonLabel, style: playTextStyle),
+                        ],
+                      )
+                    : playButtonIcon,
+              ),
             ),
             playShape ?? playCapsule,
             state.showFocus,
@@ -789,6 +803,41 @@ extension _MediaDetailActionButtons on _MediaDetailScreenState {
         showErrorSnackBar(context, t.messages.errorLoading(error: localizedErrorReason(e)));
       }
     }
+  }
+
+  /// From the play button's edge to its icon's stroke (Plebz), so the
+  /// resume line under it starts where the icon is seen to start: the
+  /// button's padding, then the glyph's own side bearing (3 of its 22). Kept
+  /// in step with `playButton`'s padding; a glyph-only button centres its
+  /// icon about as far in.
+  double _playIconInset(BuildContext context) =>
+      PlatformDetector.isTV() ? (17.0 + 3) * TvLayoutConstants.scaleOf(context) : 16.0 + 3;
+
+  /// [child] under the wash of the share of [target] already watched, when
+  /// there is one (Plebz; see [DetailResumeWash]).
+  Widget _withResumeWash(
+    MediaItem? target, {
+    required ShapeBorder shape,
+    required Color color,
+    required bool focused,
+    required Widget child,
+  }) {
+    if (target == null) return child;
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        child,
+        Positioned.fill(
+          child: DetailResumeWash(
+            key: const ValueKey('detail_resume_wash'),
+            fraction: DetailResumeProgress.fractionOf(target),
+            shape: shape,
+            color: color,
+            focused: focused,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildWatchedToggleButton(

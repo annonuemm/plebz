@@ -3170,6 +3170,9 @@ class Translations$videoControls$en {
 
 	/// en: 'No channel numbered ${number}'
 	String channelNumberMissing({required Object number}) => 'No channel numbered ${number}';
+
+	/// en: 'Playing'
+	String get playingNow => 'Playing';
 }
 
 // Path: messages
@@ -11602,6 +11605,7 @@ extension on Translations {
 			'videoControls.endCardSeasonEpisode' => ({required Object season, required Object episode}) => 'Season ${season}, episode ${episode}',
 			'videoControls.channelNumberTyped' => ({required Object number}) => 'Channel ${number}',
 			'videoControls.channelNumberMissing' => ({required Object number}) => 'No channel numbered ${number}',
+			'videoControls.playingNow' => 'Playing',
 			'messages.markedAsWatched' => 'Marked as watched',
 			'messages.markedAsUnwatched' => 'Marked as unwatched',
 			'messages.markedAsWatchedOffline' => 'Marked as watched (will sync when online)',
@@ -12051,9 +12055,9 @@ extension on Translations {
 			'startup.repairBodyCommon' => 'Plebz\'s settings file is damaged and cannot be read. Repairing resets every setting to its default.',
 			'startup.repairBodyOneCredential' => 'One saved sign-in is damaged and cannot be read. Repairing removes just that one; your other settings are left alone.',
 			'startup.repairBodySignInsKept' => 'Your servers and profiles should stay signed in.',
-			'startup.repairBodySignInsLost' => 'The key protecting your saved sign-ins cannot be recovered from this file, so you will have to sign in to every server and profile again. Nothing on your media server is affected.',
 			_ => null,
 		} ?? switch (path) {
+			'startup.repairBodySignInsLost' => 'The key protecting your saved sign-ins cannot be recovered from this file, so you will have to sign in to every server and profile again. Nothing on your media server is affected.',
 			'startup.repairBodySessionsUncertain' => 'Trackers (MAL, AniList, Simkl, Trakt) and Seerr are stored separately and may or may not survive. Plebz will tell you exactly what it kept.',
 			'startup.repairConfirm' => 'Repair',
 			'startup.repairSucceeded' => 'Storage repaired',
@@ -12565,9 +12569,9 @@ extension on Translations {
 			'watchTogether.notices.finished' => 'Finished',
 			'watchTogether.notices.hostChangedTo' => ({required Object name}) => '${name} is now the host',
 			'watchTogether.notices.youAreNowHost' => 'You are now the host',
-			'watchTogether.notices.joined' => ({required Object name}) => '${name} joined',
 			_ => null,
 		} ?? switch (path) {
+			'watchTogether.notices.joined' => ({required Object name}) => '${name} joined',
 			'watchTogether.notices.left' => ({required Object name}) => '${name} left',
 			'watchTogether.notices.controlRefused' => 'Only the host can control playback',
 			'watchTogether.notices.searchFailed' => 'Some servers couldn\'t be searched for the room\'s video',
@@ -13079,9 +13083,9 @@ extension on Translations {
 			'seerr.shelfEverything' => 'Everything',
 			'services.title' => 'Services',
 			'services.hubSubtitle' => 'Request new titles and fill in logos and descriptions.',
-			'services.integrations' => 'Integrations',
 			_ => null,
 		} ?? switch (path) {
+			'services.integrations' => 'Integrations',
 			'services.notConnected' => 'Not connected',
 			'services.connectedAs' => ({required Object username}) => 'Connected as @${username}',
 			'services.scrobble' => 'Track progress automatically',

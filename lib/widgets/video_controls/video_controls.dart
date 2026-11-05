@@ -61,6 +61,7 @@ import '../../utils/codec_utils.dart';
 import '../../utils/formatters.dart';
 import '../../utils/orientation_helper.dart';
 import '../../utils/platform_detector.dart';
+import '../../redesign/ocker_skin.dart';
 import '../../utils/player_utils.dart';
 import '../../theme/mono_tokens.dart';
 import '../../utils/provider_extensions.dart';
@@ -1361,8 +1362,26 @@ class _PlexVideoControlsState extends State<PlexVideoControls>
                                           // a runtimeType change here would re-inflate the whole
                                           // controls subtree and drop its state.
                                           return RasterizedGradient(
-                                            gradient: hasFrame
+                                            gradient: !hasFrame
+                                                ? const LinearGradient(colors: [Colors.black, Colors.black])
+                                                // Plebz: the television's islands set the title and
+                                                // the timeline over the picture, higher than the bar
+                                                // reached; the shade below rises with them, and the
+                                                // top keeps only the clock's.
+                                                : !isMobile && isOckerLayout(context)
                                                 ? LinearGradient(
+                                                    begin: Alignment.topCenter,
+                                                    end: Alignment.bottomCenter,
+                                                    colors: [
+                                                      Colors.black.withValues(alpha: 0.55),
+                                                      Colors.transparent,
+                                                      Colors.transparent,
+                                                      Colors.black.withValues(alpha: 0.45),
+                                                      Colors.black.withValues(alpha: 0.8),
+                                                    ],
+                                                    stops: const [0.0, 0.14, 0.5, 0.72, 1.0],
+                                                  )
+                                                : LinearGradient(
                                                     begin: Alignment.topCenter,
                                                     end: Alignment.bottomCenter,
                                                     colors: [
@@ -1372,8 +1391,7 @@ class _PlexVideoControlsState extends State<PlexVideoControls>
                                                       Colors.black.withValues(alpha: 0.7),
                                                     ],
                                                     stops: const [0.0, 0.2, 0.8, 1.0],
-                                                  )
-                                                : const LinearGradient(colors: [Colors.black, Colors.black]),
+                                                  ),
                                             child: child,
                                           );
                                         },

@@ -56,6 +56,15 @@ class VideoControlButton extends StatelessWidget {
 
   final bool autofocus;
 
+  /// How far the glyph is drawn right of its box's centre (Plebz), for a
+  /// glyph whose ink is not balanced round it — see [playGlyphShift].
+  final double glyphShift;
+
+  /// A play triangle's optical correction, as a share of its size: centred
+  /// by its box, most of its ink lies on the flat side and it reads as
+  /// sitting left of the disc round it.
+  static const double playGlyphShift = 0.06;
+
   const VideoControlButton({
     super.key,
     required this.icon,
@@ -72,6 +81,7 @@ class VideoControlButton extends StatelessWidget {
     this.onKeyEvent,
     this.onFocusChange,
     this.autofocus = false,
+    this.glyphShift = 0,
   });
 
   @override
@@ -82,7 +92,12 @@ class VideoControlButton extends StatelessWidget {
 
     Widget button(Color iconColor) => label == null
         ? IconButton(
-            icon: AppIcon(icon, fill: 1, color: iconColor, size: iconSize),
+            icon: glyphShift == 0
+                ? AppIcon(icon, fill: 1, color: iconColor, size: iconSize)
+                : Transform.translate(
+                    offset: Offset(glyphShift, 0),
+                    child: AppIcon(icon, fill: 1, color: iconColor, size: iconSize),
+                  ),
             iconSize: iconSize,
             onPressed: onPressed,
             tooltip: tooltip,

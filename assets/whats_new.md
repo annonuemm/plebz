@@ -13,6 +13,14 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.44.0 (Build 967)
+
+### Player auf dem Fernseher
+- Der Player ist aufgeräumt: Titel, Staffel und Folge stehen jetzt über der Zeitleiste, die Knöpfe ohne Hintergrund darunter.
+- Neben der Restzeit steht, wann du fertig bist, zum Beispiel „Endet um 22:14“.
+- Knöpfe für Kapitel oder die nächste Folge erscheinen nur noch, wenn es Kapitel oder eine nächste Folge gibt.
+- Warteschlange und Kapitel öffnen sich als Reihe wie auf der Startseite, mit großen Bildern. Was gerade läuft, trägt das Schild „Läuft“.
+
 ## 1.43.0 (Build 963)
 
 ### Startseite

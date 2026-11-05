@@ -38,6 +38,7 @@ import 'widgets/volume_control.dart';
 import 'widgets/track_chapter_controls.dart';
 import 'video_control_button.dart';
 import '../../redesign/ocker_skin.dart';
+import '../../redesign/ocker_type.dart';
 import '../../theme/mono_tokens.dart';
 
 /// Desktop-specific video controls layout with top bar and bottom controls
@@ -744,7 +745,10 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
                     Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        _glassBottomControls(context, _buildBottomControlsContent(context, hasFrame: true)),
+                        if (_islands(context))
+                          _buildIslandControls(context)
+                        else
+                          _glassBottomControls(context, _buildBottomControlsContent(context, hasFrame: true)),
                         // Down arrow hint when strip content is available
                         if (widget.useDpadNavigation && _hasStripContent)
                           const ContentStripHint(Symbols.keyboard_arrow_down_rounded),
@@ -796,6 +800,36 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
                         },
                         onNavigateUp: _onContentStripNavigateUp,
                         onFocusActivity: widget.onFocusActivity,
+                      ),
+                    ),
+                  )
+                else if (_contentStripVisible && widget.useDpadNavigation && _islands(context))
+                  // Plebz: under the islands the strip is a row of the start
+                  // page — no pane, at the page's margin, running on off the
+                  // right edge ([ContentStrip.rowLook]).
+                  _absorbMissedClicks(
+                    ContentStripPanel(
+                      padding: EdgeInsets.only(
+                        left: _islandMargin(context),
+                        bottom: _islandMargin(context) / 2,
+                        top: 32,
+                      ),
+                      chevron: Symbols.keyboard_arrow_up_rounded,
+                      scrim: false,
+                      child: ContentStrip(
+                        key: _contentStripKey,
+                        player: widget.player,
+                        chapters: widget.chapters,
+                        serverId: widget.serverId,
+                        canControl: _canControl,
+                        showQueueTab: widget.showQueueTab,
+                        onQueueItemSelected: widget.onQueueItemSelected,
+                        onSeekRequested: widget.onSeekRequested,
+                        onSeekCompleted: widget.onSeekCompleted,
+                        useFocusNavigation: true,
+                        onNavigateUp: _onContentStripNavigateUp,
+                        onFocusActivity: widget.onFocusActivity,
+                        rowLook: true,
                       ),
                     ),
                   )
@@ -861,9 +895,11 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
     );
   }
 
-  Widget _buildTopBarContent(BuildContext _, double leftPadding) {
+  Widget _buildTopBarContent(BuildContext context, double leftPadding) {
+    final islands = _islands(context);
     final topBar = Padding(
-      padding: .only(left: leftPadding, right: 16),
+      // The clock keeps to the page's margin, as the title below it does.
+      padding: .only(left: leftPadding, right: islands ? _islandMargin(context) - 8 : 16),
       child: Row(
         children: [
           Expanded(
@@ -875,19 +911,10 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
               onBack: widget.onBack,
               onCancelAutoHide: widget.onCancelAutoHide,
               onStartAutoHide: widget.onStartAutoHide,
+              showTitle: !islands,
             ),
           ),
-          if (_isLive && (widget.captureBuffer == null || widget.isAtLiveEdge)) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: const BoxDecoration(color: Colors.red, borderRadius: BorderRadius.all(Radius.circular(4))),
-              child: Text(
-                t.liveTv.live,
-                style: const TextStyle(color: Colors.white, fontWeight: .bold, fontSize: 12),
-              ),
-            ),
-          ],
+          if (!islands && _showLiveBadge) ...[const SizedBox(width: 8), _liveBadge()],
         ],
       ),
     );
@@ -923,190 +950,133 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
     );
   }
 
+  /// Plebz: the television's player under the redesign (Glas, Flach) lays
+  /// its controls out as islands rather than one bar across the width: the
+  /// title stands over the timeline at the page's margin, and the buttons sit
+  /// under it, bare on the shade — playback on the left, tracks and tools on
+  /// the right — so more of the picture stays in view (the user's call: no
+  /// capsules round them either). The Mac, the phone and the tablet keep the
+  /// bar.
+  bool _islands(BuildContext context) => isOckerLayout(context);
+
+  /// The page's own margin, so the title lines up with the rest of the app.
+  double _islandMargin(BuildContext context) => OckerLayout.safeMargin * ockerScale(context);
+
+  /// How far in a control's glyph sits from the edge of its button
+  /// ([IconButton]'s padding): the row reaches out by it, so the outermost
+  /// glyphs, not their buttons, stand flush with the title and the timeline.
+  static const double _islandGlyphInset = 8;
+
+  bool get _showLiveBadge => _isLive && (widget.captureBuffer == null || widget.isAtLiveEdge);
+
+  Widget _liveBadge() => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: const BoxDecoration(color: Colors.red, borderRadius: BorderRadius.all(Radius.circular(4))),
+    child: Text(
+      t.liveTv.live,
+      style: const TextStyle(color: Colors.white, fontWeight: .bold, fontSize: 12),
+    ),
+  );
+
+  Widget _buildIslandControls(BuildContext context) {
+    final margin = _islandMargin(context);
+    final timeline = _timeline(canInteract: _canControl, horizontal: false, finishTime: true);
+    final goToLive = _isLive ? _goToLive() : null;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(margin - _islandGlyphInset, 0, margin - _islandGlyphInset, margin / 2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: _islandGlyphInset),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _islandTitle(context),
+                if (timeline != null) ...[const SizedBox(height: 12), timeline],
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Focus(
+            key: const ValueKey('player_islands'),
+            onFocusChange: _onButtonRowFocusChange,
+            skipTraversal: true,
+            child: Row(
+              children: [
+                Row(mainAxisSize: MainAxisSize.min, children: _transportButtons(dropUnavailable: true)),
+                Expanded(
+                  child: goToLive == null
+                      ? const SizedBox.shrink()
+                      : Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: goToLive),
+                ),
+                _trackControls(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// What is playing, over the timeline: a show's name over its episode, a
+  /// film's title over its year, a channel over what it is airing.
+  Widget _islandTitle(BuildContext context) {
+    final type = OckerType.of(context);
+    final scale = ockerScale(context);
+    final item = widget.metadata;
+    final String name;
+    final List<String> facts;
+    if (widget.liveChannelName != null || _isLive) {
+      name = widget.liveChannelName ?? item.title ?? t.common.unknown;
+      facts = [?widget.liveProgramTitle];
+    } else if (item.parentIndex != null && item.index != null) {
+      name = item.grandparentTitle ?? item.title ?? t.common.unknown;
+      facts = ['S${item.parentIndex}', 'E${item.index}', ?item.title];
+    } else {
+      name = item.title ?? t.common.unknown;
+      facts = [if (item.year != null) '${item.year}'];
+    }
+    final titleStyle = type.metadata.copyWith(
+      color: Colors.white,
+      fontSize: 36 * scale,
+      fontWeight: FontWeight.w700,
+      height: 1.15,
+    );
+    final factsStyle = type.metadata.copyWith(color: Colors.white70, fontSize: 28 * scale, height: 1.25);
+    return Column(
+      key: const ValueKey('player_island_title'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Flexible(
+              child: Text(name, style: titleStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+            if (_showLiveBadge) ...[const SizedBox(width: 12), _liveBadge()],
+          ],
+        ),
+        if (facts.isNotEmpty)
+          Text(toBulletedString(facts), style: factsStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+      ],
+    );
+  }
+
   Widget _buildBottomControlsContent(BuildContext _, {required bool hasFrame}) {
     final canInteract = _canControl && hasFrame;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
         children: [
-          // The bar cannot place anything without the epoch mapping, so it is
-          // part of the condition rather than a bang on the next line.
-          if (_isLive && widget.captureBuffer != null && widget.liveEpochForPosition != null) ...[
-            LiveTimelineBar(
-              player: widget.player,
-              captureBuffer: widget.captureBuffer!,
-              epochForPosition: widget.liveEpochForPosition!,
-              isAtLiveEdge: widget.isAtLiveEdge,
-              onSeekEnd: widget.onLiveSeek,
-              horizontalLayout: true,
-              focusNode: _timelineFocusNode,
-              onKeyEvent: _handleTimelineKeyEvent,
-              onFocusChange: _onFocusChange,
-              enabled: canInteract,
-            ),
-          ] else if (!_isLive) ...[
-            VideoTimelineBar(
-              player: widget.player,
-              chapters: widget.chapters,
-              chaptersLoaded: widget.chaptersLoaded,
-              showChapterMarkersOnTimeline: widget.showChapterMarkersOnTimeline,
-              onSeek: widget.onSeek,
-              onSeekEnd: widget.onSeekEnd,
-              onScrubStart: widget.onScrubStart,
-              onScrubEnd: widget.onScrubEnd,
-              horizontalLayout: true,
-              focusNode: _timelineFocusNode,
-              onKeyEvent: _handleTimelineKeyEvent,
-              onFocusChange: _onFocusChange,
-              enabled: canInteract,
-              thumbnailDataBuilder: widget.thumbnailDataBuilder,
-              showKeyRepeatThumbnail: _showKeyRepeatThumbnail,
-              previewPosition: _timelineSeek.pendingPosition,
-            ),
-          ],
+          ?_timeline(canInteract: canInteract),
           Focus(
             onFocusChange: _onButtonRowFocusChange,
             skipTraversal: true,
             child: Row(
               children: [
-                if (!_isLive) ...[
-                  Opacity(
-                    opacity: _canControl ? 1.0 : 0.5,
-                    child: _buildFocusableButton(
-                      focusNode: _prevItemFocusNode,
-                      index: 0,
-                      icon: Symbols.skip_previous_rounded,
-                      color: widget.onPrevious != null && _canControl ? Colors.white : Colors.white54,
-                      onPressed: _canControl ? widget.onPrevious : null,
-                      semanticLabel: t.videoControls.previousButton,
-                    ),
-                  ),
-                  // Previous chapter
-                  StreamBuilder<String?>(
-                    stream: _previousChapterLabelStream,
-                    initialData: _getPreviousChapterLabel(widget.player.state.position),
-                    builder: (context, prevLabelSnapshot) {
-                      return Opacity(
-                        opacity: _canControl ? 1.0 : 0.5,
-                        child: _buildFocusableButton(
-                          focusNode: _prevChapterFocusNode,
-                          index: 1,
-                          icon: Symbols.fast_rewind_rounded,
-                          color: widget.chapters.isNotEmpty && _canControl ? Colors.white : Colors.white54,
-                          onPressed: _canControl && widget.chapters.isNotEmpty ? widget.onSeekToPreviousChapter : null,
-                          semanticLabel: t.videoControls.previousChapterButton,
-                          tooltip: prevLabelSnapshot.data,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-                if (!_isLive || widget.captureBuffer != null) ...[
-                  // Skip backward
-                  Opacity(
-                    opacity: _canControl ? 1.0 : 0.5,
-                    child: _buildFocusableButton(
-                      focusNode: _skipBackFocusNode,
-                      index: 2,
-                      icon: widget.getReplayIcon(widget.seekTimeSmall),
-                      onPressed: _canControl ? widget.onSeekBackward : null,
-                      semanticLabel: t.videoControls.seekBackwardButton(seconds: widget.seekTimeSmall),
-                    ),
-                  ),
-                ],
-                // Play/Pause
-                Opacity(
-                  opacity: _canControl ? 1.0 : 0.5,
-                  child: PlayPauseStreamBuilder(
-                    player: widget.player,
-                    builder: (context, isPlaying) {
-                      return _buildFocusableButton(
-                        focusNode: _playPauseFocusNode,
-                        index: 3,
-                        icon: isPlaying ? Symbols.pause_rounded : Symbols.play_arrow_rounded,
-                        iconSize: 32,
-                        onPressed: _canControl ? widget.onPlayPause : null,
-                        semanticLabel: isPlaying ? t.videoControls.pauseButton : t.videoControls.playButton,
-                      );
-                    },
-                  ),
-                ),
-                if (!_isLive || widget.captureBuffer != null) ...[
-                  // Skip forward
-                  Opacity(
-                    opacity: _canControl ? 1.0 : 0.5,
-                    child: _buildFocusableButton(
-                      focusNode: _skipForwardFocusNode,
-                      index: 4,
-                      icon: widget.getForwardIcon(widget.seekTimeSmall),
-                      onPressed: _canControl ? widget.onSeekForward : null,
-                      semanticLabel: t.videoControls.seekForwardButton(seconds: widget.seekTimeSmall),
-                    ),
-                  ),
-                ],
-                if (!_isLive) ...[
-                  // Next chapter
-                  StreamBuilder<String?>(
-                    stream: _nextChapterLabelStream,
-                    initialData: _getNextChapterLabel(widget.player.state.position),
-                    builder: (context, nextLabelSnapshot) {
-                      return Opacity(
-                        opacity: _canControl ? 1.0 : 0.5,
-                        child: _buildFocusableButton(
-                          focusNode: _nextChapterFocusNode,
-                          index: 5,
-                          icon: Symbols.fast_forward_rounded,
-                          color: widget.chapters.isNotEmpty && _canControl ? Colors.white : Colors.white54,
-                          onPressed: _canControl && widget.chapters.isNotEmpty ? widget.onSeekToNextChapter : null,
-                          semanticLabel: t.videoControls.nextChapterButton,
-                          tooltip: nextLabelSnapshot.data,
-                        ),
-                      );
-                    },
-                  ),
-                  // Next item
-                  Opacity(
-                    opacity: _canControl ? 1.0 : 0.5,
-                    child: _buildFocusableButton(
-                      focusNode: _nextItemFocusNode,
-                      index: 6,
-                      icon: Symbols.skip_next_rounded,
-                      color: widget.onNext != null && _canControl ? Colors.white : Colors.white54,
-                      onPressed: _canControl ? widget.onNext : null,
-                      semanticLabel: t.videoControls.nextButton,
-                    ),
-                  ),
-                ],
-                // Which route to the station is playing, where a playlist
-                // offered several and they were merged into one channel.
-                // A list rather than a step-to-the-next: with three copies to
-                // choose from, cycling tells the viewer neither where they
-                // are nor what else there is.
-                if (widget.liveVariantLabels.length > 1)
-                  Opacity(
-                    opacity: _canControl ? 1.0 : 0.5,
-                    child: _buildFocusableButton(
-                      focusNode: _variantFocusNode,
-                      index: _buttonFocusNodes.indexOf(_variantFocusNode),
-                      icon: Symbols.swap_horiz_rounded,
-                      onPressed: _canControl
-                          ? () => unawaited(
-                              showLiveVariantSheet(
-                                context,
-                                labels: widget.liveVariantLabels,
-                                index: widget.liveVariantIndex,
-                                onSelected: widget.onLiveVariantSelected,
-                              ),
-                            )
-                          : null,
-                      semanticLabel: t.liveTv.chooseVariant,
-                      tooltip: t.liveTv.variantOf(
-                        current: widget.liveVariantIndex + 1,
-                        total: widget.liveVariantLabels.length,
-                        name: widget.liveVariantLabels[widget.liveVariantIndex],
-                      ),
-                    ),
-                  ),
+                ..._transportButtons(dropUnavailable: false),
                 // Live TV: Go to Live, only while time-shifted behind the live
                 // edge. A labelled pill, since no glyph names this action and
                 // a tooltip never shows under D-pad focus. It takes the slot
@@ -1114,22 +1084,7 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
                 // instead of overflowing the row.
                 // VOD: finish time, faded when too narrow.
                 if (_isLive)
-                  Expanded(
-                    child: widget.captureBuffer != null && !widget.isAtLiveEdge && widget.onJumpToLive != null
-                        ? Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: _buildFocusableButton(
-                              focusNode: _goToLiveFocusNode,
-                              index: 7,
-                              icon: Symbols.fiber_manual_record_rounded,
-                              iconSize: 12,
-                              label: t.liveTv.goToLive,
-                              onPressed: _canControl ? widget.onJumpToLive : null,
-                              semanticLabel: t.liveTv.goToLive,
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                  )
+                  Expanded(child: _goToLive())
                 else
                   Expanded(
                     child: FinishTimeBuilder(
@@ -1160,28 +1115,7 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
                   ),
                   const SizedBox(width: 16),
                 ],
-                // Audio track, subtitle, and chapter controls
-                TrackChapterControls(
-                  player: widget.player,
-                  chapters: widget.chapters,
-                  chaptersLoaded: widget.chaptersLoaded,
-                  trackControlsState: _trackControlsState,
-                  onSeekRequested: widget.onSeekRequested,
-                  onSeekCompleted: widget.onSeekCompleted,
-                  focusNodes: _trackControlFocusNodes,
-                  onFocusChange: _onFocusChange,
-                  onNavigateLeft: navigateFromTrackToVolume,
-                  onNavigateUp: () {
-                    _timelineFocusNode.requestFocus();
-                    widget.onFocusActivity?.call();
-                  },
-                  onNavigateDown: () {
-                    if (widget.useDpadNavigation && _hasStripContent) {
-                      _showContentStrip();
-                    }
-                  },
-                  hideChaptersAndQueue: widget.useDpadNavigation && _hasStripContent,
-                ),
+                _trackControls(),
               ],
             ),
           ),
@@ -1189,6 +1123,245 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
       ),
     );
   }
+
+  /// The timeline: the capture buffer's for live TV that can rewind, the
+  /// title's own for everything on demand, none for live TV that cannot.
+  /// [finishTime] (Plebz, the islands) puts when the title ends beside the
+  /// time left under the bar.
+  Widget? _timeline({required bool canInteract, bool horizontal = true, bool finishTime = false}) {
+    // The bar cannot place anything without the epoch mapping, so it is
+    // part of the condition rather than a bang on the next line.
+    if (_isLive && widget.captureBuffer != null && widget.liveEpochForPosition != null) {
+      return LiveTimelineBar(
+        player: widget.player,
+        captureBuffer: widget.captureBuffer!,
+        epochForPosition: widget.liveEpochForPosition!,
+        isAtLiveEdge: widget.isAtLiveEdge,
+        onSeekEnd: widget.onLiveSeek,
+        horizontalLayout: true,
+        focusNode: _timelineFocusNode,
+        onKeyEvent: _handleTimelineKeyEvent,
+        onFocusChange: _onFocusChange,
+        enabled: canInteract,
+      );
+    }
+    if (_isLive) return null;
+    return VideoTimelineBar(
+      player: widget.player,
+      chapters: widget.chapters,
+      chaptersLoaded: widget.chaptersLoaded,
+      showChapterMarkersOnTimeline: widget.showChapterMarkersOnTimeline,
+      onSeek: widget.onSeek,
+      onSeekEnd: widget.onSeekEnd,
+      onScrubStart: widget.onScrubStart,
+      onScrubEnd: widget.onScrubEnd,
+      horizontalLayout: horizontal,
+      showFinishTime: finishTime,
+      finishTimeLabel: finishTime ? (clock) => t.videoControls.endsAt(time: clock) : null,
+      // Under the islands the times stand flush with the bar's ends, and
+      // so with the title and the capsules.
+      timestampInset: finishTime ? 0 : 16,
+      focusNode: _timelineFocusNode,
+      onKeyEvent: _handleTimelineKeyEvent,
+      onFocusChange: _onFocusChange,
+      enabled: canInteract,
+      thumbnailDataBuilder: widget.thumbnailDataBuilder,
+      showKeyRepeatThumbnail: _showKeyRepeatThumbnail,
+      previewPosition: _timelineSeek.pendingPosition,
+    );
+  }
+
+  /// Previous and next title, chapter jumps, the small skips and play/pause,
+  /// plus the live variant picker. [dropUnavailable] (Plebz, the islands)
+  /// leaves out what has nothing to do — no chapter jumps on a title without
+  /// chapters, no previous or next where there is none — instead of showing
+  /// it greyed. The D-pad steps over a button that is not built.
+  List<Widget> _transportButtons({required bool dropUnavailable}) => [
+    if (!_isLive) ...[
+      if (!dropUnavailable || widget.onPrevious != null)
+        Opacity(
+          opacity: _canControl ? 1.0 : 0.5,
+          child: _buildFocusableButton(
+            focusNode: _prevItemFocusNode,
+            index: 0,
+            icon: Symbols.skip_previous_rounded,
+            color: widget.onPrevious != null && _canControl ? Colors.white : Colors.white54,
+            onPressed: _canControl ? widget.onPrevious : null,
+            semanticLabel: t.videoControls.previousButton,
+          ),
+        ),
+      // Previous chapter
+      if (!dropUnavailable || widget.chapters.isNotEmpty)
+        StreamBuilder<String?>(
+          stream: _previousChapterLabelStream,
+          initialData: _getPreviousChapterLabel(widget.player.state.position),
+          builder: (context, prevLabelSnapshot) {
+            return Opacity(
+              opacity: _canControl ? 1.0 : 0.5,
+              child: _buildFocusableButton(
+                focusNode: _prevChapterFocusNode,
+                index: 1,
+                icon: Symbols.fast_rewind_rounded,
+                color: widget.chapters.isNotEmpty && _canControl ? Colors.white : Colors.white54,
+                onPressed: _canControl && widget.chapters.isNotEmpty ? widget.onSeekToPreviousChapter : null,
+                semanticLabel: t.videoControls.previousChapterButton,
+                tooltip: prevLabelSnapshot.data,
+              ),
+            );
+          },
+        ),
+    ],
+    if (!_isLive || widget.captureBuffer != null) ...[
+      // Skip backward
+      Opacity(
+        opacity: _canControl ? 1.0 : 0.5,
+        child: _buildFocusableButton(
+          focusNode: _skipBackFocusNode,
+          index: 2,
+          icon: widget.getReplayIcon(widget.seekTimeSmall),
+          onPressed: _canControl ? widget.onSeekBackward : null,
+          semanticLabel: t.videoControls.seekBackwardButton(seconds: widget.seekTimeSmall),
+        ),
+      ),
+    ],
+    // Play/Pause
+    Opacity(
+      opacity: _canControl ? 1.0 : 0.5,
+      child: PlayPauseStreamBuilder(
+        player: widget.player,
+        builder: (context, isPlaying) {
+          return _buildFocusableButton(
+            focusNode: _playPauseFocusNode,
+            index: 3,
+            icon: isPlaying ? Symbols.pause_rounded : Symbols.play_arrow_rounded,
+            iconSize: 32,
+            // Plebz: a triangle centred by its box looks pushed left — most of
+            // its ink is on the flat side — so play steps right by what tvOS
+            // and Netflix give theirs; pause is symmetric and stays put.
+            glyphShift: isPlaying ? 0 : VideoControlButton.playGlyphShift * 32,
+            onPressed: _canControl ? widget.onPlayPause : null,
+            semanticLabel: isPlaying ? t.videoControls.pauseButton : t.videoControls.playButton,
+          );
+        },
+      ),
+    ),
+    if (!_isLive || widget.captureBuffer != null) ...[
+      // Skip forward
+      Opacity(
+        opacity: _canControl ? 1.0 : 0.5,
+        child: _buildFocusableButton(
+          focusNode: _skipForwardFocusNode,
+          index: 4,
+          icon: widget.getForwardIcon(widget.seekTimeSmall),
+          onPressed: _canControl ? widget.onSeekForward : null,
+          semanticLabel: t.videoControls.seekForwardButton(seconds: widget.seekTimeSmall),
+        ),
+      ),
+    ],
+    if (!_isLive) ...[
+      // Next chapter
+      if (!dropUnavailable || widget.chapters.isNotEmpty)
+        StreamBuilder<String?>(
+          stream: _nextChapterLabelStream,
+          initialData: _getNextChapterLabel(widget.player.state.position),
+          builder: (context, nextLabelSnapshot) {
+            return Opacity(
+              opacity: _canControl ? 1.0 : 0.5,
+              child: _buildFocusableButton(
+                focusNode: _nextChapterFocusNode,
+                index: 5,
+                icon: Symbols.fast_forward_rounded,
+                color: widget.chapters.isNotEmpty && _canControl ? Colors.white : Colors.white54,
+                onPressed: _canControl && widget.chapters.isNotEmpty ? widget.onSeekToNextChapter : null,
+                semanticLabel: t.videoControls.nextChapterButton,
+                tooltip: nextLabelSnapshot.data,
+              ),
+            );
+          },
+        ),
+      // Next item
+      if (!dropUnavailable || widget.onNext != null)
+        Opacity(
+          opacity: _canControl ? 1.0 : 0.5,
+          child: _buildFocusableButton(
+            focusNode: _nextItemFocusNode,
+            index: 6,
+            icon: Symbols.skip_next_rounded,
+            color: widget.onNext != null && _canControl ? Colors.white : Colors.white54,
+            onPressed: _canControl ? widget.onNext : null,
+            semanticLabel: t.videoControls.nextButton,
+          ),
+        ),
+    ],
+    // Which route to the station is playing, where a playlist
+    // offered several and they were merged into one channel.
+    // A list rather than a step-to-the-next: with three copies to
+    // choose from, cycling tells the viewer neither where they
+    // are nor what else there is.
+    if (widget.liveVariantLabels.length > 1)
+      Opacity(
+        opacity: _canControl ? 1.0 : 0.5,
+        child: _buildFocusableButton(
+          focusNode: _variantFocusNode,
+          index: _buttonFocusNodes.indexOf(_variantFocusNode),
+          icon: Symbols.swap_horiz_rounded,
+          onPressed: _canControl
+              ? () => unawaited(
+                  showLiveVariantSheet(
+                    context,
+                    labels: widget.liveVariantLabels,
+                    index: widget.liveVariantIndex,
+                    onSelected: widget.onLiveVariantSelected,
+                  ),
+                )
+              : null,
+          semanticLabel: t.liveTv.chooseVariant,
+          tooltip: t.liveTv.variantOf(
+            current: widget.liveVariantIndex + 1,
+            total: widget.liveVariantLabels.length,
+            name: widget.liveVariantLabels[widget.liveVariantIndex],
+          ),
+        ),
+      ),
+  ];
+
+  /// Live TV's way back to the live edge, while time-shifted behind it.
+  Widget _goToLive() => widget.captureBuffer != null && !widget.isAtLiveEdge && widget.onJumpToLive != null
+      ? Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: _buildFocusableButton(
+            focusNode: _goToLiveFocusNode,
+            index: 7,
+            icon: Symbols.fiber_manual_record_rounded,
+            iconSize: 12,
+            label: t.liveTv.goToLive,
+            onPressed: _canControl ? widget.onJumpToLive : null,
+            semanticLabel: t.liveTv.goToLive,
+          ),
+        )
+      : const SizedBox.shrink();
+
+  Widget _trackControls() => TrackChapterControls(
+    player: widget.player,
+    chapters: widget.chapters,
+    chaptersLoaded: widget.chaptersLoaded,
+    trackControlsState: _trackControlsState,
+    onSeekRequested: widget.onSeekRequested,
+    onSeekCompleted: widget.onSeekCompleted,
+    focusNodes: _trackControlFocusNodes,
+    onFocusChange: _onFocusChange,
+    onNavigateLeft: navigateFromTrackToVolume,
+    onNavigateUp: () {
+      _timelineFocusNode.requestFocus();
+      widget.onFocusActivity?.call();
+    },
+    onNavigateDown: () {
+      if (widget.useDpadNavigation && _hasStripContent) {
+        _showContentStrip();
+      }
+    },
+    hideChaptersAndQueue: widget.useDpadNavigation && _hasStripContent,
+  );
 
   /// Returns the label of the next chapter the user would seek to, or null.
   String? _getNextChapterLabel(Duration position) {
@@ -1212,10 +1385,12 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
     double iconSize = 24,
     String? tooltip,
     String? label,
+    double glyphShift = 0,
   }) {
     return VideoControlButton(
       icon: icon,
       iconSize: iconSize,
+      glyphShift: glyphShift,
       color: color,
       tooltip: tooltip,
       label: label,

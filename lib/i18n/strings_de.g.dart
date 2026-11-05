@@ -1202,6 +1202,7 @@ class _Translations$videoControls$de extends Translations$videoControls$en {
 	@override String endCardSeasonEpisode({required Object season, required Object episode}) => 'Staffel ${season}, Folge ${episode}';
 	@override String channelNumberTyped({required Object number}) => 'Sender ${number}';
 	@override String channelNumberMissing({required Object number}) => 'Kein Sender mit der Nummer ${number}';
+	@override String get playingNow => 'Läuft';
 }
 
 // Path: messages
@@ -5343,6 +5344,7 @@ extension on TranslationsDe {
 			'videoControls.endCardSeasonEpisode' => ({required Object season, required Object episode}) => 'Staffel ${season}, Folge ${episode}',
 			'videoControls.channelNumberTyped' => ({required Object number}) => 'Sender ${number}',
 			'videoControls.channelNumberMissing' => ({required Object number}) => 'Kein Sender mit der Nummer ${number}',
+			'videoControls.playingNow' => 'Läuft',
 			'messages.markedAsWatched' => 'Als gesehen markiert',
 			'messages.markedAsUnwatched' => 'Als ungesehen markiert',
 			'messages.markedAsWatchedOffline' => 'Als gesehen markiert (wird synchronisiert, wenn online)',
@@ -5834,9 +5836,9 @@ extension on TranslationsDe {
 			'explore.status.upcoming' => 'Demnächst',
 			'explore.episodeCount' => ({required num n}) => (_root.$meta.cardinalResolver ?? PluralResolvers.cardinal('de'))(n, one: '${n} Folge', other: '${n} Folgen', ), 
 			'explore.cast' => 'Besetzung',
-			'explore.characters' => 'Charaktere',
 			_ => null,
 		} ?? switch (path) {
+			'explore.characters' => 'Charaktere',
 			'explore.addToWatchlist' => 'Zur Merkliste hinzufügen',
 			'explore.removeFromWatchlist' => 'Von Merkliste entfernen',
 			'explore.addedToWatchlist' => 'Zur Watchlist hinzugefügt',
@@ -6348,9 +6350,9 @@ extension on TranslationsDe {
 			'downloads.deleteCollectionDownloadsConfirm' => ({required Object title}) => 'Alle Downloads aus „${title}“ von diesem Gerät löschen?',
 			'downloads.collectionDownloadsDeleted' => 'Downloads gelöscht',
 			'downloads.cancelledDownloadTitle' => 'Abgebrochener Download',
-			'downloads.cancelledDownloadMessage' => 'Dieser Download wurde abgebrochen. Was möchtest du tun?',
 			_ => null,
 		} ?? switch (path) {
+			'downloads.cancelledDownloadMessage' => 'Dieser Download wurde abgebrochen. Was möchtest du tun?',
 			'downloads.allEpisodesAlreadyDownloaded' => 'Alle Episoden sind bereits heruntergeladen',
 			'downloads.resumeDownload' => 'Download fortsetzen',
 			'downloads.cancelledDownload' => 'Abgebrochener Download',
@@ -6862,9 +6864,9 @@ extension on TranslationsDe {
 			'services.libraryFilter.noLibraries' => 'Keine Mediatheken verfügbar',
 			'services.tmdb.title' => 'TMDB',
 			'services.tmdb.hubSubtitle' => 'Ergänzt Logos und Beschreibungen',
-			'services.tmdb.enabled' => 'Fehlendes von TMDB ergänzen',
 			_ => null,
 		} ?? switch (path) {
+			'services.tmdb.enabled' => 'Fehlendes von TMDB ergänzen',
 			'services.tmdb.enabledDescription' => 'Logos und Beschreibungen, die dem Server fehlen',
 			'services.tmdb.apiKey' => 'API-Schlüssel',
 			'services.tmdb.apiKeySet' => 'Hinterlegt',

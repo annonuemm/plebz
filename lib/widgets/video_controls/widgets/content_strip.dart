@@ -18,6 +18,9 @@ import '../../../mpv/mpv.dart';
 import '../../../media/media_source_info.dart';
 import '../../../providers/playback_state_provider.dart';
 import '../../../redesign/ocker_skin.dart';
+import '../../../redesign/ocker_type.dart';
+import '../../../focus/focus_theme.dart';
+import '../../detail_resume_progress.dart';
 import '../../../services/settings_service.dart';
 import '../../../services/download_storage_service.dart';
 import '../../../theme/mono_tokens.dart';
@@ -52,6 +55,13 @@ class ContentStrip extends StatefulWidget {
   /// Called on any focus activity (to reset auto-hide timer).
   final VoidCallback? onFocusActivity;
 
+  /// Plebz: the strip as a row of the start page — on the television's
+  /// player under the redesign. No pane: a heading at the left naming the
+  /// page (and the other one, dimmed, where there are both), 16:9 pictures
+  /// at the size of the start page's wide tiles, focus as a poster's (ring
+  /// and growth), the one playing marked on its picture with its progress.
+  final bool rowLook;
+
   const ContentStrip({
     super.key,
     required this.player,
@@ -65,7 +75,12 @@ class ContentStrip extends StatefulWidget {
     this.useFocusNavigation = false,
     this.onNavigateUp,
     this.onFocusActivity,
+    this.rowLook = false,
   });
+
+  /// [rowLook]'s picture width and the gap after it, at the 1920 reference.
+  static const double rowThumbWidth = 336;
+  static const double rowGap = 24;
 
   @override
   State<ContentStrip> createState() => ContentStripState();
@@ -272,7 +287,11 @@ class ContentStripState extends State<ContentStrip> {
     return context.tryGetMediaClientForServer(serverId);
   }
 
-  double _itemWidth(bool isTablet) => isTablet ? 212.0 : 132.0; // thumb + 12 padding
+  double _itemWidth(bool isTablet) => widget.rowLook
+      ? (ContentStrip.rowThumbWidth + ContentStrip.rowGap) * ockerScale(context)
+      : isTablet
+      ? 212.0
+      : 132.0; // thumb + 12 padding
 
   GlobalKey _itemKeyFor(Map<int, GlobalKey> keys, int index) {
     return keys.putIfAbsent(index, GlobalKey.new);
@@ -304,7 +323,7 @@ class ContentStripState extends State<ContentStrip> {
         controller,
         index,
         itemExtent: _itemWidth(isTablet),
-        leadingPadding: widget.useFocusNavigation ? 12 : 4,
+        leadingPadding: widget.rowLook ? 0 : (widget.useFocusNavigation ? 12 : 4),
         animate: false,
       );
       scrollKeyedChildToHorizontalCenter(
@@ -320,6 +339,7 @@ class ContentStripState extends State<ContentStrip> {
   @override
   Widget build(BuildContext context) {
     if (!_hasChapters && !_hasQueue) return const SizedBox.shrink();
+    if (widget.rowLook) return _buildRowLook(context);
 
     final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
     final stripHeight = isTablet ? 170.0 : 106.0;
@@ -357,6 +377,65 @@ class ContentStripState extends State<ContentStrip> {
         ),
       ),
     );
+  }
+
+  /// [ContentStrip.rowLook]: the heading at the left, the row under it, both
+  /// at the left edge the parent gives; the row runs on off the right edge.
+  Widget _buildRowLook(BuildContext context) {
+    final scale = ockerScale(context);
+    final type = OckerType.of(context);
+    final heading = type.sectionHeading.copyWith(color: Colors.white);
+    final thumbHeight = ContentStrip.rowThumbWidth * scale * 9 / 16;
+    // Picture, the words under it, and room above and below for the ring
+    // and the growth of a focused tile.
+    final rowHeight = thumbHeight + _RowStripItem.wordsHeight(scale) + 2 * _RowStripItem.focusRoom;
+
+    Widget page(_StripTab tab) {
+      final label = tab == _StripTab.chapters ? t.videoControls.chapters : t.videoControls.queue;
+      final active = _activeTab == tab;
+      return Text(
+        label,
+        key: ValueKey('strip_heading_${tab.name}'),
+        style: active ? heading : heading.copyWith(color: Colors.white38),
+      );
+    }
+
+    return Column(
+      mainAxisSize: .min,
+      crossAxisAlignment: .start,
+      children: [
+        // The page on show first; the other, dimmed, says Up or Down leads
+        // there — the remote's way between them.
+        Row(
+          children: [
+            page(_activeTab),
+            if (_hasBothTabs) ...[
+              SizedBox(width: 24 * scale),
+              page(_activeTab == _StripTab.chapters ? _StripTab.queue : _StripTab.chapters),
+            ],
+          ],
+        ),
+        SizedBox(height: 12 * scale),
+        SizedBox(
+          height: rowHeight,
+          child: _activeTab == _StripTab.chapters ? _buildChapterStrip(false) : _buildQueueStrip(false),
+        ),
+      ],
+    );
+  }
+
+  /// Under a picture of [ContentStrip.rowLook]: season and episode, or the
+  /// year, then the length.
+  String _rowFacts(MediaItem item) {
+    final parts = <String>[
+      if (item.parentIndex != null && item.index != null) ...[
+        'S${item.parentIndex}',
+        'E${item.index}',
+      ] else if (item.year != null)
+        '${item.year}',
+      if (item.durationMs != null && item.durationMs! > 0) formatDurationTextual(item.durationMs!),
+    ];
+    return parts.isEmpty ? (item.grandparentTitle ?? '') : toBulletedString(parts);
   }
 
   Widget _buildTabBar() {
@@ -430,7 +509,7 @@ class ContentStripState extends State<ContentStrip> {
       scrollDirection: Axis.horizontal,
       clipBehavior: widget.useFocusNavigation ? Clip.none : Clip.hardEdge,
       itemCount: itemCount,
-      padding: .symmetric(horizontal: widget.useFocusNavigation ? 12 : 4),
+      padding: widget.rowLook ? EdgeInsets.zero : .symmetric(horizontal: widget.useFocusNavigation ? 12 : 4),
       itemBuilder: (context, index) {
         final (item, onTap) = itemBuilder(context, index, _itemKeyFor(keys, index));
 
@@ -445,12 +524,15 @@ class ContentStripState extends State<ContentStrip> {
             onFocusChange: (hasFocus) {
               if (hasFocus) widget.onFocusActivity?.call();
             },
-            borderRadius: 6,
+            borderRadius: widget.rowLook ? artworkRadius(context) : 6,
             autoScroll: false,
-            useBackgroundFocus: true,
+            // Plebz: a row's picture takes focus as a poster does — the ring
+            // round the picture, the tile grown — rather than a pane.
+            useBackgroundFocus: !widget.rowLook,
+            focusScale: widget.rowLook ? FocusTheme.posterFocusScaleFor(context) : FocusTheme.focusScale,
             // Under glass the item draws its own marks, focus and the one
             // playing in one pane ([_GlassStripMarks]), as a menu row does.
-            delegateFocusBorder: ockerGlass(context),
+            delegateFocusBorder: widget.rowLook || ockerGlass(context),
             child: item,
           ),
         );
@@ -551,8 +633,10 @@ class ContentStripState extends State<ContentStrip> {
                       : null,
                   blurThumbnail: hideSpoilers && item.shouldHideSpoiler,
                   title: item.title ?? '',
-                  subtitle: formatQueueItemSubtitle(item),
+                  subtitle: widget.rowLook ? _rowFacts(item) : formatQueueItemSubtitle(item),
                   onTap: onTap,
+                  progress: item.hasActiveProgress ? DetailResumeProgress.fractionOf(item) : null,
+                  livePlayer: widget.player,
                 ),
                 onTap,
               );
@@ -569,12 +653,13 @@ class ContentStripState extends State<ContentStrip> {
     required bool isTablet,
     String? localFilePath,
   }) {
+    final rowWidth = widget.rowLook ? ContentStrip.rowThumbWidth * ockerScale(context) : null;
     return OptimizedMediaImage.thumb(
       client: client,
       imagePath: imagePath,
       localFilePath: localFilePath,
-      width: isTablet ? 200.0 : 120.0,
-      height: isTablet ? 112.0 : 68.0,
+      width: rowWidth ?? (isTablet ? 200.0 : 120.0),
+      height: rowWidth != null ? rowWidth * 9 / 16 : (isTablet ? 112.0 : 68.0),
       fit: BoxFit.cover,
       errorWidget: (_, _, _) => const AppIcon(Symbols.image_rounded, fill: 1, color: Colors.white54, size: 34),
     );
@@ -589,7 +674,26 @@ class ContentStripState extends State<ContentStrip> {
     required VoidCallback? onTap,
     bool blurThumbnail = false,
     bool isTablet = false,
+    double? progress,
+    Player? livePlayer,
   }) {
+    if (widget.rowLook) {
+      return ClickableCursor(
+        child: GestureDetector(
+          onTap: onTap,
+          child: _RowStripItem(
+            key: key,
+            current: isCurrent,
+            thumbnail: thumbnail,
+            blurThumbnail: blurThumbnail,
+            title: title,
+            subtitle: subtitle,
+            progress: progress,
+            player: isCurrent ? livePlayer : null,
+          ),
+        ),
+      );
+    }
     final itemWidth = isTablet ? 200.0 : 120.0;
     final thumbHeight = isTablet ? 112.0 : 68.0;
     final titleFontSize = isTablet ? 13.0 : 11.0;
@@ -698,6 +802,159 @@ class _GlassStripMarks extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
           bright: focused,
           tint: current ? 1 : 0,
+        ),
+      ),
+    );
+  }
+}
+
+/// One tile of [ContentStrip.rowLook] (Plebz): a 16:9 picture with the
+/// start page's corner, a ring round it while focused, the one playing
+/// marked on it with the accent and its progress, the words under it.
+class _RowStripItem extends StatelessWidget {
+  const _RowStripItem({
+    super.key,
+    required this.current,
+    required this.thumbnail,
+    required this.blurThumbnail,
+    required this.title,
+    required this.subtitle,
+    required this.progress,
+    required this.player,
+  });
+
+  final bool current;
+  final Widget? thumbnail;
+  final bool blurThumbnail;
+  final String title;
+  final String subtitle;
+
+  /// How far in the viewer is, 0 to 1; null for none.
+  final double? progress;
+
+  /// The player, for the item playing now: its bar follows the playhead.
+  final Player? player;
+
+  /// Room round the picture for the ring and the growth of a focused tile.
+  static const double focusRoom = 10;
+
+  static const double _titleSize = 22;
+  static const double _factsSize = 18;
+
+  /// The two lines under the picture and the gap above them.
+  static double wordsHeight(double scale) => (10 + _titleSize * 1.25 + 2 + _factsSize * 1.25) * scale;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = ockerScale(context);
+    final type = OckerType.of(context);
+    final tk = tokens(context);
+    final width = ContentStrip.rowThumbWidth * scale;
+    final radius = artworkRadius(context);
+    final accent = tk.accent;
+    final onAccent = ThemeData.estimateBrightnessForColor(accent) == Brightness.dark ? Colors.white : tk.bg;
+
+    Widget bar(double share) => Positioned(
+      left: 10 * scale,
+      right: 10 * scale,
+      bottom: 10 * scale,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(3 * scale),
+        child: SizedBox(
+          height: 6 * scale,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              const ColoredBox(color: Colors.white30),
+              FractionallySizedBox(
+                alignment: AlignmentDirectional.centerStart,
+                widthFactor: share.clamp(0.0, 1.0),
+                child: const ColoredBox(color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final livePlayer = player;
+    final picture = Stack(
+      fit: StackFit.expand,
+      children: [
+        MediaSelectorThumbnail(
+          width: width,
+          height: width * 9 / 16,
+          thumbnail: thumbnail,
+          isCurrent: false,
+          borderColor: Colors.white,
+          radius: radius,
+          blurThumbnail: blurThumbnail,
+        ),
+        if (current)
+          PositionedDirectional(
+            start: 10 * scale,
+            top: 10 * scale,
+            child: OckerKeepColours(
+              child: DecoratedBox(
+                key: const ValueKey('strip_playing_chip'),
+                decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(6 * scale)),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
+                  child: Text(
+                    t.videoControls.playingNow,
+                    style: type.nowChip.copyWith(color: onAccent, fontSize: _factsSize * scale),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        if (livePlayer != null)
+          StreamBuilder<Duration>(
+            stream: livePlayer.streams.position,
+            initialData: livePlayer.state.position,
+            builder: (context, snapshot) {
+              final duration = livePlayer.state.duration.inMilliseconds;
+              if (duration <= 0) return const SizedBox.shrink();
+              return Stack(fit: StackFit.expand, children: [bar((snapshot.data?.inMilliseconds ?? 0) / duration)]);
+            },
+          )
+        else if (progress != null)
+          bar(progress!),
+      ],
+    );
+
+    return Padding(
+      padding: EdgeInsetsDirectional.only(top: focusRoom, end: ContentStrip.rowGap * scale),
+      child: SizedBox(
+        width: width,
+        child: Column(
+          mainAxisSize: .min,
+          crossAxisAlignment: .start,
+          children: [
+            CardFocusBorder(
+              borderRadius: radius,
+              child: SizedBox(width: width, height: width * 9 / 16, child: picture),
+            ),
+            SizedBox(height: 10 * scale),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: .ellipsis,
+              style: type.metadata.copyWith(
+                color: Colors.white,
+                fontSize: _titleSize * scale,
+                fontWeight: FontWeight.w600,
+                height: 1.25,
+              ),
+            ),
+            SizedBox(height: 2 * scale),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: .ellipsis,
+              style: type.metadata.copyWith(color: Colors.white60, fontSize: _factsSize * scale, height: 1.25),
+            ),
+          ],
         ),
       ),
     );

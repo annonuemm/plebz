@@ -48,6 +48,11 @@ class VideoControlsHeader extends StatelessWidget {
   /// controls.
   final bool showClock;
 
+  /// Whether the header carries the back button and the title (Plebz). The
+  /// television's player under the redesign sets the title over its
+  /// timeline instead and leaves Back to the remote; the clock stays.
+  final bool showTitle;
+
   const VideoControlsHeader({
     super.key,
     required this.metadata,
@@ -59,6 +64,7 @@ class VideoControlsHeader extends StatelessWidget {
     this.onCancelAutoHide,
     this.onStartAutoHide,
     this.showClock = true,
+    this.showTitle = true,
   });
 
   @override
@@ -66,13 +72,17 @@ class VideoControlsHeader extends StatelessWidget {
     final itemTitle = titleOverride ?? metadata.title ?? t.common.unknown;
     return Row(
       children: [
-        AppBarBackButton(style: BackButtonStyle.video, onPressed: onBack ?? () => Navigator.of(context).pop(true)),
-        const SizedBox(width: 16),
-        Expanded(
-          child: style == VideoHeaderStyle.singleLine
-              ? _buildSingleLineTitle(itemTitle)
-              : _buildMultiLineTitle(itemTitle),
-        ),
+        if (showTitle) ...[
+          AppBarBackButton(style: BackButtonStyle.video, onPressed: onBack ?? () => Navigator.of(context).pop(true)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: style == VideoHeaderStyle.singleLine
+                ? _buildSingleLineTitle(itemTitle)
+                : _buildMultiLineTitle(itemTitle),
+          ),
+        ] else
+          // The back button's height, so the clock stays where it was.
+          const Expanded(child: SizedBox(height: 48)),
         Selector<WatchTogetherProvider, bool>(
           selector: (_, p) => p.isInSession,
           builder: (context, inSession, child) {

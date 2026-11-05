@@ -1148,7 +1148,8 @@
     "endCardRemaining": "${time} left",
     "endCardSeasonEpisode": "Season ${season}, episode ${episode}",
     "channelNumberTyped": "Channel ${number}",
-    "channelNumberMissing": "No channel numbered ${number}"
+    "channelNumberMissing": "No channel numbered ${number}",
+    "playingNow": "Playing"
   },
   "userStatus": {},
   "messages": {

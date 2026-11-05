@@ -40,6 +40,15 @@ class VideoTimelineBar extends StatelessWidget {
   /// Whether to show the estimated finish time next to the remaining timestamp (mobile).
   final bool showFinishTime;
 
+  /// How the finish time reads after the remaining time, given the clock
+  /// time (Plebz: "Endet um 22:14" on the television). The clock alone when
+  /// null.
+  final String Function(String clock)? finishTimeLabel;
+
+  /// How far in the timestamps under the slider stand from its ends
+  /// (vertical layout only).
+  final double timestampInset;
+
   /// Optional callback that returns thumbnail image bytes for a given timestamp.
   final ScrubFrame? Function(Duration time)? thumbnailDataBuilder;
 
@@ -66,6 +75,8 @@ class VideoTimelineBar extends StatelessWidget {
     this.onFocusChange,
     this.enabled = true,
     this.showFinishTime = false,
+    this.finishTimeLabel,
+    this.timestampInset = 16,
     this.thumbnailDataBuilder,
     this.showKeyRepeatThumbnail = false,
     this.previewPosition,
@@ -137,7 +148,7 @@ class VideoTimelineBar extends StatelessWidget {
       children: [
         _buildSlider(position, duration, bufferRanges),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: timestampInset),
           child: Row(
             mainAxisAlignment: .spaceBetween,
             children: [_buildTimestamp(position), _buildRemainingTimestamp(remaining)],
@@ -164,7 +175,10 @@ class VideoTimelineBar extends StatelessWidget {
       builder: (context, finishTime) {
         if (finishTime == null) return _buildTimestamp(remaining);
         final clock = formatClockTime(finishTime, is24Hour: MediaQuery.alwaysUse24HourFormatOf(context));
-        return Text('${formatDurationTimestamp(remaining)} · $clock', style: _timestampStyle);
+        return Text(
+          '${formatDurationTimestamp(remaining)} · ${finishTimeLabel?.call(clock) ?? clock}',
+          style: _timestampStyle,
+        );
       },
     );
   }

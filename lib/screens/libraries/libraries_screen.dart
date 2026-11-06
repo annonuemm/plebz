@@ -24,6 +24,7 @@ import '../../widgets/app_menu.dart';
 import '../../widgets/desktop_app_bar.dart';
 import '../../widgets/focusable_tab_chip.dart';
 import '../../widgets/library_management_sheet.dart';
+import '../../widgets/options_chips_bar.dart';
 import '../../services/storage_service.dart';
 import '../../mixins/refreshable.dart';
 import '../../i18n/strings.g.dart';
@@ -100,12 +101,14 @@ class _LibrariesScreenState extends State<LibrariesScreen>
     return OckerRailMenu.fromEntries<int>([
       for (var i = 0; i < _visibleTabs.length; i++)
         AppMenuItem<int>(value: i, label: _getTabLabel(_visibleTabs[i]), selected: i == current),
-    ], _chooseViewFromRail);
+    ], _chooseView);
   }
 
-  /// A view chosen in the rail: switch to it and go into it, as choosing a
-  /// view from the menu behind a destination does everywhere else.
-  void _chooseViewFromRail(int index) {
+  /// A view chosen in the rail or from the chooser over the posters: switch
+  /// to it and go into it, as choosing a view from the menu behind a
+  /// destination does everywhere else. Both read and set [tabController], so
+  /// each follows what the other chose.
+  void _chooseView(int index) {
     if (index >= _visibleTabs.length) return;
     if (index != tabController.index) {
       setState(() {
@@ -131,21 +134,102 @@ class _LibrariesScreenState extends State<LibrariesScreen>
     });
   }
 
-  /// The filters of the view on show, on a band of glass at the top left of
-  /// the posters: the views are rows in the rail, and UP out of the first row
-  /// is the shortest way to the filters.
-  Widget _buildOckerFilterBand() {
+  /// The view chooser over the posters ("Durchsuchen ⌄"): a second way to the
+  /// views beside the rows in the rail, so a viewer on the page need not go
+  /// into the navigation first. It names the view on show and opens a small
+  /// menu of them. Null where there is no choice to make, and off the
+  /// television arrangement, where the views stand on the page as chips.
+  OptionsChipDescriptor? get _viewChip {
+    if (!isOckerLayout(context) || _selectedLibraryGlobalKey == null || _visibleTabs.length < 2) return null;
+    final index = tabController.index.clamp(0, _visibleTabs.length - 1);
+    return OptionsChipDescriptor(
+      icon: Symbols.grid_view_rounded,
+      label: _getTabLabel(_visibleTabs[index]),
+      trailingIcon: Symbols.expand_more_rounded,
+      spellOut: true,
+      focusNode: _viewChipFocusNode,
+      onPressed: () => unawaited(_showViewMenu()),
+    );
+  }
+
+  final _viewChipFocusNode = FocusNode(debugLabel: 'library_view_chip');
+
+  /// The views as a menu, the one on show marked and under the cursor — the
+  /// same entries the rail lists.
+  Future<void> _showViewMenu() async {
+    SelectKeyUpSuppressor.suppressSelectUntilKeyUp();
+    final box = _viewChipFocusNode.context?.findRenderObject() as RenderBox?;
+    final anchor = box != null && box.hasSize ? box.localToGlobal(Offset.zero) & box.size : Rect.zero;
+    final current = tabController.index;
+    final chosen = await showAdaptiveAppMenu<int>(
+      context,
+      entries: [
+        for (var i = 0; i < _visibleTabs.length; i++)
+          AppMenuItem<int>(value: i, label: _getTabLabel(_visibleTabs[i]), selected: i == current),
+      ],
+      anchorRect: anchor,
+      focusFirstItem: true,
+    );
+    if (!mounted) return;
+    if (chosen == null) {
+      // Dismissed: back where the menu was opened.
+      if (_viewChip != null) _viewChipFocusNode.requestFocus();
+      return;
+    }
+    _chooseView(chosen);
+  }
+
+  /// UP off the top of a view under the redesign: the chooser over it, or the
+  /// rail where there is none.
+  void _focusViewChip() {
+    if (_viewChip == null) {
+      focusTabBar();
+      return;
+    }
+    _viewChipFocusNode.requestFocus();
+  }
+
+  /// LEFT off the band: the libraries, which open beside the page, as off the
+  /// first column of posters; the rail where they cannot open.
+  void _openLibrariesOrRail() {
+    if (_libraryColumnKey.currentState?.open() ?? false) return;
+    MainScreenFocusScope.focusSidebarOf(context);
+  }
+
+  /// The view chooser alone on a band, for the views without filters of
+  /// their own (Empfohlen, Sammlungen, Playlists).
+  Widget _buildViewChooserBar(OptionsChipDescriptor chip) => OptionsChipsBar(
+    chips: [chip],
+    onGridBand: true,
+    onNavigateDown: _focusCurrentTab,
+    onNavigateUp: () {},
+    onNavigateRightEdge: () {},
+    onNavigateLeftEdge: _openLibrariesOrRail,
+    onBack: focusTabBar,
+  );
+
+  /// The band over the posters: the view chooser, and on Durchsuchen the
+  /// filters and sort after it (the browse tab draws all three, see
+  /// [OckerFilterSlot]); the library's name over the right. UP out of the
+  /// first row reaches it.
+  Widget _buildOckerFilterBand(LibraryTabType? current) {
+    final viewChip = _viewChip;
     return ValueListenableBuilder<WidgetBuilder?>(
       valueListenable: _ockerFilterSlot,
       builder: (context, chips, _) {
-        if (chips == null) return const SizedBox.shrink();
+        final Widget? row = current == LibraryTabType.browse && chips != null
+            ? chips(context)
+            : viewChip == null
+            ? null
+            : _buildViewChooserBar(viewChip);
+        if (row == null) return const SizedBox.shrink();
         // The rail lights "Mediatheken" but not which library is open.
         final library = context
             .read<LibrariesProvider>()
             .libraries
             .where((lib) => lib.globalKey == _selectedLibraryGlobalKey)
             .firstOrNull;
-        return OckerGridFilterBand(location: library?.title, children: [chips(context)]);
+        return OckerGridFilterBand(location: library?.title, children: [row]);
       },
     );
   }
@@ -483,6 +567,7 @@ class _LibrariesScreenState extends State<LibrariesScreen>
   @override
   void dispose() {
     _ockerFilterSlot.dispose();
+    _viewChipFocusNode.dispose();
     _outerScrollController.dispose();
     for (final node in _tabFocusNodes) {
       node.dispose();
@@ -544,7 +629,7 @@ class _LibrariesScreenState extends State<LibrariesScreen>
         suppressAutoFocus: suppressAutoFocus,
         onDataLoaded: () => _handleTabDataLoaded(tabIndex),
         onBack: focusTabBar,
-        onNavigateToChrome: focusTabBar,
+        onNavigateToChrome: isOckerLayout(context) ? _focusViewChip : focusTabBar,
       ),
       LibraryTabType.browse => LibraryBrowseTab(
         key: _browseTabKey,
@@ -556,6 +641,7 @@ class _LibrariesScreenState extends State<LibrariesScreen>
         onBack: focusTabBar,
         onResetScroll: _resetOuterScroll,
         onFiltersActiveChanged: _handleBrowseFiltersActiveChanged,
+        viewChip: _viewChip,
       ),
       LibraryTabType.collections => LibraryCollectionsTab(
         key: _collectionsTabKey,
@@ -564,6 +650,7 @@ class _LibrariesScreenState extends State<LibrariesScreen>
         suppressAutoFocus: suppressAutoFocus,
         onDataLoaded: () => _handleTabDataLoaded(tabIndex),
         onBack: focusTabBar,
+        onNavigateUp: isOckerLayout(context) ? _focusViewChip : null,
       ),
       LibraryTabType.playlists => LibraryPlaylistsTab(
         key: _playlistsTabKey,
@@ -572,6 +659,7 @@ class _LibrariesScreenState extends State<LibrariesScreen>
         suppressAutoFocus: suppressAutoFocus,
         onDataLoaded: () => _handleTabDataLoaded(tabIndex),
         onBack: focusTabBar,
+        onNavigateUp: isOckerLayout(context) ? _focusViewChip : null,
       ),
     };
   }
@@ -1009,10 +1097,10 @@ class _LibrariesScreenState extends State<LibrariesScreen>
     ];
 
     // Under the redesign there is no app bar at all: the views are rows in the
-    // side rail, and the page keeps only the filters, over the grid — the
-    // browse view's alone, since only it has any.
-    final ockerHeader = isOckerLayout(context) && currentTabType == LibraryTabType.browse
-        ? _buildOckerFilterBand()
+    // side rail, and the page keeps a band over the grid — the view chooser,
+    // and on Durchsuchen its filters and sort.
+    final ockerHeader = isOckerLayout(context) && currentTabType != LibraryTabType.recommended
+        ? _buildOckerFilterBand(currentTabType)
         : null;
 
     Widget appBar({required bool floating}) => isOckerLayout(context)
@@ -1205,8 +1293,24 @@ class _LibrariesScreenState extends State<LibrariesScreen>
       //
       // The spotlight takes the whole page, edge to edge, as on the home
       // screen — no frame's margins round it.
+      final viewChip = _viewChip;
       final page = useTvRecommendedBackdrop
-          ? scrollBody
+          ? Stack(
+              fit: StackFit.expand,
+              clipBehavior: Clip.none,
+              children: [
+                scrollBody,
+                // The view chooser where it stands over the other views, so
+                // it does not move as the views change; the spotlight's words
+                // stand low, on the rows.
+                if (viewChip != null)
+                  Positioned(
+                    left: ockerFlushLeftInset(context),
+                    top: ockerContentTop(context),
+                    child: OckerGridFilterBand(withGapBelow: false, children: [_buildViewChooserBar(viewChip)]),
+                  ),
+              ],
+            )
           : OckerPanelFrame(
               resolveClient: (item) => item?.serverId == null
                   ? context.tryGetMediaClientForServer(null)

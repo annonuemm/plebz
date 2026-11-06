@@ -188,7 +188,9 @@ abstract class PaginatedCardGridTabState<T extends Object, W extends BaseLibrary
     // nested-scroll coordinator and resets the inner position to zero on UP —
     // snapping the list back to the top and dropping focus onto the header.
     final columnCount = position.columnCount;
-    final navigateUp = position.isFirstRow ? widget.onBack : () => _focusGridItem(index - columnCount);
+    final navigateUp = position.isFirstRow
+        ? (widget.onNavigateUp ?? widget.onBack)
+        : () => _focusGridItem(index - columnCount);
     final navigateDown = index + columnCount < totalSize ? () => _focusGridItem(index + columnCount) : null;
     final navigateLeft = position.isFirstColumn ? _navigateToSidebar : () => _focusGridItem(index - 1);
     final navigateRight = !position.isLastColumn && index + 1 < totalSize ? () => _focusGridItem(index + 1) : null;

@@ -40,6 +40,10 @@ class FocusableFilterChip extends StatefulWidget {
   /// the word at reading strength, focus the capsule every word there takes.
   final bool spellOut;
 
+  /// A small mark after the word saying the chip opens a choice — the library
+  /// view chooser's chevron. Null for none.
+  final IconData? trailingIcon;
+
   const FocusableFilterChip({
     super.key,
     required this.icon,
@@ -52,6 +56,7 @@ class FocusableFilterChip extends StatefulWidget {
     this.onNavigateRight,
     this.onBack,
     this.spellOut = false,
+    this.trailingIcon,
   });
 
   @override
@@ -120,6 +125,10 @@ class _FocusableFilterChipState extends State<FocusableFilterChip> with Focusabl
                   widget.label,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(color: ink, fontWeight: FontWeight.w600),
                 ),
+                if (widget.trailingIcon case final trailing?) ...[
+                  const SizedBox(width: 4),
+                  AppIcon(trailing, size: 14, color: ink),
+                ],
               ],
             ),
           ),
@@ -144,7 +153,12 @@ class _FocusableFilterChipState extends State<FocusableFilterChip> with Focusabl
         // "Flach" (Plebz): a pill with the glyph and the word, as the design
         // draws a library's filter and sort.
         child: ockerFlat(context)
-            ? OckerFlatLabelledControl(icon: icon, label: widget.label, focused: showFocus)
+            ? OckerFlatLabelledControl(
+                icon: icon,
+                label: widget.label,
+                focused: showFocus,
+                trailingIcon: widget.trailingIcon,
+              )
             : widget.spellOut
             ? _spelledOut(context, showFocus: showFocus)
             : OckerFilterGlyph(icon: icon, focused: showFocus),
@@ -169,6 +183,10 @@ class _FocusableFilterChipState extends State<FocusableFilterChip> with Focusabl
           AppIcon(icon, size: 16, color: foregroundColor),
           const SizedBox(width: 6),
           Text(widget.label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: foregroundColor)),
+          if (widget.trailingIcon case final trailing?) ...[
+            const SizedBox(width: 4),
+            AppIcon(trailing, size: 14, color: foregroundColor),
+          ],
         ],
       ),
     );
@@ -188,11 +206,22 @@ class _FocusableFilterChipState extends State<FocusableFilterChip> with Focusabl
           padding: EdgeInsets.all(tk.focusRingOffset),
           child: OckerInk(
             color: showFocus ? tk.ink(1) : tk.ink(0.85),
-            builder: (context, ink) => Text(
-              widget.label,
-              maxLines: 1,
-              style: OckerType.of(context).groupEntry(active: false).copyWith(color: ink),
-            ),
+            builder: (context, ink) {
+              final style = OckerType.of(context).groupEntry(active: false).copyWith(color: ink);
+              final word = Text(widget.label, maxLines: 1, style: style);
+              final trailing = widget.trailingIcon;
+              if (trailing == null) return word;
+              // The chevron a step smaller than the word and as bright, set
+              // close to it: one control, not a word and a second button.
+              return Row(
+                mainAxisSize: .min,
+                children: [
+                  word,
+                  SizedBox(width: 4 * scale),
+                  AppIcon(trailing, fill: 0, size: (style.fontSize ?? 18) * 0.8, weight: 500, color: ink),
+                ],
+              );
+            },
           ),
         ),
       ),

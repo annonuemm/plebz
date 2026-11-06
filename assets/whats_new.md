@@ -13,6 +13,15 @@ Only the build number in the heading makes a section visible; a draft
 without one stays hidden in the app.
 -->
 
+## 1.45.0 (Build 971)
+
+### Mediathek
+- Neben Filter und Sortierung kannst du jetzt die Ansicht wechseln: Empfohlen, Durchsuchen, Sammlungen oder Playlists. Der Weg über die Navigation bleibt.
+
+### Live-TV
+- Öffnest du im Player die Senderliste mit runter, steht der Fokus jetzt auf dem laufenden Sender, und du kannst wieder durchschalten.
+- Das „LIVE“ neben dem Sendernamen ist weg.
+
 ## 1.44.0 (Build 967)
 
 ### Player auf dem Fernseher

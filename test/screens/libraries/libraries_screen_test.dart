@@ -43,6 +43,9 @@ import 'package:plezy/media/library_change_event.dart';
 import 'package:plezy/widgets/hub_section.dart';
 import 'package:plezy/widgets/overlay_sheet.dart';
 import 'package:plezy/widgets/focusable_tab_chip.dart';
+import 'package:plezy/widgets/focusable_filter_chip.dart';
+import 'package:plezy/redesign/ocker_poster_tile.dart';
+import 'package:plezy/widgets/app_menu.dart';
 import 'package:plezy/redesign/ocker_detail_panel.dart';
 import 'package:plezy/redesign/ocker_filter_glyph.dart';
 import 'package:plezy/redesign/ocker_filter_slot.dart';
@@ -189,6 +192,146 @@ void main() {
     await tester.pumpAndSettle();
     expect(selected, [_libraryA.globalKey]);
     expect(tester.takeException(), isNull);
+  });
+
+  for (final variant in [AppThemeVariant.glasV2, AppThemeVariant.flach]) {
+    testWidgets('under ${variant.name} the view chooser over the posters switches the views, the rail follows it, '
+        'and the remote reaches it from every view', (tester) async {
+      final client = _ViewsClient();
+      final harness = await _Harness.create(
+        _GatedPreferences({
+          'selected_library_key': _libraryA.globalKey,
+          'library_tab_${_libraryA.globalKey}': LibraryTabType.browse.name,
+        }),
+        clients: [client],
+        libraryOrder: const [_libraryA],
+      );
+      addTearDown(harness.dispose);
+      TvDetectionService.debugSetAppleTVOverride(true);
+
+      await harness.pump(tester, variant: variant);
+      expect(harness.controller(tester).index, LibraryTabType.browse.index);
+      expect(tester.takeException(), isNull);
+
+      final viewChip = find.byWidgetPredicate((widget) => widget is FocusableFilterChip && widget.trailingIcon != null);
+      FocusableFilterChip chooser() => tester.widget<FocusableFilterChip>(viewChip);
+      final screen = tester.state(find.byType(LibrariesScreen)) as OckerSubmenuHost;
+      String railSelection() => screen.ockerRailMenu!.items.firstWhere((item) => item.selected).label;
+
+      // On Durchsuchen it leads the band, before the sort.
+      expect(chooser().label, t.libraries.tabs.browse);
+      final band = tester.widgetList<FocusableFilterChip>(find.byType(FocusableFilterChip)).toList();
+      expect(band.length, 2, reason: 'the chooser and the sort');
+      expect(band.first.trailingIcon, isNotNull);
+      if (variant == AppThemeVariant.flach) {
+        expect(
+          find.byWidgetPredicate((widget) => widget is OckerFlatLabelledControl && widget.trailingIcon != null),
+          findsOneWidget,
+          reason: 'Flach draws it as the same pill as the sort',
+        );
+      }
+      expect(
+        tester.getRect(viewChip).left,
+        lessThan(tester.getRect(find.byWidget(band.last)).left),
+        reason: 'the chooser stands left of the sort',
+      );
+
+      // UP off the first row of posters lands on the chooser, which leads
+      // the band, not on the sort after it.
+      tester.widget<OckerPosterTile>(find.byType(OckerPosterTile).first).focusNode.requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(FocusManager.instance.primaryFocus, same(chooser().focusNode));
+
+      // Along the band and back.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(FocusManager.instance.primaryFocus, same(band.last.focusNode));
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pump();
+      expect(FocusManager.instance.primaryFocus, same(chooser().focusNode));
+
+      // OK opens the views, the one on show under the cursor; DOWN, OK picks
+      // the next.
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      final sheet = find.byType(AppMenuSheet<int>);
+      expect(sheet, findsOneWidget);
+      for (final label in [
+        t.libraries.tabs.recommended,
+        t.libraries.tabs.browse,
+        t.libraries.tabs.collections,
+        t.libraries.tabs.playlists,
+      ]) {
+        expect(find.descendant(of: sheet, matching: find.text(label)), findsOneWidget);
+      }
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(sheet, findsNothing);
+      expect(harness.controller(tester).index, LibraryTabType.collections.index);
+      expect(railSelection(), t.libraries.tabs.collections, reason: 'the rail follows the chooser');
+      expect(chooser().label, t.libraries.tabs.collections);
+      expect(tester.takeException(), isNull);
+
+      // Into the view, as a choice in the rail goes; UP off its first row is
+      // the chooser, DOWN goes back to the posters.
+      final focusedCard = FocusManager.instance.primaryFocus;
+      expect(focusedCard, isNot(same(chooser().focusNode)));
+      expect(focusedCard?.context, isNotNull);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(FocusManager.instance.primaryFocus, same(chooser().focusNode));
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus, isNot(same(chooser().focusNode)));
+      expect(find.byType(OckerPanelFrame), findsOneWidget);
+
+      // The rail's rows choose too, and the chooser follows them.
+      screen.ockerRailMenu!.items.firstWhere((item) => item.label == t.libraries.tabs.recommended).onSelect();
+      await tester.pumpAndSettle();
+      expect(harness.controller(tester).index, LibraryTabType.recommended.index);
+      expect(chooser().label, t.libraries.tabs.recommended);
+      expect(find.byType(TvSpotlightScaffold), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // Over the spotlight it stands where it stood over the posters, and UP
+      // off the rows reaches it.
+      bool onRows() =>
+          FocusManager.instance.primaryFocus?.context?.findAncestorWidgetOfExactType<TvBrowseRail>() != null;
+      expect(onRows(), isTrue, reason: 'the rows have the cursor');
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pumpAndSettle();
+      expect(FocusManager.instance.primaryFocus, same(chooser().focusNode));
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pumpAndSettle();
+      expect(onRows(), isTrue, reason: 'DOWN goes back to the rows');
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('off the television arrangement there is no view chooser: the views are chips on the page', (
+    tester,
+  ) async {
+    final harness = await _Harness.create(
+      _GatedPreferences({
+        'selected_library_key': _libraryA.globalKey,
+        'library_tab_${_libraryA.globalKey}': LibraryTabType.browse.name,
+      }),
+      clients: [_ViewsClient()],
+      libraryOrder: const [_libraryA],
+    );
+    addTearDown(harness.dispose);
+
+    await harness.pump(tester, variant: AppThemeVariant.glasV2);
+    expect(tester.takeException(), isNull);
+    expect(find.byType(FocusableTabChip), findsWidgets);
+    expect(
+      find.byWidgetPredicate((widget) => widget is FocusableFilterChip && widget.trailingIcon != null),
+      findsNothing,
+    );
   });
 
   testWidgets('libraries arriving after an empty first load select the default library', (tester) async {
@@ -894,6 +1037,35 @@ class _HubClient extends _PagedClient {
     onDeckCalls++;
     return hubs.first.items;
   }
+}
+
+/// Library A with something in every view: hubs, a page of titles, a sort
+/// and two collections.
+class _ViewsClient extends _HubClient {
+  @override
+  Future<List<MediaSort>> fetchSortOptions(String libraryId, {String? libraryType}) async => const [
+    MediaSort(key: 'titleSort', title: 'Title'),
+  ];
+
+  @override
+  Future<LibraryPage<MediaItem>> fetchCollectionsPage(
+    String libraryId, {
+    int? start,
+    int? size,
+    AbortController? abort,
+  }) async => LibraryPage(
+    items: [
+      for (var i = 0; i < 2; i++)
+        testMediaItem(
+          id: 'collection-$i',
+          title: 'Collection $i',
+          kind: MediaKind.collection,
+          backend: MediaBackend.plex,
+          serverId: 'server',
+        ),
+    ],
+    totalCount: 2,
+  );
 }
 
 class _HubPushChannel implements LibraryEventChannel {

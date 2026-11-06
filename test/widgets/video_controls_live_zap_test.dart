@@ -270,6 +270,25 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('down from the controls puts focus on the playing channel, and right walks the list', (tester) async {
+    await pumpPlayer(tester);
+
+    await press(tester, LogicalKeyboardKey.select);
+    await tester.pumpAndSettle();
+    await press(tester, LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LiveChannelStrip), findsOneWidget);
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'live_channel_2');
+
+    await press(tester, LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'live_channel_3');
+
+    endTest(tester);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('a rewound session keeps left and right for its time-shift', (tester) async {
     // Behind the live edge the viewer is working in the timeline, and LEFT is
     // how they move in it.

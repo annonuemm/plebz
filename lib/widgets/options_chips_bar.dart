@@ -51,6 +51,10 @@ class OptionsChipDescriptor {
   /// show. See [FocusableFilterChip.spellOut].
   final bool spellOut;
 
+  /// A chevron after the word, for a chip that opens a choice. See
+  /// [FocusableFilterChip.trailingIcon].
+  final IconData? trailingIcon;
+
   const OptionsChipDescriptor({
     required this.icon,
     required this.label,
@@ -63,6 +67,7 @@ class OptionsChipDescriptor {
     this.onNavigateUp,
     this.onBack,
     this.spellOut = false,
+    this.trailingIcon,
   });
 }
 
@@ -146,6 +151,7 @@ class OptionsChipsBar extends StatelessWidget {
       icon: chip.icon,
       label: chip.label,
       spellOut: chip.spellOut,
+      trailingIcon: chip.trailingIcon,
       onPressed: chip.onPressed,
       onNavigateDown: chip.onNavigateDown ?? onNavigateDown,
       onNavigateUp: chip.onNavigateUp ?? onNavigateUp,

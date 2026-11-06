@@ -90,6 +90,11 @@ class LibraryBrowseTab extends BaseLibraryTab<MediaItem> {
   final ValueChanged<bool>? onFiltersActiveChanged;
   final bool canGroupByFolders;
 
+  /// Under the redesign, the library's view chooser ("Durchsuchen ⌄"), set
+  /// first on the band before the filters and sort. Owned by the libraries
+  /// screen, which shows the same chooser over its other views.
+  final OptionsChipDescriptor? viewChip;
+
   /// The width the letter bar takes at the right. Under the redesign it
   /// stands just outside the column — see [OckerGridRoom.trailing].
   static const double alphaJumpBarWidth = 20.0;
@@ -106,6 +111,7 @@ class LibraryBrowseTab extends BaseLibraryTab<MediaItem> {
     super.onBack,
     this.onResetScroll,
     this.onFiltersActiveChanged,
+    this.viewChip,
   });
 
   @override
@@ -1552,9 +1558,13 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
   }
 
   /// The first chip on the bar: the grouping, except under the redesign, which
-  /// has none — there the filters, or the sort when a library has no filters.
+  /// has none — there the view chooser, which leads the band (the user: UP
+  /// should reach "Durchsuchen" first, not the filters), else the filters, or
+  /// the sort when a library has no filters.
   FocusNode? get _firstChipFocusNode => !_ocker
       ? _groupingChipFocusNode
+      : widget.viewChip != null
+      ? widget.viewChip!.focusNode
       : _isFiltersChipVisible
       ? _filtersChipFocusNode
       : _isSortChipVisible
@@ -1898,6 +1908,7 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
       _selectedGrouping,
       _selectedFilters.length,
       _selectedSort?.title,
+      widget.viewChip?.label,
     );
     if (shown != _ockerChipsShown) {
       _ockerChipsShown = shown;
@@ -2114,6 +2125,9 @@ class _LibraryBrowseTabState extends BaseLibraryTabState<MediaItem, LibraryBrows
   Widget _buildChipsBar() {
     return OptionsChipsBar(
       chips: [
+        // The views first, where the redesign has them on the page at all:
+        // the filters and sort that follow narrow what that view shows.
+        if (_ocker) ?widget.viewChip,
         // Not under the redesign: the user found the choice superfluous there.
         if (!_ocker)
           OptionsChipDescriptor(

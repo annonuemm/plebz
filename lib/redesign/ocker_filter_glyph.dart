@@ -145,11 +145,20 @@ class OckerFlatControl extends StatelessWidget {
 /// A labelled control on "Flach"'s toolbar — a library's filter and sort: the
 /// glyph and the word on a pill, 52 tall at 1920.
 class OckerFlatLabelledControl extends StatelessWidget {
-  const OckerFlatLabelledControl({super.key, required this.icon, required this.label, required this.focused});
+  const OckerFlatLabelledControl({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.focused,
+    this.trailingIcon,
+  });
 
   final IconData icon;
   final String label;
   final bool focused;
+
+  /// A chevron after the word where the pill opens a choice; null for none.
+  final IconData? trailingIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +189,10 @@ class OckerFlatLabelledControl extends StatelessWidget {
                     color: ink,
                   ),
                 ),
+                if (trailingIcon case final trailing?) ...[
+                  SizedBox(width: 6 * scale),
+                  AppIcon(trailing, fill: 0, size: math.max(18 * scale, 11), weight: 400, color: ink),
+                ],
               ],
             ),
           ),

@@ -20,6 +20,7 @@ class LibraryCollectionsTab extends BaseLibraryTab<MediaItem> {
     super.isActive,
     super.suppressAutoFocus,
     super.onBack,
+    super.onNavigateUp,
   });
 
   @override

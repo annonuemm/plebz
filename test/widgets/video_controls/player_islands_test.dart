@@ -43,6 +43,7 @@ void main() {
     MediaItem? item,
     List<MediaChapter> chapters = const [],
     bool withNeighbours = false,
+    bool live = false,
   }) async {
     LocaleSettings.setLocaleSync(AppLocale.en);
     await initializeDateFormatting('en');
@@ -82,7 +83,8 @@ void main() {
               onSeekEnd: (_) {},
               getReplayIcon: (_) => Icons.replay_10,
               getForwardIcon: (_) => Icons.forward_10,
-              trackControlsState: const TrackControlsState(canControl: true),
+              trackControlsState: TrackControlsState(canControl: true, isLive: live),
+              liveChannelName: live ? 'Das Erste' : null,
             ),
           ),
         ),
@@ -261,6 +263,14 @@ void main() {
       expect(focused(), 'PlayPause');
     });
   }
+
+  testWidgets('a live channel is named without a LIVE badge beside it', (tester) async {
+    await pumpControls(tester, live: true);
+
+    final title = find.byKey(const ValueKey('player_island_title'));
+    expect(find.descendant(of: title, matching: find.text('Das Erste')), findsOneWidget);
+    expect(find.text(t.liveTv.live), findsNothing);
+  });
 
   testWidgets('a Mac keeps the bar', (tester) async {
     debugOckerLayoutOnThisHost = false;

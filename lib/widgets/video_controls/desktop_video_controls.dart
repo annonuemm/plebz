@@ -482,6 +482,10 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
     setState(() {
       _contentStripVisible = true;
       _stripOpenedFromPicture = fromPicture;
+      // Down out of the chrome opens what the panel shows for that session:
+      // the channel list on live TV, chapters and queue otherwise. The keys
+      // that name a list (LEFT, RIGHT) set their mode before calling in.
+      if (!fromPicture) _stripMode = _hasChannelStrip ? _ContentStripMode.channels : _ContentStripMode.chapters;
     });
     widget.onContentStripVisibilityChanged?.call(true);
 
@@ -1050,14 +1054,9 @@ class DesktopVideoControlsState extends State<DesktopVideoControls> {
       key: const ValueKey('player_island_title'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Flexible(
-              child: Text(name, style: titleStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-            if (_showLiveBadge) ...[const SizedBox(width: 12), _liveBadge()],
-          ],
-        ),
+        // No LIVE badge beside a channel's name: it outshouted the name
+        // (the user's call). Leaving live shows as the go-to-live button.
+        Text(name, style: titleStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
         if (facts.isNotEmpty)
           Text(toBulletedString(facts), style: factsStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
       ],

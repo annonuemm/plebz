@@ -51,6 +51,10 @@ abstract class BaseLibraryTab<T> extends StatefulWidget {
   /// Used to navigate focus back to the tab bar.
   final VoidCallback? onBack;
 
+  /// UP off the top of the content. Defaults to [onBack]; under the redesign
+  /// the libraries screen points it at its view chooser over the posters.
+  final VoidCallback? onNavigateUp;
+
   const BaseLibraryTab({
     super.key,
     required this.library,
@@ -60,6 +64,7 @@ abstract class BaseLibraryTab<T> extends StatefulWidget {
     this.isActive = false,
     this.suppressAutoFocus = false,
     this.onBack,
+    this.onNavigateUp,
   });
 }
 

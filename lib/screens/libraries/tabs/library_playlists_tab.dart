@@ -21,6 +21,7 @@ class LibraryPlaylistsTab extends BaseLibraryTab<MediaPlaylist> {
     super.isActive,
     super.suppressAutoFocus,
     super.onBack,
+    super.onNavigateUp,
   });
 
   @override
